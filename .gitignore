@@ -1,0 +1,39 @@
+# Backups locais (não enviar para o remoto — usar git revert/checkout)
+_backups/
+
+# Configurações locais do Claude Code (per-machine, não compartilhar)
+.claude/
+
+# Sistema operacional
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# IDE / Editor
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs e temporários
+*.log
+*.tmp
+*.bak
+*.old
+
+# Dependências (caso futuramente seja adicionado Node.js)
+node_modules/
+package-lock.json
+.npm/
+
+# Arquivos sensíveis
+.env
+.env.local
+secrets.json
+credentials.json
