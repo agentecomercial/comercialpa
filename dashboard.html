@@ -2982,13 +2982,26 @@ function _renderTurmasYearBar(turmas){
 
 var _SWIM_MESES_FULL = APP_CONST.MESES_FULL;
 
+/* ─── Prólogo comum dos layouts A–G (Fase 1.D) ───
+   Retorna {el, ano, mesMap} ou null se o container não existe.
+   ano = turmas filtradas pelo ano atual (_tturmasAnoAtual).
+   mesMap = { 1: [...turmas], 2: [...turmas], ..., 12: [...turmas] }.
+   Atualiza a barra de anos como efeito colateral. */
+function _turmasPrepararDados(turmas){
+  var el = document.getElementById('turmasSwimGrid');
+  if(!el) return null;
+  _renderTurmasYearBar(turmas);
+  var ano = turmas.filter(function(t){return _swimExtrairAno(t)===_tturmasAnoAtual;});
+  var mesMap = {};
+  for(var m=1;m<=12;m++) mesMap[m]=[];
+  ano.forEach(function(t){var m=_swimExtrairMes(t);if(m>=1&&m<=12)mesMap[m].push(t);else mesMap[1].push(t);});
+  return { el:el, ano:ano, mesMap:mesMap };
+}
+
 /* ── A: Timeline horizontal ── */
 function _renderTurmasA(turmas){
-  var el=document.getElementById('turmasSwimGrid');if(!el)return;
-  _renderTurmasYearBar(turmas);
-  var ano=turmas.filter(function(t){return _swimExtrairAno(t)===_tturmasAnoAtual;});
-  var mesMap={};for(var m=1;m<=12;m++)mesMap[m]=[];
-  ano.forEach(function(t){var m=_swimExtrairMes(t);if(m>=1&&m<=12)mesMap[m].push(t);else mesMap[1].push(t);});
+  var d=_turmasPrepararDados(turmas); if(!d) return;
+  var el=d.el, mesMap=d.mesMap;
   var html='<div style="display:grid;grid-template-columns:repeat(12,minmax(70px,1fr));gap:5px;min-width:680px;">';
   _SWIM_MESES.forEach(function(m,i){
     var list=mesMap[i+1];
@@ -3002,11 +3015,8 @@ function _renderTurmasA(turmas){
 
 /* ── B: Grade de meses ── */
 function _renderTurmasB(turmas){
-  var el=document.getElementById('turmasSwimGrid');if(!el)return;
-  _renderTurmasYearBar(turmas);
-  var ano=turmas.filter(function(t){return _swimExtrairAno(t)===_tturmasAnoAtual;});
-  var mesMap={};for(var m=1;m<=12;m++)mesMap[m]=[];
-  ano.forEach(function(t){var m=_swimExtrairMes(t);if(m>=1&&m<=12)mesMap[m].push(t);else mesMap[1].push(t);});
+  var d=_turmasPrepararDados(turmas); if(!d) return;
+  var el=d.el, mesMap=d.mesMap;
   var html='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">';
   for(var m=1;m<=12;m++){
     var list=mesMap[m];
@@ -3021,11 +3031,8 @@ function _renderTurmasB(turmas){
 
 /* ── C: Lista detalhada por mês ── */
 function _renderTurmasC(turmas){
-  var el=document.getElementById('turmasSwimGrid');if(!el)return;
-  _renderTurmasYearBar(turmas);
-  var ano=turmas.filter(function(t){return _swimExtrairAno(t)===_tturmasAnoAtual;});
-  var mesMap={};for(var m=1;m<=12;m++)mesMap[m]=[];
-  ano.forEach(function(t){var m=_swimExtrairMes(t);if(m>=1&&m<=12)mesMap[m].push(t);else mesMap[1].push(t);});
+  var d=_turmasPrepararDados(turmas); if(!d) return;
+  var el=d.el, mesMap=d.mesMap;
   var html='';
   for(var m=1;m<=12;m++){
     var list=mesMap[m];if(!list.length)continue;
@@ -3040,11 +3047,8 @@ function _renderTurmasC(turmas){
 
 /* ── D: Linha do tempo vertical ── */
 function _renderTurmasD(turmas){
-  var el=document.getElementById('turmasSwimGrid');if(!el)return;
-  _renderTurmasYearBar(turmas);
-  var ano=turmas.filter(function(t){return _swimExtrairAno(t)===_tturmasAnoAtual;});
-  var mesMap={};for(var m=1;m<=12;m++)mesMap[m]=[];
-  ano.forEach(function(t){var m=_swimExtrairMes(t);if(m>=1&&m<=12)mesMap[m].push(t);else mesMap[1].push(t);});
+  var d=_turmasPrepararDados(turmas); if(!d) return;
+  var el=d.el, ano=d.ano, mesMap=d.mesMap;
   var html='<div style="padding-left:70px;">';
   for(var m=1;m<=12;m++){
     var list=mesMap[m];if(!list.length)continue;
@@ -3061,9 +3065,8 @@ function _renderTurmasD(turmas){
 
 /* ── E: Kanban por trimestre ── */
 function _renderTurmasE(turmas){
-  var el=document.getElementById('turmasSwimGrid');if(!el)return;
-  _renderTurmasYearBar(turmas);
-  var ano=turmas.filter(function(t){return _swimExtrairAno(t)===_tturmasAnoAtual;});
+  var d=_turmasPrepararDados(turmas); if(!d) return;
+  var el=d.el, ano=d.ano;
   var trims=[{l:'Q1 — Jan/Mar',m:[1,2,3]},{l:'Q2 — Abr/Jun',m:[4,5,6]},{l:'Q3 — Jul/Set',m:[7,8,9]},{l:'Q4 — Out/Dez',m:[10,11,12]}];
   var corQ=['var(--blue)','var(--accent)','#a78bfa','var(--red)'];
   var html='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">';
@@ -3079,13 +3082,10 @@ function _renderTurmasE(turmas){
 
 /* ── F: Mapa de calor ── */
 function _renderTurmasF(turmas){
-  var el=document.getElementById('turmasSwimGrid');if(!el)return;
-  _renderTurmasYearBar(turmas);
-  var ano=turmas.filter(function(t){return _swimExtrairAno(t)===_tturmasAnoAtual;});
+  var d=_turmasPrepararDados(turmas); if(!d) return;
+  var el=d.el, ano=d.ano, mesMap=d.mesMap;
   var tiposSet={};ano.forEach(function(t){tiposSet[_swimExtrairTipo(t)]=true;});
   var tipos=Object.keys(tiposSet).sort();
-  var mesMap={};for(var m=1;m<=12;m++)mesMap[m]=[];
-  ano.forEach(function(t){var m=_swimExtrairMes(t);if(m>=1&&m<=12)mesMap[m].push(t);else mesMap[1].push(t);});
   var html='<div style="display:grid;grid-template-columns:90px repeat(12,1fr);gap:3px;min-width:620px;">';
   html+='<div></div>';
   _SWIM_MESES.forEach(function(m){html+='<div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center;padding:3px 0;text-transform:uppercase;letter-spacing:.04em;">'+m+'</div>';});
@@ -3105,9 +3105,8 @@ function _renderTurmasF(turmas){
 
 /* ── G: Semestres ── */
 function _renderTurmasG(turmas){
-  var el=document.getElementById('turmasSwimGrid');if(!el)return;
-  _renderTurmasYearBar(turmas);
-  var ano=turmas.filter(function(t){return _swimExtrairAno(t)===_tturmasAnoAtual;});
+  var d=_turmasPrepararDados(turmas); if(!d) return;
+  var el=d.el, ano=d.ano;
   var sems=[{l:'1º Semestre — Jan a Jun',m:[1,2,3,4,5,6]},{l:'2º Semestre — Jul a Dez',m:[7,8,9,10,11,12]}];
   var html='';
   sems.forEach(function(s){
