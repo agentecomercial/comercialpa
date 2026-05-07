@@ -2735,10 +2735,23 @@ function _getPermsUsuario(perfil, permissoesSalvas){
   if(!permissoesSalvas) return Object.assign({},padrao);
   return Object.assign({},padrao,permissoesSalvas);
 }
-const allTreinamentos=['BHP','CEOP','CI','CIS','CIS-GL','FCIS','FGPC','IF','MAESTRIA','MASTER COACHING','ML5','TAV','TOUR BLACK BEL','TOUR BRONZE BEL','TOUR OURO BEL'];
-const PALETTE_T=['#60a5fa','#34d399','#ffb740','#f472b6','#a78bfa','#fb923c','#38bdf8'];
-const PALETTE_C=['#c084fc','#38bdf8','#fb923c','#34d399','#f472b6','#ffb740','#60a5fa'];
-const NB_CLS=['nb-blue','nb-green','nb-amber','nb-pink','nb-purple','nb-orange'];
+// ── Constantes centralizadas (Fase 1.A — fonte única) ──
+window.APP_CONST = {
+  MESES_CURTO: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+  MESES_FULL:  ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
+  PALETTE_T:   ['#60a5fa','#34d399','#ffb740','#f472b6','#a78bfa','#fb923c','#38bdf8'],
+  PALETTE_C:   ['#c084fc','#38bdf8','#fb923c','#34d399','#f472b6','#ffb740','#60a5fa'],
+  PALETTE_SWIM:    ['var(--blue)','var(--accent)','#a78bfa','var(--red)','var(--amber)','var(--green)','#f472b6','#fb923c','#38bdf8','#e879f9'],
+  PALETTE_SWIM_BG: ['rgba(96,165,250,.15)','rgba(200,240,90,.15)','rgba(167,139,250,.18)','rgba(255,95,87,.15)','rgba(255,183,64,.15)','rgba(52,211,153,.15)','rgba(244,114,182,.15)','rgba(251,146,60,.15)','rgba(56,189,248,.15)','rgba(232,121,249,.15)'],
+  NB_CLS: ['nb-blue','nb-green','nb-amber','nb-pink','nb-purple','nb-orange'],
+  TREINAMENTOS: ['BHP','CEOP','CI','CIS','CIS-GL','FCIS','FGPC','IF','MAESTRIA','MASTER COACHING','ML5','TAV','TOUR BLACK BEL','TOUR BRONZE BEL','TOUR OURO BEL'],
+};
+
+// Aliases preservando 100% da API existente
+const allTreinamentos = APP_CONST.TREINAMENTOS;
+const PALETTE_T = APP_CONST.PALETTE_T;
+const PALETTE_C = APP_CONST.PALETTE_C;
+const NB_CLS = APP_CONST.NB_CLS;
 
 function _normalizeUid(str){
   return str.toLowerCase()
@@ -2824,9 +2837,9 @@ var _tturmasAnoAtual=new Date().getFullYear();
 var _tturmasAnosExtra=[];
 var _tturmasCache=[];
 
-var _SWIM_MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-var _SWIM_CORES=['var(--blue)','var(--accent)','#a78bfa','var(--red)','var(--amber)','var(--green)','#f472b6','#fb923c','#38bdf8','#e879f9'];
-var _SWIM_BGS=['rgba(96,165,250,.15)','rgba(200,240,90,.15)','rgba(167,139,250,.18)','rgba(255,95,87,.15)','rgba(255,183,64,.15)','rgba(52,211,153,.15)','rgba(244,114,182,.15)','rgba(251,146,60,.15)','rgba(56,189,248,.15)','rgba(232,121,249,.15)'];
+var _SWIM_MESES = APP_CONST.MESES_CURTO;
+var _SWIM_CORES = APP_CONST.PALETTE_SWIM;
+var _SWIM_BGS   = APP_CONST.PALETTE_SWIM_BG;
 
 function _swimExtrairTipo(t){
   var cod=(t.codigo||t.id||''). toUpperCase();
@@ -2936,7 +2949,7 @@ function _renderTurmasYearBar(turmas){
 }
 
 
-var _SWIM_MESES_FULL=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var _SWIM_MESES_FULL = APP_CONST.MESES_FULL;
 
 /* ── A: Timeline horizontal ── */
 function _renderTurmasA(turmas){
@@ -5414,10 +5427,10 @@ function _gtRenderLista(el){
 }
 
 // ── Helpers compartilhados pelos layouts visuais ──
-var _gtMeses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-var _gtMesesFull=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-var _gtCores=['var(--blue)','var(--accent)','#a78bfa','var(--red)','var(--amber)','var(--green)','#f472b6','#fb923c','#38bdf8','#e879f9'];
-var _gtBgs=['rgba(96,165,250,.15)','rgba(200,240,90,.15)','rgba(167,139,250,.18)','rgba(255,95,87,.15)','rgba(255,183,64,.15)','rgba(52,211,153,.15)','rgba(244,114,182,.15)','rgba(251,146,60,.15)','rgba(56,189,248,.15)','rgba(232,121,249,.15)'];
+var _gtMeses     = APP_CONST.MESES_CURTO;
+var _gtMesesFull = APP_CONST.MESES_FULL;
+var _gtCores     = APP_CONST.PALETTE_SWIM;
+var _gtBgs       = APP_CONST.PALETTE_SWIM_BG;
 
 function _gtMesMap(){
   var turmasAno=_gerenciarTurmasList.filter(function(t){return _gtExtrairAno(t)===_gtAnoAtual;});
