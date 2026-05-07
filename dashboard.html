@@ -2773,8 +2773,33 @@ function _buildColors(){
    FORMATAÇÃO
 ═══════════════════════════════════════════ */
 function hexToRgba(hex,a){var h=hex.replace('#','');if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];return'rgba('+parseInt(h.slice(0,2),16)+','+parseInt(h.slice(2,4),16)+','+parseInt(h.slice(4,6),16)+','+a+')';}
-function formatVal(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function parseVal(s){if(!s)return 0;return parseFloat(String(s).trim().replace(/R\$\s*/,'').replace(/\./g,'').replace(',','.'))||0;}
+
+/* ─── fmtMoney — fonte canônica de formatação BRL (Fase 1.C) ───
+   Modos:
+     'display'         number → 'R$ 1.234,56'   (default, com prefixo)
+     'displayNoSymbol' number → '1.234,56'       (sem prefixo)
+     'parse'           string → number           ('R$ 1.234,56' → 1234.56)
+     'inputMask'       string → '1.234,56' ou '' (para input em tempo real, base centavos)
+*/
+window.fmtMoney = function(input, mode){
+  mode = mode || 'display';
+  if(mode === 'display')         return 'R$ ' + Number(input||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  if(mode === 'displayNoSymbol') return Number(input||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  if(mode === 'parse'){
+    if(!input) return 0;
+    return parseFloat(String(input).trim().replace(/R\$\s*/,'').replace(/\./g,'').replace(',','.')) || 0;
+  }
+  if(mode === 'inputMask'){
+    if(!input && input !== 0) return '';
+    var raw = String(input).replace(/\D/g,'');
+    if(!raw) return '';
+    return (parseInt(raw,10)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  return String(input||'');
+};
+
+function formatVal(v){return fmtMoney(v, 'display');}
+function parseVal(s){return fmtMoney(s, 'parse');}
 function formatDate(d){if(!d)return '';const[y,m,dd]=d.split('-');return dd+'/'+m+'/'+y;}
 
 /* ─── Helpers de modal (Fase 1.B — uso opcional, padroniza abrir/fechar) ───
@@ -10551,27 +10576,12 @@ tr.card-row-selected td{background:rgba(200,240,90,.06)!important;}
    (mesmas fontes usadas pelo modal "Novo cliente")
 ════════════════════════════════════════════════════════════════ */
 
-/* ─── lcMoneyMask — escopo global, aceita string OU elemento DOM ─── */
-/* lcMoneyMask — global, aceita string ou valor numérico */
-function lcMoneyMask(valor) {
-  if (!valor && valor !== 0) return "";
-  // Remover tudo que não é dígito
-  var raw = String(valor).replace(/\D/g, "");
-  if (!raw) return "";
-  // Converter centavos → reais
-  var num = parseInt(raw, 10) / 100;
-  // Formatar: ponto de milhar, vírgula decimal
-  return num.toFixed(2)
-    .replace(".", ",")
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
-
-/* Fix 5: máscara BRL em tempo real (oninput) — divide por 100 para centavos */
+/* lcMoneyMask / cardMoneyMask — wrappers de fmtMoney (Fase 1.C)
+   cardMoneyMask preserva comportamento original de esvaziar quando reais===0. */
+function lcMoneyMask(valor){ return fmtMoney(valor, 'inputMask'); }
 function cardMoneyMask(el){
-  var raw   = el.value.replace(/\D/g,'');
-  var cents = parseInt(raw||'0',10);
-  var reais = cents/100;
-  el.value  = reais>0 ? reais.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
+  var f = fmtMoney(el.value, 'inputMask');
+  el.value = (f === '0,00') ? '' : f;
 }
 
 /* Atualiza data[] ao mudar um SELECT (treinamento, treinador, consultor, status) */
