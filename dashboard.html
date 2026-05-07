@@ -2777,6 +2777,12 @@ function formatVal(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigi
 function parseVal(s){if(!s)return 0;return parseFloat(String(s).trim().replace(/R\$\s*/,'').replace(/\./g,'').replace(',','.'))||0;}
 function formatDate(d){if(!d)return '';const[y,m,dd]=d.split('-');return dd+'/'+m+'/'+y;}
 
+/* ─── Helpers de modal (Fase 1.B — uso opcional, padroniza abrir/fechar) ───
+   Padrão atual: classList.add('open') / classList.remove('open') em #xxxOverlay.
+   Aceita id (string) ou o próprio elemento. Retorna o elemento ou null. */
+window.modalOpen  = function(idOrEl){var el = (typeof idOrEl === 'string') ? document.getElementById(idOrEl) : idOrEl; if(el) el.classList.add('open'); return el || null;};
+window.modalClose = function(idOrEl){var el = (typeof idOrEl === 'string') ? document.getElementById(idOrEl) : idOrEl; if(el) el.classList.remove('open'); return el || null;};
+
 /* ═══════════════════════════════════════════
    SISTEMA DE TURMAS
 ═══════════════════════════════════════════ */
