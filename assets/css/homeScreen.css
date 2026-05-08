@@ -1,0 +1,28 @@
+.home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1060px;}
+.home-card{border-radius:16px;padding:28px 24px;cursor:pointer;transition:transform .18s,box-shadow .18s;display:flex;flex-direction:column;gap:16px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.home-card:hover{transform:translateY(-4px) scale(1.01);box-shadow:0 16px 40px rgba(var(--card-shadow-rgb),.22),inset 0 1px 0 rgba(255,255,255,.16);border-color:rgba(var(--card-shadow-rgb),.4)!important;}
+.home-card-icon{width:44px;height:44px;border-radius:12px;background:var(--card-bg);display:flex;align-items:center;justify-content:center;}
+.home-card-icon svg{width:22px;height:22px;}
+.home-card-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--card-accent);}
+.home-card-title{font-size:17px;font-weight:700;color:var(--text);line-height:1.2;margin-bottom:2px;}
+.home-card-sub{font-size:12px;color:var(--muted);line-height:1.5;}
+.home-card-footer{margin-top:auto;font-size:11px;font-weight:600;color:var(--card-accent);display:flex;align-items:center;gap:4px;letter-spacing:.03em;}
+.home-card-footer svg{width:12px;height:12px;}
+/* nav header da home */
+.home-nav{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid var(--border);background:var(--surface);}
+.home-nav-brand{display:flex;align-items:center;gap:10px;}
+.home-nav-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
+.home-nav-title{font-size:15px;font-weight:600;color:var(--text);}
+/* nav header das sub-telas */
+.sub-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--surface);
+  /* Fix: permitir que dropdown filho flutue livremente */
+  overflow:visible;
+  position:relative;
+}
+.sub-nav-left{display:flex;align-items:center;gap:10px;}
+.sub-nav-back{display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:border-color .15s,color .15s;}
+.sub-nav-back:hover{border-color:var(--border2);color:var(--text);}
+.sub-nav-back svg{width:14px;height:14px;}
+.sub-nav-badge{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 10px;border-radius:20px;}
+.sub-nav-badge.blue{background:var(--blue-bg);color:var(--blue);}
+.sub-nav-badge.accent{background:var(--accent-dim);color:var(--accent);}
