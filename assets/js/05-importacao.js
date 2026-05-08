@@ -4,12 +4,14 @@
 
 // ── VARIÁVEL GLOBAL (requisito explícito do spec) ──────────────
 var dadosImportacao = [];
+var _impUltimoRes   = null;  // guarda o res completo para re-renders de checkbox
+var _impProcessando = false; // guard contra duplo processamento do arquivo
 
 // ── Aliases de colunas ─────────────────────────────────────────
 var IMP_ALIASES = {
   cliente:     ['cliente','nome','cliente_nome','nome_do_cliente','aluno','name','nome completo','nome_completo'],
   treinador:   ['treinador','coach','instrutor','trainer','professor'],
-  treinamento: ['treinamento','curso','produto','product','course','nome_curso'],
+  treinamento: ['treinamento','curso','produto','product','course','nome_curso','nome da venda','nome_da_venda'],
   consultor:   ['utm_gclid','consultor','responsavel','responsável','vendedor','sales'],
   valor:       ['valor','preco','preço','total','value','price','valor_total','investimento'],
   status:      ['status','situacao','situação','state','status_pagamento'],
@@ -30,6 +32,11 @@ var IMP_STATUS = {
   'estorno':'estorno','devolvido':'estorno','chargeback':'estorno',
   'entrada':'entrada'
 };
+
+/* ── Chave de identidade entre imports ───────────────────────── */
+function impGerarKey(cliente){
+  return 'nome:' + impNorm(String(cliente||''));
+}
 
 /* ── Utilitários ─────────────────────────────────────────────── */
 function impNorm(s){
@@ -150,8 +157,26 @@ function impProcessarAOA(aoa){
   // Ex: "Ã§" → "ç", "Ãµ" → "õ", "â€œ" → """
   aoa = _sanitizarAOA(aoa);
 
+  // ── Camada 3: detectar linha de cabeçalho ────────────────────────
+  // Planilhas exportadas de CRMs têm metadados nas primeiras linhas
+  // (ex: título, filtros, data de exportação). Escaneia até 25 linhas
+  // para encontrar aquela com mais colunas reconhecidas.
+  (function(){
+    var bestIdx = 0, bestScore = 0;
+    for (var r = 0; r < Math.min(aoa.length, 25); r++) {
+      var rowH = aoa[r];
+      if (!rowH || rowH.length === 0) continue;
+      var testMapa = impMapearColunas(rowH.map(function(h){ return String(h||''); }));
+      var score = Object.keys(testMapa).length;
+      if (score > bestScore) { bestScore = score; bestIdx = r; }
+    }
+    if (bestIdx > 0) {
+      console.log('[IMPORT v3] Cabeçalho detectado na linha ' + (bestIdx + 1) + ' (score: ' + bestScore + ')');
+      aoa = aoa.slice(bestIdx);
+    }
+  })();
+
   var upper  = document.getElementById('importOptMaiusculo').checked;
-  var igDup  = document.getElementById('importOptDuplicados').checked;
   var headers= aoa[0].map(function(h){ return String(h||''); });
   var mapa   = impMapearColunas(headers);
 
@@ -176,7 +201,7 @@ function impProcessarAOA(aoa){
     return (v===null||v===undefined)?'':String(v).trim();
   }
 
-  var resultado=[], semNome=0, filtrado=0, dup=0;
+  var resultado=[], semNome=0, filtrado=0;
 
   for(var i=1;i<aoa.length;i++){
     var row=aoa[i];
@@ -191,15 +216,6 @@ function impProcessarAOA(aoa){
     var clienteRaw=upper?_get(row,'cliente').toUpperCase():_get(row,'cliente');
     if(!clienteRaw.trim()){ semNome++; continue; }
 
-    // Verificar duplicata
-    if(igDup){
-      var cn=impNorm(clienteRaw), tn=impNorm(_get(row,'treinamento'));
-      var isDup=(data||[]).some(function(d){
-        return impNorm(d.cliente)===cn&&impNorm(d.treinamento||'')===tn;
-      });
-      if(isDup){ dup++; continue; }
-    }
-
     resultado.push({
       cliente:     clienteRaw,
       treinador:   upper?_get(row,'treinador').toUpperCase():_get(row,'treinador'),
@@ -208,13 +224,14 @@ function impProcessarAOA(aoa){
       valor:       impParseNum(_get(row,'valor')),
       status:      impNormStatus(_get(row,'status')),
       entrada:     impParseNum(_get(row,'entrada')),
-      info:        _get(row,'acao')
+      info:        _get(row,'acao'),
+      _importKey:  impGerarKey(clienteRaw)
     });
   }
 
   /* debug log removido */
 
-  return {dados:resultado, total:aoa.length-1, filtrado:filtrado, dup:dup, semNome:semNome};
+  return {dados:resultado, total:aoa.length-1, filtrado:filtrado, dup:0, semNome:semNome};
 }
 
 /* ── Resumo dinâmico por consultor ──────────────────────────── */
@@ -480,6 +497,7 @@ function impRedistToggleExcl(i){
 /* ── Renderizar prévia no modal ─────────────────────────────── */
 function impRenderPrevia(res){
   // ── Atribuição GLOBAL (requisito do spec) ──────────────────
+  _impUltimoRes = res;
   dadosImportacao = res.dados;
 
   // Atualizar contador no botão
@@ -616,6 +634,8 @@ function impLerArquivo(event){
   var file=event.target.files[0];
   event.target.value='';
   if(!file) return;
+  if(_impProcessando) return;
+  _impProcessando=true;
 
   var ext=file.name.split('.').pop().toLowerCase();
   if(!['xlsx','xls','csv','pdf'].includes(ext)){
@@ -632,6 +652,7 @@ function impLerArquivo(event){
 
   // ── Função auxiliar: processar workbook → AOA → render ──────────
   function _processarWB(wb){
+    _impProcessando=false;
     var ws=wb.Sheets[wb.SheetNames[0]];
     var aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
     var res=impProcessarAOA(aoa); // _sanitizarAOA é chamado dentro
@@ -672,6 +693,7 @@ function impLerArquivo(event){
           _processarWB(wb);
         }
       }catch(err){
+        _impProcessando=false;
         console.error('[IMPORT v3]',err);
         _showToast('❌ Erro ao ler CSV: '+err.message,'var(--red)');
       }
@@ -693,6 +715,7 @@ function impLerArquivo(event){
         });
         _processarWB(wb);
       }catch(err){
+        _impProcessando=false;
         console.error('[IMPORT v3]',err);
         _showToast('❌ Erro ao ler: '+err.message,'var(--red)');
       }
@@ -744,6 +767,8 @@ async function impImportarSheets(){
 /* ── Abrir modal ─────────────────────────────────────────────── */
 function openImportModal(){
   dadosImportacao=[];
+  _impUltimoRes=null;
+  _impProcessando=false;
   document.getElementById('importQtdSpan').textContent='0';
   document.getElementById('importStats').innerHTML='';
   document.getElementById('importPreviewHead').innerHTML='';
@@ -764,24 +789,146 @@ function closeImportModal(){
   dadosImportacao=[];
 }
 
-/* ── CONFIRMAR IMPORTAÇÃO (função separada para máxima clareza) ─ */
-function confirmarImportacao(){
-  // 1. Capturar todos os consultores editados no modal
-  atualizarConsultoresEditados();
+/* ── Calcular diff entre planilha nova e turma atual ────────────
+   Retorna { inserir:[], manter:[], remover:[] }
+   - inserir: objetos novos da planilha (não existem na turma)
+   - manter:  clientes já importados que continuam na planilha
+   - remover: clientes já importados que SUMIRAM da planilha
+   Clientes sem _importado:true (manuais) são ignorados. ────── */
+function impSincronizarTurma(novos){
+  var importadosNaTurma = (data||[]).filter(function(d){ return d._importado === true; });
 
-  // 2. Validar
-  if(!dadosImportacao.length){
-    _showToast('⚠️ Nenhum dado para importar.','var(--amber)');
-    return;
+  // Indexar existentes por _importKey
+  var mapaExistentes = {};
+  importadosNaTurma.forEach(function(d){
+    var key = d._importKey || impGerarKey(d.cliente);
+    // Garante retrocompatibilidade: persiste a key se ainda não tiver
+    if(!d._importKey) d._importKey = key;
+    mapaExistentes[key] = d;
+  });
+
+  // Indexar novos por _importKey
+  var mapaNovaplanilha = {};
+  novos.forEach(function(n){
+    var key = n._importKey || impGerarKey(n.cliente);
+    mapaNovaplanilha[key] = n;
+  });
+
+  var inserir = [], manter = [], remover = [];
+
+  // Novos que não existem → inserir
+  novos.forEach(function(n){
+    var key = n._importKey || impGerarKey(n.cliente);
+    if(!mapaExistentes[key]) inserir.push(n);
+    else manter.push(mapaExistentes[key]);
+  });
+
+  // Existentes que sumiram da planilha → remover
+  importadosNaTurma.forEach(function(d){
+    var key = d._importKey || impGerarKey(d.cliente);
+    if(!mapaNovaplanilha[key]) remover.push(d);
+  });
+
+  return { inserir: inserir, manter: manter, remover: remover };
+}
+
+/* ── Modal de confirmação do diff ────────────────────────────── */
+function impAbrirModalDiff(diff, criadoPor){
+  // Remover modal anterior se existir
+  var antigo = document.getElementById('impDiffOverlay');
+  if(antigo) antigo.remove();
+
+  var alertaRemocao = diff.remover.length > 0 &&
+    diff.remover.length >= Math.ceil((data||[]).filter(function(d){return d._importado;}).length * 0.2);
+
+  var listaRemovidos = diff.remover.slice(0, 50).map(function(d){
+    return '<li style="padding:3px 0;font-size:12px;color:var(--text);">• ' +
+      d.cliente.replace(/</g,'&lt;') + '</li>';
+  }).join('');
+  if(diff.remover.length > 50){
+    listaRemovidos += '<li style="padding:3px 0;font-size:12px;color:var(--muted);">... e mais '+(diff.remover.length-50)+'</li>';
   }
 
-  // 3. Recuperar sessão para criadoPor
-  var sessao=typeof _getSessao==='function'?_getSessao():null;
-  var criadoPor=sessao?(sessao.vinculo||sessao.nome||sessao.login||'adm'):'adm';
+  var ov = document.createElement('div');
+  ov.id = 'impDiffOverlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1700;display:flex;align-items:center;justify-content:center;';
+  ov.innerHTML =
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;width:min(520px,94vw);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">' +
+      '<div style="padding:20px 24px 14px;border-bottom:1px solid var(--border);">' +
+        '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;">Sincronizar turma com a planilha</div>' +
+        '<div style="font-size:12px;color:var(--muted);">Revise as alterações antes de confirmar.</div>' +
+      '</div>' +
+      '<div style="padding:16px 24px;display:flex;flex-direction:column;gap:10px;flex-shrink:0;">' +
+        (diff.inserir.length > 0 ?
+          '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:8px;">' +
+            '<span style="font-size:18px;">➕</span>' +
+            '<div><div style="font-size:13px;font-weight:600;color:#4ade80;">'+diff.inserir.length+' novo'+(diff.inserir.length!==1?'s':'')+' cliente'+(diff.inserir.length!==1?'s':'')+' a adicionar</div>' +
+            '<div style="font-size:11px;color:var(--muted);">Não existiam na turma ainda.</div></div>' +
+          '</div>' : '') +
+        (diff.manter.length > 0 ?
+          '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(148,163,184,.06);border:1px solid var(--border);border-radius:8px;">' +
+            '<span style="font-size:18px;">✔️</span>' +
+            '<div><div style="font-size:13px;font-weight:600;color:var(--muted);">'+diff.manter.length+' cliente'+(diff.manter.length!==1?'s':'')+' sem alteração</div>' +
+            '<div style="font-size:11px;color:var(--muted);">Já existem na turma — nada será modificado.</div></div>' +
+          '</div>' : '') +
+        (diff.remover.length > 0 ?
+          '<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;overflow:hidden;">' +
+            '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;">' +
+              '<span style="font-size:18px;">🗑️</span>' +
+              '<div><div style="font-size:13px;font-weight:600;color:#f87171;">'+diff.remover.length+' cliente'+(diff.remover.length!==1?'s':'')+' a remover</div>' +
+              '<div style="font-size:11px;color:var(--muted);">Não estão mais na planilha.</div></div>' +
+            '</div>' +
+            '<ul style="margin:0;padding:4px 14px 10px 14px;list-style:none;max-height:140px;overflow-y:auto;border-top:1px solid rgba(239,68,68,.2);">' +
+              listaRemovidos +
+            '</ul>' +
+          '</div>' : '') +
+        (diff.inserir.length === 0 && diff.remover.length === 0 ?
+          '<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma alteração detectada. A turma já está sincronizada.</div>' : '') +
+        (alertaRemocao ?
+          '<div style="padding:10px 14px;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);border-radius:8px;font-size:12px;color:#fbbf24;">⚠️ <strong>Atenção:</strong> mais de 20% dos clientes importados serão removidos. Confirme apenas se tiver certeza que a planilha está correta.</div>' : '') +
+      '</div>' +
+      '<div style="padding:12px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;">' +
+        '<button id="impDiffCancelar" style="padding:8px 18px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:\'DM Sans\',sans-serif;font-size:12px;cursor:pointer;">Cancelar</button>' +
+        (diff.inserir.length > 0 || diff.remover.length > 0 ?
+          '<button id="impDiffConfirmar" style="padding:8px 22px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#0a0a0a;font-family:\'DM Sans\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Sincronizar</button>' :
+          '<button id="impDiffFechar" style="padding:8px 22px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#0a0a0a;font-family:\'DM Sans\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">OK</button>') +
+      '</div>' +
+    '</div>';
 
-  // 4. Inserir no array data[]
-  var inseridos=0;
-  dadosImportacao.forEach(function(obj){
+  document.body.appendChild(ov);
+
+  // Botão cancelar
+  var btnCancel = document.getElementById('impDiffCancelar');
+  if(btnCancel) btnCancel.addEventListener('click', function(){ ov.remove(); });
+
+  // Botão fechar (sem alterações)
+  var btnFechar = document.getElementById('impDiffFechar');
+  if(btnFechar) btnFechar.addEventListener('click', function(){ ov.remove(); closeImportModal(); });
+
+  // Botão confirmar sync
+  var btnConf = document.getElementById('impDiffConfirmar');
+  if(btnConf) btnConf.addEventListener('click', function(){
+    ov.remove();
+    impAplicarSync(diff, criadoPor);
+  });
+}
+
+/* ── Aplicar sync (inserir + remover) ────────────────────────── */
+function impAplicarSync(diff, criadoPor){
+  // Remover ausentes
+  if(diff.remover.length){
+    var keysRemover = {};
+    diff.remover.forEach(function(d){ keysRemover[d._importKey || impGerarKey(d.cliente)] = true; });
+    data = (data||[]).filter(function(d){
+      if(!d._importado) return true;
+      var key = d._importKey || impGerarKey(d.cliente);
+      return !keysRemover[key];
+    });
+  }
+
+  // Inserir novos
+  var inseridos = 0;
+  diff.inserir.forEach(function(obj){
     data.push({
       cliente:     obj.cliente     || '',
       treinamento: obj.treinamento || '',
@@ -792,58 +939,33 @@ function confirmarImportacao(){
       entrada:     obj.entrada     || 0,
       info:        obj.info        || '',
       criadoPor:   criadoPor,
-      _importado:  true
+      _importado:  true,
+      _importKey:  obj._importKey || impGerarKey(obj.cliente)
     });
     inseridos++;
   });
 
-  /* debug log removido */
-
-  // 5. Criar/atualizar cards de consultores com base nos dados importados
-  (function _atualizarConsultoresAposImport(){
+  // Atualizar consultores novos
+  (function(){
     try{
-      // Coletar consultores únicos dos dados importados
-      var consultoresImportados={};
-      dadosImportacao.forEach(function(obj){
-        var nome=(obj.consultor||'').trim().toUpperCase();
+      var novosConsultores = {};
+      diff.inserir.forEach(function(obj){
+        var nome = (obj.consultor||'').trim().toUpperCase();
         if(!nome||nome==='-'||nome==='—') return;
-        if(!consultoresImportados[nome]) consultoresImportados[nome]=[];
-        consultoresImportados[nome].push(obj);
+        novosConsultores[nome] = true;
       });
-
-      var nomesImportados=Object.keys(consultoresImportados);
-      if(!nomesImportados.length) return;
-
-      // Verificar quais consultores já existem no sistema
-      var consultoresExistentes=(typeof allConsultors!=='undefined'&&Array.isArray(allConsultors))?allConsultors:[];
-
-      var novos=0, atualizados=0;
-      nomesImportados.forEach(function(nomeConsultor){
-        var jaExiste=consultoresExistentes.some(function(c){
-          return (c||'').toUpperCase()===nomeConsultor;
-        });
-        if(!jaExiste){
-          // Criar novo consultor na lista
-          if(typeof allConsultors!=='undefined'&&Array.isArray(allConsultors)){
-            allConsultors.push(nomeConsultor);
-          }
-          novos++;
-        } else {
-          atualizados++;
+      var consultoresExistentes = (typeof allConsultors!=='undefined'&&Array.isArray(allConsultors))?allConsultors:[];
+      Object.keys(novosConsultores).forEach(function(nome){
+        if(!consultoresExistentes.some(function(c){ return (c||'').toUpperCase()===nome; })){
+          if(typeof allConsultors!=='undefined'&&Array.isArray(allConsultors)) allConsultors.push(nome);
         }
       });
-
-      // Reconstruir cores e seletores
       if(typeof _buildColors==='function') _buildColors();
       if(typeof buildSelects==='function') buildSelects();
-
-      /* debug log removido */
-    }catch(e){
-      console.warn('[IMPORT v3] Erro ao atualizar consultores:',e);
-    }
+    }catch(e){ console.warn('[IMPORT sync] Erro ao atualizar consultores:',e); }
   })();
 
-  // 6. Atualizar interface
+  // Atualizar interface
   if(typeof markUnsaved    ==='function') markUnsaved();
   if(typeof saveStorage    ==='function') saveStorage();
   if(typeof buildSelects   ==='function') buildSelects();
@@ -853,9 +975,33 @@ function confirmarImportacao(){
   if(typeof renderTreinador==='function') renderTreinador();
   if(typeof renderProduto  ==='function') renderProduto();
 
-  // 7. Fechar e notificar
   closeImportModal();
-  _showToast('✅ '+inseridos+' cliente'+(inseridos!==1?'s':'')+' importado'+(inseridos!==1?'s':'')+'!','var(--accent)');
+
+  var msg = [];
+  if(inseridos)         msg.push('➕ '+inseridos+' adicionado'+(inseridos!==1?'s':''));
+  if(diff.remover.length) msg.push('🗑️ '+diff.remover.length+' removido'+(diff.remover.length!==1?'s':''));
+  if(!msg.length)         msg.push('Turma já estava sincronizada');
+  _showToast('✅ Sync concluído — ' + msg.join(' · '), 'var(--accent)');
+}
+
+/* ── CONFIRMAR IMPORTAÇÃO (função separada para máxima clareza) ─ */
+function confirmarImportacao(){
+  // 1. Capturar consultores editados na prévia
+  atualizarConsultoresEditados();
+
+  // 2. Validar
+  if(!dadosImportacao.length){
+    _showToast('⚠️ Nenhum dado para importar.','var(--amber)');
+    return;
+  }
+
+  // 3. Sessão
+  var sessao    = typeof _getSessao==='function' ? _getSessao() : null;
+  var criadoPor = sessao ? (sessao.vinculo||sessao.nome||sessao.login||'adm') : 'adm';
+
+  // 4. Calcular diff e abrir modal de confirmação
+  var diff = impSincronizarTurma(dadosImportacao);
+  impAbrirModalDiff(diff, criadoPor);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1220,11 +1366,11 @@ function _vincularEventosImport(){
   }
 
   // Opções — null-safe
-  ['importOptMaiusculo','importOptDuplicados'].forEach(function(id){
+  ['importOptMaiusculo'].forEach(function(id){
     var el=document.getElementById(id);
     if(el&&!el._bound){
       el.addEventListener('change',function(){
-        if(dadosImportacao.length) impRenderPrevia({dados:dadosImportacao,total:dadosImportacao.length,filtrado:0,dup:0,semNome:0});
+        if(_impUltimoRes) impRenderPrevia(_impUltimoRes);
       });
       el._bound=true;
     }

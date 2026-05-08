@@ -816,7 +816,11 @@
     </div>
 
     <!-- Rodapé -->
-    <div style="padding:12px 24px;border-top:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;gap:8px;">
+    <div style="padding:12px 24px;border-top:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none;">
+        <input type="checkbox" id="importOptMaiusculo" style="accent-color:var(--accent);cursor:pointer;">
+        Converter nomes para maiúsculas
+      </label>
       <button id="importBtnCancelar" onclick="closeImportModal()" style="padding:8px 18px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;">Cancelar</button>
     </div>
   </div>
@@ -1595,6 +1599,17 @@ try{
   window._fbResolve();
 }
 </script>
+<script src="assets/js/propostas/proposta-renderer.js"></script>
+<script src="assets/js/propostas/proposta-if.js"></script>
+<script src="assets/js/propostas/proposta-ceop.js"></script>
+<script src="assets/js/propostas/proposta-master.js"></script>
+    <script src="assets/js/propostas/proposta-fgpc.js"></script>
+    <script src="assets/js/propostas/proposta-bhp.js"></script>
+    <script src="assets/js/propostas/proposta-fcis.js"></script>
+    <script src="assets/js/propostas/proposta-ml5.js"></script>
+    <script src="assets/js/propostas/proposta-tav.js"></script>
+    <script src="assets/js/propostas/proposta-cis.js"></script>
+    <script src="assets/js/propostas/proposta-cis-global.js"></script>
 <script src="assets/js/02-main.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">

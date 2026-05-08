@@ -9,39 +9,153 @@ window.FebracisData.TREINAMENTOS = [
     nome: 'Tour Crescimento Empresarial',
     nomeCurto: 'TCE',
     emoji: '🚀',
-    subtitulo: 'Imersão de 1 dia com Paulo Vieira sobre vendas, marketing, gestão e alta performance',
-    publico: 'Empresários (donos), sócios, gestores/diretores, profissionais liberais',
-    formato: 'Imersão presencial de 1 dia, com Paulo Vieira ao vivo. Itinerante — chega em diversas cidades do Brasil.',
+    subtitulo: 'Imersão de 1 dia com Paulo Vieira sobre vendas, marketing, gestão e alta performance — não é motivacional, é estratégico e prático',
+    publico: 'Empresários (donos), sócios, gestores/diretores, profissionais liberais que querem estruturar crescimento com método, organização e produtividade',
+    formato: 'Imersão presencial de 1 dia (4 horas, 10h às 14h), com Paulo Vieira ao vivo. Itinerante — próxima edição em Belém-PA.',
+    eventoDetalhes: {
+      data: '20 de Agosto',
+      horario: '10h00 às 14h00',
+      formato: '100% presencial',
+      local: 'Lagoinha Belém - IT Center',
+      endereco: 'Av. Sen. Lemos, 3153 - Sacramenta, Belém - PA'
+    },
+    pacotes: [
+      {
+        nome: 'BRONZE',
+        emoji: '🟤',
+        tagline: 'ACESSO ESSENCIAL',
+        beneficios: [
+          'Acesso ao treinamento completo',
+          'Certificado digital de participação',
+          'Cashback de 100% para cursos da unidade (1 ano para utilizar — exceto Método CIS)',
+          'Opção mais acessível financeiramente'
+        ],
+        indicadoPara: 'Quem quer participar e aprender pagando o menor investimento possível, ou conhecer o evento antes de investir em experiência premium'
+      },
+      {
+        nome: 'OURO',
+        emoji: '🟡',
+        tagline: 'MELHOR CUSTO-BENEFÍCIO',
+        beneficios: [
+          'Inclui tudo do Bronze',
+          'Kit físico exclusivo Ouro',
+          'Localização privilegiada no auditório (área premium)',
+          'Entrada antecipada (mais tempo para networking)',
+          'Cashback de 100% para cursos da unidade (1 ano — exceto Método CIS)'
+        ],
+        diferencial: 'Experiência mais confortável e estratégica, melhor lugar e mais networking',
+        indicadoPara: 'Quem quer aproveitar melhor o evento, fazer conexões e ter experiência superior'
+      },
+      {
+        nome: 'BLACK',
+        emoji: '⚫',
+        tagline: 'EXPERIÊNCIA PREMIUM',
+        beneficios: [
+          'Inclui tudo do Ouro',
+          'Kit exclusivo Black (material premium + brindes diferenciados)',
+          'Lugar na frente do palco (máxima proximidade com os palestrantes)',
+          'Entrada e credenciamento VIP, sem filas e com recepção diferenciada',
+          'Networking mais seleto',
+          'Cashback de 100% para cursos da unidade (1 ano — exceto Método CIS)'
+        ],
+        diferencial: 'Experiência mais exclusiva, com prioridade, proximidade e ambiente seleto',
+        indicadoPara: 'Empresários e líderes que querem máxima imersão, proximidade e networking de alto nível'
+      }
+    ],
     conteudos: [
-      'Estratégia Empresarial e Gestão de Resultados (Planejamento, KPIs)',
-      'Multiplicação de Vendas e Lucro',
-      'Construção de Times de Alta Performance',
-      'Marketing Digital — Método dos Dígitos'
+      'Estratégia Empresarial e Gestão de Resultados (Planejamento, KPIs, indicadores)',
+      'Multiplicação de Vendas e Lucro com previsibilidade',
+      'Construção de Times de Alta Performance — equipe alinhada e produtiva',
+      'Marketing Digital — Método dos Dígitos',
+      'Como tirar a empresa da dependência 100% do dono',
+      'Processos claros: sair do "apagar incêndio" para gestão estratégica'
     ],
     autoridadeExtra: [
       'Metodologia que levou a Febracis de R$ 300 mil para mais de R$ 400 milhões de faturamento',
-      'Os 3 níveis trabalhados: Estratégico · Tático · Operacional'
+      'Os 3 níveis trabalhados: Estratégico · Tático · Operacional',
+      'NÃO é motivacional — é metodologia validada e prática',
+      'Paulo Vieira ao vivo, presencial — sem intermediário, sem gravação'
     ],
     doresAlvo: [
-      'Baixa produtividade e engajamento',
-      'Falta de líderes preparados',
-      'Estagnação de vendas',
-      'Dificuldade de expandir mercado',
-      'Decisões por intuição',
-      'Incapacidade de adaptação',
-      'Baixa presença digital',
-      'Marketing ineficiente'
+      'Empresário centralizado em si — empresa depende 100% dele',
+      'Apaga incêndio em vez de pensar estratégia (mais operação que gestão)',
+      'Faturamento oscilando ou estagnado, sem previsibilidade',
+      'Equipe desalinhada que não entrega no nível esperado',
+      'Falta de metas claras e indicadores definidos',
+      'Decisões por urgência/intuição, não por dados',
+      'Trabalha muito mais do que deveria, e o crescimento não acompanha',
+      'Já perdeu dinheiro por falta de organização e processos',
+      'Sente que poderia crescer mais, mas algo trava',
+      'Falta clareza sobre onde focar para crescer',
+      'Impacto na vida pessoal e família — refém da operação',
+      'Quer crescimento estruturado, não improviso'
     ],
+    spinPerguntas: {
+      situacao: [
+        'Hoje, quantas pessoas fazem parte da sua equipe?',
+        'Você tem metas claras definidas para o próximo ano?',
+        'Como está organizada sua gestão hoje? Processos definidos ou tudo muito centralizado em você?',
+        'Você tem indicadores claros para medir crescimento?',
+        'Seu faturamento hoje está estável, crescendo ou oscilando?',
+        'Hoje você está mais na operação ou mais na gestão estratégica?',
+        'Sua empresa está crescendo de forma organizada ou você sente que está apagando incêndio?'
+      ],
+      problema: [
+        'Você sente que trabalha muito mais do que deveria?',
+        'Sua equipe entrega o que você espera?',
+        'Já perdeu dinheiro por falta de organização?',
+        'Você sente que poderia crescer mais, mas algo trava?',
+        'Falta clareza sobre onde focar para crescer?',
+        'Qual hoje é o maior desafio do seu negócio?',
+        'O quanto a desorganização impacta seus resultados financeiros?'
+      ],
+      implicacao: [
+        'Se continuar assim, onde sua empresa estará daqui a 1 ano?',
+        'Quanto custa manter uma equipe desalinhada?',
+        'Quanto você deixa de faturar por não ter processos claros?',
+        'Como isso impacta sua vida pessoal e sua família?',
+        'Se isso continuar pelos próximos 12 meses, o que pode acontecer?',
+        'Você acha que sua empresa depende demais de você hoje?'
+      ],
+      necessidadeSolucao: [
+        'Se você tivesse clareza total de metas e processos, o que mudaria?',
+        'Se sua equipe fosse produtiva e alinhada, como seria seu dia?',
+        'Quanto valeria para você ter previsibilidade de crescimento?',
+        'Se seu negócio funcionasse sem depender 100% de você, o que isso significaria?'
+      ]
+    },
     objecoesEspecificas: [
-      { tag: 'Tá caro', resposta: 'O caro é continuar perdendo faturamento. Quanto ele já perdeu nos últimos 6 meses sem o método?' },
-      { tag: 'Vou pensar', resposta: 'Pergunte O QUE precisa ser pensado. Implicação: "Daqui a 3 meses sem método, onde sua empresa estará?"' },
-      { tag: 'Já fiz outros', resposta: 'Não é motivacional. É metodologia que escalou Febracis de 300k a 400mi.' },
-      { tag: 'Não conheço Paulo Vieira', resposta: 'Maior escola da América Latina, 70mi impactados, 26 anos.' }
+      { tag: 'Está caro', resposta: 'Comparado ao quanto você já perdeu por desorganização e falta de estrutura, ainda parece caro? Quanto deixou de faturar nos últimos 6 meses sem método?' },
+      { tag: 'Não tenho tempo', resposta: 'Justamente por isso você precisa estruturar. Quem não tem tempo para organizar a gestão, sempre terá tempo para apagar incêndio.' },
+      { tag: 'Vou pensar', resposta: 'O que exatamente você precisa avaliar? (descobrir causa raiz). Daqui a 3 meses sem método, onde sua empresa estará?' },
+      { tag: 'Já fiz outros cursos', resposta: 'Outros foram motivacionais. O Tour é metodologia validada — escalou a Febracis de 300k a 400mi. Não é palestra, é método aplicável imediato.' },
+      { tag: 'Não conheço Paulo Vieira', resposta: 'Maior escola de coaching e negócios da América Latina, 70mi de impactados, 26 anos de mercado. Ao vivo, presencial, sem intermediário.' },
+      { tag: 'Posso fazer online?', resposta: 'Não. É 100% presencial em Belém-PA, dia 20/08 — a imersão ao vivo é o diferencial. A energia da sala e o networking não acontecem por tela.' },
+      { tag: 'Bronze ou Ouro?', resposta: 'Depende do objetivo: se quer só absorver conteúdo, Bronze entrega. Se quer networking estratégico e melhor experiência, Ouro é o melhor custo-benefício. Black é pra quem quer máxima proximidade do palco e VIP.' },
+      { tag: 'Vai ter outras edições?', resposta: 'Itinerante. Mas a próxima de Belém é 20/08. Quem perde, espera meses pela próxima na região — e o cashback de 100% pra cursos da unidade já paga o ingresso.' }
+    ],
+    fechamento: {
+      resumoEstrategico: 'Hoje você me disse que: trabalha muito · falta clareza de crescimento · equipe desalinhada · quer previsibilidade. O Tour resolve exatamente esses pontos.',
+      perguntasFechamento: [
+        'Faz sentido resolver isso agora ou prefere continuar administrando o problema?',
+        'Vamos confirmar sua vaga?',
+        'Vamos garantir sua participação e começar a estruturar isso de forma profissional?'
+      ]
+    },
+    posturaLigacao: [
+      'Voz firme, ritmo calmo',
+      'Nunca implorar, sempre conduzir',
+      'Escutar mais do que falar',
+      'Silêncio estratégico após perguntas importantes',
+      'Postura consultiva: descobrir causa raiz → reafirmar valor'
     ],
     faq: [
-      'Onde acontece o Tour? Itinerante — verifique cidades atuais com seu líder',
-      'Qual a duração? 1 dia inteiro de imersão',
-      'Tem online? Não, é presencial com Paulo Vieira ao vivo'
+      'Onde acontece? Lagoinha Belém - IT Center, Av. Sen. Lemos 3153, Sacramenta, Belém-PA',
+      'Quando? 20 de Agosto, das 10h00 às 14h00 (4 horas de imersão)',
+      'É online? Não, 100% presencial com Paulo Vieira ao vivo',
+      'Tem cashback? Sim, 100% do valor vira crédito para cursos da unidade (1 ano para usar — exceto Método CIS)',
+      'Quais os pacotes? Bronze (essencial), Ouro (melhor custo-benefício, área premium + networking) e Black (VIP, frente do palco)',
+      'Vai ter outra edição perto? É itinerante — sem garantia de retorno a Belém em curto prazo'
     ],
     tema: {
       dark: {
