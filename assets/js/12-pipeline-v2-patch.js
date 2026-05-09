@@ -285,9 +285,9 @@
       :'';
     var refEl=document.getElementById('npMetaGeralRef');
     if(refEl){
-      refEl.innerHTML='<div>Faturado (pago): <strong style="color:var(--text);">'+_npFmtR(faturado)+'</strong></div>'
+      refEl.innerHTML='<div>Meta Geral: <strong style="color:#60a5fa;">'+(mgVal>0?_npFmtR(mgVal):'—')+'</strong></div>'
         +'<div>Σ metas individuais: <strong style="color:var(--muted);">'+_npFmtR(somaInd)+'</strong></div>'
-        +'<div>Meta Geral: <strong style="color:#60a5fa;">'+(mgVal>0?_npFmtR(mgVal):'—')+'</strong></div>'
+        +'<div>Faturado (pago): <strong style="color:var(--accent);">'+_npFmtR(faturado)+'</strong></div>'
         +diffHtml
         +'<div style="margin-top:10px;font-size:10px;color:var(--muted);">Quando definida, a Meta Geral substitui a soma das metas individuais no Performance do Time e em "Faltam para meta".</div>';
     }
@@ -347,8 +347,9 @@
     if(_npVendasTurma.length===0&&Object.keys(_npVendasAvulso||{}).length===0){
       grid.innerHTML='<div class="np-empty">Nenhum dado para este mês.</div>';return;
     }
-    var _cons=window._npConsultores||[];
-    if(!_cons.length){grid.innerHTML='<div class="np-empty">Nenhum consultor encontrado.</div>';return;}
+    var _consComVenda=new Set((typeof window._npTodasVendas==='function'?window._npTodasVendas():[]).map(function(v){return (v.consultor||'').trim().toUpperCase();}));
+    var _cons=(window._npConsultores||[]).filter(function(n){return _consComVenda.has((n||'').trim().toUpperCase());});
+    if(!_cons.length){grid.innerHTML='<div class="np-empty">Nenhum consultor encontrado neste mês.</div>';return;}
     var COR=window._npCOR||['#c8f05a','#60a5fa','#34d399','#f59e0b','#a78bfa','#f472b6','#fb923c','#38bdf8'];
     var ranking=typeof window._npPorConsultor==='function'?window._npPorConsultor(todas,'','pago'):[];
     grid.innerHTML=_cons.map(function(nome,i){
@@ -393,17 +394,17 @@
           '<div class="np-meta-tiers" style="margin-top:10px;">'
           +(b?'<div class="np-tier np-tier--basica'+(tierInfo.tier==='basica'?' ativa':'')+'">'
             +'<div class="np-tier-label">🥉 Básica</div>'
-            +'<div class="np-tier-val" style="color:'+(pctB>=100?'#c8f05a':'#ff5252')+';">'+_npFmtR(b)+'</div>'
+            +'<div class="np-tier-val" style="color:'+(pctB>=100?'#c8f05a':'#ff5252')+';font-size:10px;">'+(pctB>=100?'✅ Batida':'Falta '+_npFmtR(Math.max(0,b-real)))+'</div>'
             +'<div style="font-size:9px;color:var(--muted);margin-top:1px;">'+pctB+'%</div>'
             +'</div>':'<div class="np-tier np-tier--basica" style="opacity:.3;"><div class="np-tier-label">🥉 Básica</div><div class="np-tier-val">—</div></div>')
           +(m?'<div class="np-tier np-tier--minima'+(tierInfo.tier==='minima'?' ativa':'')+'">'
             +'<div class="np-tier-label">🥈 Mínima</div>'
-            +'<div class="np-tier-val" style="color:'+(pctM>=100?'#c8f05a':'#ffe000')+';">'+_npFmtR(m)+'</div>'
+            +'<div class="np-tier-val" style="color:'+(pctM>=100?'#c8f05a':'#ffe000')+';font-size:10px;">'+(pctM>=100?'✅ Batida':'Falta '+_npFmtR(Math.max(0,m-real)))+'</div>'
             +'<div style="font-size:9px;color:var(--muted);margin-top:1px;">'+pctM+'%</div>'
             +'</div>':'<div class="np-tier np-tier--minima" style="opacity:.3;"><div class="np-tier-label">🥈 Mínima</div><div class="np-tier-val">—</div></div>')
           +(M?'<div class="np-tier np-tier--master'+(tierInfo.tier==='master'?' ativa':'')+'">'
             +'<div class="np-tier-label">🥇 Master</div>'
-            +'<div class="np-tier-val" style="color:'+(pctMas>=100?'#c8f05a':'#c8f05a')+';">'+_npFmtR(M)+'</div>'
+            +'<div class="np-tier-val" style="color:'+(pctMas>=100?'#c8f05a':'#c8f05a')+';font-size:10px;">'+(pctMas>=100?'✅ Batida':'Falta '+_npFmtR(Math.max(0,M-real)))+'</div>'
             +'<div style="font-size:9px;color:var(--muted);margin-top:1px;">'+pctMas+'%</div>'
             +'</div>':'<div class="np-tier np-tier--master" style="opacity:.3;"><div class="np-tier-label">🥇 Master</div><div class="np-tier-val">—</div></div>')
           +'</div>'
@@ -506,28 +507,36 @@
       var col=r._col;
       var t=r._tier;
       var barW=t.pct!==null?Math.min(t.pct,100):0;
-      var bLeft=i<3?'border-left:3px solid '+medalBorder[i]+';':'';
-      var gap=t.meta&&t.pct<100?_npFmtR(t.meta-r.pago)+' p/ meta':'';
-      return '<div class="np-ranking-item" style="'+bLeft+'border-color:'+col.border+';background:'+col.bg+';">'
-        +'<div class="np-ri-pos">'+(medalhas[i]||(i+1)+'°')+'</div>'
-        +'<div style="width:36px;height:36px;border-radius:50%;background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;">'+r.nome.charAt(0).toUpperCase()+'</div>'
+      var accentBorder=i<3?'border-left:3px solid '+medalBorder[i]+';':'';
+      var gap=t.meta&&t.pct<100?_npFmtR(Math.max(0,t.meta-r.pago))+' p/ meta':'';
+      var pctBadge=t.meta
+        ?'<span class="np-ri-pct-badge" style="background:'+col.bg+';color:'+col.text+';border:1px solid '+col.border+';">'+t.pct+'%</span>'
+        :'';
+      var potHtml=r.total>0
+        ?'<span class="np-ri-val-sub">pot. '+_npFmtR2(r.total)+'</span>'
+        :'';
+      return '<div class="np-ranking-item" style="'+accentBorder+'border-color:'+col.border+';background:'+col.bg+';">'
+        /* posição */
+        +'<div class="np-ri-pos">'+(medalhas[i]||'<span style="font-size:13px;font-weight:700;">'+(i+1)+'°</span>')+'</div>'
+        /* avatar */
+        +'<div class="np-ri-avatar" style="background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;">'+r.nome.charAt(0).toUpperCase()+'</div>'
+        /* info central */
         +'<div class="np-ri-info">'
-        +'<div class="np-ri-nome">'+_esc2(r.nome)+'</div>'
-        +(t.meta?'<div class="np-ri-bar"><div class="np-ri-bar-fill" style="width:'+barW+'%;background:'+col.bar+';"></div></div>':'')
-        +'<div class="np-ri-detail">'
-        +'<span class="np-ri-tier" style="color:'+col.text+';">'+t.label+'</span>'
-        +(t.meta?'<span style="color:'+col.text+';font-weight:700;margin-left:4px;">'+t.pct+'%</span>':'')
-        +(gap?'<span class="np-ri-gap">'+gap+'</span>':'')
+          +'<div class="np-ri-nome">'+_esc2(r.nome)+'</div>'
+          +(t.meta?'<div class="np-ri-bar"><div class="np-ri-bar-fill" style="width:'+barW+'%;background:'+col.bar+';"></div></div>':'')
+          +'<div class="np-ri-tags">'
+            +'<span class="np-ri-tier" style="color:'+col.text+';border-color:'+col.border+';">'+t.label+'</span>'
+            +pctBadge
+            +(gap?'<span class="np-ri-badge">⏳ '+gap+'</span>':'')
+            +'<span class="np-ri-badge">'+r.qtdPago+'/'+r.qtd+' pago'+(r.qtdPago!==1?'s':'')+'</span>'
+            +'<span class="np-ri-badge">'+r._conv+'% conv</span>'
+            +(r._ticket?'<span class="np-ri-badge">tkt '+_npFmtR(r._ticket)+'</span>':'')
+          +'</div>'
         +'</div>'
-        +'<div class="np-ri-detail" style="margin-top:2px;opacity:.75;">'
-        +r.qtd+' venda'+(r.qtd!==1?'s':'')+' \xb7 '+r.qtdPago+' paga'+(r.qtdPago!==1?'s':'')
-        +' \xb7 conv '+r._conv+'%'
-        +(r._ticket?' \xb7 tkt '+_npFmtR(r._ticket):'')
-        +'</div>'
-        +'</div>'
+        /* valores */
         +'<div class="np-ri-vals">'
-        +'<div class="np-ri-val" style="color:'+col.text+';">'+_npFmtR2(r.pago)+'</div>'
-        +'<div class="np-ri-val-sub">pot. '+_npFmtR2(r.total)+'</div>'
+          +'<div class="np-ri-val" style="color:'+col.text+';">'+_npFmtR2(r.pago)+'</div>'
+          +potHtml
         +'</div>'
         +'</div>';
     }).join('');
@@ -553,6 +562,9 @@
       window.npRenderRanking();
     }
   };
+
+  /* Expor _npRenderMetasV2 como override — garante que _npRenderTudo interno use a versão com tiers */
+  window._npRenderMetasOverride=_npRenderMetasV2;
 
   /* Hook npShowTab para usar _npRenderMetasV2 na aba metas */
   var _origShowTab=window.npShowTab;

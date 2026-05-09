@@ -1,4 +1,4 @@
-
+﻿
 /* ════════════════════════════════════════════════════════════
    NOVA PIPELINE COMERCIAL — JS COMPLETO
    Fonte A: turmas/{id}/clientes  (read-only, sync auto)
@@ -62,16 +62,35 @@
     return Object.values(window._npGoals||{}).reduce(function(s,g){return s+(+(g.metaBasica||g.metaValor||0));},0);
   }
   function _npAtualizarBtnConfigurar(){
-    var btn=document.getElementById('npBtnConfigurar');
-    if(!btn) return;
-    if(window._npMetaGeral&&window._npMetaGeral.valor>0){
-      var v=window._npMetaGeral.valor;
-      var fmt=(typeof _fmtR==='function'?_fmtR(v):'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}));
-      btn.innerHTML='&#x2699; Configurar metas'+'<span class="np-btn__status"><span class="np-btn__dot" aria-hidden="true"></span><span>'+fmt+'</span></span>';
-    } else {
-      btn.innerHTML='&#x2699; Configurar metas';
+    var _fmt=function(n){return 'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});};
+    var todas=_npTodasVendas();
+    var totalPago=todas.filter(function(vd){
+      return String(vd.status||'').toLowerCase()==='pago';
+    }).reduce(function(s,vd){return s+(+(vd.valor||0));},0);
+    /* Faturado */
+    var btnFat=document.getElementById('npBtnFaturamento');
+    if(btnFat){
+      var spans=btnFat.querySelectorAll('span');
+      if(spans[1]) spans[1].textContent=_fmt(totalPago);
     }
-    btn.style.setProperty('font-size','13px','important');
+    /* Falta */
+    var btnFalta=document.getElementById('npBtnFaltaMeta');
+    if(btnFalta){
+      if(window._npMetaGeral&&window._npMetaGeral.valor>0){
+        var v=window._npMetaGeral.valor;
+        var falta=Math.max(0,v-totalPago);
+        var batida=falta<=0;
+        var spans2=btnFalta.querySelectorAll('span');
+        if(spans2[0]) spans2[0].textContent=batida?'Meta batida!':'Falta p/ meta';
+        if(spans2[1]) spans2[1].textContent=batida?'✅':'_fmt(falta)'.replace('_fmt(falta)',_fmt(falta));
+        if(spans2[1]) spans2[1].textContent=batida?'✅ Batida!':_fmt(falta);
+        btnFalta.style.background=batida?'rgba(52,211,153,.08)':'rgba(200,240,90,.06)';
+        btnFalta.style.borderColor=batida?'rgba(52,211,153,.25)':'rgba(200,240,90,.2)';
+        if(spans2[0]) spans2[0].style.color=batida?'rgba(52,211,153,.7)':'rgba(200,240,90,.7)';
+        if(spans2[1]) spans2[1].style.color=batida?'var(--green)':'var(--accent)';
+        btnFalta.style.display='flex';
+      } else { btnFalta.style.display='none'; }
+    }
   }
 
   /* ── Coletar consultores unificados ─────────────────── */
@@ -85,13 +104,9 @@
         }
       });
     }
-    /* De _npVendasTurma — consultores das turmas do mês atual (fonte principal) */
-    _npVendasTurma.forEach(function(v){
-      if(v.consultor&&v.consultor.trim()) set[v.consultor.trim().toUpperCase()]=v.consultor.trim();
-    });
-    /* De _npVendasAvulso — consultores de vendas avulsas do mês */
-    Object.values(_npVendasAvulso||{}).forEach(function(v){
-      var nome=(v.consultor||v.consultorNome||'').trim();
+    /* De todas as vendas do mês (turma + avulso normalizados) */
+    _npTodasVendas().forEach(function(v){
+      var nome=(v.consultor||'').trim();
       if(nome) set[nome.toUpperCase()]=nome;
     });
     _npConsultores=Object.values(set).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
@@ -114,14 +129,21 @@
       var el=document.getElementById(id);
       if(el&&typeof _skelOn==='function') _skelOn(el,_skelCards(3));
     });
-    window._fbGet('turmas').then(function(turmas){
+    /* Buscar turmas e goals em paralelo — garante que _npGoals está pronto antes de renderizar */
+    Promise.all([
+      window._fbGet('turmas'),
+      window._fbGet('pipelineGoals/'+mkSnap).catch(function(){return {};})
+    ]).then(function(res){
+      var turmas=res[0]; var goals=res[1];
       if(genSnap !== _npGen) return;
       /* Remover skeleton independente do resultado */
       _skelAlvos.forEach(function(id){
         var el=document.getElementById(id);
         if(el&&typeof _skelOff==='function') _skelOff(el);
       });
-      if(!turmas) return;
+      /* Atualizar goals com dados frescos do mês */
+      if(goals&&Object.keys(goals).length>0) _npGoals=goals;
+      if(!turmas) { _npRenderTudo(); return; }
       Object.entries(turmas).forEach(function(e){
         var tid=e[0],td=e[1];
         if(td.mesMeta){
@@ -154,7 +176,7 @@
       _npRenderTudo();
     }).catch(function(e){
       _skelAlvos.forEach(function(id){var el=document.getElementById(id);if(el&&typeof _skelOff==='function')_skelOff(el);});
-      console.error('[NP] Erro ao carregar turmas:',e);
+      console.error('[NP] Erro ao carregar turmas/goals:',e);
       _showToast('❌ Erro ao carregar dados do mês','error');
     });
   }
@@ -345,12 +367,12 @@
       if(!map[n]) map[n]={nome:n,total:0,pago:0,qtd:0,qtdPago:0};
       var val=+(v.valor||0);
       var st=(v.status||'').toLowerCase();
-      map[n].total+=val;
       map[n].qtd++;
       if(st==='pago'){
         map[n].pago+=val;   /* único status que abate meta */
         map[n].qtdPago++;
       }
+      if(st==='negociacao') map[n].total+=val; /* potencial = somente em negociação */
     });
     var _sb=sortBy||'pago';
     return Object.values(map).sort(function(a,b){return b[_sb]-a[_sb];});
@@ -361,14 +383,16 @@
   function _npRenderTudo(){
     if(!_npAtivo) return;
     _npRenderLabel();
+    _npAtualizarBtnConfigurar();
     _npColetarConsultores();
     _npPopularFiltros();
     var todas=_npTodasVendas();
     if(_npTabAtiva==='dashboard') _npRenderDashboard(todas);
     else if(_npTabAtiva==='vendas') { if(typeof window.npRenderVendas==='function') window.npRenderVendas(); }
-    else if(_npTabAtiva==='metas') _npRenderMetas(todas);
+    else if(_npTabAtiva==='metas'){ if(typeof window._npRenderMetasOverride==='function') window._npRenderMetasOverride(todas); else _npRenderMetas(todas); }
     else if(_npTabAtiva==='ranking') { if(typeof window.npRenderRanking==='function') window.npRenderRanking(); }
     else if(_npTabAtiva==='funil') { if(typeof window._fnlRender==='function') window._fnlRender(); }
+    if(typeof window._fuInit==='function') window._fuInit(_mesKey());
   }
 
   function _npRenderLabel(){
@@ -567,7 +591,8 @@
     /* Grafico Meta x Realizado */
     var chartMeta=document.getElementById('npChartMeta');
     if(chartMeta){
-      var rows=_npConsultores.map(function(nome,i){
+      var _consNasTurmasChart=new Set(_npVendasTurma.map(function(v){return (v.consultor||'').trim().toUpperCase();}));
+      var rows=_npConsultores.filter(function(nome){return _consNasTurmasChart.has((nome||'').trim().toUpperCase());}).map(function(nome,i){
         var meta=_npGoals[nome]?+((_npGoals[nome].metaValor)||0):0;
         var real=(ranking.find(function(r){return r.nome.toUpperCase()===nome.toUpperCase();})||{}).pago||0;
         var pctMeta=meta>0?Math.round(real/meta*100):0;
@@ -602,7 +627,9 @@
     /* Alertas */
     var alertEl=document.getElementById('npAlertaStrip');
     if(alertEl){
+      var _consNasTurmasAlerta=new Set(_npVendasTurma.map(function(v){return (v.consultor||'').trim().toUpperCase();}));
       var abaixo=_npConsultores.filter(function(nome){
+        if(!_consNasTurmasAlerta.has((nome||'').trim().toUpperCase())) return false;
         var meta=_npGoals[nome]?+((_npGoals[nome].metaValor)||0):0;
         if(!meta) return false;
         var real=(ranking.find(function(r){return r.nome.toUpperCase()===nome.toUpperCase();})||{}).pago||0;
@@ -811,16 +838,25 @@
     var tbT=document.getElementById('npTbodyTurma');
     if(tbT) tbT.innerHTML=turma.length
       ?turma.map(function(v){
+          var isNeg=(v.status||'').toLowerCase()==='negociacao';
+          var fuBtn=isNeg
+            ?'<button class="np-fu-btn" data-cons="'+_esc(v.consultor)+'" data-cli="'+_esc(v.cliente)+'"'
+              +' onclick="npAbrirFollowUp(\''+_esc(v.consultor)+'\',\''+_esc(v.cliente)+'\')"'
+              +' style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px 6px;opacity:.5;color:var(--muted);transition:opacity .15s;border-radius:4px;"'
+              +' title="Definir próxima ação">📅</button>'
+            :'';
           return '<tr>'
             +'<td>'+_esc(v.cliente)+'</td>'
             +'<td>'+_esc(v.consultor)+'</td>'
             +'<td>'+_esc(v.treinamento||'—')+'</td>'
             +'<td class="r">'+_fmtR(v.valor)+'</td>'
-            +'<td><span class="'+_stClass(v.status)+'">'+_esc((v.status||'aberto').toUpperCase())+'</span></td>'
+            +'<td><span class="'+_stClass(v.status)+'">'+_esc((v.status||'aberto').toUpperCase())+'</span>'+fuBtn+'</td>'
             +'<td style="font-size:10px;color:var(--muted);">'+_esc(v._turmaNome||'—')+'</td>'
             +'</tr>';
         }).join('')
       :'<tr><td colspan="6" class="np-empty">Nenhuma venda de turma neste período.</td></tr>';
+    /* Atualizar indicadores de follow-up nos botões recém-criados */
+    if(typeof window._fuInjetarBotoes==='function') setTimeout(window._fuInjetarBotoes, 50);
 
     /* Tabela avulso */
     var tbA=document.getElementById('npTbodyAvulso');
@@ -1325,7 +1361,7 @@
     /* Renderizar imediatamente o estado vazio para evitar mostrar dados do mês anterior */
     if(typeof _npRenderTudo==='function') _npRenderTudo();
     _npIniciarListeners();
-    _npColetarVendasTurma();
+    _npColetarVendasTurma(); /* já busca goals em paralelo com as turmas */
     _npRenderLabel();
     var el=document.getElementById('npModalMetaMes');
     if(el) el.textContent=_mesLabel();
@@ -1400,6 +1436,7 @@
   Object.defineProperty(window,'_npMes',{get:function(){return _npMes;},set:function(v){_npMes=v;},configurable:true});
   Object.defineProperty(window,'_npAno',{get:function(){return _npAno;},set:function(v){_npAno=v;},configurable:true});
   window._npRenderTudo=_npRenderTudo;
+  window._npColetarVendasTurma=_npColetarVendasTurma;
   window._npTodasVendas=_npTodasVendas;
   window._npPorConsultor=_npPorConsultor;
   window._npColetarConsultores=_npColetarConsultores;

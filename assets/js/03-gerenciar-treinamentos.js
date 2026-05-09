@@ -1,4 +1,4 @@
-(function _iniciarGerenciarTreinamentos(){
+﻿(function _iniciarGerenciarTreinamentos(){
   /* ── Mostrar botão de gerenciar apenas para ADM ── */
   function _verificarPermissaoTreinamentos(){
     var sessao = typeof _getSessao==='function' ? _getSessao() : null;
@@ -69,8 +69,7 @@
   /* ── Persistência Firebase ── */
   function _salvarTreinamentosFirebase(){
     if(typeof window._fbSave!=='function') return;
-    var turmaId = (typeof _turmaAtiva!=='undefined' && _turmaAtiva && _turmaAtiva.id)
-      ? _turmaAtiva.id : null;
+    var turmaId = (window._turmaAtiva&&window._turmaAtiva.id)?window._turmaAtiva.id:null;
     if(turmaId){
       window._fbSave('turmas/'+turmaId+'/treinamentos', allTreinamentos)
         .catch(function(e){ console.warn('[Treinamentos] Firebase save:', e); });
@@ -168,7 +167,7 @@
     window._renderListaTreinamentosGerenciar && window._renderListaTreinamentosGerenciar();
     if(typeof _showToast==='function') _showToast('✅ "'+nome+'" adicionado!','var(--accent)');
     // Persistir Firebase (função interna do módulo)
-    var turmaId=(typeof _turmaAtiva!=='undefined'&&_turmaAtiva&&_turmaAtiva.id)?_turmaAtiva.id:null;
+    var turmaId=(window._turmaAtiva&&window._turmaAtiva.id)?window._turmaAtiva.id:null;
     if(turmaId&&typeof window._fbSave==='function'){
       window._fbSave('turmas/'+turmaId+'/treinamentos',allTreinamentos)
         .catch(function(e){console.warn('[GTM] Firebase:',e);});
@@ -184,7 +183,7 @@
     if(typeof buildSelects==='function') buildSelects();
     window._renderListaTreinamentosGerenciar && window._renderListaTreinamentosGerenciar();
     if(typeof _showToast==='function') _showToast('🗑 "'+nome+'" removido.','var(--red)');
-    var turmaId=(typeof _turmaAtiva!=='undefined'&&_turmaAtiva&&_turmaAtiva.id)?_turmaAtiva.id:null;
+    var turmaId=(window._turmaAtiva&&window._turmaAtiva.id)?window._turmaAtiva.id:null;
     if(turmaId&&typeof window._fbSave==='function'){
       window._fbSave('turmas/'+turmaId+'/treinamentos',allTreinamentos)
         .catch(function(e){console.warn('[GTM] Firebase:',e);});
@@ -200,3 +199,4 @@
   });
 
 })();
+

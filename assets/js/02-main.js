@@ -713,7 +713,6 @@ function _renderTurmasCards(turmas){
       <div class="turma-card-footer" style="flex-direction:column;gap:8px;">
         <div style="display:flex;gap:8px;">
           <button class="turma-enter-btn" onclick="entrarTurma('${t.id}')">Entrar →</button>
-
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border2);">
           <span style="font-size:12px;font-weight:700;color:${_turmaGlobalAtiva===t.id?'var(--accent)':'var(--muted)'};text-transform:uppercase;letter-spacing:.06em;">${_turmaGlobalAtiva===t.id?'Ativa':'Inativa'}</span>
@@ -747,6 +746,7 @@ function entrarTurma(id){
   // Buscar metadados da turma do Firebase (índice)
   function _doEntrar(turmaObj,dadosJaCarregados){
     _turmaAtiva=turmaObj;
+    window._turmaAtiva=_turmaAtiva;
     if(!_turmaAtiva){_showToast('❌ Turma não encontrada.','var(--red)');return;}
   _periodText='';_periodStart='';_periodEnd='';
   document.getElementById('periodBarInner').style.display='none';
@@ -965,6 +965,15 @@ function entrarTurma(id){
       treinadoresDB.sort(function(a,b){return a.localeCompare(b,'pt-BR');});
       allConsultors=consultoresDB;
       allTrainers=treinadoresDB;
+
+      // Carregar treinamentos customizados salvos na turma
+      var _fbTreinList=(fbTurma&&Array.isArray(fbTurma.treinamentos))?fbTurma.treinamentos
+        :(fbDadosAntigo&&Array.isArray(fbDadosAntigo.treinamentos))?fbDadosAntigo.treinamentos
+        :null;
+      if(_fbTreinList&&_fbTreinList.length){
+        allTreinamentos.length=0;
+        _fbTreinList.forEach(function(t){allTreinamentos.push(t);});
+      }
 
       _doEntrar(turmaObj,dadosFinais);
     }).catch(function(e){
@@ -1266,6 +1275,7 @@ function _concluirLogin(uid,user,loginStr,manter){
         .catch(function(e){console.warn('[login] primeiroAcesso update:',e);});
     }
   }
+  _addUsuarioRecente(uid, user.nome, user.perfil);
   _mostrarTela('dashboard');
   _entrarDashboardEquipe(user);
   if(typeof window._audit==='function') window._audit('auth.login',null,{perfil:user.perfil||'—'});
@@ -2003,6 +2013,9 @@ function atualizarDados(){
       }
       savedData=JSON.stringify(data);
       buildSelects();buildFilterBtns();renderAll();renderConsultor();renderTreinador();renderProduto();
+      /* Recarregar pipeline comercial (vendas + goals do mês) */
+      if(typeof window._npColetarVendasTurma==='function') window._npColetarVendasTurma();
+      else if(typeof window._npRenderTudo==='function') window._npRenderTudo();
       _showToast('✅ '+fbArray.length+' clientes carregados do Firebase!','var(--accent)');
     }).catch(function(e){
       _showToast('❌ Erro ao buscar: '+(e&&e.message?e.message:String(e)),'var(--red)');
@@ -4008,8 +4021,8 @@ function _renderConsultorDetail(c){
         const entradaStyle=d.entrada>0?'color:var(--green);font-weight:600;':'color:var(--muted);';
         return `<tr style="border-left:${borderLeft};" onclick="openModal(${ri})" title="Clique para editar" class="tr-clickable">
           <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button></span></td>
-          <td style="text-align:center;white-space:nowrap;">${d.treinamento||'—'}</td>
           <td style="text-align:center;white-space:nowrap;color:var(--muted);font-size:11px;">${treinadorTxt}</td>
+          <td style="text-align:center;white-space:nowrap;">${d.treinamento||'—'}</td>
           <td style="text-align:center;white-space:nowrap;font-weight:${ip?'600':'400'};${ip?'color:var(--text);':''}">${formatVal(d.valor)}</td>
           <td style="text-align:center;white-space:nowrap;"><span style="font-size:10px;font-weight:500;padding:2px 8px;border-radius:4px;" class="badge badge-${st}">${sl(st)}</span></td>
           <td style="text-align:center;white-space:nowrap;${entradaStyle}">${entradaTxt}</td>
@@ -4094,9 +4107,6 @@ function _setMinistrante(nome,ativo){
       _showToast(ativo?'✅ '+nome+' agora é Ministrante':'✅ '+nome+' voltou para Treinador','var(--accent)');
       renderAll();
       renderTreinador();
-      if(document.getElementById('usuariosOverlay').classList.contains('open')){
-        _renderUsuariosGrid();
-      }
     }).catch(function(e){
       _showToast('❌ Erro: '+(e&&e.message?e.message:JSON.stringify(e)),'var(--red)');
       renderTreinador();
@@ -4110,6 +4120,8 @@ function _setMinistrante(nome,ativo){
 
 function renderTreinador(){
   document.getElementById('treinadorDetail').style.display='none';
+  var _twrapR=document.getElementById('treinadorLayoutWrap');
+  if(_twrapR) _twrapR.style.display='grid';
   document.getElementById('treinadorCards').style.display='grid';
   const _ministrante=_getTurmaMinistante();
   const _sessT=_getSessao?_getSessao():null;
@@ -4183,17 +4195,78 @@ function renderTreinador(){
   const _totalPagoT=data.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
   const _pctGeralT=Math.round((_totalPagoT/META)*100);
   const _colGeralT=getCol(_pctGeralT);
-  document.getElementById('treinadorCards').innerHTML+=`<div class="spanel" style="align-self:stretch;display:flex;flex-direction:column;"><div onclick="abrirPagosModal()" style="text-align:center;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:opacity .15s;" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'"><div class="spanel-title" style="font-size:18px;font-weight:400;margin-bottom:4px;">Ranking — Faturado</div><div style="font-size:18px;font-weight:700;color:${_colGeralT.text};">${formatVal(_totalPagoT)}</div></div>${_rankTHtml}</div>`;
+  var rankPanelT = document.getElementById('treinadorRankingPanel');
+  var rankBodyT  = document.getElementById('treinadorRankingBody');
+  if(rankPanelT && rankBodyT){
+    var rankHeaderT = rankPanelT.querySelector('.spanel-title');
+    if(rankHeaderT) rankHeaderT.innerHTML = `Ranking — Faturado<br><span style="font-size:16px;font-weight:700;color:${_colGeralT.text};">${formatVal(_totalPagoT)}</span>`;
+    rankBodyT.innerHTML = _rankTHtml;
+    rankPanelT.style.cursor = 'default';
+    rankPanelT.onclick = null;
+  }
 }
 function openTreinadorDetail(t){window._treinadorAtivo=t;_renderTreinadorDetail(t);}
 function _renderTreinadorDetail(t){
   const tdA=data.filter(d=>d.treinador===t).sort((a,b)=>a.cliente.localeCompare(b.cliente,'pt-BR'));
   const td=activeTreinadorStatus===null?tdA:activeTreinadorStatus==='entrada'?tdA.filter(d=>d.entrada>0):tdA.filter(d=>d.status===activeTreinadorStatus);
-  const total=tdA.reduce((a,d)=>a+d.valor,0),pago=tdA.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0),entrada=tdA.reduce((a,d)=>a+d.entrada,0);
-  const pct=Math.round((pago/META)*100),fl=activeTreinadorStatus?' · Filtro: '+activeTreinadorStatus.toUpperCase():'';
+
+  // Métricas
+  const total=tdA.reduce((a,d)=>a+d.valor,0);
+  const pago=tdA.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
+  const aberto=tdA.filter(d=>d.status==='aberto').reduce((a,d)=>a+d.valor,0);
+  const entrada=tdA.reduce((a,d)=>a+d.entrada,0);
+  const nTodos=tdA.length;
+  const nPago=tdA.filter(d=>d.status==='pago').length;
+  const nAberto=tdA.filter(d=>d.status==='aberto').length;
+  const nEntrada=tdA.filter(d=>d.entrada>0).length;
+
+  const fl=activeTreinadorStatus?' · Filtro: '+activeTreinadorStatus.toUpperCase():'';
+  const pct=META>0?Math.round((pago/META)*100):0;
   const _colTDetail=getCol(pct);
+  const _pctBar=Math.min(pct,100);
+
   document.getElementById('treinadorDetailName').textContent=t.toUpperCase()+' — '+tdA.length+' cliente'+(tdA.length!==1?'s':'');
-  document.getElementById('treinadorDetailSub').innerHTML='Potencial: '+formatVal(total)+' · Faturado: <span style="color:'+_colTDetail.text+';font-weight:700;">'+formatVal(pago)+'</span> · '+pct+'% da meta'+(entrada>0?' · Entradas: '+formatVal(entrada):'')+fl;
+
+  // KPIs + barra de progresso (igual ao consultor)
+  document.getElementById('treinadorDetailSub').innerHTML=
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+    +'<div style="flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;">'
+    +'<div style="height:4px;width:'+_pctBar+'%;background:'+_colTDetail.bar+';border-radius:2px;transition:width .4s;"></div>'
+    +'</div>'
+    +'<span style="font-size:11px;font-weight:600;color:'+_colTDetail.text+';font-family:\'DM Mono\',monospace;min-width:36px;text-align:right;">'+pct+'%</span>'
+    +'<span style="font-size:10px;color:var(--muted);">da meta</span>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">'
+    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Potencial</div>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--text);font-family:\'DM Mono\',monospace;">'+formatVal(total)+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nTodos+' cliente'+(nTodos!==1?'s':'')+'</div>'
+    +'</div>'
+    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Faturado</div>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--green);font-family:\'DM Mono\',monospace;">'+formatVal(pago)+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nPago+' pago'+(nPago!==1?'s':'')+'</div>'
+    +'</div>'
+    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Em aberto</div>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--amber);font-family:\'DM Mono\',monospace;">'+formatVal(aberto)+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nAberto+' cliente'+(nAberto!==1?'s':'')+'</div>'
+    +'</div>'
+    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Entradas</div>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--blue);font-family:\'DM Mono\',monospace;">'+(entrada>0?formatVal(entrada):'—')+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nEntrada+' cliente'+(nEntrada!==1?'s':'')+'</div>'
+    +'</div>'
+    +'</div>'
+    +'<span style="font-size:12px;color:var(--muted);">Potencial: '+formatVal(total)+' · Faturado: <span style="color:'+_colTDetail.text+';font-weight:700;">'+formatVal(pago)+'</span>'+(entrada>0?' · Entradas: '+formatVal(entrada):'')+fl+'</span>';
+
+  // Contadores nos botões de filtro
+  const _ftMap={ftAll:nTodos,ftAberto:nAberto,ftPago:nPago,ftEntrada:nEntrada};
+  const _ftLabel={ftAll:'Todos',ftAberto:'Aberto',ftPago:'Pago',ftEntrada:'Entrada'};
+  Object.keys(_ftMap).forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.textContent=_ftLabel[id]+(_ftMap[id]>0?' ('+_ftMap[id]+')':'');
+  });
   // Checkbox ministrante no detail
   var ministrante=_getTurmaMinistante();
   var isMinistrante=ministrante===t;
@@ -4210,7 +4283,8 @@ function _renderTreinadorDetail(t){
       +'<span style="font-size:12px;font-weight:700;color:'+lblCor+';text-transform:uppercase;letter-spacing:.06em;">Ministrante</span>'
       +'</label>';
   } else if(boxEl){ boxEl.innerHTML=''; }
-  document.getElementById('treinadorCards').style.display='none';
+  var _twrap=document.getElementById('treinadorLayoutWrap');
+  if(_twrap) _twrap.style.display='none';
   document.getElementById('treinadorDetail').style.display='block';
   const sl=s=>s==='pago'?'PAGO':s==='negociacao'?'NEGOCIAÇÃO':s==='desistiu'?'DESISTIU':s==='estorno'?'ESTORNO':s==='-'?'—':'ABERTO';
   document.getElementById('treinadorDetailTable').innerHTML=td.length===0
@@ -4229,7 +4303,10 @@ function closeTreinadorDetail(){
   window._treinadorAtivo=null;activeTreinadorStatus=null;
   ['ftAll','ftAberto','ftPago','ftEntrada'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
   const el=document.getElementById('ftAll');if(el)el.classList.add('active');
-  document.getElementById('treinadorDetail').style.display='none';renderTreinador();
+  document.getElementById('treinadorDetail').style.display='none';
+  var _twrapClose=document.getElementById('treinadorLayoutWrap');
+  if(_twrapClose) _twrapClose.style.display='grid';
+  renderTreinador();
 }
 
 /* ═══════════════════════════════════════════
@@ -4831,10 +4908,10 @@ function openClientInfo(idx){
   const d=data[idx];
   document.getElementById('clientInfoSub').textContent=d.cliente+' · '+d.treinador+' · '+d.consultor;
   document.getElementById('clientInfoText').value=d.info||'';
-  // Modo leitura para consultor
   var _sessCI=_getSessao?_getSessao():null;
   var _perfilCI=_sessCI?_sessCI.perfil:'adm';
   var _soLeitura=_perfilCI==='consultor';
+  var _isAdmCI=_perfilCI==='adm';
   var ta=document.getElementById('clientInfoText');
   ta.readOnly=_soLeitura;
   ta.style.opacity=_soLeitura?'0.7':'1';
@@ -4843,10 +4920,24 @@ function openClientInfo(idx){
   var btnLimpar=document.querySelector('#clientInfoOverlay .modal-del');
   if(btnSalvar) btnSalvar.style.display=_soLeitura?'none':'';
   if(btnLimpar) btnLimpar.style.display=_soLeitura?'none':'';
+  // Campo nome: só ADM pode editar
+  var campoNome=document.getElementById('clientInfoNomeCampo');
+  var inpNome=document.getElementById('clientInfoNome');
+  if(campoNome) campoNome.style.display=_isAdmCI?'':'none';
+  if(inpNome) inpNome.value=d.cliente||'';
   document.getElementById('clientInfoOverlay').classList.add('open');
 }
 function closeClientInfo(){document.getElementById('clientInfoOverlay').classList.remove('open');_ciIdx=null;}
-function saveClientInfo(){if(_ciIdx===null)return;data[_ciIdx].info=document.getElementById('clientInfoText').value.trim();closeClientInfo();markUnsaved();saveStorage();renderAll();renderConsultor();renderTreinador();}
+function saveClientInfo(){
+  if(_ciIdx===null)return;
+  data[_ciIdx].info=document.getElementById('clientInfoText').value.trim();
+  var inpNome=document.getElementById('clientInfoNome');
+  if(inpNome&&document.getElementById('clientInfoNomeCampo').style.display!=='none'){
+    var novoNome=inpNome.value.trim().toUpperCase();
+    if(novoNome) data[_ciIdx].cliente=novoNome;
+  }
+  closeClientInfo();markUnsaved();saveStorage();renderAll();renderConsultor();renderTreinador();
+}
 function clearClientInfo(){if(_ciIdx===null)return;data[_ciIdx].info='';closeClientInfo();markUnsaved();saveStorage();renderAll();}
 
 /* ═══════════════════════════════════════════
@@ -5181,6 +5272,13 @@ async function carregarUsuarios(){
 function _renderUsuariosGrid(){
   var grid=document.getElementById('usuariosGrid');
   if(!grid) return;
+  // Não re-renderizar se um sub-modal de edição estiver aberto (protege o admin enquanto edita)
+  var subModaisAbertos=['novoUsuarioOverlay','alterarSenhaOverlay'];
+  var temSubModalAberto=subModaisAbertos.some(function(id){
+    var el=document.getElementById(id);
+    return el&&el.classList.contains('open');
+  });
+  if(temSubModalAberto) return;
   grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center;">Carregando...</div>';
   // Fix 2: complementar membros com consultores presentes em data[]
   var membros=complementarMembrosComData(_getMembros());
@@ -5254,6 +5352,10 @@ function _montarGrid(membros,usuarios){
   var grid=document.getElementById('usuariosGrid');
   if(!grid) return;
 
+  // Ordenar alfabeticamente para evitar reordenação entre renders
+  membros.consultores=membros.consultores.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});});
+  membros.treinadores=membros.treinadores.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});});
+
   // Ministrante real da turma — fonte de verdade
   var _ministranteAtual=_getTurmaMinistante();
 
@@ -5296,7 +5398,7 @@ function _montarGrid(membros,usuarios){
         +'<button class="title-edit-btn btn-toggle-ativo" data-uid="'+uid+'" data-ativo="'+(ativo?'true':'false')+'" style="justify-content:center;color:'+(ativo?'var(--muted)':'var(--accent)')+';">'+(ativo?'Pausar':'Ativar')+'</button>'
         ;
     }
-    return '<div class="usuario-card" style="opacity:'+opacity+';">'
+    return '<div class="usuario-card" data-nome="'+nomeU+'" style="opacity:'+opacity+';">'
       +'<div class="usuario-card-header">'
         +'<div class="usuario-avatar" style="background:var(--surface2);color:'+cor+';border:2px solid '+cor+';">'+inicial+'</div>'
         +'<div style="flex:1;min-width:0;">'
@@ -5321,7 +5423,42 @@ function _montarGrid(membros,usuarios){
     return perfil+'_'+_normalizeUid(nome);
   }
 
+  // ── Busca + Recentes ──────────────────────────────────────────
+  var recentes=_getUsuariosRecentes();
   var html='';
+
+  // Barra de busca (span grid-column:1/-1)
+  html+='<div style="grid-column:1/-1;margin-bottom:8px;">'
+    +'<input id="usuariosBusca" type="text" placeholder="🔍  Buscar usuário..." autocomplete="off"'
+    +' oninput="_filtrarUsuariosGrid(this.value)"'
+    +' style="width:100%;box-sizing:border-box;padding:8px 14px;border-radius:var(--radius-sm);'
+    +'border:1px solid var(--border2);background:var(--surface2);color:var(--text);'
+    +'font-family:\'DM Sans\',sans-serif;font-size:13px;outline:none;">'
+    +'</div>';
+
+  // Acesso rápido — recentes
+  if(recentes.length){
+    html+='<div style="grid-column:1/-1;margin-bottom:12px;">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">⚡ Acesso rápido</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+    recentes.forEach(function(r){
+      var ini=(r.nome||'?')[0].toUpperCase();
+      var cor=r.perfil==='consultor'?'var(--green)':r.perfil==='adm'?'var(--accent)':'var(--amber)';
+      html+='<button onclick="_loginRapido(\''+r.uid+'\')" title="Entrar como '+r.nome+'"'
+        +' style="display:flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:20px;'
+        +'border:1px solid var(--border2);background:var(--surface2);cursor:pointer;'
+        +'font-family:\'DM Sans\',sans-serif;transition:all .15s;" '
+        +'onmouseover="this.style.borderColor=\''+cor+'\'" onmouseout="this.style.borderColor=\'var(--border2)\'">'
+        +'<div style="width:28px;height:28px;border-radius:50%;background:var(--surface);'
+        +'border:2px solid '+cor+';display:flex;align-items:center;justify-content:center;'
+        +'font-size:12px;font-weight:800;color:'+cor+';">'+ini+'</div>'
+        +'<span style="font-size:12px;font-weight:600;color:var(--text);">'+r.nome.split(' ')[0]+'</span>'
+        +'</button>';
+    });
+    html+='</div></div>';
+    html+='<div style="grid-column:1/-1;border-top:1px solid var(--border2);margin-bottom:12px;"></div>';
+  }
+
   html+='<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border2);margin-bottom:4px;">'+'<span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;">Consultores ('+membros.consultores.length+')</span>'+'<button class="btn-perms-grupo" data-perfil="consultor" title="Permissões do perfil Consultor"'+' style="background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;padding:3px 10px;color:var(--muted);display:flex;align-items:center;gap:5px;'+' transition:all .15s;">🔒 Permissões</button>'+'</div>';
   if(membros.consultores.length===0){
     html+='<div style="grid-column:1/-1;color:var(--muted);font-size:12px;">Nenhum consultor.</div>';
@@ -5366,6 +5503,36 @@ function _montarGrid(membros,usuarios){
       abrirPermsGrupo(btn.dataset.perfil);
     }
   });
+}
+
+/* ── Recentes / Busca de usuários ──────────────────────────── */
+function _getUsuariosRecentes(){
+  try{ var r=JSON.parse(localStorage.getItem('ci_usuarios_recentes')); return Array.isArray(r)?r:[]; }catch(e){ return []; }
+}
+function _addUsuarioRecente(uid,nome,perfil){
+  var lista=_getUsuariosRecentes().filter(function(r){ return r.uid!==uid; });
+  lista.unshift({uid:uid,nome:nome,perfil:perfil});
+  if(lista.length>5) lista=lista.slice(0,5);
+  try{ localStorage.setItem('ci_usuarios_recentes',JSON.stringify(lista)); }catch(e){}
+}
+function _filtrarUsuariosGrid(q){
+  var t=(q||'').trim().toUpperCase();
+  document.querySelectorAll('#usuariosGrid .usuario-card').forEach(function(card){
+    var nome=(card.dataset.nome||'').toUpperCase();
+    card.style.display=(!t||nome.indexOf(t)>=0)?'':'none';
+  });
+}
+function _loginRapido(uid){
+  // Abre modal de senha pré-preenchendo o login do usuário recente
+  var recentes=_getUsuariosRecentes();
+  var r=recentes.find(function(x){ return x.uid===uid; });
+  if(!r) return;
+  // Simular clique no botão Editar do card desse usuário
+  var btn=document.querySelector('#usuariosGrid .usuario-card[data-nome="'+r.nome.toUpperCase()+'"] .btn-editar-acesso, #usuariosGrid .usuario-card[data-nome="'+r.nome.toUpperCase()+'"] .btn-configurar-acesso');
+  if(btn){ btn.click(); return; }
+  // Fallback: foca no campo de login padrão se existir
+  var inp=document.getElementById('usuarioLoginInput');
+  if(inp){ inp.value=r.nome.split(' ')[0].toLowerCase(); inp.focus(); }
 }
 
 function _abrirConfigurarAcesso(uid,nome,perfil){
@@ -6090,7 +6257,7 @@ function abrirPdfClientesModal(){
   _pdfcDocAtual=null;
   var frame=document.getElementById('pdfcPreviewFrame');
   var placeholder=document.getElementById('pdfcPreviewPlaceholder');
-  if(frame){frame.src='';frame.style.display='none';}
+  if(frame){frame.src='about:blank';frame.style.display='none';}
   if(placeholder) placeholder.style.display='flex';
   _pdfcHabilitarBotoes(false);
   document.getElementById('pdfClientesOverlay').classList.add('open');
@@ -6343,7 +6510,7 @@ function abrirPropostaModal(){
   _propostaRecalcular();
   var frame = document.getElementById('propostaPreviewFrame');
   var ph = document.getElementById('propostaPreviewPlaceholder');
-  if(frame){frame.src='';frame.style.display='none';}
+  if(frame){frame.src='about:blank';frame.style.display='none';}
   if(ph) ph.style.display='flex';
   document.getElementById('propostaOverlay').classList.add('open');
 }

@@ -10,7 +10,6 @@ var _impProcessando = false; // guard contra duplo processamento do arquivo
 // ── Aliases de colunas ─────────────────────────────────────────
 var IMP_ALIASES = {
   cliente:     ['cliente','nome','cliente_nome','nome_do_cliente','aluno','name','nome completo','nome_completo'],
-  treinador:   ['treinador','coach','instrutor','trainer','professor'],
   treinamento: ['treinamento','curso','produto','product','course','nome_curso','nome da venda','nome_da_venda'],
   consultor:   ['utm_gclid','consultor','responsavel','responsável','vendedor','sales'],
   valor:       ['valor','preco','preço','total','value','price','valor_total','investimento'],
@@ -179,6 +178,20 @@ function impProcessarAOA(aoa){
   var upper  = document.getElementById('importOptMaiusculo').checked;
   var headers= aoa[0].map(function(h){ return String(h||''); });
   var mapa   = impMapearColunas(headers);
+  var _isTCE = window._turmaAtiva&&(window._turmaAtiva.codigo||'').toUpperCase()==='TCE-BEL';
+  /* No modo TCE: forçar coluna Promoção para treinamento */
+  if(_isTCE){
+    var _iPromocao=headers.findIndex(function(h){
+      var hn=impNorm(h);
+      return hn==='promocao'||hn==='promo'||h.toLowerCase().trim()==='promoção';
+    });
+    if(_iPromocao>=0) mapa.treinamento=_iPromocao;
+    /* Forçar onboarding via coluna "Fase" se existir */
+    if(mapa.__onboard===undefined){
+      var _iFase=headers.findIndex(function(h){ return h.toLowerCase().trim()==='fase'; });
+      if(_iFase>=0) mapa.__onboard=_iFase;
+    }
+  }
 
   // Log mapeamento
   console.group('[IMPORT v3] Mapeamento detectado');
@@ -210,17 +223,27 @@ function impProcessarAOA(aoa){
     // ── REGRA CRÍTICA: Status do Onboarding = CONFIRMADO ──────
     if(mapa.__onboard!==undefined){
       var onbVal=impNorm(row[mapa.__onboard]||'');
-      if(onbVal!==IMP_ONBOARD_OK){ filtrado++; continue; }
+      var onbOk=_isTCE
+        ? (onbVal==='fechada'||onbVal==='aprovada'||onbVal===IMP_ONBOARD_OK)
+        : onbVal===IMP_ONBOARD_OK;
+      if(!onbOk){ filtrado++; continue; }
     }
 
     var clienteRaw=upper?_get(row,'cliente').toUpperCase():_get(row,'cliente');
     if(!clienteRaw.trim()){ semNome++; continue; }
 
+    var treinamentoRaw=_get(row,'treinamento');
+    /* Modo TCE: normalizar promoção para os 4 tipos aceitos */
+    if(_isTCE&&treinamentoRaw){
+      var _TCE_TIPOS=['TCE - BLACK','TCE - VIP','TCE - OURO','TCE - BRONZE'];
+      var _trNorm=treinamentoRaw.toUpperCase();
+      var _match=_TCE_TIPOS.find(function(t){return _trNorm.startsWith(t);});
+      treinamentoRaw=_match||treinamentoRaw; /* mantém original se não bater */
+    }
     resultado.push({
       cliente:     clienteRaw,
-      treinador:   upper?_get(row,'treinador').toUpperCase():_get(row,'treinador'),
-      treinamento: upper?_get(row,'treinamento').toUpperCase():_get(row,'treinamento'),
       consultor:   upper?_get(row,'consultor').toUpperCase():_get(row,'consultor'),
+      treinamento: treinamentoRaw,
       valor:       impParseNum(_get(row,'valor')),
       status:      impNormStatus(_get(row,'status')),
       entrada:     impParseNum(_get(row,'entrada')),
@@ -377,6 +400,120 @@ function impAplicarDistribuicao(){
   impRenderPrevia({dados:dadosImportacao,total:dadosImportacao.length,filtrado:0,dup:0,semNome:0});
   var restantes=dadosImportacao.filter(function(d){return !d.consultor||!d.consultor.trim();}).length;
   _showToast(soma+' clientes distribuídos!'+(restantes>0?' ('+restantes+' ainda sem consultor)':''),'var(--accent)');
+}
+
+/* ── Garantir que o modal de distribuição existe no DOM ── */
+function _garantirImpDistModal(){
+  if(document.getElementById('impDistModal')) return;
+  var dm=document.createElement('div');
+  dm.id='impDistModal';
+  dm.setAttribute('role','dialog');
+  dm.innerHTML='<div class="imp-dist-box">'
+    +'<div class="imp-dist-header">'
+      +'<div class="imp-dist-title" id="impDistModalTitle"></div>'
+      +'<div class="imp-dist-sub" id="impDistModalSub"></div>'
+    +'</div>'
+    +'<div class="imp-dist-body">'
+      +'<div class="imp-cons-grid" id="impDistModalGrid"></div>'
+      +'<div class="imp-dist-total">Distribuindo: <span id="impDistModalCount">0</span> / <span id="impDistModalTotal">0</span> clientes</div>'
+    +'</div>'
+    +'<div class="imp-dist-footer" id="impDistModalFooter"></div>'
+  +'</div>';
+  document.body.appendChild(dm);
+}
+
+/* ── Redistribuição de sem-consultor nos dados REAIS (modal Clientes) ── */
+function redistSemConsultorReal(){
+  _garantirImpDistModal();
+  var arr=(typeof data!=='undefined'&&Array.isArray(data))?data:[];
+  var sem=arr.filter(function(d){return !d.consultor||!d.consultor.trim();});
+  if(!sem.length){_showToast('Nenhum cliente sem consultor.','var(--amber)');return;}
+  var cons=typeof allConsultors!=='undefined'&&allConsultors.length?allConsultors.slice():[];
+  if(!cons.length){_showToast('Nenhum consultor disponível na turma.','var(--amber)');return;}
+  var CORES=['#c8f05a','#60a5fa','#34d399','#f59e0b','#a78bfa','#f472b6','#fb923c','#38bdf8','#e879f9','#4ade80'];
+  var total=sem.length,n=cons.length;
+  var base=Math.floor(total/n),extra=total%n;
+  window._impDistExcl={};
+  window._impDistCons=cons;
+  window._impDistTotal=total;
+  function _atuTotal(){
+    var soma=cons.reduce(function(a,k,i){
+      if(window._impDistExcl[k]) return a;
+      return a+(parseInt((document.getElementById('impDQt_'+i)||{}).value)||0);
+    },0);
+    var ct=document.getElementById('impDistModalCount');
+    var tt=document.getElementById('impDistModalTotal');
+    if(ct){ct.textContent=soma;ct.style.color=soma===total?'var(--green)':(soma>total?'var(--red)':'var(--amber)');}
+    if(tt) tt.textContent=total;
+  }
+  var grid=document.getElementById('impDistModalGrid');
+  if(grid) grid.innerHTML=cons.map(function(k,i){
+    var cor=CORES[i%CORES.length];
+    var ini=k.trim().charAt(0).toUpperCase();
+    var bg=cor+'26';
+    return '<div class="imp-cons-card" id="impDCard_'+i+'">'
+      +'<div class="imp-cons-avatar" style="background:'+bg+';color:'+cor+';border:1.5px solid '+cor+'55;">'+ini+'</div>'
+      +'<div class="imp-cons-nome" title="'+impEsc(k)+'">'+impEsc(k)+'</div>'
+      +'<input type="number" class="imp-cons-qt" id="impDQt_'+i+'" value="'+(base+(i<extra?1:0))+'" min="0" max="'+total+'" oninput="_impDistAtualizarTotal()">'
+      +'<button class="imp-cons-x" title="Excluir da distribuição" onclick="impDistToggleExcl('+i+')">&times;</button>'
+      +'</div>';
+  }).join('');
+  var tit=document.getElementById('impDistModalTitle');
+  var sub=document.getElementById('impDistModalSub');
+  if(tit) tit.textContent=total+' clientes sem consultor';
+  if(sub) sub.textContent='Defina quantos clientes cada consultor vai receber. Clique no × para excluir um consultor da distribuição.';
+  var footer=document.getElementById('impDistModalFooter');
+  if(footer) footer.innerHTML=
+    '<button class="imp-dist-btn-primary" onclick="redistAplicarDistribuicaoReal()">✓ Aplicar distribuição</button>'
+    +'<button class="imp-dist-btn-secondary" onclick="impDistribuirAutoModal()">↻ Equilibrar automaticamente</button>'
+    +'<button class="imp-dist-btn-cancel" onclick="impFecharDistModal()">Fechar</button>';
+  _atuTotal();
+  document.getElementById('impDistModal').classList.add('open');
+  window._impDistAtualizarTotal=_atuTotal;
+  window._recalcAuto=function(){
+    var ativos=cons.filter(function(k){return !window._impDistExcl[k];});
+    var na=ativos.length; if(!na) return;
+    var ba=Math.floor(total/na),ea=total%na;
+    ativos.forEach(function(k,i){var inp=document.getElementById('impDQt_'+cons.indexOf(k));if(inp)inp.value=ba+(i<ea?1:0);});
+    _atuTotal();
+  };
+}
+
+/* ── Aplicar redistribuição ao data[] real ── */
+function redistAplicarDistribuicaoReal(){
+  var arr=(typeof data!=='undefined'&&Array.isArray(data))?data:[];
+  var cons=window._impDistCons||[];
+  var total=window._impDistTotal||0;
+  var qtds=cons.map(function(k,i){
+    if(window._impDistExcl&&window._impDistExcl[k]) return 0;
+    return Math.max(0,parseInt((document.getElementById('impDQt_'+i)||{}).value)||0);
+  });
+  var soma=qtds.reduce(function(a,v){return a+v;},0);
+  if(soma>total){_showToast('A soma ('+soma+') excede os '+total+' clientes sem consultor.','var(--red)');return;}
+  var semIdx=[];
+  arr.forEach(function(d,i){if(!d.consultor||!d.consultor.trim()) semIdx.push(i);});
+  var ptr=0;
+  cons.forEach(function(nome,ci){
+    for(var j=0;j<qtds[ci];j++){
+      if(ptr>=semIdx.length) break;
+      arr[semIdx[ptr]].consultor=nome;
+      ptr++;
+    }
+  });
+  document.getElementById('impDistModal').classList.remove('open');
+  var restantes=arr.filter(function(d){return !d.consultor||!d.consultor.trim();}).length;
+  _showToast(soma+' clientes distribuídos!'+(restantes>0?' ('+restantes+' ainda sem consultor)':''),'var(--accent)');
+  if(typeof markUnsaved   ==='function') markUnsaved();
+  if(typeof saveStorage   ==='function') saveStorage();
+  if(typeof renderConsultor==='function') renderConsultor();
+  if(typeof renderAll     ==='function') renderAll();
+  // Atualizar botão no overlay de clientes
+  var btn=document.getElementById('lcBtnDistribuir');
+  if(btn){
+    if(restantes>0){btn.textContent='⚖ Distribuir sem consultor ('+restantes+')';btn.style.display='';}
+    else btn.style.display='none';
+  }
+  try{lcRenderizar('');}catch(e){}
 }
 
 /* ── Redistribuir clientes de um consultor ── */
@@ -538,6 +675,15 @@ function impRenderPrevia(res){
 
   document.getElementById('importStats').innerHTML=statsHTML;
 
+  // Botão de redistribuição no rodapé — só ADM e só quando há sem-consultor
+  var _btnDistImp=document.getElementById('importBtnDistribuir');
+  if(_btnDistImp){
+    var _isAdm=typeof _getSessao==='function'&&((_getSessao()||{}).perfil==='adm');
+    var _semConsImp=dadosImportacao.filter(function(d){return !d.consultor||!d.consultor.trim();}).length;
+    _btnDistImp.style.display=(_isAdm&&_semConsImp>0)?'':'none';
+    if(_isAdm&&_semConsImp>0) _btnDistImp.textContent='⚖ Distribuir sem consultor ('+_semConsImp+')';
+  }
+
   // Injetar painel de distribuição após importStats (se não existir)
   if(!document.getElementById('impDistPanel')){
     var dp=document.createElement('div');
@@ -571,7 +717,7 @@ function impRenderPrevia(res){
   if(!dadosImportacao.length){
     document.getElementById('importPreviewHead').innerHTML='';
     document.getElementById('importPreviewBody').innerHTML=
-      '<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--muted);font-size:13px;">'
+      '<tr><td colspan="6" style="padding:32px;text-align:center;color:var(--muted);font-size:13px;">'
       +'Nenhum registro com "Status do Onboarding = CONFIRMADO" encontrado.</td></tr>';
     return;
   }
@@ -579,9 +725,8 @@ function impRenderPrevia(res){
   document.getElementById('importPreviewHead').innerHTML=
     '<tr>'
     +'<th style="text-align:left;padding:9px 10px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">Cliente</th>'
-    +'<th style="padding:9px 10px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">Treinamento</th>'
-    +'<th style="padding:9px 10px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">Treinador</th>'
     +'<th style="padding:9px 10px;font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">Consultor ✏</th>'
+    +'<th style="padding:9px 10px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">Treinamento</th>'
     +'<th style="padding:9px 10px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">Valor</th>'
     +'<th style="padding:9px 10px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">Status</th>'
     +'<th style="padding:9px 10px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">Entrada</th>'
@@ -596,9 +741,6 @@ function impRenderPrevia(res){
     return '<tr style="'+(i%2===0?'':'background:rgba(255,255,255,.015)')+'">'
       // Cliente: alinhado à esquerda
       +'<td style="text-align:left;padding:7px 10px;font-weight:600;white-space:nowrap;">'+impEsc(d.cliente)+'</td>'
-      // Demais: centradas
-      +'<td style="text-align:center;padding:7px 10px;color:var(--muted);">'+impEsc(d.treinamento||'—')+'</td>'
-      +'<td style="text-align:center;padding:7px 10px;color:var(--muted);">'+impEsc(d.treinador||'—')+'</td>'
       // Consultor: EDITÁVEL com select
       +'<td style="text-align:center;padding:4px 8px;min-width:120px;">'
         +(function(){
@@ -615,6 +757,7 @@ function impRenderPrevia(res){
             +'</select>';
         })()
       +'</td>'
+      +'<td style="text-align:center;padding:7px 10px;font-size:11px;color:var(--muted);white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;">'+impEsc(d.treinamento||'—')+'</td>'
       +'<td style="text-align:center;padding:7px 10px;font-family:monospace;color:var(--blue);">'+(d.valor?'R$'+d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—')+'</td>'
       +'<td style="text-align:center;padding:7px 10px;"><span style="font-size:10px;font-weight:700;color:'+cor+';background:'+cor+'1a;border:1px solid '+cor+'33;border-radius:20px;padding:2px 8px;">'+impEsc(d.status||'—')+'</span></td>'
       +'<td style="text-align:center;padding:7px 10px;font-family:monospace;color:var(--accent);">'+(d.entrada?'R$'+d.entrada.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—')+'</td>'
@@ -624,7 +767,7 @@ function impRenderPrevia(res){
 
   if(dadosImportacao.length>300){
     document.getElementById('importPreviewBody').innerHTML+=
-      '<tr><td colspan="8" style="padding:8px;text-align:center;color:var(--muted);font-size:11px;">'
+      '<tr><td colspan="6" style="padding:8px;text-align:center;color:var(--muted);font-size:11px;">'
       +'… e mais '+(dadosImportacao.length-300)+' registros (todos serão importados)</td></tr>';
   }
 }
@@ -778,6 +921,13 @@ function openImportModal(){
   document.getElementById('importModalSub').textContent='Selecione o arquivo ou cole o link do Google Sheets.';
   document.getElementById('importBtnConfirmar').disabled=true;
   document.getElementById('importBtnConfirmar').style.opacity='.4';
+  /* Mostrar botão TCE apenas para turma TCE-BEL */
+  var btnTCE=document.getElementById('importBtnTCE');
+  if(btnTCE){
+    var _ta=window._turmaAtiva||window.turmaAtiva||(typeof _turmaAtiva!=='undefined'?_turmaAtiva:null);
+    var isTCE=_ta&&(_ta.codigo||'').toUpperCase()==='TCE-BEL';
+    btnTCE.style.display=isTCE?'inline-flex':'none';
+  }
   document.getElementById('importModalOverlay').classList.add('open');
   /* Vincular eventos lazy — elementos só existem após o modal abrir */
   setTimeout(_vincularEventosImport, 0);
@@ -787,6 +937,11 @@ function openImportModal(){
 function closeImportModal(){
   document.getElementById('importModalOverlay').classList.remove('open');
   dadosImportacao=[];
+  /* Remove barra de fonte para recriar com estado correto na próxima abertura */
+  var sb=document.getElementById('importSourceBar');
+  if(sb) sb.remove();
+  var sr=document.getElementById('importSheetRow');
+  if(sr) sr.remove();
 }
 
 /* ── Calcular diff entre planilha nova e turma atual ────────────
@@ -820,7 +975,12 @@ function impSincronizarTurma(novos){
   novos.forEach(function(n){
     var key = n._importKey || impGerarKey(n.cliente);
     if(!mapaExistentes[key]) inserir.push(n);
-    else manter.push(mapaExistentes[key]);
+    else {
+      var ex=mapaExistentes[key];
+      /* Atualizar treinamento se a planilha traz valor novo */
+      if(n.treinamento) ex.treinamento=n.treinamento;
+      manter.push(ex);
+    }
   });
 
   // Existentes que sumiram da planilha → remover
@@ -926,8 +1086,23 @@ function impAplicarSync(diff, criadoPor){
     });
   }
 
+  // Atualizar treinamento nos clientes existentes (manter)
+  var _isTCESync=window._turmaAtiva&&(window._turmaAtiva.codigo||'').toUpperCase()==='TCE-BEL';
+  if(_isTCESync&&diff.manter.length){
+    var mapaNovoTrein={};
+    dadosImportacao.forEach(function(n){
+      if(n.treinamento) mapaNovoTrein[n._importKey||impGerarKey(n.cliente)]=n.treinamento;
+    });
+    (data||[]).forEach(function(d){
+      if(!d._importado) return;
+      var key=d._importKey||impGerarKey(d.cliente);
+      if(mapaNovoTrein[key]) d.treinamento=mapaNovoTrein[key];
+    });
+  }
+
   // Inserir novos
   var inseridos = 0;
+  if(diff.inserir.length) console.log('[IMP inserir] primeiro item treinamento:', diff.inserir[0].treinamento, '| total:', diff.inserir.length);
   diff.inserir.forEach(function(obj){
     data.push({
       cliente:     obj.cliente     || '',
@@ -1019,6 +1194,19 @@ function abrirListaClientes(){
   if(!overlay){ console.error('[abrirListaClientes] listaClientesOverlay não encontrado'); return; }
   if(input) input.value = '';
   try{ lcRenderizar(''); } catch(e){ console.warn('[abrirListaClientes] lcRenderizar:', e); }
+  // Botão de redistribuição — só ADM e só quando há sem-consultor
+  var btn=document.getElementById('lcBtnDistribuir');
+  if(btn){
+    var isAdm=typeof _getSessao==='function'&&((_getSessao()||{}).perfil==='adm');
+    if(isAdm){
+      var arr=(typeof data!=='undefined'&&Array.isArray(data))?data:[];
+      var sem=arr.filter(function(d){return !d.consultor||!d.consultor.trim();}).length;
+      if(sem>0){btn.textContent='⚖ Distribuir sem consultor ('+sem+')';btn.style.display='';}
+      else btn.style.display='none';
+    } else {
+      btn.style.display='none';
+    }
+  }
   overlay.classList.add('open');
 }
 function fecharListaClientes(){
@@ -1113,9 +1301,9 @@ function lcRenderizar(filtro){
       +'<td style="text-align:center;width:36px;">'
         +'<input type="checkbox" class="lc-row-chk" data-idx="'+realIdx+'" onchange="lcOnChkChange()" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer;">'
       +'</td>'
-      // Cliente (texto livre) — estrutura intocada conforme especificado
-      +'<td style="text-align:left;">'
-        +'<input class="lc-cell-input" data-idx="'+realIdx+'" data-campo="cliente" value="'+_lcEsc(r.cliente||'')+'" onchange="lcCellChange(this)" placeholder="Nome...">'
+      // Cliente — texto fixo (edição via botão "i" no card, só ADM)
+      +'<td style="text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">'
+        +'<span style="font-size:12px;font-weight:600;color:var(--text);">'+_lcEsc(r.cliente||'')+'</span>'
       +'</td>'
       // Treinamento — SELECT com opção vazia
       +'<td style="text-align:center;vertical-align:middle;">'
@@ -1155,6 +1343,33 @@ function lcRenderizar(filtro){
 }
 
 function _lcEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* Edição inline do nome do cliente — só ADM */
+function lcEditarNomeCliente(btn, idx){
+  var td = btn.parentElement;
+  var span = td.querySelector('span');
+  var nomeAtual = (Array.isArray(data)&&data[idx])?data[idx].cliente||'':'';
+  // Substituir conteúdo da célula por input
+  td.innerHTML = '<input id="lcNomeEdit_'+idx+'" class="lc-cell-input" value="'+_lcEsc(nomeAtual)+'"'
+    +' style="width:100%;min-width:120px;" placeholder="Nome..."'
+    +' onblur="lcSalvarNomeCliente(this,'+idx+')" onkeydown="if(event.key===\'Enter\')this.blur();if(event.key===\'Escape\'){lcCancelarNomeCliente(this,'+idx+',\''+_lcEsc(nomeAtual)+'\')}">';
+  var inp = document.getElementById('lcNomeEdit_'+idx);
+  if(inp){ inp.focus(); inp.select(); }
+}
+
+function lcSalvarNomeCliente(inp, idx){
+  var novo = inp.value.trim();
+  if(novo && Array.isArray(data) && data[idx]){
+    data[idx].cliente = novo;
+    if(typeof markUnsaved==='function') markUnsaved();
+    if(typeof saveStorage==='function') saveStorage();
+  }
+  lcRenderizar(document.getElementById('lcSearchInput').value||'');
+}
+
+function lcCancelarNomeCliente(inp, idx, original){
+  lcRenderizar(document.getElementById('lcSearchInput').value||'');
+}
 function _lcFmtEdit(v){ var n=Number(v)||0; return n?String(n).replace('.',','):''; }
 function _lcParseNum(s){ if(!s&&s!==0)return 0; var n=parseFloat(String(s).trim().replace(/R\$\s*/,'').replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
 
@@ -1217,7 +1432,7 @@ function lcDeselecionarTodos(){
   if(ca){ca.checked=false;ca.indeterminate=false;}
 }
 
-/* Fix 2: barra de massa com botão dinâmico "Excluir Todos / Excluir Selecionados" */
+/* Barra de ações em massa */
 function lcAtualizarMassaBar(){
   var sels  = document.querySelectorAll('.lc-row-chk:checked').length;
   var total = document.querySelectorAll('.lc-row-chk').length;
@@ -1226,19 +1441,116 @@ function lcAtualizarMassaBar(){
   var btn   = document.getElementById('lcBtnExcluirDin');
 
   if(!bar) return;
+
   if(sels>0){
     bar.classList.add('visible');
-    if(cnt) cnt.textContent = sels+' selecionado'+(sels!==1?'s':'');
+    if(cnt) cnt.textContent = sels+' selecionado'+(sels!==1?'s':(sels===total&&total>0?' (todos)':''));
     if(btn){
       btn.style.display = 'inline-flex';
       btn.innerHTML = sels===total && total>0
-        ? '🗑 Excluir Todos ('+total+')'
-        : '🗑 Excluir Selecionados ('+sels+')';
+        ? '🗑 Remover Todos ('+total+')'
+        : '🗑 Remover selecionados ('+sels+')';
     }
+    // Popular selects De/Para com listas dinâmicas
+    var _consLst  = (typeof allConsultors!=='undefined'&&Array.isArray(allConsultors))?allConsultors:[];
+    var _treinLst = (typeof allTreinamentos!=='undefined'&&Array.isArray(allTreinamentos))?allTreinamentos:[];
+    function _populatePar(deId, paraId, opts){
+      [deId, paraId].forEach(function(id, isP){
+        var el = document.getElementById(id);
+        if(!el) return;
+        var prev = el.value;
+        el.innerHTML = '<option value="">'+(isP?'— Para —':'— De —')+'</option>'
+          + opts.map(function(o){ return '<option value="'+o.v+'"'+(prev===o.v?' selected':'')+'>'+o.l+'</option>'; }).join('');
+      });
+    }
+    var consOpts  = _consLst.map(function(c){ return {v:c, l:c.toUpperCase()}; });
+    var treinOpts = _treinLst.map(function(t){ return {v:t, l:t}; });
+    _populatePar('lcMassaConsultorDe',   'lcMassaConsultorPara',   consOpts);
+    _populatePar('lcMassaTreinamentoDe', 'lcMassaTreinamentoPara', treinOpts);
   } else {
     bar.classList.remove('visible');
     if(btn) btn.style.display='none';
   }
+}
+
+/* Seleciona automaticamente as linhas cujo campo === valor ao escolher "De" */
+function lcSelecionarPorDe(campo, valor){
+  if(!valor) return; // "— De —" selecionado: não altera seleção
+  var arr = (typeof data!=='undefined'&&Array.isArray(data))?data:[];
+  document.querySelectorAll('.lc-row-chk').forEach(function(chk){
+    var idx = parseInt(chk.dataset.idx);
+    var d = arr[idx];
+    if(!d) return;
+    var match = (d[campo]||'') === valor;
+    chk.checked = match;
+    var tr = chk.closest('tr');
+    if(tr) tr.classList.toggle('lc-selected', match);
+  });
+  var ca = document.getElementById('lcChkAll');
+  var todos = document.querySelectorAll('.lc-row-chk');
+  var marcados = document.querySelectorAll('.lc-row-chk:checked');
+  if(ca){
+    ca.checked = marcados.length === todos.length && todos.length > 0;
+    ca.indeterminate = marcados.length > 0 && marcados.length < todos.length;
+  }
+  lcAtualizarMassaBar();
+}
+
+/* Aplicar alterações em massa com lógica De → Para */
+function lcAplicarMassa(){
+  var consDe   = (document.getElementById('lcMassaConsultorDe')    ||{}).value || '';
+  var consPara = (document.getElementById('lcMassaConsultorPara')   ||{}).value || '';
+  var stDe     = (document.getElementById('lcMassaStatusDe')        ||{}).value || '';
+  var stPara   = (document.getElementById('lcMassaStatusPara')      ||{}).value || '';
+  var treinDe  = (document.getElementById('lcMassaTreinamentoDe')   ||{}).value || '';
+  var treinPara= (document.getElementById('lcMassaTreinamentoPara') ||{}).value || '';
+
+  var temAlgo = (consPara) || (stPara) || (treinPara);
+  if(!temAlgo){
+    if(typeof _showToast==='function') _showToast('Preencha ao menos um campo "Para".','var(--amber)');
+    return;
+  }
+
+  var indices = Array.from(document.querySelectorAll('.lc-row-chk:checked')).map(function(c){ return parseInt(c.dataset.idx); });
+  if(!indices.length) return;
+
+  var alterados = 0;
+  indices.forEach(function(idx){
+    if(!Array.isArray(data)||!data[idx]) return;
+    var d = data[idx];
+    var mudou = false;
+    if(consPara && (!consDe || d.consultor === consDe)){
+      d.consultor = consPara; mudou = true;
+    }
+    if(stPara && (!stDe || d.status === stDe)){
+      d.status = stPara; mudou = true;
+    }
+    if(treinPara && (!treinDe || d.treinamento === treinDe)){
+      d.treinamento = treinPara; mudou = true;
+    }
+    if(mudou) alterados++;
+  });
+
+  if(!alterados){
+    if(typeof _showToast==='function') _showToast('Nenhum cliente correspondeu aos critérios "De".','var(--amber)');
+    return;
+  }
+
+  if(typeof markUnsaved==='function') markUnsaved();
+  if(typeof saveStorage==='function') saveStorage();
+
+  // Resetar selects
+  ['lcMassaConsultorDe','lcMassaConsultorPara','lcMassaStatusDe','lcMassaStatusPara',
+   'lcMassaTreinamentoDe','lcMassaTreinamentoPara'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+
+  lcDeselecionarTodos();
+  lcRenderizar(document.getElementById('lcSearchInput').value||'');
+  if(typeof renderAll==='function') renderAll();
+  if(typeof renderConsultor==='function') renderConsultor();
+
+  if(typeof _showToast==='function') _showToast('✅ '+alterados+' cliente'+(alterados!==1?'s':'')+' alterado'+(alterados!==1?'s':'')+'!','var(--accent)');
 }
 
 /* Excluir linha individual */
@@ -1306,6 +1618,11 @@ window.lcDeselecionarTodos = lcDeselecionarTodos;
 window.lcExcluirLinha      = lcExcluirLinha;
 window.lcExcluirSelecionados = lcExcluirSelecionados;
 window.lcSalvarTodos       = lcSalvarTodos;
+window.lcAplicarMassa      = lcAplicarMassa;
+window.lcSelecionarPorDe   = lcSelecionarPorDe;
+window.lcEditarNomeCliente  = lcEditarNomeCliente;
+window.lcSalvarNomeCliente  = lcSalvarNomeCliente;
+window.lcCancelarNomeCliente= lcCancelarNomeCliente;
 
 // BLOQUEIOS: modal NÃO fecha com ESC nem backdrop
 // (backdrop bloqueado via onclick="event.stopPropagation()" no HTML)
@@ -1329,6 +1646,7 @@ function _vincularEventosImport(){
   // Barra de fonte (só inserir uma vez)
   var modalBody=document.querySelector('#importModalOverlay .modal');
   if(modalBody&&!document.getElementById('importSourceBar')){
+    var _ta=window._turmaAtiva||(typeof _turmaAtiva!=='undefined'?_turmaAtiva:null);
     var fBar=document.createElement('div');
     fBar.id='importSourceBar';
     fBar.style.cssText='display:flex;gap:8px;padding:10px 24px;border-bottom:1px solid var(--border);background:var(--surface2);align-items:center;flex-shrink:0;flex-wrap:wrap;';
@@ -1339,6 +1657,11 @@ function _vincularEventosImport(){
       +'<button id="impBtnToggleSheets" onclick="impToggleSheets()" '
         +'style="padding:6px 14px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface);color:var(--muted);font-family:\'DM Sans\',sans-serif;font-size:12px;cursor:pointer;">'
         +'🔗 Google Sheets</button>'
+      +((_ta&&(_ta.codigo||'').toUpperCase()==='TCE-BEL')
+        ?'<button onclick="document.getElementById(\'_planilhaFileInput\').click()" '
+          +'style="padding:6px 14px;border-radius:var(--radius-sm);border:1px solid rgba(251,191,36,.35);background:rgba(251,191,36,.08);color:#fbbf24;font-family:\'DM Sans\',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">'
+          +'⬆ Importar TCE</button>'
+        :'')
       +'<span id="impFileNome" style="font-size:11px;color:var(--muted);font-family:monospace;"></span>';
     modalBody.insertBefore(fBar,modalBody.children[1]);
     var sr=document.createElement('div');

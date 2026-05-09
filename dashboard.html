@@ -743,14 +743,48 @@
         <span id="lcCount" style="font-size:13px;font-weight:600;color:var(--text);">0 clientes</span>
         <span id="lcSubtitle" style="font-size:11px;color:var(--muted);"></span>
       </div>
+      <button id="lcBtnDistribuir" onclick="redistSemConsultorReal()" style="display:none;padding:7px 16px;border-radius:var(--radius-sm);border:1px solid rgba(200,240,90,.35);background:rgba(200,240,90,.08);color:var(--accent);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">⚖ Distribuir sem consultor</button>
       <button onclick="fecharListaClientes()" style="padding:7px 16px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;flex-shrink:0;">✕ Fechar</button>
     </div>
 
     <!-- Barra de ações em massa -->
-    <div id="lcMassaBar" style="padding:8px 24px;background:rgba(200,240,90,.07);border-bottom:1px solid var(--border);align-items:center;gap:10px;">
-      <span id="lcMassaCount" style="font-size:12px;color:var(--accent);font-weight:600;flex:1;"></span>
-      <button id="lcBtnExcluirDin" onclick="lcExcluirSelecionados()" style="display:none;padding:5px 14px;border-radius:var(--radius-sm);border:1px solid rgba(255,95,87,.35);background:rgba(255,95,87,.12);color:var(--red);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;align-items:center;gap:6px;">🗑 Excluir Selecionados</button>
-      <button onclick="lcDeselecionarTodos()" style="padding:5px 14px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;">Cancelar seleção</button>
+    <div id="lcMassaBar" style="padding:10px 16px;background:rgba(200,240,90,.06);border-bottom:1px solid var(--border);flex-direction:column;gap:8px;">
+      <!-- Linha 1: contagem + ações rápidas -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span id="lcMassaCount" style="font-size:12px;color:var(--accent);font-weight:700;white-space:nowrap;"></span>
+        <button onclick="lcAplicarMassa()" style="padding:5px 18px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#0a0a0a;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Aplicar</button>
+        <span style="width:1px;height:18px;background:var(--border2);align-self:center;flex-shrink:0;"></span>
+        <button id="lcBtnExcluirDin" onclick="lcExcluirSelecionados()" style="display:none;padding:5px 14px;border-radius:var(--radius-sm);border:1px solid rgba(255,95,87,.35);background:rgba(255,95,87,.12);color:var(--red);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">🗑 Remover selecionados</button>
+        <button onclick="lcDeselecionarTodos()" style="padding:5px 14px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;">Cancelar</button>
+      </div>
+      <!-- Linha 2: pares De → Para -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <!-- Consultor -->
+        <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">Consultor</span>
+        <select id="lcMassaConsultorDe" onchange="lcSelecionarPorDe('consultor',this.value)" style="padding:3px 7px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;max-width:130px;"><option value="">— De —</option></select>
+        <span style="font-size:12px;color:var(--muted);">→</span>
+        <select id="lcMassaConsultorPara" style="padding:3px 7px;border-radius:var(--radius-sm);border:1px solid rgba(200,240,90,.25);background:var(--surface2);color:var(--accent);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;max-width:130px;"><option value="">— Para —</option></select>
+        <span style="width:1px;height:16px;background:var(--border2);align-self:center;flex-shrink:0;"></span>
+        <!-- Status -->
+        <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">Status</span>
+        <select id="lcMassaStatusDe" onchange="lcSelecionarPorDe('status',this.value)" style="padding:3px 7px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;">
+          <option value="">— De —</option>
+          <option value="aberto">ABERTO</option><option value="pago">PAGO</option><option value="entrada">ENTRADA</option>
+          <option value="negociacao">NEGOCIAÇÃO</option><option value="desistiu">DESISTIU</option><option value="estorno">ESTORNO</option>
+        </select>
+        <span style="font-size:12px;color:var(--muted);">→</span>
+        <select id="lcMassaStatusPara" style="padding:3px 7px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;">
+          <option value="">— Para —</option>
+          <option value="aberto">ABERTO</option><option value="pago">PAGO</option><option value="entrada">ENTRADA</option>
+          <option value="negociacao">NEGOCIAÇÃO</option><option value="desistiu">DESISTIU</option><option value="estorno">ESTORNO</option>
+        </select>
+        <span style="width:1px;height:16px;background:var(--border2);align-self:center;flex-shrink:0;"></span>
+        <!-- Treinamento -->
+        <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">Treinamento</span>
+        <select id="lcMassaTreinamentoDe" onchange="lcSelecionarPorDe('treinamento',this.value)" style="padding:3px 7px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;max-width:140px;"><option value="">— De —</option></select>
+        <span style="font-size:12px;color:var(--muted);">→</span>
+        <select id="lcMassaTreinamentoPara" style="padding:3px 7px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;max-width:140px;"><option value="">— Para —</option></select>
+      </div>
     </div>
 
     <!-- Barra de resumo por consultor (preenchida por JS) -->
@@ -821,7 +855,8 @@
         <input type="checkbox" id="importOptMaiusculo" style="accent-color:var(--accent);cursor:pointer;">
         Converter nomes para maiúsculas
       </label>
-      <button id="importBtnCancelar" onclick="closeImportModal()" style="padding:8px 18px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;">Cancelar</button>
+      <button id="importBtnDistribuir" onclick="impAbrirDistribuicao()" style="display:none;padding:8px 16px;border-radius:var(--radius-sm);border:1px solid rgba(200,240,90,.35);background:rgba(200,240,90,.08);color:var(--accent);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">⚖ Distribuir sem consultor</button>
+<button id="importBtnCancelar" onclick="closeImportModal()" style="padding:8px 18px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;">Cancelar</button>
     </div>
   </div>
 </div>
@@ -1035,7 +1070,13 @@
           <button class="add-btn" onclick="abrirNovoTreinador()">+ Novo treinador</button>
         </div>
       </div>
-      <div class="person-grid" id="treinadorCards"></div>
+      <div id="treinadorLayoutWrap" style="display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start;">
+        <div class="person-grid" id="treinadorCards"></div>
+        <div id="treinadorRankingPanel" class="spanel" style="position:sticky;top:20px;min-width:0;">
+          <div class="spanel-title">Ranking — Faturado</div>
+          <div id="treinadorRankingBody"></div>
+        </div>
+      </div>
       <div class="detail-panel" id="treinadorDetail" style="display:none;">
         <div class="detail-header">
           <div>
@@ -1186,6 +1227,7 @@
   <div class="modal" style="width:420px;">
     <div class="modal-title">Informações do cliente</div>
     <div class="modal-subtitle" id="clientInfoSub"></div>
+    <div class="modal-field" id="clientInfoNomeCampo" style="display:none;"><label class="modal-label">Nome do cliente</label><input class="modal-input" id="clientInfoNome" type="text" placeholder="Nome..." style="text-transform:uppercase;"></div>
     <div class="modal-field"><label class="modal-label">Anotações</label><textarea class="modal-input" id="clientInfoText" rows="5" style="resize:vertical;line-height:1.6;" placeholder="Anotações sobre o cliente..."></textarea></div>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeClientInfo()">Cancelar</button>
@@ -1788,6 +1830,8 @@ try{
         <div class="np-kpi-sub" id="npKpiFaltamSub"></div>
       </div>
     </div>
+    <!-- Widget Follow-ups do dia -->
+    <div id="npFollowUpWidget" style="display:none;background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:14px 16px;margin-bottom:16px;"></div>
     <!-- Performance do Time -->
     <div class="np-perf-panel" id="npPerfPanel">
       <div class="np-perf-header">
@@ -1891,7 +1935,20 @@ try{
   <div class="np-body" id="npTabMetas">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <div style="font-size:13px;color:var(--muted);">Metas individuais por consultor</div>
-      <button class="np-btn" id="npBtnConfigurar" onclick="npAbrirModalMeta()" style="font-size:13px;">&#x2699; Configurar metas</button>
+      <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
+        <div id="npBtnFaturamento" style="display:flex;flex-direction:column;align-items:flex-start;padding:5px 14px;border-radius:8px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);white-space:nowrap;">
+          <span style="font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:rgba(96,165,250,.7);font-weight:600;">Faturado</span>
+          <span style="font-size:13px;font-weight:800;color:#60a5fa;font-variant-numeric:tabular-nums;line-height:1.3;white-space:nowrap;">—</span>
+        </div>
+        <div id="npBtnConfigurar" onclick="npAbrirModalMeta()" style="display:flex;flex-direction:column;align-items:flex-start;padding:5px 14px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--border2);cursor:pointer;white-space:nowrap;">
+          <span style="font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;">Configurar</span>
+          <span style="font-size:13px;font-weight:800;color:var(--text);line-height:1.3;white-space:nowrap;">&#x2699; Metas</span>
+        </div>
+        <div id="npBtnFaltaMeta" style="display:none;flex-direction:column;align-items:flex-start;padding:5px 14px;border-radius:8px;border:1px solid rgba(200,240,90,.2);background:rgba(200,240,90,.06);white-space:nowrap;">
+          <span style="font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:rgba(200,240,90,.7);font-weight:600;">Falta p/ meta</span>
+          <span style="font-size:13px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1.3;white-space:nowrap;">—</span>
+        </div>
+      </div>
     </div>
     <div class="np-metas-grid" id="npMetasGrid"></div>
   </div>
@@ -2101,6 +2158,37 @@ try{
 <script src="assets/js/13-funil-vendas.js"></script>
 
 <script src="assets/js/14-notificacoes.js"></script>
+<script src="assets/js/15-pipeline-followup.js"></script>
+
+<!-- Modal Follow-up -->
+<div class="np-modal-overlay" id="npFollowUpOverlay">
+  <div class="np-modal" style="width:min(420px,95vw);">
+    <div class="np-modal-header">
+      <span class="np-modal-title">📅 Próxima ação</span>
+      <button class="np-modal-close" onclick="npFecharFollowUp()">×</button>
+    </div>
+    <div class="np-modal-body">
+      <div style="margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid var(--border2);">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Consultor → Cliente</div>
+        <div style="font-size:13px;font-weight:700;color:var(--accent);" id="npFuConsultor"></div>
+        <div style="font-size:12px;color:var(--text);" id="npFuCliente"></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px;">Próxima ação *</label>
+        <textarea id="npFuAcao" class="np-form-input" rows="3" placeholder="Ex: Ligar para apresentar proposta, enviar contrato..." style="resize:vertical;line-height:1.6;"></textarea>
+      </div>
+      <div>
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px;">Data do follow-up *</label>
+        <input type="date" id="npFuData" class="np-form-input" style="font-size:14px;font-weight:600;">
+      </div>
+    </div>
+    <div class="np-modal-footer">
+      <button class="np-btn-sec" style="color:var(--red);border-color:rgba(255,82,82,.3);" onclick="npRemoverFollowUp()">Remover</button>
+      <button class="np-btn-sec" onclick="npFecharFollowUp()">Cancelar</button>
+      <button class="np-btn" onclick="npSalvarFollowUp()">Salvar</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ DROPDOWN NOTIFICAÇÕES ══ -->
 <div id="notifDropdown" class="notif-dropdown hidden">
@@ -2128,5 +2216,7 @@ try{
 </div>
 
 <!-- CSS de audit-row e afins movido para assets/css/modaisExtras.css -->
+
+<script src="assets/js/06-tce-importacao.js"></script>
 </body>
 </html>
