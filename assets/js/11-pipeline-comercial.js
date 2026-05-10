@@ -921,27 +921,10 @@
   }
 
   /* ── Ranking ─────────────────────────────────────── */
-  window.npRenderRanking=function(){
-    var filtroSrc=(document.getElementById('npRankFiltro')||{}).value||'';
-    var todas=_npTodasVendas();
-    var ranking=_npPorConsultor(todas,filtroSrc,'total'); /* ranking por volume total */
-    var el=document.getElementById('npRankingList');if(!el) return;
-    if(!ranking.length){el.innerHTML='<div class="np-empty">Sem dados neste período.</div>';return;}
-    var medalhas=['🥇','🥈','🥉'];
-    el.innerHTML=ranking.map(function(r,i){
-      var cor=COR[i%COR.length];
-      var goal=_npGoals[r.nome]||{};
-      var meta=+(goal.metaValor||0);
-      var pct=meta?Math.min(100,Math.round(r.total/meta*100)):null;
-      return '<div class="np-ranking-item">'
-        +'<div class="np-ri-pos">'+(medalhas[i]||(i+1)+'°')+'</div>'
-        +'<div class="np-rank-avatar" style="background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;">'+r.nome.charAt(0).toUpperCase()+'</div>'
-        +'<div class="np-ri-info"><div class="np-ri-nome">'+_esc(r.nome)+'</div>'
-        +'<div class="np-ri-detail">'+r.qtd+' venda'+(r.qtd!==1?'s':'')+' · '+r.qtdPago+' paga'+(r.qtdPago!==1?'s':'')
-        +(pct!==null?' · meta: '+pct+'%':'')+'</div></div>'
-        +'<div style="text-align:right;"><div class="np-ri-val">'+_fmtR(r.total)+'</div></div>'
-        +'</div>';
-    }).join('');
+  /* Renderização sobrescrita pelo 12-pipeline-v2-patch.js — placeholder para evitar erro se v2 não carregar */
+  window.npRenderRanking=window.npRenderRanking||function(){
+    var el=document.getElementById('npRankingList');
+    if(el) el.innerHTML='<div class="np-empty">Carregando...</div>';
   };
 
   /* Popular dropdown de Produto/Serviço com os mesmos treinamentos da
