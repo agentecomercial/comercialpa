@@ -12,6 +12,8 @@
   var _editId = null;
   var _ultimoBase64 = '';
   var _filtroConsultor = '';
+  var _filtroDist      = '';
+  var _filtroBusca     = '';
 
   /* ── Worker OCR reutilizável ────────────────────────────────── */
   var _ocrWorker = null;
@@ -91,9 +93,57 @@
     window._fbSave(_fbPath('_rrIndex'), _rrIdx).catch(function(){});
   }
 
-  /* ── Filtro ativo ───────────────────────────────────────────── */
-  window._ldFiltrar = function(consultor){
-    _filtroConsultor = consultor||'';
+  /* ── Filtros (toolbar estilo Funil) ────────────────────────── */
+  function _filtroAtivo(){ return _filtroConsultor||_filtroDist||_filtroBusca; }
+
+  function _atualizarBotaoLimpar(){
+    var btn=document.getElementById('ldFilLimpar');
+    if(btn) btn.style.display=_filtroAtivo()?'':'none';
+    var sc=document.getElementById('ldFilConsultor');
+    var sd=document.getElementById('ldFilDist');
+    if(sc) sc.classList.toggle('ativo',!!_filtroConsultor);
+    if(sd) sd.classList.toggle('ativo',!!_filtroDist);
+  }
+
+  function _populaSelectConsultores(){
+    var sel=document.getElementById('ldFilConsultor');
+    if(!sel) return;
+    var cons=Array.from(new Set(
+      Object.values(_leads).map(function(l){ return l.consultor||''; }).filter(Boolean)
+    )).sort();
+    var cur=sel.value;
+    sel.innerHTML='<option value="">Todos consultores</option>'
+      +cons.map(function(c){ return '<option value="'+_esc(c)+'"'+(c===cur?' selected':'')+'>'+_esc(c)+'</option>'; }).join('');
+  }
+
+  window._ldBuscar=function(v){
+    _filtroBusca=(v||'').trim().toLowerCase();
+    _atualizarBotaoLimpar();
+    _render();
+  };
+
+  window._ldFiltrarSel=function(){
+    var sc=document.getElementById('ldFilConsultor');
+    var sd=document.getElementById('ldFilDist');
+    _filtroConsultor=sc?sc.value:'';
+    _filtroDist=sd?sd.value:'';
+    _atualizarBotaoLimpar();
+    _render();
+  };
+
+  window._ldLimparFiltros=function(){
+    _filtroConsultor=''; _filtroDist=''; _filtroBusca='';
+    var sc=document.getElementById('ldFilConsultor'); if(sc) sc.value='';
+    var sd=document.getElementById('ldFilDist');      if(sd) sd.value='';
+    var si=document.getElementById('ldSearch');       if(si) si.value='';
+    _atualizarBotaoLimpar();
+    _render();
+  };
+
+  window._ldFiltrar=function(consultor){
+    _filtroConsultor=(consultor==='__sem__')?'':( consultor||'');
+    _filtroDist=(consultor==='__sem__')?'nao':_filtroDist;
+    _atualizarBotaoLimpar();
     _render();
   };
 
@@ -116,18 +166,23 @@
 
   /* ── Render principal ───────────────────────────────────────── */
   function _render(){
-    _renderFiltros();
     _renderResumo();
     _renderProximo();
+    _populaSelectConsultores();
     var el = document.getElementById('npLeadsGrid');
     if(!el) return;
     var todas = Object.entries(_leads).sort(function(a,b){ return (b[1].criadoEm||0)-(a[1].criadoEm||0); });
-    var lista = _filtroConsultor
-      ? todas.filter(function(e){
-          if(_filtroConsultor==='__sem__') return !e[1].consultor;
-          return (e[1].consultor||'')=== _filtroConsultor;
-        })
-      : todas;
+    var lista = todas.filter(function(e){
+      var l=e[1];
+      if(_filtroConsultor && (l.consultor||'')!==_filtroConsultor) return false;
+      if(_filtroDist==='sim' && !l.consultor) return false;
+      if(_filtroDist==='nao' && l.consultor)  return false;
+      if(_filtroBusca){
+        var haystack=((l.nome||'')+' '+(l.telefone||'')).toLowerCase();
+        if(haystack.indexOf(_filtroBusca)===-1) return false;
+      }
+      return true;
+    });
 
     if(!todas.length){
       el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Nenhum lead cadastrado.<br>Arraste uma imagem do WhatsApp acima.</div>';
@@ -170,46 +225,6 @@
       +'</table>';
   }
 
-  /* ── Barra de filtros por consultor ─────────────────────────── */
-  function _renderFiltros(){
-    var el = document.getElementById('npLeadsFiltros');
-    if(!el) return;
-    var todas = Object.values(_leads);
-    var total = todas.length;
-    if(!total){ el.innerHTML=''; return; }
-
-    var map = {};
-    todas.forEach(function(l){
-      var k = l.consultor||'__sem__';
-      map[k] = (map[k]||0)+1;
-    });
-
-    var btns = '<button onclick="window._ldFiltrar(\'\')" style="'
-      +_btnStyle(_filtroConsultor==='')+'">'
-      +'Todos <span style="font-size:9px;opacity:.7;">('+total+')</span></button>';
-
-    if(map['__sem__']){
-      btns += '<button onclick="window._ldFiltrar(\'__sem__\')" style="'
-        +_btnStyle(_filtroConsultor==='__sem__','var(--red)')+'">'
-        +'❗ Sem consultor <span style="font-size:9px;opacity:.7;">('+map['__sem__']+')</span></button>';
-    }
-
-    Object.keys(map).filter(function(k){ return k!=='__sem__'; }).sort().forEach(function(cons){
-      btns += '<button onclick="window._ldFiltrar(\''+_esc(cons)+'\')" style="'
-        +_btnStyle(_filtroConsultor===cons)+'">'
-        +_esc(cons)+' <span style="font-size:9px;opacity:.7;">('+map[cons]+')</span></button>';
-    });
-
-    el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">'+btns+'</div>';
-  }
-
-  function _btnStyle(ativo, cor){
-    cor = cor||'var(--accent)';
-    return 'font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;cursor:pointer;transition:all .15s;'
-      +(ativo
-        ?'background:'+cor+';color:#000;border:1px solid '+cor+';'
-        :'background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border2);');
-  }
 
   /* ── Resumo por consultor (mini cards) ──────────────────────── */
   function _renderResumo(){

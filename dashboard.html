@@ -1983,11 +1983,25 @@ try{
       </div>
       <button onclick="window._ldAbrirChave()" title="Configurar chave da IA (opcional)" style="flex-shrink:0;padding:10px 14px;border-radius:10px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.06);color:var(--accent);cursor:pointer;font-size:18px;">🤖</button>
     </div>
-    <div id="npLeadsResumo"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
-      <div id="npLeadsFiltros" style="flex:1;min-width:0;"></div>
-      <div id="npLeadsProximo" style="flex-shrink:0;padding:4px 12px;border-radius:20px;background:rgba(200,240,90,.06);border:1px solid rgba(200,240,90,.18);white-space:nowrap;"></div>
+    <!-- toolbar de filtros (padrão funil) -->
+    <div class="fnl-toolbar" style="padding:0 0 12px 0;">
+      <div class="fnl-search-wrap" style="display:flex;flex:1;min-width:180px;">
+        <input class="fnl-search" id="ldSearch" placeholder="Buscar nome ou telefone…" oninput="window._ldBuscar(this.value)" autocomplete="off">
+      </div>
+      <div class="fnl-filtros-bar">
+        <select class="fnl-filtro-sel" id="ldFilConsultor" onchange="window._ldFiltrarSel()">
+          <option value="">Todos consultores</option>
+        </select>
+        <select class="fnl-filtro-sel" id="ldFilDist" onchange="window._ldFiltrarSel()">
+          <option value="">Todos</option>
+          <option value="sim">Distribuídos</option>
+          <option value="nao">Não distribuídos</option>
+        </select>
+        <button class="fnl-filtro-limpar-btn" id="ldFilLimpar" onclick="window._ldLimparFiltros()" style="display:none;">✕ Limpar</button>
+      </div>
+      <div id="npLeadsProximo" style="flex-shrink:0;padding:5px 12px;border-radius:20px;background:rgba(200,240,90,.06);border:1px solid rgba(200,240,90,.18);white-space:nowrap;font-size:12px;"></div>
     </div>
+    <div id="npLeadsResumo"></div>
     <div id="npLeadsGrid" style="overflow-x:auto;"></div>
   </div>
 
