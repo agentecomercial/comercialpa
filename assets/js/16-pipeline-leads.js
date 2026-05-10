@@ -137,27 +137,37 @@
       el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Nenhum lead encontrado para este filtro.</div>';
       return;
     }
-    el.innerHTML = lista.map(function(e){
+    var rows = lista.map(function(e){
       var id=e[0]; var l=e[1];
+      var foto = l.imgBase64
+        ? '<img class="ld-thumb" src="'+l.imgBase64+'" onclick="window._ldVerImg(\''+id+'\')" title="Ver imagem">'
+        : '<div class="ld-thumb-ph">👤</div>';
       var dist = l.consultor
-        ?'<span style="font-size:10px;background:rgba(200,240,90,.12);color:var(--accent);border:1px solid rgba(200,240,90,.25);border-radius:20px;padding:2px 8px;white-space:nowrap;">✅ '+_esc(l.consultor)+'</span>'
-        :'<span style="font-size:10px;background:rgba(255,82,82,.1);color:var(--red);border:1px solid rgba(255,82,82,.25);border-radius:20px;padding:2px 8px;">Não distribuído</span>';
-      return '<div class="np-lead-card">'
-        +(l.imgBase64?'<img src="'+l.imgBase64+'" onclick="window._ldVerImg(\''+id+'\')" style="width:100%;border-radius:8px;margin-bottom:10px;cursor:pointer;max-height:160px;object-fit:cover;">':'')
-        +'<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;">'+_esc(l.nome||'Sem nome')+'</div>'
-        +'<div style="font-size:11px;color:var(--muted);margin-bottom:4px;">'+_esc(l.telefone||'—')+'</div>'
-        +'<div style="font-size:11px;color:var(--text);font-style:italic;margin-bottom:8px;line-height:1.4;">'+_esc(l.mensagem||'')+'</div>'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">'
-          +dist
-          +'<div style="display:flex;gap:6px;">'
-            +'<button onclick="window._ldDistribuir(\''+id+'\')" style="font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.08);color:var(--accent);cursor:pointer;">📤 Distribuir</button>'
-            +(l.consultor?'<button onclick="window._ldDesfazer(\''+id+'\')" style="font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid rgba(255,180,0,.3);background:rgba(255,180,0,.07);color:var(--amber);cursor:pointer;">↩</button>':'')
-            +'<button onclick="window._ldEditar(\''+id+'\')" style="font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;">✏</button>'
-            +'<button onclick="window._ldRemover(\''+id+'\')" style="font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid rgba(255,82,82,.3);background:rgba(255,82,82,.06);color:var(--red);cursor:pointer;">✕</button>'
-          +'</div>'
-        +'</div>'
-        +'</div>';
+        ? '<span style="font-size:10px;background:rgba(200,240,90,.12);color:var(--accent);border:1px solid rgba(200,240,90,.25);border-radius:20px;padding:2px 8px;white-space:nowrap;">✅ '+_esc(l.consultor)+'</span>'
+        : '<span style="font-size:10px;background:rgba(255,82,82,.1);color:var(--red);border:1px solid rgba(255,82,82,.25);border-radius:20px;padding:2px 8px;">Não dist.</span>';
+      var desfazer = l.consultor
+        ? '<button onclick="window._ldDesfazer(\''+id+'\')" title="Desfazer distribuição" style="font-size:10px;padding:2px 6px;border-radius:5px;border:1px solid rgba(255,180,0,.3);background:rgba(255,180,0,.07);color:var(--amber);cursor:pointer;">↩</button>'
+        : '';
+      return '<tr>'
+        +'<td class="td-foto">'+foto+'</td>'
+        +'<td class="td-nome" title="'+_esc(l.nome||'')+'">'+_esc(l.nome||'Sem nome')+'</td>'
+        +'<td class="td-tel">'+_esc(l.telefone||'—')+'</td>'
+        +'<td class="td-msg" title="'+_esc(l.mensagem||'')+'">'+_esc(l.mensagem||'')+'</td>'
+        +'<td class="td-cons">'+dist+'</td>'
+        +'<td class="td-acoes"><div class="td-acoes-inner">'
+          +'<button onclick="window._ldDistribuir(\''+id+'\')" title="Distribuir" style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.08);color:var(--accent);cursor:pointer;">📤</button>'
+          +desfazer
+          +'<button onclick="window._ldEditar(\''+id+'\')" title="Editar" style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;">✏</button>'
+          +'<button onclick="window._ldRemover(\''+id+'\')" title="Remover" style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid rgba(255,82,82,.3);background:rgba(255,82,82,.06);color:var(--red);cursor:pointer;">✕</button>'
+        +'</div></td>'
+        +'</tr>';
     }).join('');
+    el.innerHTML = '<table class="ld-table">'
+      +'<thead><tr>'
+      +'<th></th><th>Nome</th><th>Telefone</th><th>Mensagem</th><th>Consultor</th><th>Ações</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+      +'</table>';
   }
 
   /* ── Barra de filtros por consultor ─────────────────────────── */

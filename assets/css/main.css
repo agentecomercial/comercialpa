@@ -868,6 +868,23 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-alert-strip.visible{display:block;}
 /* Bloco separador */
 .np-bloco{background:var(--surface);border:1px solid var(--border2);border-radius:10px;overflow:hidden;margin-bottom:16px;}
+/* ─── Leads ──────────────────────────────────────────────────── */
+#npLeadsDropZone.ativo{background:rgba(200,240,90,.08);border-color:var(--accent);}
+/* tabela de leads (opção C) */
+.ld-table{width:100%;border-collapse:collapse;font-size:12px;}
+.ld-table thead th{text-align:left;padding:8px 10px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border2);background:var(--surface);position:sticky;top:0;z-index:1;}
+.ld-table tbody tr{border-bottom:1px solid var(--border2);transition:background .12s;}
+.ld-table tbody tr:hover{background:var(--surface2);}
+.ld-table td{padding:7px 10px;vertical-align:middle;}
+.ld-table .td-foto{width:44px;}
+.ld-table .ld-thumb{width:36px;height:36px;border-radius:50%;object-fit:cover;cursor:pointer;border:1px solid var(--border2);}
+.ld-table .ld-thumb-ph{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:16px;opacity:.5;}
+.ld-table .td-nome{font-weight:700;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ld-table .td-tel{color:var(--muted);white-space:nowrap;}
+.ld-table .td-msg{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.75;font-style:italic;}
+.ld-table .td-cons{}
+.ld-table .td-acoes{white-space:nowrap;}
+.ld-table .td-acoes-inner{display:flex;gap:4px;align-items:center;}
 
 /* ═══ FASE 4 — UX / MOBILE / SKELETON ═══════════════════ */
 
