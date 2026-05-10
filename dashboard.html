@@ -1795,6 +1795,7 @@ try{
     <button class="np-tab" data-tab="metas" onclick="npShowTab('metas')">Metas</button>
     <button class="np-tab" data-tab="ranking" onclick="npShowTab('ranking')">Ranking</button>
     <button class="np-tab" data-tab="funil" onclick="npShowTab('funil')">Funil</button>
+    <button class="np-tab" data-tab="leads" onclick="npShowTab('leads')">Leads</button>
   </div>
 
   <!-- TAB: DASHBOARD -->
@@ -1970,6 +1971,24 @@ try{
     </div>
     <div id="npRankKpis" style="margin-bottom:12px;"></div>
     <div class="np-ranking-list" id="npRankingList"></div>
+  </div>
+
+  <!-- TAB: LEADS -->
+  <div class="np-body" id="npTabLeads" style="padding:16px;">
+    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:20px;">
+      <div id="npLeadsDropZone" style="flex:1;border:2px dashed rgba(200,240,90,.35);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:background .2s;background:rgba(200,240,90,.03);">
+        <div style="font-size:28px;margin-bottom:8px;">📲</div>
+        <div style="font-size:13px;font-weight:700;color:var(--accent);" id="npLeadsDropTxt">Arraste uma imagem do WhatsApp aqui</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">ou clique para selecionar · ou <kbd style="background:rgba(255,255,255,.08);border:1px solid var(--border2);border-radius:4px;padding:1px 5px;font-size:10px;">Ctrl+V</kbd> para colar</div>
+      </div>
+      <button onclick="window._ldAbrirChave()" title="Configurar chave da IA (opcional)" style="flex-shrink:0;padding:10px 14px;border-radius:10px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.06);color:var(--accent);cursor:pointer;font-size:18px;">🤖</button>
+    </div>
+    <div id="npLeadsResumo"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+      <div id="npLeadsFiltros" style="flex:1;min-width:0;"></div>
+      <div id="npLeadsProximo" style="flex-shrink:0;padding:4px 12px;border-radius:20px;background:rgba(200,240,90,.06);border:1px solid rgba(200,240,90,.18);white-space:nowrap;"></div>
+    </div>
+    <div id="npLeadsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;"></div>
   </div>
 
   <!-- TAB: FUNIL -->
@@ -2159,6 +2178,62 @@ try{
 
 <script src="assets/js/14-notificacoes.js"></script>
 <script src="assets/js/15-pipeline-followup.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="assets/js/16-pipeline-leads.js"></script>
+
+<!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
+<div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
+  <div class="np-modal-box" style="max-width:420px;width:95%;">
+    <div class="np-modal-header">
+      <span style="font-weight:700;font-size:14px;">🤖 Chave Gemini (opcional)</span>
+      <button class="np-modal-close" onclick="window._ldFecharChave()">✕</button>
+    </div>
+    <div style="padding:18px 20px;">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:6px;line-height:1.6;">O OCR local já funciona sem chave. A chave Gemini melhora a extração da <strong style="color:var(--text);">mensagem do lead</strong>. Obtenha grátis em <strong style="color:var(--accent);">aistudio.google.com</strong>.</p>
+      <label style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Chave AIza...</label>
+      <input id="npLdApiKeyInput" type="password" class="modal-input" placeholder="AIzaSy..." style="width:100%;margin-top:6px;margin-bottom:16px;font-family:monospace;">
+      <div style="display:flex;gap:10px;">
+        <button class="modal-btn modal-btn-secondary" onclick="window._ldFecharChave()" style="flex:1;">Cancelar</button>
+        <button class="modal-btn modal-btn-primary" onclick="window._ldSalvarChave()" style="flex:2;">✅ Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: LEAD ══════════════════════════════════════════════ -->
+<div class="np-modal-overlay" id="npLeadsModalOverlay" onclick="if(event.target===this)window._ldFecharModal()" data-img="">
+  <div class="np-modal-box" style="max-width:460px;width:95%;">
+    <div class="np-modal-header">
+      <span style="font-weight:700;font-size:14px;">📋 Dados do Lead</span>
+      <button class="np-modal-close" onclick="window._ldFecharModal()">✕</button>
+    </div>
+    <div style="padding:18px 20px;">
+      <img id="npLdImgPreview" src="" alt="" style="display:none;width:100%;border-radius:8px;margin-bottom:14px;max-height:200px;object-fit:cover;">
+      <div id="npLdIABadge" style="display:none;font-size:11px;background:rgba(200,240,90,.1);border:1px solid rgba(200,240,90,.25);border-radius:8px;padding:6px 10px;margin-bottom:12px;color:var(--accent);">🤖 Dados extraídos automaticamente — confirme antes de salvar</div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Nome</label>
+        <input id="npLdNome" class="modal-input" placeholder="Ex: Thais Pacheco" style="width:100%;margin-top:4px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Telefone</label>
+        <input id="npLdTel" class="modal-input" placeholder="Ex: +55 91 8761-1868" style="width:100%;margin-top:4px;">
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">O que o lead disse</label>
+        <textarea id="npLdMsg" class="modal-input" rows="3" placeholder="Ex: Quero informações sobre os treinamentos da Febracis" style="width:100%;margin-top:4px;resize:vertical;"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="modal-btn modal-btn-secondary" onclick="window._ldFecharModal()" style="flex:1;">Cancelar</button>
+        <button class="modal-btn modal-btn-primary" onclick="window._ldSalvar()" style="flex:2;">✅ Salvar Lead</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: IMAGEM AMPLIADA ════════════════════════════════════ -->
+<div class="np-modal-overlay" id="npLeadsImgOverlay" onclick="window._ldFecharImg()" style="align-items:center;justify-content:center;">
+  <img id="npLeadsImgBig" src="" alt="" style="max-width:92vw;max-height:90vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.7);">
+</div>
 
 <!-- Modal Follow-up -->
 <div class="np-modal-overlay" id="npFollowUpOverlay">
