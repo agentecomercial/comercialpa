@@ -5518,10 +5518,14 @@ function _renderUsuariosGrid(){
     window._fbGet('usuarios').then(function(u){
       if(!_done){
         _done=true;clearTimeout(_timeout);
-        var base=_buildLocal();
-        // Firebase tem prioridade — mesclar com base local
-        if(u) Object.keys(u).forEach(function(uid){ base[uid]=u[uid]; });
-        _renderComUsuarios(base);
+        // Firebase é fonte de verdade: usar apenas dados do Firebase
+        // (não mesclar com local para evitar "fantasmas" de usuários excluídos)
+        if(u&&Object.keys(u).length>0){
+          _saveUsuariosLocal(u);
+          _renderComUsuarios(u);
+        } else {
+          _renderComUsuarios({});
+        }
       }
     }).catch(function(){
       if(!_done){_done=true;clearTimeout(_timeout);_renderComUsuarios(_buildLocal());}
@@ -5937,6 +5941,9 @@ function abrirNovoUsuario(){document.getElementById('novoUsuarioOverlay').classL
 function fecharNovoUsuario(){document.getElementById('novoUsuarioOverlay').classList.remove('open');}
 function _excluirUsuario(uid,nome){
   if(!confirm('Excluir o acesso de "'+nome+'"?\nEsta ação não pode ser desfeita.')) return;
+  // Remover do localStorage imediatamente
+  var local=_getUsuariosLocal();
+  if(local[uid]){ delete local[uid]; _saveUsuariosLocal(local); }
   if(window._fbSave){
     window._fbSave('usuarios/'+uid,null).then(function(){
       _showToast('✅ Acesso de '+nome+' removido.','var(--accent)');
@@ -5944,6 +5951,8 @@ function _excluirUsuario(uid,nome){
     }).catch(function(e){
       _showToast('❌ Erro ao excluir: '+(e&&e.message?e.message:String(e)),'var(--red)');
     });
+  } else {
+    _renderUsuariosGrid();
   }
 }
 function excluirUsuario(uid,nome){_excluirUsuario(uid,nome);}
