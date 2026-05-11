@@ -97,7 +97,11 @@ const PERMS_PADRAO={
 function _getPermsUsuario(perfil, permissoesSalvas){
   var padrao=PERMS_PADRAO[perfil]||PERMS_PADRAO.consultor;
   if(!permissoesSalvas) return Object.assign({},padrao);
-  return Object.assign({},padrao,permissoesSalvas);
+  var merged=Object.assign({},padrao,permissoesSalvas);
+  // Permissões que o perfil garante por padrão não podem ser removidas por
+  // registros antigos no Firebase (ex: consultor sempre tem verProduto).
+  Object.keys(padrao).forEach(function(k){ if(padrao[k]===true) merged[k]=true; });
+  return merged;
 }
 // ── Constantes centralizadas (Fase 1.A — fonte única) ──
 window.APP_CONST = {
