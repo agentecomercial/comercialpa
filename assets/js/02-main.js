@@ -3447,7 +3447,7 @@ function renderProduto(){
   var _isConsultorP=_perfilP==='consultor';
   // Painel Cards Proposta — oculto para consultor
   var _propSection=document.querySelector('#tab-produto > div:nth-child(4)');
-  if(_propSection) _propSection.style.display=_isConsultorP?'none':'';
+  if(_propSection) _propSection.style.display='';
   // P2: aviso de orientação mobile para consultor
   var _rotWarn=document.getElementById('rotateWarning');
   if(_rotWarn){

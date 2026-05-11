@@ -77,9 +77,10 @@ function lcRenderResumoConsultores(){
   dSem.title=semSel?'Clique para desmarcar':'Clique para filtrar • Duplo clique para selecionar distribuição';
   dSem.addEventListener('click',function(e){
     if(_lcModoSelecao||e.shiftKey){ lcToggleSelecao('__sem__'); }
+    else if(semQt>0){ lcAbrirDistribuicaoEquilibrado(); }
     else { lcFiltroSem(); }
   });
-  dSem.addEventListener('dblclick',function(e){ e.preventDefault(); lcToggleSelecao('__sem__'); });
+  dSem.addEventListener('dblclick',function(e){ e.preventDefault(); lcFiltroSem(); });
   var lS=document.createElement('div');lS.className='lc-box__label';lS.textContent='Sem consultor';
   var vS=document.createElement('div');vS.className='lc-box__val';vS.textContent=String(semQt);
   if(semSel){
@@ -385,6 +386,109 @@ function lcAplicarDistribuicao2(){
   if(typeof _showToast==='function') _showToast(soma+' clientes distribu\u00eddos!','var(--accent)');
 }
 
+/* ── Distribuição equilibrada — considera saldos atuais ─────── */
+function lcAbrirDistribuicaoEquilibrado(){
+  var arr=(typeof data!=='undefined'&&Array.isArray(data))?data:[];
+  var resumo=impGerarResumoConsultores(arr);
+  var cons=(typeof allConsultors!=='undefined'&&allConsultors.length)
+    ?allConsultors.slice()
+    :Object.keys(resumo).filter(function(k){return k!=='SEM CONSULTOR';});
+  if(!cons.length){
+    if(typeof _showToast==='function') _showToast('Nenhum consultor disponível.','var(--amber)');
+    return;
+  }
+  var indices=[];
+  arr.forEach(function(d,i){ if(!d.consultor||!d.consultor.trim()) indices.push(i); });
+  if(!indices.length){
+    if(typeof _showToast==='function') _showToast('Nenhum cliente sem consultor.','var(--amber)');
+    return;
+  }
+
+  /* Cálculo equilibrado: distribui os sem-consultor para nivelar totais */
+  var semQt=indices.length;
+  var atuais={}; cons.forEach(function(k){ atuais[k]=resumo[k]||0; });
+  var totalGeral=arr.length; /* inclui os sem-consultor */
+  var n=cons.length;
+  var alvo=totalGeral/n;    /* alvo flutuante por consultor */
+  var diffs=cons.map(function(k){ return Math.max(0,alvo-atuais[k]); });
+  var somaDiffs=diffs.reduce(function(a,v){return a+v;},0);
+  /* Proporcional: quem está mais abaixo recebe mais */
+  var qtds;
+  if(somaDiffs===0){
+    /* todos iguais: divisão simples */
+    var b=Math.floor(semQt/n),ex=semQt%n;
+    qtds=cons.map(function(_,i){ return b+(i<ex?1:0); });
+  } else {
+    /* proporção dos déficits */
+    var restante=semQt;
+    qtds=diffs.map(function(d,i){
+      if(i===cons.length-1) return restante; /* último pega o resto */
+      var q=Math.round(d/somaDiffs*semQt);
+      restante-=q;
+      return q;
+    });
+    /* garantir não-negativos e soma correta */
+    qtds=qtds.map(function(q){ return Math.max(0,q); });
+    var somaQt=qtds.reduce(function(a,v){return a+v;},0);
+    if(somaQt!==semQt) qtds[0]+=semQt-somaQt;
+  }
+
+  /* Abrir modal com esses valores */
+  window._impDistExcl={};
+  window._impDistCons=cons;
+  window._impDistTotal=semQt;
+  window._lcDistIndices=indices;
+  window._lcDistQtdsEquil=qtds;
+
+  if(!document.getElementById('impDistModal')){
+    var dm=document.createElement('div');
+    dm.id='impDistModal';
+    dm.setAttribute('role','dialog');
+    dm.innerHTML='<div class="imp-dist-box"><div class="imp-dist-header"><div class="imp-dist-title" id="impDistModalTitle"></div><div class="imp-dist-sub" id="impDistModalSub"></div></div><div class="imp-dist-body"><div class="imp-cons-grid" id="impDistModalGrid"></div><div class="imp-dist-total">Distribuindo: <span id="impDistModalCount">0</span> / <span id="impDistModalTotal">0</span> clientes</div></div><div class="imp-dist-footer" id="impDistModalFooter"></div></div>';
+    document.body.appendChild(dm);
+  }
+
+  var CORES=['#c8f05a','#60a5fa','#34d399','#f59e0b','#a78bfa','#f472b6','#fb923c','#38bdf8','#e879f9','#4ade80'];
+  var grid=document.getElementById('impDistModalGrid');
+  if(grid) grid.innerHTML=cons.map(function(k,i){
+    var cor=CORES[i%CORES.length];
+    var atual=atuais[k]||0;
+    return '<div class="imp-cons-card" id="impDCard_'+i+'">'
+      +'<div class="imp-cons-avatar" style="background:'+cor+'26;color:'+cor+';border:1.5px solid '+cor+'55;">'+k.trim().charAt(0).toUpperCase()+'</div>'
+      +'<div class="imp-cons-nome" title="'+k+'">'+k+'<br><span style="font-size:10px;opacity:.6;">atual: '+atual+'</span></div>'
+      +'<input type="number" class="imp-cons-qt" id="impDQt_'+i+'" value="'+qtds[i]+'" min="0" max="'+semQt+'" oninput="_impDistAtualizarTotal()">'
+      +'<button class="imp-cons-x" onclick="impDistToggleExcl('+i+')">&times;</button>'
+      +'</div>';
+  }).join('');
+
+  function _atualizar(){
+    var soma=cons.reduce(function(a,k,i){
+      if(window._impDistExcl&&window._impDistExcl[k]) return a;
+      return a+(parseInt((document.getElementById('impDQt_'+i)||{}).value)||0);
+    },0);
+    var ct=document.getElementById('impDistModalCount'),tt=document.getElementById('impDistModalTotal');
+    if(ct){ct.textContent=soma;ct.style.color=soma===semQt?'var(--green)':(soma>semQt?'var(--red)':'var(--amber)');}
+    if(tt) tt.textContent=semQt;
+  }
+  window._impDistAtualizarTotal=_atualizar;
+
+  var tit=document.getElementById('impDistModalTitle');
+  var sub2=document.getElementById('impDistModalSub');
+  if(tit) tit.textContent='Distribuir '+semQt+' clientes sem consultor';
+  if(sub2) sub2.textContent='Distribuição equilibrada considerando clientes atuais de cada consultor.';
+
+  var footer=document.getElementById('impDistModalFooter');
+  if(footer) footer.innerHTML=
+    '<button class="imp-dist-btn-primary" onclick="lcAplicarDistribuicao2()">✓ Aplicar</button>'
+    +'<button class="imp-dist-btn-secondary" onclick="lcDistribuirAuto()">↻ Reequilibrar</button>'
+    +'<button class="imp-dist-btn-cancel" onclick="lcFecharDistModal();lcFiltroSem()">Ver lista</button>'
+    +'<button class="imp-dist-btn-cancel" onclick="lcFecharDistModal()">Fechar</button>';
+
+  _atualizar();
+  var dm2=document.getElementById('impDistModal');
+  if(dm2) dm2.classList.add('open');
+}
+
 /* Compatibilidade com botão antigo */
 function lcAbrirDistribuicao(){ lcAbrirDistribuicaoSelecionados(); }
 function lcAplicarDistribuicao(){ lcAplicarDistribuicao2(); }
@@ -427,5 +531,6 @@ window.lcDistribuirAuto=lcDistribuirAuto;
 window.lcFecharDistModal=lcFecharDistModal;
 window.lcToggleSelecao=lcToggleSelecao;
 window.lcLimparSelecao=lcLimparSelecao;
+window.lcAbrirDistribuicaoEquilibrado=lcAbrirDistribuicaoEquilibrado;
 /* fim módulo lc-resumo v2 */
 
