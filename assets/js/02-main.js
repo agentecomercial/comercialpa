@@ -5454,7 +5454,7 @@ function _renderUsuariosGrid(){
   });
   if(temSubModalAberto) return;
   grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center;">Carregando...</div>';
-  var membros=_getMembros();
+  var membros={consultores:[],treinadores:[]};
 
   function _renderComUsuarios(usuarios){
     var ministrante=_getTurmaMinistante();
@@ -5476,6 +5476,17 @@ function _renderUsuariosGrid(){
         alertEl.style.display='none';
       }
     }
+    // Montar membros a partir de TODOS os usuários cadastrados (não filtrar por turma)
+    membros={consultores:[],treinadores:[]};
+    Object.values(usuarios||{}).forEach(function(u){
+      if(!u.nome) return;
+      var perfil=u.perfil||'consultor';
+      if(perfil==='consultor'){
+        if(membros.consultores.indexOf(u.nome)<0) membros.consultores.push(u.nome);
+      } else if(perfil==='treinador'||perfil==='ministrante'){
+        if(membros.treinadores.indexOf(u.nome)<0) membros.treinadores.push(u.nome);
+      }
+    });
     _montarGrid(membros,usuarios||{});
   }
 
