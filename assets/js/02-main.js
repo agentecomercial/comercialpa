@@ -5688,8 +5688,10 @@ function _montarGrid(membros,usuarios){
   consValidos.forEach(function(e){ jaRenderizados[e[0]]=1; });
   treinValidos.forEach(function(e){ jaRenderizados[e[0]]=1; });
   var outros=Object.entries(usuarios||{}).filter(function(e){
-    return e[1]&&e[1].nome&&!jaRenderizados[e[0]];
+    return e[1]&&!jaRenderizados[e[0]];
   }).sort(function(a,b){return (a[1].nome||'').localeCompare(b[1].nome||'','pt-BR',{sensitivity:'base'});});
+  // garantir nome placeholder para exibição
+  outros.forEach(function(e){ if(!e[1].nome) e[1].nome='(sem nome — uid: '+e[0]+')'; });
   if(outros.length){
     html+=_secaoHeader('Outros', outros.length, 'outros');
     outros.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
