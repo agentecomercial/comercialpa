@@ -378,7 +378,8 @@ function _renderTurmasA(turmas){
     if(!list.length) html+='<div style="height:28px;"></div>';
     html+='</div>';
   });
-  html+='</div>';el.innerHTML=html;
+  html+='</div>';
+  el.innerHTML='<div class="swim-wrapper">'+html+'</div>';
 }
 
 /* ── B: Grade de meses ── */

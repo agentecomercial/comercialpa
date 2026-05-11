@@ -519,7 +519,7 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   .mcard-label{font-size:10px;}
 
   /* Home cards — coluna única */
-  .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1060px;}
+  .home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:100%;}
 
   /* Topbar do dashboard — botões menores */
   .topbar-right .title-edit-btn{font-size:10px;padding:4px 7px;}
@@ -997,4 +997,165 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
 .empty-state-icon{font-size:48px;opacity:.4;margin-bottom:12px;display:block;}
 .empty-state-title{color:var(--text);font-size:16px;margin-bottom:6px;}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVIDADE MOBILE — CORREÇÕES COMPLETAS v2
+   Testado: iPhone SE (375px), iPhone 14 (390px), Samsung (360px),
+   iPad (768px), tablet wide (1024px)
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Login: safe width para telas muito pequenas ── */
+.login-box{max-width:min(360px,90vw);padding:clamp(24px,6vw,40px) clamp(20px,5vw,36px);}
+.login-input,.login-btn{font-size:16px;} /* evita zoom iOS */
+
+/* ── SaveBar: safe-area para iPhone com home indicator ── */
+#saveBar{
+  padding:12px 16px;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  gap:10px;
+}
+
+/* ── Swimlane: scroll horizontal elegante ── */
+.swim-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+.swim-wrapper::-webkit-scrollbar{height:3px;}
+.swim-wrapper::-webkit-scrollbar-track{background:var(--surface2);}
+.swim-wrapper::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── lc-resumo-bar: scroll horizontal no mobile ── */
+.lc-resumo-bar{
+  display:flex;align-items:center;gap:8px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  padding:6px 0 8px;scrollbar-width:none;
+}
+.lc-resumo-bar::-webkit-scrollbar{display:none;}
+.lc-box{flex-shrink:0;} /* impede compressão dos cards */
+
+/* ── Modais: safe-area no iOS + bottom-sheet melhorado ── */
+.modal-overlay{
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* ── Topbar: compactar botões no mobile ── */
+@media(max-width:600px){
+  .topbar{padding:8px 12px;gap:4px;}
+  .topbar-title{font-size:13px;}
+  .topbar-badge{display:none;} /* ocultar badge no mobile pequeno */
+  .topbar-right{gap:4px;}
+  /* Botões da topbar — ícone sem texto no mobile */
+  .topbar-right .btn-secondary{font-size:11px;padding:6px 10px;}
+}
+
+/* ── Tabs: melhor toque e legibilidade ── */
+@media(max-width:600px){
+  .tab{font-size:11px;padding:8px 10px;min-height:40px;}
+  .tabs{gap:2px;}
+}
+
+/* ── Home grid: 1 coluna em mobile pequeno ── */
+@media(max-width:480px){
+  /* Correção: estava ainda com 3 colunas no 480px */
+  .home-grid{grid-template-columns:1fr!important;max-width:100%!important;gap:12px!important;}
+}
+
+/* ── Produtos proposta: 2 colunas em tablet, 1 no mobile pequeno ── */
+@media(max-width:640px){
+  #produtoPropCards{grid-template-columns:repeat(2,1fr)!important;}
+}
+@media(max-width:380px){
+  #produtoPropCards{grid-template-columns:1fr!important;}
+}
+
+/* ── Modal usuários: max-width seguro ── */
+#usuariosOverlay .modal{max-width:min(1300px,96vw)!important;}
+@media(max-width:768px){
+  #usuariosOverlay .modal{border-radius:16px 16px 0 0!important;}
+  /* usuario-row: simplificar em telas pequenas */
+  .usuario-row{grid-template-columns:32px 1fr auto 36px;gap:8px;padding:8px 2px;}
+  .ur-badge{display:none;} /* ocultar badge na linha compacta */
+  .ur-dot{display:none;}   /* status visível via cor do avatar */
+}
+
+/* ── Tabelas com scroll horizontal elegante ── */
+.tpanel-scroll-wrap,.lc-table-wrap{
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  border-radius:var(--radius-sm);
+}
+.tpanel-scroll-wrap::-webkit-scrollbar,.lc-table-wrap::-webkit-scrollbar{height:4px;}
+.tpanel-scroll-wrap::-webkit-scrollbar-thumb,.lc-table-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── Pipeline leads: scroll + cells compactos ── */
+@media(max-width:640px){
+  .ld-table .td-msg,.ld-table .td-tel{display:none;}
+  .ld-table .td-nome{max-width:100px;}
+  .ld-table td,.ld-table th{padding:6px 6px;}
+}
+
+/* ── Dashboard inner padding mobile ── */
+@media(max-width:480px){
+  .main{padding:10px 10px 80px;}
+  /* Métricas: 2x2 com valores maiores */
+  .mcard{padding:14px 12px;}
+  .mcard-val{font-size:22px;}
+}
+
+/* ── Turma card: melhor leitura mobile ── */
+@media(max-width:480px){
+  .turma-card{padding:14px;}
+  .turma-card h3{font-size:15px;}
+}
+
+/* ── Turmas header: empilhar botões ── */
+@media(max-width:600px){
+  .turmas-header{flex-direction:column;align-items:flex-start;gap:10px;padding:14px 16px;}
+}
+
+/* ── Proposta comercial screen: padding mobile ── */
+@media(max-width:600px){
+  #propostaComercialScreen{padding:16px 12px!important;}
+  #propostaComercialCards{grid-template-columns:repeat(2,1fr)!important;}
+}
+
+/* ── np-pipeline: padding e espaços menores ── */
+@media(max-width:480px){
+  .np-pipeline{padding:12px;}
+  .np-kpi-val{font-size:22px;}
+}
+
+/* ── Micro-animações premium ── */
+.tab{transition:color .15s,border-color .15s,background .15s;}
+.btn-secondary,.modal-save,.modal-cancel{transition:opacity .15s,background .15s,transform .1s;}
+.btn-secondary:active,.modal-save:active,.modal-cancel:active{transform:scale(.97);}
+.consultor-list-item{transition:background .15s,border-color .15s,transform .1s;}
+.consultor-list-item:active{transform:scale(.99);}
+.mcard{transition:box-shadow .2s,transform .15s;}
+.mcard:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3);}
+
+/* ── Inputs e selects: evitar zoom iOS em todos os contextos ── */
+@media(max-width:768px){
+  input:not([type=checkbox]):not([type=radio]),
+  select,
+  textarea{font-size:16px!important;}
+}
+
+/* ── Modais bottom-sheet: handle visual ── */
+@media(max-width:768px){
+  .modal::before{
+    content:'';display:block;width:36px;height:4px;
+    border-radius:2px;background:var(--border2);
+    margin:0 auto 16px;
+  }
+  .modal{padding-top:12px!important;}
+}
+
+/* ── Scrollbar global elegante (desktop) ── */
+@media(min-width:769px){
+  *::-webkit-scrollbar{width:6px;height:6px;}
+  *::-webkit-scrollbar-track{background:transparent;}
+  *::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+  *::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+}
+
+/* ── Fix: overflow horizontal global ── */
+body{overflow-x:hidden;}
+#dashboard,#turmasScreen,#telaTurmasScreen,#loginScreen,#propostaComercialScreen{overflow-x:hidden;}
 
