@@ -580,7 +580,7 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .ur-dot.pausado{background:#374137;}
 .ur-dot.sem-acesso{background:#ef4444;box-shadow:0 0 5px rgba(239,68,68,.4);}
 /* ações / dropdown */
-.ur-acoes{opacity:0;position:relative;transition:opacity .12s;}
+.ur-acoes{opacity:1;position:relative;}
 .ur-menu-btn{width:30px;height:30px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;}
 .ur-menu-btn:hover{border-color:var(--accent);color:var(--accent);}
 .ur-dropdown{display:none;position:absolute;right:0;top:34px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;min-width:175px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.55);overflow:hidden;}

@@ -5670,23 +5670,26 @@ function _montarGrid(membros,usuarios){
 
   grid.innerHTML=html;
 
-  // Fechar dropdowns ao clicar fora
-  document.addEventListener('click', function _ddClose(e){
-    if(!e.target.closest('.ur-acoes')){
-      grid.querySelectorAll('.ur-dropdown.open').forEach(function(d){d.classList.remove('open');});
-    }
-  }, {capture:true});
+  // Fechar dropdowns ao clicar fora (bubble, não capture)
+  if(!window._urDdCloseHandler){
+    window._urDdCloseHandler = function(e){
+      if(!e.target.closest('.ur-acoes')){
+        document.querySelectorAll('.ur-dropdown.open').forEach(function(d){d.classList.remove('open');});
+      }
+    };
+    document.addEventListener('click', window._urDdCloseHandler);
+  }
 
   // Event delegation
   grid.addEventListener('click',function(e){
     // Toggle dropdown do ⋯
     var menuBtn=e.target.closest('.ur-menu-btn');
     if(menuBtn){
+      e.stopPropagation();
       var dd=menuBtn.nextElementSibling;
       var aberto=dd.classList.contains('open');
-      grid.querySelectorAll('.ur-dropdown.open').forEach(function(d){d.classList.remove('open');});
+      document.querySelectorAll('.ur-dropdown.open').forEach(function(d){d.classList.remove('open');});
       if(!aberto){ dd.classList.add('open'); }
-      // mostrar ações da linha
       var acoes=menuBtn.closest('.ur-acoes');
       if(acoes) acoes.style.opacity='1';
       return;
