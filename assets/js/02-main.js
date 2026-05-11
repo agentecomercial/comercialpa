@@ -3179,7 +3179,8 @@ function toggleCliente(nome){
 function setConsultorStatus(s){
   activeConsultorStatus=s;
   ['fcAll','fcAberto','fcPago','fcEntrada'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
-  const aid=s===null?'fcAll':s==='aberto'?'fcAberto':s==='pago'?'fcPago':'fcEntrada';
+  // negociacao vem dos KPI cards — não tem botão dedicado, deixa "Todos" ativo
+  const aid=s===null?'fcAll':s==='aberto'?'fcAberto':s==='pago'?'fcPago':s==='negociacao'?'fcAll':'fcEntrada';
   const el=document.getElementById(aid);if(el)el.classList.add('active');
   if(document.getElementById('consultorDetail').style.display!=='none'&&window._consultorAtivo)_renderConsultorDetail(window._consultorAtivo);
   else renderConsultor();
@@ -3927,16 +3928,18 @@ function _renderConsultorDetail(c){
   const cdA=data.filter(d=>d.consultor===c).sort((a,b)=>a.cliente.localeCompare(b.cliente,'pt-BR'));
   const cd=activeConsultorStatus===null?cdA:activeConsultorStatus==='entrada'?cdA.filter(d=>d.entrada>0):cdA.filter(d=>d.status===activeConsultorStatus);
 
-  // ── Métricas agregadas (já existiam, expandidas para KPIs) ──
-  const total=cdA.reduce((a,d)=>a+d.valor,0);
+  // ── Métricas agregadas ──
+  // POTENCIAL = vendas em NEGOCIAÇÃO (não total geral)
+  const potencial=cdA.filter(d=>d.status==='negociacao').reduce((a,d)=>a+d.valor,0);
+  const total=cdA.reduce((a,d)=>a+d.valor,0); // mantido para subtítulo
   const pago=cdA.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
   const aberto=cdA.filter(d=>d.status==='aberto').reduce((a,d)=>a+d.valor,0);
-  const entrada=cdA.reduce((a,d)=>a+d.entrada,0);
-  // Contagens por status (melhoria 4)
+  const entrada=cdA.reduce((a,d)=>a+(d.entrada||0),0);
   const nTodos=cdA.length;
   const nPago=cdA.filter(d=>d.status==='pago').length;
   const nAberto=cdA.filter(d=>d.status==='aberto').length;
   const nEntrada=cdA.filter(d=>d.entrada>0).length;
+  const nPotencial=cdA.filter(d=>d.status==='negociacao').length;
 
   const fl=activeConsultorStatus?' · Filtro: '+activeConsultorStatus.toUpperCase():'';
   const _metaInd=allConsultors.length>0?META/allConsultors.length:0;
@@ -3970,24 +3973,24 @@ function _renderConsultorDetail(c){
     +'<span style="font-size:11px;font-weight:600;color:'+_colDetail.text+';font-family:\'DM Mono\',monospace;min-width:36px;text-align:right;">'+_pctDetail+'%</span>'
     +'<span style="font-size:10px;color:var(--muted);">da meta</span>'
     +'</div>'
-    // KPIs (melhoria 1)
+    // KPI cards — clicáveis para filtrar lista
     +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">'
-    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div onclick="setConsultorStatus(\'negociacao\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--accent)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Potencial</div>'
-    +'<div style="font-size:13px;font-weight:700;color:var(--text);font-family:\'DM Mono\',monospace;">'+formatVal(total)+'</div>'
-    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nTodos+' cliente'+(nTodos!==1?'s':'')+'</div>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--text);font-family:\'DM Mono\',monospace;">'+formatVal(potencial)+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nPotencial+' em negoc.</div>'
     +'</div>'
-    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div onclick="setConsultorStatus(\'pago\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--green)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Faturado</div>'
     +'<div style="font-size:13px;font-weight:700;color:var(--green);font-family:\'DM Mono\',monospace;">'+formatVal(pago)+'</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nPago+' pago'+(nPago!==1?'s':'')+'</div>'
     +'</div>'
-    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div onclick="setConsultorStatus(\'aberto\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--amber)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Em aberto</div>'
     +'<div style="font-size:13px;font-weight:700;color:var(--amber);font-family:\'DM Mono\',monospace;">'+formatVal(aberto)+'</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nAberto+' cliente'+(nAberto!==1?'s':'')+'</div>'
     +'</div>'
-    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div onclick="setConsultorStatus(\'entrada\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--blue)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Entradas</div>'
     +'<div style="font-size:13px;font-weight:700;color:var(--blue);font-family:\'DM Mono\',monospace;">'+(entrada>0?formatVal(entrada):'—')+'</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nEntrada+' cliente'+(nEntrada!==1?'s':'')+'</div>'
@@ -3996,7 +3999,7 @@ function _renderConsultorDetail(c){
     // Subtítulo original compacto
     +'<span style="font-size:12px;color:var(--muted);">Potencial: '+formatVal(total)+' · Faturado: <span style="color:'+_colDetail.text+';font-weight:700;">'+formatVal(pago)+'</span>'+(entrada>0?' · Entradas: '+formatVal(entrada):'')+fl+'</span>';
 
-  // ── Melhoria 4: atualizar contagem nos botões de filtro ──
+  // ── Botões de filtro: atualizar contagem ──
   const _fcMap={fcAll:nTodos,fcAberto:nAberto,fcPago:nPago,fcEntrada:nEntrada};
   const _fcLabel={fcAll:'Todos',fcAberto:'Aberto',fcPago:'Pago',fcEntrada:'Entrada'};
   Object.keys(_fcMap).forEach(function(id){
@@ -4056,7 +4059,7 @@ function _renderConsultorDetail(c){
         // Melhoria 6: entrada com ↑
         const entradaTxt=d.entrada>0?'↑ '+formatVal(d.entrada):'—';
         const entradaStyle=d.entrada>0?'color:var(--green);font-weight:600;':'color:var(--muted);';
-        return `<tr style="border-left:${borderLeft};" onclick="openModal(${ri})" title="Clique para editar" class="tr-clickable">
+        return `<tr style="border-left:${borderLeft};" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar" class="tr-clickable">
           <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button></span></td>
           <td style="text-align:center;white-space:nowrap;color:var(--muted);font-size:11px;">${treinadorTxt}</td>
           <td style="text-align:center;white-space:nowrap;">${d.treinamento||'—'}</td>
@@ -4074,11 +4077,10 @@ function abrirClienteDetalhe(ri){
   _clienteDetalheIdx=ri;
   var sl=function(s){return s==='pago'?'PAGO':s==='negociacao'?'NEGOCIAÇÃO':s==='desistiu'?'DESISTIU':s==='estorno'?'ESTORNO':s==='-'?'—':'ABERTO';};
 
-  /* Modo edição: consultor já só visualiza os próprios clientes (filtro
-     aplicado em renderConsultor), então qualquer card que ele clicar é seu. */
+  /* Modo edição: consultor edita seus próprios clientes; ADM edita qualquer um */
   var _sess=_getSessao?_getSessao():null;
   var _perfil=_sess?_sess.perfil:'adm';
-  var _modoEdit=(_perfil==='consultor');
+  var _modoEdit=(_perfil==='consultor'||_perfil==='adm'||!_sess);
 
   document.getElementById('clienteDetalheName').textContent=d.cliente;
 
@@ -4129,7 +4131,7 @@ function abrirClienteDetalhe(ri){
   stEl.textContent=sl(d.status);
   stEl.className='badge badge-'+(d.status||'aberto');
   var stEdit=document.getElementById('clienteDetalheStatusEdit');
-  var STATUS_OPTS=[{v:'aberto',l:'ABERTO'},{v:'pago',l:'PAGO'},{v:'entrada',l:'ENTRADA'},{v:'negociacao',l:'NEGOCIAÇÃO'},{v:'desistiu',l:'DESISTIU'},{v:'estorno',l:'ESTORNO'}];
+  var STATUS_OPTS=[{v:'-',l:'—'},{v:'aberto',l:'ABERTO'},{v:'pago',l:'PAGO'},{v:'negociacao',l:'NEGOCIAÇÃO'},{v:'desistiu',l:'DESISTIU'},{v:'estorno',l:'ESTORNO'}];
   stEdit.innerHTML=STATUS_OPTS.map(function(s){
     return '<option value="'+s.v+'"'+((d.status||'aberto')===s.v?' selected':'')+'>'+s.l+'</option>';
   }).join('');
