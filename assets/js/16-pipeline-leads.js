@@ -470,7 +470,16 @@
       return '<tr'+trCls+'>'
         +'<td class="td-check"><input type="checkbox" class="ld-chk"'+sel+' onchange="window._ldToggleSel(\''+id+'\')" onclick="event.stopPropagation()"></td>'
         +'<td class="td-foto">'+foto+'</td>'
-        +'<td class="td-nome" title="'+_esc(l.nome||'')+'">'+_esc(l.nome||'Sem nome')+'</td>'
+        +'<td class="td-nome" title="'+_esc(l.nome||'')+'">'
+          +'<span style="display:flex;align-items:center;gap:5px;">'
+          +_esc(l.nome||'Sem nome')
+          +'<button onclick="window._ldAbrirObs(\''+id+'\')" title="'+(l.obs?_esc(l.obs):'Adicionar observação')+'" '
+          +'style="width:16px;height:16px;border-radius:50%;border:1.5px solid '+(l.obs?'var(--accent)':'rgba(255,255,255,.2)')+';'
+          +'background:'+(l.obs?'rgba(200,240,90,.15)':'transparent')+';color:'+(l.obs?'var(--accent)':'rgba(255,255,255,.3)')+';'
+          +'font-size:9px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;'
+          +'flex-shrink:0;line-height:1;padding:0;">i</button>'
+          +'</span>'
+        +'</td>'
         +'<td class="td-tel">'+_esc(l.telefone||'—')+'</td>'
         +'<td class="td-msg" title="'+_esc(l.mensagem||'')+'">'+_esc(l.mensagem||'')+'</td>'
         +'<td>'+statusChip+'</td>'
@@ -1006,5 +1015,65 @@
   document.addEventListener('DOMContentLoaded',function(){
     setTimeout(function(){ window._ldInit(); }, 1800);
   });
+
+  /* ── Observações do lead (só ADM edita) ────────────────────── */
+  window._ldAbrirObs = function(id){
+    var l = _leads[id]||{};
+    var sess = window._getSessao ? window._getSessao() : null;
+    var isAdm = !sess || sess.perfil === 'adm';
+
+    var ov = document.getElementById('ldObsOverlay');
+    if(!ov){
+      ov = document.createElement('div');
+      ov.id = 'ldObsOverlay';
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:flex;align-items:center;justify-content:center;';
+      ov.innerHTML = '<div style="background:#111a11;border:1px solid #1e2e1e;border-radius:14px;width:min(480px,95vw);padding:24px;display:flex;flex-direction:column;gap:14px;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;">'
+        +'<span style="font-size:14px;font-weight:700;color:#fff;">ℹ️ Observação do Lead</span>'
+        +'<button onclick="window._ldFecharObs()" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;">✕</button>'
+        +'</div>'
+        +'<div id="ldObsNome" style="font-size:12px;color:var(--muted);"></div>'
+        +'<textarea id="ldObsTexto" rows="5" style="width:100%;background:#0d160d;border:1px solid #1e2e1e;border-radius:8px;color:#e8f0e8;font-size:13px;padding:10px;resize:vertical;font-family:inherit;outline:none;" placeholder="Digite uma observação sobre este lead..."></textarea>'
+        +'<div id="ldObsAcoes" style="display:flex;gap:8px;justify-content:flex-end;"></div>'
+        +'</div>';
+      ov.addEventListener('click', function(e){ if(e.target===ov) window._ldFecharObs(); });
+      document.body.appendChild(ov);
+    }
+
+    ov.dataset.id = id;
+    document.getElementById('ldObsNome').textContent = (l.nome||'Sem nome').toUpperCase();
+    var txt = document.getElementById('ldObsTexto');
+    txt.value = l.obs||'';
+    txt.readOnly = !isAdm;
+    txt.style.color = isAdm ? '#e8f0e8' : '#8aaa8a';
+
+    var acoes = document.getElementById('ldObsAcoes');
+    if(isAdm){
+      acoes.innerHTML = '<button onclick="window._ldFecharObs()" style="padding:8px 16px;border-radius:8px;border:1px solid #1e2e1e;background:#1a2a1a;color:#8aaa8a;cursor:pointer;font-size:12px;">Cancelar</button>'
+        +'<button onclick="window._ldSalvarObs()" style="padding:8px 20px;border-radius:8px;border:none;background:#c8f05a;color:#0a150a;font-weight:700;cursor:pointer;font-size:12px;">💾 Salvar</button>';
+    } else {
+      acoes.innerHTML = '<button onclick="window._ldFecharObs()" style="padding:8px 20px;border-radius:8px;border:none;background:#c8f05a;color:#0a150a;font-weight:700;cursor:pointer;font-size:12px;">Fechar</button>';
+    }
+
+    ov.style.display = 'flex';
+  };
+
+  window._ldFecharObs = function(){
+    var ov = document.getElementById('ldObsOverlay');
+    if(ov) ov.style.display = 'none';
+  };
+
+  window._ldSalvarObs = function(){
+    var ov = document.getElementById('ldObsOverlay');
+    if(!ov) return;
+    var id = ov.dataset.id;
+    var obs = (document.getElementById('ldObsTexto').value||'').trim();
+    if(!_leads[id]) return;
+    _leads[id].obs = obs;
+    _salvarLead(id, _leads[id]);
+    window._ldFecharObs();
+    _render();
+    _toast('✅ Observação salva!','var(--accent)');
+  };
 
 })();
