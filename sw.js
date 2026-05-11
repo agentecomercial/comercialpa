@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v53 — Consultor edita clientes próprios; campo Treinador só aparece com CI
-const CACHE_NAME = 'agente-febracis-v53';
+// v54 — Verde neon (#39ff14) no nome do cliente PAGO na lista do consultor
+const CACHE_NAME = 'agente-febracis-v54';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
