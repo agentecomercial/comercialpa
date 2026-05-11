@@ -5598,9 +5598,9 @@ function _montarGrid(membros,usuarios){
       +'<span class="ur-badge badge-'+perfilCls+'">'+perfilL+'</span>'
       +'<div class="ur-dot '+dotCls+'" title="'+dotTip+'"></div>'
       +'<div class="ur-acoes">'
-        +'<button class="ur-menu-btn" data-uid="'+uid+'">⋯</button>'
-        +'<div class="ur-dropdown" style="background:#161e16 !important;background-color:#161e16 !important;border:1px solid #2a3a2a;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);overflow:hidden;">'+ddItems+'</div>'
+        +'<button class="ur-menu-btn" data-uid="'+uid+'" data-dd="'+uid+'">⋯</button>'
       +'</div>'
+      +'<div class="ur-dd-data" data-uid="'+uid+'" style="display:none;">'+ddItems+'</div>'
     +'</div>';
   }
 
@@ -5693,67 +5693,72 @@ function _montarGrid(membros,usuarios){
 
   grid.innerHTML=html;
 
-  // Fechar dropdowns ao clicar fora — registrar apenas uma vez no document
-  if(!window._urDdCloseHandler){
-    window._urDdCloseHandler = function(e){
-      if(!e.target.closest('.ur-acoes')){
-        document.querySelectorAll('.ur-dropdown.open').forEach(function(d){d.classList.remove('open');});
-      }
-    };
-    document.addEventListener('click', window._urDdCloseHandler);
+  // ── Dropdown no body (evita clipping do overflow do grid) ──
+  function _fecharUrDd(){
+    var dd=document.getElementById('_urBodyDd');
+    if(dd) dd.remove();
+    window._urBodyDdUid=null;
   }
 
-  // Event delegation — remover listener antigo antes de adicionar novo
-  if(grid._urClickHandler) grid.removeEventListener('click', grid._urClickHandler);
-  grid._urClickHandler = function(e){
-    // Toggle dropdown do ⋯
-    var menuBtn=e.target.closest('.ur-menu-btn');
-    if(menuBtn){
-      e.stopPropagation();
-      var dd=menuBtn.nextElementSibling;
-      var aberto=dd.classList.contains('open');
-      document.querySelectorAll('.ur-dropdown.open').forEach(function(d){d.classList.remove('open');});
-      if(!aberto){ dd.classList.add('open'); }
-      var acoes=menuBtn.closest('.ur-acoes');
-      if(acoes) acoes.style.opacity='1';
-      return;
-    }
+  function _abrirUrDd(menuBtn){
+    _fecharUrDd();
+    var uid=menuBtn.dataset.uid;
+    var ddData=document.querySelector('.ur-dd-data[data-uid="'+uid+'"]');
+    if(!ddData) return;
+    var rect=menuBtn.getBoundingClientRect();
+    var dd=document.createElement('div');
+    dd.id='_urBodyDd';
+    dd.innerHTML=ddData.innerHTML;
+    dd.style.cssText='position:fixed;z-index:9999;background:#12201200;border:1px solid #2a3a2a;border-radius:10px;'
+      +'min-width:180px;box-shadow:0 8px 40px rgba(0,0,0,.9);overflow:hidden;'
+      +'right:'+(window.innerWidth-rect.right)+'px;top:'+(rect.bottom+4)+'px;';
+    // fundo sólido via elemento filho
+    dd.style.background='#12201f';
+    dd.style.background='#111d11';
+    document.body.appendChild(dd);
+    window._urBodyDdUid=uid;
 
+    // ações
+    dd.addEventListener('click',function(e){
+      var btn=e.target.closest('button');
+      if(!btn) return;
+      _fecharUrDd();
+      if(btn.classList.contains('btn-configurar-acesso')){
+        _abrirConfigurarAcesso(btn.dataset.uid, btn.dataset.nome, btn.dataset.perfil);
+      } else if(btn.classList.contains('btn-editar-acesso')){
+        _abrirEditarAcesso(btn.dataset.uid);
+      } else if(btn.classList.contains('btn-alterar-senha')){
+        _abrirAlterarSenhaUsuario(btn.dataset.uid, btn.dataset.nome);
+      } else if(btn.classList.contains('btn-reset-senha')){
+        resetarSenhaUsuario(btn.dataset.uid, btn.dataset.nome);
+      } else if(btn.classList.contains('btn-toggle-ativo')){
+        _toggleAtivo(btn.dataset.uid, btn.dataset.ativo==='true'?false:true);
+      } else if(btn.classList.contains('btn-excluir-usuario')){
+        _excluirUsuario(btn.dataset.uid, btn.dataset.nome);
+      } else if(btn.classList.contains('btn-perms')){
+        abrirPermsModal(btn.dataset.uid, btn.dataset.nome, btn.dataset.perfil);
+      }
+    });
+  }
+
+  // Fechar ao clicar fora — registrar apenas uma vez
+  if(!window._urDdCloseHandler){
+    window._urDdCloseHandler=function(e){
+      if(!e.target.closest('#_urBodyDd')&&!e.target.closest('.ur-menu-btn')) _fecharUrDd();
+    };
+    document.addEventListener('click',window._urDdCloseHandler);
+  }
+
+  // Event delegation do grid
+  if(grid._urClickHandler) grid.removeEventListener('click',grid._urClickHandler);
+  grid._urClickHandler=function(e){
+    var menuBtn=e.target.closest('.ur-menu-btn');
+    if(menuBtn){ e.stopPropagation(); _abrirUrDd(menuBtn); return; }
     var btn=e.target.closest('button');
     if(!btn) return;
-    // fechar dropdown ao clicar em item
-    var parentDd=btn.closest('.ur-dropdown');
-    if(parentDd) parentDd.classList.remove('open');
-
-    if(btn.classList.contains('btn-configurar-acesso')){
-      _abrirConfigurarAcesso(btn.dataset.uid, btn.dataset.nome, btn.dataset.perfil);
-    } else if(btn.classList.contains('btn-editar-acesso')){
-      _abrirEditarAcesso(btn.dataset.uid);
-    } else if(btn.classList.contains('btn-alterar-senha')){
-      _abrirAlterarSenhaUsuario(btn.dataset.uid, btn.dataset.nome);
-    } else if(btn.classList.contains('btn-reset-senha')){
-      resetarSenhaUsuario(btn.dataset.uid, btn.dataset.nome);
-    } else if(btn.classList.contains('btn-toggle-ativo')){
-      _toggleAtivo(btn.dataset.uid, btn.dataset.ativo==='true'?false:true);
-    } else if(btn.classList.contains('btn-excluir-usuario')){
-      _excluirUsuario(btn.dataset.uid, btn.dataset.nome);
-    } else if(btn.classList.contains('btn-perms')){
-      abrirPermsModal(btn.dataset.uid, btn.dataset.nome, btn.dataset.perfil);
-    } else if(btn.classList.contains('btn-perms-grupo')){
-      abrirPermsGrupo(btn.dataset.perfil);
-    }
+    if(btn.classList.contains('btn-perms-grupo')) abrirPermsGrupo(btn.dataset.perfil);
   };
-  grid.addEventListener('click', grid._urClickHandler);
-
-  // Hover: mostrar/ocultar ações
-  grid.querySelectorAll('.usuario-row').forEach(function(row){
-    var acoes=row.querySelector('.ur-acoes');
-    if(!acoes) return;
-    row.addEventListener('mouseenter',function(){ acoes.style.opacity='1'; });
-    row.addEventListener('mouseleave',function(){
-      if(!row.querySelector('.ur-dropdown.open')) acoes.style.opacity='0';
-    });
-  });
+  grid.addEventListener('click',grid._urClickHandler);
 }
 
 /* ── Recentes / Busca de usuários ──────────────────────────── */
