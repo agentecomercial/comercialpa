@@ -4073,14 +4073,11 @@ function abrirClienteDetalhe(ri){
   _clienteDetalheIdx=ri;
   var sl=function(s){return s==='pago'?'PAGO':s==='negociacao'?'NEGOCIAÇÃO':s==='desistiu'?'DESISTIU':s==='estorno'?'ESTORNO':s==='-'?'—':'ABERTO';};
 
-  /* Verificar se consultor logado é dono deste cliente */
+  /* Modo edição: consultor já só visualiza os próprios clientes (filtro
+     aplicado em renderConsultor), então qualquer card que ele clicar é seu. */
   var _sess=_getSessao?_getSessao():null;
   var _perfil=_sess?_sess.perfil:'adm';
-  var _vinculo=_sess?(_sess.vinculo||'').toUpperCase():'';
-  var _consultorCliente=(d.consultor||'').toUpperCase();
-  var _ehDono=_perfil==='consultor'&&_vinculo&&_consultorCliente===_vinculo;
-  var _modoEdit=_ehDono;
-  console.log('[ClienteDetalhe] perfil='+_perfil+' vinculo="'+_vinculo+'" consultor_cliente="'+_consultorCliente+'" ehDono='+_ehDono);
+  var _modoEdit=(_perfil==='consultor');
 
   document.getElementById('clienteDetalheName').textContent=d.cliente;
 
