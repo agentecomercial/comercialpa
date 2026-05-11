@@ -1,6 +1,14 @@
 // Service Worker para PWA - Agente Comercial Febracis
-const CACHE_NAME = 'agente-febracis-v5';
-const URLS = ['./agente-comercial.html', './manifest.json'];
+// v53 — Consultor edita clientes próprios; campo Treinador só aparece com CI
+const CACHE_NAME = 'agente-febracis-v53';
+const URLS = [
+  './agente-comercial.html',
+  './manifest.json',
+  './js/data/treinamentos.js',
+  './js/data/playbook-spin-tour.js',
+  './js/data/perfis-treino.js'
+  // api-key.js NÃO entra no cache (não está no git e pode mudar)
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(URLS)).catch(() => {}));
@@ -16,13 +24,17 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+// Network-first: tenta a rede primeiro, cai pro cache se offline.
+// Garante que o HTML atualizado sempre seja servido quando online.
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request).then((resp) => {
-      const copy = resp.clone();
-      caches.open(CACHE_NAME).then((c) => c.put(e.request, copy)).catch(() => {});
-      return resp;
-    }).catch(() => cached))
+    fetch(e.request)
+      .then((resp) => {
+        const copy = resp.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(e.request, copy)).catch(() => {});
+        return resp;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
