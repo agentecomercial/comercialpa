@@ -5599,7 +5599,7 @@ function _montarGrid(membros,usuarios){
       +'<div class="ur-dot '+dotCls+'" title="'+dotTip+'"></div>'
       +'<div class="ur-acoes">'
         +'<button class="ur-menu-btn" data-uid="'+uid+'">⋯</button>'
-        +'<div class="ur-dropdown">'+ddItems+'</div>'
+        +'<div class="ur-dropdown" style="background:#161e16 !important;background-color:#161e16 !important;border:1px solid #2a3a2a;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);overflow:hidden;">'+ddItems+'</div>'
       +'</div>'
     +'</div>';
   }
