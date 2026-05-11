@@ -5477,11 +5477,13 @@ function _renderUsuariosGrid(){
       }
     }
     // Montar membros a partir de TODOS os usuários cadastrados (não filtrar por turma)
-    membros={consultores:[],treinadores:[]};
+    membros={consultores:[],treinadores:[],adms:[]};
     Object.values(usuarios||{}).forEach(function(u){
       if(!u.nome) return;
       var perfil=u.perfil||'consultor';
-      if(perfil==='consultor'){
+      if(perfil==='adm'){
+        if(membros.adms.indexOf(u.nome)<0) membros.adms.push(u.nome);
+      } else if(perfil==='consultor'){
         if(membros.consultores.indexOf(u.nome)<0) membros.consultores.push(u.nome);
       } else if(perfil==='treinador'||perfil==='ministrante'){
         if(membros.treinadores.indexOf(u.nome)<0) membros.treinadores.push(u.nome);
@@ -5655,6 +5657,16 @@ function _montarGrid(membros,usuarios){
       +'</div>';
   }
 
+  if(membros.adms&&membros.adms.length){
+    html+=_secaoHeader('ADM', membros.adms.length, 'adm');
+    membros.adms.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});}).forEach(function(nome){
+      var entry=encontrar(nome,'adm');
+      var uid=entry?entry[0]:uid_('adm',nome);
+      var u=entry?entry[1]:{nome:nome,perfil:'adm',login:'',senha:'',ativo:true};
+      html+=_card(uid,u);
+    });
+  }
+
   html+=_secaoHeader('Consultores', membros.consultores.length, 'consultor');
   if(membros.consultores.length===0){
     html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum consultor.</div>';
@@ -5681,7 +5693,7 @@ function _montarGrid(membros,usuarios){
 
   grid.innerHTML=html;
 
-  // Fechar dropdowns ao clicar fora (bubble, não capture)
+  // Fechar dropdowns ao clicar fora — registrar apenas uma vez no document
   if(!window._urDdCloseHandler){
     window._urDdCloseHandler = function(e){
       if(!e.target.closest('.ur-acoes')){
@@ -5691,8 +5703,9 @@ function _montarGrid(membros,usuarios){
     document.addEventListener('click', window._urDdCloseHandler);
   }
 
-  // Event delegation
-  grid.addEventListener('click',function(e){
+  // Event delegation — remover listener antigo antes de adicionar novo
+  if(grid._urClickHandler) grid.removeEventListener('click', grid._urClickHandler);
+  grid._urClickHandler = function(e){
     // Toggle dropdown do ⋯
     var menuBtn=e.target.closest('.ur-menu-btn');
     if(menuBtn){
@@ -5729,7 +5742,8 @@ function _montarGrid(membros,usuarios){
     } else if(btn.classList.contains('btn-perms-grupo')){
       abrirPermsGrupo(btn.dataset.perfil);
     }
-  });
+  };
+  grid.addEventListener('click', grid._urClickHandler);
 
   // Hover: mostrar/ocultar ações
   grid.querySelectorAll('.usuario-row').forEach(function(row){
