@@ -5694,11 +5694,11 @@ function _montarGrid(membros,usuarios){
   grid.innerHTML=html;
 
   // ── Dropdown no body (evita clipping do overflow do grid) ──
-  function _fecharUrDd(){
+  window._fecharUrDd=function(){
     var dd=document.getElementById('_urBodyDd');
     if(dd) dd.remove();
     window._urBodyDdUid=null;
-  }
+  };
 
   function _abrirUrDd(menuBtn){
     _fecharUrDd();
@@ -5722,7 +5722,7 @@ function _montarGrid(membros,usuarios){
     dd.addEventListener('click',function(e){
       var btn=e.target.closest('button');
       if(!btn) return;
-      _fecharUrDd();
+      window._fecharUrDd();
       if(btn.classList.contains('btn-configurar-acesso')){
         _abrirConfigurarAcesso(btn.dataset.uid, btn.dataset.nome, btn.dataset.perfil);
       } else if(btn.classList.contains('btn-editar-acesso')){
@@ -5744,7 +5744,7 @@ function _montarGrid(membros,usuarios){
   // Fechar ao clicar fora — registrar apenas uma vez
   if(!window._urDdCloseHandler){
     window._urDdCloseHandler=function(e){
-      if(!e.target.closest('#_urBodyDd')&&!e.target.closest('.ur-menu-btn')) _fecharUrDd();
+      if(!e.target.closest('#_urBodyDd')&&!e.target.closest('.ur-menu-btn')) window._fecharUrDd();
     };
     document.addEventListener('click',window._urDdCloseHandler);
   }
@@ -5754,6 +5754,7 @@ function _montarGrid(membros,usuarios){
   grid._urClickHandler=function(e){
     var menuBtn=e.target.closest('.ur-menu-btn');
     if(menuBtn){ e.stopPropagation(); _abrirUrDd(menuBtn); return; }
+    window._fecharUrDd();
     var btn=e.target.closest('button');
     if(!btn) return;
     if(btn.classList.contains('btn-perms-grupo')) abrirPermsGrupo(btn.dataset.perfil);
