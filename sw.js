@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v54 — Verde neon (#39ff14) no nome do cliente PAGO na lista do consultor
-const CACHE_NAME = 'agente-febracis-v54';
+// v55 — 9 melhorias de responsividade mobile (modais, grids, touch targets, animações)
+const CACHE_NAME = 'agente-febracis-v55';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',

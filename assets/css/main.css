@@ -387,7 +387,7 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .detail-sub{font-size:17px;font-weight:500;color:var(--muted);margin-top:3px;}
 
 /* SAVE BAR */
-#saveBar{position:fixed;bottom:0;left:0;right:0;z-index:2000;background:var(--surface);border-top:1px solid var(--border2);padding:14px 28px;display:none;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 -4px 24px rgba(0,0,0,.4);}
+#saveBar{position:fixed;bottom:0;left:0;right:0;z-index:2000;background:var(--surface);border-top:1px solid var(--border2);padding:14px 28px;padding-bottom:calc(14px + env(safe-area-inset-bottom));display:none;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 -4px 24px rgba(0,0,0,.4);}
 #saveBar.visible{display:flex;}
 .save-bar-msg{font-size:12px;color:var(--muted);}
 .save-bar-msg span{color:var(--amber);font-weight:600;}
@@ -1159,4 +1159,28 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 /* ── Fix: overflow horizontal global ── */
 body{overflow-x:hidden;}
 #dashboard,#turmasScreen,#telaTurmasScreen,#loginScreen,#propostaComercialScreen{overflow-x:hidden;}
+
+/* ── Animação slide-up nos modais em mobile ── */
+@keyframes modalSlideUp{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+@media(max-width:768px){
+  .modal-overlay.open .modal{animation:modalSlideUp .22s cubic-bezier(.25,.46,.45,.94) both;}
+}
+
+/* ── Desligar hover nos cards em touchscreen (evita card levitado após toque) ── */
+@media(hover:none){
+  .mcard:hover{transform:none!important;box-shadow:none!important;}
+  .consultor-list-item:hover{background:var(--surface2)!important;border-color:transparent!important;}
+  .turma-card:hover{transform:none!important;box-shadow:none!important;}
+}
+
+/* ── Textarea: altura mínima legível em mobile ── */
+@media(max-width:768px){
+  textarea.modal-input,textarea{min-height:80px;}
+}
+
+/* ── Topbar iPhone SE (375px): ocultar título para não comprimir botões ── */
+@media(max-width:380px){
+  .topbar-title{display:none;}
+  .topbar{justify-content:space-between;}
+}
 

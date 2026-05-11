@@ -455,7 +455,7 @@ function _renderTurmasF(turmas){
   var el=d.el, ano=d.ano, mesMap=d.mesMap;
   var tiposSet={};ano.forEach(function(t){tiposSet[_swimExtrairTipo(t)]=true;});
   var tipos=Object.keys(tiposSet).sort();
-  var html='<div style="display:grid;grid-template-columns:90px repeat(12,1fr);gap:3px;min-width:620px;">';
+  var html='<div class="swim-wrapper"><div style="display:grid;grid-template-columns:90px repeat(12,1fr);gap:3px;min-width:620px;">';
   html+='<div></div>';
   _SWIM_MESES.forEach(function(m){html+='<div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center;padding:3px 0;text-transform:uppercase;letter-spacing:.04em;">'+m+'</div>';});
   tipos.forEach(function(tipo,ti){
@@ -467,7 +467,7 @@ function _renderTurmasF(turmas){
       else{html+='<div onclick="entrarTurma(\''+list[0].id+'\')" title="'+list[0].nome+'" style="height:34px;border-radius:4px;background:'+bg+';border:1px solid '+cor+'55;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:'+cor+';cursor:pointer;overflow:hidden;padding:0 3px;white-space:nowrap;'+(_turmaGlobalAtiva===list[0].id?'outline:2px solid var(--accent);outline-offset:2px;box-shadow:0 0 8px rgba(200,240,90,.35);':'')+'">'+list.length+'</div>';}
     }
   });
-  html+='</div>';
+  html+='</div></div>';
   if(!tipos.length) html='<div style="color:var(--muted);font-size:13px;padding:20px 0;">Nenhuma turma em '+_tturmasAnoAtual+'.</div>';
   el.innerHTML=html;
 }
@@ -512,7 +512,7 @@ function _renderTurmasSwim(turmas){
   turmasAno.forEach(function(t){tiposSet[_swimExtrairTipo(t)]=true;});
   var tipos=Object.keys(tiposSet).sort();
   var cols='110px repeat(12,1fr)';
-  var html='<div style="display:grid;grid-template-columns:'+cols+';gap:3px;min-width:680px;">';
+  var html='<div class="swim-wrapper"><div style="display:grid;grid-template-columns:'+cols+';gap:3px;min-width:680px;">';
   // Cabeçalho
   html+='<div></div>';
   _SWIM_MESES.forEach(function(m){html+='<div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center;padding:4px 0;text-transform:uppercase;letter-spacing:.04em;">'+m+'</div>';});
@@ -534,7 +534,7 @@ function _renderTurmasSwim(turmas){
       }
     }
   });
-  html+='</div>';
+  html+='</div></div>';
   el.innerHTML=html;
 }
 
@@ -1406,7 +1406,7 @@ function _abrirModalPrimeiroAcesso(uid,nome){
     // Construção via DOM para evitar problema de aspas em onkeydown
     var modalDiv=document.createElement('div');
     modalDiv.className='modal';
-    modalDiv.style.width='380px';
+    modalDiv.style.cssText='width:min(380px,92vw);max-height:90vh;overflow-y:auto;';
     modalDiv.innerHTML=[
       '<div class="modal-title">&#128272; Redefinir senha</div>',
       '<div class="modal-subtitle">Este é seu primeiro acesso. Por favor, defina uma nova senha.</div>',
@@ -2803,9 +2803,9 @@ function _gtRenderLista(el){
     div.style.cssText='display:flex;flex-direction:column;gap:10px;padding:14px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);margin-bottom:8px;';
     var topRow=document.createElement('div');topRow.style.cssText='display:flex;align-items:center;gap:8px;';
     var btns=document.createElement('div');btns.style.cssText='display:flex;flex-direction:column;gap:2px;flex-shrink:0;';
-    var bUp=document.createElement('button');bUp.textContent='↑';bUp.style.cssText='background:var(--surface);border:1px solid var(--border2);border-radius:4px;width:22px;height:20px;cursor:pointer;color:var(--muted);font-size:11px;';bUp.disabled=(i===0);if(i===0)bUp.style.opacity='0.3';
+    var bUp=document.createElement('button');bUp.textContent='↑';bUp.style.cssText='background:var(--surface);border:1px solid var(--border2);border-radius:4px;width:32px;height:32px;min-width:32px;min-height:32px;cursor:pointer;color:var(--muted);font-size:13px;display:flex;align-items:center;justify-content:center;';bUp.disabled=(i===0);if(i===0)bUp.style.opacity='0.3';
     bUp.addEventListener('click',function(){_moverTurma(i,-1);});
-    var bDown=document.createElement('button');bDown.textContent='↓';bDown.style.cssText='background:var(--surface);border:1px solid var(--border2);border-radius:4px;width:22px;height:20px;cursor:pointer;color:var(--muted);font-size:11px;';bDown.disabled=(i===_gerenciarTurmasList.length-1);if(i===_gerenciarTurmasList.length-1)bDown.style.opacity='0.3';
+    var bDown=document.createElement('button');bDown.textContent='↓';bDown.style.cssText='background:var(--surface);border:1px solid var(--border2);border-radius:4px;width:32px;height:32px;min-width:32px;min-height:32px;cursor:pointer;color:var(--muted);font-size:13px;display:flex;align-items:center;justify-content:center;';bDown.disabled=(i===_gerenciarTurmasList.length-1);if(i===_gerenciarTurmasList.length-1)bDown.style.opacity='0.3';
     bDown.addEventListener('click',function(){_moverTurma(i,1);});
     btns.appendChild(bUp);btns.appendChild(bDown);
     var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';

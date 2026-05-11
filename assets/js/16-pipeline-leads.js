@@ -503,13 +503,13 @@
         +'</div>'
       : '';
 
-    el.innerHTML = barraLote + '<table class="ld-table">'
+    el.innerHTML = barraLote + '<div class="tpanel-scroll-wrap"><table class="ld-table">'
       +'<thead><tr>'
       +'<th class="td-check"><input type="checkbox" class="ld-chk"'+(todosSel?' checked':'')+' onchange="window._ldToggleSelTodos(this.checked)" title="Selecionar todos"></th>'
       +'<th></th><th>Nome</th><th>Telefone</th><th>Mensagem</th><th>Status</th><th>Consultor</th><th>Distribuído em</th><th>Ações</th>'
       +'</tr></thead>'
       +'<tbody>'+rows+'</tbody>'
-      +'</table>';
+      +'</table></div>';
   }
 
 
