@@ -5742,11 +5742,18 @@ function _montarGrid(membros,usuarios){
   }
 
   // Fechar ao clicar fora — registrar apenas uma vez
+  // Usamos 'mousedown' (não 'click') porque vários onclick inline no app
+  // chamam event.stopPropagation(), o que impediria o bubble do click
+  // chegar ao document. mousedown dispara antes do click e não é
+  // interceptado por esses handlers, fechando o dropdown de forma confiável.
   if(!window._urDdCloseHandler){
     window._urDdCloseHandler=function(e){
-      if(!e.target.closest('#_urBodyDd')&&!e.target.closest('.ur-menu-btn')) window._fecharUrDd();
+      if(!document.getElementById('_urBodyDd')) return;
+      if(e.target.closest('#_urBodyDd')) return;
+      if(e.target.closest('.ur-menu-btn')) return;
+      window._fecharUrDd();
     };
-    document.addEventListener('click',window._urDdCloseHandler);
+    document.addEventListener('mousedown',window._urDdCloseHandler);
   }
 
   // Event delegation do grid
