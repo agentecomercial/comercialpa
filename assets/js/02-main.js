@@ -5680,6 +5680,21 @@ function _montarGrid(membros,usuarios){
     treinValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
   }
 
+  /* Fix: garantir que TODO usuário em `usuarios/` apareça no painel.
+     Usuários com perfil ausente/desconhecido (não-adm/consultor/treinador/ministrante)
+     eram descartados silenciosamente — agora caem numa seção "Outros". */
+  var jaRenderizados={};
+  (membros.adms||[]).forEach(function(n){ var e=encontrar(n,'adm'); if(e) jaRenderizados[e[0]]=1; });
+  consValidos.forEach(function(e){ jaRenderizados[e[0]]=1; });
+  treinValidos.forEach(function(e){ jaRenderizados[e[0]]=1; });
+  var outros=Object.entries(usuarios||{}).filter(function(e){
+    return e[1]&&e[1].nome&&!jaRenderizados[e[0]];
+  }).sort(function(a,b){return (a[1].nome||'').localeCompare(b[1].nome||'','pt-BR',{sensitivity:'base'});});
+  if(outros.length){
+    html+=_secaoHeader('Outros', outros.length, 'outros');
+    outros.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
+  }
+
   grid.innerHTML=html;
 
   // ── Dropdown no body (evita clipping do overflow do grid) ──
