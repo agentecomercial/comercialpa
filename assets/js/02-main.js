@@ -5230,7 +5230,27 @@ function _getSessao(){try{return JSON.parse(sessionStorage.getItem('ci_sessao'))
 
 function abrirPainelUsuarios(){
   document.getElementById('usuariosOverlay').classList.add('open');
-  _renderUsuariosGrid();
+  // Se _turmaAtiva já está em memória, renderiza direto.
+  // Se não (acessou o painel sem entrar numa turma), tenta carregar do Firebase
+  // para que _getMembros() retorne os membros reais (incluindo importados via planilha).
+  if(_turmaAtiva){
+    _renderUsuariosGrid();
+  } else {
+    var turmaId=localStorage.getItem(TURMA_ATIVA_KEY);
+    if(turmaId&&window._fbGet){
+      window._fbGet('turmas/'+turmaId).then(function(t){
+        if(t){
+          _turmaAtiva=Object.assign({id:turmaId},t);
+          window._turmaAtiva=_turmaAtiva;
+          if(!allConsultors.length&&t.consultores) allConsultors=t.consultores.slice();
+          if(!allTrainers.length&&t.treinadores) allTrainers=t.treinadores.slice();
+        }
+        _renderUsuariosGrid();
+      }).catch(function(){ _renderUsuariosGrid(); });
+    } else {
+      _renderUsuariosGrid();
+    }
+  }
 }
 function fecharPainelUsuarios(){document.getElementById('usuariosOverlay').classList.remove('open');}
 
@@ -5697,6 +5717,31 @@ function _montarGrid(membros,usuarios){
     outros.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
   }
 
+  /* Seção "Aguardando configuração": membros da turma que não têm
+     entrada em `usuarios/` — ex: importados via planilha. */
+  var todosNomesRegistrados={};
+  Object.values(usuarios||{}).forEach(function(u){ if(u&&u.nome) todosNomesRegistrados[u.nome.trim().toUpperCase()]=1; });
+  var membrosAtuais=_getMembros();
+  var semConta=[];
+  (membrosAtuais.consultores||[]).concat(membrosAtuais.treinadores||[]).forEach(function(nome){
+    if(nome&&!todosNomesRegistrados[nome.trim().toUpperCase()]) semConta.push(nome.trim());
+  });
+  // remover duplicatas
+  semConta=semConta.filter(function(n,i,a){ return a.indexOf(n)===i; });
+  if(semConta.length){
+    html+='<div class="ur-secao-header"><div class="ur-secao-titulo" style="color:#fbbf24;">⏳ Aguardando configuração<span class="ur-secao-count">'+semConta.length+'</span></div></div>';
+    semConta.forEach(function(nome){
+      html+='<div class="usuario-row" style="opacity:.85;">'
+        +'<div class="ur-avatar" style="background:#2a2000;color:#fbbf24;border-color:#fbbf24;font-size:13px;font-weight:700;">'+nome.charAt(0)+'</div>'
+        +'<div class="ur-info"><div class="ur-nome">'+nome+'</div><div class="ur-login" style="color:#fbbf24;">Sem acesso configurado</div></div>'
+        +'<span class="ur-badge" style="background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.3);">Membro</span>'
+        +'<div class="ur-dot sem-acesso" title="Sem conta"></div>'
+        +'<div class="ur-acoes"><button class="ur-menu-btn btn-criar-acesso-membro" data-nome="'+nome+'" title="Criar acesso" style="color:#fbbf24;">⚙</button></div>'
+        +'<div class="ur-dd-data" style="display:none;"></div>'
+        +'</div>';
+    });
+  }
+
   grid.innerHTML=html;
 
   // ── Dropdown no body (evita clipping do overflow do grid) ──
@@ -5765,12 +5810,15 @@ function _montarGrid(membros,usuarios){
   // Event delegation do grid
   if(grid._urClickHandler) grid.removeEventListener('click',grid._urClickHandler);
   grid._urClickHandler=function(e){
-    var menuBtn=e.target.closest('.ur-menu-btn');
+    var menuBtn=e.target.closest('.ur-menu-btn:not(.btn-criar-acesso-membro)');
     if(menuBtn){ e.stopPropagation(); _abrirUrDd(menuBtn); return; }
     window._fecharUrDd();
     var btn=e.target.closest('button');
     if(!btn) return;
     if(btn.classList.contains('btn-perms-grupo')) abrirPermsGrupo(btn.dataset.perfil);
+    if(btn.classList.contains('btn-criar-acesso-membro')){
+      _abrirCriarAcessoMembro(btn.dataset.nome);
+    }
   };
   grid.addEventListener('click',grid._urClickHandler);
 }
@@ -5818,6 +5866,12 @@ function _abrirConfigurarAcesso(uid,nome,perfil){
   document.getElementById('campoVinculo').style.display='none';
   document.getElementById('novoUsuarioOverlay').classList.add('open');
   setTimeout(function(){document.getElementById('novoUsuarioSenha').focus();},100);
+}
+
+function _abrirCriarAcessoMembro(nome){
+  // Membro da turma sem conta — gera UID temporário baseado no nome
+  var uid='membro_'+nome.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_'+Date.now();
+  _abrirConfigurarAcesso(uid, nome.toUpperCase(), 'consultor');
 }
 
 function _abrirEditarAcesso(uid){
