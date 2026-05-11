@@ -36,6 +36,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .consultor-list-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;transition:background .15s;border:1px solid transparent;}
 .consultor-list-item:hover{background:rgba(200,240,90,.07);border-color:rgba(200,240,90,.2);}
 .consultor-list-name{font-size:14px;font-weight:600;color:var(--text);text-transform:uppercase;}
+.consultor-list-item.pago .consultor-list-name,.consultor-list-name.pago{color:#39ff14!important;text-shadow:0 0 8px rgba(57,255,20,.35);}
 .swim-header-row{display:grid;gap:3px;min-width:620px;}
 .swim-row-item{display:grid;gap:3px;min-width:620px;align-items:center;}
 .swim-cell-empty{height:32px;border-radius:4px;background:var(--surface2);opacity:.3;}

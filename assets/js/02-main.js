@@ -4037,8 +4037,8 @@ function _renderConsultorDetail(c){
       listEl.innerHTML=cd.map(function(d){
         var ri=data.indexOf(d);
         var _ip=d.status==='pago';
-        return '<div class="consultor-list-item" onclick="abrirClienteDetalhe('+ri+')">'
-          +'<span class="consultor-list-name"'+(_ip?' style="color:#39ff14;text-shadow:0 0 8px rgba(57,255,20,.35);"':'')+'>'+d.cliente+'</span>'
+        return '<div class="consultor-list-item'+(_ip?' pago':'')+'" onclick="abrirClienteDetalhe('+ri+')">'
+          +'<span class="consultor-list-name'+(_ip?' pago':'')+'">'+d.cliente+'</span>'
           +'<span class="badge badge-'+d.status+'">'+sl(d.status)+'</span>'
           +'</div>';
       }).join('');
