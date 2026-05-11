@@ -4098,7 +4098,8 @@ function abrirClienteDetalhe(ri){
   }).join('');
   _show('clienteDetalheTreinamento','clienteDetalheTreinamentoEdit',_modoEdit);
 
-  /* Treinador */
+  /* Treinador — só relevante se Treinamento = CI */
+  var _trdRow=document.getElementById('clienteDetalheTreinadorRow');
   var trdEl=document.getElementById('clienteDetalheTreinador');
   trdEl.textContent=d.treinador?d.treinador.toUpperCase():'—';
   var trdEdit=document.getElementById('clienteDetalheTreinadorEdit');
@@ -4106,7 +4107,15 @@ function abrirClienteDetalhe(ri){
   trdEdit.innerHTML='<option value="-">—</option>'+_trainLst.map(function(t){
     return '<option value="'+t+'"'+(d.treinador===t?' selected':'')+'>'+t.toUpperCase()+'</option>';
   }).join('');
+  var _eCI=(d.treinamento||'').toUpperCase()==='CI';
+  if(_trdRow) _trdRow.style.display=_eCI?'flex':'none';
   _show('clienteDetalheTreinador','clienteDetalheTreinadorEdit',_modoEdit);
+
+  /* Ao mudar treinamento no select, mostrar/ocultar treinador */
+  trnEdit.onchange=function(){
+    var isCI=this.value.toUpperCase()==='CI';
+    if(_trdRow) _trdRow.style.display=isCI?'flex':'none';
+  };
 
   /* Valor */
   var valEl=document.getElementById('clienteDetalheValor');
