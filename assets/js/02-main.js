@@ -5493,20 +5493,11 @@ function _renderUsuariosGrid(){
   }
 
   function _buildLocal(){
-    var _ministrante=_getTurmaMinistante();
-    var base={};
-    membros.consultores.forEach(function(nome){
-      var uid='consultor_'+_normalizeUid(nome);
-      base[uid]={nome:nome,perfil:'consultor',login:'',senha:'',ativo:true};
-    });
-    membros.treinadores.forEach(function(nome){
-      var uid='treinador_'+_normalizeUid(nome);
-      var perfil=(_ministrante&&_ministrante.toUpperCase()===nome.toUpperCase())?'ministrante':'treinador';
-      base[uid]={nome:nome,perfil:perfil,login:'',senha:'',ativo:true};
-    });
-    var local=_getUsuariosLocal();
-    Object.keys(local).forEach(function(uid){ base[uid]=local[uid]; });
-    return base;
+    /* Fix: NÃO injetar membros da turma como usuários sintéticos.
+       O painel de gestão de usuários reflete EXCLUSIVAMENTE o nó `usuarios/`.
+       Membros da turma sem entrada em `usuarios/` aparecem nos demais módulos
+       (como consultor/treinador) mas não devem aparecer aqui. */
+    return _getUsuariosLocal();
   }
 
   var _done=false;
@@ -5661,38 +5652,32 @@ function _montarGrid(membros,usuarios){
       +'</div>';
   }
 
+  /* Fix: só renderiza membros que TÊM entrada em `usuarios/`.
+     Membro de turma sem cadastro em `usuarios/` (ou recém-excluído)
+     NÃO deve aparecer no painel de gestão — `encontrar()` decide. */
   if(membros.adms&&membros.adms.length){
-    html+=_secaoHeader('ADM', membros.adms.length, 'adm');
-    membros.adms.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});}).forEach(function(nome){
-      var entry=encontrar(nome,'adm');
-      var uid=entry?entry[0]:uid_('adm',nome);
-      var u=entry?entry[1]:{nome:nome,perfil:'adm',login:'',senha:'',ativo:true};
-      html+=_card(uid,u);
-    });
+    var admsValidos=membros.adms.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});})
+      .map(function(nome){return encontrar(nome,'adm');}).filter(Boolean);
+    if(admsValidos.length){
+      html+=_secaoHeader('ADM', admsValidos.length, 'adm');
+      admsValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
+    }
   }
 
-  html+=_secaoHeader('Consultores', membros.consultores.length, 'consultor');
-  if(membros.consultores.length===0){
+  var consValidos=membros.consultores.map(function(nome){return encontrar(nome,'consultor');}).filter(Boolean);
+  html+=_secaoHeader('Consultores', consValidos.length, 'consultor');
+  if(consValidos.length===0){
     html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum consultor.</div>';
   } else {
-    membros.consultores.forEach(function(nome){
-      var entry=encontrar(nome,'consultor');
-      var uid=entry?entry[0]:uid_('consultor',nome);
-      var u=entry?entry[1]:{nome:nome,perfil:'consultor',login:'',senha:'',ativo:true};
-      html+=_card(uid,u);
-    });
+    consValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
   }
 
-  html+=_secaoHeader('Treinadores', membros.treinadores.length, 'treinador');
-  if(membros.treinadores.length===0){
+  var treinValidos=membros.treinadores.map(function(nome){return encontrar(nome,'treinador')||encontrar(nome,'ministrante');}).filter(Boolean);
+  html+=_secaoHeader('Treinadores', treinValidos.length, 'treinador');
+  if(treinValidos.length===0){
     html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum treinador.</div>';
   } else {
-    membros.treinadores.forEach(function(nome){
-      var entry=encontrar(nome,'treinador')||encontrar(nome,'ministrante');
-      var uid=entry?entry[0]:uid_('treinador',nome);
-      var u=entry?entry[1]:{nome:nome,perfil:'treinador',login:'',senha:'',ativo:true};
-      html+=_card(uid,u);
-    });
+    treinValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
   }
 
   grid.innerHTML=html;
