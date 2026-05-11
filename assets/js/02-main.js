@@ -4066,32 +4066,108 @@ function _renderConsultorDetail(c){
       }).join('');
   }
 }
+var _clienteDetalheIdx=null;
 function abrirClienteDetalhe(ri){
   var d=data[ri];
   if(!d) return;
+  _clienteDetalheIdx=ri;
   var sl=function(s){return s==='pago'?'PAGO':s==='negociacao'?'NEGOCIAÇÃO':s==='desistiu'?'DESISTIU':s==='estorno'?'ESTORNO':s==='-'?'—':'ABERTO';};
+
+  /* Verificar se consultor logado é dono deste cliente */
+  var _sess=_getSessao?_getSessao():null;
+  var _perfil=_sess?_sess.perfil:'adm';
+  var _vinculo=_sess?(_sess.vinculo||'').toUpperCase():'';
+  var _ehDono=_perfil==='consultor'&&_vinculo&&(d.consultor||'').toUpperCase()===_vinculo;
+  var _modoEdit=_ehDono; /* consultor só edita os próprios */
+
   document.getElementById('clienteDetalheName').textContent=d.cliente;
+
+  /* Alternar entre modo visualização e edição */
+  function _show(spanId, editId, mostrarEdit){
+    document.getElementById(spanId).style.display=mostrarEdit?'none':'';
+    document.getElementById(editId).style.display=mostrarEdit?'':'none';
+  }
+
+  /* Treinamento */
+  var trnEl=document.getElementById('clienteDetalheTreinamento');
+  trnEl.textContent=d.treinamento||'—';
+  var trnEdit=document.getElementById('clienteDetalheTreinamentoEdit');
+  var _treinLst=(typeof allTreinamentos!=='undefined'&&Array.isArray(allTreinamentos))?allTreinamentos:[];
+  trnEdit.innerHTML='<option value="">— vazio —</option>'+_treinLst.map(function(t){
+    return '<option value="'+t+'"'+(d.treinamento===t?' selected':'')+'>'+t+'</option>';
+  }).join('');
+  _show('clienteDetalheTreinamento','clienteDetalheTreinamentoEdit',_modoEdit);
+
+  /* Treinador */
+  var trdEl=document.getElementById('clienteDetalheTreinador');
+  trdEl.textContent=d.treinador?d.treinador.toUpperCase():'—';
+  var trdEdit=document.getElementById('clienteDetalheTreinadorEdit');
+  var _trainLst=(typeof allTrainers!=='undefined'&&Array.isArray(allTrainers))?allTrainers:[];
+  trdEdit.innerHTML='<option value="-">—</option>'+_trainLst.map(function(t){
+    return '<option value="'+t+'"'+(d.treinador===t?' selected':'')+'>'+t.toUpperCase()+'</option>';
+  }).join('');
+  _show('clienteDetalheTreinador','clienteDetalheTreinadorEdit',_modoEdit);
+
+  /* Valor */
+  var valEl=document.getElementById('clienteDetalheValor');
+  valEl.textContent=formatVal(d.valor);
+  var valEdit=document.getElementById('clienteDetalheValorEdit');
+  valEdit.value=d.valor?Number(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
+  _show('clienteDetalheValor','clienteDetalheValorEdit',_modoEdit);
+
+  /* Status */
   var stEl=document.getElementById('clienteDetalheStatus');
   stEl.textContent=sl(d.status);
-  stEl.className='badge badge-'+d.status;
-  document.getElementById('clienteDetalheTreinamento').textContent=d.treinamento||'—';
-  document.getElementById('clienteDetalheTreinador').textContent=d.treinamento==='CI'?d.treinador.toUpperCase():'—';
-  document.getElementById('clienteDetalheValor').textContent=formatVal(d.valor);
+  stEl.className='badge badge-'+(d.status||'aberto');
+  var stEdit=document.getElementById('clienteDetalheStatusEdit');
+  var STATUS_OPTS=[{v:'aberto',l:'ABERTO'},{v:'pago',l:'PAGO'},{v:'entrada',l:'ENTRADA'},{v:'negociacao',l:'NEGOCIAÇÃO'},{v:'desistiu',l:'DESISTIU'},{v:'estorno',l:'ESTORNO'}];
+  stEdit.innerHTML=STATUS_OPTS.map(function(s){
+    return '<option value="'+s.v+'"'+((d.status||'aberto')===s.v?' selected':'')+'>'+s.l+'</option>';
+  }).join('');
+  _show('clienteDetalheStatus','clienteDetalheStatusEdit',_modoEdit);
+
+  /* Entrada e Info (sempre só leitura) */
   var entRow=document.getElementById('clienteDetalheEntradaRow');
   document.getElementById('clienteDetalheEntrada').textContent=d.entrada>0?formatVal(d.entrada):'—';
   entRow.style.display=d.entrada>0?'flex':'none';
   var infoRow=document.getElementById('clienteDetalheInfoRow');
   var infoEl=document.getElementById('clienteDetalheInfo');
-  if(d.info&&d.info.trim()){
-    infoEl.textContent=d.info.trim();
-    infoRow.style.display='block';
-  } else {
-    infoRow.style.display='none';
-  }
+  if(d.info&&d.info.trim()){infoEl.textContent=d.info.trim();infoRow.style.display='block';}
+  else infoRow.style.display='none';
+
+  /* Botão Salvar */
+  document.getElementById('clienteDetalheSalvar').style.display=_modoEdit?'':'none';
+
   document.getElementById('clienteDetalheOverlay').classList.add('open');
 }
+
+function salvarClienteDetalhe(){
+  if(_clienteDetalheIdx===null) return;
+  var d=data[_clienteDetalheIdx];
+  if(!d) return;
+
+  /* Ler valores dos campos editáveis */
+  var novoTreinamento=document.getElementById('clienteDetalheTreinamentoEdit').value||'';
+  var novoTreinador=document.getElementById('clienteDetalheTreinadorEdit').value||'-';
+  var novoValorRaw=document.getElementById('clienteDetalheValorEdit').value.replace(/\./g,'').replace(',','.');
+  var novoValor=parseFloat(novoValorRaw)||0;
+  var novoStatus=document.getElementById('clienteDetalheStatusEdit').value||'aberto';
+
+  d.treinamento=novoTreinamento;
+  d.treinador=novoTreinador==='-'?'':novoTreinador;
+  d.valor=novoValor||null;
+  d.status=novoStatus;
+
+  if(typeof markUnsaved==='function') markUnsaved();
+  if(typeof saveStorage==='function') saveStorage();
+  if(typeof renderAll==='function') renderAll();
+  fecharClienteDetalhe();
+  if(typeof _showToast==='function') _showToast('Cliente atualizado!','var(--accent)');
+}
+
 function fecharClienteDetalhe(){
   document.getElementById('clienteDetalheOverlay').classList.remove('open');
+  _clienteDetalheIdx=null;
 }
 function closeConsultorDetail(){
   window._consultorAtivo=null;activeConsultorStatus=null;
