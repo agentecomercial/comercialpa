@@ -393,6 +393,7 @@
     else if(_npTabAtiva==='ranking') { if(typeof window.npRenderRanking==='function') window.npRenderRanking(); }
     else if(_npTabAtiva==='funil') { if(typeof window._fnlRender==='function') window._fnlRender(); }
     if(typeof window._fuInit==='function') window._fuInit(_mesKey());
+    if(typeof window._ldInit==='function') window._ldInit(_mesKey());
   }
 
   function _npRenderLabel(){
@@ -635,8 +636,14 @@
         var real=(ranking.find(function(r){return r.nome.toUpperCase()===nome.toUpperCase();})||{}).pago||0;
         return real<meta*0.7;
       });
+      var comMeta=_npConsultores.filter(function(nome){
+        return _npGoals[nome]&&+((_npGoals[nome].metaValor)||0)>0;
+      });
       if(abaixo.length){
-        alertEl.textContent='Abaixo de 70% da meta: '+abaixo.join(', ');
+        var msg = (comMeta.length>0 && abaixo.length===comMeta.length)
+          ? 'Todos os consultores estão abaixo de 70% da meta'
+          : 'Abaixo de 70% da meta: '+abaixo.join(', ');
+        alertEl.textContent=msg;
         alertEl.classList.add('visible');
       } else {
         alertEl.classList.remove('visible');
@@ -1328,6 +1335,7 @@
     else if(tab==='metas') _npRenderMetas(todas);
     else if(tab==='ranking') npRenderRanking();
     else if(tab==='funil'&&typeof _fnlRender==='function') _fnlRender();
+    else if(tab==='leads'){ if(typeof window._ldInit==='function') window._ldInit(_mesKey()); setTimeout(function(){ if(typeof window._initDrop==='function') window._initDrop(); },200); }
   };
 
   /* ── Mês anterior / próximo ──────────────────────── */

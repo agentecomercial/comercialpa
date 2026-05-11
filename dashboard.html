@@ -721,8 +721,29 @@
 
     <div class="modal-actions">
       <button class="modal-cancel" onclick="fecharPropProd()">Cancelar</button>
-      <button class="modal-save" onclick="gerarPropostaProduto()">Gerar HTML</button>
+      <button class="modal-save" onclick="gerarPropostaProduto()">Visualizar Proposta</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL PREVIEW PROPOSTA PRODUTO -->
+<div class="modal-overlay" id="propProdPreviewOverlay" style="z-index:1500;display:none;align-items:center;justify-content:center;" onclick="if(event.target===this)fecharPreviewPropProd()">
+  <div style="background:var(--surface);border-radius:var(--radius);border:1px solid var(--border2);width:92vw;max-width:900px;height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border2);flex-shrink:0;">
+      <div style="font-size:15px;font-weight:700;color:var(--text);" id="ppPreviewTitulo">Proposta</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button onclick="ppCopiarLink()" style="padding:7px 14px;border-radius:var(--radius-sm);border:1px solid rgba(200,240,90,.4);background:rgba(200,240,90,.08);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;">🔗 Copiar Link</button>
+        <button onclick="ppAbrirAba()" style="padding:7px 14px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;">↗ Abrir em nova aba</button>
+        <button onclick="ppCopiarHtml()" style="padding:7px 14px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;">📋 Copiar HTML</button>
+        <button onclick="ppBaixar()" style="padding:7px 14px;border-radius:var(--radius-sm);border:1px solid rgba(200,240,90,.4);background:var(--accent);color:#0a150a;font-size:12px;font-weight:700;cursor:pointer;">⬇ Baixar HTML</button>
+        <button onclick="fecharPreviewPropProd()" style="padding:7px 12px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:13px;cursor:pointer;">✕</button>
+      </div>
+    </div>
+    <div style="padding:10px 20px;background:var(--surface2);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <span style="font-size:11px;color:var(--muted);">Link da proposta:</span>
+      <input id="ppLinkInput" readonly onclick="this.select()" style="flex:1;font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:monospace;cursor:pointer;" value="" placeholder="Gerando..." />
+    </div>
+    <iframe id="ppIframe" style="flex:1;border:none;width:100%;" sandbox="allow-scripts allow-same-origin"></iframe>
   </div>
 </div>
 
@@ -1439,16 +1460,92 @@
 </div>
 <!-- MODAL PAINEL USUARIOS -->
 <div class="modal-overlay" id="usuariosOverlay" onclick="event.stopPropagation()">
-  <div class="modal" style="width:98vw;max-width:1800px;height:90vh;max-height:90vh;overflow-x:hidden;overflow-y:auto;display:flex;flex-direction:column;">
+  <div class="modal" style="width:98vw;max-width:960px;height:90vh;max-height:90vh;overflow-x:hidden;overflow-y:auto;display:flex;flex-direction:column;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-shrink:0;">
       <div class="modal-title" style="margin-bottom:0;">Gestão de Usuários</div>
-      <button class="modal-close" onclick="fecharPainelUsuarios()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button onclick="abrirWizardNovoUsuario()" style="padding:7px 16px;border-radius:8px;border:1px solid rgba(200,240,90,.4);background:rgba(200,240,90,.1);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;">+ Novo Usuário</button>
+        <button class="modal-close" onclick="fecharPainelUsuarios()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
+      </div>
     </div>
     <div class="modal-subtitle" style="flex-shrink:0;">Gerencie os acessos da equipe. Apenas o ADM pode criar, editar ou excluir usuários.</div>
+    <div id="usuariosAlertaLegado" style="display:none;margin-bottom:10px;padding:8px 14px;background:rgba(255,180,0,.08);border:1px solid rgba(255,180,0,.25);border-radius:8px;font-size:12px;color:var(--amber);flex-shrink:0;"></div>
     <div class="usuarios-grid" id="usuariosGrid" style="flex:1;overflow-y:auto;overflow-x:hidden;"></div>
-    <div class="modal-actions" style="margin-top:16px;flex-shrink:0;">
-      <button class="modal-save" id="btnExportarUsuarios" onclick="exportarUsuarios()" style="background:transparent;border:1px solid rgba(200,240,90,.3);color:var(--accent);">⬇ Exportar usuários</button>
-      <button class="modal-save" onclick="fecharPainelUsuarios()">Fechar</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-shrink:0;flex-wrap:wrap;gap:8px;">
+      <div class="ur-legenda">
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px rgba(34,197,94,.5);"></span>Ativo</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#fbbf24;"></span>1º acesso pendente</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#374137;"></span>Pausado</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;"></span>Sem acesso</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="modal-save" id="btnExportarUsuarios" onclick="exportarUsuarios()" style="background:transparent;border:1px solid rgba(200,240,90,.3);color:var(--accent);">⬇ Exportar</button>
+        <button class="modal-save" onclick="fecharPainelUsuarios()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL WIZARD NOVO USUÁRIO -->
+<div class="modal-overlay" id="wizardUsuarioOverlay">
+  <div onclick="event.stopPropagation()" class="modal" style="width:480px;">
+    <div class="modal-title" id="wizardTitulo">Novo Usuário — Passo 1 de 3</div>
+    <div class="modal-subtitle" id="wizardSubtitulo">Dados básicos e perfil</div>
+
+    <!-- Passo 1: dados + perfil -->
+    <div id="wizardPasso1">
+      <div class="modal-row">
+        <div class="modal-field" style="flex:1;">
+          <label class="modal-label">Nome completo</label>
+          <input class="modal-input" id="wzNome" style="text-transform:uppercase;" placeholder="Ex: João Silva" />
+        </div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-field" style="flex:1;">
+          <label class="modal-label">Perfil</label>
+          <select class="modal-input" id="wzPerfil" onchange="wizardAtualizarPerms()">
+            <option value="adm">ADM</option>
+            <option value="consultor">Consultor</option>
+            <option value="treinador">Treinador</option>
+            <option value="ministrante">Ministrante</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-field" style="flex:1;">
+          <label class="modal-label">Login</label>
+          <input class="modal-input" id="wzLogin" placeholder="Ex: joao.silva" autocomplete="off" />
+        </div>
+        <div class="modal-field" style="flex:1;">
+          <label class="modal-label">Senha inicial</label>
+          <input class="modal-input" id="wzSenha" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+        </div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-field" style="flex:1;">
+          <label class="modal-label">WhatsApp (opcional)</label>
+          <input class="modal-input" id="wzWhatsapp" placeholder="(91) 99999-9999" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Passo 2: permissões -->
+    <div id="wizardPasso2" style="display:none;">
+      <div style="background:rgba(200,240,90,.06);border:1px solid rgba(200,240,90,.15);border-radius:10px;padding:14px;margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Permissões pré-definidas pelo perfil — ajuste se necessário</div>
+        <div id="wzPermsGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+      </div>
+    </div>
+
+    <!-- Passo 3: confirmação -->
+    <div id="wizardPasso3" style="display:none;">
+      <div style="background:var(--surface2);border-radius:10px;padding:16px;" id="wzResumo"></div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="modal-cancel" id="wzBtnVoltar" onclick="wizardVoltar()" style="display:none;">← Voltar</button>
+      <button class="modal-cancel" onclick="fecharWizardUsuario()">Cancelar</button>
+      <button class="modal-save" id="wzBtnAvancar" onclick="wizardAvancar()">Próximo →</button>
     </div>
   </div>
 </div>
@@ -1467,6 +1564,7 @@
       <div class="modal-field">
         <label class="modal-label">Perfil</label>
         <select class="modal-input" id="novoUsuarioPerfil">
+          <option value="adm">ADM</option>
           <option value="consultor">Consultor</option>
           <option value="treinador">Treinador</option>
           <option value="ministrante">Ministrante</option>
@@ -1983,6 +2081,25 @@ try{
       </div>
       <button onclick="window._ldAbrirChave()" title="Configurar chave da IA (opcional)" style="flex-shrink:0;padding:10px 14px;border-radius:10px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.06);color:var(--accent);cursor:pointer;font-size:18px;">🤖</button>
     </div>
+    <!-- filtro de período por data de distribuição -->
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;">Período:</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="ldPeriodoBtns">
+        <button class="ld-periodo-btn ativo" onclick="window._ldPeriodo('tudo')">Tudo</button>
+        <button class="ld-periodo-btn" onclick="window._ldPeriodo('hoje')">Hoje</button>
+        <button class="ld-periodo-btn" onclick="window._ldPeriodo('ontem')">Ontem</button>
+        <button class="ld-periodo-btn" onclick="window._ldPeriodo('semana')">Esta semana</button>
+        <button class="ld-periodo-btn" onclick="window._ldPeriodo('mes')">Este mês</button>
+        <button class="ld-periodo-btn" onclick="window._ldPeriodo('mes_passado')">Mês passado</button>
+        <button class="ld-periodo-btn" id="ldPeriodoPersonBtn" onclick="window._ldPeriodo('custom')">Personalizado</button>
+      </div>
+      <div id="ldPeriodoCustom" style="display:none;align-items:center;gap:6px;">
+        <input type="date" id="ldPeriodoDe" class="fnl-filtro-sel" style="padding:4px 8px;" onchange="window._ldPeriodoCustomAplicar()">
+        <span style="font-size:11px;color:var(--muted);">até</span>
+        <input type="date" id="ldPeriodoAte" class="fnl-filtro-sel" style="padding:4px 8px;" onchange="window._ldPeriodoCustomAplicar()">
+      </div>
+    </div>
+
     <!-- toolbar de filtros (padrão funil) -->
     <div class="fnl-toolbar" style="padding:0 0 12px 0;">
       <div class="fnl-search-wrap" style="display:flex;flex:1;min-width:180px;">
@@ -1992,12 +2109,27 @@ try{
         <select class="fnl-filtro-sel" id="ldFilConsultor" onchange="window._ldFiltrarSel()">
           <option value="">Todos consultores</option>
         </select>
+        <select class="fnl-filtro-sel" id="ldFilStatus" onchange="window._ldFiltrarSel()">
+          <option value="">Todos status</option>
+          <option value="novo">Novo</option>
+          <option value="contatado">Contatado</option>
+          <option value="negociando">Negociando</option>
+          <option value="ganho">Ganho</option>
+          <option value="perdido">Perdido</option>
+        </select>
         <select class="fnl-filtro-sel" id="ldFilDist" onchange="window._ldFiltrarSel()">
           <option value="">Todos</option>
           <option value="sim">Distribuídos</option>
           <option value="nao">Não distribuídos</option>
         </select>
         <button class="fnl-filtro-limpar-btn" id="ldFilLimpar" onclick="window._ldLimparFiltros()" style="display:none;">✕ Limpar</button>
+      </div>
+      <!-- pool de distribuição -->
+      <div style="position:relative;flex-shrink:0;">
+        <button id="ldPoolBtn" onclick="window._ldAbrirPool()" class="fnl-filtro-sel" style="cursor:pointer;white-space:nowrap;">
+          👥 Distribuir para: <strong id="ldPoolLabel">Todos</strong> ▾
+        </button>
+        <div id="ldPoolDropdown" style="display:none;position:fixed;background:var(--surface);border:1px solid var(--border2);border-radius:10px;min-width:200px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden;"></div>
       </div>
       <div id="npLeadsProximo" style="flex-shrink:0;padding:5px 12px;border-radius:20px;background:rgba(200,240,90,.06);border:1px solid rgba(200,240,90,.18);white-space:nowrap;font-size:12px;"></div>
     </div>
@@ -2149,7 +2281,7 @@ try{
 
 <!-- Modal: Configurar Metas -->
 <div class="np-modal-overlay" id="npModalMeta">
-  <div class="np-modal" style="width:min(800px,95vw);">
+  <div class="np-modal" style="width:min(1100px,95vw);">
     <div class="np-modal-header">
       <span class="np-modal-title" style="white-space:nowrap;">🎯 Metas Individuais — <span id="npModalMetaMes">—</span></span>
       <button class="np-modal-close" onclick="npFecharModalMeta()">×</button>
@@ -2222,7 +2354,7 @@ try{
       <button class="np-modal-close" onclick="window._ldFecharModal()">✕</button>
     </div>
     <div style="padding:18px 20px;">
-      <img id="npLdImgPreview" src="" alt="" style="display:none;width:100%;border-radius:8px;margin-bottom:14px;max-height:200px;object-fit:cover;">
+      <img id="npLdImgPreview" src="" alt="" style="display:none;width:100%;border-radius:8px;margin-bottom:14px;max-height:60vh;object-fit:contain;background:#ffffff;border:1px solid rgba(255,255,255,.08);">
       <div id="npLdIABadge" style="display:none;font-size:11px;background:rgba(200,240,90,.1);border:1px solid rgba(200,240,90,.25);border-radius:8px;padding:6px 10px;margin-bottom:12px;color:var(--accent);">🤖 Dados extraídos automaticamente — confirme antes de salvar</div>
       <div style="margin-bottom:12px;">
         <label style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Nome</label>

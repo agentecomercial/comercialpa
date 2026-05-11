@@ -14,54 +14,59 @@
   var _filtroConsultor = '';
   var _filtroDist      = '';
   var _filtroBusca     = '';
+  var _filtroStatus    = '';
+  var _selecionados    = {};
 
-  /* ── Worker OCR reutilizável ────────────────────────────────── */
-  var _ocrWorker = null;
-  var _ocrPronto = false;
-  var _ocrFila   = []; // callbacks aguardando warmup
-
-  function _iniciarWorker(cb){
-    if(_ocrPronto){ if(cb) cb(); return; }
-    if(typeof Tesseract==='undefined'){ if(cb) cb(); return; }
-    _ocrWorker = Tesseract.createWorker('por+eng', 1, {
-      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
-      corePath:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js',
-      langPath:   'https://tessdata.projectnaptha.com/4.0.0'
-    });
-    _ocrWorker.then(function(w){
-      _ocrWorker  = w;
-      _ocrPronto  = true;
-      if(cb) cb();
-      _ocrFila.forEach(function(fn){ fn(); });
-      _ocrFila = [];
-    }).catch(function(e){
-      console.warn('[Leads OCR] warmup falhou:', e);
-      _ocrWorker = null;
-      _ocrPronto = false;
-      if(cb) cb();
-    });
-  }
+  /* ── Config OCR (file:// compatível) ───────────────────────── */
+  var _ocrCfg = {
+    workerPath:    'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
+    corePath:      'https://cdn.jsdelivr.net/npm/tesseract.js-core@5',
+    langPath:      'https://tessdata.projectnaptha.com/4.0.0',
+    workerBlobURL: true,  /* blobifica o worker -> contorna origem opaca do file:// */
+    cacheMethod:   'none' /* IndexedDB errático em file:// */
+  };
 
   /* ── Helpers ────────────────────────────────────────────────── */
   function _mk(){ return typeof window._mesKey==='function'?window._mesKey():(function(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');})(); }
   function _id(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
   function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function _toast(msg,cor){ if(typeof _showToast==='function') _showToast(msg,cor||'var(--accent)'); }
-  function _consultores(){ return window._npConsultores&&window._npConsultores.length?window._npConsultores:[]; }
+  /* pool completo de consultores do mês */
+  function _consultoresTodos(){ return window._npConsultores&&window._npConsultores.length?window._npConsultores:[]; }
+
+  /* pool de distribuição: localStorage ou todos */
+  var _POOL_KEY = 'ld_pool_dist';
+  function _poolSalvar(arr){ try{ localStorage.setItem(_POOL_KEY, JSON.stringify(arr)); }catch(e){} }
+  function _poolCarregar(){
+    try{
+      var v = localStorage.getItem(_POOL_KEY);
+      if(v){ var p=JSON.parse(v); if(Array.isArray(p)&&p.length) return p; }
+    }catch(e){}
+    return null; /* null = todos */
+  }
+  var _poolAtivo = _poolCarregar(); /* null | string[] */
+
+  /* consultores efetivos para o round-robin */
+  function _consultores(){
+    var todos = _consultoresTodos();
+    if(!_poolAtivo) return todos;
+    return todos.filter(function(c){ return _poolAtivo.indexOf(c)!==-1; });
+  }
 
   /* ── Compressão de imagem ───────────────────────────────────── */
   function _comprimir(base64, callback){
-    var MAX_W = 720;
-    var QUALITY = 0.70;
     var img = new Image();
     img.onload = function(){
-      var ratio = Math.min(1, MAX_W / img.width);
+      var ratio = Math.min(1, 1280 / img.width); /* 1280px: resolução mínima para OCR */
       var w = Math.round(img.width  * ratio);
       var h = Math.round(img.height * ratio);
       var canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      callback(canvas.toDataURL('image/jpeg', QUALITY));
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; /* fundo branco: evita preto no JPEG e melhora OCR */
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.85));
     };
     img.onerror = function(){ callback(base64); };
     img.src = base64;
@@ -93,16 +98,81 @@
     window._fbSave(_fbPath('_rrIndex'), _rrIdx).catch(function(){});
   }
 
+  /* ── Filtro de período ──────────────────────────────────────── */
+  var _filtroPeriodo = 'tudo'; // padrão: tudo
+  var _periodoCustomDe  = 0;
+  var _periodoCustomAte = 0;
+
+  function _inicioDia(d){ var r=new Date(d); r.setHours(0,0,0,0); return r.getTime(); }
+  function _fimDia(d)   { var r=new Date(d); r.setHours(23,59,59,999); return r.getTime(); }
+
+  function _periodoBounds(){
+    var agora = new Date();
+    switch(_filtroPeriodo){
+      case 'hoje':
+        return [_inicioDia(agora), _fimDia(agora)];
+      case 'ontem':
+        var ontem = new Date(agora); ontem.setDate(ontem.getDate()-1);
+        return [_inicioDia(ontem), _fimDia(ontem)];
+      case 'semana':
+        var seg = new Date(agora); seg.setDate(agora.getDate()-agora.getDay()+1);
+        return [_inicioDia(seg), _fimDia(agora)];
+      case 'mes':
+        var ini = new Date(agora.getFullYear(), agora.getMonth(), 1);
+        return [_inicioDia(ini), _fimDia(agora)];
+      case 'mes_passado':
+        var mp  = new Date(agora.getFullYear(), agora.getMonth()-1, 1);
+        var mpe = new Date(agora.getFullYear(), agora.getMonth(), 0);
+        return [_inicioDia(mp), _fimDia(mpe)];
+      case 'custom':
+        return [_periodoCustomDe, _periodoCustomAte];
+      default: // 'tudo'
+        return [0, Infinity];
+    }
+  }
+
+  function _periodoDentro(ts){
+    if(_filtroPeriodo==='tudo') return true;
+    if(!ts) return false; /* sem data de distribuição: só aparece em "tudo" */
+    var b = _periodoBounds();
+    return ts>=b[0] && ts<=b[1];
+  }
+
+  window._ldPeriodo = function(p){
+    _filtroPeriodo = p;
+    /* atualiza botões ativos */
+    document.querySelectorAll('.ld-periodo-btn').forEach(function(b){
+      b.classList.remove('ativo');
+    });
+    var mapa = {hoje:0,ontem:1,semana:2,mes:3,mes_passado:4,tudo:5,custom:6};
+    var btns = document.querySelectorAll('.ld-periodo-btn');
+    if(btns[mapa[p]]) btns[mapa[p]].classList.add('ativo');
+    /* mostra/esconde inputs de datas */
+    var customDiv = document.getElementById('ldPeriodoCustom');
+    if(customDiv) customDiv.style.display = p==='custom' ? 'flex' : 'none';
+    _render();
+  };
+
+  window._ldPeriodoCustomAplicar = function(){
+    var de  = document.getElementById('ldPeriodoDe');
+    var ate = document.getElementById('ldPeriodoAte');
+    _periodoCustomDe  = de  && de.value  ? _inicioDia(new Date(de.value+'T00:00:00'))  : 0;
+    _periodoCustomAte = ate && ate.value ? _fimDia(new Date(ate.value+'T00:00:00')) : Infinity;
+    _render();
+  };
+
   /* ── Filtros (toolbar estilo Funil) ────────────────────────── */
-  function _filtroAtivo(){ return _filtroConsultor||_filtroDist||_filtroBusca; }
+  function _filtroAtivo(){ return _filtroConsultor||_filtroDist||_filtroBusca||_filtroStatus; }
 
   function _atualizarBotaoLimpar(){
     var btn=document.getElementById('ldFilLimpar');
     if(btn) btn.style.display=_filtroAtivo()?'':'none';
     var sc=document.getElementById('ldFilConsultor');
     var sd=document.getElementById('ldFilDist');
+    var ss=document.getElementById('ldFilStatus');
     if(sc) sc.classList.toggle('ativo',!!_filtroConsultor);
     if(sd) sd.classList.toggle('ativo',!!_filtroDist);
+    if(ss) ss.classList.toggle('ativo',!!_filtroStatus);
   }
 
   function _populaSelectConsultores(){
@@ -125,16 +195,19 @@
   window._ldFiltrarSel=function(){
     var sc=document.getElementById('ldFilConsultor');
     var sd=document.getElementById('ldFilDist');
+    var ss=document.getElementById('ldFilStatus');
     _filtroConsultor=sc?sc.value:'';
     _filtroDist=sd?sd.value:'';
+    _filtroStatus=ss?ss.value:'';
     _atualizarBotaoLimpar();
     _render();
   };
 
   window._ldLimparFiltros=function(){
-    _filtroConsultor=''; _filtroDist=''; _filtroBusca='';
+    _filtroConsultor=''; _filtroDist=''; _filtroBusca=''; _filtroStatus='';
     var sc=document.getElementById('ldFilConsultor'); if(sc) sc.value='';
     var sd=document.getElementById('ldFilDist');      if(sd) sd.value='';
+    var ss=document.getElementById('ldFilStatus');    if(ss) ss.value='';
     var si=document.getElementById('ldSearch');       if(si) si.value='';
     _atualizarBotaoLimpar();
     _render();
@@ -144,6 +217,174 @@
     _filtroConsultor=(consultor==='__sem__')?'':( consultor||'');
     _filtroDist=(consultor==='__sem__')?'nao':_filtroDist;
     _atualizarBotaoLimpar();
+    _render();
+  };
+
+  window._ldFiltrarCard=function(nome){
+    if(nome==='__sem__'){
+      /* toggle filtro "sem consultor" */
+      if(_filtroDist==='nao'){ _filtroDist=''; }
+      else { _filtroDist='nao'; _filtroConsultor=''; }
+    } else {
+      /* toggle filtro por consultor */
+      if(_filtroConsultor===nome){ _filtroConsultor=''; }
+      else { _filtroConsultor=nome; _filtroDist=''; }
+    }
+    var sc=document.getElementById('ldFilConsultor'); if(sc) sc.value=_filtroConsultor;
+    var sd=document.getElementById('ldFilDist');      if(sd) sd.value=_filtroDist;
+    _atualizarBotaoLimpar();
+    _render();
+  };
+
+  /* ── Seleção em lote ────────────────────────────────────────── */
+  window._ldToggleSel=function(id){
+    if(_selecionados[id]) delete _selecionados[id];
+    else _selecionados[id]=true;
+    _render();
+  };
+  window._ldToggleSelTodos=function(check){
+    var el=document.getElementById('npLeadsGrid');
+    if(!el) return;
+    var chks=el.querySelectorAll('tbody .ld-chk');
+    chks.forEach(function(c){
+      var id=c.closest('tr') && c.closest('tr').querySelector('[data-dist-id]') && c.closest('tr').querySelector('[data-dist-id]').getAttribute('data-dist-id');
+      /* fallback: pegar id do onchange */
+      if(!id){
+        var oc=c.getAttribute('onchange')||'';
+        var m=oc.match(/'([^']+)'/);
+        if(m) id=m[1];
+      }
+      if(id){ if(check) _selecionados[id]=true; else delete _selecionados[id]; }
+    });
+    _render();
+  };
+  window._ldLimparSelecao=function(){
+    _selecionados={};
+    _render();
+  };
+
+  window._ldDistribuirLote=function(){
+    var ids=Object.keys(_selecionados);
+    if(!ids.length) return;
+    var cons=_consultores(); /* respeita o pool ativo de "👥 Distribuir para:" */
+    if(!cons.length){ _toast('Nenhum consultor no pool. Configure em 👥 Distribuir para.','var(--amber)'); return; }
+    /* distribui em round-robin entre os consultores do pool */
+    var ts=Date.now();
+    ids.forEach(function(id,i){
+      var consultor=cons[i%cons.length];
+      var lead=_leads[id]; if(!lead) return;
+      lead.consultor=consultor;
+      lead.distribuidoEm=ts;
+      _fbSave(_mesk+'/'+id+'/consultor',consultor);
+      _fbSave(_mesk+'/'+id+'/distribuidoEm',ts);
+      delete _selecionados[id];
+    });
+    _toast('✅ '+ids.length+' lead'+(ids.length!==1?'s':'')+' distribuído'+(ids.length!==1?'s':'')+' entre '+cons.length+' consultor'+(cons.length!==1?'es':''),'var(--accent)');
+    requestAnimationFrame(_render);
+  };
+
+  /* ── Pool de distribuição — dropdown com checkboxes ────────── */
+  window._ldAbrirPool = function(){
+    var drop = document.getElementById('ldPoolDropdown');
+    var btn  = document.getElementById('ldPoolBtn');
+    if(!drop||!btn) return;
+    if(drop.style.display!=='none'){ drop.style.display='none'; return; }
+
+    var todos = _consultoresTodos();
+    if(!todos.length){ _toast('Nenhum consultor disponível.','var(--amber)'); return; }
+    var sel = _poolAtivo ? _poolAtivo : todos.slice();
+
+    drop.innerHTML = '<div style="padding:8px 12px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border2);">Quem recebe leads</div>'
+      + todos.map(function(c){
+          var chk = sel.indexOf(c)!==-1;
+          return '<label style="display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;" '
+            +'onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'
+            +'<input type="checkbox" id="ldpc_'+_esc(c)+'" value="'+_esc(c)+'"'+(chk?' checked':'')
+            +' style="accent-color:var(--accent);width:15px;height:15px;cursor:pointer;">'
+            +'<span style="font-size:13px;font-weight:600;color:var(--text);">'+_esc(c)+'</span>'
+            +'</label>';
+        }).join('')
+      +'<div style="padding:8px 12px;border-top:1px solid var(--border2);">'
+      +'<button onclick="window._ldPoolAplicar()" style="width:100%;padding:7px;background:var(--accent);color:#000;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">Confirmar</button>'
+      +'</div>';
+
+    /* posicionar abaixo do botão */
+    var r = btn.getBoundingClientRect();
+    drop.style.top  = (r.bottom+4)+'px';
+    drop.style.left = r.left+'px';
+    drop.style.display = 'block';
+
+    setTimeout(function(){
+      function _fora(e){
+        if(!drop.contains(e.target)&&e.target!==btn){
+          drop.style.display='none';
+          document.removeEventListener('click',_fora);
+        }
+      }
+      document.addEventListener('click',_fora);
+    },10);
+  };
+
+  window._ldPoolAplicar = function(){
+    var checks = document.querySelectorAll('#ldPoolDropdown input[type=checkbox]:checked');
+    var todos  = _consultoresTodos();
+    var sels   = Array.from(checks).map(function(c){ return c.value; });
+    _poolAtivo = sels.length===todos.length ? null : (sels.length ? sels : null);
+    _poolSalvar(_poolAtivo||[]);
+    document.getElementById('ldPoolDropdown').style.display='none';
+    _render();
+    _toast('✅ Pool atualizado');
+  };
+
+  window._ldPoolChange = function(){}; /* sem ação — aplica no Confirmar */
+
+  function _renderPoolSelect(){} /* sem ação — mantido para compatibilidade */
+
+  function _renderPoolBtn(){
+    var lbl  = document.getElementById('ldPoolLabel');
+    var btn  = document.getElementById('ldPoolBtn');
+    if(!lbl||!btn) return;
+    var todos = _consultoresTodos();
+    var n = _poolAtivo ? _poolAtivo.length : todos.length;
+    var ativo = _poolAtivo && _poolAtivo.length < todos.length;
+    lbl.textContent = ativo ? n+'/'+todos.length : 'Todos';
+    btn.style.borderColor = ativo ? 'var(--accent)' : '';
+    btn.style.color       = ativo ? 'var(--accent)' : '';
+  }
+
+  /* ── SLA e Status ──────────────────────────────────────────── */
+  var _STATUS_ORDEM = ['novo','contatado','negociando','ganho','perdido'];
+  var _STATUS_LABEL = {novo:'Novo',contatado:'Contatado',negociando:'Negociando',ganho:'✅ Ganho',perdido:'❌ Perdido'};
+  var _STATUS_CSS   = {novo:'ld-status-novo',contatado:'ld-status-contatado',negociando:'ld-status-negociando',ganho:'ld-status-ganho',perdido:'ld-status-perdido'};
+
+  function _slaChip(distribuidoEm){
+    if(!distribuidoEm) return '';
+    var min = Math.floor((Date.now()-distribuidoEm)/60000);
+    var cls, label;
+    if(min<15){      cls='ld-sla-verde';    label='⏱ '+min+'min'; }
+    else if(min<60){ cls='ld-sla-amarelo';  label='⏱ '+min+'min'; }
+    else if(min<240){cls='ld-sla-laranja';  label='⏱ '+Math.floor(min/60)+'h'; }
+    else{            cls='ld-sla-vermelho'; label='⏱ '+Math.floor(min/60)+'h'; }
+    return '<span class="ld-sla '+cls+'">'+label+'</span>';
+  }
+
+  function _fmtDataHora(ts){
+    if(!ts) return '—';
+    var d = new Date(ts);
+    return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '
+          +d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }
+
+  window._ldAvancarStatus = function(id){
+    var l = _leads[id]; if(!l) return;
+    var cur = l.status||'novo';
+    var idx = _STATUS_ORDEM.indexOf(cur);
+    /* ganho e perdido são terminais — clique rewind para novo */
+    var prox = (idx>=_STATUS_ORDEM.length-1||cur==='ganho'||cur==='perdido')
+      ? 'novo' : _STATUS_ORDEM[idx+1];
+    if((prox==='perdido')&&!confirm('Marcar como Perdido?')) return;
+    l.status=prox; _leads[id]=l;
+    _salvarLead(id,l);
     _render();
   };
 
@@ -168,6 +409,7 @@
   function _render(){
     _renderResumo();
     _renderProximo();
+    _renderPoolBtn();
     _populaSelectConsultores();
     var el = document.getElementById('npLeadsGrid');
     if(!el) return;
@@ -177,6 +419,8 @@
       if(_filtroConsultor && (l.consultor||'')!==_filtroConsultor) return false;
       if(_filtroDist==='sim' && !l.consultor) return false;
       if(_filtroDist==='nao' && l.consultor)  return false;
+      if(_filtroStatus && (l.status||'novo')!==_filtroStatus) return false;
+      if(!_periodoDentro(l.distribuidoEm)) return false;
       if(_filtroBusca){
         var haystack=((l.nome||'')+' '+(l.telefone||'')).toLowerCase();
         if(haystack.indexOf(_filtroBusca)===-1) return false;
@@ -192,34 +436,68 @@
       el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Nenhum lead encontrado para este filtro.</div>';
       return;
     }
+    var ids = lista.map(function(e){ return e[0]; });
+    var todosSel = ids.length > 0 && ids.every(function(id){ return _selecionados[id]; });
+
     var rows = lista.map(function(e){
       var id=e[0]; var l=e[1];
+      var sel = _selecionados[id] ? ' checked' : '';
+      var trCls = _selecionados[id] ? ' class="ld-tr-sel"' : '';
       var foto = l.imgBase64
         ? '<img class="ld-thumb" src="'+l.imgBase64+'" onclick="window._ldVerImg(\''+id+'\')" title="Ver imagem">'
         : '<div class="ld-thumb-ph">👤</div>';
-      var dist = l.consultor
-        ? '<span style="font-size:10px;background:rgba(200,240,90,.12);color:var(--accent);border:1px solid rgba(200,240,90,.25);border-radius:20px;padding:2px 8px;white-space:nowrap;">✅ '+_esc(l.consultor)+'</span>'
-        : '<span style="font-size:10px;background:rgba(255,82,82,.1);color:var(--red);border:1px solid rgba(255,82,82,.25);border-radius:20px;padding:2px 8px;">Não dist.</span>';
+
+      var st = l.status||'novo';
+      var statusChip = '<span class="ld-status '+(_STATUS_CSS[st]||'ld-status-novo')+'" '
+        +'onclick="window._ldAvancarStatus(\''+id+'\')" title="Clique para avançar o status">'
+        +(_STATUS_LABEL[st]||'Novo')+'</span>';
+
+      var consCell;
+      if(l.consultor){
+        consCell = '<span onclick="window._ldDistribuir(\''+id+'\',event)" title="Clique para redistribuir" style="cursor:pointer;font-size:10px;background:rgba(200,240,90,.12);color:var(--accent);border:1px solid rgba(200,240,90,.25);border-radius:20px;padding:2px 8px;white-space:nowrap;">'+_esc(l.consultor)+'</span>';
+      } else {
+        consCell = '<span onclick="window._ldDistribuir(\''+id+'\',event)" title="Clique para distribuir" style="cursor:pointer;font-size:10px;background:rgba(255,82,82,.1);color:var(--red);border:1px solid rgba(255,82,82,.25);border-radius:20px;padding:2px 8px;">Não dist.</span>';
+      }
+
+      var distCell = l.distribuidoEm
+        ? '<span style="font-size:11px;color:var(--text);">'+_fmtDataHora(l.distribuidoEm)+'</span>'
+        : '<span style="color:var(--muted);font-size:11px;">—</span>';
+
       var desfazer = l.consultor
         ? '<button onclick="window._ldDesfazer(\''+id+'\')" title="Desfazer distribuição" style="font-size:10px;padding:2px 6px;border-radius:5px;border:1px solid rgba(255,180,0,.3);background:rgba(255,180,0,.07);color:var(--amber);cursor:pointer;">↩</button>'
         : '';
-      return '<tr>'
+
+      return '<tr'+trCls+'>'
+        +'<td class="td-check"><input type="checkbox" class="ld-chk"'+sel+' onchange="window._ldToggleSel(\''+id+'\')" onclick="event.stopPropagation()"></td>'
         +'<td class="td-foto">'+foto+'</td>'
         +'<td class="td-nome" title="'+_esc(l.nome||'')+'">'+_esc(l.nome||'Sem nome')+'</td>'
         +'<td class="td-tel">'+_esc(l.telefone||'—')+'</td>'
         +'<td class="td-msg" title="'+_esc(l.mensagem||'')+'">'+_esc(l.mensagem||'')+'</td>'
-        +'<td class="td-cons">'+dist+'</td>'
+        +'<td>'+statusChip+'</td>'
+        +'<td class="td-cons">'+consCell+'</td>'
+        +'<td>'+distCell+'</td>'
         +'<td class="td-acoes"><div class="td-acoes-inner">'
-          +'<button onclick="window._ldDistribuir(\''+id+'\')" title="Distribuir" style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.08);color:var(--accent);cursor:pointer;">📤</button>'
+          +'<button data-dist-id="'+id+'" onclick="window._ldDistribuir(\''+id+'\',event)" title="Distribuir" style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.08);color:var(--accent);cursor:pointer;">📤</button>'
           +desfazer
           +'<button onclick="window._ldEditar(\''+id+'\')" title="Editar" style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;">✏</button>'
           +'<button onclick="window._ldRemover(\''+id+'\')" title="Remover" style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid rgba(255,82,82,.3);background:rgba(255,82,82,.06);color:var(--red);cursor:pointer;">✕</button>'
         +'</div></td>'
         +'</tr>';
     }).join('');
-    el.innerHTML = '<table class="ld-table">'
+
+    var qtdSel = Object.keys(_selecionados).length;
+    var barraLote = qtdSel > 0
+      ? '<div class="ld-barra-lote">'
+        +'<span style="font-size:12px;color:var(--text);font-weight:600;">'+qtdSel+' lead'+(qtdSel!==1?'s':'')+' selecionado'+(qtdSel!==1?'s':'')+'</span>'
+        +'<button onclick="window._ldDistribuirLote()" style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid rgba(200,240,90,.4);background:rgba(200,240,90,.1);color:var(--accent);cursor:pointer;font-weight:600;">📤 Distribuir selecionados</button>'
+        +'<button onclick="window._ldLimparSelecao()" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;">✕ Limpar seleção</button>'
+        +'</div>'
+      : '';
+
+    el.innerHTML = barraLote + '<table class="ld-table">'
       +'<thead><tr>'
-      +'<th></th><th>Nome</th><th>Telefone</th><th>Mensagem</th><th>Consultor</th><th>Ações</th>'
+      +'<th class="td-check"><input type="checkbox" class="ld-chk"'+(todosSel?' checked':'')+' onchange="window._ldToggleSelTodos(this.checked)" title="Selecionar todos"></th>'
+      +'<th></th><th>Nome</th><th>Telefone</th><th>Mensagem</th><th>Status</th><th>Consultor</th><th>Distribuído em</th><th>Ações</th>'
       +'</tr></thead>'
       +'<tbody>'+rows+'</tbody>'
       +'</table>';
@@ -244,7 +522,8 @@
     var i=0;
     var cards = cons.map(function(nome){
       var cor = COR[(i++)%COR.length];
-      return '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;min-width:160px;">'
+      var ativo = _filtroConsultor===nome;
+      return '<div onclick="window._ldFiltrarCard(\''+nome.replace(/'/g,"\\'")+'\')" title="Clique para filtrar" style="cursor:pointer;background:var(--surface);border:1px solid '+(ativo?cor:' var(--border2)')+';border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;min-width:160px;transition:border-color .15s,box-shadow .15s;'+(ativo?'box-shadow:0 0 0 2px '+cor+'44;':'')+'">'
         +'<div style="width:32px;height:32px;border-radius:50%;background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;">'+nome.charAt(0).toUpperCase()+'</div>'
         +'<div><div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">'+_esc(nome)+'</div>'
         +'<div style="font-size:10px;color:var(--muted);">'+map[nome]+' lead'+(map[nome]!==1?'s':'')+'</div>'
@@ -253,7 +532,8 @@
 
     var semDist = map['__sem__']||0;
     if(semDist){
-      cards = '<div style="background:rgba(255,82,82,.06);border:1px solid rgba(255,82,82,.2);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;min-width:160px;">'
+      var ativoSem = _filtroDist==='nao';
+      cards = '<div onclick="window._ldFiltrarCard(\'__sem__\')" title="Filtrar não distribuídos" style="cursor:pointer;background:rgba(255,82,82,.06);border:1px solid '+(ativoSem?'var(--red)':'rgba(255,82,82,.2)')+';border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;min-width:160px;transition:border-color .15s;'+(ativoSem?'box-shadow:0 0 0 2px rgba(255,82,82,.3);':'')+'">'
         +'<div style="width:32px;height:32px;border-radius:50%;background:rgba(255,82,82,.15);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">❗</div>'
         +'<div><div style="font-size:12px;font-weight:700;color:var(--red);">Sem consultor</div>'
         +'<div style="font-size:10px;color:var(--muted);">'+semDist+' lead'+(semDist!==1?'s':'')+'</div>'
@@ -326,125 +606,172 @@
     setTimeout(function(){ if(inp){inp.focus();inp.select();} },100);
   };
 
-  /* ── Extração OCR via worker reutilizável ───────────────────── */
+  /* ── Extração OCR (file:// compatível, sem worker persistente) ─ */
   function _extrairOCR(base64, callback){
     if(typeof Tesseract==='undefined'){
       console.warn('[Leads OCR] Tesseract não carregado');
       callback({}); return;
     }
     _toast('🔍 Lendo imagem...','var(--muted)');
-
-    function _reconhecer(){
-      /* worker já inicializado (createWorker resolvido) */
-      if(_ocrPronto && _ocrWorker && typeof _ocrWorker.recognize === 'function'){
-        _ocrWorker.recognize(base64).then(function(result){
-          var txt = result.data.text||'';
+    /* decodifica em canvas com fundo branco antes de passar ao Tesseract:
+       evita que o worker leia o canvas interno da página em file:// */
+    var img = new Image();
+    img.onload = function(){
+      var canvas = document.createElement('canvas');
+      canvas.width  = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      Tesseract.recognize(canvas, 'por+eng', _ocrCfg)
+        .then(function(result){
+          var txt = (result&&result.data&&result.data.text)||'';
           console.log('[Leads OCR] texto bruto:\n', txt);
           var dados = _parsearWhatsApp(txt);
           console.log('[Leads OCR] dados:', dados);
           callback(dados);
-        }).catch(function(e){
+        })
+        .catch(function(e){
           console.warn('[Leads OCR] erro:', e);
           callback({});
         });
-      } else {
-        /* fallback sem worker */
-        Tesseract.recognize(base64, 'por+eng', {
-          workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
-          corePath:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js',
-          langPath:   'https://tessdata.projectnaptha.com/4.0.0'
-        }).then(function(result){
-          var txt = result.data.text||'';
-          var dados = _parsearWhatsApp(txt);
-          callback(dados);
-        }).catch(function(e){
-          console.warn('[Leads OCR] fallback erro:', e);
-          callback({});
-        });
-      }
-    }
-
-    if(_ocrPronto){ _reconhecer(); }
-    else if(_ocrWorker){ _ocrFila.push(_reconhecer); }
-    else { _reconhecer(); }
+    };
+    img.onerror = function(){
+      console.warn('[Leads OCR] imagem inválida');
+      callback({});
+    };
+    img.src = base64;
   }
 
   /* ── Parser regex para screenshots do WhatsApp ──────────────── */
   function _parsearWhatsApp(txt){
-    var linhas = txt.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
-
-    var rTel = txt.match(/(\+\d{1,3}[\s\-]?\d{2}[\s\-]?\d{4,5}[\s\-]?\d{4})/);
-    var telefone = rTel ? rTel[1].replace(/\s+/g,' ').trim() : '';
-
-    var nome = '';
-    var iNome = -1;
-    linhas.forEach(function(l,i){
-      if(!nome && /^~/.test(l)){ nome = l.replace(/^[\s.,;:!?()\-_~'"*]+/,'').trim(); iNome=i; }
-    });
-    if(!nome && telefone){
-      var iTel = linhas.findIndex(function(l){ return l.indexOf(telefone.split(' ')[0])!==-1; });
-      if(iTel!==-1 && linhas[iTel+1]) { nome = linhas[iTel+1].replace(/^[\s.,;:!?()\-_~'"*]+/,'').trim(); iNome=iTel+1; }
-    }
-
-    var excluir = /criptografia|contatos|grupos|ferramentas|bloquear|nenhum|seguran|mensagens|ligaç/i;
-    var horaRe  = /^\d{1,2}:\d{2}$/;
-    var candidatas = linhas.filter(function(l, i){
-      return l.length > 10 && !excluir.test(l) && !horaRe.test(l) && i !== iNome && l !== telefone;
-    });
-    var mensagem = candidatas.length ? candidatas[candidatas.length-1] : '';
+    if(!txt) return {nome:'', telefone:'', mensagem:''};
 
     function _limpar(s){
-      return s.replace(/^[\s.,;:!?()\-_~'"*]+/,'').replace(/[\s.,;:!?()\-_~'"*]+$/,'').trim();
+      return String(s||'').replace(/^[~\-\s>•·]+/,'').replace(/[\s>•·]+$/,'').replace(/\s+/g,' ').trim();
     }
-    mensagem = _limpar(mensagem);
-    nome     = _limpar(nome);
 
-    return { nome: nome, telefone: telefone, mensagem: mensagem };
+    var RUIDO = /^(online|digitando|visto por último|visto|hoje|ontem|agora|últ\.|últ |status|story indispon|ver perfil|segue você|seguidores|posts?|novas mensagens|número de telefone|mensagem do whatsapp|ligar|mensagem\.\.\.|mensagem$|respondeu ao seu story|min online|\d{1,2}:\d{2}|\d{1,2} de [a-zç]+|ontem,?\s*\d|hoje,?\s*\d|\d{1,2}\/\d{1,2}|video|vídeo|chamada|áudio|foto|imagem|encaminhada|criptografia|contatos|grupos|ferramentas|bloquear|nenhum|seguran|ligaç)/i;
+
+    function _ehRuido(l){
+      var s = _limpar(l).toLowerCase();
+      if(!s||s.length<2) return true;
+      if(/^[\d\s:\-\/\.,]+$/.test(s)) return true;
+      if(RUIDO.test(s)) return true;
+      if(/^@/.test(s)) return true;
+      return false;
+    }
+
+    var linhasRaw = txt.split(/\r?\n/);
+    var linhas = [];
+    for(var i=0;i<linhasRaw.length;i++){
+      var lx=_limpar(linhasRaw[i]);
+      if(lx) linhas.push(lx);
+    }
+
+    /* ── TELEFONE ─────────────────────────────────────────────── */
+    var telefone = '';
+    var rTel1 = txt.match(/(\+\d{1,3}[\s\-]?\(?\d{2}\)?[\s\-]?\d{4,5}[\s\-]?\d{4})/);
+    var rTel2 = txt.match(/(\(\d{2}\)\s?\d{4,5}[\s\-]?\d{4})/);
+    var rTel5 = txt.match(/(\b\d{2}\d{4,5}[\s\-]\d{4}\b)/);
+    var rTel3 = txt.match(/(\b\d{2}\s\d{4,5}[\s\-]?\d{4}\b)/);
+    var rTel4 = txt.match(/(\b\d{10,11}\b)/);
+    if(rTel1) telefone=rTel1[1];
+    else if(rTel2) telefone=rTel2[1];
+    else if(rTel5) telefone=rTel5[1];
+    else if(rTel3) telefone=rTel3[1];
+    else if(rTel4) telefone=rTel4[1];
+    if(telefone){
+      var soDig=telefone.replace(/\D/g,'');
+      if(soDig.length===13&&soDig.indexOf('55')===0) soDig=soDig.substring(2);
+      if(soDig.length===12&&soDig.indexOf('55')===0) soDig=soDig.substring(2);
+      if(soDig.length===11) telefone='('+soDig.substring(0,2)+') '+soDig.substring(2,7)+'-'+soDig.substring(7);
+      else if(soDig.length===10) telefone='('+soDig.substring(0,2)+') '+soDig.substring(2,6)+'-'+soDig.substring(6);
+    }
+
+    /* ── NOME ─────────────────────────────────────────────────── */
+    var nome=''; var iNome=-1;
+
+    /* 1) WhatsApp: ~ */
+    for(var a=0;a<linhas.length;a++){
+      if(/^~/.test(linhas[a])){ nome=_limpar(linhas[a].replace(/^~/,'')); iNome=a; break; }
+    }
+
+    /* 2) Instagram: linha antes do @username */
+    if(!nome){
+      for(var b=0;b<linhas.length;b++){
+        if(/^@?[a-z0-9_.]{3,}$/i.test(linhas[b])&&/[a-z]/.test(linhas[b])&&!/\s/.test(linhas[b])){
+          for(var bb=b-1;bb>=0&&bb>=b-3;bb--){
+            if(_ehRuido(linhas[bb])) continue;
+            var pals=linhas[bb].split(/\s+/);
+            if(pals.length>=1&&pals.length<=4&&/^[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ]/.test(pals[0])){
+              nome=linhas[bb]; iNome=bb; break;
+            }
+          }
+          if(nome) break;
+        }
+      }
+    }
+
+    /* 3) Linha após "Número de telefone" */
+    if(!nome){
+      for(var d=0;d<linhas.length;d++){
+        if(/n[uú]mero de telefone/i.test(linhas[d])){
+          for(var dd=d+1;dd<linhas.length&&dd<=d+3;dd++){
+            if(!_ehRuido(linhas[dd])){
+              var pp=linhas[dd].split(/\s+/);
+              if(pp.length>=2&&/^[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ]/.test(pp[0])){ nome=linhas[dd]; iNome=dd; break; }
+            }
+          }
+          if(nome) break;
+        }
+      }
+    }
+
+    /* 4) Primeira linha com 2–5 palavras todas capitalizadas */
+    if(!nome){
+      for(var e=0;e<linhas.length;e++){
+        if(_ehRuido(linhas[e])) continue;
+        var palavras=linhas[e].split(/\s+/);
+        if(palavras.length>=2&&palavras.length<=5){
+          var todasCap=true;
+          for(var f=0;f<palavras.length;f++){
+            if(!/^[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç'\-]+$/.test(palavras[f])){ todasCap=false; break; }
+          }
+          if(todasCap){ nome=linhas[e]; iNome=e; break; }
+        }
+      }
+    }
+
+    /* ── MENSAGEM ─────────────────────────────────────────────── */
+    var mensagem='';
+    /* prioriza linha curta com ? ou ! */
+    for(var g=0;g<linhas.length;g++){
+      if(g===iNome) continue;
+      var lg=linhas[g];
+      if(_ehRuido(lg)||lg===nome) continue;
+      if(telefone&&lg.replace(/\D/g,'').length>=8) continue;
+      if(/[?!]/.test(lg)&&lg.length<=120){ mensagem=lg; break; }
+    }
+    /* fallback: primeira linha razoável */
+    if(!mensagem){
+      for(var h=0;h<linhas.length;h++){
+        if(h===iNome) continue;
+        var lh=linhas[h];
+        if(_ehRuido(lh)||lh===nome) continue;
+        if(lh.replace(/\D/g,'').length>=8) continue;
+        if(lh.length>=3&&lh.length<=200&&/[a-záéíóúç]/i.test(lh)){ mensagem=lh; break; }
+      }
+    }
+
+    return { nome: nome||'', telefone: telefone||'', mensagem: mensagem||'' };
   }
 
-  /* ── Extração via Gemini (fallback opcional com chave) ──────── */
-  function _extrairGemini(base64, mediaType, callback){
-    var key = _getApiKey();
-    if(!key){ callback(null); return; }
-    var pureB64 = base64.replace(/^data:[^;]+;base64,/,'');
-    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key,{
-      method:'POST',
-      headers:{ 'content-type':'application/json' },
-      body: JSON.stringify({
-        contents:[{ parts:[
-          { inline_data:{ mime_type: mediaType||'image/jpeg', data: pureB64 } },
-          { text:'Captura de tela do WhatsApp. Retorne SOMENTE JSON (sem markdown): {"nome":"","telefone":"","mensagem":""}. Nome: contato. Telefone: com DDI. Mensagem: o que o lead escreveu.' }
-        ]}],
-        generationConfig:{ maxOutputTokens:200, temperature:0 }
-      })
-    })
-    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function(res){
-      var text = (((res.candidates||[])[0]||{}).content||{});
-      text = ((text.parts||[])[0]||{}).text||'{}';
-      text = text.replace(/```[a-z]*/gi,'').replace(/```/g,'').trim();
-      try{ callback(JSON.parse(text)); } catch(e){ callback(null); }
-    })
-    .catch(function(){ callback(null); });
-  }
-
-  /* ── Orquestrador: OCR primeiro, Gemini melhora se necessário ─ */
+  /* ── Extração de dados da imagem (OCR) ─────────────────────── */
   function _extrairDadosIA(base64, mediaType, callback){
     _ultimoBase64 = base64;
-    _extrairOCR(base64, function(ocrDados){
-      var key = _getApiKey();
-      if(!key || (ocrDados.nome && ocrDados.telefone && ocrDados.mensagem)){
-        callback(ocrDados); return;
-      }
-      _extrairGemini(base64, mediaType, function(gemDados){
-        if(!gemDados){ callback(ocrDados); return; }
-        callback({
-          nome:     gemDados.nome     || ocrDados.nome     || '',
-          telefone: gemDados.telefone || ocrDados.telefone || '',
-          mensagem: gemDados.mensagem || ocrDados.mensagem || ''
-        });
-      });
-    });
+    _extrairOCR(base64, callback);
   }
 
   /* ── Deduplicação por telefone ──────────────────────────────── */
@@ -459,23 +786,23 @@
     return found;
   }
 
+  var _processando = false; /* flag anti-duplo disparo */
   function _processarArquivo(file){
-    if(!file.type.startsWith('image/')){ _toast('Só imagens são aceitas.','var(--amber)'); return; }
+    if(!file||!file.type.startsWith('image/')){ _toast('Só imagens são aceitas.','var(--amber)'); return; }
+    if(_processando) return;
+    _processando = true;
     var reader=new FileReader();
     reader.onload=function(e){
       var base64Raw = e.target.result;
       var mediaType = file.type||'image/jpeg';
-      /* comprimir antes de usar */
       _comprimir(base64Raw, function(base64){
-        if(!_getApiKey()){
-          _abrirModal(null, base64);
-          return;
-        }
         _extrairDadosIA(base64, mediaType, function(dados){
+          _processando = false;
           _abrirModal(null, base64, dados);
         });
       });
     };
+    reader.onerror = function(){ _processando = false; };
     reader.readAsDataURL(file);
   }
 
@@ -546,14 +873,69 @@
     if(ov) ov.classList.remove('open');
   };
 
-  /* ── Distribuir (round-robin) ───────────────────────────────── */
-  window._ldDistribuir = function(id){
+  /* ── Distribuir — escolha manual do consultor ──────────────── */
+  var _distDropId = null; // id do lead com dropdown aberto
+
+  window._ldDistribuir = function(id, evt){
     var l = _leads[id]; if(!l) return;
     var cons = _consultores();
     if(!cons.length){ _toast('Nenhum consultor disponível neste mês.','var(--amber)'); return; }
-    var consultor = cons[_rrIdx % cons.length];
-    _rrIdx++;
-    _salvarRR();
+
+    /* fecha dropdown anterior se existir */
+    if(_distDropId && _distDropId!==id){
+      var prev = document.getElementById('ldDrop_'+_distDropId);
+      if(prev) prev.remove();
+    }
+    /* toggle: fecha se já está aberto para este lead */
+    var existing = document.getElementById('ldDrop_'+id);
+    if(existing){ existing.remove(); _distDropId=null; return; }
+    _distDropId = id;
+
+    var drop = document.createElement('div');
+    drop.id = 'ldDrop_'+id;
+    drop.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);'
+      +'border:1px solid var(--border2);border-radius:10px;padding:6px;'
+      +'box-shadow:0 8px 24px rgba(0,0,0,.5);min-width:160px;';
+
+    cons.forEach(function(c){
+      var item = document.createElement('button');
+      item.textContent = c;
+      item.style.cssText = 'display:block;width:100%;text-align:left;padding:7px 12px;'
+        +'background:none;border:none;color:var(--text);font-size:12px;font-weight:600;'
+        +'cursor:pointer;border-radius:6px;';
+      item.onmouseover = function(){ item.style.background='var(--surface2)'; };
+      item.onmouseout  = function(){ item.style.background='none'; };
+      item.onclick = function(){ _confirmarDistribuicao(id, c); drop.remove(); _distDropId=null; };
+      drop.appendChild(item);
+    });
+
+    document.body.appendChild(drop);
+
+    /* posicionar: usa o elemento clicado (evt.target) ou o botão 📤 como fallback */
+    var ancora = (evt && evt.currentTarget) || (evt && evt.target) || document.querySelector('[data-dist-id="'+id+'"]');
+    if(ancora){
+      var rect = ancora.getBoundingClientRect();
+      var dropW = 160;
+      var left = rect.left;
+      /* não sair da tela pela direita */
+      if(left + dropW > window.innerWidth - 8) left = window.innerWidth - dropW - 8;
+      drop.style.top  = (rect.bottom + 4) + 'px';
+      drop.style.left = left + 'px';
+    }
+
+    /* fechar ao clicar fora */
+    setTimeout(function(){
+      function _fora(e){ if(!drop.contains(e.target)){ drop.remove(); _distDropId=null; document.removeEventListener('click',_fora); } }
+      document.addEventListener('click',_fora);
+    },10);
+  };
+
+  function _confirmarDistribuicao(id, consultor){
+    var l = _leads[id]; if(!l) return;
+
+    /* fecha qualquer dropdown aberto ANTES de re-renderizar */
+    document.querySelectorAll('[id^="ldDrop_"]').forEach(function(el){ el.remove(); });
+    _distDropId = null;
 
     var texto = '📋 *LEAD — Febracis*\n'
       +'👤 *Nome:* '+(l.nome||'Não informado')+'\n'
@@ -568,10 +950,10 @@
       }).catch(function(){ _copiarFallback(texto,consultor); });
     } else { _copiarFallback(texto,consultor); }
 
-    l.consultor=consultor; l.distribuidoEm=Date.now();
+    l.consultor=consultor; l.distribuidoEm=Date.now(); l.status=l.status||'novo';
     _leads[id]=l;
     _salvarLead(id,l);
-    _render();
+    requestAnimationFrame(_render); /* fora do contexto do clique — evita conflito com listener _fora */
   };
 
   /* ── Desfazer distribuição ──────────────────────────────────── */
@@ -610,11 +992,8 @@
   window._ldInit = function(mk){
     _carregar(mk||_mk());
     setTimeout(_initDrop, 200);
-    /* aquecer o worker OCR em background */
-    if(typeof Tesseract!=='undefined' && !_ocrWorker){
-      setTimeout(_iniciarWorker, 500);
-    }
   };
+
 
   /* ESC fecha modais */
   document.addEventListener('keydown',function(e){

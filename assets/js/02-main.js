@@ -88,10 +88,10 @@ let allTrainers=[],allConsultors=[];
    PERMISSÕES PADRÃO POR PERFIL
 ═══════════════════════════════════════════ */
 const PERMS_PADRAO={
-  adm:       {verGeral:true, verConsultor:true, verTreinador:true, verProduto:true, verValores:true, editar:true, exportar:true},
-  ministrante:{verGeral:true, verConsultor:true, verTreinador:true, verProduto:false,verValores:true, editar:false,exportar:false},
-  consultor:  {verGeral:false,verConsultor:true, verTreinador:false,verProduto:true, verValores:true, editar:false,exportar:false},
-  treinador:  {verGeral:false,verConsultor:false,verTreinador:true, verProduto:false,verValores:true, editar:false,exportar:false}
+  adm:       {verGeral:true, verConsultor:true, verTreinador:true, verProduto:true, verValores:true, editar:true, exportar:true,  gerenciarUsuarios:true,  configuracoes:true },
+  ministrante:{verGeral:true, verConsultor:true, verTreinador:true, verProduto:false,verValores:true, editar:false,exportar:false, gerenciarUsuarios:false, configuracoes:false},
+  consultor:  {verGeral:false,verConsultor:true, verTreinador:false,verProduto:true, verValores:true, editar:false,exportar:false, gerenciarUsuarios:false, configuracoes:false},
+  treinador:  {verGeral:false,verConsultor:false,verTreinador:true, verProduto:false,verValores:true, editar:false,exportar:false, gerenciarUsuarios:false, configuracoes:false}
 };
 
 function _getPermsUsuario(perfil, permissoesSalvas){
@@ -790,23 +790,43 @@ function entrarTurma(id){
     var perfil=sess?sess.perfil:'adm';
     var isAdm=perfil==='adm';
 
-    // Modo leitura para não-ADM
-    if(isAdm){document.body.classList.remove('modo-leitura');}
+    // Abas visíveis por perfil — lê permissões salvas do usuário se disponível
+    var _userPerms=null;
+    if(sess&&sess.uid){
+      var _localU=_getUsuariosLocal();
+      var _uObj=_localU[sess.uid]||null;
+      if(_uObj&&_uObj.permissoes) _userPerms=_getPermsUsuario(perfil,_uObj.permissoes);
+    }
+    if(!_userPerms) _userPerms=_getPermsUsuario(perfil,null);
+
+    // Modo leitura: apenas para perfis sem edição
+    if(_userPerms.editar){document.body.classList.remove('modo-leitura');}
     else{document.body.classList.add('modo-leitura');}
-    // Proposta: visível apenas para ADM e consultor
+
+    // Proposta: visível para ADM e consultor
     var _btnProp=document.getElementById('btnProposta');
     if(_btnProp)_btnProp.style.display=(isAdm||perfil==='consultor')?'':'none';
 
-    // Botões visíveis apenas para ADM
-    ['btnPeriodModal','btnEditarTreinadores','btnEditarConsultores'].forEach(function(bid){
+    // Botões de período/membros: só ADM
+    var _btnPM=document.getElementById('btnPeriodModal');
+    if(_btnPM) _btnPM.style.display=isAdm?'':'none';
+    ['btnEditarTreinadores','btnEditarConsultores'].forEach(function(bid){
       var b=document.getElementById(bid);if(b)b.style.display=isAdm?'':'none';
     });
-    // Exportar: controlado por permissão individual
+
+    // Exportar: permissão individual
     var _btnExp=document.getElementById('btnExportar');
-    if(_btnExp) _btnExp.style.display=(isAdm||(_userPerms&&_userPerms.exportar))?'':'none';
+    if(_btnExp) _btnExp.style.display=(_userPerms&&_userPerms.exportar)?'':'none';
+
+    // Gerenciar turmas: só ADM
     var _btnGT=document.getElementById('btnGerenciarTurmas');
     if(_btnGT) _btnGT.style.display=isAdm?'':'none';
-    // Botões de ação da topbar
+
+    // Gerenciar usuários: só ADM
+    var _btnGU=document.querySelector('[onclick*="abrirPainelUsuarios"]');
+    if(_btnGU) _btnGU.style.display=isAdm?'':'none';
+
+    // Configurações críticas: só ADM
     document.querySelectorAll('.title-edit-btn').forEach(function(b){
       var txt=b.textContent||'';
       var bid=b.id||'';
@@ -816,17 +836,8 @@ function entrarTurma(id){
         txt.includes('Usuários')||
         b.getAttribute('onclick')==='openInfoModal()'||
         b.getAttribute('onclick')==='openTitleModal()';
-      if(isActionBtn) b.style.display=isAdm?'':'none';
+      if(isActionBtn) b.style.display=(_userPerms&&_userPerms.configuracoes)?'':'none';
     });
-
-    // Abas visíveis por perfil — lê permissões salvas do usuário se disponível
-    var _userPerms=null;
-    if(sess&&sess.uid){
-      var _localU=_getUsuariosLocal();
-      var _uObj=_localU[sess.uid]||null;
-      if(_uObj&&_uObj.permissoes) _userPerms=_getPermsUsuario(perfil,_uObj.permissoes);
-    }
-    if(!_userPerms) _userPerms=_getPermsUsuario(perfil,null);
 
     var _abaMap={geral:'verGeral',consultor:'verConsultor',treinador:'verTreinador',produto:'verProduto'};
     document.querySelectorAll('.tab').forEach(function(b){
@@ -1276,6 +1287,27 @@ function _concluirLogin(uid,user,loginStr,manter){
     }
   }
   _addUsuarioRecente(uid, user.nome, user.perfil);
+
+  /* Migração silenciosa: se usuário tem senha em texto plano e ainda não tem authUid,
+     cria conta Firebase Auth e apaga a senha do RTDB */
+  if(user.senha && !user.authUid && window._fbAuthCreate && window._fbUpdate){
+    var _emailMigr = _loginToEmail(loginStr);
+    var _senhaMigr = user.senha;
+    window._fbAuthCreate(_emailMigr, _senhaMigr).then(function(cred){
+      var updates = {authUid: cred.user.uid, lastLogin: Date.now()};
+      updates['senha'] = null; /* apaga senha em texto plano */
+      window._fbUpdate('usuarios/'+uid, updates).catch(function(){});
+      console.info('[auth] Usuário migrado para Firebase Auth:', loginStr);
+    }).catch(function(e){
+      /* conta pode já existir — apenas remove a senha local do RTDB */
+      if(e.code === 'auth/email-already-in-use'){
+        window._fbUpdate('usuarios/'+uid, {senha: null, lastLogin: Date.now()}).catch(function(){});
+      }
+    });
+  } else if(window._fbUpdate){
+    window._fbUpdate('usuarios/'+uid, {lastLogin: Date.now()}).catch(function(){});
+  }
+
   _mostrarTela('dashboard');
   _entrarDashboardEquipe(user);
   if(typeof window._audit==='function') window._audit('auth.login',null,{perfil:user.perfil||'—'});
@@ -1463,7 +1495,7 @@ function _mostrarTurmas(){
   var sess=_getSessao?_getSessao():null;
   var isAdm=!sess||sess.perfil==='adm';
   var isAdmOuMin=isAdm||(sess&&sess.perfil==='ministrante');
-  // Card TURMAS: só ADM e ministrante
+  // Card TURMAS: ADM e ministrante
   var btnCardT=document.getElementById('btnCardTurmas');
   if(btnCardT) btnCardT.style.display=isAdmOuMin?'':'none';
   // Card MAPEAMENTO: só ADM
@@ -5202,6 +5234,148 @@ function abrirPainelUsuarios(){
 }
 function fecharPainelUsuarios(){document.getElementById('usuariosOverlay').classList.remove('open');}
 
+/* ══════════════════════════════════════════════════════════
+   WIZARD — NOVO USUÁRIO (3 passos)
+══════════════════════════════════════════════════════════ */
+var _wzPasso = 1;
+var _wzPermsLabels = {
+  verGeral:          'Ver painel geral',
+  verConsultor:      'Ver consultores',
+  verTreinador:      'Ver treinadores',
+  verProduto:        'Ver produtos',
+  verValores:        'Ver valores (R$)',
+  editar:            'Editar dados',
+  exportar:          'Exportar PDF/JSON',
+  gerenciarUsuarios: 'Gerenciar usuários',
+  configuracoes:     'Configurações críticas'
+};
+
+function abrirWizardNovoUsuario(){
+  _wzPasso = 1;
+  document.getElementById('wzNome').value = '';
+  document.getElementById('wzLogin').value = '';
+  document.getElementById('wzSenha').value = '';
+  document.getElementById('wzWhatsapp').value = '';
+  document.getElementById('wzPerfil').value = 'consultor';
+  wizardAtualizarPerms();
+  _wzMostrarPasso(1);
+  document.getElementById('wizardUsuarioOverlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('wzNome').focus(); }, 100);
+}
+window.abrirWizardNovoUsuario = abrirWizardNovoUsuario;
+
+function fecharWizardUsuario(){
+  document.getElementById('wizardUsuarioOverlay').classList.remove('open');
+}
+window.fecharWizardUsuario = fecharWizardUsuario;
+
+function _wzMostrarPasso(n){
+  _wzPasso = n;
+  [1,2,3].forEach(function(i){
+    var el = document.getElementById('wizardPasso'+i);
+    if(el) el.style.display = i===n ? '' : 'none';
+  });
+  var titulos = ['Novo Usuário — Passo 1 de 3','Novo Usuário — Passo 2 de 3','Novo Usuário — Passo 3 de 3'];
+  var subs = ['Dados básicos e perfil','Permissões — ajuste se necessário','Confirme antes de salvar'];
+  document.getElementById('wizardTitulo').textContent = titulos[n-1];
+  document.getElementById('wizardSubtitulo').textContent = subs[n-1];
+  document.getElementById('wzBtnVoltar').style.display = n > 1 ? '' : 'none';
+  document.getElementById('wzBtnAvancar').textContent = n < 3 ? 'Próximo →' : '✓ Criar usuário';
+  if(n === 3) _wzGerarResumo();
+}
+
+function wizardAtualizarPerms(){
+  var perfil = document.getElementById('wzPerfil').value;
+  var perms = Object.assign({}, PERMS_PADRAO[perfil] || PERMS_PADRAO.consultor);
+  var grid = document.getElementById('wzPermsGrid');
+  if(!grid) return;
+  grid.innerHTML = Object.keys(_wzPermsLabels).map(function(k){
+    var chk = perms[k] ? ' checked' : '';
+    return '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;">'
+      +'<input type="checkbox" id="wzP_'+k+'"'+chk+' style="width:14px;height:14px;accent-color:var(--accent);">'
+      +_wzPermsLabels[k]+'</label>';
+  }).join('');
+}
+window.wizardAtualizarPerms = wizardAtualizarPerms;
+
+function wizardAvancar(){
+  if(_wzPasso === 1){
+    var nome = (document.getElementById('wzNome').value||'').trim();
+    var login = (document.getElementById('wzLogin').value||'').trim().toLowerCase().replace(/\s+/g,'.');
+    var senha = (document.getElementById('wzSenha').value||'').trim();
+    if(!nome){ _showToast('Informe o nome do usuário.','var(--amber)'); return; }
+    if(!login){ _showToast('Informe o login.','var(--amber)'); return; }
+    if(senha.length < 6){ _showToast('Senha deve ter pelo menos 6 caracteres.','var(--amber)'); return; }
+    document.getElementById('wzLogin').value = login;
+    _wzMostrarPasso(2);
+  } else if(_wzPasso === 2){
+    _wzMostrarPasso(3);
+  } else if(_wzPasso === 3){
+    _wzSalvar();
+  }
+}
+window.wizardAvancar = wizardAvancar;
+
+function wizardVoltar(){
+  if(_wzPasso > 1) _wzMostrarPasso(_wzPasso - 1);
+}
+window.wizardVoltar = wizardVoltar;
+
+function _wzGerarResumo(){
+  var nome   = (document.getElementById('wzNome').value||'').toUpperCase();
+  var login  = document.getElementById('wzLogin').value||'';
+  var perfil = document.getElementById('wzPerfil').value||'consultor';
+  var wpp    = document.getElementById('wzWhatsapp').value||'—';
+  var permsAtivas = Object.keys(_wzPermsLabels).filter(function(k){
+    var el = document.getElementById('wzP_'+k); return el && el.checked;
+  }).map(function(k){ return _wzPermsLabels[k]; });
+  var corPerfil = {adm:'var(--accent)',consultor:'var(--green)',treinador:'var(--amber)',ministrante:'var(--blue)'}[perfil]||'var(--muted)';
+  var labelPerfil = {adm:'ADM',consultor:'Consultor',treinador:'Treinador',ministrante:'Ministrante'}[perfil]||perfil;
+  document.getElementById('wzResumo').innerHTML =
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">'
+    +'<div style="width:40px;height:40px;border-radius:50%;background:'+corPerfil+'22;color:'+corPerfil+';border:2px solid '+corPerfil+'55;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;">'+nome[0]+'</div>'
+    +'<div><div style="font-size:15px;font-weight:700;color:var(--text);">'+nome+'</div>'
+    +'<div style="font-size:11px;color:'+corPerfil+';">'+labelPerfil+' · @'+login+'</div></div>'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">WhatsApp: '+wpp+'</div>'
+    +'<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Permissões:</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px;">'
+    +permsAtivas.map(function(p){
+      return '<span style="font-size:10px;background:rgba(200,240,90,.1);color:var(--accent);border:1px solid rgba(200,240,90,.25);border-radius:20px;padding:2px 8px;">'+p+'</span>';
+    }).join('')
+    +'</div>';
+}
+
+function _wzSalvar(){
+  var nome   = (document.getElementById('wzNome').value||'').trim().toUpperCase();
+  var login  = (document.getElementById('wzLogin').value||'').trim();
+  var senha  = document.getElementById('wzSenha').value||'';
+  var perfil = document.getElementById('wzPerfil').value||'consultor';
+  var wpp    = (document.getElementById('wzWhatsapp').value||'').trim();
+  var perms  = {};
+  Object.keys(_wzPermsLabels).forEach(function(k){
+    var el = document.getElementById('wzP_'+k); perms[k] = !!(el && el.checked);
+  });
+  var uid = perfil+'_'+_normalizeUid(nome)+'_'+Date.now();
+  var novoUser = {
+    nome: nome, login: login, senha: senha, perfil: perfil,
+    whatsapp: wpp, ativo: true, primeiroAcesso: true,
+    permissoes: perms, createdAt: Date.now(), updatedAt: Date.now()
+  };
+  /* salvar local */
+  var local = _getUsuariosLocal();
+  local[uid] = novoUser;
+  _saveUsuariosLocal(local);
+  /* tentar Firebase */
+  var salvoFb = false;
+  if(window._fbSave){
+    try{ window._fbSave('usuarios/'+uid, novoUser); salvoFb = true; }catch(e){}
+  }
+  fecharWizardUsuario();
+  _renderUsuariosGrid();
+  _showToast('✅ Usuário '+nome+' criado!'+(salvoFb?' ☁️':''),'var(--accent)');
+}
+
 /* ── Fix 2: funções complementares — NÃO alteram estrutura existente ──────────
    Extraem consultores presentes em data[] e os adicionam à lista de membros
    sem remover nenhum existente e sem duplicar.
@@ -5292,6 +5466,17 @@ function _renderUsuariosGrid(){
         else if(u.perfil==='ministrante') u.perfil='treinador';
       });
     }
+    /* alerta de usuários ainda com senha em texto plano */
+    var alertEl=document.getElementById('usuariosAlertaLegado');
+    if(alertEl&&usuarios){
+      var legados=Object.values(usuarios).filter(function(u){ return u.senha&&!u.authUid; }).length;
+      if(legados>0){
+        alertEl.textContent='⚠ '+legados+' usuário'+(legados>1?'s ainda usam':'ainda usa')+' senha em modo legado. A migração ocorre automaticamente no próximo login de cada um.';
+        alertEl.style.display='';
+      } else {
+        alertEl.style.display='none';
+      }
+    }
     _montarGrid(membros,usuarios||{});
   }
 
@@ -5364,52 +5549,46 @@ function _montarGrid(membros,usuarios){
   function _card(uid,u){
     var temLogin=!!(u.login&&u.senha);
     var ativo=u.ativo!==false;
-    // primeiroAcesso: true = nunca logou, false/undefined = já logou
-    var primAcesso = u.primeiroAcesso===true;
-    // Badge Ministrante baseado no estado real da turma, não no campo perfil salvo
+    var primAcesso=u.primeiroAcesso===true;
     var _ehMinistranteReal=u.perfil==='treinador'||u.perfil==='ministrante'
       ?(_ministranteAtual&&_ministranteAtual.toUpperCase()===(u.nome||'').toUpperCase())
       :false;
-    var cor=u.perfil==='consultor'?'var(--green)':_ehMinistranteReal?'var(--blue)':'var(--amber)';
-    var inicial=(u.nome||'?')[0].toUpperCase();
-    var statusCor=!temLogin?'var(--red)':!ativo?'var(--muted)':'var(--accent)';
-    var statusTxt=!temLogin?'Sem acesso configurado':!ativo?'Acesso desativado':'@'+u.login;
-    var nomeU=(u.nome||'').toUpperCase();
+    var perfilCls=u.perfil==='consultor'?'consultor':_ehMinistranteReal?'ministrante':'treinador';
     var perfilL=u.perfil==='consultor'?'Consultor':_ehMinistranteReal?'Ministrante':'Treinador';
-    var opacity=ativo?'1':'0.55';
+    var inicial=(u.nome||'?')[0].toUpperCase();
+    var nomeU=(u.nome||'').toUpperCase();
+    var loginTxt=u.login?'@'+u.login:'—';
 
-    // Badge de status de login (Fix 4)
-    var accessBadge='';
-    if(temLogin){
-      if(primAcesso){
-        accessBadge='<span class="status-nao-logado" title="Este usuário ainda não fez o primeiro login">⚠ Primeiro acesso pendente</span>';
-      } else {
-        accessBadge='<span class="status-ok" title="Usuário ativo e já acessou o sistema">✓ Ativo</span>';
-      }
-    }
+    // bolinha de status
+    var dotCls=!temLogin?'sem-acesso':!ativo?'pausado':primAcesso?'pendente':'ativo';
+    var dotTip=!temLogin?'Sem acesso configurado':!ativo?'Acesso pausado':primAcesso?'Primeiro acesso pendente':'Ativo';
 
-    var btns='';
+    // itens do dropdown
+    var ddItems='';
     if(!temLogin){
-      btns='<button class="title-edit-btn btn-configurar-acesso" data-uid="'+uid+'" data-nome="'+u.nome+'" data-perfil="'+u.perfil+'" style="flex:1;justify-content:center;color:var(--accent);border-color:rgba(200,240,90,.4);">Configurar acesso</button>';
+      ddItems='<button class="ur-dd-item btn-configurar-acesso" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'">⚙️ Configurar acesso</button>';
     } else {
-      btns='<button class="title-edit-btn btn-editar-acesso" data-uid="'+uid+'" style="flex:1;justify-content:center;">Editar</button>'
-        +'<button class="title-edit-btn btn-alterar-senha" data-uid="'+uid+'" data-nome="'+nomeU+'" style="justify-content:center;">Senha</button>'
-        +'<button class="title-edit-btn" onclick="resetarSenhaUsuario(\''+uid+'\',\''+enc(u.nome)+'\')" style="justify-content:center;color:var(--amber);border-color:rgba(245,158,11,.3);" title="Resetar senha para o nome do usuário">🔁 Reset</button>'
-        +'<button class="title-edit-btn btn-toggle-ativo" data-uid="'+uid+'" data-ativo="'+(ativo?'true':'false')+'" style="justify-content:center;color:'+(ativo?'var(--muted)':'var(--accent)')+';">'+(ativo?'Pausar':'Ativar')+'</button>'
-        ;
+      ddItems='<button class="ur-dd-item btn-editar-acesso" data-uid="'+uid+'">✏️ Editar</button>'
+        +'<button class="ur-dd-item btn-alterar-senha" data-uid="'+uid+'" data-nome="'+enc(nomeU)+'">🔑 Alterar senha</button>'
+        +'<button class="ur-dd-item btn-reset-senha" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'">🔁 Resetar senha</button>'
+        +'<hr class="ur-dd-sep">'
+        +'<button class="ur-dd-item btn-perms" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'">🔒 Permissões</button>'
+        +'<button class="ur-dd-item btn-toggle-ativo" data-uid="'+uid+'" data-ativo="'+(ativo?'true':'false')+'">'+(ativo?'⏸ Pausar acesso':'▶ Ativar acesso')+'</button>';
     }
-    return '<div class="usuario-card" data-nome="'+nomeU+'" style="opacity:'+opacity+';">'
-      +'<div class="usuario-card-header">'
-        +'<div class="usuario-avatar" style="background:var(--surface2);color:'+cor+';border:2px solid '+cor+';">'+inicial+'</div>'
-        +'<div style="flex:1;min-width:0;">'
-          +'<div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+nomeU+'</div>'
-          +'<div style="font-size:11px;color:'+statusCor+';">'+statusTxt+'</div>'
-        +'</div>'
-        +'<span class="usuario-perfil-badge badge-'+u.perfil+'">'+perfilL+'</span>'
+    ddItems+='<hr class="ur-dd-sep"><button class="ur-dd-item danger btn-excluir-usuario" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'">🗑 Excluir usuário</button>';
+
+    return '<div class="usuario-row" data-nome="'+nomeU+'" data-ativo="'+(ativo?'true':'false')+'">'
+      +'<div class="ur-avatar '+perfilCls+'">'+inicial+'</div>'
+      +'<div class="ur-info">'
+        +'<div class="ur-nome">'+nomeU+'</div>'
+        +'<div class="ur-login">'+loginTxt+'</div>'
       +'</div>'
-      // Fix 4: indicador de primeiro acesso
-      +(accessBadge?'<div style="margin:2px 0;">'+accessBadge+'</div>':'')
-      +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">'+btns+'</div>'
+      +'<span class="ur-badge badge-'+perfilCls+'">'+perfilL+'</span>'
+      +'<div class="ur-dot '+dotCls+'" title="'+dotTip+'"></div>'
+      +'<div class="ur-acoes">'
+        +'<button class="ur-menu-btn" data-uid="'+uid+'">⋯</button>'
+        +'<div class="ur-dropdown">'+ddItems+'</div>'
+      +'</div>'
     +'</div>';
   }
 
@@ -5459,9 +5638,16 @@ function _montarGrid(membros,usuarios){
     html+='<div style="grid-column:1/-1;border-top:1px solid var(--border2);margin-bottom:12px;"></div>';
   }
 
-  html+='<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border2);margin-bottom:4px;">'+'<span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;">Consultores ('+membros.consultores.length+')</span>'+'<button class="btn-perms-grupo" data-perfil="consultor" title="Permissões do perfil Consultor"'+' style="background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;padding:3px 10px;color:var(--muted);display:flex;align-items:center;gap:5px;'+' transition:all .15s;">🔒 Permissões</button>'+'</div>';
+  function _secaoHeader(titulo, count, perfil){
+    return '<div class="ur-secao-header">'
+      +'<div class="ur-secao-titulo">'+titulo+'<span class="ur-secao-count">'+count+'</span></div>'
+      +'<button class="btn-perms-grupo" data-perfil="'+perfil+'" style="background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;padding:3px 10px;color:var(--muted);">🔒 Permissões</button>'
+      +'</div>';
+  }
+
+  html+=_secaoHeader('Consultores', membros.consultores.length, 'consultor');
   if(membros.consultores.length===0){
-    html+='<div style="grid-column:1/-1;color:var(--muted);font-size:12px;">Nenhum consultor.</div>';
+    html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum consultor.</div>';
   } else {
     membros.consultores.forEach(function(nome){
       var entry=encontrar(nome,'consultor');
@@ -5470,9 +5656,10 @@ function _montarGrid(membros,usuarios){
       html+=_card(uid,u);
     });
   }
-  html+='<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border2);margin:16px 0 4px;">'+'<span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;">Treinadores ('+membros.treinadores.length+')</span>'+'<button class="btn-perms-grupo" data-perfil="treinador" title="Permissões do perfil Treinador"'+' style="background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;padding:3px 10px;color:var(--muted);display:flex;align-items:center;gap:5px;'+' transition:all .15s;">🔒 Permissões</button>'+'</div>';
+
+  html+=_secaoHeader('Treinadores', membros.treinadores.length, 'treinador');
   if(membros.treinadores.length===0){
-    html+='<div style="grid-column:1/-1;color:var(--muted);font-size:12px;">Nenhum treinador.</div>';
+    html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum treinador.</div>';
   } else {
     membros.treinadores.forEach(function(nome){
       var entry=encontrar(nome,'treinador')||encontrar(nome,'ministrante');
@@ -5481,18 +5668,45 @@ function _montarGrid(membros,usuarios){
       html+=_card(uid,u);
     });
   }
+
   grid.innerHTML=html;
 
-  // Event delegation — evita problema de escape de aspas no onclick inline
+  // Fechar dropdowns ao clicar fora
+  document.addEventListener('click', function _ddClose(e){
+    if(!e.target.closest('.ur-acoes')){
+      grid.querySelectorAll('.ur-dropdown.open').forEach(function(d){d.classList.remove('open');});
+    }
+  }, {capture:true});
+
+  // Event delegation
   grid.addEventListener('click',function(e){
+    // Toggle dropdown do ⋯
+    var menuBtn=e.target.closest('.ur-menu-btn');
+    if(menuBtn){
+      var dd=menuBtn.nextElementSibling;
+      var aberto=dd.classList.contains('open');
+      grid.querySelectorAll('.ur-dropdown.open').forEach(function(d){d.classList.remove('open');});
+      if(!aberto){ dd.classList.add('open'); }
+      // mostrar ações da linha
+      var acoes=menuBtn.closest('.ur-acoes');
+      if(acoes) acoes.style.opacity='1';
+      return;
+    }
+
     var btn=e.target.closest('button');
     if(!btn) return;
+    // fechar dropdown ao clicar em item
+    var parentDd=btn.closest('.ur-dropdown');
+    if(parentDd) parentDd.classList.remove('open');
+
     if(btn.classList.contains('btn-configurar-acesso')){
       _abrirConfigurarAcesso(btn.dataset.uid, btn.dataset.nome, btn.dataset.perfil);
     } else if(btn.classList.contains('btn-editar-acesso')){
       _abrirEditarAcesso(btn.dataset.uid);
     } else if(btn.classList.contains('btn-alterar-senha')){
       _abrirAlterarSenhaUsuario(btn.dataset.uid, btn.dataset.nome);
+    } else if(btn.classList.contains('btn-reset-senha')){
+      resetarSenhaUsuario(btn.dataset.uid, btn.dataset.nome);
     } else if(btn.classList.contains('btn-toggle-ativo')){
       _toggleAtivo(btn.dataset.uid, btn.dataset.ativo==='true'?false:true);
     } else if(btn.classList.contains('btn-excluir-usuario')){
@@ -5502,6 +5716,16 @@ function _montarGrid(membros,usuarios){
     } else if(btn.classList.contains('btn-perms-grupo')){
       abrirPermsGrupo(btn.dataset.perfil);
     }
+  });
+
+  // Hover: mostrar/ocultar ações
+  grid.querySelectorAll('.usuario-row').forEach(function(row){
+    var acoes=row.querySelector('.ur-acoes');
+    if(!acoes) return;
+    row.addEventListener('mouseenter',function(){ acoes.style.opacity='1'; });
+    row.addEventListener('mouseleave',function(){
+      if(!row.querySelector('.ur-dropdown.open')) acoes.style.opacity='0';
+    });
   });
 }
 
@@ -5517,9 +5741,9 @@ function _addUsuarioRecente(uid,nome,perfil){
 }
 function _filtrarUsuariosGrid(q){
   var t=(q||'').trim().toUpperCase();
-  document.querySelectorAll('#usuariosGrid .usuario-card').forEach(function(card){
-    var nome=(card.dataset.nome||'').toUpperCase();
-    card.style.display=(!t||nome.indexOf(t)>=0)?'':'none';
+  document.querySelectorAll('#usuariosGrid .usuario-row').forEach(function(row){
+    var nome=(row.dataset.nome||'').toUpperCase();
+    row.style.display=(!t||nome.indexOf(t)>=0)?'':'none';
   });
 }
 function _loginRapido(uid){
@@ -7160,18 +7384,68 @@ function gerarPropostaProduto(){
     +'</div>'
     +'</body></html>';
 
-  // Download
+  // Abrir preview
+  window._ppHtml = html;
+  window._ppNomeArquivo = 'proposta-'+_propProdAtual.toLowerCase()+'-'+cliente.toLowerCase().replace(/\s+/g,'-')+'.html';
+  window._ppBlobUrl = null;
+
   var blob = new Blob([html], {type:'text/html'});
   var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'proposta-'+_propProdAtual.toLowerCase()+'-'+cliente.toLowerCase().replace(/\s+/g,'-')+'.html';
-  a.click();
-  URL.revokeObjectURL(url);
+  window._ppBlobUrl = url;
+
+  var iframe = document.getElementById('ppIframe');
+  iframe.src = url;
+  document.getElementById('ppLinkInput').value = url;
+  document.getElementById('ppPreviewTitulo').textContent = 'Proposta — '+p.nome+' · '+cliente;
+
+  var ov = document.getElementById('propProdPreviewOverlay');
+  ov.style.display = 'flex';
 
   fecharPropProd();
   _showToast('✅ Proposta gerada para '+cliente+'!','var(--accent)');
   if(typeof _addPendLog==='function') _addPendLog('Proposta HTML gerada',cliente+' · '+p.nome,'📄');
+}
+
+function fecharPreviewPropProd(){
+  var ov = document.getElementById('propProdPreviewOverlay');
+  ov.style.display = 'none';
+  document.getElementById('ppIframe').src = 'about:blank';
+  if(window._ppBlobUrl){ URL.revokeObjectURL(window._ppBlobUrl); window._ppBlobUrl = null; }
+}
+
+function ppBaixar(){
+  if(!window._ppHtml) return;
+  var blob = new Blob([window._ppHtml], {type:'text/html'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = window._ppNomeArquivo || 'proposta.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function ppAbrirAba(){
+  if(window._ppBlobUrl) window.open(window._ppBlobUrl, '_blank');
+}
+
+function ppCopiarLink(){
+  var link = document.getElementById('ppLinkInput').value;
+  if(!link) return;
+  navigator.clipboard.writeText(link).then(function(){
+    _showToast('🔗 Link copiado! Válido nesta sessão do navegador.','var(--accent)');
+  }).catch(function(){
+    document.getElementById('ppLinkInput').select();
+    document.execCommand('copy');
+    _showToast('🔗 Link copiado!','var(--accent)');
+  });
+}
+
+function ppCopiarHtml(){
+  if(!window._ppHtml) return;
+  navigator.clipboard.writeText(window._ppHtml).then(function(){
+    _showToast('📋 HTML copiado para a área de transferência!','var(--accent)');
+  }).catch(function(){
+    _showToast('❌ Não foi possível copiar.','var(--red)');
+  });
 }
 
 /* ── Fix 4: Impedir fechamento de modais ao clicar fora ── */

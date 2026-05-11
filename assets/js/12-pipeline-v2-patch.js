@@ -85,20 +85,20 @@
         var cor=COR[i%COR.length];
         var hl=focoConsultor&&focoConsultor===nome;
         var temMeta=!!(g.metaBasica||g.metaMinima||g.metaMaster);
-        return '<div class="np-meta-row" style="border-bottom:1px solid var(--border);padding:14px 0;'+(hl?'background:rgba(200,240,90,.03);border-radius:8px;padding:14px;margin:-2px;':'')+'">'
-          +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:nowrap;overflow:hidden;">'
+        return '<div class="np-meta-row" style="border-bottom:1px solid var(--border);padding:12px 0;'+(hl?'background:rgba(200,240,90,.03);border-radius:8px;padding:12px;margin:-2px;':'')+'">'
+          +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
           +'<input type="checkbox" class="np-meta-chk" data-cons-chk="'+_esc2(nome)+'" onchange="npUpdateSelCounter()" onclick="npChkClick(event,this)" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;">'
           +'<div style="width:32px;height:32px;border-radius:50%;background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;">'+nome.charAt(0).toUpperCase()+'</div>'
-          +'<div style="font-size:13px;font-weight:700;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_esc2(nome)+'</div>'
-          +(temMeta?'<span style="font-size:9px;background:rgba(255,238,0,.15);color:#ffe000;border:1px solid rgba(255,238,0,.3);border-radius:4px;padding:1px 6px;white-space:nowrap;flex-shrink:0;">meta definida</span>':'')
+          +'<span style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;">'+_esc2(nome)+'</span>'
+          +(temMeta?' <span style="font-size:9px;background:rgba(255,238,0,.15);color:#ffe000;border:1px solid rgba(255,238,0,.3);border-radius:4px;padding:1px 6px;white-space:nowrap;flex-shrink:0;">meta definida</span>':'')
           +'</div>'
-          +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">'
-          +'<div><div style="font-size:9px;font-weight:700;color:#ffe000;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">&#x1F948; M\xednima</div>'
-          +'<input type="text" class="np-form-input" data-cons="'+_esc2(nome)+'" data-tipo="metaMinima" placeholder="0,00" value="'+(g.metaMinima?_npFmtMoneyInput(g.metaMinima):'')+'" oninput="this.value=npMoneyMask(this.value)" style="border-color:rgba(255,238,0,.3);"></div>'
-          +'<div><div style="font-size:9px;font-weight:700;color:#ff5252;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">&#x1F949; B\xe1sica</div>'
-          +'<input type="text" class="np-form-input" data-cons="'+_esc2(nome)+'" data-tipo="metaBasica" placeholder="0,00" value="'+(g.metaBasica?_npFmtMoneyInput(g.metaBasica):'')+'" oninput="this.value=npMoneyMask(this.value)" style="border-color:rgba(255,82,82,.3);"></div>'
-          +'<div><div style="font-size:9px;font-weight:700;color:#c8f05a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">&#x1F947; Master</div>'
-          +'<input type="text" class="np-form-input" data-cons="'+_esc2(nome)+'" data-tipo="metaMaster" placeholder="0,00" value="'+(g.metaMaster?_npFmtMoneyInput(g.metaMaster):'')+'" oninput="this.value=npMoneyMask(this.value)" style="border-color:rgba(200,240,90,.3);"></div>'
+          +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">'
+          +'<div><div style="font-size:9px;font-weight:700;color:#ffe000;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">🥈 Mínima</div>'
+          +'<input type="text" class="np-form-input" data-cons="'+_esc2(nome)+'" data-tipo="metaMinima" placeholder="0,00" value="'+(g.metaMinima?_npFmtMoneyInput(g.metaMinima):'')+'" oninput="this.value=npMoneyMask(this.value)" style="border-color:rgba(255,238,0,.3);width:100%;box-sizing:border-box;"></div>'
+          +'<div><div style="font-size:9px;font-weight:700;color:#ff5252;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">🥉 Básica</div>'
+          +'<input type="text" class="np-form-input" data-cons="'+_esc2(nome)+'" data-tipo="metaBasica" placeholder="0,00" value="'+(g.metaBasica?_npFmtMoneyInput(g.metaBasica):'')+'" oninput="this.value=npMoneyMask(this.value)" style="border-color:rgba(255,82,82,.3);width:100%;box-sizing:border-box;"></div>'
+          +'<div><div style="font-size:9px;font-weight:700;color:#c8f05a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">🥇 Master</div>'
+          +'<input type="text" class="np-form-input" data-cons="'+_esc2(nome)+'" data-tipo="metaMaster" placeholder="0,00" value="'+(g.metaMaster?_npFmtMoneyInput(g.metaMaster):'')+'" oninput="this.value=npMoneyMask(this.value)" style="border-color:rgba(200,240,90,.3);width:100%;box-sizing:border-box;"></div>'
           +'</div>'
           +'</div>';
       }).join('');

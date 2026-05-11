@@ -554,56 +554,50 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .perms-tog::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;top:3px;transition:left .2s,background .2s;}
 .perms-tog:not(.perm-on)::after{left:2px;background:#555;}
 .perms-tog.perm-on::after{left:21px;background:var(--accent);}
-.usuarios-grid{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:12px;
-  margin-top:12px;
-  overflow-x:hidden;
-}
-@media(max-width:1400px){.usuarios-grid{grid-template-columns:repeat(4,1fr);}}
-@media(max-width:1100px){.usuarios-grid{grid-template-columns:repeat(3,1fr);}}
-@media(max-width:780px){.usuarios-grid{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:480px){.usuarios-grid{grid-template-columns:1fr;}}
-.usuario-card{
-  background:#111;
-  border:1px solid var(--border2);
-  border-radius:12px;
-  padding:12px;
-  display:flex;flex-direction:column;gap:8px;
-  transition:border-color .15s,box-shadow .15s;
-  overflow:hidden;
-}
-.usuario-card:hover{border-color:rgba(200,240,90,.25);box-shadow:0 0 0 1px rgba(200,240,90,.1);}
-.usuario-card-header{display:flex;align-items:center;gap:10px;margin-bottom:2px;}
-.usuario-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;}
-/* Fix 4: badges de status de acesso */
-.status-nao-logado{
-  display:inline-block;
-  background:rgba(245,158,11,.2);
-  color:#fbbf24;
-  border:1px solid rgba(245,158,11,.4);
-  padding:3px 8px;
-  border-radius:6px;
-  font-size:11px;
-  font-weight:600;
-  white-space:nowrap;
-}
-.status-ok{
-  display:inline-block;
-  background:rgba(57,255,20,.12);
-  color:#39ff14;
-  border:1px solid rgba(57,255,20,.3);
-  padding:3px 8px;
-  border-radius:6px;
-  font-size:11px;
-  font-weight:600;
-  white-space:nowrap;
-}
-.badge-consultor{background:rgba(34,197,94,.15);color:var(--green);}
-.badge-treinador{background:rgba(251,191,36,.15);color:var(--amber);}
-.badge-ministrante{background:rgba(96,165,250,.15);color:var(--blue);}
-.badge-adm{background:rgba(200,240,90,.15);color:var(--accent);}
+/* ── Lista de usuários (novo layout) ── */
+.usuarios-grid{display:flex;flex-direction:column;margin-top:8px;}
+.usuario-row{display:grid;grid-template-columns:36px 1fr auto auto auto 36px;align-items:center;gap:12px;padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .12s;position:relative;}
+.usuario-row:hover{background:rgba(255,255,255,.025);}
+.usuario-row:hover .ur-acoes{opacity:1;}
+.usuario-row[data-ativo="false"]{opacity:.55;}
+.ur-avatar{width:30px;height:30px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.ur-avatar.consultor{border-color:rgba(34,197,94,.5);color:var(--green);background:rgba(34,197,94,.07);}
+.ur-avatar.treinador{border-color:rgba(251,191,36,.5);color:var(--amber);background:rgba(251,191,36,.07);}
+.ur-avatar.ministrante{border-color:rgba(96,165,250,.5);color:var(--blue);background:rgba(96,165,250,.07);}
+.ur-avatar.adm{border-color:rgba(200,240,90,.7);color:var(--accent);background:rgba(200,240,90,.1);}
+.ur-info{min-width:0;}
+.ur-nome{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ur-login{font-size:11px;color:var(--muted);font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ur-badge{padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;}
+.badge-consultor{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2);}
+.badge-treinador{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.2);}
+.badge-ministrante{background:rgba(96,165,250,.12);color:var(--blue);border:1px solid rgba(96,165,250,.2);}
+.badge-adm{background:rgba(200,240,90,.12);color:var(--accent);border:1px solid rgba(200,240,90,.25);}
+/* bolinha de status */
+.ur-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ur-dot.ativo{background:#22c55e;box-shadow:0 0 5px rgba(34,197,94,.5);}
+.ur-dot.pendente{background:#fbbf24;box-shadow:0 0 5px rgba(251,191,36,.5);}
+.ur-dot.pausado{background:#374137;}
+.ur-dot.sem-acesso{background:#ef4444;box-shadow:0 0 5px rgba(239,68,68,.4);}
+/* ações / dropdown */
+.ur-acoes{opacity:0;position:relative;transition:opacity .12s;}
+.ur-menu-btn{width:30px;height:30px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;}
+.ur-menu-btn:hover{border-color:var(--accent);color:var(--accent);}
+.ur-dropdown{display:none;position:absolute;right:0;top:34px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;min-width:175px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.55);overflow:hidden;}
+.ur-dropdown.open{display:block;}
+.ur-dd-item{display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:12px;color:var(--muted);cursor:pointer;transition:background .1s;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;}
+.ur-dd-item:hover{background:rgba(200,240,90,.06);color:var(--accent);}
+.ur-dd-item.danger:hover{background:rgba(239,68,68,.08);color:#ef4444;}
+.ur-dd-sep{border:none;border-top:1px solid var(--border2);margin:3px 0;}
+.ur-secao-header{display:flex;align-items:center;justify-content:space-between;padding:10px 0 6px;position:sticky;top:0;background:var(--surface);z-index:10;border-bottom:1px solid var(--border2);margin-bottom:2px;}
+.ur-secao-titulo{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:8px;}
+.ur-secao-count{background:var(--surface2);color:var(--muted);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;}
+/* legenda rodapé */
+.ur-legenda{display:flex;align-items:center;gap:16px;font-size:11px;color:var(--muted);}
+.ur-legenda span{display:flex;align-items:center;gap:5px;}
+/* compat: manter .status-nao-logado e .status-ok para outros usos */
+.status-nao-logado{display:none;}
+.status-ok{display:none;}
 
 /* ── Fix 6: Centralizar colunas e nowrap ── */
 .lc-table td, .lc-table th { white-space:nowrap; }
@@ -820,9 +814,31 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-meta-edit{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:5px;padding:3px 8px;font-size:10px;cursor:pointer;margin-top:8px;transition:color .12s,border-color .12s;}
 .np-meta-edit:hover{color:var(--accent);border-color:var(--accent);}
 /* Modal nova venda + meta */
-.np-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1600;display:none;align-items:center;justify-content:center;}
+.np-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
 .np-modal-overlay.open{display:flex;}
-.np-modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;width:min(480px,95vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;}
+/* botões de período de leads */
+.ld-periodo-btn{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;cursor:pointer;transition:all .15s;background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border2);}
+.ld-periodo-btn:hover{color:var(--text);}
+.ld-periodo-btn.ativo{background:var(--accent);color:#000;border-color:var(--accent);}
+/* checkbox + seleção em lote */
+.td-check{width:32px;text-align:center;padding:0 4px;}
+.ld-chk{width:15px;height:15px;cursor:pointer;accent-color:var(--accent);}
+.ld-tr-sel td{background:rgba(200,240,90,.06);}
+.ld-barra-lote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;margin-bottom:6px;background:rgba(200,240,90,.07);border:1px solid rgba(200,240,90,.2);border-radius:10px;}
+/* chips SLA leads */
+.ld-sla{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+.ld-sla-verde {background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.3);}
+.ld-sla-amarelo{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3);}
+.ld-sla-laranja{background:rgba(251,146,60,.15);color:#fb923c;border:1px solid rgba(251,146,60,.3);}
+.ld-sla-vermelho{background:rgba(255,82,82,.15);color:var(--red);border:1px solid rgba(255,82,82,.3);}
+/* status atendimento */
+.ld-status{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;cursor:pointer;white-space:nowrap;}
+.ld-status-novo      {background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid rgba(96,165,250,.25);}
+.ld-status-contatado {background:rgba(167,139,250,.12);color:#a78bfa;border:1px solid rgba(167,139,250,.25);}
+.ld-status-negociando{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.25);}
+.ld-status-ganho     {background:rgba(52,211,153,.12);color:#34d399;border:1px solid rgba(52,211,153,.25);}
+.ld-status-perdido   {background:rgba(255,82,82,.12);color:var(--red);border:1px solid rgba(255,82,82,.25);}
+.np-modal,.np-modal-box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;width:min(480px,95vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;}
 .np-modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .np-modal-title{font-size:15px;font-weight:700;color:var(--text);}
 .np-modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;transition:color .12s;}
@@ -885,6 +901,9 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .ld-table .td-cons{}
 .ld-table .td-acoes{white-space:nowrap;}
 .ld-table .td-acoes-inner{display:flex;gap:4px;align-items:center;}
+/* dropdown pool de distribuição */
+#ldPoolDropdown{display:none;}
+#ldPoolDropdown.open{display:block;}
 
 /* ═══ FASE 4 — UX / MOBILE / SKELETON ═══════════════════ */
 
