@@ -4077,8 +4077,10 @@ function abrirClienteDetalhe(ri){
   var _sess=_getSessao?_getSessao():null;
   var _perfil=_sess?_sess.perfil:'adm';
   var _vinculo=_sess?(_sess.vinculo||'').toUpperCase():'';
-  var _ehDono=_perfil==='consultor'&&_vinculo&&(d.consultor||'').toUpperCase()===_vinculo;
-  var _modoEdit=_ehDono; /* consultor só edita os próprios */
+  var _consultorCliente=(d.consultor||'').toUpperCase();
+  var _ehDono=_perfil==='consultor'&&_vinculo&&_consultorCliente===_vinculo;
+  var _modoEdit=_ehDono;
+  console.log('[ClienteDetalhe] perfil='+_perfil+' vinculo="'+_vinculo+'" consultor_cliente="'+_consultorCliente+'" ehDono='+_ehDono);
 
   document.getElementById('clienteDetalheName').textContent=d.cliente;
 
