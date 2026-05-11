@@ -5808,11 +5808,17 @@ function _montarGrid(membros,usuarios){
     outros.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
   }
 
-  /* Seção "Aguardando configuração": membros da turma que não têm
-     entrada em `usuarios/` — ex: importados via planilha. */
+  /* Seção "Aguardando configuração": membros da turma sem conta em `usuarios/`.
+     Só exibe se há turma real carregada — evita mostrar o fallback hardcoded. */
+  var _temTurmaReal=!!_turmaAtiva||(function(){
+    var tid=localStorage.getItem(TURMA_ATIVA_KEY);
+    var tls=_getTurmas();
+    var t=tid?tls.find(function(x){return x.id===tid;}):null;
+    return !!(t&&(t.consultores||t.treinadores));
+  })();
   var todosNomesRegistrados={};
   Object.values(usuarios||{}).forEach(function(u){ if(u&&u.nome) todosNomesRegistrados[u.nome.trim().toUpperCase()]=1; });
-  var membrosAtuais=_getMembros();
+  var membrosAtuais=_temTurmaReal?_getMembros():{consultores:[],treinadores:[]};
   var semConta=[];
   (membrosAtuais.consultores||[]).concat(membrosAtuais.treinadores||[]).forEach(function(nome){
     if(nome&&!todosNomesRegistrados[nome.trim().toUpperCase()]) semConta.push(nome.trim());
