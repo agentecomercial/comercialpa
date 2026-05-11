@@ -5454,8 +5454,7 @@ function _renderUsuariosGrid(){
   });
   if(temSubModalAberto) return;
   grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center;">Carregando...</div>';
-  // Fix 2: complementar membros com consultores presentes em data[]
-  var membros=complementarMembrosComData(_getMembros());
+  var membros=_getMembros();
 
   function _renderComUsuarios(usuarios){
     var ministrante=_getTurmaMinistante();
