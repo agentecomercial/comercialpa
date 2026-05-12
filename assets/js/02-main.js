@@ -3195,12 +3195,12 @@ function setTreinadorStatus(s){
 }
 function filtered(){
   const q=(document.getElementById('searchInput')?.value||'').toLowerCase().trim();
-  let f=data.filter(d=>
+  let f=data.filter(d=>d&&d.cliente).filter(d=>
     (!activeTrainer||d.treinador===activeTrainer)&&
     (!activeConsultor||d.consultor===activeConsultor)&&
     (!activeCliente||(d.cliente===activeCliente&&d.entrada>0))&&
     (!activeStatus||(activeStatus==='entrada'?d.entrada>0:d.status===activeStatus))&&
-    (!q||d.cliente.toLowerCase().includes(q)||d.treinador.toLowerCase().includes(q)||d.consultor.toLowerCase().includes(q)||d.treinamento.toLowerCase().includes(q))
+    (!q||d.cliente.toLowerCase().includes(q)||(d.treinador||'').toLowerCase().includes(q)||(d.consultor||'').toLowerCase().includes(q)||(d.treinamento||'').toLowerCase().includes(q))
   );
   if(sortCol){f=[...f].sort((a,b)=>{const av=a[sortCol],bv=b[sortCol];if(typeof av==='number')return(av-bv)*sortDir;return String(av).localeCompare(String(bv),'pt-BR')*sortDir;});}
   return f;
@@ -3300,8 +3300,8 @@ function renderAll(){
   var _vinculo=_sess?(_sess.vinculo||'').toUpperCase():'';
   // Base de dados filtrada por vínculo para consultor
   var _base=(_perfil==='consultor'&&_vinculo)
-    ? data.filter(function(d){return (d.consultor||'').toUpperCase()===_vinculo;})
-    : data;
+    ? data.filter(function(d){return d&&d.cliente&&(d.consultor||'').toUpperCase()===_vinculo;})
+    : data.filter(function(d){return d&&d.cliente;});
   var _btnNC=document.getElementById('btnNovoCliente');
   if(_btnNC)_btnNC.style.display=_isAdm?'':'none';
   // Atualizar botões filtro
@@ -3867,7 +3867,7 @@ function renderConsultor(){
   if(wrap) wrap.style.display='grid';
   document.getElementById('consultorCards').style.display='';
   const metaInd=allConsultors.length>0?META/allConsultors.length:0;
-  const _rankMapC=[...allConsultors].map(c=>({nome:c,pago:data.filter(d=>d.consultor===c&&d.status==='pago').reduce((a,d)=>a+d.valor,0)})).sort((a,b)=>b.pago-a.pago);
+  const _rankMapC=[...allConsultors].map(c=>({nome:c,pago:data.filter(d=>d&&d.cliente&&d.consultor===c&&d.status==='pago').reduce((a,d)=>a+d.valor,0)})).sort((a,b)=>b.pago-a.pago);
   const _posMapC={};_rankMapC.forEach((c,i)=>{_posMapC[c.nome]=i;});
   var _sessC=_getSessao?_getSessao():null;
   var _perfilC=_sessC?_sessC.perfil:'adm';
@@ -3879,7 +3879,7 @@ function renderConsultor(){
 
   // ── Renderizar apenas os cards de consultores (sem ranking embutido) ──
   document.getElementById('consultorCards').innerHTML=_listaC.map(c=>{
-    const cdA=data.filter(d=>d.consultor===c);
+    const cdA=data.filter(d=>d&&d.cliente&&d.consultor===c);
     const cd=activeConsultorStatus===null?cdA:activeConsultorStatus==='entrada'?cdA.filter(d=>d.entrada>0):cdA.filter(d=>d.status===activeConsultorStatus);
     const total=cd.reduce((a,d)=>a+d.valor,0),pago=cd.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
     const aberto=cd.filter(d=>d.status==='aberto').reduce((a,d)=>a+d.valor,0),entrada=cd.reduce((a,d)=>a+d.entrada,0);
@@ -4007,7 +4007,7 @@ function abrirPagosModal(){
 }
 function openConsultorDetail(c){window._consultorAtivo=c;_renderConsultorDetail(c);}
 function _renderConsultorDetail(c){
-  const cdA=data.filter(d=>d.consultor===c).sort((a,b)=>a.cliente.localeCompare(b.cliente,'pt-BR'));
+  const cdA=data.filter(d=>d&&d.cliente&&d.consultor===c).sort((a,b)=>a.cliente.localeCompare(b.cliente,'pt-BR'));
   const cd=activeConsultorStatus===null?cdA:activeConsultorStatus==='entrada'?cdA.filter(d=>d.entrada>0):cdA.filter(d=>d.status===activeConsultorStatus);
 
   // ── Métricas agregadas ──
@@ -4402,7 +4402,7 @@ function renderTreinador(){
       ?_allTrainersSorted.filter(t=>t.toUpperCase()===(_sessT.vinculo||'').toUpperCase())||_allTrainersSorted
       :_allTrainersSorted;
   document.getElementById('treinadorCards').innerHTML=_listaT.map(t=>{
-    const tdA=data.filter(d=>d.treinador===t);
+    const tdA=data.filter(d=>d&&d.cliente&&d.treinador===t);
     const td=activeTreinadorStatus===null?tdA:activeTreinadorStatus==='entrada'?tdA.filter(d=>d.entrada>0):tdA.filter(d=>d.status===activeTreinadorStatus);
     const total=td.reduce((a,d)=>a+d.valor,0),pago=td.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0),aberto=td.filter(d=>d.status==='aberto').reduce((a,d)=>a+d.valor,0);
     const pct=Math.round((pago/META)*100),col=getCol(pct),cor=tBorder[t]||'#888',bg=tBg[t]||'rgba(136,136,136,0.1)',ini=t.split(' ').map(w=>w[0]).join('').slice(0,2);
@@ -4469,7 +4469,7 @@ function renderTreinador(){
 }
 function openTreinadorDetail(t){window._treinadorAtivo=t;_renderTreinadorDetail(t);}
 function _renderTreinadorDetail(t){
-  const tdA=data.filter(d=>d.treinador===t).sort((a,b)=>a.cliente.localeCompare(b.cliente,'pt-BR'));
+  const tdA=data.filter(d=>d&&d.cliente&&d.treinador===t).sort((a,b)=>a.cliente.localeCompare(b.cliente,'pt-BR'));
   const td=activeTreinadorStatus===null?tdA:activeTreinadorStatus==='entrada'?tdA.filter(d=>d.entrada>0):tdA.filter(d=>d.status===activeTreinadorStatus);
 
   // Métricas

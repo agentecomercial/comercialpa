@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v80 — dedup apenas manual via console; sem auto-run
-const CACHE_NAME = 'agente-febracis-v80';
+// v81 — guard null em todos os filtros de data[]
+const CACHE_NAME = 'agente-febracis-v81';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
