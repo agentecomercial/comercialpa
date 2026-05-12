@@ -871,15 +871,6 @@ function entrarTurma(id){
     buildSelects();buildFilterBtns();renderAll();
     switchTab(abaInicial);
     startRealtimeSync();
-    // Deduplicar registros antigos após estabilizar o carregamento
-    setTimeout(function(){
-      var _n=_dedupClientesInterno(true);
-      if(_n>0){
-        savedData=JSON.stringify(data);
-        markUnsaved();saveStorage();renderAll();
-        console.warn('[Dedup] '+_n+' duplicado(s) mesclados e salvos no Firebase.');
-      }
-    },2000);
   }
 
   // Usar dados já carregados pelo chamador

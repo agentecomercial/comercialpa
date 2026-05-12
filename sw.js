@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v79 — fix recursao infinita dedup + guard undefined em saveAdd
-const CACHE_NAME = 'agente-febracis-v79';
+// v80 — dedup apenas manual via console; sem auto-run
+const CACHE_NAME = 'agente-febracis-v80';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
