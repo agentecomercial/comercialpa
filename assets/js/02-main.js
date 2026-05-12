@@ -4022,6 +4022,19 @@ function _renderConsultorDetail(c){
   const tbl=tblEl?tblEl.closest('table'):null;
   var listEl=document.getElementById('consultorDetailList');
 
+  // ── Agrupamento por cliente ──
+  const _gruposMap=new Map();
+  cd.forEach(function(d){
+    var k=d.cliente;
+    if(!_gruposMap.has(k)) _gruposMap.set(k,[]);
+    _gruposMap.get(k).push(d);
+  });
+  // determinar status "misto" de um grupo
+  function _statusGrupo(itens){
+    var sts=[...new Set(itens.map(d=>d.status||'-'))];
+    return sts.length===1?sts[0]:'misto';
+  }
+
   if(_ehProprio){
     if(tbl) tbl.style.display='none';
     if(!listEl){
@@ -4034,43 +4047,139 @@ function _renderConsultorDetail(c){
     if(!cd.length){
       listEl.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Nenhum cliente para este filtro.</div>';
     } else {
-      listEl.innerHTML=cd.map(function(d){
-        var ri=data.indexOf(d);
-        var _ip=d.status==='pago';
-        return '<div class="consultor-list-item'+(_ip?' pago':'')+'" onclick="abrirClienteDetalhe('+ri+')">'
-          +'<span class="consultor-list-name'+(_ip?' pago':'')+'">'+d.cliente+'</span>'
-          +'<span class="badge badge-'+d.status+'">'+sl(d.status)+'</span>'
-          +'</div>';
-      }).join('');
+      var _listHtml='';
+      _gruposMap.forEach(function(itens,nome){
+        if(itens.length===1){
+          var d=itens[0]; var ri=data.indexOf(d);
+          var _ip=d.status==='pago';
+          _listHtml+='<div class="consultor-list-item'+(_ip?' pago':'')+'" onclick="abrirClienteDetalhe('+ri+')">'
+            +'<span class="consultor-list-name'+(_ip?' pago':'')+'">'+d.cliente+'</span>'
+            +'<span class="badge badge-'+d.status+'">'+sl(d.status)+'</span>'
+            +'</div>';
+        } else {
+          var totalG=itens.reduce(function(a,d){return a+d.valor;},0);
+          var stG=_statusGrupo(itens);
+          var _gid='cg_'+nome.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
+          var todosP=itens.every(function(d){return d.status==='pago';});
+          _listHtml+='<div style="border-radius:var(--radius-sm);overflow:hidden;margin-bottom:8px;border:1px solid rgba(200,240,90,.25);border-left:3px solid var(--accent);">'
+            +'<div class="consultor-list-item" style="margin-bottom:0;border-radius:0;border:none;background:rgba(200,240,90,.06);" onclick="window._toggleGrupo(\''+_gid+'\')">'
+            +'<span style="display:flex;align-items:center;gap:6px;flex:1;">'
+            +'<span class="consultor-list-name'+(todosP?' pago':'')+'">'+nome+'</span>'
+            +'<span style="font-size:9px;font-weight:700;background:rgba(200,240,90,.15);color:var(--accent);border-radius:10px;padding:1px 7px;">'+itens.length+'</span>'
+            +'</span>'
+            +'<span style="display:flex;align-items:center;gap:8px;">'
+            +'<span style="font-size:12px;font-weight:700;color:'+(todosP?'#39ff14':'var(--text)')+';">'+formatVal(totalG)+'</span>'
+            +'<span id="arr_'+_gid+'" style="font-size:10px;color:var(--accent);transition:transform .2s;">▶</span>'
+            +'</span>'
+            +'</div>'
+            +'<div id="'+_gid+'" style="display:none;">'
+            +itens.map(function(d){
+              var ri=data.indexOf(d);
+              var _ip=d.status==='pago';
+              return '<div class="consultor-list-item" style="margin-bottom:0;border-radius:0;border:none;padding-left:20px;border-top:1px solid var(--border);" onclick="abrirClienteDetalhe('+ri+')">'
+                +'<span style="display:flex;flex-direction:column;gap:1px;flex:1;">'
+                +'<span style="font-size:11px;font-weight:600;color:var(--muted);">'+(d.treinamento||'—')+'</span>'
+                +'</span>'
+                +'<span style="display:flex;align-items:center;gap:8px;">'
+                +'<span style="font-size:12px;font-weight:700;color:'+(d.entrada>0?'var(--green)':'var(--muted)')+';">'+(d.entrada>0?'↑ '+formatVal(d.entrada):'')+'</span>'
+                +'<span class="badge badge-'+d.status+'">'+sl(d.status)+'</span>'
+                +'</span>'
+                +'</div>';
+            }).join('')
+            +'</div>'
+            +'</div>';
+        }
+      });
+      listEl.innerHTML=_listHtml;
     }
   } else {
     if(tbl) tbl.style.display='';
     if(listEl) listEl.style.display='none';
-    tblEl.innerHTML=cd.length===0
-      ?'<tr class="empty-row"><td colspan="6">Nenhum cliente para este filtro.</td></tr>'
-      :cd.map(d=>{
-        const ri=data.indexOf(d);
-        const ip=d.status==='pago';
-        const hi=!!(d.info&&d.info.trim());
-        const st=d.status||'-';
-        // Melhoria 3: borda lateral por status, sem fundo de linha
-        const borderLeft=_statusBorder[st]||'2px solid var(--border)';
-        // Treinador: exibir sempre que existir (melhoria 2)
-        const treinadorTxt=(d.treinador&&d.treinador!=='-')?d.treinador.toUpperCase():'—';
-        // Melhoria 6: entrada com ↑
-        const entradaTxt=d.entrada>0?'↑ '+formatVal(d.entrada):'—';
-        const entradaStyle=d.entrada>0?'color:var(--green);font-weight:600;':'color:var(--muted);';
-        return `<tr style="border-left:${borderLeft};" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar" class="tr-clickable">
-          <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button></span></td>
-          <td style="text-align:center;white-space:nowrap;color:var(--muted);font-size:11px;">${treinadorTxt}</td>
-          <td style="text-align:center;white-space:nowrap;">${d.treinamento||'—'}</td>
-          <td style="text-align:center;white-space:nowrap;font-weight:${ip?'600':'400'};${ip?'color:var(--text);':''}">${formatVal(d.valor)}</td>
-          <td style="text-align:center;white-space:nowrap;"><span style="font-size:10px;font-weight:500;padding:2px 8px;border-radius:4px;" class="badge badge-${st}">${sl(st)}</span></td>
-          <td style="text-align:center;white-space:nowrap;${entradaStyle}">${entradaTxt}</td>
-        </tr>`;
-      }).join('');
+    if(!cd.length){
+      tblEl.innerHTML='<tr class="empty-row"><td colspan="6">Nenhum cliente para este filtro.</td></tr>';
+    } else {
+      var _rows='';
+      _gruposMap.forEach(function(itens,nome){
+        if(itens.length===1){
+          var d=itens[0];
+          const ri=data.indexOf(d);
+          const ip=d.status==='pago';
+          const hi=!!(d.info&&d.info.trim());
+          const st=d.status||'-';
+          const borderLeft=_statusBorder[st]||'2px solid var(--border)';
+          const treinadorTxt=(d.treinador&&d.treinador!=='-')?d.treinador.toUpperCase():'—';
+          const entradaTxt=d.entrada>0?'↑ '+formatVal(d.entrada):'—';
+          const entradaStyle=d.entrada>0?'color:var(--green);font-weight:600;':'color:var(--muted);';
+          _rows+=`<tr style="border-left:${borderLeft};" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar" class="tr-clickable">
+            <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button></span></td>
+            <td style="text-align:center;white-space:nowrap;color:var(--muted);font-size:11px;">${treinadorTxt}</td>
+            <td style="text-align:center;white-space:nowrap;">${d.treinamento||'—'}</td>
+            <td style="text-align:center;white-space:nowrap;">${formatVal(d.valor)}</td>
+            <td style="text-align:center;white-space:nowrap;"><span class="badge badge-${st}">${sl(st)}</span></td>
+            <td style="text-align:center;white-space:nowrap;${entradaStyle}">${entradaTxt}</td>
+          </tr>`;
+        } else {
+          var totalG=itens.reduce(function(a,d){return a+d.valor;},0);
+          var entradaG=itens.reduce(function(a,d){return a+(d.entrada||0);},0);
+          var stG=_statusGrupo(itens);
+          var todosP=itens.every(function(d){return d.status==='pago';});
+          var _gid='tg_'+nome.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
+          // Linha pai
+          _rows+=`<tr class="tr-grupo-pai" onclick="window._toggleGrupo('${_gid}')" style="border-left:3px solid var(--accent);background:rgba(200,240,90,.04);cursor:pointer;">
+            <td style="font-weight:700;text-transform:uppercase;white-space:nowrap;${todosP?'color:#39ff14;':'color:var(--accent);'}">
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <span id="arr_${_gid}" style="font-size:9px;color:var(--accent);transition:transform .25s;display:inline-block;">▶</span>
+                ${nome}
+                <span style="font-size:9px;font-weight:700;background:rgba(200,240,90,.15);color:var(--accent);border-radius:10px;padding:1px 7px;">${itens.length} treinamentos</span>
+              </span>
+            </td>
+            <td style="text-align:center;color:var(--muted);font-size:11px;">—</td>
+            <td style="text-align:center;color:var(--muted);font-size:11px;">—</td>
+            <td style="text-align:center;font-weight:700;color:${todosP?'#39ff14':'var(--text)'};">${formatVal(totalG)}</td>
+            <td style="text-align:center;"><span class="badge badge-${stG==='misto'?'negociacao':stG}" style="${stG==='misto'?'border:1px dashed var(--amber);background:transparent;color:var(--amber);':''}">${stG==='misto'?'MISTO':sl(stG)}</span></td>
+            <td style="text-align:center;${entradaG>0?'color:var(--green);font-weight:600;':'color:var(--muted);'}">${entradaG>0?'↑ '+formatVal(entradaG):'—'}</td>
+          </tr>`;
+          // Sub-linhas
+          itens.forEach(function(d){
+            const ri=data.indexOf(d);
+            const ip=d.status==='pago';
+            const hi=!!(d.info&&d.info.trim());
+            const st=d.status||'-';
+            const treinadorTxt=(d.treinador&&d.treinador!=='-')?d.treinador.toUpperCase():'—';
+            const entradaTxt=d.entrada>0?'↑ '+formatVal(d.entrada):'—';
+            const entradaStyle=d.entrada>0?'color:var(--green);font-weight:600;':'color:var(--muted);';
+            _rows+=`<tr class="tr-grupo-filho" data-grupo="${_gid}" style="display:none;border-left:3px solid rgba(200,240,90,.2);background:rgba(200,240,90,.02);" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar">
+              <td style="font-weight:500;text-transform:uppercase;white-space:nowrap;padding-left:28px;color:var(--muted);font-size:12px;">
+                <span style="display:inline-flex;align-items:center;gap:4px;">└ ${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button></span>
+              </td>
+              <td style="text-align:center;white-space:nowrap;color:var(--muted);font-size:11px;">${treinadorTxt}</td>
+              <td style="text-align:center;white-space:nowrap;font-size:12px;">${d.treinamento||'—'}</td>
+              <td style="text-align:center;white-space:nowrap;font-size:12px;">${formatVal(d.valor)}</td>
+              <td style="text-align:center;white-space:nowrap;"><span class="badge badge-${st}">${sl(st)}</span></td>
+              <td style="text-align:center;white-space:nowrap;${entradaStyle}">${entradaTxt}</td>
+            </tr>`;
+          });
+        }
+      });
+      tblEl.innerHTML=_rows;
+    }
   }
 }
+
+window._toggleGrupo=function(gid){
+  var filhos=document.querySelectorAll('[data-grupo="'+gid+'"]');
+  var subDiv=document.getElementById(gid);
+  var arr=document.getElementById('arr_'+gid);
+  if(filhos.length){
+    var aberto=filhos[0].style.display!=='none';
+    filhos.forEach(function(el){el.style.display=aberto?'none':'';});
+    if(arr) arr.style.transform=aberto?'':'rotate(90deg)';
+  } else if(subDiv){
+    var aberto=subDiv.style.display!=='none';
+    subDiv.style.display=aberto?'none':'';
+    if(arr) arr.style.transform=aberto?'':'rotate(90deg)';
+  }
+};
 var _clienteDetalheIdx=null;
 function abrirClienteDetalhe(ri){
   var d=data[ri];

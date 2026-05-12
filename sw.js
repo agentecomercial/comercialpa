@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v60 — botão Selecionar todos / Desmarcar todos na proposta comercial
-const CACHE_NAME = 'agente-febracis-v60';
+// v61 — agrupamento de clientes com múltiplos treinamentos na tabela do consultor
+const CACHE_NAME = 'agente-febracis-v61';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
