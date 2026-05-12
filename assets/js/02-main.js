@@ -4133,13 +4133,13 @@ function _renderConsultorDetail(c){
         var ri=data.indexOf(d);
         var _ip=d.status==='pago';
         var _td=_treinDisplay(d);
-        var _treins=d.treinamentos&&d.treinamentos.length?d.treinamentos:[{cod:d.treinamento||'—',valor:d.valor||0}];
-        var _treinRows=_treins.map(function(t){
+        var _treins=d.treinamentos&&d.treinamentos.length?d.treinamentos:[];
+        var _treinRows=_treins.length?_treins.map(function(t){
           return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
             +'<span style="font-size:12px;font-weight:700;color:var(--accent);font-family:\'DM Mono\',monospace;letter-spacing:.05em;">'+t.cod+'</span>'
             +'<span style="font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;">'+formatVal(t.valor)+'</span>'
             +'</div>';
-        }).join('');
+        }).join(''):'<div style="font-size:11px;color:var(--muted);padding:6px 0;">Nenhum treinamento cadastrado.</div>';
         var _panelId='clipanel_'+ri;
         return '<div style="border-bottom:1px solid var(--border);">'
           // ── Header clicável ──
