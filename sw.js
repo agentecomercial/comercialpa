@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v61 — agrupamento de clientes com múltiplos treinamentos na tabela do consultor
-const CACHE_NAME = 'agente-febracis-v61';
+// v62 — botão + por linha com mini-menu: adicionar treinamento, editar, ver info
+const CACHE_NAME = 'agente-febracis-v62';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',

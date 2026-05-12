@@ -4054,13 +4054,17 @@ function _renderConsultorDetail(c){
           var _ip=d.status==='pago';
           _listHtml+='<div class="consultor-list-item'+(_ip?' pago':'')+'" onclick="abrirClienteDetalhe('+ri+')">'
             +'<span class="consultor-list-name'+(_ip?' pago':'')+'">'+d.cliente+'</span>'
+            +'<span style="display:flex;align-items:center;gap:6px;">'
             +'<span class="badge badge-'+d.status+'">'+sl(d.status)+'</span>'
+            +'<button onclick="window._abrirMenuCliente(event,\''+d.cliente.replace(/'/g,"\\'")+'\',' +ri+')" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:22px;height:22px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button>'
+            +'</span>'
             +'</div>';
         } else {
           var totalG=itens.reduce(function(a,d){return a+d.valor;},0);
           var stG=_statusGrupo(itens);
           var _gid='cg_'+nome.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
           var todosP=itens.every(function(d){return d.status==='pago';});
+          var _ri0=data.indexOf(itens[0]);
           _listHtml+='<div style="border-radius:var(--radius-sm);overflow:hidden;margin-bottom:8px;border:1px solid rgba(200,240,90,.25);border-left:3px solid var(--accent);">'
             +'<div class="consultor-list-item" style="margin-bottom:0;border-radius:0;border:none;background:rgba(200,240,90,.06);" onclick="window._toggleGrupo(\''+_gid+'\')">'
             +'<span style="display:flex;align-items:center;gap:6px;flex:1;">'
@@ -4069,6 +4073,7 @@ function _renderConsultorDetail(c){
             +'</span>'
             +'<span style="display:flex;align-items:center;gap:8px;">'
             +'<span style="font-size:12px;font-weight:700;color:'+(todosP?'#39ff14':'var(--text)')+';">'+formatVal(totalG)+'</span>'
+            +'<button onclick="window._abrirMenuCliente(event,\''+nome.replace(/'/g,"\\'")+'\',' +_ri0+')" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:22px;height:22px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button>'
             +'<span id="arr_'+_gid+'" style="font-size:10px;color:var(--accent);transition:transform .2s;">▶</span>'
             +'</span>'
             +'</div>'
@@ -4111,7 +4116,7 @@ function _renderConsultorDetail(c){
           const entradaTxt=d.entrada>0?'↑ '+formatVal(d.entrada):'—';
           const entradaStyle=d.entrada>0?'color:var(--green);font-weight:600;':'color:var(--muted);';
           _rows+=`<tr style="border-left:${borderLeft};" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar" class="tr-clickable">
-            <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button></span></td>
+            <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button><button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:18px;height:18px;cursor:pointer;color:var(--accent);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button></span></td>
             <td style="text-align:center;white-space:nowrap;color:var(--muted);font-size:11px;">${treinadorTxt}</td>
             <td style="text-align:center;white-space:nowrap;">${d.treinamento||'—'}</td>
             <td style="text-align:center;white-space:nowrap;">${formatVal(d.valor)}</td>
@@ -4125,12 +4130,14 @@ function _renderConsultorDetail(c){
           var todosP=itens.every(function(d){return d.status==='pago';});
           var _gid='tg_'+nome.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
           // Linha pai
+          var _ri0t=data.indexOf(itens[0]);
           _rows+=`<tr class="tr-grupo-pai" onclick="window._toggleGrupo('${_gid}')" style="border-left:3px solid var(--accent);background:rgba(200,240,90,.04);cursor:pointer;">
             <td style="font-weight:700;text-transform:uppercase;white-space:nowrap;${todosP?'color:#39ff14;':'color:var(--accent);'}">
               <span style="display:inline-flex;align-items:center;gap:6px;">
                 <span id="arr_${_gid}" style="font-size:9px;color:var(--accent);transition:transform .25s;display:inline-block;">▶</span>
                 ${nome}
                 <span style="font-size:9px;font-weight:700;background:rgba(200,240,90,.15);color:var(--accent);border-radius:10px;padding:1px 7px;">${itens.length} treinamentos</span>
+                <button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${nome.replace(/'/g,"\\'")}',${_ri0t})" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:18px;height:18px;cursor:pointer;color:var(--accent);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button>
               </span>
             </td>
             <td style="text-align:center;color:var(--muted);font-size:11px;">—</td>
@@ -5050,6 +5057,56 @@ function executeDelete(){
 }
 function setAddEntradaToggle(sim){addEntradaRealizada=sim;document.getElementById('aToggleSim').className='etoggle'+(sim?' active-yes':'');document.getElementById('aToggleNao').className='etoggle'+(!sim?' active-no':'');document.getElementById('addEntradaValField').style.display=sim?'block':'none';}
 // Modal simplificado para consultor — campos restritos
+// ── Mini-menu "+" por linha de cliente ──
+window._abrirMenuCliente=function(e,nomeCliente,ri){
+  e.stopPropagation();
+  // Remove menu anterior se existir
+  var old=document.getElementById('_menuCliente');
+  if(old){ old.remove(); return; }
+
+  var btn=e.currentTarget;
+  var rect=btn.getBoundingClientRect();
+
+  var menu=document.createElement('div');
+  menu.id='_menuCliente';
+  menu.style.cssText='position:fixed;z-index:99999;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:6px;min-width:200px;'
+    +'box-shadow:0 16px 48px rgba(0,0,0,.75);display:flex;flex-direction:column;gap:2px;';
+  menu.style.top=(rect.bottom+6)+'px';
+  menu.style.left=Math.min(rect.left,window.innerWidth-220)+'px';
+
+  var opcoes=[
+    {icon:'➕', label:'Adicionar treinamento', fn:function(){
+      // Pré-preenche o modal com o nome do cliente já fixo
+      var _s=_getSessao?_getSessao():null;
+      var _ehC=_s&&_s.perfil==='consultor';
+      _ehC?openAddModalConsultor():openAddModal();
+      setTimeout(function(){
+        var el=document.getElementById('aNome');
+        if(el){el.value=nomeCliente;el.disabled=true;el.style.opacity='0.6';}
+        var _mt=document.querySelector('#addModalOverlay .modal-title');
+        if(_mt)_mt.textContent='Novo treinamento — '+nomeCliente;
+      },50);
+    }},
+    {icon:'✏️', label:'Editar registro', fn:function(){ abrirClienteDetalhe(ri); }},
+    {icon:'ℹ️', label:'Ver informações', fn:function(){ openClientInfo(ri); }},
+  ];
+
+  opcoes.forEach(function(op){
+    var item=document.createElement('button');
+    item.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;border:none;background:none;font-family:"DM Sans",sans-serif;font-size:13px;color:var(--muted);width:100%;text-align:left;transition:background .12s;';
+    item.innerHTML='<span style="font-size:14px;">'+op.icon+'</span><span>'+op.label+'</span>';
+    item.onmouseover=function(){this.style.background='var(--surface2)';this.style.color='var(--text)';};
+    item.onmouseout=function(){this.style.background='none';this.style.color='var(--muted)';};
+    item.onclick=function(){ menu.remove(); op.fn(); };
+    menu.appendChild(item);
+  });
+
+  document.body.appendChild(menu);
+  setTimeout(function(){
+    document.addEventListener('click',function _c(){ menu.remove(); document.removeEventListener('click',_c); });
+  },0);
+};
+
 function openAddModalConsultor(){
   var _s=_getSessao?_getSessao():null;
   if(!_s||_s.perfil!=='consultor'){openAddModal();return;}
