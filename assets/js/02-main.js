@@ -7009,6 +7009,17 @@ function _propostaRenderTreinamentos(){
 
 }
 
+function _propostaSelecionarTodos(){
+  var container = document.getElementById('propostaTreinamentos');
+  if(!container) return;
+  var chks = container.querySelectorAll('input[type=checkbox]:not(:disabled)');
+  var todos = Array.from(chks).every(function(c){ return c.checked; });
+  chks.forEach(function(c){ c.checked = !todos; });
+  var btn = document.getElementById('btnPropostaSelecionarTodos');
+  if(btn) btn.textContent = todos ? 'Selecionar todos' : 'Desmarcar todos';
+  _propostaRecalcular();
+}
+
 function _propostaAtualizar(){
   var cliente = document.getElementById('propostaCliente').value;
   var sub = document.getElementById('propostaSub');

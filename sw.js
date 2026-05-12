@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v59 — corrige _propostaRecalcular para exibir mensal no 12x c/ desconto
-const CACHE_NAME = 'agente-febracis-v59';
+// v60 — botão Selecionar todos / Desmarcar todos na proposta comercial
+const CACHE_NAME = 'agente-febracis-v60';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
