@@ -865,6 +865,9 @@ function entrarTurma(id){
       if(_tli!==-1){_tls[_tli].ministrante=null;_saveTurmas(_tls);_turmaAtiva=_tls[_tli];}
     }
 
+    var _dupCount=_deduplicarClientes(true); // silencioso no carregamento
+    if(_dupCount>0) console.warn('[Dedup] '+_dupCount+' registro(s) duplicado(s) mesclados automaticamente.');
+
     savedData=JSON.stringify(data);
 
     // allConsultors e allTrainers já populados pelo entrarTurma (usuarios/ + clientes)
@@ -3207,6 +3210,88 @@ function filtered(){
 }
 
 /* ═══════════════════════════════════════════
+   DEDUPLICAÇÃO DE CLIENTES
+   Mescla registros com mesmo cliente+consultor
+   gerados pelo modelo antigo (1 registro por treinamento)
+═══════════════════════════════════════════ */
+function _deduplicarClientes(silencioso){
+  // Agrupar por chave cliente+consultor
+  var grupos={};
+  data.forEach(function(d,i){
+    var chave=(d.cliente||'').toUpperCase()+'|'+(d.consultor||'');
+    if(!grupos[chave]) grupos[chave]=[];
+    grupos[chave].push({d:d,i:i});
+  });
+
+  var indicesToRemover=[];
+  var houveMesclagem=false;
+
+  Object.keys(grupos).forEach(function(chave){
+    var grupo=grupos[chave];
+    if(grupo.length<=1) return; // sem duplicata
+
+    // Ordenar: preferir o registro com treinamentos[] mais completo
+    grupo.sort(function(a,b){
+      var la=(a.d.treinamentos&&a.d.treinamentos.length)||0;
+      var lb=(b.d.treinamentos&&b.d.treinamentos.length)||0;
+      if(lb!==la) return lb-la; // mais treinamentos primeiro
+      return (b.d.valor||0)-(a.d.valor||0); // maior valor primeiro
+    });
+
+    var principal=grupo[0].d;
+
+    // Coletar todos os treinamentos únicos de todos os registros do grupo
+    var treinsMesclados=[];
+    var codsVistos={};
+    grupo.forEach(function(g){
+      var treins=g.d.treinamentos&&g.d.treinamentos.length
+        ? g.d.treinamentos
+        : [{cod:g.d.treinamento||'-', valor:g.d.valor||0}];
+      treins.forEach(function(t){
+        if(t.cod&&t.cod!=='-'&&!codsVistos[t.cod]){
+          codsVistos[t.cod]=true;
+          treinsMesclados.push({cod:t.cod,valor:t.valor||0});
+        }
+      });
+    });
+
+    // Status: pago > negociacao > aberto > desistiu > estorno > -
+    var _prioridade={pago:5,negociacao:4,aberto:3,desistiu:2,estorno:1,'-':0};
+    var melhorStatus=grupo.reduce(function(best,g){
+      var p=_prioridade[g.d.status]||0;
+      return p>(_prioridade[best]||0)?g.d.status:best;
+    }, principal.status||'aberto');
+
+    // Aplicar ao registro principal
+    principal.treinamentos=treinsMesclados;
+    principal.treinamento=treinsMesclados.length?treinsMesclados[0].cod:'-';
+    principal.valor=treinsMesclados.reduce(function(a,t){return a+(t.valor||0);},0);
+    principal.status=melhorStatus;
+
+    // Marcar índices dos duplicados (todos exceto o principal) para remoção
+    for(var k=1;k<grupo.length;k++) indicesToRemover.push(grupo[k].i);
+    houveMesclagem=true;
+  });
+
+  if(!houveMesclagem) return 0;
+
+  // Remover duplicados (ordem decrescente para não deslocar índices)
+  indicesToRemover.sort(function(a,b){return b-a;});
+  indicesToRemover.forEach(function(i){ data.splice(i,1); });
+
+  if(!silencioso){
+    if(typeof markUnsaved==='function') markUnsaved();
+    if(typeof saveStorage==='function') saveStorage();
+    if(typeof renderAll==='function') renderAll();
+    if(typeof renderConsultor==='function') renderConsultor();
+    if(typeof _showToast==='function') _showToast('✅ '+indicesToRemover.length+' registro(s) duplicado(s) removido(s) e mesclados.','var(--accent)');
+  }
+
+  return indicesToRemover.length;
+}
+window._deduplicarClientes=function(){ _deduplicarClientes(false); };
+
+/* ═══════════════════════════════════════════
    RENDER ALL
 ═══════════════════════════════════════════ */
 function renderAll(){
@@ -4040,23 +4125,57 @@ function _renderConsultorDetail(c){
     if(!cd.length){
       listEl.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Nenhum cliente para este filtro.</div>';
     } else {
+      listEl.style.cssText='margin-top:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;';
       listEl.innerHTML=cd.map(function(d){
         var ri=data.indexOf(d);
         var _ip=d.status==='pago';
         var _td=_treinDisplay(d);
-        return '<div class="consultor-list-item'+(_ip?' pago':'')+'" onclick="abrirClienteDetalhe('+ri+')">'
-          +'<span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">'
-          +'<span class="consultor-list-name'+(_ip?' pago':'')+'" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+d.cliente+'</span>'
-          +'<span style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_td+'</span>'
-          +'</span>'
-          +'<span style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'
-          +'<span style="font-size:12px;font-weight:700;color:var(--text);">'+formatVal(d.valor)+'</span>'
-          +'<span class="badge badge-'+d.status+'">'+sl(d.status)+'</span>'
+        var _treins=d.treinamentos&&d.treinamentos.length?d.treinamentos:[{cod:d.treinamento||'—',valor:d.valor||0}];
+        var _treinRows=_treins.map(function(t){
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
+            +'<span style="font-size:12px;font-weight:700;color:var(--accent);font-family:\'DM Mono\',monospace;letter-spacing:.05em;">'+t.cod+'</span>'
+            +'<span style="font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;">'+formatVal(t.valor)+'</span>'
+            +'</div>';
+        }).join('');
+        var _panelId='clipanel_'+ri;
+        return '<div style="border-bottom:1px solid var(--border);">'
+          // ── Header clicável ──
+          +'<div id="clihdr_'+ri+'" onclick="window._toggleCliAcc('+ri+')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;transition:background .12s;user-select:none;" onmouseover="this.style.background=\'var(--surface3,rgba(255,255,255,.03))\'" onmouseout="this.style.background=\'transparent\'">'
+          +'<span id="cliarr_'+ri+'" style="font-size:9px;color:var(--muted);flex-shrink:0;transition:transform .2s;line-height:1;">▶</span>'
+          +'<div style="flex:1;min-width:0;">'
+          +'<div style="font-size:13px;font-weight:700;'+(+_ip?'color:#39ff14;':'color:var(--text);')+'text-transform:uppercase;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+d.cliente+'</div>'
+          +'<div style="font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_td+' &nbsp;·&nbsp; '+formatVal(d.valor)+'</div>'
+          +'</div>'
+          +'<span class="badge badge-'+(d.status||'aberto')+'">'+sl(d.status)+'</span>'
           +'<button onclick="event.stopPropagation();window._abrirMenuCliente(event,\''+d.cliente.replace(/'/g,"\\'")+'\',' +ri+')" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:22px;height:22px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button>'
-          +'</span>'
+          +'</div>'
+          // ── Painel expansível ──
+          +'<div id="'+_panelId+'" style="display:none;background:rgba(0,0,0,.18);padding:10px 14px 12px 34px;border-top:1px solid rgba(255,255,255,.04);">'
+          +_treinRows
+          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,.06);">'
+          +'<span style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.07em;">Total</span>'
+          +'<span style="font-size:13px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;">'+formatVal(d.valor)+'</span>'
+          +'</div>'
+          +'<button onclick="abrirClienteDetalhe('+ri+')" style="margin-top:10px;width:100%;font-size:11px;font-weight:700;padding:7px 0;border-radius:6px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.08);color:var(--accent);cursor:pointer;font-family:\'DM Sans\',sans-serif;">✏ Editar cliente</button>'
+          +'</div>'
           +'</div>';
       }).join('');
     }
+
+    // Toggle accordion — expande 1 por vez
+    window._toggleCliAcc=function(ri){
+      var panel=document.getElementById('clipanel_'+ri);
+      var arrow=document.getElementById('cliarr_'+ri);
+      if(!panel) return;
+      var open=panel.style.display!=='none';
+      // fechar todos
+      document.querySelectorAll('[id^="clipanel_"]').forEach(function(p){ p.style.display='none'; });
+      document.querySelectorAll('[id^="cliarr_"]').forEach(function(a){ a.style.transform='';a.style.color='var(--muted)'; });
+      if(!open){
+        panel.style.display='block';
+        if(arrow){arrow.style.transform='rotate(90deg)';arrow.style.color='var(--accent)';}
+      }
+    };
   } else {
     if(tbl) tbl.style.display='';
     if(listEl) listEl.style.display='none';

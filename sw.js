@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v72 — remover sem bloqueio: permite zerar treinamentos e salvar
-const CACHE_NAME = 'agente-febracis-v72';
+// v76 — fix iframe ppIframe: src=about:blank + sandbox sem allow-same-origin
+const CACHE_NAME = 'agente-febracis-v76';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
