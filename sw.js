@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v55 — 9 melhorias de responsividade mobile (modais, grids, touch targets, animações)
-const CACHE_NAME = 'agente-febracis-v55';
+// v56 — Tabela de preços atualizada: 6 colunas + CIS GL + valores revisados
+const CACHE_NAME = 'agente-febracis-v56';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',

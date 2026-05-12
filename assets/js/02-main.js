@@ -6864,18 +6864,26 @@ function _mostrarPropostaComercial(){
 var _PROPOSTA_TEXTO = "É uma imensa honra tê-lo conosco e poder fazer parte da sua jornada.\nSabemos que você superou diversos desafios para chegar até esse curso e queremos te parabenizar por isso.\nAcreditar que existe uma vida extraordinária e agir em direção a ela é um ato de ousadia e coragem.\nMas, reforçamos que existe um nível ainda mais alto e queremos muito te conduzir em direção a ele.\nE é justamente por esse motivo, que venho te lembrar dos treinamentos que ainda faltam para concluir a jornada e se tornar um GOLDEN BELT Febracis.\nTemos a total certeza de que juntos construiremos dia após dia o seu legado dentro e fora da Febracis.";
 
 var _PROPOSTA_PRECOS = {
-  'FCIS':     {integral:10796.49, avista:8997.00, parcelado:899.71,  reciclagem:5398.25},
-  'ML5':      {integral:10796.49, avista:8997.00, parcelado:899.71,  reciclagem:5398.25},
-  'BHP':      {integral:5996.45,  avista:4997.00, parcelado:499.70,  reciclagem:2998.23},
-  'FGPC':     {integral:5996.45,  avista:4997.00, parcelado:499.70,  reciclagem:2998.23},
-  'CEOP':     {integral:5996.45,  avista:4997.00, parcelado:499.70,  reciclagem:2998.23},
-  'MASTER':   {integral:7796.47,  avista:6497.00, parcelado:649.71,  reciclagem:3898.24},
-  'IF':       {integral:3596.40,  avista:2997.00, parcelado:299.70,  reciclagem:1798.20},
-  'TAV':      {integral:2997.00,  avista:1997.00, parcelado:249.75,  reciclagem:1498.50},
-  'MAESTRIA': {integral:80000.00, avista:70000.00, parcelado:6666.67, reciclagem:null},
+  'IF':        {integral:4596.40,  parcelado:299.70,  parcelado_desc:3596.40,  avista_credito:2997.00, avista:2497.00,  reciclagem:1798.20},
+  'MASTER':    {integral:8796.47,  parcelado:649.71,  parcelado_desc:7796.52,  avista_credito:6497.00, avista:6497.00,  reciclagem:3898.24},
+  'FCIS':      {integral:11796.49, parcelado:899.71,  parcelado_desc:10796.52, avista_credito:8997.00, avista:8997.00,  reciclagem:5398.25},
+  'ML5':       {integral:11796.49, parcelado:899.71,  parcelado_desc:10796.52, avista_credito:8997.00, avista:8997.00,  reciclagem:5398.25},
+  'BHP':       {integral:6996.45,  parcelado:499.70,  parcelado_desc:5996.40,  avista_credito:4997.00, avista:4997.00,  reciclagem:2998.23},
+  'FGPC':      {integral:6996.45,  parcelado:499.70,  parcelado_desc:5996.40,  avista_credito:4997.00, avista:4997.00,  reciclagem:2998.23},
+  'CEOP':      {integral:6996.45,  parcelado:499.70,  parcelado_desc:5996.40,  avista_credito:4997.00, avista:4997.00,  reciclagem:2998.23},
+  'TAV':       {integral:3997.00,  parcelado:249.75,  parcelado_desc:2997.00,  avista_credito:2497.00, avista:1997.00,  reciclagem:1498.50},
+  'MAESTRIA':  {integral:85000.00, parcelado:7083.63, parcelado_desc:80000.00, avista_credito:70000.00,avista:70000.00, reciclagem:null},
+  'CIS_GLOBAL':{integral:1997.00,  parcelado:199.70,  parcelado_desc:199.70,   avista_credito:1997.00, avista:1997.00,  reciclagem:998.50},
 };
 
-var _PROPOSTA_LABELS = {integral:'Integral',avista:'À Vista',parcelado:'Parcelado 12x',reciclagem:'Reciclagem 50%'};
+var _PROPOSTA_LABELS = {
+  integral:      'Integral',
+  parcelado:     '12x',
+  parcelado_desc:'12x c/ desconto',
+  avista_credito:'À Vista no crédito',
+  avista:        'À Vista',
+  reciclagem:    'Reciclagem 50%'
+};
 
 // Treinamentos disponíveis para proposta (tabela de preços)
 var _PROPOSTA_TREINAMENTOS = Object.keys(_PROPOSTA_PRECOS);
@@ -7561,10 +7569,14 @@ function gerarPropostaProduto(){
     +'.cliente-label{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;}'
     +'.cliente-nome{font-size:20px;font-weight:700;color:#c8f05a;}'
     +'.texto{font-size:15px;color:#ccc;line-height:1.8;white-space:pre-line;margin-bottom:28px;}'
-    +'.preco-box{background:#111;border:1px solid #222;border-radius:12px;padding:20px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;}'
-    +'.preco-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.07em;}'
-    +'.preco-val{font-size:26px;font-weight:800;color:#c8f05a;}'
-    +'.validade{font-size:12px;color:#555;margin-top:4px;}'
+    +'.preco-titulo{font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;}'
+    +'.preco-table{width:100%;border-collapse:collapse;background:#111;border:1px solid #222;border-radius:12px;overflow:hidden;margin-bottom:24px;}'
+    +'.preco-table th{font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;background:#0d0d0d;border-bottom:1px solid #222;text-align:left;}'
+    +'.preco-table td{padding:10px 14px;font-size:14px;font-weight:600;color:#f0f0f0;border-bottom:1px solid #1a1a1a;}'
+    +'.preco-table tr:last-child td{border-bottom:none;}'
+    +'.preco-table td.val{color:#c8f05a;font-size:16px;font-weight:800;text-align:right;}'
+    +'.preco-table tr.destaque td{background:rgba(200,240,90,.06);}'
+    +'.validade{font-size:12px;color:#555;margin-bottom:24px;}'
     +'.wpp-btn{display:block;width:100%;background:#25d366;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer;margin-bottom:16px;}'
     +'.consultor-box{text-align:center;font-size:12px;color:#444;padding-top:16px;border-top:1px solid #1a1a1a;}'
     +'</style>'
@@ -7579,9 +7591,29 @@ function gerarPropostaProduto(){
     +'<div class="cliente-nome">'+_escHtml(cliente)+'</div>'
     +'</div>'
     +'<div class="texto">'+_escHtml(texto)+'</div>'
-    +'<div class="preco-box">'
-    +'<div><div class="preco-label">Investimento</div><div class="preco-val">'+_escHtml(preco)+'</div><div class="validade">Válido por '+_escHtml(validade)+' dias</div></div>'
-    +'</div>'
+    +(function(){
+      var pc = _PROPOSTA_PRECOS[_propProdAtual];
+      var fmtR = function(v){ return v==null ? '—' : 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+      if(!pc) return '<div style="font-size:14px;color:#c8f05a;margin-bottom:24px;">'+_escHtml(preco)+'</div>';
+      var linhas = [
+        {k:'integral',      label:'Integral',             destaque:false},
+        {k:'parcelado',     label:'12x (mensal)',          destaque:false},
+        {k:'parcelado_desc',label:'12x c/ desconto (total)',destaque:true},
+        {k:'avista_credito',label:'À Vista no crédito',    destaque:false},
+        {k:'avista',        label:'À Vista',               destaque:true},
+        {k:'reciclagem',    label:'Reciclagem 50%',        destaque:false},
+      ];
+      var rows = linhas.filter(function(l){ return pc[l.k]!=null; }).map(function(l){
+        return '<tr'+(l.destaque?' class="destaque"':'')+'>'+
+          '<td>'+l.label+'</td>'+
+          '<td class="val">'+fmtR(pc[l.k])+'</td>'+
+          '</tr>';
+      }).join('');
+      return '<div class="preco-titulo">Condições de Pagamento</div>'+
+        '<table class="preco-table"><thead><tr><th>Modalidade</th><th style="text-align:right;">Valor</th></tr></thead>'+
+        '<tbody>'+rows+'</tbody></table>';
+    })()
+    +'<div class="validade">Proposta válida por '+_escHtml(validade)+' dias</div>'
     +(wpp ? '<a class="wpp-btn" href="'+_escHtml(wppLink)+'" target="_blank">Falar com '+_escHtml(consultor)+' no WhatsApp</a>' : '')
     +'<div class="consultor-box">Proposta apresentada por <strong>'+_escHtml(consultor)+'</strong> · Febracis</div>'
     +'</div>'
