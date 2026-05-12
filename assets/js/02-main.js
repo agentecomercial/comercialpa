@@ -7005,55 +7005,6 @@ function _propostaRenderTreinamentos(){
     container.appendChild(row);
   });
 
-  // Treinamentos customizados (do sistema, não na tabela de preços)
-  var customTreins = allTreinamentos.filter(function(t){
-    return !_PROPOSTA_TREINAMENTOS.includes(t) && t !== 'CI';
-  });
-  if(customTreins.length){
-    var sep = document.createElement('div');
-    sep.style.cssText = 'font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:8px 0 4px;';
-    sep.textContent = 'Outros treinamentos';
-    container.appendChild(sep);
-
-    customTreins.forEach(function(nome){
-      var row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);cursor:pointer;transition:all .15s;';
-
-      var chk = document.createElement('input');
-      chk.type = 'checkbox';
-      chk.id = 'prop_' + nome;
-      chk.style.cssText = 'accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;cursor:pointer;';
-      chk.addEventListener('change', _propostaRecalcular);
-
-      var label = document.createElement('label');
-      label.htmlFor = 'prop_' + nome;
-      label.style.cssText = 'flex:1;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;';
-
-      var nomeSpan = document.createElement('span');
-      nomeSpan.style.cssText = 'font-size:13px;font-weight:600;color:var(--text);';
-      nomeSpan.textContent = nome;
-
-      var precoInput = document.createElement('input');
-      precoInput.type = 'text';
-      precoInput.id = 'propval_' + nome;
-      precoInput.value = 'R$ 0,00';
-      precoInput.placeholder = 'Digite o valor';
-      precoInput.style.cssText = 'width:120px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:DM Mono,monospace;';
-      precoInput.addEventListener('change', _propostaRecalcular);
-      precoInput.addEventListener('focus', function(){this.select();});
-
-      label.appendChild(nomeSpan);
-      label.appendChild(precoInput);
-      row.appendChild(chk);
-      row.appendChild(label);
-      row.addEventListener('click', function(e){
-        if(e.target === chk || e.target === precoInput) return;
-        chk.checked = !chk.checked;
-        _propostaRecalcular();
-      });
-      container.appendChild(row);
-    });
-  }
 }
 
 function _propostaAtualizar(){
