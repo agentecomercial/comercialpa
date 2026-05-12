@@ -4192,7 +4192,7 @@ function _renderConsultorDetail(c){
     if(tbl) tbl.style.display='';
     if(listEl) listEl.style.display='none';
     if(!cd.length){
-      tblEl.innerHTML='<tr class="empty-row"><td colspan="6">Nenhum cliente para este filtro.</td></tr>';
+      tblEl.innerHTML='<tr class="empty-row"><td colspan="7">Nenhum cliente para este filtro.</td></tr>';
     } else {
       var _rows='';
       cd.forEach(function(d){
@@ -4211,6 +4211,7 @@ function _renderConsultorDetail(c){
             <td style="text-align:center;white-space:nowrap;">${formatVal(d.valor)}</td>
             <td style="text-align:center;white-space:nowrap;"><span class="badge badge-${st}">${sl(st)}</span></td>
             <td style="text-align:center;white-space:nowrap;${entradaStyle}">${entradaTxt}</td>
+            <td style="text-align:center;padding:3px 6px;vertical-align:middle;" data-presenca-ri="${ri}" onclick="event.stopPropagation();">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):'—'}</td>
           </tr>`;
       });
       tblEl.innerHTML=_rows;
