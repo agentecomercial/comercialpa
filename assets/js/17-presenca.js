@@ -187,7 +187,33 @@ window._setFiltroPresenca = function(v){
 
 window._getFiltroPresenca = function(){ return _filtroPresenca; };
 
-/* ── Renderizar botões de filtro ── */
+/* ── Estado filtro presença do card consultor ── */
+var _filtroPresencaConsultor = null;
+
+window._setFiltroPresencaConsultor = function(v){
+  _filtroPresencaConsultor = (_filtroPresencaConsultor === v) ? null : v;
+  _renderFiltrosPresencaConsultor();
+  if(typeof _renderConsultorDetail === 'function' && window._consultorAtivo){
+    _renderConsultorDetail(window._consultorAtivo);
+  }
+};
+
+window._getFiltroPresencaConsultor = function(){ return _filtroPresencaConsultor; };
+
+function _renderFiltrosPresencaConsultor(){
+  var wrap = document.getElementById('presencaFBtnsConsultor');
+  if(!wrap) return;
+  wrap.innerHTML = PRESENCA_OPTS.map(function(opt){
+    var ativo = _filtroPresencaConsultor === opt.v;
+    return '<button id="pfbtnc_'+opt.v+'" onclick="_setFiltroPresencaConsultor(\''+opt.v+'\')" '
+      +'style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid '+(ativo?opt.border:'rgba(255,255,255,.08)')+';background:'+(ativo?opt.bg:'transparent')+';color:'+(ativo?opt.cor:'var(--muted)')+';cursor:pointer;font-family:\'DM Sans\',sans-serif;font-weight:'+(ativo?'700':'400')+';transition:all .12s;white-space:nowrap;"'
+      +' onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">'
+      +opt.icon+' '+opt.l+'</button>';
+  }).join('');
+}
+window._renderFiltrosPresencaConsultor = _renderFiltrosPresencaConsultor;
+
+/* ── Renderizar botões de filtro (aba geral) ── */
 window._renderFiltrosPresenca = function(){
   var wrap = document.getElementById('presencaFBtns');
   if(!wrap) return;

@@ -4011,7 +4011,10 @@ function abrirPagosModal(){
 function openConsultorDetail(c){window._consultorAtivo=c;_renderConsultorDetail(c);}
 function _renderConsultorDetail(c){
   const cdA=data.filter(d=>d&&d.cliente&&d.consultor===c).sort((a,b)=>a.cliente.localeCompare(b.cliente,'pt-BR'));
-  const cd=activeConsultorStatus===null?cdA:activeConsultorStatus==='entrada'?cdA.filter(d=>d.entrada>0):cdA.filter(d=>d.status===activeConsultorStatus);
+  var _cdStatus=activeConsultorStatus===null?cdA:activeConsultorStatus==='entrada'?cdA.filter(d=>d.entrada>0):cdA.filter(d=>d.status===activeConsultorStatus);
+  var _fpC=window._getFiltroPresencaConsultor?window._getFiltroPresencaConsultor():null;
+  const cd=_fpC?_cdStatus.filter(d=>(d.presenca||'pendente')===_fpC):_cdStatus;
+  if(window._renderFiltrosPresencaConsultor) window._renderFiltrosPresencaConsultor();
 
   // ── Métricas agregadas ──
   // POTENCIAL = vendas em NEGOCIAÇÃO (não total geral)
