@@ -279,8 +279,6 @@ window._verHistoricoPresenca = function(ri){
 /* ── Inicializar após DOM pronto ── */
 function _init(){
   _patchFiltered();
-  var bar = document.getElementById('presencaCountBar');
-  if(bar) bar.style.display = '';
   _atualizarContadores();
   _renderFiltrosPresenca();
 
