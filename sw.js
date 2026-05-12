@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v57 — Adiciona 12x c/ desconto e À Vista no crédito no select da proposta
-const CACHE_NAME = 'agente-febracis-v57';
+// v58 — 12x c/ desconto exibe valor mensal (total ÷ 12) igual ao 12x mensal
+const CACHE_NAME = 'agente-febracis-v58';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',

@@ -6960,10 +6960,12 @@ function _propostaRenderTreinamentos(){
   container.innerHTML = '';
 
   // Treinamentos da tabela de preços
+  var _isMensal = (pagamento === 'parcelado' || pagamento === 'parcelado_desc');
   _PROPOSTA_TREINAMENTOS.forEach(function(nome){
     var precos = _PROPOSTA_PRECOS[nome];
-    var preco = precos[pagamento];
-    var indisponivel = preco === null;
+    var precoBase = precos[pagamento];
+    var preco = (pagamento === 'parcelado_desc' && precoBase != null) ? precoBase / 12 : precoBase;
+    var indisponivel = precoBase === null;
 
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);cursor:pointer;transition:all .15s;';
