@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v62 — botão + por linha com mini-menu: adicionar treinamento, editar, ver info
-const CACHE_NAME = 'agente-febracis-v62';
+// v63 — fix botão +: stopPropagation correto e reset aNome ao fechar modal
+const CACHE_NAME = 'agente-febracis-v63';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',

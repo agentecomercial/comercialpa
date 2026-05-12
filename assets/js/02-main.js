@@ -4056,7 +4056,7 @@ function _renderConsultorDetail(c){
             +'<span class="consultor-list-name'+(_ip?' pago':'')+'">'+d.cliente+'</span>'
             +'<span style="display:flex;align-items:center;gap:6px;">'
             +'<span class="badge badge-'+d.status+'">'+sl(d.status)+'</span>'
-            +'<button onclick="window._abrirMenuCliente(event,\''+d.cliente.replace(/'/g,"\\'")+'\',' +ri+')" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:22px;height:22px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button>'
+            +'<button onclick="event.stopPropagation();window._abrirMenuCliente(event,\''+d.cliente.replace(/'/g,"\\'")+'\',' +ri+')" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:22px;height:22px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button>'
             +'</span>'
             +'</div>';
         } else {
@@ -5146,11 +5146,17 @@ function openAddModal(){
 }
 function closeAddModal(){
   document.getElementById('addModalOverlay').classList.remove('open');
-  // Restaurar campo consultor (pode ter sido ocultado pelo modal do consultor)
   var _cRow=document.getElementById('addConsultorRow');
   if(_cRow)_cRow.style.display='';
   var _aTreinEl=document.getElementById('aTreinador');
   if(_aTreinEl){_aTreinEl.disabled=false;_aTreinEl.style.opacity='1';}
+  // Resetar nome (pode ter sido fixado pelo fluxo de "adicionar treinamento")
+  var _aNomeEl=document.getElementById('aNome');
+  if(_aNomeEl){_aNomeEl.disabled=false;_aNomeEl.style.opacity='1';}
+  var _mt=document.querySelector('#addModalOverlay .modal-title');
+  if(_mt)_mt.textContent='Novo cliente';
+  var _ms=document.querySelector('#addModalOverlay .modal-subtitle');
+  if(_ms)_ms.textContent='';
 }
 function saveAdd(){
   const nome=document.getElementById('aNome').value.trim();
