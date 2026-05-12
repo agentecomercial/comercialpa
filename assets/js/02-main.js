@@ -873,7 +873,7 @@ function entrarTurma(id){
     startRealtimeSync();
     // Deduplicar registros antigos após estabilizar o carregamento
     setTimeout(function(){
-      var _n=_deduplicarClientes(true);
+      var _n=_dedupClientesInterno(true);
       if(_n>0){
         savedData=JSON.stringify(data);
         markUnsaved();saveStorage();renderAll();
@@ -3220,7 +3220,7 @@ function filtered(){
    Mescla registros com mesmo cliente+consultor
    gerados pelo modelo antigo (1 registro por treinamento)
 ═══════════════════════════════════════════ */
-function _deduplicarClientes(silencioso){
+function _dedupClientesInterno(silencioso){
   // Agrupar por chave cliente+consultor
   var grupos={};
   data.forEach(function(d,i){
@@ -3295,7 +3295,7 @@ function _deduplicarClientes(silencioso){
 
   return indicesToRemover.length;
 }
-window._deduplicarClientes=function(){ _deduplicarClientes(false); };
+window._deduplicarClientes=function(){ _dedupClientesInterno(false); };
 
 /* ═══════════════════════════════════════════
    RENDER ALL
@@ -5302,7 +5302,7 @@ function saveAdd(){
   // ── Ler treinamentos múltiplos (opcional) ──
   var _treinRows=_getTreinRows('aTreinamentosLista');
   // ── Regra: 1 registro por cliente+consultor ──
-  var _dupCliente=data.find(function(d){return d.cliente.toUpperCase()===nomeUp&&(d.consultor||'')===((_consultorVal)||'');});
+  var _dupCliente=data.find(function(d){return d&&d.cliente&&d.cliente.toUpperCase()===nomeUp&&(d.consultor||'')===((_consultorVal)||'');});
   if(_dupCliente){
     _showToast('❌ "'+nomeUp+'" já tem registro neste consultor. Use "+" no card do cliente para adicionar treinamentos.','var(--red)');return;
   }

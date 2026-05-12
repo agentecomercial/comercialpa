@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v78 — novo cliente sem restricao de treinamento obrigatorio
-const CACHE_NAME = 'agente-febracis-v78';
+// v79 — fix recursao infinita dedup + guard undefined em saveAdd
+const CACHE_NAME = 'agente-febracis-v79';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
