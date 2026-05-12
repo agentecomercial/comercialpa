@@ -58,6 +58,7 @@
       }
       // Atualizar contadores de presença
       if(typeof window._presencaAtualizarContadores==='function') window._presencaAtualizarContadores();
+      if(typeof window._atualizarBarraPresencaConsultor==='function') window._atualizarBarraPresencaConsultor();
     }catch(e){ console.warn('[RT] render clientes:', e); }
   }
 

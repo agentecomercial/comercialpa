@@ -67,6 +67,7 @@ window._alterarPresenca = function(ri, novoStatus){
   // Atualizar somente o badge — sem re-renderizar tudo
   _atualizarBadge(ri);
   _atualizarContadores();
+  if(typeof window._atualizarBarraPresencaConsultor==='function') window._atualizarBarraPresencaConsultor();
 
   // Toast
   var opt = _opt(novoStatus);
@@ -170,6 +171,30 @@ function _atualizarContadores(){
     +'<span style="font-size:12px;font-weight:700;color:'+(pct>=80?'#34d399':pct>=50?'#ffb740':'#ff5f57')+';">'+pct+'% presença</span>';
 }
 window._presencaAtualizarContadores = _atualizarContadores;
+
+/* ── Atualizar barra de presença no card do consultor ── */
+window._atualizarBarraPresencaConsultor = function(){
+  var bar = document.getElementById('presencaBarConsultor');
+  if(!bar) return;
+  var c = window._consultorAtivo;
+  if(!c || typeof data === 'undefined') return;
+  var base = data.filter(function(d){ return d&&d.cliente&&d.consultor===c; });
+  var pres = base.filter(function(d){ return d.presenca==='presente'; }).length;
+  var falt = base.filter(function(d){ return d.presenca==='falta'; }).length;
+  var pend = base.filter(function(d){ return !d.presenca||d.presenca==='pendente'; }).length;
+  var tot  = base.length;
+  var pct  = tot>0 ? Math.round((pres/tot)*100) : 0;
+  var cor  = pct>=80?'#34d399':pct>=50?'#ffb740':'#ff5f57';
+  bar.innerHTML =
+    '<span style="font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px;">Presença</span>'
+    +'<span style="color:#34d399;font-weight:700;">✅ '+pres+'</span>'
+    +'<span style="color:var(--muted);">·</span>'
+    +'<span style="color:#ff5f57;font-weight:700;">❌ '+falt+'</span>'
+    +'<span style="color:var(--muted);">·</span>'
+    +'<span style="color:var(--muted);">⏳ '+pend+'</span>'
+    +'<span style="color:var(--muted);margin:0 4px;">|</span>'
+    +'<span style="font-weight:700;color:'+cor+';">'+pct+'% presença</span>';
+};
 
 /* ── Filtros de presença ── */
 window._setFiltroPresenca = function(v){

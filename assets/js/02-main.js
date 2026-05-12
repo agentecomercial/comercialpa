@@ -4085,25 +4085,7 @@ function _renderConsultorDetail(c){
     +'</div>'
     +'</div>'
     // Barra de presença
-    +(function(){
-      var _cdAll=data.filter(function(d){return d&&d.cliente&&d.consultor===c;});
-      var _pres=_cdAll.filter(function(d){return d.presenca==='presente';}).length;
-      var _falt=_cdAll.filter(function(d){return d.presenca==='falta';}).length;
-      var _pend=_cdAll.filter(function(d){return !d.presenca||d.presenca==='pendente';}).length;
-      var _tot=_cdAll.length;
-      var _pct=_tot>0?Math.round((_pres/_tot)*100):0;
-      var _cor=_pct>=80?'#34d399':_pct>=50?'#ffb740':'#ff5f57';
-      return '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 0 4px;font-size:11px;">'
-        +'<span style="font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px;">Presença</span>'
-        +'<span style="color:#34d399;font-weight:700;">✅ '+_pres+'</span>'
-        +'<span style="color:var(--muted);">·</span>'
-        +'<span style="color:#ff5f57;font-weight:700;">❌ '+_falt+'</span>'
-        +'<span style="color:var(--muted);">·</span>'
-        +'<span style="color:var(--muted);">⏳ '+_pend+'</span>'
-        +'<span style="color:var(--muted);margin:0 4px;">|</span>'
-        +'<span style="font-weight:700;color:'+_cor+';">'+_pct+'% presença</span>'
-        +'</div>';
-    })()
+    +'<div id="presencaBarConsultor" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 0 4px;font-size:11px;"></div>'
     // Subtítulo original compacto
     +'<span style="font-size:12px;color:var(--muted);">Potencial: '+formatVal(total)+' · Faturado: <span style="color:'+_colDetail.text+';font-weight:700;">'+formatVal(pago)+'</span>'+(entrada>0?' · Entradas: '+formatVal(entrada):'')+fl+'</span>';
 
