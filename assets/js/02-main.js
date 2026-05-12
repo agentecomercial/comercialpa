@@ -4074,10 +4074,10 @@ function _renderConsultorDetail(c){
             +'<span style="display:flex;align-items:center;gap:8px;">'
             +'<span style="font-size:12px;font-weight:700;color:'+(todosP?'#39ff14':'var(--text)')+';">'+formatVal(totalG)+'</span>'
             +'<button onclick="window._abrirMenuCliente(event,\''+nome.replace(/'/g,"\\'")+'\',' +_ri0+')" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:22px;height:22px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button>'
-            +'<span id="arr_'+_gid+'" style="font-size:10px;color:var(--accent);transition:transform .2s;">▶</span>'
+            +'<span id="arr_'+_gid+'" style="font-size:10px;color:var(--accent);transition:transform .2s;transform:rotate(90deg);">▶</span>'
             +'</span>'
             +'</div>'
-            +'<div id="'+_gid+'" style="display:none;">'
+            +'<div id="'+_gid+'" style="display:block;">'
             +itens.map(function(d){
               var ri=data.indexOf(d);
               var _ip=d.status==='pago';
@@ -4134,7 +4134,7 @@ function _renderConsultorDetail(c){
           _rows+=`<tr class="tr-grupo-pai" onclick="window._toggleGrupo('${_gid}')" style="border-left:3px solid var(--accent);background:rgba(200,240,90,.04);cursor:pointer;">
             <td style="font-weight:700;text-transform:uppercase;white-space:nowrap;${todosP?'color:#39ff14;':'color:var(--accent);'}">
               <span style="display:inline-flex;align-items:center;gap:6px;">
-                <span id="arr_${_gid}" style="font-size:9px;color:var(--accent);transition:transform .25s;display:inline-block;">▶</span>
+                <span id="arr_${_gid}" style="font-size:9px;color:var(--accent);transition:transform .25s;display:inline-block;transform:rotate(90deg);">▶</span>
                 ${nome}
                 <span style="font-size:9px;font-weight:700;background:rgba(200,240,90,.15);color:var(--accent);border-radius:10px;padding:1px 7px;">${itens.length} treinamentos</span>
                 <button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${nome.replace(/'/g,"\\'")}',${_ri0t})" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:18px;height:18px;cursor:pointer;color:var(--accent);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button>
@@ -4155,7 +4155,7 @@ function _renderConsultorDetail(c){
             const treinadorTxt=(d.treinador&&d.treinador!=='-')?d.treinador.toUpperCase():'—';
             const entradaTxt=d.entrada>0?'↑ '+formatVal(d.entrada):'—';
             const entradaStyle=d.entrada>0?'color:var(--green);font-weight:600;':'color:var(--muted);';
-            _rows+=`<tr class="tr-grupo-filho" data-grupo="${_gid}" style="display:none;border-left:3px solid rgba(200,240,90,.2);background:rgba(200,240,90,.02);" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar">
+            _rows+=`<tr class="tr-grupo-filho" data-grupo="${_gid}" style="display:table-row;border-left:3px solid rgba(200,240,90,.2);background:rgba(200,240,90,.02);" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar">
               <td style="font-weight:500;text-transform:uppercase;white-space:nowrap;padding-left:28px;color:var(--muted);font-size:12px;">
                 <span style="display:inline-flex;align-items:center;gap:4px;">└ ${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button></span>
               </td>
