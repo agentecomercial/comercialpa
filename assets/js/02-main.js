@@ -5193,6 +5193,12 @@ function saveAdd(){
     criadoPor:_criadoPor
   });
   closeAddModal();markUnsaved();saveStorage();renderAll();renderConsultor();renderTreinador();renderProduto();
+  // Se estava no detalhe de um consultor, reabrir o detalhe ao invés de voltar ao grid
+  if(window._consultorAtivo&&document.getElementById('consultorDetail')&&document.getElementById('consultorDetail').style.display!=='none'){
+    _renderConsultorDetail(window._consultorAtivo);
+  } else if(window._consultorAtivo){
+    openConsultorDetail(window._consultorAtivo);
+  }
 }
 
 /* ═══════════════════════════════════════════

@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v63 — fix botão +: stopPropagation correto e reset aNome ao fechar modal
-const CACHE_NAME = 'agente-febracis-v63';
+// v64 — após salvar novo treinamento, permanece no detalhe do consultor
+const CACHE_NAME = 'agente-febracis-v64';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
