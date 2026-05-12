@@ -4151,7 +4151,8 @@ function abrirClienteDetalhe(ri){
   stEdit.innerHTML=STATUS_OPTS.map(function(s){
     return '<option value="'+s.v+'"'+((d.status||'aberto')===s.v?' selected':'')+'>'+s.l+'</option>';
   }).join('');
-  _show('clienteDetalheStatus','clienteDetalheStatusEdit',_modoEdit);
+  stEl.style.display=_modoEdit?'none':'';
+  stEdit.style.display=_modoEdit?'':'none';
 
   /* Entrada e Info (sempre só leitura) */
   var entRow=document.getElementById('clienteDetalheEntradaRow');
