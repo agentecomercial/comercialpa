@@ -1029,7 +1029,8 @@
             </div>
           </div>
           <div id="presencaCountBar" style="display:none;padding:6px 14px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--bg2);"></div>
-          <table>
+          <div style="overflow-x:auto;">
+          <table style="min-width:700px;">
             <thead><tr>
               <th class="sortable" id="th-cliente" onclick="sortBy('cliente')" style="text-align:left;">Cliente</th>
               <th class="sortable" id="th-treinador" onclick="sortBy('treinador')" style="text-align:center;white-space:nowrap;">Treinador</th>
@@ -1042,6 +1043,7 @@
             </tr></thead>
             <tbody id="clientTable"></tbody>
           </table>
+          </div>
           <div class="table-footer">
             <span class="table-count" id="tableCount"></span>
             <span class="table-total" id="tableTotal"></span>
