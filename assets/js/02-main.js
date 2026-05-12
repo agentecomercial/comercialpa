@@ -4175,13 +4175,14 @@ function salvarClienteDetalhe(){
   if(!d) return;
 
   var _treinRows=_getTreinRows('cdTreinamentosLista');
+  if(!_treinRows.length){_showToast('⚠️ Adicione pelo menos 1 treinamento.','var(--amber)');return;}
   var _valorTotal=_treinRows.reduce(function(a,t){return a+t.valor;},0);
   var _hasCI=_treinRows.some(function(t){return t.cod==='CI';});
   var novoStatus=document.getElementById('clienteDetalheStatusEdit').value||'aberto';
   var novoTreinador=(document.getElementById('clienteDetalheTreinadorEdit')||{}).value||'-';
 
   d.treinamentos=_treinRows;
-  d.treinamento=_treinRows.length?_treinRows[0].cod:'-';
+  d.treinamento=_treinRows[0].cod;
   d.valor=_valorTotal;
   d.treinador=_hasCI?(novoTreinador==='-'?'':novoTreinador):'-';
   d.status=novoStatus;
@@ -4973,13 +4974,12 @@ function _removerUltimoTrein(listId){
   var container=document.getElementById(listId);
   if(!container)return;
   var rows=container.querySelectorAll('.trein-row');
-  if(!rows.length) return;
+  if(rows.length<=1)return;
   rows[rows.length-1].remove();
   _calcTotalTrein(listId);
   _checkCITreinador(listId);
   _updateRemoveBtns(listId);
 }
-window._removerUltimoTrein=_removerUltimoTrein;
 
 function _updateRemoveBtns(listId){
   var container=document.getElementById(listId);
@@ -4987,7 +4987,7 @@ function _updateRemoveBtns(listId){
   var rows=container.querySelectorAll('.trein-row');
   rows.forEach(function(row){
     var btn=row.querySelector('.trein-remove-btn');
-    if(btn)btn.style.display='flex';
+    if(btn)btn.style.display=rows.length<=1?'none':'flex';
   });
 }
 
@@ -5047,11 +5047,6 @@ function _checkCITreinador(listId){
     if(rowEl)rowEl.style.display=hasCI?'flex':'none';
   }
 }
-window._addTreinRow=_addTreinRow;
-window._calcTotalTrein=_calcTotalTrein;
-window._getTreinRows=_getTreinRows;
-window._checkCITreinador=_checkCITreinador;
-window._updateRemoveBtns=_updateRemoveBtns;
 
 window._abrirMenuCliente=function(e,nomeCliente,ri){
   e.stopPropagation();

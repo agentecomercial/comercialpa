@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v72 — remover sem bloqueio: permite zerar treinamentos e salvar
-const CACHE_NAME = 'agente-febracis-v72';
+// v66 — multi-treinamentos por cliente: 1 registro com array + soma automática
+const CACHE_NAME = 'agente-febracis-v66';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
