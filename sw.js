@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v77 — dedup via setTimeout pos-carga para evitar stack overflow
-const CACHE_NAME = 'agente-febracis-v77';
+// v78 — novo cliente sem restricao de treinamento obrigatorio
+const CACHE_NAME = 'agente-febracis-v78';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',

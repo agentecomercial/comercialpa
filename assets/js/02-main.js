@@ -5299,11 +5299,8 @@ function saveAdd(){
   }
   const nomeUp=nome.toUpperCase();
   const _consultorVal=document.getElementById('aConsultor').value;
-  // ── Ler treinamentos múltiplos ──
+  // ── Ler treinamentos múltiplos (opcional) ──
   var _treinRows=_getTreinRows('aTreinamentosLista');
-  if(!_treinRows.length){
-    _showToast('⚠️ Adicione pelo menos 1 treinamento.','var(--amber)');return;
-  }
   // ── Regra: 1 registro por cliente+consultor ──
   var _dupCliente=data.find(function(d){return d.cliente.toUpperCase()===nomeUp&&(d.consultor||'')===((_consultorVal)||'');});
   if(_dupCliente){
@@ -5316,7 +5313,7 @@ function saveAdd(){
   var _hasCI=_treinRows.some(function(t){return t.cod==='CI';});
   data.push({
     cliente:nomeUp,
-    treinamento:_treinRows[0].cod,
+    treinamento:_treinRows.length?_treinRows[0].cod:'-',
     treinamentos:_treinRows,
     treinador:_hasCI?document.getElementById('aTreinador').value:'-',
     consultor:_consultorVal,
