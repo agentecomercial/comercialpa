@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v81 — guard null em todos os filtros de data[]
-const CACHE_NAME = 'agente-febracis-v81';
+// v82 — guard null global em todos os data.filter
+const CACHE_NAME = 'agente-febracis-v82';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',

@@ -3347,10 +3347,10 @@ function renderAll(){
   // Cards treinadores
   const _ministranteGeral=_getTurmaMinistante();
   document.getElementById('trainerMetaRows').innerHTML=allTrainers.map(t=>{
-    const tP=data.filter(d=>d.treinador===t&&d.status==='pago').reduce((a,d)=>a+d.valor,0);
-    const tT=data.filter(d=>d.treinador===t).reduce((a,d)=>a+d.valor,0);
-    const tA=data.filter(d=>d.treinador===t&&d.status==='aberto').reduce((a,d)=>a+d.valor,0);
-    const tC=data.filter(d=>d.treinador===t).length;
+    const tP=data.filter(d=>d&&d.cliente&&d.treinador===t&&d.status==='pago').reduce((a,d)=>a+d.valor,0);
+    const tT=data.filter(d=>d&&d.cliente&&d.treinador===t).reduce((a,d)=>a+d.valor,0);
+    const tA=data.filter(d=>d&&d.cliente&&d.treinador===t&&d.status==='aberto').reduce((a,d)=>a+d.valor,0);
+    const tC=data.filter(d=>d&&d.cliente&&d.treinador===t).length;
     const pct=Math.round((tP/META)*100),bw=Math.min(Math.round((tP/(META*1.5))*100),100);
     const col=getCol(pct),fat=Math.max(META-tP,0),border=tBorder[t]||'#888';
     const isMiniG=_ministranteGeral===t;
@@ -3440,7 +3440,7 @@ function renderAll(){
   document.getElementById('tableTotal').innerHTML='Total visível: <span>'+formatVal(f.reduce((a,d)=>a+d.valor,0))+'</span>';
 
   // Barras por treinador — NEON + PERCENTUAL
-  const maxV=Math.max(1,...allTrainers.map(t=>data.filter(d=>d.treinador===t).reduce((a,d)=>a+d.valor,0)));
+  const maxV=Math.max(1,...allTrainers.map(t=>data.filter(d=>d&&d.cliente&&d.treinador===t).reduce((a,d)=>a+d.valor,0)));
 
   // Permissão: consultor não interage com rankings e barras da aba Geral
   var _sessG=_getSessao?_getSessao():null;
@@ -3449,14 +3449,14 @@ function renderAll(){
 
   // Correlação cruzada — calculada antes de qualquer renderização dos painéis
   const consultoresDoTreinadorAtivo = activeTrainer
-    ? new Set(data.filter(d=>d.treinador===activeTrainer).map(d=>d.consultor))
+    ? new Set(data.filter(d=>d&&d.cliente&&d.treinador===activeTrainer).map(d=>d.consultor))
     : null;
   const treinadoresDoConsultorAtivo = activeConsultor
-    ? new Set(data.filter(d=>d.consultor===activeConsultor).map(d=>d.treinador))
+    ? new Set(data.filter(d=>d&&d.cliente&&d.consultor===activeConsultor).map(d=>d.treinador))
     : null;
   document.getElementById('trainerBars').innerHTML=allTrainers.map((t,i)=>{
-    const tv=data.filter(d=>d.treinador===t).reduce((a,d)=>a+d.valor,0);
-    const tp=data.filter(d=>d.treinador===t&&d.status==='pago').reduce((a,d)=>a+d.valor,0);
+    const tv=data.filter(d=>d&&d.cliente&&d.treinador===t).reduce((a,d)=>a+d.valor,0);
+    const tp=data.filter(d=>d&&d.cliente&&d.treinador===t&&d.status==='pago').reduce((a,d)=>a+d.valor,0);
     const bw=Math.round((tv/maxV)*100);
     const pctT=tv>0?Math.round((tp/tv)*100):0;
     const cor=tColors[t]||PALETTE_T[i%PALETTE_T.length];
@@ -3484,7 +3484,7 @@ function renderAll(){
   const medals=['gold','silver','bronze'];
   // _rankClicavel já declarado acima no bloco de barras
 
-  const rankT=[...allTrainers].map(t=>({nome:t,total:data.filter(d=>d.treinador===t).reduce((a,d)=>a+d.valor,0),pago:data.filter(d=>d.treinador===t&&d.status==='pago').reduce((a,d)=>a+d.valor,0),clientes:data.filter(d=>d.treinador===t).length})).sort((a,b)=>b.pago-a.pago);
+  const rankT=[...allTrainers].map(t=>({nome:t,total:data.filter(d=>d&&d.cliente&&d.treinador===t).reduce((a,d)=>a+d.valor,0),pago:data.filter(d=>d&&d.cliente&&d.treinador===t&&d.status==='pago').reduce((a,d)=>a+d.valor,0),clientes:data.filter(d=>d&&d.cliente&&d.treinador===t).length})).sort((a,b)=>b.pago-a.pago);
   document.getElementById('rankingTreinador').innerHTML=rankT.map((t,i)=>{
     var opT=1;
     if(activeTrainer&&activeTrainer!==t.nome) opT=0.3;
@@ -3493,7 +3493,7 @@ function renderAll(){
     return `<div class="rank-row" ${_attrT}><div class="rank-num ${medals[i]||''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div><div class="rank-info"><div class="rank-name">${t.nome.toUpperCase()}</div><div class="rank-detail">${t.clientes} clientes · ${formatVal(t.pago)} faturado</div></div><div class="rank-val">${formatVal(t.pago)}</div></div>`;
   }).join('');
 
-  const rankC=[...allConsultors].map(c=>({nome:c,total:data.filter(d=>d.consultor===c).reduce((a,d)=>a+d.valor,0),pago:data.filter(d=>d.consultor===c&&d.status==='pago').reduce((a,d)=>a+d.valor,0),entrada:data.filter(d=>d.consultor===c).reduce((a,d)=>a+d.entrada,0),clientes:data.filter(d=>d.consultor===c).length})).sort((a,b)=>b.pago-a.pago);
+  const rankC=[...allConsultors].map(c=>({nome:c,total:data.filter(d=>d&&d.cliente&&d.consultor===c).reduce((a,d)=>a+d.valor,0),pago:data.filter(d=>d&&d.cliente&&d.consultor===c&&d.status==='pago').reduce((a,d)=>a+d.valor,0),entrada:data.filter(d=>d&&d.cliente&&d.consultor===c).reduce((a,d)=>a+d.entrada,0),clientes:data.filter(d=>d&&d.cliente&&d.consultor===c).length})).sort((a,b)=>b.pago-a.pago);
   document.getElementById('rankingConsultor').innerHTML=rankC.map((c,i)=>{
     var opC=1;
     if(activeConsultor&&activeConsultor!==c.nome) opC=0.3;
@@ -3561,8 +3561,8 @@ function renderProduto(){
   var _isConsRP=_perfilRP==='consultor';
   // Consultor só vê os próprios clientes pagos
   const pagos=_isConsRP
-    ?data.filter(d=>d.status==='pago'&&(d.consultor||''). toUpperCase()===_vinculoRP)
-    :data.filter(d=>d.status==='pago');
+    ?data.filter(d=>d&&d.cliente&&d.status==='pago'&&(d.consultor||''). toUpperCase()===_vinculoRP)
+    :data.filter(d=>d&&d.cliente&&d.status==='pago');
   const produtos=[...new Set(data.map(d=>d.treinamento||'—'))].sort();
   const consultores=[...new Set(pagos.map(d=>d.consultor))].sort();
   const el=document.getElementById('produtoCruzadaTable');
@@ -3806,7 +3806,7 @@ function _abrirClientesModalComLista(lista,titulo,sub){
 }
 
 function abrirTotalProduto(produto){
-  const lista=data.filter(d=>d.status==='pago'&&(produto===null||produto==='null'||(d.treinamento||'—')===produto));
+  const lista=data.filter(d=>d&&d.cliente&&d.status==='pago'&&(produto===null||produto==='null'||(d.treinamento||'—')===produto));
   const total=lista.reduce((a,d)=>a+d.valor,0);
   const titulo=produto&&produto!=='null'?'Total · '+produto:'Total · Todos os produtos';
   const col=getCol(Math.round((total/META)*100));
@@ -3815,7 +3815,7 @@ function abrirTotalProduto(produto){
 }
 
 function abrirProdutoClientes(consultor,produto){
-  const lista=data.filter(d=>d.status==='pago'&&d.consultor===consultor&&(produto===null||produto==='null'||(d.treinamento||'—')===produto));
+  const lista=data.filter(d=>d&&d.cliente&&d.status==='pago'&&d.consultor===consultor&&(produto===null||produto==='null'||(d.treinamento||'—')===produto));
   const total=lista.reduce((a,d)=>a+d.valor,0);
   const titulo=produto&&produto!=='null'?consultor.toUpperCase()+' · '+produto:consultor.toUpperCase()+' · Todos os produtos';
   const sub=lista.length+' cliente'+(lista.length!==1?'s':'')+' pagos · Total: <span style="color:var(--accent);font-weight:700;">'+formatVal(total)+'</span>';
@@ -3916,12 +3916,12 @@ function renderConsultor(){
   var _isAdmC=(_perfilC==='adm'||_perfilC==='ministrante');
   const _rankCFat=[...allConsultors].map(c=>({
     nome:c,
-    total:data.filter(d=>d.consultor===c).reduce((a,d)=>a+d.valor,0),
-    pago:data.filter(d=>d.consultor===c&&d.status==='pago').reduce((a,d)=>a+d.valor,0),
-    clientes:data.filter(d=>d.consultor===c).length
+    total:data.filter(d=>d&&d.cliente&&d.consultor===c).reduce((a,d)=>a+d.valor,0),
+    pago:data.filter(d=>d&&d.cliente&&d.consultor===c&&d.status==='pago').reduce((a,d)=>a+d.valor,0),
+    clientes:data.filter(d=>d&&d.cliente&&d.consultor===c).length
   })).sort((a,b)=>b.pago-a.pago);
 
-  const _totalPagoC=data.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
+  const _totalPagoC=data.filter(d=>d&&d.cliente&&d.status==='pago').reduce((a,d)=>a+d.valor,0);
   const _pctGeralC=Math.round((_totalPagoC/META)*100);
   const _colGeralC=getCol(_pctGeralC);
 
@@ -3959,8 +3959,8 @@ function abrirClientesModal(tipo){
   var _perfil=_sess?_sess.perfil:'adm';
   var _vinculo=_sess?(_sess.vinculo||'').toUpperCase():'';
   var _base=(_perfil==='consultor'&&_vinculo)
-    ? data.filter(function(d){return (d.consultor||'').toUpperCase()===_vinculo;})
-    : data;
+    ? data.filter(function(d){return d&&d.cliente&&(d.consultor||'').toUpperCase()===_vinculo;})
+    : data.filter(function(d){return d&&d.cliente;});
 
   let lista,titulo,subExtra='';
   if(tipo==='todos'){
@@ -3988,7 +3988,7 @@ function abrirClientesModal(tipo){
   _abrirClientesModalComLista(lista,titulo,subExtra);
 }
 function abrirPagosModal(){
-  const pagos=data.filter(d=>d.status==='pago').sort((a,b)=>b.valor-a.valor);
+  const pagos=data.filter(d=>d&&d.cliente&&d.status==='pago').sort((a,b)=>b.valor-a.valor);
   const total=pagos.reduce((a,d)=>a+d.valor,0);
   const pct=Math.round((total/META)*100);
   const col=getCol(pct);
@@ -4436,10 +4436,10 @@ function renderTreinador(){
   const _medalsT=['gold','silver','bronze'];
   const _rankTFat=[...allTrainers].map(t=>({
     nome:t,
-    total:data.filter(d=>d.treinador===t).reduce((a,d)=>a+d.valor,0),
-    pago:data.filter(d=>d.treinador===t&&d.status==='pago').reduce((a,d)=>a+d.valor,0),
-    clientes:data.filter(d=>d.treinador===t).length,
-    pct:Math.round((data.filter(d=>d.treinador===t&&d.status==='pago').reduce((a,d)=>a+d.valor,0)/META)*100)
+    total:data.filter(d=>d&&d.cliente&&d.treinador===t).reduce((a,d)=>a+d.valor,0),
+    pago:data.filter(d=>d&&d.cliente&&d.treinador===t&&d.status==='pago').reduce((a,d)=>a+d.valor,0),
+    clientes:data.filter(d=>d&&d.cliente&&d.treinador===t).length,
+    pct:Math.round((data.filter(d=>d&&d.cliente&&d.treinador===t&&d.status==='pago').reduce((a,d)=>a+d.valor,0)/META)*100)
   })).sort((a,b)=>b.pago-a.pago);
   const _rankTHtml=_rankTFat.length===0
     ?'<div style="font-size:13px;color:var(--muted);padding:8px 0;">Nenhum dado.</div>'
@@ -4454,7 +4454,7 @@ function renderTreinador(){
         <div class="rank-val" style="font-size:16px;font-weight:700;color:${_col.text};">${formatVal(t.pago)}</div>
       </div>`;
     }).join('');
-  const _totalPagoT=data.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
+  const _totalPagoT=data.filter(d=>d&&d.cliente&&d.status==='pago').reduce((a,d)=>a+d.valor,0);
   const _pctGeralT=Math.round((_totalPagoT/META)*100);
   const _colGeralT=getCol(_pctGeralT);
   var rankPanelT = document.getElementById('treinadorRankingPanel');
