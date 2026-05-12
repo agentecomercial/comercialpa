@@ -48,14 +48,20 @@
       if(typeof buildSelects==='function')    buildSelects();
       if(typeof buildFilterBtns==='function') buildFilterBtns();
       if(typeof renderAll==='function')       renderAll();
-      if(typeof renderConsultor==='function') renderConsultor();
+
+      // Se o card de um consultor está aberto, re-renderizá-lo diretamente
+      // SEM chamar renderConsultor() que fecha o detail panel
+      var _cdEl = document.getElementById('consultorDetail');
+      var _consultorDetailAberto = _cdEl && _cdEl.style.display !== 'none' && window._consultorAtivo;
+      if(_consultorDetailAberto && typeof _renderConsultorDetail === 'function'){
+        _renderConsultorDetail(window._consultorAtivo);
+      } else if(typeof renderConsultor==='function'){
+        renderConsultor();
+      }
+
       if(typeof renderTreinador==='function') renderTreinador();
       if(typeof renderProduto==='function')   renderProduto();
-      // Re-renderizar card do consultor aberto (atualiza badges de presença em tempo real)
-      if(typeof _renderConsultorDetail==='function' && window._consultorAtivo){
-        var _cd = document.getElementById('consultorDetail');
-        if(_cd && _cd.style.display!=='none') _renderConsultorDetail(window._consultorAtivo);
-      }
+
       // Atualizar contadores de presença
       if(typeof window._presencaAtualizarContadores==='function') window._presencaAtualizarContadores();
       if(typeof window._atualizarBarraPresencaConsultor==='function') window._atualizarBarraPresencaConsultor();
