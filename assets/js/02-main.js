@@ -4255,7 +4255,8 @@ function abrirClienteDetalhe(ri){
   var _cdLista=document.getElementById('cdTreinamentosLista');
   if(_cdLista){
     _cdLista.innerHTML='';
-    var _treinsEdit=d.treinamentos&&d.treinamentos.length?d.treinamentos:[{cod:d.treinamento||'-',valor:d.valor||0}];
+    // Usa array real se existir (mesmo vazio); só usa fallback legado se treinamentos for null/undefined
+    var _treinsEdit=Array.isArray(d.treinamentos)?d.treinamentos:(d.treinamento&&d.treinamento!=='-'?[{cod:d.treinamento,valor:d.valor||0}]:[]);
     _treinsEdit.forEach(function(t){_addTreinRow('cdTreinamentosLista',t.cod,t.valor);});
     _calcTotalTrein('cdTreinamentosLista');
     // Bloquear edição de linhas existentes se não for modo edição
