@@ -4219,6 +4219,8 @@ function _renderConsultorDetail(c){
       tblEl.innerHTML=_rows;
     }
   }
+  // Preencher barra de presença após renderizar o detail
+  if(typeof window._atualizarBarraPresencaConsultor==='function') window._atualizarBarraPresencaConsultor();
 }
 
 window._toggleGrupo=function(gid){
