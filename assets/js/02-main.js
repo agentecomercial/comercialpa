@@ -6867,7 +6867,7 @@ var _PROPOSTA_PRECOS = {
   'IF':        {integral:4596.40,  parcelado:299.70,  parcelado_desc:3596.40,  avista_credito:2997.00, avista:2497.00,  reciclagem:1798.20},
   'MASTER':    {integral:8796.47,  parcelado:649.71,  parcelado_desc:7796.52,  avista_credito:6497.00, avista:6497.00,  reciclagem:3898.24},
   'FCIS':      {integral:11796.49, parcelado:899.71,  parcelado_desc:10796.52, avista_credito:8997.00, avista:8997.00,  reciclagem:5398.25},
-  'ML5':       {integral:11796.49, parcelado:899.71,  parcelado_desc:10796.52, avista_credito:8997.00, avista:8997.00,  reciclagem:5398.25},
+  'ML5':       {integral:11796.49, parcelado:899.71,  parcelado_desc:5398.26,  avista_credito:8997.00, avista:8997.00,  reciclagem:5398.25},
   'BHP':       {integral:6996.45,  parcelado:499.70,  parcelado_desc:5996.40,  avista_credito:4997.00, avista:4997.00,  reciclagem:2998.23},
   'FGPC':      {integral:6996.45,  parcelado:499.70,  parcelado_desc:5996.40,  avista_credito:4997.00, avista:4997.00,  reciclagem:2998.23},
   'CEOP':      {integral:6996.45,  parcelado:499.70,  parcelado_desc:5996.40,  avista_credito:4997.00, avista:4997.00,  reciclagem:2998.23},
