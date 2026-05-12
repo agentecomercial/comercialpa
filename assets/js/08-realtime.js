@@ -4,6 +4,7 @@
   /* ── Estado interno ── */
   var _listeners       = {};   // path → unsubscribe (não usamos, Firebase RTDB não retorna unsub facilmente)
   var _rtLocalWrite    = false; // flag anti-loop: true quando salvamento local está em andamento
+  var _rtLastSaveTs    = 0;    // timestamp do último save local (para rejeitar dados mais antigos)
   var _rtIniciado      = false; // evitar dupla inicialização
   var _debounceTimers  = {};   // path → timer de debounce
   var RT_DEBOUNCE_MS   = 400;  // ms de espera antes de re-renderizar
@@ -22,18 +23,20 @@
 
     window.markUnsaved = function(){
       _rtLocalWrite = true;
+      _rtLastSaveTs = Date.now();
       if(typeof _origMarkUnsaved==='function') _origMarkUnsaved.apply(this, arguments);
-      // Resetar flag após 2s (tempo suficiente para o listener disparar e ignorar)
+      // Resetar flag após 5s (aumentado para cobrir latência Firebase + acks de múltiplos saves seguidos)
       clearTimeout(window._rtLocalWriteTimer);
-      window._rtLocalWriteTimer = setTimeout(function(){ _rtLocalWrite=false; }, 2000);
+      window._rtLocalWriteTimer = setTimeout(function(){ _rtLocalWrite=false; }, 5000);
     };
 
     // Também marcar ao salvar diretamente no Firebase
     if(typeof _origFbSave==='function'){
       window._fbSave = function(){
         _rtLocalWrite = true;
+        _rtLastSaveTs = Date.now();
         clearTimeout(window._rtLocalWriteTimer);
-        window._rtLocalWriteTimer = setTimeout(function(){ _rtLocalWrite=false; }, 2000);
+        window._rtLocalWriteTimer = setTimeout(function(){ _rtLocalWrite=false; }, 5000);
         return _origFbSave.apply(this, arguments);
       };
     }
@@ -69,6 +72,11 @@
   /* ── Processar snapshot de clientes da turma ativa ── */
   function _onClientesChange(novosDados){
     if(_rtLocalWrite){ return; } // anti-loop: ignorar mudança originada localmente
+
+    // Rejeitar snapshots mais antigos que nosso último save local (evita sobreposição por ack tardio)
+    if(_rtLastSaveTs && novosDados && novosDados.updatedAt && novosDados.updatedAt < _rtLastSaveTs){
+      return;
+    }
 
     var id = (typeof _turmaAtiva!=='undefined' && _turmaAtiva) ? _turmaAtiva.id : null;
     if(!id || !novosDados) return;
