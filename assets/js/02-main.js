@@ -4970,10 +4970,19 @@ function setAddEntradaToggle(sim){addEntradaRealizada=sim;document.getElementByI
 ═══════════════════════════════════════════ */
 function _treinTotalId(listId){return listId==='aTreinamentosLista'?'aValorTotal':'cdValorTotal';}
 
+function _updateRemoveBtns(listId){
+  var container=document.getElementById(listId);
+  if(!container)return;
+  var rows=container.querySelectorAll('.trein-row');
+  rows.forEach(function(row){
+    var btn=row.querySelector('.trein-remove-btn');
+    if(btn)btn.style.display=rows.length<=1?'none':'flex';
+  });
+}
+
 function _addTreinRow(listId,cod,val){
   var container=document.getElementById(listId);
   if(!container)return;
-  var totalId=_treinTotalId(listId);
   var opts='<option value="-">— treinamento —</option>';
   var _tl=(typeof allTreinamentos!=='undefined'&&Array.isArray(allTreinamentos))?allTreinamentos:[];
   _tl.forEach(function(t){opts+='<option value="'+t+'"'+(cod===t?' selected':'')+'>'+t+'</option>';});
@@ -4983,10 +4992,11 @@ function _addTreinRow(listId,cod,val){
   row.style.cssText='display:flex;gap:6px;align-items:center;';
   row.innerHTML='<select class="modal-select trein-cod" style="flex:1;min-width:0;font-size:12px;padding:6px 8px;" onchange="_calcTotalTrein(\''+listId+'\');_checkCITreinador(\''+listId+'\')">'+opts+'</select>'
     +'<input type="text" inputmode="numeric" class="modal-input trein-valor" style="width:110px;flex-shrink:0;font-size:12px;padding:6px 8px;text-align:right;margin:0;" placeholder="0,00" value="'+valStr+'" oninput="this.value=lcMoneyMask(this.value);_calcTotalTrein(\''+listId+'\')">'
-    +'<button type="button" onclick="this.closest(\'.trein-row\').remove();_calcTotalTrein(\''+listId+'\');_checkCITreinador(\''+listId+'\')" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;font-family:monospace;">×</button>';
+    +'<button type="button" class="trein-remove-btn" onclick="this.closest(\'.trein-row\').remove();_calcTotalTrein(\''+listId+'\');_checkCITreinador(\''+listId+'\');_updateRemoveBtns(\''+listId+'\')" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;font-family:monospace;">×</button>';
   container.appendChild(row);
   _calcTotalTrein(listId);
   _checkCITreinador(listId);
+  _updateRemoveBtns(listId);
 }
 
 function _calcTotalTrein(listId){
