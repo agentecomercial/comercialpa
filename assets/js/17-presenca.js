@@ -8,10 +8,9 @@
 
 /* ── Constantes ── */
 var PRESENCA_OPTS = [
-  { v: 'pendente',          l: 'Pendente',           icon: '⏳', cor: 'var(--muted)',  bg: 'rgba(136,136,136,.12)', border: 'rgba(136,136,136,.3)'  },
-  { v: 'presente',          l: 'Presente',            icon: '✅', cor: '#34d399',       bg: 'rgba(52,211,153,.12)',  border: 'rgba(52,211,153,.35)'  },
-  { v: 'confirmado_falta',  l: 'Conf. Falta',         icon: '📋', cor: '#60a5fa',       bg: 'rgba(96,165,250,.12)', border: 'rgba(96,165,250,.35)'  },
-  { v: 'falta',             l: 'Falta',               icon: '❌', cor: '#ff5f57',       bg: 'rgba(255,95,87,.10)',  border: 'rgba(255,95,87,.35)'   }
+  { v: 'pendente',  l: 'Pendente', icon: '⏳', cor: 'var(--muted)', bg: 'rgba(136,136,136,.12)', border: 'rgba(136,136,136,.3)' },
+  { v: 'presente',  l: 'Presente', icon: '✅', cor: '#34d399',      bg: 'rgba(52,211,153,.12)',  border: 'rgba(52,211,153,.35)' },
+  { v: 'falta',     l: 'Falta',    icon: '❌', cor: '#ff5f57',      bg: 'rgba(255,95,87,.10)',   border: 'rgba(255,95,87,.35)'  }
 ];
 
 /* ── Estado ── */
@@ -155,7 +154,6 @@ function _atualizarContadores(){
   var total    = base.length;
   var presente = base.filter(function(d){ return d.presenca==='presente'; }).length;
   var falta    = base.filter(function(d){ return d.presenca==='falta'; }).length;
-  var confFalt = base.filter(function(d){ return d.presenca==='confirmado_falta'; }).length;
   var pendente = base.filter(function(d){ return !d.presenca||d.presenca==='pendente'; }).length;
   var pct      = total>0 ? Math.round((presente/total)*100) : 0;
 
@@ -164,8 +162,6 @@ function _atualizarContadores(){
     +'<span style="font-size:11px;color:#34d399;font-weight:700;" title="Presentes">✅ '+presente+'</span>'
     +'<span style="font-size:11px;color:var(--muted);margin:0 6px;">·</span>'
     +'<span style="font-size:11px;color:#ff5f57;font-weight:700;" title="Faltas">❌ '+falta+'</span>'
-    +'<span style="font-size:11px;color:var(--muted);margin:0 6px;">·</span>'
-    +'<span style="font-size:11px;color:#60a5fa;font-weight:700;" title="Conf. Falta">📋 '+confFalt+'</span>'
     +'<span style="font-size:11px;color:var(--muted);margin:0 6px;">·</span>'
     +'<span style="font-size:11px;color:var(--muted);" title="Pendentes">⏳ '+pendente+'</span>'
     +'<span style="font-size:11px;color:var(--muted);margin:0 8px;">|</span>'
