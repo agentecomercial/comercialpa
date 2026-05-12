@@ -7023,7 +7023,8 @@ function _propostaRecalcular(){
     var inp = document.getElementById('propval_' + nome);
     var chk = document.getElementById('prop_' + nome);
     if(!inp || !chk) return;
-    var preco = _PROPOSTA_PRECOS[nome][pagamento];
+    var precoBase = _PROPOSTA_PRECOS[nome][pagamento];
+    var preco = (pagamento === 'parcelado_desc' && precoBase != null) ? precoBase / 12 : precoBase;
     if(preco !== null && !chk.dataset.edited){
       inp.value = formatVal(preco);
     }
