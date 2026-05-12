@@ -4164,6 +4164,10 @@ function _renderConsultorDetail(c){
           +'<span style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.07em;">Total</span>'
           +'<span style="font-size:13px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;">'+formatVal(d.valor)+'</span>'
           +'</div>'
+          +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.06);">'
+          +'<span style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.07em;">Presença</span>'
+          +'<div data-presenca-ri="'+ri+'">'+(window._presencaBadgeHtml?window._presencaBadgeHtml(ri):'—')+'</div>'
+          +'</div>'
           +'<button onclick="abrirClienteDetalhe('+ri+')" style="margin-top:10px;width:100%;font-size:11px;font-weight:700;padding:7px 0;border-radius:6px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.08);color:var(--accent);cursor:pointer;font-family:\'DM Sans\',sans-serif;">✏ Editar cliente</button>'
           +'</div>'
           +'</div>';
