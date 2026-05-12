@@ -250,8 +250,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .clear-link{font-size:11px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;}
 .clear-link:hover{color:var(--accent);}
 table{width:100%;border-collapse:collapse;}
-thead th{text-align:center;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--surface2);}
-tbody td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle;text-align:left;}
+thead th{text-align:center;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:8px 8px;border-bottom:1px solid var(--border);background:var(--surface2);}
+tbody td{padding:8px 8px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle;text-align:left;}
 /* Colunas numéricas alinhadas à direita */
 tbody td:has(.card-num-valor){text-align:center;}tbody td:has(.card-num-entrada){text-align:center;}
 /* Colunas de select centralizadas */
