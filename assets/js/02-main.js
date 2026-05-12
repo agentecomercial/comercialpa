@@ -3786,8 +3786,8 @@ function _cmRenderRows(){
         :(_perfilM!=='consultor'?`<button class="info-btn" onclick="event.stopPropagation();openClientInfo(${idx})">i</button>`:'')
       return `<tr style="border-left:2px solid #39ff14;">
         <td style="font-weight:600;text-transform:uppercase;text-align:left;color:#39ff14;white-space:nowrap;"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}${iBtn}</span></td>
-        <td style="text-align:center;font-size:12px;white-space:nowrap;">${d.treinamento||'—'}</td>
-        <td style="text-align:center;font-size:12px;color:var(--muted);white-space:nowrap;">${d.treinamento==='CI'?d.treinador:'-'}</td>
+        <td style="text-align:center;font-size:12px;white-space:nowrap;">${d.treinamentos&&d.treinamentos.length?d.treinamentos.map(t=>t.cod).join(' · '):'—'}</td>
+        <td style="text-align:center;font-size:12px;color:var(--muted);white-space:nowrap;">${(d.treinamentos&&d.treinamentos.some(t=>t.cod==='CI'))?d.treinador:'-'}</td>
         <td style="text-align:center;font-size:12px;color:var(--muted);white-space:nowrap;">${d.consultor.toUpperCase()}</td>
         <td style="text-align:right;font-weight:600;white-space:nowrap;">${formatVal(d.valor)}</td>
         <td style="text-align:right;font-size:12px;white-space:nowrap;color:${d.entrada>0?'var(--accent)':'var(--muted)'};">${d.entrada>0?formatVal(d.entrada):'—'}</td>
