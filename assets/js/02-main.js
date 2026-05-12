@@ -3373,7 +3373,7 @@ function renderAll(){
   // Toda seleção/exclusão ocorre no modal Gerenciar Clientes
 
   document.getElementById('clientTable').innerHTML=f.length===0
-    ?'<tr class="empty-row"><td colspan="7" style="text-align:center;">Nenhum cliente para os filtros selecionados.</td></tr>'
+    ?'<tr class="empty-row"><td colspan="8" style="text-align:center;">Nenhum cliente para os filtros selecionados.</td></tr>'
     :f.map(d=>{
       const ri=data.indexOf(d), pago=d.status==='pago', hasInfo=!!(d.info&&d.info.trim());
       const statusCls='cs-status-'+(d.status||'aberto');
@@ -3432,6 +3432,9 @@ function renderAll(){
           <input type="text" inputmode="numeric" class="card-num-input card-num-entrada" data-ri="${ri}" data-campo="entrada"
             value="${entEdit}" oninput="cardMoneyMask(this)" onchange="cardNumChange(this)" placeholder="—"
             style="color:var(--blue);font-weight:500;">
+        </td>
+        <td style="text-align:center;padding:3px 6px;vertical-align:middle;" data-presenca-ri="${ri}">
+          ${window._presencaBadgeHtml ? window._presencaBadgeHtml(ri) : '<span style="color:var(--muted);font-size:10px;">—</span>'}
         </td>
       </tr>`;
     }).join('');
@@ -4141,9 +4144,17 @@ function _renderConsultorDetail(c){
           +'<span id="cliarr_'+ri+'" style="font-size:9px;color:var(--muted);flex-shrink:0;transition:transform .2s;line-height:1;">▶</span>'
           +'<div style="flex:1;min-width:0;">'
           +'<div style="font-size:13px;font-weight:700;'+(+_ip?'color:#39ff14;':'color:var(--text);')+'text-transform:uppercase;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+d.cliente+'</div>'
-          +'<div style="font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_td+' &nbsp;·&nbsp; '+formatVal(d.valor)+'</div>'
+          +(function(){
+            var _stMap={'pago':{cor:'#39ff14',l:'Pago'},'negociacao':{cor:'#60a5fa',l:'Negociação'},'desistiu':{cor:'#ff5252',l:'Desistiu'},'estorno':{cor:'#ff5252',l:'Estorno'},'entrada':{cor:'#c8f05a',l:'Entrada'},'aberto':{cor:'#ffaa00',l:'Aberto'}};
+            var _stInfo=_stMap[d.status||'']||{cor:'#666',l:'Sem status'};
+            var _valTxt=d.valor>0?('<span style="font-size:10px;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums;">'+formatVal(d.valor)+'</span>'):'';
+            return '<div style="display:flex;align-items:center;gap:5px;margin-top:3px;">'
+              +'<span style="width:6px;height:6px;border-radius:50%;background:'+_stInfo.cor+';flex-shrink:0;display:inline-block;"></span>'
+              +'<span style="font-size:10px;font-weight:600;color:'+_stInfo.cor+';">'+_stInfo.l+'</span>'
+              +_valTxt
+              +'</div>';
+          })()
           +'</div>'
-          +'<span class="badge badge-'+(d.status||'aberto')+'">'+sl(d.status)+'</span>'
           +'<button onclick="event.stopPropagation();window._abrirMenuCliente(event,\''+d.cliente.replace(/'/g,"\\'")+'\',' +ri+')" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:22px;height:22px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button>'
           +'</div>'
           // ── Painel expansível ──
@@ -4192,7 +4203,7 @@ function _renderConsultorDetail(c){
           _rows+=`<tr style="border-left:${borderLeft};" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar" class="tr-clickable">
             <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button><button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:18px;height:18px;cursor:pointer;color:var(--accent);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button></span></td>
             <td style="text-align:center;white-space:nowrap;color:var(--muted);font-size:11px;">${treinadorTxt}</td>
-            <td style="text-align:center;white-space:nowrap;font-size:11px;">${_treinDisplay(d)}</td>
+            <td style="text-align:center;white-space:nowrap;font-size:11px;color:var(--muted);">—</td>
             <td style="text-align:center;white-space:nowrap;">${formatVal(d.valor)}</td>
             <td style="text-align:center;white-space:nowrap;"><span class="badge badge-${st}">${sl(st)}</span></td>
             <td style="text-align:center;white-space:nowrap;${entradaStyle}">${entradaTxt}</td>
@@ -4550,7 +4561,7 @@ function _renderTreinadorDetail(t){
   document.getElementById('treinadorDetail').style.display='block';
   const sl=s=>s==='pago'?'PAGO':s==='negociacao'?'NEGOCIAÇÃO':s==='desistiu'?'DESISTIU':s==='estorno'?'ESTORNO':s==='-'?'—':'ABERTO';
   document.getElementById('treinadorDetailTable').innerHTML=td.length===0
-    ?'<tr class="empty-row"><td colspan="7">Nenhum cliente para este filtro.</td></tr>'
+    ?'<tr class="empty-row"><td colspan="8">Nenhum cliente para este filtro.</td></tr>'
     :td.map(d=>{const ri=data.indexOf(d),ip=d.status==='pago',hi=!!(d.info&&d.info.trim());return `<tr style="border-left:${ip?'2px solid #39ff14':'2px solid transparent'};">
       <td style="font-weight:600;text-transform:uppercase;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="openClientInfo(${ri})">i</button></span></td>
       <td style="text-align:center;">${d.treinamento||'—'}</td>
@@ -5311,7 +5322,9 @@ function saveAdd(){
     valor:_valorTotal,
     status:document.getElementById('aStatus').value,
     entrada:addEntradaRealizada?parseVal(document.getElementById('aEntrada').value):0,
-    criadoPor:_criadoPor
+    criadoPor:_criadoPor,
+    presenca:'pendente',
+    presencaLog:[]
   });
   closeAddModal();markUnsaved();saveStorage();renderAll();renderConsultor();renderTreinador();renderProduto();
   // Se estava no detalhe de um consultor, reabrir o detalhe ao invés de voltar ao grid
