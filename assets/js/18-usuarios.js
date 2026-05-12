@@ -1,0 +1,1315 @@
+/* ============================================================
+   GESTAO DE USUARIOS
+============================================================ */
+// _getSessao definida em 02-main.js
+
+function abrirPainelUsuarios(){
+  document.getElementById('usuariosOverlay').classList.add('open');
+  // Se _turmaAtiva já está em memória, renderiza direto.
+  // Se não (acessou o painel sem entrar numa turma), tenta carregar do Firebase
+  // para que _getMembros() retorne os membros reais (incluindo importados via planilha).
+  if(_turmaAtiva){
+    _renderUsuariosGrid();
+  } else {
+    var turmaId=localStorage.getItem(TURMA_ATIVA_KEY);
+    if(turmaId&&window._fbGet){
+      window._fbGet('turmas/'+turmaId).then(function(t){
+        if(t){
+          _turmaAtiva=Object.assign({id:turmaId},t);
+          window._turmaAtiva=_turmaAtiva;
+          if(!allConsultors.length&&t.consultores) allConsultors=t.consultores.slice();
+          if(!allTrainers.length&&t.treinadores) allTrainers=t.treinadores.slice();
+        }
+        _renderUsuariosGrid();
+      }).catch(function(){ _renderUsuariosGrid(); });
+    } else {
+      _renderUsuariosGrid();
+    }
+  }
+}
+function fecharPainelUsuarios(){document.getElementById('usuariosOverlay').classList.remove('open');}
+
+/* ══════════════════════════════════════════════════════════
+   WIZARD — NOVO USUÁRIO (3 passos)
+══════════════════════════════════════════════════════════ */
+var _wzPasso = 1;
+var _wzPermsLabels = {
+  verGeral:          'Ver painel geral',
+  verConsultor:      'Ver consultores',
+  verTreinador:      'Ver treinadores',
+  verProduto:        'Ver produtos',
+  verValores:        'Ver valores (R$)',
+  editar:            'Editar dados',
+  exportar:          'Exportar PDF/JSON',
+  gerenciarUsuarios: 'Gerenciar usuários',
+  configuracoes:     'Configurações críticas'
+};
+
+function abrirWizardNovoUsuario(){
+  _wzPasso = 1;
+  document.getElementById('wzNome').value = '';
+  document.getElementById('wzLogin').value = '';
+  document.getElementById('wzSenha').value = '';
+  document.getElementById('wzWhatsapp').value = '';
+  document.getElementById('wzPerfil').value = 'consultor';
+  wizardAtualizarPerms();
+  _wzMostrarPasso(1);
+  document.getElementById('wizardUsuarioOverlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('wzNome').focus(); }, 100);
+}
+window.abrirWizardNovoUsuario = abrirWizardNovoUsuario;
+
+function fecharWizardUsuario(){
+  document.getElementById('wizardUsuarioOverlay').classList.remove('open');
+}
+window.fecharWizardUsuario = fecharWizardUsuario;
+
+function _wzMostrarPasso(n){
+  _wzPasso = n;
+  [1,2,3].forEach(function(i){
+    var el = document.getElementById('wizardPasso'+i);
+    if(el) el.style.display = i===n ? '' : 'none';
+  });
+  var titulos = ['Novo Usuário — Passo 1 de 3','Novo Usuário — Passo 2 de 3','Novo Usuário — Passo 3 de 3'];
+  var subs = ['Dados básicos e perfil','Permissões — ajuste se necessário','Confirme antes de salvar'];
+  document.getElementById('wizardTitulo').textContent = titulos[n-1];
+  document.getElementById('wizardSubtitulo').textContent = subs[n-1];
+  document.getElementById('wzBtnVoltar').style.display = n > 1 ? '' : 'none';
+  document.getElementById('wzBtnAvancar').textContent = n < 3 ? 'Próximo →' : '✓ Criar usuário';
+  if(n === 3) _wzGerarResumo();
+}
+
+function wizardAtualizarPerms(){
+  var perfil = document.getElementById('wzPerfil').value;
+  var perms = Object.assign({}, PERMS_PADRAO[perfil] || PERMS_PADRAO.consultor);
+  var grid = document.getElementById('wzPermsGrid');
+  if(!grid) return;
+  grid.innerHTML = Object.keys(_wzPermsLabels).map(function(k){
+    var chk = perms[k] ? ' checked' : '';
+    return '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;">'
+      +'<input type="checkbox" id="wzP_'+k+'"'+chk+' style="width:14px;height:14px;accent-color:var(--accent);">'
+      +_wzPermsLabels[k]+'</label>';
+  }).join('');
+}
+window.wizardAtualizarPerms = wizardAtualizarPerms;
+
+function wizardAvancar(){
+  if(_wzPasso === 1){
+    var nome = (document.getElementById('wzNome').value||'').trim();
+    var login = (document.getElementById('wzLogin').value||'').trim().toLowerCase().replace(/\s+/g,'.');
+    var senha = (document.getElementById('wzSenha').value||'').trim();
+    if(!nome){ _showToast('Informe o nome do usuário.','var(--amber)'); return; }
+    if(!login){ _showToast('Informe o login.','var(--amber)'); return; }
+    if(senha.length < 6){ _showToast('Senha deve ter pelo menos 6 caracteres.','var(--amber)'); return; }
+    document.getElementById('wzLogin').value = login;
+    _wzMostrarPasso(2);
+  } else if(_wzPasso === 2){
+    _wzMostrarPasso(3);
+  } else if(_wzPasso === 3){
+    _wzSalvar();
+  }
+}
+window.wizardAvancar = wizardAvancar;
+
+function wizardVoltar(){
+  if(_wzPasso > 1) _wzMostrarPasso(_wzPasso - 1);
+}
+window.wizardVoltar = wizardVoltar;
+
+function _wzGerarResumo(){
+  var nome   = (document.getElementById('wzNome').value||'').toUpperCase();
+  var login  = document.getElementById('wzLogin').value||'';
+  var perfil = document.getElementById('wzPerfil').value||'consultor';
+  var wpp    = document.getElementById('wzWhatsapp').value||'—';
+  var permsAtivas = Object.keys(_wzPermsLabels).filter(function(k){
+    var el = document.getElementById('wzP_'+k); return el && el.checked;
+  }).map(function(k){ return _wzPermsLabels[k]; });
+  var corPerfil = {adm:'var(--accent)',consultor:'var(--green)',treinador:'var(--amber)',ministrante:'var(--blue)'}[perfil]||'var(--muted)';
+  var labelPerfil = {adm:'ADM',consultor:'Consultor',treinador:'Treinador',ministrante:'Ministrante'}[perfil]||perfil;
+  document.getElementById('wzResumo').innerHTML =
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">'
+    +'<div style="width:40px;height:40px;border-radius:50%;background:'+corPerfil+'22;color:'+corPerfil+';border:2px solid '+corPerfil+'55;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;">'+nome[0]+'</div>'
+    +'<div><div style="font-size:15px;font-weight:700;color:var(--text);">'+nome+'</div>'
+    +'<div style="font-size:11px;color:'+corPerfil+';">'+labelPerfil+' · @'+login+'</div></div>'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">WhatsApp: '+wpp+'</div>'
+    +'<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Permissões:</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px;">'
+    +permsAtivas.map(function(p){
+      return '<span style="font-size:10px;background:rgba(200,240,90,.1);color:var(--accent);border:1px solid rgba(200,240,90,.25);border-radius:20px;padding:2px 8px;">'+p+'</span>';
+    }).join('')
+    +'</div>';
+}
+
+function _wzSalvar(){
+  var nome   = (document.getElementById('wzNome').value||'').trim().toUpperCase();
+  var login  = (document.getElementById('wzLogin').value||'').trim();
+  var senha  = document.getElementById('wzSenha').value||'';
+  var perfil = document.getElementById('wzPerfil').value||'consultor';
+  var wpp    = (document.getElementById('wzWhatsapp').value||'').trim();
+  var perms  = {};
+  Object.keys(_wzPermsLabels).forEach(function(k){
+    var el = document.getElementById('wzP_'+k); perms[k] = !!(el && el.checked);
+  });
+  var uid = perfil+'_'+_normalizeUid(nome)+'_'+Date.now();
+  var novoUser = {
+    nome: nome, login: login, senha: senha, perfil: perfil,
+    whatsapp: wpp, ativo: true, primeiroAcesso: true,
+    permissoes: perms, createdAt: Date.now(), updatedAt: Date.now()
+  };
+  /* salvar local */
+  var local = _getUsuariosLocal();
+  local[uid] = novoUser;
+  _saveUsuariosLocal(local);
+  /* tentar Firebase */
+  var salvoFb = false;
+  if(window._fbSave){
+    try{ window._fbSave('usuarios/'+uid, novoUser); salvoFb = true; }catch(e){}
+  }
+  fecharWizardUsuario();
+  _renderUsuariosGrid();
+  _showToast('✅ Usuário '+nome+' criado!'+(salvoFb?' ☁️':''),'var(--accent)');
+}
+
+/* ── Fix 2: funções complementares — NÃO alteram estrutura existente ──────────
+   Extraem consultores presentes em data[] e os adicionam à lista de membros
+   sem remover nenhum existente e sem duplicar.
+─────────────────────────────────────────────────────────────────────────────── */
+function extrairConsultoresDoData(){
+  var consultores=new Set();
+  (Array.isArray(data)?data:[]).forEach(function(c){
+    if(c.consultor&&c.consultor.trim()!=='')
+      consultores.add(c.consultor.trim().toUpperCase());
+  });
+  return Array.from(consultores);
+}
+
+function complementarMembrosComData(membros){
+  // Recebe o objeto membros e adiciona consultores de data[] que ainda não estão na lista
+  var novos=extrairConsultoresDoData();
+  novos.forEach(function(nome){
+    var jaExiste=membros.consultores.some(function(m){
+      return m.toUpperCase().trim()===nome.toUpperCase().trim();
+    });
+    if(!jaExiste) membros.consultores.push(nome);
+  });
+  return membros; // retorna o mesmo objeto enriquecido
+}
+
+function _getMembros(){
+  // 1. Turma ativa em memória
+  if(_turmaAtiva){
+    return {consultores:_turmaAtiva.consultores||[],treinadores:_turmaAtiva.treinadores||[]};
+  }
+  // 2. localStorage
+  var turmaId=localStorage.getItem(TURMA_ATIVA_KEY);
+  var turmas=_getTurmas();
+  var turma=turmaId?turmas.find(function(t){return t.id===turmaId;}):turmas[0];
+  if(turma&&(turma.consultores||turma.treinadores)){
+    return {consultores:turma.consultores||[],treinadores:turma.treinadores||[]};
+  }
+  // 3. allConsultors/allTrainers em memória
+  if(allConsultors.length||allTrainers.length){
+    return {consultores:allConsultors,treinadores:allTrainers};
+  }
+  // 4. Fallback: dados fixos da turma IF15
+  return {
+    consultores:['LARISSA','DANIEL','DARLEY'],
+    treinadores:['RAFAEL SIMÕES','JOSIANE BORGES','THIAGO PINHEIRO']
+  };
+}
+
+/* Fix 2: carregarUsuarios — sempre busca do Firebase, localStorage como fallback */
+async function carregarUsuarios(){
+  var local = _getUsuariosLocal();
+  if(window._fbGet){
+    try{
+      var fbUsuarios = await window._fbGet('usuarios');
+      if(fbUsuarios&&Object.keys(fbUsuarios).length>0){
+        // Mesclar: Firebase tem prioridade, mas preservar dados locais ausentes no Firebase
+        Object.keys(local).forEach(function(uid){
+          if(!fbUsuarios[uid]) fbUsuarios[uid]=local[uid];
+        });
+        _saveUsuariosLocal(fbUsuarios);
+        return fbUsuarios;
+      }
+    }catch(e){ console.warn('[carregarUsuarios] Firebase erro:',e); }
+  }
+  return local;
+}
+
+function _renderUsuariosGrid(){
+  var grid=document.getElementById('usuariosGrid');
+  if(!grid) return;
+  // Não re-renderizar se um sub-modal de edição estiver aberto (protege o admin enquanto edita)
+  var subModaisAbertos=['novoUsuarioOverlay','alterarSenhaOverlay'];
+  var temSubModalAberto=subModaisAbertos.some(function(id){
+    var el=document.getElementById(id);
+    return el&&el.classList.contains('open');
+  });
+  if(temSubModalAberto) return;
+  grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center;">Carregando...</div>';
+  var membros={consultores:[],treinadores:[]};
+
+  function _renderComUsuarios(usuarios){
+    var ministrante=_getTurmaMinistante();
+    if(ministrante&&usuarios){
+      Object.keys(usuarios).forEach(function(uid){
+        var u=usuarios[uid];
+        if(u.nome&&u.nome.toUpperCase()===ministrante.toUpperCase()) u.perfil='ministrante';
+        else if(u.perfil==='ministrante') u.perfil='treinador';
+      });
+    }
+    /* alerta de usuários ainda com senha em texto plano */
+    var alertEl=document.getElementById('usuariosAlertaLegado');
+    if(alertEl&&usuarios){
+      var legados=Object.values(usuarios).filter(function(u){ return u.senha&&!u.authUid; }).length;
+      if(legados>0){
+        alertEl.textContent='⚠ '+legados+' usuário'+(legados>1?'s ainda usam':'ainda usa')+' senha em modo legado. A migração ocorre automaticamente no próximo login de cada um.';
+        alertEl.style.display='';
+      } else {
+        alertEl.style.display='none';
+      }
+    }
+    // Montar membros a partir de TODOS os usuários cadastrados (não filtrar por turma)
+    membros={consultores:[],treinadores:[],adms:[]};
+    Object.values(usuarios||{}).forEach(function(u){
+      if(!u.nome) return;
+      var perfil=u.perfil||'consultor';
+      if(perfil==='adm'){
+        if(membros.adms.indexOf(u.nome)<0) membros.adms.push(u.nome);
+      } else if(perfil==='consultor'){
+        if(membros.consultores.indexOf(u.nome)<0) membros.consultores.push(u.nome);
+      } else if(perfil==='treinador'||perfil==='ministrante'){
+        if(membros.treinadores.indexOf(u.nome)<0) membros.treinadores.push(u.nome);
+      }
+    });
+    _montarGrid(membros,usuarios||{});
+  }
+
+  function _buildLocal(){
+    /* Fix: NÃO injetar membros da turma como usuários sintéticos.
+       O painel de gestão de usuários reflete EXCLUSIVAMENTE o nó `usuarios/`.
+       Membros da turma sem entrada em `usuarios/` aparecem nos demais módulos
+       (como consultor/treinador) mas não devem aparecer aqui. */
+    return _getUsuariosLocal();
+  }
+
+  var _done=false;
+  var _timeout=setTimeout(function(){
+    if(!_done){_done=true;_renderComUsuarios(_buildLocal());}
+  },2000);
+
+  if(window._fbGet){
+    window._fbGet('usuarios').then(function(u){
+      if(!_done){
+        _done=true;clearTimeout(_timeout);
+        // Firebase é fonte de verdade: usar apenas dados do Firebase
+        // (não mesclar com local para evitar "fantasmas" de usuários excluídos)
+        if(u&&Object.keys(u).length>0){
+          _saveUsuariosLocal(u);
+          _renderComUsuarios(u);
+        } else {
+          _renderComUsuarios({});
+        }
+      }
+    }).catch(function(){
+      if(!_done){_done=true;clearTimeout(_timeout);_renderComUsuarios(_buildLocal());}
+    });
+  } else {
+    clearTimeout(_timeout);
+    _renderComUsuarios(_buildLocal());
+  }
+}
+
+function _getUsuariosLocal(){
+  try{
+    var u=JSON.parse(localStorage.getItem('ci_usuarios'));
+    if(u&&typeof u==='object') return u;
+  }catch(e){}
+  // Fix 3: retornar objeto vazio — sem fallback hardcoded que causava usuários fantasma
+  return {};
+}
+
+function _saveUsuariosLocal(u){
+  try{localStorage.setItem('ci_usuarios',JSON.stringify(u));}catch(e){}
+}
+
+function _montarGrid(membros,usuarios){
+  var grid=document.getElementById('usuariosGrid');
+  if(!grid) return;
+
+  // Ordenar alfabeticamente para evitar reordenação entre renders
+  membros.consultores=membros.consultores.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});});
+  membros.treinadores=membros.treinadores.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});});
+
+  // Ministrante real da turma — fonte de verdade
+  var _ministranteAtual=_getTurmaMinistante();
+
+  function enc(s){return (s||'').replace(/"/g,'').replace(/'/g,'');}
+
+  function _card(uid,u){
+    var temLogin=!!(u.login&&u.senha);
+    var ativo=u.ativo!==false;
+    var primAcesso=u.primeiroAcesso===true;
+    var _ehMinistranteReal=u.perfil==='treinador'||u.perfil==='ministrante'
+      ?(_ministranteAtual&&_ministranteAtual.toUpperCase()===(u.nome||'').toUpperCase())
+      :false;
+    var perfilCls=u.perfil==='consultor'?'consultor':_ehMinistranteReal?'ministrante':'treinador';
+    var perfilL=u.perfil==='consultor'?'Consultor':_ehMinistranteReal?'Ministrante':'Treinador';
+    var inicial=(u.nome||'?')[0].toUpperCase();
+    var nomeU=(u.nome||'').toUpperCase();
+    var loginTxt=u.login?'@'+u.login:'—';
+
+    // bolinha de status
+    var dotCls=!temLogin?'sem-acesso':!ativo?'pausado':primAcesso?'pendente':'ativo';
+    var dotTip=!temLogin?'Sem acesso configurado':!ativo?'Acesso pausado':primAcesso?'Primeiro acesso pendente':'Ativo';
+
+    // itens do dropdown
+    var ddItems='';
+    if(!temLogin){
+      ddItems='<button class="ur-dd-item btn-configurar-acesso" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'">⚙️ Configurar acesso</button>';
+    } else {
+      ddItems='<button class="ur-dd-item btn-editar-acesso" data-uid="'+uid+'">✏️ Editar</button>'
+        +'<button class="ur-dd-item btn-alterar-senha" data-uid="'+uid+'" data-nome="'+enc(nomeU)+'">🔑 Alterar senha</button>'
+        +'<button class="ur-dd-item btn-reset-senha" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'">🔁 Resetar senha</button>'
+        +'<hr class="ur-dd-sep">'
+        +'<button class="ur-dd-item btn-perms" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'">🔒 Permissões</button>'
+        +'<button class="ur-dd-item btn-toggle-ativo" data-uid="'+uid+'" data-ativo="'+(ativo?'true':'false')+'">'+(ativo?'⏸ Pausar acesso':'▶ Ativar acesso')+'</button>';
+    }
+    ddItems+='<hr class="ur-dd-sep"><button class="ur-dd-item danger btn-excluir-usuario" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'">🗑 Excluir usuário</button>';
+
+    return '<div class="usuario-row" data-nome="'+nomeU+'" data-ativo="'+(ativo?'true':'false')+'">'
+      +'<div class="ur-avatar '+perfilCls+'">'+inicial+'</div>'
+      +'<div class="ur-info">'
+        +'<div class="ur-nome">'+nomeU+'</div>'
+        +'<div class="ur-login">'+loginTxt+'</div>'
+      +'</div>'
+      +'<span class="ur-badge badge-'+perfilCls+'">'+perfilL+'</span>'
+      +'<div class="ur-dot '+dotCls+'" title="'+dotTip+'"></div>'
+      +'<div class="ur-acoes">'
+        +'<button class="ur-menu-btn" data-uid="'+uid+'" data-dd="'+uid+'">⋯</button>'
+      +'</div>'
+      +'<div class="ur-dd-data" data-uid="'+uid+'" style="display:none;">'+ddItems+'</div>'
+    +'</div>';
+  }
+
+  function encontrar(nome,perfil){
+    return Object.entries(usuarios).find(function(e){
+      return e[1].nome&&e[1].nome.toUpperCase()===nome.toUpperCase()&&e[1].perfil===perfil;
+    });
+  }
+
+  function uid_(perfil,nome){
+    return perfil+'_'+_normalizeUid(nome);
+  }
+
+  // ── Busca + Recentes ──────────────────────────────────────────
+  var recentes=_getUsuariosRecentes();
+  var html='';
+
+  // Barra de busca (span grid-column:1/-1)
+  html+='<div style="grid-column:1/-1;margin-bottom:8px;">'
+    +'<input id="usuariosBusca" type="text" placeholder="🔍  Buscar usuário..." autocomplete="off"'
+    +' oninput="_filtrarUsuariosGrid(this.value)"'
+    +' style="width:100%;box-sizing:border-box;padding:8px 14px;border-radius:var(--radius-sm);'
+    +'border:1px solid var(--border2);background:var(--surface2);color:var(--text);'
+    +'font-family:\'DM Sans\',sans-serif;font-size:13px;outline:none;">'
+    +'</div>';
+
+  // Acesso rápido — recentes
+  if(recentes.length){
+    html+='<div style="grid-column:1/-1;margin-bottom:12px;">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">⚡ Acesso rápido</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+    recentes.forEach(function(r){
+      var ini=(r.nome||'?')[0].toUpperCase();
+      var cor=r.perfil==='consultor'?'var(--green)':r.perfil==='adm'?'var(--accent)':'var(--amber)';
+      html+='<button onclick="_loginRapido(\''+r.uid+'\')" title="Entrar como '+r.nome+'"'
+        +' style="display:flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:20px;'
+        +'border:1px solid var(--border2);background:var(--surface2);cursor:pointer;'
+        +'font-family:\'DM Sans\',sans-serif;transition:all .15s;" '
+        +'onmouseover="this.style.borderColor=\''+cor+'\'" onmouseout="this.style.borderColor=\'var(--border2)\'">'
+        +'<div style="width:28px;height:28px;border-radius:50%;background:var(--surface);'
+        +'border:2px solid '+cor+';display:flex;align-items:center;justify-content:center;'
+        +'font-size:12px;font-weight:800;color:'+cor+';">'+ini+'</div>'
+        +'<span style="font-size:12px;font-weight:600;color:var(--text);">'+r.nome.split(' ')[0]+'</span>'
+        +'</button>';
+    });
+    html+='</div></div>';
+    html+='<div style="grid-column:1/-1;border-top:1px solid var(--border2);margin-bottom:12px;"></div>';
+  }
+
+  function _secaoHeader(titulo, count, perfil){
+    return '<div class="ur-secao-header">'
+      +'<div class="ur-secao-titulo">'+titulo+'<span class="ur-secao-count">'+count+'</span></div>'
+      +'<button class="btn-perms-grupo" data-perfil="'+perfil+'" style="background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;padding:3px 10px;color:var(--muted);">🔒 Permissões</button>'
+      +'</div>';
+  }
+
+  /* Fix: só renderiza membros que TÊM entrada em `usuarios/`.
+     Membro de turma sem cadastro em `usuarios/` (ou recém-excluído)
+     NÃO deve aparecer no painel de gestão — `encontrar()` decide. */
+  if(membros.adms&&membros.adms.length){
+    var admsValidos=membros.adms.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR',{sensitivity:'base'});})
+      .map(function(nome){return encontrar(nome,'adm');}).filter(Boolean);
+    if(admsValidos.length){
+      html+=_secaoHeader('ADM', admsValidos.length, 'adm');
+      admsValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
+    }
+  }
+
+  var consValidos=membros.consultores.map(function(nome){return encontrar(nome,'consultor');}).filter(Boolean);
+  html+=_secaoHeader('Consultores', consValidos.length, 'consultor');
+  if(consValidos.length===0){
+    html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum consultor.</div>';
+  } else {
+    consValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
+  }
+
+  var treinValidos=membros.treinadores.map(function(nome){return encontrar(nome,'treinador')||encontrar(nome,'ministrante');}).filter(Boolean);
+  html+=_secaoHeader('Treinadores', treinValidos.length, 'treinador');
+  if(treinValidos.length===0){
+    html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum treinador.</div>';
+  } else {
+    treinValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
+  }
+
+  /* Fix: garantir que TODO usuário em `usuarios/` apareça no painel.
+     Usuários com perfil ausente/desconhecido (não-adm/consultor/treinador/ministrante)
+     eram descartados silenciosamente — agora caem numa seção "Outros". */
+  var jaRenderizados={};
+  (membros.adms||[]).forEach(function(n){ var e=encontrar(n,'adm'); if(e) jaRenderizados[e[0]]=1; });
+  consValidos.forEach(function(e){ jaRenderizados[e[0]]=1; });
+  treinValidos.forEach(function(e){ jaRenderizados[e[0]]=1; });
+  var outros=Object.entries(usuarios||{}).filter(function(e){
+    return e[1]&&!jaRenderizados[e[0]];
+  }).sort(function(a,b){return (a[1].nome||'').localeCompare(b[1].nome||'','pt-BR',{sensitivity:'base'});});
+  // garantir nome placeholder para exibição
+  outros.forEach(function(e){ if(!e[1].nome) e[1].nome='(sem nome — uid: '+e[0]+')'; });
+  if(outros.length){
+    html+=_secaoHeader('Outros', outros.length, 'outros');
+    outros.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
+  }
+
+  /* Seção "Aguardando configuração": membros da turma sem conta em `usuarios/`.
+     Só exibe se há turma real carregada — evita mostrar o fallback hardcoded. */
+  var _temTurmaReal=!!_turmaAtiva||(function(){
+    var tid=localStorage.getItem(TURMA_ATIVA_KEY);
+    var tls=_getTurmas();
+    var t=tid?tls.find(function(x){return x.id===tid;}):null;
+    return !!(t&&(t.consultores||t.treinadores));
+  })();
+  var todosNomesRegistrados={};
+  Object.values(usuarios||{}).forEach(function(u){ if(u&&u.nome) todosNomesRegistrados[u.nome.trim().toUpperCase()]=1; });
+  var membrosAtuais=_temTurmaReal?_getMembros():{consultores:[],treinadores:[]};
+  var semConta=[];
+  (membrosAtuais.consultores||[]).concat(membrosAtuais.treinadores||[]).forEach(function(nome){
+    if(nome&&!todosNomesRegistrados[nome.trim().toUpperCase()]) semConta.push(nome.trim());
+  });
+  // remover duplicatas
+  semConta=semConta.filter(function(n,i,a){ return a.indexOf(n)===i; });
+  if(semConta.length){
+    html+='<div class="ur-secao-header"><div class="ur-secao-titulo" style="color:#fbbf24;">⏳ Aguardando configuração<span class="ur-secao-count">'+semConta.length+'</span></div></div>';
+    semConta.forEach(function(nome){
+      html+='<div class="usuario-row" style="opacity:.85;">'
+        +'<div class="ur-avatar" style="background:#2a2000;color:#fbbf24;border-color:#fbbf24;font-size:13px;font-weight:700;">'+nome.charAt(0)+'</div>'
+        +'<div class="ur-info"><div class="ur-nome">'+nome+'</div><div class="ur-login" style="color:#fbbf24;">Sem acesso configurado</div></div>'
+        +'<span class="ur-badge" style="background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.3);">Membro</span>'
+        +'<div class="ur-dot sem-acesso" title="Sem conta"></div>'
+        +'<div class="ur-acoes"><button class="ur-menu-btn btn-criar-acesso-membro" data-nome="'+nome+'" title="Criar acesso" style="color:#fbbf24;">⚙</button></div>'
+        +'<div class="ur-dd-data" style="display:none;"></div>'
+        +'</div>';
+    });
+  }
+
+  grid.innerHTML=html;
+
+  // ── Dropdown no body (evita clipping do overflow do grid) ──
+  window._fecharUrDd=function(){
+    var dd=document.getElementById('_urBodyDd');
+    if(dd) dd.remove();
+    window._urBodyDdUid=null;
+  };
+
+  function _abrirUrDd(menuBtn){
+    _fecharUrDd();
+    var uid=menuBtn.dataset.uid;
+    var ddData=document.querySelector('.ur-dd-data[data-uid="'+uid+'"]');
+    if(!ddData) return;
+    var rect=menuBtn.getBoundingClientRect();
+    var dd=document.createElement('div');
+    dd.id='_urBodyDd';
+    dd.innerHTML=ddData.innerHTML;
+    dd.style.cssText='position:fixed;z-index:9999;background:#12201200;border:1px solid #2a3a2a;border-radius:10px;'
+      +'min-width:180px;box-shadow:0 8px 40px rgba(0,0,0,.9);overflow:hidden;'
+      +'right:'+(window.innerWidth-rect.right)+'px;top:'+(rect.bottom+4)+'px;';
+    // fundo sólido via elemento filho
+    dd.style.background='#12201f';
+    dd.style.background='#111d11';
+    document.body.appendChild(dd);
+    window._urBodyDdUid=uid;
+
+    // ações
+    dd.addEventListener('click',function(e){
+      var btn=e.target.closest('button');
+      if(!btn) return;
+      window._fecharUrDd();
+      if(btn.classList.contains('btn-configurar-acesso')){
+        _abrirConfigurarAcesso(btn.dataset.uid, btn.dataset.nome, btn.dataset.perfil);
+      } else if(btn.classList.contains('btn-editar-acesso')){
+        _abrirEditarAcesso(btn.dataset.uid);
+      } else if(btn.classList.contains('btn-alterar-senha')){
+        _abrirAlterarSenhaUsuario(btn.dataset.uid, btn.dataset.nome);
+      } else if(btn.classList.contains('btn-reset-senha')){
+        resetarSenhaUsuario(btn.dataset.uid, btn.dataset.nome);
+      } else if(btn.classList.contains('btn-toggle-ativo')){
+        _toggleAtivo(btn.dataset.uid, btn.dataset.ativo==='true'?false:true);
+      } else if(btn.classList.contains('btn-excluir-usuario')){
+        _excluirUsuario(btn.dataset.uid, btn.dataset.nome);
+      } else if(btn.classList.contains('btn-perms')){
+        abrirPermsModal(btn.dataset.uid, btn.dataset.nome, btn.dataset.perfil);
+      }
+    });
+  }
+
+  // Fechar ao clicar fora — registrar apenas uma vez
+  // Usamos 'mousedown' (não 'click') porque vários onclick inline no app
+  // chamam event.stopPropagation(), o que impediria o bubble do click
+  // chegar ao document. mousedown dispara antes do click e não é
+  // interceptado por esses handlers, fechando o dropdown de forma confiável.
+  if(!window._urDdCloseHandler){
+    window._urDdCloseHandler=function(e){
+      if(!document.getElementById('_urBodyDd')) return;
+      if(e.target.closest('#_urBodyDd')) return;
+      if(e.target.closest('.ur-menu-btn')) return;
+      window._fecharUrDd();
+    };
+    document.addEventListener('mousedown',window._urDdCloseHandler);
+  }
+
+  // Event delegation do grid
+  if(grid._urClickHandler) grid.removeEventListener('click',grid._urClickHandler);
+  grid._urClickHandler=function(e){
+    var menuBtn=e.target.closest('.ur-menu-btn:not(.btn-criar-acesso-membro)');
+    if(menuBtn){ e.stopPropagation(); _abrirUrDd(menuBtn); return; }
+    window._fecharUrDd();
+    var btn=e.target.closest('button');
+    if(!btn) return;
+    if(btn.classList.contains('btn-perms-grupo')) abrirPermsGrupo(btn.dataset.perfil);
+    if(btn.classList.contains('btn-criar-acesso-membro')){
+      _abrirCriarAcessoMembro(btn.dataset.nome);
+    }
+  };
+  grid.addEventListener('click',grid._urClickHandler);
+}
+
+/* ── Recentes / Busca de usuários ──────────────────────────── */
+function _getUsuariosRecentes(){
+  try{ var r=JSON.parse(localStorage.getItem('ci_usuarios_recentes')); return Array.isArray(r)?r:[]; }catch(e){ return []; }
+}
+function _addUsuarioRecente(uid,nome,perfil){
+  var lista=_getUsuariosRecentes().filter(function(r){ return r.uid!==uid; });
+  lista.unshift({uid:uid,nome:nome,perfil:perfil});
+  if(lista.length>5) lista=lista.slice(0,5);
+  try{ localStorage.setItem('ci_usuarios_recentes',JSON.stringify(lista)); }catch(e){}
+}
+function _filtrarUsuariosGrid(q){
+  var t=(q||'').trim().toUpperCase();
+  document.querySelectorAll('#usuariosGrid .usuario-row').forEach(function(row){
+    var nome=(row.dataset.nome||'').toUpperCase();
+    row.style.display=(!t||nome.indexOf(t)>=0)?'':'none';
+  });
+}
+function _loginRapido(uid){
+  // Abre modal de senha pré-preenchendo o login do usuário recente
+  var recentes=_getUsuariosRecentes();
+  var r=recentes.find(function(x){ return x.uid===uid; });
+  if(!r) return;
+  // Simular clique no botão Editar do card desse usuário
+  var btn=document.querySelector('#usuariosGrid .usuario-card[data-nome="'+r.nome.toUpperCase()+'"] .btn-editar-acesso, #usuariosGrid .usuario-card[data-nome="'+r.nome.toUpperCase()+'"] .btn-configurar-acesso');
+  if(btn){ btn.click(); return; }
+  // Fallback: foca no campo de login padrão se existir
+  var inp=document.getElementById('usuarioLoginInput');
+  if(inp){ inp.value=r.nome.split(' ')[0].toLowerCase(); inp.focus(); }
+}
+
+function _abrirConfigurarAcesso(uid,nome,perfil){
+  document.getElementById('novoUsuarioUid').value=uid;
+  document.getElementById('novoUsuarioTitulo').textContent='Configurar acesso';
+  document.getElementById('novoUsuarioNome').value=nome;
+  document.getElementById('novoUsuarioPerfil').value=perfil;
+  var _localU=_getUsuariosLocal();
+  document.getElementById('novoUsuarioWhatsapp').value=(_localU[uid]&&_localU[uid].whatsapp)||'';
+  var loginSugerido=nome.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g,'');
+  document.getElementById('novoUsuarioLogin').value=loginSugerido;
+  document.getElementById('novoUsuarioSenha').value='';
+  document.getElementById('campoVinculo').style.display='none';
+  document.getElementById('novoUsuarioOverlay').classList.add('open');
+  setTimeout(function(){document.getElementById('novoUsuarioSenha').focus();},100);
+}
+
+function _abrirCriarAcessoMembro(nome){
+  // Membro da turma sem conta — gera UID temporário baseado no nome
+  var uid='membro_'+nome.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_'+Date.now();
+  _abrirConfigurarAcesso(uid, nome.toUpperCase(), 'consultor');
+}
+
+function _abrirEditarAcesso(uid){
+  function _preencherModal(u){
+    if(!u){alert('Usuario nao encontrado.');return;}
+    document.getElementById('novoUsuarioUid').value=uid;
+    document.getElementById('novoUsuarioTitulo').textContent='Editar acesso';
+    document.getElementById('novoUsuarioNome').value=(u.nome||'').toUpperCase();
+    document.getElementById('novoUsuarioPerfil').value=u.perfil||'treinador';
+    document.getElementById('novoUsuarioLogin').value=u.login||'';
+    document.getElementById('novoUsuarioSenha').value='';
+    document.getElementById('campoVinculo').style.display='none';
+    document.getElementById('novoUsuarioOverlay').classList.add('open');
+  }
+  // Tentar local primeiro
+  var local=_getUsuariosLocal();
+  if(local[uid]){_preencherModal(local[uid]);return;}
+  // Firebase com timeout
+  if(window._fbGet){
+    var _done=false;
+    var _t=setTimeout(function(){if(!_done){_done=true;alert('Firebase indisponível.');}},3000);
+    window._fbGet('usuarios/'+uid).then(function(u){
+      if(!_done){_done=true;clearTimeout(_t);_preencherModal(u);}
+    }).catch(function(){
+      if(!_done){_done=true;clearTimeout(_t);alert('Erro ao buscar usuário.');}
+    });
+  } else {
+    alert('Usuario nao encontrado.');
+  }
+}
+
+function _abrirAlterarSenhaUsuario(uid,nome){
+  document.getElementById('alterarSenhaUid').value=uid;
+  document.getElementById('alterarSenhaSub').textContent='Nova senha para '+nome+'.';
+  document.getElementById('alterarSenhaNova').value='';
+  document.getElementById('alterarSenhaOverlay').classList.add('open');
+  setTimeout(function(){document.getElementById('alterarSenhaNova').focus();},100);
+}
+
+function _toggleAtivo(uid,novoEstado){
+  var msg=novoEstado?'Reativar acesso?':'Desativar acesso? O usuario nao conseguira mais logar.';
+  if(!confirm(msg)) return;
+  window._fbSave('usuarios/'+uid+'/ativo',novoEstado).then(function(){
+    _renderUsuariosGrid();
+  }).catch(function(e){alert('Erro: '+(e&&e.message?e.message:e));});
+}
+
+async function salvarUsuario(){
+  var uid   = document.getElementById('novoUsuarioUid').value.trim();
+  var nome  = document.getElementById('novoUsuarioNome').value.trim().toUpperCase();
+  var login = document.getElementById('novoUsuarioLogin').value.trim().toLowerCase();
+  var senhaEl = document.getElementById('novoUsuarioSenha');
+  var senha = (senhaEl&&senhaEl.value) ? senhaEl.value.trim() : '';
+  var perfil  = document.getElementById('novoUsuarioPerfil').value || 'consultor';
+  var whatsapp= (document.getElementById('novoUsuarioWhatsapp')||{value:''}).value.replace(/\D/g,'');
+
+  // ── Validações ──────────────────────────────────────────────
+  if(!nome){_showToast('❌ Nome obrigatório.','var(--red)');return;}
+  if(!login||login.length<2){_showToast('❌ Login deve ter pelo menos 2 caracteres.','var(--red)');return;}
+  if(!senha||senha.length<3){_showToast('❌ Senha deve ter pelo menos 3 caracteres.','var(--red)');return;}
+
+  // ── Fix 3: Verificar duplicidade ────────────────────────────
+  var local = _getUsuariosLocal();
+  var existentes = Object.values(local);
+  var nomeJaExiste = existentes.some(function(u){
+    return u.nome&&u.nome.toUpperCase()===nome && (!uid || Object.keys(local).find(function(k){return local[k]===u;})!==uid);
+  });
+  var loginJaExiste = existentes.some(function(u){
+    return u.login&&u.login.toLowerCase()===login && (!uid || Object.keys(local).find(function(k){return local[k]===u;})!==uid);
+  });
+  if(nomeJaExiste){_showToast('❌ Já existe um usuário com este nome.','var(--red)');return;}
+  if(loginJaExiste){_showToast('❌ Este login já está em uso.','var(--red)');return;}
+
+  // ── Montar objeto ────────────────────────────────────────────
+  var isNovo = !uid || !local[uid];
+  if(!uid) uid = (perfil==='consultor'?'consultor_':'treinador_')+_normalizeUid(nome);
+  var jaExiste = local[uid];
+  var dados = {
+    nome:nome, login:login, senha:senha, perfil:perfil,
+    ativo:true, vinculo:nome, whatsapp:whatsapp,
+    primeiroAcesso: isNovo ? true : (jaExiste&&jaExiste.primeiroAcesso)||false,
+    updatedAt: Date.now()
+  };
+  if(isNovo) dados.createdAt = Date.now();
+
+  // ── Fix 2: Salvar no Firebase PRIMEIRO, depois local ────────
+  var salvoNoFirebase = false;
+  if(window._fbSave||window._fbUpdate){
+    try{
+      var fbOp = window._fbUpdate
+        ? window._fbUpdate('usuarios/'+uid, dados)
+        : window._fbSave('usuarios/'+uid, dados);
+      await fbOp;
+      salvoNoFirebase = true;
+      // Criar conta Firebase Auth para novos usuários
+      if(isNovo && typeof window._fbAuthCreate==='function'){
+        try{
+          var authCred = await window._fbAuthCreate(_loginToEmail(login), senha);
+          await window._fbUpdate('usuarios/'+uid,{authUid:authCred.user.uid});
+        }catch(authErr){
+          // Conta pode já existir (criada anteriormente) — não é erro crítico
+          console.warn('[salvarUsuario] Auth create:',authErr.code||authErr.message);
+        }
+      }
+    }catch(e){
+      console.error('[salvarUsuario] Firebase erro:',e);
+      _showToast('⚠️ Firebase indisponível. Salvo localmente.','var(--amber)');
+    }
+  }
+
+  // ── Atualizar estado local ───────────────────────────────────
+  local[uid] = dados;
+  _saveUsuariosLocal(local);
+
+  // ── Fechar modal e atualizar UI ──────────────────────────────
+  document.getElementById('novoUsuarioOverlay').classList.remove('open');
+  _renderUsuariosGrid();
+  _showToast('✅ '+(isNovo?'Acesso criado':'Acesso atualizado')+' para '+nome+'!'+(salvoNoFirebase?' ☁️':''),'var(--accent)');
+}
+
+function abrirEditarUsuario(uid){_abrirEditarAcesso(uid);}
+function abrirNovoUsuario(){document.getElementById('novoUsuarioOverlay').classList.add('open');}
+function fecharNovoUsuario(){document.getElementById('novoUsuarioOverlay').classList.remove('open');}
+function _excluirUsuario(uid,nome){
+  if(!confirm('Excluir o acesso de "'+nome+'"?\nEsta ação não pode ser desfeita.')) return;
+  // Remover do localStorage imediatamente
+  var local=_getUsuariosLocal();
+  if(local[uid]){ delete local[uid]; _saveUsuariosLocal(local); }
+  if(window._fbSave){
+    window._fbSave('usuarios/'+uid,null).then(function(){
+      _showToast('✅ Acesso de '+nome+' removido.','var(--accent)');
+      _renderUsuariosGrid();
+    }).catch(function(e){
+      _showToast('❌ Erro ao excluir: '+(e&&e.message?e.message:String(e)),'var(--red)');
+    });
+  } else {
+    _renderUsuariosGrid();
+  }
+}
+function excluirUsuario(uid,nome){_excluirUsuario(uid,nome);}
+function abrirAlterarSenha(uid,nome){_abrirAlterarSenhaUsuario(uid,nome);}
+function confirmarAlterarSenha(){
+  var uid=document.getElementById('alterarSenhaUid').value;
+  var nova=document.getElementById('alterarSenhaNova').value.trim();
+  if(!nova||nova.length<3){alert('Senha deve ter pelo menos 3 caracteres.');return;}
+  if(uid==='adm'){
+    localStorage.setItem('ci_adm_senha',nova);
+    document.getElementById('alterarSenhaOverlay').classList.remove('open');
+    alert('Senha do ADM alterada!');
+  } else {
+    window._fbSave('usuarios/'+uid+'/senha',nova).then(function(){
+      document.getElementById('alterarSenhaOverlay').classList.remove('open');
+      _renderUsuariosGrid();
+      alert('Senha alterada!');
+    }).catch(function(e){alert('Erro: '+e.message);});
+  }
+}
+
+/* ============================================================
+   FECHAR MODAIS USUARIOS AO CLICAR FORA
+============================================================ */
+/* ═══════════════════════════════════════════
+   FECHAR MODAIS AO CLICAR FORA
+═══════════════════════════════════════════ */
+/* Fix 5: novoUsuarioOverlay e alterarSenhaOverlay NÃO fecham ao clicar fora —
+   somente via botões "Cancelar" ou "Salvar" */
+['modalOverlay','addModalOverlay','titleModalOverlay','infoModalOverlay','periodModalOverlay','clientInfoOverlay','confirmOverlay','novaTurmaOverlay','novoConsultorOverlay','novoTreinadorOverlay','pagosModalOverlay','clientesModalOverlay','editarTreinadoresOverlay','editarConsultoresOverlay','pdfExportOverlay','pendLogOverlay','permsModalOverlay','pdfClientesOverlay','propostaOverlay','propProdOverlay','gerenciarTurmasOverlay','salvarComoOverlay','clienteDetalheOverlay','syncModalOverlay'].forEach(id=>{
+  const el=document.getElementById(id);if(el)el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});
+});
+// usuariosOverlay, novoUsuarioOverlay e alterarSenhaOverlay: bloquear fechamento por clique fora
+['usuariosOverlay','novoUsuarioOverlay','alterarSenhaOverlay'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.addEventListener('click',function(e){
+    if(e.target===el){e.stopPropagation();return;}
+  });
+});
+/* Bloquear ESC para syncModal e listaClientesOverlay */
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    if(document.getElementById('syncModalOverlay')&&document.getElementById('syncModalOverlay').classList.contains('open')){
+      e.stopPropagation();e.preventDefault();return false;
+    }
+    if(document.getElementById('listaClientesOverlay')&&document.getElementById('listaClientesOverlay').classList.contains('open')){
+      e.stopPropagation();e.preventDefault();return false;
+    }
+  }
+},{capture:true});
+
+/* ============================================================
+   SISTEMA DE LOG DE PENDÊNCIAS
+============================================================ */
+var _pendLog=[];
+var _PEND_KEY='ci_pendlog';
+
+function _loadPendLog(){
+  try{
+    var saved=localStorage.getItem(_PEND_KEY);
+    if(saved)_pendLog=JSON.parse(saved)||[];
+  }catch(e){_pendLog=[];}
+  _updatePendBadge();
+}
+
+function _savePendLog(){
+  try{localStorage.setItem(_PEND_KEY,JSON.stringify(_pendLog));}catch(e){}
+}
+
+function _addPendLog(acao,detalhe,icon){
+  icon=icon||'📝';
+  var item={
+    id:Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    acao:acao,
+    detalhe:detalhe||'',
+    icon:icon,
+    ts:new Date().toISOString(),
+    enviado:false
+  };
+  _pendLog.unshift(item);
+  if(_pendLog.length>100)_pendLog=_pendLog.slice(0,100);
+  _savePendLog();
+  _updatePendBadge();
+}
+
+function _updatePendBadge(){
+  var badge=document.getElementById('netStatusBadge');
+  var label=document.getElementById('netStatusLabel');
+  if(!badge||!label)return;
+  var pendentes=_pendLog.filter(function(i){return !i.enviado;}).length;
+  var online=navigator.onLine;
+  badge.className='net-badge '+(online?'online':'offline');
+  if(online){
+    label.textContent=pendentes>0?'Online · '+pendentes+' pend.':'Online';
+  } else {
+    label.textContent=pendentes>0?'Offline · '+pendentes+' pend.':'Offline';
+  }
+}
+
+function _abrirPendLog(){
+  _loadPendLog();
+  _renderPendLog();
+  document.getElementById('pendLogOverlay').classList.add('open');
+}
+
+function _fecharPendLog(){
+  document.getElementById('pendLogOverlay').classList.remove('open');
+}
+
+function _renderPendLog(){
+  var list=document.getElementById('pendLogList');
+  var sel=document.getElementById('pendLogSelCount');
+  if(!list)return;
+  if(!_pendLog.length){
+    list.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">Nenhuma pendência registrada.</div>';
+    if(sel)sel.textContent='';
+    return;
+  }
+  list.innerHTML=_pendLog.map(function(item){
+    var dt=new Date(item.ts);
+    var timeStr=dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    return '<div class="pend-log-item" id="pli_'+item.id+'" onclick="_togglePendItem(\''+item.id+'\')">'
+      +'<input type="checkbox" '+(item._sel?'checked':'')+' onclick="event.stopPropagation();_togglePendItem(\''+item.id+'\')" />'
+      +'<span class="pend-log-icon">'+item.icon+'</span>'
+      +'<div class="pend-log-info">'
+        +'<div class="pend-log-action">'+item.acao+' '+(item.enviado?'✅':'⏳')+'</div>'
+        +'<div class="pend-log-detail">'+(item.detalhe||'')+'</div>'
+      +'</div>'
+      +'<span class="pend-log-time">'+timeStr+'</span>'
+      +'</div>';
+  }).join('');
+  _atualizarContadorSel();
+}
+
+function _togglePendItem(id){
+  var item=_pendLog.find(function(i){return i.id===id;});
+  if(!item)return;
+  item._sel=!item._sel;
+  var el=document.getElementById('pli_'+id);
+  if(el){
+    el.classList.toggle('selected',!!item._sel);
+    var cb=el.querySelector('input[type=checkbox]');
+    if(cb)cb.checked=!!item._sel;
+  }
+  _atualizarContadorSel();
+}
+
+function _atualizarContadorSel(){
+  var sel=_pendLog.filter(function(i){return i._sel;}).length;
+  var el=document.getElementById('pendLogSelCount');
+  if(el)el.textContent=sel>0?sel+' selecionado'+(sel>1?'s':''):'';
+}
+
+function _marcarEnviados(){
+  var ids=_pendLog.filter(function(i){return i._sel;}).map(function(i){return i.id;});
+  if(!ids.length){_showToast('⚠️ Selecione ao menos uma pendência.','var(--amber)');return;}
+  ids.forEach(function(id){
+    var item=_pendLog.find(function(i){return i.id===id;});
+    if(item){item.enviado=true;item._sel=false;}
+  });
+  _savePendLog();_renderPendLog();_updatePendBadge();
+  _showToast('✅ '+ids.length+' item(ns) marcado(s) como enviado(s).','var(--accent)');
+}
+
+function _excluirSelecionados(){
+  var ids=_pendLog.filter(function(i){return i._sel;}).map(function(i){return i.id;});
+  if(!ids.length){_showToast('⚠️ Selecione ao menos uma pendência.','var(--amber)');return;}
+  _pendLog=_pendLog.filter(function(i){return !i._sel;});
+  _savePendLog();_renderPendLog();_updatePendBadge();
+  _showToast('🗑 '+ids.length+' item(ns) excluído(s).','var(--muted)');
+}
+
+function _selecionarTodosPend(){
+  var todos=_pendLog.every(function(i){return i._sel;});
+  _pendLog.forEach(function(i){i._sel=!todos;});
+  _renderPendLog();
+}
+
+function _limparPendLog(){
+  if(!confirm('Limpar todo o histórico de pendências?'))return;
+  _pendLog=[];_savePendLog();_renderPendLog();_updatePendBadge();
+}
+
+/* ============================================================
+   ONLINE / OFFLINE
+============================================================ */
+function _initNetworkEvents(){
+  window.addEventListener('online',function(){
+    _updatePendBadge();
+    _showToast('🟢 Conexão restaurada!','var(--green)');
+  });
+  window.addEventListener('offline',function(){
+    _updatePendBadge();
+    _showToast('🔴 Sem conexão. Ações registradas como pendentes.','var(--red)');
+  });
+  _loadPendLog();
+}
+document.addEventListener('DOMContentLoaded',function(){
+  _initNetworkEvents();
+  // Mostrar loginScreen se nenhuma outra tela foi ativada pelo auto-login
+  var algumaTelaMostrada=_TELAS.some(function(id){
+    var el=document.getElementById(id);
+    return el&&el.style.display&&el.style.display!=='none';
+  });
+  if(!algumaTelaMostrada){
+    _mostrarTela('loginScreen',true);
+  }
+  // Safety net: se após 8s nenhuma tela estiver visível (Firebase travou),
+  // força loginScreen com aviso — evita tela em branco silenciosa.
+  setTimeout(function(){
+    var algumaVisivel=_TELAS.some(function(id){
+      var el=document.getElementById(id);
+      return el&&el.style.display&&el.style.display!=='none';
+    });
+    if(!algumaVisivel){
+      console.warn('[UI] Nenhuma tela visível após 8s — forçando loginScreen.');
+      _mostrarTela('loginScreen',true);
+      try{ if(typeof _showToast==='function') _showToast('⚠️ Carregamento demorou. Tente fazer login novamente.','var(--amber)'); }catch(_){}
+    }
+  }, 8000);
+});
+
+
+/* ============================================================
+   CONTROLE DE PERMISSÕES
+============================================================ */
+
+var _permsUidAtual=null;
+var _permsPerfilAtual=null;
+
+
+/* ============================================================
+   WRAPPERS — patches após declarações
+============================================================ */
+(function(){
+  'use strict';
+
+  function _modalFechou(id){
+    var el=document.getElementById(id);
+    return el&&!el.classList.contains('open');
+  }
+
+  /* ── Clientes ── */
+  var _origSaveEdit=window.saveEdit;
+  window.saveEdit=function(){
+    if(typeof editIdx==='undefined'||editIdx===null)return _origSaveEdit();
+    var nome=(document.getElementById('mCliente')||{}).value||'';
+    nome=nome.trim().toUpperCase();
+    _origSaveEdit();
+    if(_modalFechou('modalOverlay')&&nome)_addPendLog('Cliente editado','Cliente: '+nome,'✏️');
+  };
+
+  var _origSaveAdd=window.saveAdd;
+  window.saveAdd=function(){
+    var nome=(document.getElementById('aNome')||{}).value||'';
+    var valor=(document.getElementById('aValor')||{}).value||'';
+    nome=nome.trim().toUpperCase();
+    _origSaveAdd();
+    if(_modalFechou('addModalOverlay')&&nome&&valor)_addPendLog('Novo cliente adicionado','Cliente: '+nome,'➕');
+  };
+
+  var _origExecuteDelete=window.executeDelete;
+  window.executeDelete=function(){
+    var nome='?';
+    if(typeof confirmIdx!=='undefined'&&confirmIdx!==null&&data&&data[confirmIdx])nome=data[confirmIdx].cliente.toUpperCase();
+    _origExecuteDelete();
+    _addPendLog('Cliente excluído','Cliente: '+nome,'🗑️');
+  };
+
+  var _origSaveClientInfo=window.saveClientInfo;
+  window.saveClientInfo=function(){
+    var ciIdx=typeof _ciIdx!=='undefined'?_ciIdx:null;
+    var cliente=ciIdx!==null&&data&&data[ciIdx]?data[ciIdx].cliente.toUpperCase():'?';
+    _origSaveClientInfo();
+    _addPendLog('Observação salva','Cliente: '+cliente,'📝');
+  };
+
+  /* ── Título / Info / Período ── */
+  var _origSaveTitleModal=window.saveTitleModal;
+  window.saveTitleModal=function(){
+    var novoTitulo=(document.getElementById('titleInput')||{}).value||'';
+    _origSaveTitleModal();
+    _addPendLog('Título alterado',novoTitulo.trim()||"CI'S POR RESPONSÁVEL",'📌');
+  };
+
+  var _origSaveInfoModal=window.saveInfoModal;
+  window.saveInfoModal=function(){
+    var info=(document.getElementById('infoInput')||{}).value||'';
+    _origSaveInfoModal();
+    _addPendLog('Informação atualizada',info.trim()||'(removida)','ℹ️');
+  };
+
+  var _origSavePeriodModal=window.savePeriodModal;
+  window.savePeriodModal=function(){
+    _origSavePeriodModal();
+    _addPendLog('Período atualizado',window._periodText||'(limpo)','📅');
+  };
+
+  var _origClearPeriod=window.clearPeriod;
+  window.clearPeriod=function(){
+    _origClearPeriod();
+    _addPendLog('Período removido','','📅');
+  };
+
+  /* ── Ministrante ── */
+  var _origSetMinistrante=window._setMinistrante;
+  window._setMinistrante=function(nome,ativo){
+    _origSetMinistrante(nome,ativo);
+    _addPendLog(ativo?'Ministrante definido':'Ministrante removido','Treinador: '+nome,'🎙️');
+  };
+
+  /* ── Treinadores ── */
+  var _origConfirmarRenomearTreinador=window._confirmarRenomearTreinador;
+  window._confirmarRenomearTreinador=function(idx,nomeAtual){
+    var inp=document.getElementById('inputRenomearTreinador_'+idx);
+    var novoNome=inp?inp.value.trim().toUpperCase():null;
+    _origConfirmarRenomearTreinador(idx,nomeAtual);
+    if(novoNome&&novoNome!==nomeAtual)_addPendLog('Treinador renomeado',nomeAtual+' → '+novoNome,'✏️');
+  };
+
+  var _origAdicionarTreinadorModal=window.adicionarTreinadorModal;
+  window.adicionarTreinadorModal=function(){
+    var inp=document.getElementById('novoTreinadorModalInput');
+    var nome=inp?inp.value.trim().toUpperCase():'';
+    var qtdAntes=allTrainers.length;
+    _origAdicionarTreinadorModal();
+    if(nome&&allTrainers.length>qtdAntes)_addPendLog('Treinador adicionado','Treinador: '+nome,'👤');
+  };
+
+  var _origExecutarExcluirTreinador=window._executarExcluirTreinador;
+  window._executarExcluirTreinador=function(nome){
+    _origExecutarExcluirTreinador(nome);
+    _addPendLog('Treinador removido','Treinador: '+nome,'🗑️');
+  };
+
+  /* ── Consultores ── */
+  var _origConfirmarRenomearConsultor=window._confirmarRenomearConsultor;
+  window._confirmarRenomearConsultor=function(idx,nomeAtual){
+    var inp=document.getElementById('inputRenomearConsultor_'+idx);
+    var novoNome=inp?inp.value.trim().toUpperCase():null;
+    _origConfirmarRenomearConsultor(idx,nomeAtual);
+    if(novoNome&&novoNome!==nomeAtual)_addPendLog('Consultor renomeado',nomeAtual+' → '+novoNome,'✏️');
+  };
+
+  var _origAdicionarConsultorModal=window.adicionarConsultorModal;
+  window.adicionarConsultorModal=function(){
+    var inp=document.getElementById('novoConsultorModalInput');
+    var nome=inp?inp.value.trim().toUpperCase():'';
+    _origAdicionarConsultorModal();
+    if(nome)_addPendLog('Consultor adicionado','Consultor: '+nome,'👤');
+  };
+
+  var _origExecutarExcluirConsultor=window._executarExcluirConsultor;
+  window._executarExcluirConsultor=function(nome){
+    _origExecutarExcluirConsultor(nome);
+    _addPendLog('Consultor removido','Consultor: '+nome,'🗑️');
+  };
+
+  /* ── Usuários ── */
+  var _origSalvarUsuario=window.salvarUsuario;
+  window.salvarUsuario=function(){
+    var nome=(document.getElementById('novoUsuarioNome')||{}).value||'';
+    var login=(document.getElementById('novoUsuarioLogin')||{}).value||'';
+    var senha=(document.getElementById('novoUsuarioSenha')||{}).value||'';
+    nome=nome.trim().toUpperCase();login=login.trim().toLowerCase();
+    if(!nome||!login||login.length<3||!senha||senha.length<3)return _origSalvarUsuario();
+    _origSalvarUsuario();
+    if(_modalFechou('novoUsuarioOverlay'))_addPendLog('Acesso configurado',nome+' (@'+login+')','👥');
+  };
+
+  var _origConfirmarAlterarSenha=window.confirmarAlterarSenha;
+  window.confirmarAlterarSenha=function(){
+    var uid=(document.getElementById('alterarSenhaUid')||{}).value||'?';
+    var nova=(document.getElementById('alterarSenhaNova')||{}).value||'';
+    if(!nova||nova.length<3)return _origConfirmarAlterarSenha();
+    _origConfirmarAlterarSenha();
+    _addPendLog('Senha alterada','Usuário: '+uid,'🔑');
+  };
+
+  var _origToggleAtivo=window._toggleAtivo;
+  window._toggleAtivo=function(uid,novoEstado){
+    _origToggleAtivo(uid,novoEstado);
+    _addPendLog(novoEstado?'Usuário reativado':'Usuário pausado','UID: '+uid,novoEstado?'✅':'⏸️');
+  };
+
+  var _origExcluirUsuario=window._excluirUsuario;
+  window._excluirUsuario=function(uid,nome){
+    _origExcluirUsuario(uid,nome);
+    _addPendLog('Usuário excluído',(nome||uid),'🗑️');
+  };
+
+  /* ── Firebase / Persistência ── */
+  var _origConfirmSave=window.confirmSave;
+  window.confirmSave=function(){
+    _origConfirmSave();
+    _addPendLog('Dados salvos localmente',new Date().toLocaleTimeString('pt-BR'),'💾');
+  };
+
+  var _origExecutarEnviar=window._executarEnviar;
+  window._executarEnviar=function(){
+    _origExecutarEnviar();
+    _addPendLog('Enviado → Firebase',data.length+' clientes','⬆️');
+  };
+
+  var _origExecutarPuxar=window._executarPuxar;
+  window._executarPuxar=function(){
+    _origExecutarPuxar();
+    _addPendLog('Puxado ← Firebase','','⬇️');
+  };
+
+})();
+
+/* ============================================================
+   CONTROLE DE PERMISSÕES
+============================================================ */
+
+// Permissões configuráveis por perfil (rótulo, chave, descrição)
+var PERMS_CONFIG={
+  ministrante:[
+    {chave:'verGeral',     label:'Ver aba Geral',      sub:'Acesso ao painel geral com métricas da turma'},
+    {chave:'verConsultor', label:'Ver aba Consultor',  sub:'Acesso ao painel de consultores'},
+    {chave:'verTreinador', label:'Ver aba Treinador',  sub:'Acesso ao painel de treinadores'},
+    {chave:'verProduto',   label:'Ver aba Produto',    sub:'Acesso à tabela cruzada de produtos'},
+    {chave:'verValores',   label:'Ver valores (R$)',   sub:'Exibir valores monetários dos clientes'},
+    {chave:'exportar',     label:'Exportar dados',     sub:'Permitir exportar PDF e backup JSON'},
+  ],
+  consultor:[
+    {chave:'verGeral',     label:'Ver aba Geral',      sub:'Visão geral da turma e métricas'},
+    {chave:'verConsultor', label:'Ver aba Consultor',  sub:'Seus clientes e métricas individuais'},
+    {chave:'verTreinador', label:'Ver aba Treinador',  sub:'Dados dos treinadores'},
+    {chave:'verProduto',   label:'Ver aba Produto',    sub:'Tabela cruzada consultor × produto'},
+    {chave:'verValores',   label:'Ver valores (R$)',   sub:'Exibir valores monetários'},
+    {chave:'exportar',     label:'Exportar dados',     sub:'Baixar backup em JSON'},
+  ],
+  treinador:[
+    {chave:'verGeral',     label:'Ver aba Geral',      sub:'Visão geral da turma e métricas'},
+    {chave:'verConsultor', label:'Ver aba Consultor',  sub:'Dados dos consultores'},
+    {chave:'verTreinador', label:'Ver aba Treinador',  sub:'Seus clientes e métricas individuais'},
+    {chave:'verProduto',   label:'Ver aba Produto',    sub:'Tabela cruzada consultor × produto'},
+    {chave:'verValores',   label:'Ver valores (R$)',   sub:'Exibir valores monetários'},
+    {chave:'exportar',     label:'Exportar dados',     sub:'Baixar backup em JSON'},
+  ]
+};
+
+var _permsModalUid=null;
+var _permsModalPerfil=null;
+
+
+function abrirPermsGrupo(perfil){
+  // Abre permissões usando uid especial para o grupo
+  var uid='_grupo_'+perfil;
+  var perfilLabel=perfil==='consultor'?'Consultores':perfil==='treinador'?'Treinadores':'Ministrantes';
+  abrirPermsModal(uid, 'Perfil: '+perfilLabel, perfil);
+}
+function abrirPermsModal(uid, nome, perfil){
+  _permsModalUid=uid;
+  _permsModalPerfil=perfil;
+
+  document.getElementById('permsModalTitulo').textContent='🔒 Controle de permissões';
+  document.getElementById('permsModalSub').textContent=nome+' · '+(perfil==='consultor'?'Consultor':perfil==='ministrante'?'Ministrante':'Treinador');
+
+  var local=_getUsuariosLocal();
+  var uObj=local[uid]||{};
+  var permsAtivas=_getPermsUsuario(perfil,uObj.permissoes||null);
+  var config=PERMS_CONFIG[perfil]||PERMS_CONFIG.consultor;
+
+  var html='<div style="display:flex;flex-direction:column;gap:2px;">';
+  config.forEach(function(item){
+    var on=!!permsAtivas[item.chave];
+    html+='<div class="perms-row'+(on?' perm-on':'')+'" onclick="_togglePerm(this,\''+item.chave+'\')">'
+      +'<div style="flex:1;min-width:0;">'
+        +'<div class="perms-row-label">'+item.label+'</div>'
+        +'<div class="perms-row-desc">'+item.sub+'</div>'
+      +'</div>'
+      +'<button class="perms-tog'+(on?' perm-on':'')+'" tabindex="-1"></button>'
+    +'</div>';
+  });
+  html+='</div>';
+  html+='<div style="font-size:11px;color:var(--muted);padding:10px 0 0;">As alterações têm efeito no próximo login do usuário.</div>';
+
+  document.getElementById('permsModalBody').innerHTML=html;
+  document.getElementById('permsModalOverlay').classList.add('open');
+}
+
+function _togglePerm(row, chave){
+  row.classList.toggle('perm-on');
+  var tog=row.querySelector('.perms-tog');
+  if(tog) tog.classList.toggle('perm-on');
+}
+
+function fecharPermsModal(){
+  document.getElementById('permsModalOverlay').classList.remove('open');
+  _permsModalUid=null;
+  _permsModalPerfil=null;
+}
+
+function salvarPermissoes(){
+  if(!_permsModalUid||!_permsModalPerfil)return;
+
+  var config=PERMS_CONFIG[_permsModalPerfil]||PERMS_CONFIG.consultor;
+  var permissoes={};
+  var rows=document.querySelectorAll('#permsModalBody .perms-row');
+  config.forEach(function(item,i){
+    permissoes[item.chave]=rows[i]?rows[i].classList.contains('perm-on'):false;
+  });
+
+  // Salvar no objeto do usuário — padrão atual do sistema
+  var local=_getUsuariosLocal();
+  if(!local[_permsModalUid]) local[_permsModalUid]={};
+  local[_permsModalUid].permissoes=permissoes;
+  _saveUsuariosLocal(local);
+
+  // Sincronizar com Firebase (padrão atual)
+  if(window._fbSave){
+    window._fbSave('usuarios/'+_permsModalUid+'/permissoes', permissoes)
+      .catch(function(){_showToast('⚠️ Salvo localmente. Firebase indisponível.','var(--amber)');});
+  }
+
+  fecharPermsModal();
+  _showToast('✅ Permissões de '+
+    (local[_permsModalUid]?local[_permsModalUid].nome||_permsModalUid:_permsModalUid)+
+    ' salvas!','var(--accent)');
+}
