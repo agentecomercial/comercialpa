@@ -51,6 +51,13 @@
       if(typeof renderConsultor==='function') renderConsultor();
       if(typeof renderTreinador==='function') renderTreinador();
       if(typeof renderProduto==='function')   renderProduto();
+      // Re-renderizar card do consultor aberto (atualiza badges de presença em tempo real)
+      if(typeof _renderConsultorDetail==='function' && window._consultorAtivo){
+        var _cd = document.getElementById('consultorDetail');
+        if(_cd && _cd.style.display!=='none') _renderConsultorDetail(window._consultorAtivo);
+      }
+      // Atualizar contadores de presença
+      if(typeof window._presencaAtualizarContadores==='function') window._presencaAtualizarContadores();
     }catch(e){ console.warn('[RT] render clientes:', e); }
   }
 

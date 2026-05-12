@@ -141,8 +141,10 @@ window._presencaBadgeHtml = function(ri){
 
 /* ── Atualizar só o badge de 1 linha (sem re-render) ── */
 function _atualizarBadge(ri){
-  var cell = document.querySelector('td[data-presenca-ri="'+ri+'"]');
-  if(cell) cell.innerHTML = window._presencaBadgeHtml(ri);
+  // Atualiza em qualquer elemento com data-presenca-ri (td na tabela geral, div no accordion)
+  document.querySelectorAll('[data-presenca-ri="'+ri+'"]').forEach(function(el){
+    el.innerHTML = window._presencaBadgeHtml(ri);
+  });
 }
 
 /* ── Contadores de presença ── */
