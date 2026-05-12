@@ -4127,8 +4127,8 @@ function abrirClienteDetalhe(ri){
       _cdLista.querySelectorAll('select,input,button').forEach(function(el){el.disabled=true;el.style.opacity='0.6';});
     }
   }
-  var _cdAddBtn=document.getElementById('cdAddTreinBtn');
-  if(_cdAddBtn)_cdAddBtn.style.display=_modoEdit?'':'none';
+  var _cdBtns=document.getElementById('cdTreinBtns');
+  if(_cdBtns)_cdBtns.style.display=_modoEdit?'':'none';
 
   /* Treinador */
   var _trdRow=document.getElementById('clienteDetalheTreinadorRow');
@@ -4970,6 +4970,17 @@ function setAddEntradaToggle(sim){addEntradaRealizada=sim;document.getElementByI
 ═══════════════════════════════════════════ */
 function _treinTotalId(listId){return listId==='aTreinamentosLista'?'aValorTotal':'cdValorTotal';}
 
+function _removerUltimoTrein(listId){
+  var container=document.getElementById(listId);
+  if(!container)return;
+  var rows=container.querySelectorAll('.trein-row');
+  if(rows.length<=1)return;
+  rows[rows.length-1].remove();
+  _calcTotalTrein(listId);
+  _checkCITreinador(listId);
+  _updateRemoveBtns(listId);
+}
+
 function _updateRemoveBtns(listId){
   var container=document.getElementById(listId);
   if(!container)return;
@@ -5063,8 +5074,8 @@ window._abrirMenuCliente=function(e,nomeCliente,ri){
         abrirClienteDetalhe(_riEdit);
         setTimeout(function(){
           _addTreinRow('cdTreinamentosLista');
-          var btn=document.getElementById('cdAddTreinBtn');
-          if(btn)btn.style.display='';
+          var _btns=document.getElementById('cdTreinBtns');
+          if(_btns)_btns.style.display='';
         },80);
       }
     }},
