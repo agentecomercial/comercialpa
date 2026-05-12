@@ -4022,17 +4022,10 @@ function _renderConsultorDetail(c){
   const tbl=tblEl?tblEl.closest('table'):null;
   var listEl=document.getElementById('consultorDetailList');
 
-  // ── Agrupamento por cliente ──
-  const _gruposMap=new Map();
-  cd.forEach(function(d){
-    var k=d.cliente;
-    if(!_gruposMap.has(k)) _gruposMap.set(k,[]);
-    _gruposMap.get(k).push(d);
-  });
-  // determinar status "misto" de um grupo
-  function _statusGrupo(itens){
-    var sts=[...new Set(itens.map(d=>d.status||'-'))];
-    return sts.length===1?sts[0]:'misto';
+  // Helper: texto de treinamentos do registro
+  function _treinDisplay(d){
+    if(d.treinamentos&&d.treinamentos.length) return d.treinamentos.map(function(t){return t.cod;}).join(' · ');
+    return d.treinamento||'—';
   }
 
   if(_ehProprio){
@@ -4047,55 +4040,22 @@ function _renderConsultorDetail(c){
     if(!cd.length){
       listEl.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Nenhum cliente para este filtro.</div>';
     } else {
-      var _listHtml='';
-      _gruposMap.forEach(function(itens,nome){
-        if(itens.length===1){
-          var d=itens[0]; var ri=data.indexOf(d);
-          var _ip=d.status==='pago';
-          _listHtml+='<div class="consultor-list-item'+(_ip?' pago':'')+'" onclick="abrirClienteDetalhe('+ri+')">'
-            +'<span class="consultor-list-name'+(_ip?' pago':'')+'">'+d.cliente+'</span>'
-            +'<span style="display:flex;align-items:center;gap:6px;">'
-            +'<span class="badge badge-'+d.status+'">'+sl(d.status)+'</span>'
-            +'<button onclick="event.stopPropagation();window._abrirMenuCliente(event,\''+d.cliente.replace(/'/g,"\\'")+'\',' +ri+')" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:22px;height:22px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button>'
-            +'</span>'
-            +'</div>';
-        } else {
-          var totalG=itens.reduce(function(a,d){return a+d.valor;},0);
-          var stG=_statusGrupo(itens);
-          var _gid='cg_'+nome.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
-          var todosP=itens.every(function(d){return d.status==='pago';});
-          var _ri0=data.indexOf(itens[0]);
-          _listHtml+='<div style="border-radius:var(--radius-sm);overflow:hidden;margin-bottom:8px;border:1px solid rgba(200,240,90,.25);border-left:3px solid var(--accent);">'
-            +'<div class="consultor-list-item" style="margin-bottom:0;border-radius:0;border:none;background:rgba(200,240,90,.06);" onclick="window._toggleGrupo(\''+_gid+'\')">'
-            +'<span style="display:flex;align-items:center;gap:6px;flex:1;">'
-            +'<span class="consultor-list-name'+(todosP?' pago':'')+'">'+nome+'</span>'
-            +'<span style="font-size:9px;font-weight:700;background:rgba(200,240,90,.15);color:var(--accent);border-radius:10px;padding:1px 7px;">'+itens.length+'</span>'
-            +'</span>'
-            +'<span style="display:flex;align-items:center;gap:8px;">'
-            +'<span style="font-size:12px;font-weight:700;color:'+(todosP?'#39ff14':'var(--text)')+';">'+formatVal(totalG)+'</span>'
-            +'<button onclick="window._abrirMenuCliente(event,\''+nome.replace(/'/g,"\\'")+'\',' +_ri0+')" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:22px;height:22px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button>'
-            +'<span id="arr_'+_gid+'" style="font-size:10px;color:var(--accent);transition:transform .2s;transform:rotate(90deg);">▶</span>'
-            +'</span>'
-            +'</div>'
-            +'<div id="'+_gid+'" style="display:block;">'
-            +itens.map(function(d){
-              var ri=data.indexOf(d);
-              var _ip=d.status==='pago';
-              return '<div class="consultor-list-item" style="margin-bottom:0;border-radius:0;border:none;padding-left:20px;border-top:1px solid var(--border);" onclick="abrirClienteDetalhe('+ri+')">'
-                +'<span style="display:flex;flex-direction:column;gap:1px;flex:1;">'
-                +'<span style="font-size:11px;font-weight:600;color:var(--muted);">'+(d.treinamento||'—')+'</span>'
-                +'</span>'
-                +'<span style="display:flex;align-items:center;gap:8px;">'
-                +'<span style="font-size:12px;font-weight:700;color:'+(d.entrada>0?'var(--green)':'var(--muted)')+';">'+(d.entrada>0?'↑ '+formatVal(d.entrada):'')+'</span>'
-                +'<span class="badge badge-'+d.status+'">'+sl(d.status)+'</span>'
-                +'</span>'
-                +'</div>';
-            }).join('')
-            +'</div>'
-            +'</div>';
-        }
-      });
-      listEl.innerHTML=_listHtml;
+      listEl.innerHTML=cd.map(function(d){
+        var ri=data.indexOf(d);
+        var _ip=d.status==='pago';
+        var _td=_treinDisplay(d);
+        return '<div class="consultor-list-item'+(_ip?' pago':'')+'" onclick="abrirClienteDetalhe('+ri+')">'
+          +'<span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">'
+          +'<span class="consultor-list-name'+(_ip?' pago':'')+'" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+d.cliente+'</span>'
+          +'<span style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_td+'</span>'
+          +'</span>'
+          +'<span style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'
+          +'<span style="font-size:12px;font-weight:700;color:var(--text);">'+formatVal(d.valor)+'</span>'
+          +'<span class="badge badge-'+d.status+'">'+sl(d.status)+'</span>'
+          +'<button onclick="event.stopPropagation();window._abrirMenuCliente(event,\''+d.cliente.replace(/'/g,"\\'")+'\',' +ri+')" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:22px;height:22px;cursor:pointer;color:var(--accent);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button>'
+          +'</span>'
+          +'</div>';
+      }).join('');
     }
   } else {
     if(tbl) tbl.style.display='';
@@ -4104,9 +4064,7 @@ function _renderConsultorDetail(c){
       tblEl.innerHTML='<tr class="empty-row"><td colspan="6">Nenhum cliente para este filtro.</td></tr>';
     } else {
       var _rows='';
-      _gruposMap.forEach(function(itens,nome){
-        if(itens.length===1){
-          var d=itens[0];
+      cd.forEach(function(d){
           const ri=data.indexOf(d);
           const ip=d.status==='pago';
           const hi=!!(d.info&&d.info.trim());
@@ -4118,55 +4076,11 @@ function _renderConsultorDetail(c){
           _rows+=`<tr style="border-left:${borderLeft};" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar" class="tr-clickable">
             <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button><button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:18px;height:18px;cursor:pointer;color:var(--accent);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button></span></td>
             <td style="text-align:center;white-space:nowrap;color:var(--muted);font-size:11px;">${treinadorTxt}</td>
-            <td style="text-align:center;white-space:nowrap;">${d.treinamento||'—'}</td>
+            <td style="text-align:center;white-space:nowrap;font-size:11px;">${_treinDisplay(d)}</td>
             <td style="text-align:center;white-space:nowrap;">${formatVal(d.valor)}</td>
             <td style="text-align:center;white-space:nowrap;"><span class="badge badge-${st}">${sl(st)}</span></td>
             <td style="text-align:center;white-space:nowrap;${entradaStyle}">${entradaTxt}</td>
           </tr>`;
-        } else {
-          var totalG=itens.reduce(function(a,d){return a+d.valor;},0);
-          var entradaG=itens.reduce(function(a,d){return a+(d.entrada||0);},0);
-          var stG=_statusGrupo(itens);
-          var todosP=itens.every(function(d){return d.status==='pago';});
-          var _gid='tg_'+nome.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
-          // Linha pai
-          var _ri0t=data.indexOf(itens[0]);
-          _rows+=`<tr class="tr-grupo-pai" onclick="window._toggleGrupo('${_gid}')" style="border-left:3px solid var(--accent);background:rgba(200,240,90,.04);cursor:pointer;">
-            <td style="font-weight:700;text-transform:uppercase;white-space:nowrap;${todosP?'color:#39ff14;':'color:var(--accent);'}">
-              <span style="display:inline-flex;align-items:center;gap:6px;">
-                <span id="arr_${_gid}" style="font-size:9px;color:var(--accent);transition:transform .25s;display:inline-block;transform:rotate(90deg);">▶</span>
-                ${nome}
-                <span style="font-size:9px;font-weight:700;background:rgba(200,240,90,.15);color:var(--accent);border-radius:10px;padding:1px 7px;">${itens.length} treinamentos</span>
-                <button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${nome.replace(/'/g,"\\'")}',${_ri0t})" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:18px;height:18px;cursor:pointer;color:var(--accent);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button>
-              </span>
-            </td>
-            <td style="text-align:center;color:var(--muted);font-size:11px;">—</td>
-            <td style="text-align:center;color:var(--muted);font-size:11px;">—</td>
-            <td style="text-align:center;font-weight:700;color:${todosP?'#39ff14':'var(--text)'};">${formatVal(totalG)}</td>
-            <td style="text-align:center;"><span class="badge badge-${stG==='misto'?'negociacao':stG}" style="${stG==='misto'?'border:1px dashed var(--amber);background:transparent;color:var(--amber);':''}">${stG==='misto'?'MISTO':sl(stG)}</span></td>
-            <td style="text-align:center;${entradaG>0?'color:var(--green);font-weight:600;':'color:var(--muted);'}">${entradaG>0?'↑ '+formatVal(entradaG):'—'}</td>
-          </tr>`;
-          // Sub-linhas
-          itens.forEach(function(d){
-            const ri=data.indexOf(d);
-            const ip=d.status==='pago';
-            const hi=!!(d.info&&d.info.trim());
-            const st=d.status||'-';
-            const treinadorTxt=(d.treinador&&d.treinador!=='-')?d.treinador.toUpperCase():'—';
-            const entradaTxt=d.entrada>0?'↑ '+formatVal(d.entrada):'—';
-            const entradaStyle=d.entrada>0?'color:var(--green);font-weight:600;':'color:var(--muted);';
-            _rows+=`<tr class="tr-grupo-filho" data-grupo="${_gid}" style="display:table-row;border-left:3px solid rgba(200,240,90,.2);background:rgba(200,240,90,.02);" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar">
-              <td style="font-weight:500;text-transform:uppercase;white-space:nowrap;padding-left:28px;color:var(--muted);font-size:12px;">
-                <span style="display:inline-flex;align-items:center;gap:4px;">└ ${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button></span>
-              </td>
-              <td style="text-align:center;white-space:nowrap;color:var(--muted);font-size:11px;">${treinadorTxt}</td>
-              <td style="text-align:center;white-space:nowrap;font-size:12px;">${d.treinamento||'—'}</td>
-              <td style="text-align:center;white-space:nowrap;font-size:12px;">${formatVal(d.valor)}</td>
-              <td style="text-align:center;white-space:nowrap;"><span class="badge badge-${st}">${sl(st)}</span></td>
-              <td style="text-align:center;white-space:nowrap;${entradaStyle}">${entradaTxt}</td>
-            </tr>`;
-          });
-        }
       });
       tblEl.innerHTML=_rows;
     }
@@ -4201,47 +4115,32 @@ function abrirClienteDetalhe(ri){
 
   document.getElementById('clienteDetalheName').textContent=d.cliente;
 
-  /* Alternar entre modo visualização e edição */
-  function _show(spanId, editId, mostrarEdit){
-    document.getElementById(spanId).style.display=mostrarEdit?'none':'';
-    document.getElementById(editId).style.display=mostrarEdit?'':'none';
+  /* Treinamentos múltiplos */
+  var _cdLista=document.getElementById('cdTreinamentosLista');
+  if(_cdLista){
+    _cdLista.innerHTML='';
+    var _treinsEdit=d.treinamentos&&d.treinamentos.length?d.treinamentos:[{cod:d.treinamento||'-',valor:d.valor||0}];
+    _treinsEdit.forEach(function(t){_addTreinRow('cdTreinamentosLista',t.cod,t.valor);});
+    _calcTotalTrein('cdTreinamentosLista');
+    // Bloquear edição de linhas existentes se não for modo edição
+    if(!_modoEdit){
+      _cdLista.querySelectorAll('select,input,button').forEach(function(el){el.disabled=true;el.style.opacity='0.6';});
+    }
   }
+  var _cdAddBtn=document.getElementById('cdAddTreinBtn');
+  if(_cdAddBtn)_cdAddBtn.style.display=_modoEdit?'':'none';
 
-  /* Treinamento */
-  var trnEl=document.getElementById('clienteDetalheTreinamento');
-  trnEl.textContent=d.treinamento||'—';
-  var trnEdit=document.getElementById('clienteDetalheTreinamentoEdit');
-  var _treinLst=(typeof allTreinamentos!=='undefined'&&Array.isArray(allTreinamentos))?allTreinamentos:[];
-  trnEdit.innerHTML='<option value="">— vazio —</option>'+_treinLst.map(function(t){
-    return '<option value="'+t+'"'+(d.treinamento===t?' selected':'')+'>'+t+'</option>';
-  }).join('');
-  _show('clienteDetalheTreinamento','clienteDetalheTreinamentoEdit',_modoEdit);
-
-  /* Treinador — só relevante se Treinamento = CI */
+  /* Treinador */
   var _trdRow=document.getElementById('clienteDetalheTreinadorRow');
-  var trdEl=document.getElementById('clienteDetalheTreinador');
-  trdEl.textContent=d.treinador?d.treinador.toUpperCase():'—';
   var trdEdit=document.getElementById('clienteDetalheTreinadorEdit');
   var _trainLst=(typeof allTrainers!=='undefined'&&Array.isArray(allTrainers))?allTrainers:[];
   trdEdit.innerHTML='<option value="-">—</option>'+_trainLst.map(function(t){
     return '<option value="'+t+'"'+(d.treinador===t?' selected':'')+'>'+t.toUpperCase()+'</option>';
   }).join('');
-  var _eCI=(d.treinamento||'').toUpperCase()==='CI';
-  if(_trdRow) _trdRow.style.display=_eCI?'flex':'none';
-  _show('clienteDetalheTreinador','clienteDetalheTreinadorEdit',_modoEdit);
+  _checkCITreinador('cdTreinamentosLista');
 
-  /* Ao mudar treinamento no select, mostrar/ocultar treinador */
-  trnEdit.onchange=function(){
-    var isCI=this.value.toUpperCase()==='CI';
-    if(_trdRow) _trdRow.style.display=isCI?'flex':'none';
-  };
-
-  /* Valor */
-  var valEl=document.getElementById('clienteDetalheValor');
-  valEl.textContent=formatVal(d.valor);
-  var valEdit=document.getElementById('clienteDetalheValorEdit');
-  valEdit.value=d.valor?Number(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
-  _show('clienteDetalheValor','clienteDetalheValorEdit',_modoEdit);
+  /* Valor legado (hidden) */
+  var valEl=document.getElementById('clienteDetalheValor');if(valEl)valEl.textContent=formatVal(d.valor);
 
   /* Status */
   var stEl=document.getElementById('clienteDetalheStatus');
@@ -4274,21 +4173,28 @@ function salvarClienteDetalhe(){
   var d=data[_clienteDetalheIdx];
   if(!d) return;
 
-  /* Ler valores dos campos editáveis */
-  var novoTreinamento=document.getElementById('clienteDetalheTreinamentoEdit').value||'';
-  var novoTreinador=document.getElementById('clienteDetalheTreinadorEdit').value||'-';
-  var novoValorRaw=document.getElementById('clienteDetalheValorEdit').value.replace(/\./g,'').replace(',','.');
-  var novoValor=parseFloat(novoValorRaw)||0;
+  var _treinRows=_getTreinRows('cdTreinamentosLista');
+  if(!_treinRows.length){_showToast('⚠️ Adicione pelo menos 1 treinamento.','var(--amber)');return;}
+  var _valorTotal=_treinRows.reduce(function(a,t){return a+t.valor;},0);
+  var _hasCI=_treinRows.some(function(t){return t.cod==='CI';});
   var novoStatus=document.getElementById('clienteDetalheStatusEdit').value||'aberto';
+  var novoTreinador=(document.getElementById('clienteDetalheTreinadorEdit')||{}).value||'-';
 
-  d.treinamento=novoTreinamento;
-  d.treinador=novoTreinador==='-'?'':novoTreinador;
-  d.valor=novoValor||null;
+  d.treinamentos=_treinRows;
+  d.treinamento=_treinRows[0].cod;
+  d.valor=_valorTotal;
+  d.treinador=_hasCI?(novoTreinador==='-'?'':novoTreinador):'-';
   d.status=novoStatus;
 
   if(typeof markUnsaved==='function') markUnsaved();
   if(typeof saveStorage==='function') saveStorage();
   if(typeof renderAll==='function') renderAll();
+  // Re-abrir detalhe do consultor se estava aberto
+  if(window._consultorAtivo){
+    var _cd=document.getElementById('consultorDetail');
+    if(_cd&&_cd.style.display!=='none') _renderConsultorDetail(window._consultorAtivo);
+    else openConsultorDetail(window._consultorAtivo);
+  }
   fecharClienteDetalhe();
   if(typeof _showToast==='function') _showToast('Cliente atualizado!','var(--accent)');
 }
@@ -5058,6 +4964,68 @@ function executeDelete(){
 function setAddEntradaToggle(sim){addEntradaRealizada=sim;document.getElementById('aToggleSim').className='etoggle'+(sim?' active-yes':'');document.getElementById('aToggleNao').className='etoggle'+(!sim?' active-no':'');document.getElementById('addEntradaValField').style.display=sim?'block':'none';}
 // Modal simplificado para consultor — campos restritos
 // ── Mini-menu "+" por linha de cliente ──
+/* ═══════════════════════════════════════════
+   TREINAMENTOS MÚLTIPLOS — helpers
+═══════════════════════════════════════════ */
+function _treinTotalId(listId){return listId==='aTreinamentosLista'?'aValorTotal':'cdValorTotal';}
+
+function _addTreinRow(listId,cod,val){
+  var container=document.getElementById(listId);
+  if(!container)return;
+  var totalId=_treinTotalId(listId);
+  var opts='<option value="-">— treinamento —</option>';
+  var _tl=(typeof allTreinamentos!=='undefined'&&Array.isArray(allTreinamentos))?allTreinamentos:[];
+  _tl.forEach(function(t){opts+='<option value="'+t+'"'+(cod===t?' selected':'')+'>'+t+'</option>';});
+  var valStr=val?Number(val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
+  var row=document.createElement('div');
+  row.className='trein-row';
+  row.style.cssText='display:flex;gap:6px;align-items:center;';
+  row.innerHTML='<select class="modal-select trein-cod" style="flex:1;min-width:0;font-size:12px;padding:6px 8px;" onchange="_calcTotalTrein(\''+listId+'\');_checkCITreinador(\''+listId+'\')">'+opts+'</select>'
+    +'<input type="text" inputmode="numeric" class="modal-input trein-valor" style="width:110px;flex-shrink:0;font-size:12px;padding:6px 8px;text-align:right;margin:0;" placeholder="0,00" value="'+valStr+'" oninput="this.value=lcMoneyMask(this.value);_calcTotalTrein(\''+listId+'\')">'
+    +'<button type="button" onclick="this.closest(\'.trein-row\').remove();_calcTotalTrein(\''+listId+'\');_checkCITreinador(\''+listId+'\')" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;font-family:monospace;">×</button>';
+  container.appendChild(row);
+  _calcTotalTrein(listId);
+  _checkCITreinador(listId);
+}
+
+function _calcTotalTrein(listId){
+  var container=document.getElementById(listId);
+  var totalEl=document.getElementById(_treinTotalId(listId));
+  if(!container||!totalEl)return;
+  var total=0;
+  container.querySelectorAll('.trein-valor').forEach(function(inp){total+=parseVal(inp.value)||0;});
+  totalEl.textContent=formatVal(total);
+}
+
+function _getTreinRows(listId){
+  var container=document.getElementById(listId);
+  if(!container)return[];
+  var rows=[];
+  container.querySelectorAll('.trein-row').forEach(function(row){
+    var sel=row.querySelector('.trein-cod');
+    var inp=row.querySelector('.trein-valor');
+    if(!sel||!inp)return;
+    var cod=sel.value;
+    if(!cod||cod==='-')return;
+    rows.push({cod:cod,valor:parseVal(inp.value)||0});
+  });
+  return rows;
+}
+
+function _checkCITreinador(listId){
+  var container=document.getElementById(listId);
+  if(!container)return;
+  var hasCI=false;
+  container.querySelectorAll('.trein-cod').forEach(function(sel){if(sel.value==='CI')hasCI=true;});
+  if(listId==='aTreinamentosLista'){
+    var rowEl=document.getElementById('addTreinadorRow');
+    if(rowEl)rowEl.style.display=hasCI?'':'none';
+  } else {
+    var rowEl=document.getElementById('clienteDetalheTreinadorRow');
+    if(rowEl)rowEl.style.display=hasCI?'flex':'none';
+  }
+}
+
 window._abrirMenuCliente=function(e,nomeCliente,ri){
   e.stopPropagation();
   // Remove menu anterior se existir
@@ -5076,19 +5044,18 @@ window._abrirMenuCliente=function(e,nomeCliente,ri){
 
   var opcoes=[
     {icon:'➕', label:'Adicionar treinamento', fn:function(){
-      // Pré-preenche o modal com o nome do cliente já fixo
-      var _s=_getSessao?_getSessao():null;
-      var _ehC=_s&&_s.perfil==='consultor';
-      _ehC?openAddModalConsultor():openAddModal();
-      setTimeout(function(){
-        var el=document.getElementById('aNome');
-        if(el){el.value=nomeCliente;el.disabled=true;el.style.opacity='0.6';}
-        // Fixar consultor ao do detalhe ativo (evita que aConsultor tenha valor residual errado)
-        var _aConsEl=document.getElementById('aConsultor');
-        if(_aConsEl&&window._consultorAtivo){_aConsEl.value=window._consultorAtivo;_aConsEl.disabled=true;_aConsEl.style.opacity='0.6';}
-        var _mt=document.querySelector('#addModalOverlay .modal-title');
-        if(_mt)_mt.textContent='Novo treinamento — '+nomeCliente;
-      },50);
+      // Encontra o registro existente do cliente e abre o modal de edição
+      var _riEdit=data.findIndex(function(d){
+        return d.cliente===nomeCliente&&(!window._consultorAtivo||d.consultor===window._consultorAtivo);
+      });
+      if(_riEdit>=0){
+        abrirClienteDetalhe(_riEdit);
+        setTimeout(function(){
+          _addTreinRow('cdTreinamentosLista');
+          var btn=document.getElementById('cdAddTreinBtn');
+          if(btn)btn.style.display='';
+        },80);
+      }
     }},
     {icon:'✏️', label:'Editar registro', fn:function(){ abrirClienteDetalhe(ri); }},
     {icon:'ℹ️', label:'Ver informações', fn:function(){ openClientInfo(ri); }},
@@ -5115,10 +5082,13 @@ function openAddModalConsultor(){
   if(!_s||_s.perfil!=='consultor'){openAddModal();return;}
   // Pré-preencher campos fixos
   document.getElementById('aNome').value='';
-  document.getElementById('aValor').value='';
   document.getElementById('aStatus').value='aberto';
   document.getElementById('aEntrada').value='';
-  document.getElementById('aTreinamento').value=allTreinamentos[2]||'';
+  // Init multi-training list
+  var _lista=document.getElementById('aTreinamentosLista');
+  if(_lista){_lista.innerHTML='';_addTreinRow('aTreinamentosLista');}
+  var _tot=document.getElementById('aValorTotal');if(_tot)_tot.textContent='R$ 0,00';
+  var _trdRow=document.getElementById('addTreinadorRow');if(_trdRow)_trdRow.style.display='none';
   // Treinador e consultor: ocultar/fixar
   var _vinculo=_s.vinculo||_s.nome||'';
   var _aConsEl=document.getElementById('aConsultor');
@@ -5138,13 +5108,15 @@ function openAddModalConsultor(){
 }
 
 function openAddModal(){
-  document.getElementById('aNome').value='';document.getElementById('aValor').value='';
+  document.getElementById('aNome').value='';
   document.getElementById('aStatus').value='aberto';document.getElementById('aEntrada').value='';
-  document.getElementById('aTreinamento').value=allTreinamentos[2]||'';
-  if(allTrainers.length)document.getElementById('aTreinador').value=allTrainers[0];
   if(allConsultors.length)document.getElementById('aConsultor').value=allConsultors[0];
-  document.getElementById('aTreinador').disabled=false;document.getElementById('aTreinador').style.opacity='1';
-  document.getElementById('aTreinamentoNote').textContent='CI: selecione o treinador responsável.';
+  // Init multi-training list
+  var _lista=document.getElementById('aTreinamentosLista');
+  if(_lista){_lista.innerHTML='';_addTreinRow('aTreinamentosLista');}
+  var _tot=document.getElementById('aValorTotal');if(_tot)_tot.textContent='R$ 0,00';
+  var _trdRow=document.getElementById('addTreinadorRow');if(_trdRow)_trdRow.style.display='none';
+  if(allTrainers.length){var _trd=document.getElementById('aTreinador');if(_trd)_trd.value=allTrainers[0];}
   setAddEntradaToggle(false);document.getElementById('addModalOverlay').classList.add('open');
 }
 function closeAddModal(){
@@ -5174,25 +5146,29 @@ function saveAdd(){
     return;
   }
   const nomeUp=nome.toUpperCase();
-  const trein=document.getElementById('aTreinamento').value;
-  // ── Regra 3: bloqueia nome + treinamento iguais ──
-  const _dupNomeTrein=data.find(d=>d.cliente.toUpperCase()===nomeUp&&(d.treinamento||'')===(trein||''));
-  if(_dupNomeTrein){
-    _showToast('❌ Cliente "'+nomeUp+'" já cadastrado neste treinamento.','var(--red)');
-    return;
+  const _consultorVal=document.getElementById('aConsultor').value;
+  // ── Ler treinamentos múltiplos ──
+  var _treinRows=_getTreinRows('aTreinamentosLista');
+  if(!_treinRows.length){
+    _showToast('⚠️ Adicione pelo menos 1 treinamento.','var(--amber)');return;
   }
-  // Nome igual com treinamento diferente → permitir silenciosamente
+  // ── Regra: 1 registro por cliente+consultor ──
+  var _dupCliente=data.find(function(d){return d.cliente.toUpperCase()===nomeUp&&(d.consultor||'')===((_consultorVal)||'');});
+  if(_dupCliente){
+    _showToast('❌ "'+nomeUp+'" já tem registro neste consultor. Use "+" no card do cliente para adicionar treinamentos.','var(--red)');return;
+  }
   // ── Gravar criadoPor ──
   var _sessA=_getSessao?_getSessao():null;
   var _criadoPor=_sessA?(_sessA.vinculo||_sessA.nome||_sessA.login||'adm'):'adm';
-  const ic=trein==='CI';
-  const valor=parseVal(document.getElementById('aValor').value)||0;
+  var _valorTotal=_treinRows.reduce(function(a,t){return a+t.valor;},0);
+  var _hasCI=_treinRows.some(function(t){return t.cod==='CI';});
   data.push({
     cliente:nomeUp,
-    treinamento:trein,
-    treinador:ic?document.getElementById('aTreinador').value:'-',
-    consultor:document.getElementById('aConsultor').value,
-    valor,
+    treinamento:_treinRows[0].cod,
+    treinamentos:_treinRows,
+    treinador:_hasCI?document.getElementById('aTreinador').value:'-',
+    consultor:_consultorVal,
+    valor:_valorTotal,
     status:document.getElementById('aStatus').value,
     entrada:addEntradaRealizada?parseVal(document.getElementById('aEntrada').value):0,
     criadoPor:_criadoPor

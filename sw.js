@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v65 — fix: 2º treinamento do mesmo cliente não sobrepõe o 1º (guard updatedAt + timeout 5s)
-const CACHE_NAME = 'agente-febracis-v65';
+// v66 — multi-treinamentos por cliente: 1 registro com array + soma automática
+const CACHE_NAME = 'agente-febracis-v66';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
