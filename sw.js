@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v76 — fix iframe ppIframe: src=about:blank + sandbox sem allow-same-origin
-const CACHE_NAME = 'agente-febracis-v76';
+// v77 — dedup via setTimeout pos-carga para evitar stack overflow
+const CACHE_NAME = 'agente-febracis-v77';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',

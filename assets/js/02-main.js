@@ -865,15 +865,21 @@ function entrarTurma(id){
       if(_tli!==-1){_tls[_tli].ministrante=null;_saveTurmas(_tls);_turmaAtiva=_tls[_tli];}
     }
 
-    var _dupCount=_deduplicarClientes(true); // silencioso no carregamento
-    if(_dupCount>0) console.warn('[Dedup] '+_dupCount+' registro(s) duplicado(s) mesclados automaticamente.');
-
     savedData=JSON.stringify(data);
 
     // allConsultors e allTrainers já populados pelo entrarTurma (usuarios/ + clientes)
     buildSelects();buildFilterBtns();renderAll();
     switchTab(abaInicial);
     startRealtimeSync();
+    // Deduplicar registros antigos após estabilizar o carregamento
+    setTimeout(function(){
+      var _n=_deduplicarClientes(true);
+      if(_n>0){
+        savedData=JSON.stringify(data);
+        markUnsaved();saveStorage();renderAll();
+        console.warn('[Dedup] '+_n+' duplicado(s) mesclados e salvos no Firebase.');
+      }
+    },2000);
   }
 
   // Usar dados já carregados pelo chamador
