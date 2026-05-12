@@ -5083,6 +5083,9 @@ window._abrirMenuCliente=function(e,nomeCliente,ri){
       setTimeout(function(){
         var el=document.getElementById('aNome');
         if(el){el.value=nomeCliente;el.disabled=true;el.style.opacity='0.6';}
+        // Fixar consultor ao do detalhe ativo (evita que aConsultor tenha valor residual errado)
+        var _aConsEl=document.getElementById('aConsultor');
+        if(_aConsEl&&window._consultorAtivo){_aConsEl.value=window._consultorAtivo;_aConsEl.disabled=true;_aConsEl.style.opacity='0.6';}
         var _mt=document.querySelector('#addModalOverlay .modal-title');
         if(_mt)_mt.textContent='Novo treinamento — '+nomeCliente;
       },50);
@@ -5150,9 +5153,11 @@ function closeAddModal(){
   if(_cRow)_cRow.style.display='';
   var _aTreinEl=document.getElementById('aTreinador');
   if(_aTreinEl){_aTreinEl.disabled=false;_aTreinEl.style.opacity='1';}
-  // Resetar nome (pode ter sido fixado pelo fluxo de "adicionar treinamento")
+  // Resetar nome e consultor (podem ter sido fixados pelo fluxo de "adicionar treinamento")
   var _aNomeEl=document.getElementById('aNome');
   if(_aNomeEl){_aNomeEl.disabled=false;_aNomeEl.style.opacity='1';}
+  var _aConsReset=document.getElementById('aConsultor');
+  if(_aConsReset){_aConsReset.disabled=false;_aConsReset.style.opacity='1';}
   var _mt=document.querySelector('#addModalOverlay .modal-title');
   if(_mt)_mt.textContent='Novo cliente';
   var _ms=document.querySelector('#addModalOverlay .modal-subtitle');
