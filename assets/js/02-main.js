@@ -5209,7 +5209,7 @@ window._abrirMenuCliente=function(e,nomeCliente,ri){
     {icon:'➕', label:'Adicionar treinamento', fn:function(){
       // Encontra o registro existente do cliente e abre o modal de edição
       var _riEdit=data.findIndex(function(d){
-        return d.cliente===nomeCliente&&(!window._consultorAtivo||d.consultor===window._consultorAtivo);
+        return d&&d.cliente&&d.cliente===nomeCliente&&(!window._consultorAtivo||d.consultor===window._consultorAtivo);
       });
       if(_riEdit>=0){
         abrirClienteDetalhe(_riEdit);
