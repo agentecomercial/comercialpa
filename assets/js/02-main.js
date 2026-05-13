@@ -772,19 +772,17 @@ function buildSelects(){
 function buildFilterBtns(){
   const tb=document.getElementById('trainerFBtns');if(tb){tb.innerHTML='';allTrainers.forEach(t=>{const b=document.createElement('button');b.className='fbtn';b.textContent=t.split(' ')[0];b.id='ft_'+t;b.onclick=()=>toggleTrainer(t);tb.appendChild(b);});}
   const cb=document.getElementById('consultorFBtns');if(cb){cb.innerHTML='';allConsultors.forEach(c=>{const b=document.createElement('button');b.className='fbtn';b.textContent=c;b.id='fc_'+c;b.onclick=()=>toggleConsultor(c);cb.appendChild(b);});}
-  // Sincronizar selects mobile
+  // Sincronizar selects mobile — refletem APENAS o estado global atual
   const tSel=document.getElementById('filtroTreinadorSel');
   if(tSel){
-    var _tVal=tSel.value;
     tSel.innerHTML='<option value="">Treinador ▾</option>'+allTrainers.map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
-    tSel.value=activeTrainer||_tVal||'';
+    tSel.value=activeTrainer||'';
     tSel.classList.toggle('ativo',!!activeTrainer);
   }
   const cSel=document.getElementById('filtroConsultorSel');
   if(cSel){
-    var _cVal=cSel.value;
     cSel.innerHTML='<option value="">Consultor ▾</option>'+allConsultors.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
-    cSel.value=activeConsultor||_cVal||'';
+    cSel.value=activeConsultor||'';
     cSel.classList.toggle('ativo',!!activeConsultor);
   }
   const pSel=document.getElementById('filtroPresencaSel');
@@ -816,6 +814,16 @@ function setStatusDropdown(v){activeStatus=v||null;renderAll();}
 function clearAll(){
   activeTrainer=null;activeConsultor=null;activeStatus=null;activeCliente=null;
   var _sf=document.getElementById('statusFilter');if(_sf)_sf.value='';
+  /* Limpar filtro de presença (estado global no módulo 17-presenca) */
+  if(typeof window._getFiltroPresenca==='function' && typeof window._setFiltroPresenca==='function'){
+    var _pAtual=window._getFiltroPresenca();
+    if(_pAtual) window._setFiltroPresenca(_pAtual); /* toggle off */
+  }
+  /* Resetar visualmente os selects mobile */
+  ['filtroTreinadorSel','filtroConsultorSel','filtroPresencaSel'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){el.value='';el.classList.remove('ativo');}
+  });
   renderAll();
 }
 function toggleCliente(nome){
