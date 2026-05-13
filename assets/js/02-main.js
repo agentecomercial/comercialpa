@@ -1094,7 +1094,8 @@ function renderAll(){
             <span class="mob-arrow">▶</span>
             <div class="mob-info">
               <div class="mob-name-row">
-                <span class="mob-name${pago?' pago':''}">${d.cliente}<button class="info-btn${hasInfo?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button></span>
+                <span class="mob-name${pago?' pago':''}">${d.cliente}</span>
+                <button class="info-btn${hasInfo?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button>
                 <span class="mob-presenca" data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):'<span style="color:var(--muted);font-size:10px;">—</span>'}</span>
               </div>
               <div class="mob-status" style="color:${stInfo.c};"><span class="mob-dot" style="background:${stInfo.c};"></span>${stInfo.l}</div>
