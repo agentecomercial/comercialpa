@@ -56,7 +56,7 @@
 
   /* ── Atualizar badges ── */
   function _notifRenderBadge(count){
-    ['notifBadge1','notifBadge2'].forEach(function(id){
+    ['notifBadge1','notifBadge2','topbarMenuNotifBadge'].forEach(function(id){
       var el=document.getElementById(id);if(!el)return;
       el.textContent=count>99?'99+':count;
       el.hidden=count===0;

@@ -1063,6 +1063,9 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   /* Esconder ações inline; mostrar kebab + meta-bar */
   .topbar-action{display:none!important;}
   .topbar-meta-inline{display:none!important;}
+  .topbar-right .notif-bell{display:none!important;}
+  .topbar-menu-badge{margin-left:auto;background:var(--red);color:#fff;border-radius:10px;min-width:18px;height:18px;padding:0 6px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;}
+  .topbar-menu-badge[hidden]{display:none;}
   .topbar-kebab{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text);font-size:18px;font-weight:700;cursor:pointer;padding:0;line-height:1;margin-left:auto;}
   .topbar-kebab:hover{background:var(--surface2);}
   .topbar-kebab.open{background:var(--surface2);border-color:var(--accent);color:var(--accent);}
