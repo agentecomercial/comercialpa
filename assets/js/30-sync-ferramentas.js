@@ -671,6 +671,7 @@ function _executarPuxar(){
       });
       META=(_turmaAtiva.meta!=null&&_turmaAtiva.meta!==undefined)?_turmaAtiva.meta:0;
       document.getElementById('turmaMetaLabel').innerHTML='META: <strong style="color:var(--text);">'+formatVal(META)+'</strong>';
+      var _metaMobS=document.getElementById('turmaMetaLabelMobile'); if(_metaMobS) _metaMobS.textContent=formatVal(META);
       document.getElementById('metaValLabel').textContent=formatVal(META);
       if(_turmaAtiva.periodText){
         _periodText=_turmaAtiva.periodText;
@@ -990,3 +991,36 @@ function _sincronizarUsuariosImportacao(consultores,treinadores){
   });
 }
 window._sincronizarUsuariosImportacao=_sincronizarUsuariosImportacao;
+
+/* ── Topbar kebab menu (mobile) ── */
+window._toggleTopbarMenu=function(ev){
+  if(ev) ev.stopPropagation();
+  var menu=document.getElementById('topbarMenu');
+  var btn=document.getElementById('btnTopbarKebab');
+  if(!menu) return;
+  var aberto=menu.classList.contains('open');
+  if(aberto){
+    menu.classList.remove('open');
+    if(btn) btn.classList.remove('open');
+  } else {
+    menu.classList.add('open');
+    if(btn) btn.classList.add('open');
+    /* fechar ao clicar fora */
+    setTimeout(function(){
+      document.addEventListener('click',_fecharTopbarMenuFora,{once:true});
+    },10);
+  }
+};
+window._closeTopbarMenu=function(){
+  var menu=document.getElementById('topbarMenu');
+  var btn=document.getElementById('btnTopbarKebab');
+  if(menu) menu.classList.remove('open');
+  if(btn) btn.classList.remove('open');
+};
+function _fecharTopbarMenuFora(e){
+  var menu=document.getElementById('topbarMenu');
+  var btn=document.getElementById('btnTopbarKebab');
+  if(!menu) return;
+  if(menu.contains(e.target)||(btn&&btn.contains(e.target))) return;
+  window._closeTopbarMenu();
+}

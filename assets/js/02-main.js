@@ -265,6 +265,7 @@ function entrarTurma(id){
   _buildColors();
   document.getElementById('turmaAtivaLabel').textContent=_turmaAtiva.codigo;
   document.getElementById('turmaMetaLabel').innerHTML='META: <strong style="color:var(--text);">'+formatVal(META)+'</strong>';
+  var _metaMob=document.getElementById('turmaMetaLabelMobile'); if(_metaMob) _metaMob.textContent=formatVal(META);
   document.getElementById('metaValLabel').textContent=formatVal(META);
   _mostrarTela('dashboard');
   // P1: botão ← Turmas visível apenas para ADM

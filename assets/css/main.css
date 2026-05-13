@@ -1055,6 +1055,30 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   .topbar-right .btn-secondary{font-size:11px;padding:6px 10px;}
 }
 
+/* ── Topbar mobile: kebab menu (Opção A) ── */
+.topbar-kebab{display:none;}
+.topbar-meta-mobile{display:none;}
+.topbar-menu{display:none;}
+@media(max-width:768px){
+  /* Esconder ações inline; mostrar kebab + meta-bar */
+  .topbar-action{display:none!important;}
+  .topbar-meta-inline{display:none!important;}
+  .topbar-kebab{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text);font-size:18px;font-weight:700;cursor:pointer;padding:0;line-height:1;margin-left:auto;}
+  .topbar-kebab:hover{background:var(--surface2);}
+  .topbar-kebab.open{background:var(--surface2);border-color:var(--accent);color:var(--accent);}
+  .topbar-meta-mobile{display:flex;align-items:center;justify-content:space-between;padding:6px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11px;gap:8px;}
+  .topbar-meta-mobile-label{color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+  .topbar-meta-mobile strong{color:var(--text);font-size:12px;}
+  .topbar-menu{position:fixed;top:54px;right:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;min-width:220px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:1000;overflow:hidden;}
+  .topbar-menu.open{display:block;}
+  .topbar-menu-item{display:flex;align-items:center;gap:12px;padding:12px 16px;font-size:13px;color:var(--text);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;border-bottom:1px solid var(--border);font-family:inherit;}
+  .topbar-menu-item:last-child{border-bottom:none;}
+  .topbar-menu-item:hover{background:var(--surface2);}
+  .topbar-menu-item .ico{width:18px;text-align:center;flex-shrink:0;}
+  .topbar-menu-sair{color:var(--red)!important;background:rgba(255,82,82,.04)!important;}
+  .topbar-menu-sair:hover{background:rgba(255,82,82,.1)!important;}
+}
+
 /* ── Cards mobile da aba Geral (Clientes) ── */
 @media(min-width:769px){.client-cards-mobile{display:none;}}
 .mob-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;}
