@@ -345,8 +345,10 @@ function _renderConsultorDetail(c){
   } else {
     if(tbl) tbl.style.display='';
     if(listEl) listEl.style.display='none';
+    var _cdCards=document.getElementById('consultorDetailCards');
     if(!cd.length){
       tblEl.innerHTML='<tr class="empty-row"><td colspan="7">Nenhum cliente para este filtro.</td></tr>';
+      if(_cdCards) _cdCards.innerHTML='<div class="mob-empty">Nenhum cliente para este filtro.</div>';
     } else {
       var _rows='';
       cd.forEach(function(d){
@@ -369,8 +371,48 @@ function _renderConsultorDetail(c){
           </tr>`;
       });
       tblEl.innerHTML=_rows;
+
+      // ── Cards mobile do detalhe do consultor (visualização compacta, click → abre modal) ──
+      if(_cdCards){
+        var _statusMap2={pago:{c:'#39ff14',l:'Pago'},aberto:{c:'var(--amber)',l:'Aberto'},negociacao:{c:'var(--blue)',l:'Negociação'},entrada:{c:'var(--accent)',l:'Entrada'},desistiu:{c:'var(--red)',l:'Desistiu'},estorno:{c:'var(--red)',l:'Estorno'},'-':{c:'var(--muted)',l:'Sem status'}};
+        _cdCards.innerHTML=cd.map(function(d){
+          var ri=data.indexOf(d), pago=d.status==='pago', hasInfo=!!(d.info&&d.info.trim());
+          var stInfo=_statusMap2[d.status||'aberto']||_statusMap2['-'];
+          var ticketCor = d.valor >= 10000.01 ? 'var(--green)' : d.valor >= 5001 ? 'var(--amber)' : d.valor > 0 ? 'var(--blue)' : 'var(--muted)';
+          var treinadorBlock = (d.treinador && d.treinador !== '-')
+            ? '<div class="mob-field"><span class="mob-field-label">Treinador</span><span style="font-size:11px;color:var(--muted);text-transform:uppercase;">'+d.treinador.toUpperCase()+'</span></div>' : '';
+          var entradaBlock = d.entrada>0
+            ? '<div class="mob-field"><span class="mob-field-label">Entrada</span><span style="font-size:12px;color:var(--green);font-weight:600;">↑ '+formatVal(d.entrada)+'</span></div>' : '';
+          return '<div class="mob-card'+(pago?' pago':'')+'" id="cdmobcard_'+ri+'">'
+            +'<div class="mob-header" onclick="window._toggleConsCliMobile('+ri+')">'
+              +'<span class="mob-arrow">▶</span>'
+              +'<div class="mob-info">'
+                +'<div class="mob-name-row">'
+                  +'<span class="mob-name'+(pago?' pago':'')+'">'+d.cliente+'<button class="info-btn'+(hasInfo?' has-info':'')+'" onclick="event.stopPropagation();openClientInfo('+ri+')">i</button></span>'
+                  +'<span class="mob-presenca" data-presenca-ri="'+ri+'">'+(window._presencaBadgeHtml?window._presencaBadgeHtml(ri):'')+'</span>'
+                +'</div>'
+                +'<div class="mob-status" style="color:'+stInfo.c+';"><span class="mob-dot" style="background:'+stInfo.c+';"></span>'+stInfo.l+'</div>'
+              +'</div>'
+              +'<div class="mob-val" style="color:'+(pago?'#39ff14':ticketCor)+';">'+formatVal(d.valor||0)+'</div>'
+            +'</div>'
+            +'<div class="mob-body">'
+              +treinadorBlock
+              +entradaBlock
+              +'<button onclick="abrirClienteDetalhe('+ri+')" style="margin-top:6px;width:100%;font-size:11px;font-weight:700;padding:8px 0;border-radius:6px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.08);color:var(--accent);cursor:pointer;">✏ Editar cliente</button>'
+            +'</div>'
+          +'</div>';
+        }).join('');
+      }
     }
   }
+  // Toggle dos cards mobile do detalhe do consultor (1 aberto por vez)
+  window._toggleConsCliMobile=function(ri){
+    var card=document.getElementById('cdmobcard_'+ri);
+    if(!card) return;
+    var open=card.classList.contains('open');
+    document.querySelectorAll('#consultorDetailCards .mob-card.open').forEach(function(c){c.classList.remove('open');});
+    if(!open) card.classList.add('open');
+  };
   // Preencher barra de presença após renderizar o detail
   if(typeof window._atualizarBarraPresencaConsultor==='function') window._atualizarBarraPresencaConsultor();
 }

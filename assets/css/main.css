@@ -494,6 +494,8 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 
   /* Aba Geral → tabela principal vira accordion (#mainClientTable) */
   #mainClientTable{display:none;}
+  /* Detalhe consultor (ADM) → também esconde tabela e mostra cards */
+  #consultorDetailTableEl{display:none;}
   .client-cards-mobile{display:block;}
 
   /* Grids de pessoas */
@@ -1052,7 +1054,7 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 }
 
 /* ── Cards mobile da aba Geral (Clientes) ── */
-.client-cards-mobile{display:none;}
+@media(min-width:769px){.client-cards-mobile{display:none;}}
 .mob-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;}
 .mob-card.pago{border-left:3px solid #39ff14;}
 .mob-header{display:flex;align-items:center;gap:8px;padding:11px 12px;cursor:pointer;user-select:none;transition:background .12s;}

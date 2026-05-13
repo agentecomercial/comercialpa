@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ADM — TREINAMENTOS</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260513b">
+<link rel="stylesheet" href="assets/css/main.css?v=20260513c">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <!-- SheetJS — leitura de planilhas Excel e CSV -->
@@ -1104,7 +1104,7 @@
             <button class="clear-link" onclick="closeConsultorDetail()">← Voltar para todos</button>
           </div>
         </div>
-        <table style="table-layout:auto;width:100%;">
+        <table id="consultorDetailTableEl" style="table-layout:auto;width:100%;">
           <thead><tr>
             <th style="text-align:left;">Cliente</th>
             <th style="text-align:center;">Treinador</th>
@@ -1116,6 +1116,7 @@
           </tr></thead>
           <tbody id="consultorDetailTable"></tbody>
         </table>
+        <div id="consultorDetailCards" class="client-cards-mobile"></div>
       </div>
     </div>
 
@@ -1798,14 +1799,14 @@ try{
     <script src="assets/js/propostas/proposta-tav.js"></script>
     <script src="assets/js/propostas/proposta-cis.js"></script>
     <script src="assets/js/propostas/proposta-cis-global.js"></script>
-<script src="assets/js/02-main.js?v=20260513b"></script>
+<script src="assets/js/02-main.js?v=20260513c"></script>
 <script src="assets/js/29-login.js"></script>
 <script src="assets/js/30-sync-ferramentas.js"></script>
 <script src="assets/js/21-turmas.js"></script>
 <script src="assets/js/22-pdf-consultor.js"></script>
 <script src="assets/js/23-gerenciar-turmas.js"></script>
 <script src="assets/js/24-aba-produto.js"></script>
-<script src="assets/js/25-abas-consultor.js"></script>
+<script src="assets/js/25-abas-consultor.js?v=20260513c"></script>
 <script src="assets/js/26-aba-treinador.js"></script>
 <script src="assets/js/27-novos-membros.js"></script>
 <script src="assets/js/28-modais-cliente.js"></script>
@@ -1826,7 +1827,7 @@ try{
 ══════════════════════════════════════════════════════════════ -->
 <link rel="stylesheet" href="assets/css/cardClientes.css">
 
-<script src="assets/js/04-card-clientes.js?v=20260513b"></script>
+<script src="assets/js/04-card-clientes.js?v=20260513c"></script>
 
 <script src="assets/js/05-importacao.js"></script>
 
@@ -2389,7 +2390,7 @@ try{
 <script src="assets/js/14-notificacoes.js"></script>
 <script src="assets/js/15-pipeline-followup.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="assets/js/16-pipeline-leads.js?v=20260513b"></script>
+<script src="assets/js/16-pipeline-leads.js?v=20260513c"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
