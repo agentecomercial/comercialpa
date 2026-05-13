@@ -468,9 +468,9 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   .legend-grid{grid-template-columns:repeat(2,1fr);}
 
   /* Topbar do dashboard — empilhar em 2 linhas */
-  .topbar{padding:10px 14px;gap:6px;}
+  .topbar{padding:10px 14px;gap:6px;flex-wrap:nowrap;}
   .topbar-left{flex:1;min-width:0;}
-  .topbar-right{width:100%;justify-content:flex-end;flex-wrap:wrap;}
+  .topbar-right{width:auto;justify-content:flex-end;flex-wrap:nowrap;flex-shrink:0;}
   .title-edit-btn{font-size:10px;padding:4px 8px;}
 
   /* Tabs — scroll horizontal quando não cabem */
@@ -1064,6 +1064,7 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   .topbar-action{display:none!important;}
   .topbar-meta-inline{display:none!important;}
   .topbar-right .notif-bell{display:none!important;}
+  .topbar-left .topbar-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .topbar-menu-badge{margin-left:auto;background:var(--red);color:#fff;border-radius:10px;min-width:18px;height:18px;padding:0 6px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;}
   .topbar-menu-badge[hidden]{display:none;}
   .topbar-kebab{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text);font-size:18px;font-weight:700;cursor:pointer;padding:0;line-height:1;margin-left:auto;}
