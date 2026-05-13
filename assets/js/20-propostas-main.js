@@ -103,10 +103,10 @@ function abrirPropostaModal(){
   sel.innerHTML = '<option value="">Selecione um cliente...</option>';
   var clientes;
   if(!isAdm && sess && sess.vinculo){
-    var meus = data.filter(function(d){return d.consultor.toUpperCase()===(sess.vinculo||'').toUpperCase();});
+    var meus = data.filter(function(d){return d&&d.cliente&&d.consultor&&d.consultor.toUpperCase()===(sess.vinculo||'').toUpperCase();});
     clientes = [...new Set(meus.map(function(d){return d.cliente;}))].sort();
   } else {
-    clientes = [...new Set(data.map(function(d){return d.cliente;}))].sort();
+    clientes = [...new Set(data.filter(function(d){return d&&d.cliente;}).map(function(d){return d.cliente;}))].sort();
   }
   clientes.forEach(function(c){
     var opt = document.createElement('option');

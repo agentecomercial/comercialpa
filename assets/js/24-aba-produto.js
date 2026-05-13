@@ -149,8 +149,8 @@ function _renderProdutoCruzadaEntrada(){
   var _vinculoRE=_sessRE?(_sessRE.vinculo||''). toUpperCase():'';
   var _isConsRE=_perfilRE==='consultor';
   var comEntrada=_isConsRE
-    ?data.filter(function(d){return d.entrada&&d.entrada>0&&(d.consultor||''). toUpperCase()===_vinculoRE;})
-    :data.filter(function(d){return d.entrada&&d.entrada>0;});
+    ?data.filter(function(d){return d&&d.cliente&&d.entrada&&d.entrada>0&&(d.consultor||'').toUpperCase()===_vinculoRE;})
+    :data.filter(function(d){return d&&d.cliente&&d.entrada&&d.entrada>0;});
 
   // Ocultar painel inteiro se não houver entradas
   if(!comEntrada.length){panel.style.display='none';return;}

@@ -12,7 +12,9 @@ function switchTab(tab){
 
 window._consultorAtivo=null;
 function renderConsultor(){
-  document.getElementById('consultorDetail').style.display='none';
+  var _cd=document.getElementById('consultorDetail');
+  var _detailAberto=_cd&&_cd.style.display!=='none'&&window._consultorAtivo;
+  _cd.style.display='none';
   // Mostrar o layout wrapper com grid + ranking
   var wrap = document.getElementById('consultorLayoutWrap');
   if(wrap) wrap.style.display='grid';
@@ -103,6 +105,8 @@ function renderConsultor(){
     rankPanel.style.cursor = 'default';
     rankPanel.onclick = null;
   }
+  // Se o detalhe estava aberto antes do render, restaurá-lo
+  if(_detailAberto) _renderConsultorDetail(window._consultorAtivo);
 }
 function abrirClientesModal(tipo){
   // Filtrar por consultor vinculado se perfil for consultor
