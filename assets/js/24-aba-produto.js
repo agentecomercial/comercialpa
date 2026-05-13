@@ -262,7 +262,7 @@ function _cmRenderRows(){
         ?`<button class="info-btn has-info" onclick="event.stopPropagation();openClientInfo(${idx})" title="${d.info.replace(/"/g,'&quot;')}">i</button>`
         :(_perfilM!=='consultor'?`<button class="info-btn" onclick="event.stopPropagation();openClientInfo(${idx})">i</button>`:'')
       return `<tr style="border-left:2px solid #39ff14;">
-        <td style="font-weight:600;text-transform:uppercase;text-align:left;color:#39ff14;white-space:nowrap;"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}${iBtn}</span></td>
+        <td style="font-weight:600;text-transform:uppercase;text-align:left;color:#39ff14;white-space:nowrap;"><span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}${iBtn}<span data-presenca-ri="${idx}">${window._presencaBadgeHtml?window._presencaBadgeHtml(idx):''}</span></span></td>
         <td style="text-align:center;font-size:12px;white-space:nowrap;">${d.treinamentos&&d.treinamentos.length?d.treinamentos.map(t=>t.cod).join(' · '):'—'}</td>
         <td style="text-align:center;font-size:12px;color:var(--muted);white-space:nowrap;">${(d.treinamentos&&d.treinamentos.some(t=>t.cod==='CI'))?d.treinador:'-'}</td>
         <td style="text-align:center;font-size:12px;color:var(--muted);white-space:nowrap;">${d.consultor.toUpperCase()}</td>

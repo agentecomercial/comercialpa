@@ -221,7 +221,7 @@ function _renderTreinadorDetail(t){
   document.getElementById('treinadorDetailTable').innerHTML=td.length===0
     ?'<tr class="empty-row"><td colspan="8">Nenhum cliente para este filtro.</td></tr>'
     :td.map(d=>{const ri=data.indexOf(d),ip=d.status==='pago',hi=!!(d.info&&d.info.trim());return `<tr style="border-left:${ip?'2px solid #39ff14':'2px solid transparent'};">
-      <td style="font-weight:600;text-transform:uppercase;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="openClientInfo(${ri})">i</button></span></td>
+      <td style="font-weight:600;text-transform:uppercase;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="openClientInfo(${ri})">i</button><span data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):''}</span></span></td>
       <td style="text-align:center;">${d.treinamento||'—'}</td>
       <td style="color:var(--muted);">${d.consultor.toUpperCase()}</td>
       <td style="${ip?'font-weight:600;':''}">${formatVal(d.valor)}</td>

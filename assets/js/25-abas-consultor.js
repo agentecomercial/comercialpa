@@ -347,7 +347,7 @@ function _renderConsultorDetail(c){
     if(listEl) listEl.style.display='none';
     var _cdCards=document.getElementById('consultorDetailCards');
     if(!cd.length){
-      tblEl.innerHTML='<tr class="empty-row"><td colspan="7">Nenhum cliente para este filtro.</td></tr>';
+      tblEl.innerHTML='<tr class="empty-row"><td colspan="6">Nenhum cliente para este filtro.</td></tr>';
       if(_cdCards) _cdCards.innerHTML='<div class="mob-empty">Nenhum cliente para este filtro.</div>';
     } else {
       var _rows='';
@@ -361,13 +361,12 @@ function _renderConsultorDetail(c){
           const entradaTxt=d.entrada>0?'↑ '+formatVal(d.entrada):'—';
           const entradaStyle=d.entrada>0?'color:var(--green);font-weight:600;':'color:var(--muted);';
           _rows+=`<tr style="border-left:${borderLeft};" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar" class="tr-clickable">
-            <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button><button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:18px;height:18px;cursor:pointer;color:var(--accent);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button></span></td>
+            <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button><span data-presenca-ri="${ri}" onclick="event.stopPropagation();">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):''}</span><button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:18px;height:18px;cursor:pointer;color:var(--accent);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button></span></td>
             <td style="text-align:center;white-space:nowrap;color:var(--muted);font-size:11px;">${treinadorTxt}</td>
             <td style="text-align:center;white-space:nowrap;font-size:11px;color:var(--muted);">—</td>
             <td style="text-align:center;white-space:nowrap;">${formatVal(d.valor)}</td>
             <td style="text-align:center;white-space:nowrap;"><span class="badge badge-${st}">${sl(st)}</span></td>
             <td style="text-align:center;white-space:nowrap;${entradaStyle}">${entradaTxt}</td>
-            <td style="text-align:center;padding:3px 6px;vertical-align:middle;" data-presenca-ri="${ri}" onclick="event.stopPropagation();">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):'—'}</td>
           </tr>`;
       });
       tblEl.innerHTML=_rows;

@@ -1005,7 +1005,7 @@ function renderAll(){
   // Toda seleção/exclusão ocorre no modal Gerenciar Clientes
 
   document.getElementById('clientTable').innerHTML=f.length===0
-    ?'<tr class="empty-row"><td colspan="8" style="text-align:center;">Nenhum cliente para os filtros selecionados.</td></tr>'
+    ?'<tr class="empty-row"><td colspan="7" style="text-align:center;">Nenhum cliente para os filtros selecionados.</td></tr>'
     :f.map(d=>{
       const ri=data.indexOf(d), pago=d.status==='pago', hasInfo=!!(d.info&&d.info.trim());
       const statusCls='cs-status-'+(d.status||'aberto');
@@ -1041,7 +1041,7 @@ function renderAll(){
 
       return `<tr data-ri="${ri}" style="border-left:${pago?'2px solid #39ff14':'2px solid transparent'};">
         <td style="text-align:left;font-weight:600;text-transform:uppercase;white-space:nowrap;${pago?'color:#39ff14;':''}">
-          <span style="display:inline-flex;align-items:center;gap:4px;">${d.cliente}<button class="info-btn${hasInfo?' has-info':''}" onclick="openClientInfo(${ri})">i</button></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}<button class="info-btn${hasInfo?' has-info':''}" onclick="openClientInfo(${ri})">i</button><span data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):''}</span></span>
         </td>
         <td style="text-align:center;white-space:nowrap;padding:3px 5px;">
           <select class="card-sel cs-treinador" data-ri="${ri}" data-campo="treinador" onchange="cardCellChange(this)">${trainOpts}</select>
@@ -1064,9 +1064,6 @@ function renderAll(){
           <input type="text" inputmode="numeric" class="card-num-input card-num-entrada" data-ri="${ri}" data-campo="entrada"
             value="${entEdit}" oninput="cardMoneyMask(this)" onchange="cardNumChange(this)" placeholder="—"
             style="color:var(--blue);font-weight:500;">
-        </td>
-        <td style="text-align:center;padding:3px 6px;vertical-align:middle;" data-presenca-ri="${ri}">
-          ${window._presencaBadgeHtml ? window._presencaBadgeHtml(ri) : '<span style="color:var(--muted);font-size:10px;">—</span>'}
         </td>
       </tr>`;
     }).join('');
