@@ -919,6 +919,8 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 @media(max-width:640px){
   button,.btn,[role=button]{min-height:44px;}
   input,select,textarea{font-size:16px!important;min-height:44px;}
+  /* Ícones pequenos (info "i") ficam circulares — fora do min-height de 44px */
+  .info-btn{min-height:0!important;width:22px!important;height:22px!important;border-radius:50%!important;padding:0!important;font-size:11px!important;}
 }
 
 /* Skeleton shimmer */
