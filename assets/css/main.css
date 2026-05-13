@@ -492,6 +492,10 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   tbody td::before{content:attr(data-label);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;flex-shrink:0;margin-right:8px;}
   tbody tr:hover td{background:rgba(255,255,255,.05);}
 
+  /* Aba Geral → tabela principal vira accordion (#mainClientTable) */
+  #mainClientTable{display:none;}
+  .client-cards-mobile{display:block;}
+
   /* Grids de pessoas */
   .person-grid{grid-template-columns:1fr;}
   .turmas-grid{grid-template-columns:1fr;}
@@ -836,6 +840,7 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .ld-status{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;cursor:pointer;white-space:nowrap;}
 .ld-status-novo      {background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid rgba(96,165,250,.25);}
 .ld-status-contatado {background:rgba(167,139,250,.12);color:#a78bfa;border:1px solid rgba(167,139,250,.25);}
+.ld-status-agendado  {background:rgba(34,211,238,.12);color:#22d3ee;border:1px solid rgba(34,211,238,.25);}
 .ld-status-negociando{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.25);}
 .ld-status-ganho     {background:rgba(52,211,153,.12);color:#34d399;border:1px solid rgba(52,211,153,.25);}
 .ld-status-perdido   {background:rgba(255,82,82,.12);color:var(--red);border:1px solid rgba(255,82,82,.25);}
@@ -1045,6 +1050,32 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   /* Botões da topbar — ícone sem texto no mobile */
   .topbar-right .btn-secondary{font-size:11px;padding:6px 10px;}
 }
+
+/* ── Cards mobile da aba Geral (Clientes) ── */
+.client-cards-mobile{display:none;}
+.mob-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;}
+.mob-card.pago{border-left:3px solid #39ff14;}
+.mob-header{display:flex;align-items:center;gap:8px;padding:11px 12px;cursor:pointer;user-select:none;transition:background .12s;}
+.mob-header:hover{background:var(--surface3,rgba(255,255,255,.03));}
+.mob-arrow{font-size:10px;color:var(--muted);flex-shrink:0;transition:transform .2s;line-height:1;}
+.mob-card.open .mob-arrow{transform:rotate(90deg);color:var(--accent);}
+.mob-info{flex:1;min-width:0;}
+.mob-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.mob-name{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.01em;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mob-name.pago{color:#39ff14;}
+.mob-presenca{flex-shrink:0;font-size:10px;font-weight:700;padding:2px 8px;border-radius:14px;white-space:nowrap;}
+.mob-status{display:inline-flex;align-items:center;gap:4px;margin-top:3px;font-size:10px;font-weight:600;}
+.mob-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+.mob-val{flex-shrink:0;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;}
+.mob-body{display:none;background:rgba(0,0,0,.18);padding:8px 14px 12px;border-top:1px solid var(--border);}
+.mob-card.open .mob-body{display:block;}
+.mob-field{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;}
+.mob-field:last-child{border-bottom:none;}
+.mob-field-label{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600;letter-spacing:.05em;flex-shrink:0;}
+.mob-sel,.mob-input{background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:inherit;font-weight:600;min-width:0;}
+.mob-sel{max-width:60%;}
+.mob-input{width:120px;text-align:right;}
+.mob-empty{padding:20px 12px;text-align:center;color:var(--muted);font-size:12px;}
 
 /* ── Tabs: melhor toque e legibilidade ── */
 @media(max-width:600px){

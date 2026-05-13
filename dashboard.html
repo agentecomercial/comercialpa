@@ -1029,7 +1029,7 @@
             </div>
           </div>
           <div id="presencaCountBar" style="padding:6px 14px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--bg2);"></div>
-          <table>
+          <table id="mainClientTable">
             <thead><tr>
               <th class="sortable" id="th-cliente" onclick="sortBy('cliente')" style="text-align:left;">Cliente</th>
               <th class="sortable" id="th-treinador" onclick="sortBy('treinador')" style="text-align:center;white-space:nowrap;">Treinador</th>
@@ -1042,6 +1042,7 @@
             </tr></thead>
             <tbody id="clientTable"></tbody>
           </table>
+          <div id="clientCards" class="client-cards-mobile"></div>
           <div class="table-footer">
             <span class="table-count" id="tableCount"></span>
             <span class="table-total" id="tableTotal"></span>
@@ -2140,6 +2141,7 @@ try{
         <div style="font-size:13px;font-weight:700;color:var(--accent);" id="npLeadsDropTxt">Arraste uma imagem do WhatsApp aqui</div>
         <div style="font-size:11px;color:var(--muted);margin-top:4px;">ou clique para selecionar · ou <kbd style="background:rgba(255,255,255,.08);border:1px solid var(--border2);border-radius:4px;padding:1px 5px;font-size:10px;">Ctrl+V</kbd> para colar</div>
       </div>
+      <button onclick="window._ldNovo()" title="Adicionar lead manualmente" style="flex-shrink:0;padding:10px 16px;border-radius:10px;border:1px solid rgba(200,240,90,.4);background:rgba(200,240,90,.1);color:var(--accent);cursor:pointer;font-size:13px;font-weight:700;">+ Novo lead</button>
       <button onclick="window._ldAbrirChave()" title="Configurar chave da IA (opcional)" style="flex-shrink:0;padding:10px 14px;border-radius:10px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.06);color:var(--accent);cursor:pointer;font-size:18px;">🤖</button>
     </div>
     <!-- filtro de período por data de distribuição -->
@@ -2174,6 +2176,7 @@ try{
           <option value="">Todos status</option>
           <option value="novo">Novo</option>
           <option value="contatado">Contatado</option>
+          <option value="agendado">Agendado</option>
           <option value="negociando">Negociando</option>
           <option value="ganho">Ganho</option>
           <option value="perdido">Perdido</option>
@@ -2427,7 +2430,7 @@ try{
       </div>
       <div style="margin-bottom:18px;">
         <label style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">O que o lead disse</label>
-        <textarea id="npLdMsg" class="modal-input" rows="3" placeholder="Ex: Quero informações sobre os treinamentos da Febracis" style="width:100%;margin-top:4px;resize:vertical;"></textarea>
+        <textarea id="npLdMsg" class="modal-input" rows="6" placeholder="Ex: Quero informações sobre os treinamentos da Febracis" style="width:100%;margin-top:4px;resize:vertical;"></textarea>
       </div>
       <div style="display:flex;gap:10px;">
         <button class="modal-btn modal-btn-secondary" onclick="window._ldFecharModal()" style="flex:1;">Cancelar</button>

@@ -904,6 +904,22 @@ function _dedupClientesInterno(silencioso){
 }
 window._deduplicarClientes=function(){ _dedupClientesInterno(false); };
 
+/* ── Accordion dos cards de cliente em mobile ── */
+window._toggleClienteMobile=function(ri){
+  var card=document.getElementById('mobcard_'+ri);
+  if(!card) return;
+  var open=card.classList.contains('open');
+  document.querySelectorAll('.mob-card.open').forEach(function(c){ c.classList.remove('open'); });
+  if(!open) card.classList.add('open');
+};
+window._mobToggleTreinador=function(ri){
+  var card=document.getElementById('mobcard_'+ri);
+  if(!card) return;
+  var trein=card.querySelector('[data-campo="treinamento"]');
+  var field=card.querySelector('.mob-field-treinador');
+  if(trein && field){ field.style.display = trein.value==='CI' ? 'flex' : 'none'; }
+};
+
 /* ═══════════════════════════════════════════
    RENDER ALL
 ═══════════════════════════════════════════ */
@@ -1055,7 +1071,66 @@ function renderAll(){
       </tr>`;
     }).join('');
 
-  document.getElementById('tableCount').textContent=`${f.length} de ${data.length} cliente${data.length!==1?'s':''}`;
+  // ── Renderização de cards mobile (espelha a tabela acima) ──
+  const _ccEl=document.getElementById('clientCards');
+  if(_ccEl){
+    if(f.length===0){
+      _ccEl.innerHTML='<div class="mob-empty">Nenhum cliente para os filtros selecionados.</div>';
+    } else {
+      const _statusMap={pago:{c:'#39ff14',l:'Pago'},aberto:{c:'var(--amber)',l:'Aberto'},negociacao:{c:'var(--blue)',l:'Negociação'},entrada:{c:'var(--accent)',l:'Entrada'},desistiu:{c:'var(--red)',l:'Desistiu'},estorno:{c:'var(--red)',l:'Estorno'},'-':{c:'var(--muted)',l:'Sem status'}};
+      _ccEl.innerHTML=f.map(d=>{
+        const ri=data.indexOf(d), pago=d.status==='pago', hasInfo=!!(d.info&&d.info.trim());
+        const valEdit = d.valor  ? d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})  : '';
+        const entEdit = d.entrada? d.entrada.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
+        const isCI = d.treinamento === 'CI';
+        const treinOpts='<option value="">— vazio —</option>'+allTreinamentos.map(t=>`<option value="${t}"${(d.treinamento||'')===t?' selected':''}>${t}</option>`).join('');
+        const trainOpts=`<option value="-"${(d.treinador||'-')==='-'?' selected':''}>—</option>`+allTrainers.map(t=>`<option value="${t}"${d.treinador===t?' selected':''}>${t.toUpperCase()}</option>`).join('');
+        const consOpts=`<option value=""${!d.consultor?' selected':''}>—</option>`+allConsultors.map(c=>`<option value="${c}"${d.consultor===c?' selected':''}>${c.toUpperCase()}</option>`).join('');
+        const statOpts=[
+          {v:'aberto',l:'ABERTO'},{v:'pago',l:'PAGO'},{v:'negociacao',l:'NEGOCIAÇÃO'},
+          {v:'entrada',l:'ENTRADA'},{v:'desistiu',l:'DESISTIU'},{v:'estorno',l:'ESTORNO'},{v:'-',l:'—'}
+        ].map(s=>`<option value="${s.v}"${(d.status||'aberto')===s.v?' selected':''}>${s.l}</option>`).join('');
+        const stInfo=_statusMap[d.status||'aberto']||_statusMap['-'];
+        const ticketCor = d.valor >= 10000.01 ? 'var(--green)' : d.valor >= 5001 ? 'var(--amber)' : d.valor > 0 ? 'var(--blue)' : 'var(--muted)';
+        return `<div class="mob-card${pago?' pago':''}" id="mobcard_${ri}">
+          <div class="mob-header" onclick="window._toggleClienteMobile(${ri})">
+            <span class="mob-arrow">▶</span>
+            <div class="mob-info">
+              <div class="mob-name-row">
+                <span class="mob-name${pago?' pago':''}">${d.cliente}<button class="info-btn${hasInfo?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button></span>
+                <span class="mob-presenca" data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):'<span style="color:var(--muted);font-size:10px;">—</span>'}</span>
+              </div>
+              <div class="mob-status" style="color:${stInfo.c};"><span class="mob-dot" style="background:${stInfo.c};"></span>${stInfo.l}</div>
+            </div>
+            <div class="mob-val" style="color:${pago?'#39ff14':ticketCor};">${formatVal(d.valor||0)}</div>
+          </div>
+          <div class="mob-body">
+            <div class="mob-field"><span class="mob-field-label">Treinamento</span>
+              <select class="card-sel mob-sel" data-ri="${ri}" data-campo="treinamento" onchange="cardCellChange(this);window._mobToggleTreinador(${ri});">${treinOpts}</select>
+            </div>
+            <div class="mob-field mob-field-treinador" style="display:${isCI?'flex':'none'};"><span class="mob-field-label">Treinador</span>
+              <select class="card-sel cs-treinador mob-sel" data-ri="${ri}" data-campo="treinador" onchange="cardCellChange(this)">${trainOpts}</select>
+            </div>
+            <div class="mob-field"><span class="mob-field-label">Consultor</span>
+              <select class="card-sel cs-consultor mob-sel" data-ri="${ri}" data-campo="consultor" onchange="cardCellChange(this)">${consOpts}</select>
+            </div>
+            <div class="mob-field"><span class="mob-field-label">Valor</span>
+              <input type="text" inputmode="numeric" class="card-num-input mob-input" data-ri="${ri}" data-campo="valor" value="${valEdit}" oninput="cardMoneyMask(this)" onchange="cardNumChange(this)" placeholder="0,00" style="color:${pago?'#39ff14':ticketCor};font-weight:${pago?'700':'600'};">
+            </div>
+            <div class="mob-field"><span class="mob-field-label">Entrada</span>
+              <input type="text" inputmode="numeric" class="card-num-input mob-input" data-ri="${ri}" data-campo="entrada" value="${entEdit}" oninput="cardMoneyMask(this)" onchange="cardNumChange(this)" placeholder="—" style="color:var(--blue);">
+            </div>
+            <div class="mob-field"><span class="mob-field-label">Status</span>
+              <select class="card-sel mob-sel cs-status-${d.status||'aberto'}" data-ri="${ri}" data-campo="status" onchange="cardCellChange(this);cardUpdateStatusClass(this)">${statOpts}</select>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  const _totalValid=data.filter(d=>d&&d.cliente).length;
+  document.getElementById('tableCount').textContent=`${f.length} de ${_totalValid} cliente${_totalValid!==1?'s':''}`;
   document.getElementById('tableTotal').innerHTML='Total visível: <span>'+formatVal(f.reduce((a,d)=>a+d.valor,0))+'</span>';
 
   // Barras por treinador — NEON + PERCENTUAL

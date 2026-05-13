@@ -136,7 +136,8 @@ function _cardAtualizarMetricas(){
     e=document.getElementById('mPctSub');     if(e)e.innerHTML=pctGeral+'% ATINGIDO';
     e=document.getElementById('geralPct');
     if(e){ var _colG=typeof getCol==='function'?getCol(pctGeral):{text:'var(--red)'}; e.textContent=pctGeral+'%'; e.style.color=_colG.text; }
-    e=document.getElementById('tableCount');  if(e)e.textContent=_base.length+' de '+data.length+' cliente'+(data.length!==1?'s':'');
+    var _totVal=data.filter(function(d){return d&&d.cliente;}).length;
+    e=document.getElementById('tableCount');  if(e)e.textContent=_base.length+' de '+_totVal+' cliente'+(_totVal!==1?'s':'');
     e=document.getElementById('tableTotal');  if(e)e.innerHTML='Total visível: <span>'+formatVal(totalPago+totalAberto)+'</span>';
     // FIX: barra de performance + FATURADO + FALTAM + cards treinadores
     if(typeof getCol==='function'){

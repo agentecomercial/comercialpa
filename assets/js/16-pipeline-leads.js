@@ -353,9 +353,9 @@
   }
 
   /* ── SLA e Status ──────────────────────────────────────────── */
-  var _STATUS_ORDEM = ['novo','contatado','negociando','ganho','perdido'];
-  var _STATUS_LABEL = {novo:'Novo',contatado:'Contatado',negociando:'Negociando',ganho:'✅ Ganho',perdido:'❌ Perdido'};
-  var _STATUS_CSS   = {novo:'ld-status-novo',contatado:'ld-status-contatado',negociando:'ld-status-negociando',ganho:'ld-status-ganho',perdido:'ld-status-perdido'};
+  var _STATUS_ORDEM = ['novo','contatado','agendado','negociando','ganho','perdido'];
+  var _STATUS_LABEL = {novo:'Novo',contatado:'Contatado',agendado:'📅 Agendado',negociando:'Negociando',ganho:'✅ Ganho',perdido:'❌ Perdido'};
+  var _STATUS_CSS   = {novo:'ld-status-novo',contatado:'ld-status-contatado',agendado:'ld-status-agendado',negociando:'ld-status-negociando',ganho:'ld-status-ganho',perdido:'ld-status-perdido'};
 
   function _slaChip(distribuidoEm){
     if(!distribuidoEm) return '';
@@ -488,6 +488,7 @@
         +'<td class="td-acoes"><div class="td-acoes-inner">'
           +'<button data-dist-id="'+id+'" onclick="window._ldDistribuir(\''+id+'\',event)" title="Distribuir" style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid rgba(200,240,90,.3);background:rgba(200,240,90,.08);color:var(--accent);cursor:pointer;">📤</button>'
           +desfazer
+          +'<button onclick="window._ldCopiarWhats(\''+id+'\')" title="Copiar informações do lead" style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25D366;cursor:pointer;">📋</button>'
           +'<button onclick="window._ldEditar(\''+id+'\')" title="Editar" style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;">✏</button>'
           +'<button onclick="window._ldRemover(\''+id+'\')" title="Remover" style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid rgba(255,82,82,.3);background:rgba(255,82,82,.06);color:var(--red);cursor:pointer;">✕</button>'
         +'</div></td>'
@@ -754,24 +755,44 @@
     }
 
     /* ── MENSAGEM ─────────────────────────────────────────────── */
-    var mensagem='';
-    /* prioriza linha curta com ? ou ! */
-    for(var g=0;g<linhas.length;g++){
-      if(g===iNome) continue;
-      var lg=linhas[g];
-      if(_ehRuido(lg)||lg===nome) continue;
-      if(telefone&&lg.replace(/\D/g,'').length>=8) continue;
-      if(/[?!]/.test(lg)&&lg.length<=120){ mensagem=lg; break; }
+    /* Estratégia: ancorar no primeiro balão de chat. Em prints do WhatsApp,
+       as mensagens do chat terminam com timestamp "HH:MM". Tudo antes disso
+       (metadados do contato, "Conta comercial", "Bloquear", criptografia)
+       é descartado. */
+    function _stripHora(s){
+      return String(s||'').replace(/\s*\d{1,2}[:.]\d{2}\s*$/,'').trim();
     }
-    /* fallback: primeira linha razoável */
-    if(!mensagem){
-      for(var h=0;h<linhas.length;h++){
-        if(h===iNome) continue;
-        var lh=linhas[h];
-        if(_ehRuido(lh)||lh===nome) continue;
-        if(lh.replace(/\D/g,'').length>=8) continue;
-        if(lh.length>=3&&lh.length<=200&&/[a-záéíóúç]/i.test(lh)){ mensagem=lh; break; }
+    var iChat=-1;
+    for(var c=0;c<linhas.length;c++){
+      if(/\d{1,2}[:.]\d{2}\s*$/.test(linhas[c])){
+        /* descartar linhas que são SÓ a hora (cabeçalho "Hoje 11:00") */
+        var semHora=_stripHora(linhas[c]);
+        if(semHora.length>=3){ iChat=c; break; }
       }
+    }
+
+    var partes=[];
+    var vistos={};
+    if(iChat>=0){
+      /* a partir do primeiro balão, pegar todas as linhas seguintes */
+      for(var g=iChat;g<linhas.length;g++){
+        if(g===iNome) continue;
+        var lgRaw=linhas[g];
+        var lg=_stripHora(lgRaw);
+        if(!lg||lg.length<2) continue;
+        if(_ehRuido(lgRaw)||_ehRuido(lg)||lg===nome) continue;
+        var chave=lg.toLowerCase();
+        if(vistos[chave]) continue;
+        vistos[chave]=1;
+        partes.push(lg);
+      }
+    }
+    var mensagem=partes.join('\n');
+
+    /* Fallback: se nenhum balão foi detectado (OCR perdeu os timestamps),
+       devolver o texto bruto para o usuário editar manualmente. */
+    if(!mensagem){
+      mensagem=String(txt||'').replace(/\r/g,'').replace(/\n{3,}/g,'\n\n').trim();
     }
 
     return { nome: nome||'', telefone: telefone||'', mensagem: mensagem||'' };
@@ -836,6 +857,7 @@
   }
 
   window._ldEditar = function(id){ _abrirModal(id, null); };
+  window._ldNovo = function(){ _abrirModal(null, null, null); };
 
   window._ldFecharModal = function(){
     var ov=document.getElementById('npLeadsModalOverlay');
@@ -986,6 +1008,29 @@
     catch(e){ _toast('Não foi possível copiar.','var(--amber)'); }
     document.body.removeChild(ta);
   }
+
+  /* ── Copiar info do lead para clipboard ─────────────────────── */
+  window._ldCopiarWhats = function(id){
+    var l = _leads[id]; if(!l) return;
+    var linhas = [];
+    if(l.nome)      linhas.push('Nome: '+l.nome);
+    if(l.telefone)  linhas.push('Telefone: '+l.telefone);
+    if(l.consultor) linhas.push('Consultor: '+l.consultor);
+    if(l.status)    linhas.push('Status: '+l.status);
+    if(l.mensagem)  linhas.push('\nMensagem:\n'+l.mensagem);
+    if(l.obs)       linhas.push('\nObservações:\n'+l.obs);
+    var texto = linhas.join('\n');
+
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(texto).then(function(){
+        _toast('📋 Informações copiadas!');
+      }).catch(function(){
+        _copiarFallback(texto, 'área de transferência');
+      });
+    } else {
+      _copiarFallback(texto, 'área de transferência');
+    }
+  };
 
   /* ── Remover ────────────────────────────────────────────────── */
   window._ldRemover = function(id){
