@@ -119,10 +119,10 @@ function abrirClientesModal(tipo){
 
   let lista,titulo,subExtra='';
   if(tipo==='todos'){
-    lista=[..._base];
+    lista=_base.filter(d=>d.status==='negociacao');
     titulo='Potencial total';
     const total=lista.reduce((a,d)=>a+d.valor,0);
-    subExtra=lista.length+' cliente'+(lista.length!==1?'s':'')+' · Potencial total: <span style="color:var(--blue);font-weight:700;">'+formatVal(total)+'</span>';
+    subExtra=lista.length+' cliente'+(lista.length!==1?'s':'')+' em negociação · Potencial total: <span style="color:var(--blue);font-weight:700;">'+formatVal(total)+'</span>';
   } else if(tipo==='aberto'){
     lista=_base.filter(d=>d.status==='aberto');
     titulo='Em aberto';

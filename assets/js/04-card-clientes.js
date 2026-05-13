@@ -118,14 +118,16 @@ function _cardAtualizarMetricas(){
       : data;
     var totalPago   = _base.filter(function(d){return d.status==='pago';}).reduce(function(a,d){return a+d.valor;},0);
     var totalAberto = _base.filter(function(d){return d.status==='aberto';}).reduce(function(a,d){return a+d.valor;},0);
+    var negociacaoArr=_base.filter(function(d){return d.status==='negociacao';});
+    var totalNeg    = negociacaoArr.reduce(function(a,d){return a+d.valor;},0);
     var totalEnt    = _base.filter(function(d){return d.entrada>0;}).reduce(function(a,d){return a+d.entrada;},0);
     var nEnt        = _base.filter(function(d){return d.entrada>0;}).length;
     var _META       = typeof META!=='undefined'?META:0;
     var faltam      = Math.max(_META-totalPago,0);
     var pctGeral    = _META>0?Math.round((totalPago/_META)*100):0;
     var e;
-    e=document.getElementById('mTotal');      if(e)e.textContent=formatVal(totalPago+totalAberto);
-    e=document.getElementById('mTotalSub');   if(e)e.textContent=_base.length+' clientes';
+    e=document.getElementById('mTotal');      if(e)e.textContent=formatVal(totalNeg);
+    e=document.getElementById('mTotalSub');   if(e)e.textContent=negociacaoArr.length+' em negociação';
     e=document.getElementById('mAberto');     if(e)e.textContent=formatVal(totalAberto);
     e=document.getElementById('mAbertoSub');  if(e)e.textContent=_base.filter(function(d){return d.status==='aberto';}).length+' clientes';
     e=document.getElementById('mPago');       if(e)e.textContent=formatVal(totalPago);

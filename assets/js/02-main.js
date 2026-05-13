@@ -794,17 +794,16 @@ function toggleCliente(nome){
 }
 function setConsultorStatus(s){
   activeConsultorStatus=s;
-  ['fcAll','fcAberto','fcPago','fcEntrada'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
-  // negociacao vem dos KPI cards — não tem botão dedicado, deixa "Todos" ativo
-  const aid=s===null?'fcAll':s==='aberto'?'fcAberto':s==='pago'?'fcPago':s==='negociacao'?'fcAll':'fcEntrada';
+  ['fcAll','fcAberto','fcPago','fcEntrada','fcNegociacao'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
+  const aid=s===null?'fcAll':s==='aberto'?'fcAberto':s==='pago'?'fcPago':s==='negociacao'?'fcNegociacao':'fcEntrada';
   const el=document.getElementById(aid);if(el)el.classList.add('active');
   if(document.getElementById('consultorDetail').style.display!=='none'&&window._consultorAtivo)_renderConsultorDetail(window._consultorAtivo);
   else renderConsultor();
 }
 function setTreinadorStatus(s){
   activeTreinadorStatus=s;
-  ['ftAll','ftAberto','ftPago','ftEntrada'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
-  const aid=s===null?'ftAll':s==='aberto'?'ftAberto':s==='pago'?'ftPago':'ftEntrada';
+  ['ftAll','ftAberto','ftPago','ftEntrada','ftNegociacao'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
+  const aid=s===null?'ftAll':s==='aberto'?'ftAberto':s==='pago'?'ftPago':s==='negociacao'?'ftNegociacao':'ftEntrada';
   const el=document.getElementById(aid);if(el)el.classList.add('active');
   if(document.getElementById('treinadorDetail').style.display!=='none'&&window._treinadorAtivo)_renderTreinadorDetail(window._treinadorAtivo);
   else renderTreinador();
@@ -945,6 +944,8 @@ function renderAll(){
 
   const totalPago=_base.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
   const totalAberto=_base.filter(d=>d.status==='aberto').reduce((a,d)=>a+d.valor,0);
+  const clientesNegociacao=_base.filter(d=>d.status==='negociacao');
+  const totalNegociacao=clientesNegociacao.reduce((a,d)=>a+d.valor,0);
   const clientesEntrada=_base.filter(d=>d.entrada>0);
   const totalEntradas=clientesEntrada.reduce((a,d)=>a+d.entrada,0);
   const pctGeral=Math.round((totalPago/META)*100);
@@ -954,8 +955,8 @@ function renderAll(){
   const barW=Math.min(Math.round((totalPago/(META*1.5))*100),100);
   const needlePct=Math.round((META/(META*1.5))*100);
 
-  document.getElementById('mTotal').textContent=formatVal(totalPago+totalAberto);
-  document.getElementById('mTotalSub').textContent=_base.length+' clientes';
+  document.getElementById('mTotal').textContent=formatVal(totalNegociacao);
+  document.getElementById('mTotalSub').textContent=clientesNegociacao.length+' em negociação';
   document.getElementById('mAberto').textContent=formatVal(totalAberto);
   document.getElementById('mAbertoSub').textContent=_base.filter(d=>d.status==='aberto').length+' clientes';
   document.getElementById('mPago').textContent=formatVal(totalPago);
