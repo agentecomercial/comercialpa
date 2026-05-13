@@ -772,9 +772,45 @@ function buildSelects(){
 function buildFilterBtns(){
   const tb=document.getElementById('trainerFBtns');if(tb){tb.innerHTML='';allTrainers.forEach(t=>{const b=document.createElement('button');b.className='fbtn';b.textContent=t.split(' ')[0];b.id='ft_'+t;b.onclick=()=>toggleTrainer(t);tb.appendChild(b);});}
   const cb=document.getElementById('consultorFBtns');if(cb){cb.innerHTML='';allConsultors.forEach(c=>{const b=document.createElement('button');b.className='fbtn';b.textContent=c;b.id='fc_'+c;b.onclick=()=>toggleConsultor(c);cb.appendChild(b);});}
+  // Sincronizar selects mobile
+  const tSel=document.getElementById('filtroTreinadorSel');
+  if(tSel){
+    var _tVal=tSel.value;
+    tSel.innerHTML='<option value="">Treinador ▾</option>'+allTrainers.map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
+    tSel.value=activeTrainer||_tVal||'';
+    tSel.classList.toggle('ativo',!!activeTrainer);
+  }
+  const cSel=document.getElementById('filtroConsultorSel');
+  if(cSel){
+    var _cVal=cSel.value;
+    cSel.innerHTML='<option value="">Consultor ▾</option>'+allConsultors.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+    cSel.value=activeConsultor||_cVal||'';
+    cSel.classList.toggle('ativo',!!activeConsultor);
+  }
+  const pSel=document.getElementById('filtroPresencaSel');
+  if(pSel && typeof window._getFiltroPresenca==='function'){
+    pSel.value=window._getFiltroPresenca()||'';
+    pSel.classList.toggle('ativo',!!pSel.value);
+  }
 }
 function toggleTrainer(t){activeTrainer=activeTrainer===t?null:t;renderAll();}
 function toggleConsultor(c){activeConsultor=activeConsultor===c?null:c;renderAll();}
+window._filtroMobTrainer=function(v){activeTrainer=v||null;renderAll();};
+window._filtroMobConsultor=function(v){activeConsultor=v||null;renderAll();};
+window._filtroMobPresenca=function(v){
+  /* _setFiltroPresenca faz toggle (mesmo valor zera). Para set direto, garantimos que o
+     valor atual seja diferente antes de chamar. */
+  if(typeof window._setFiltroPresenca!=='function') return;
+  var atual=typeof window._getFiltroPresenca==='function'?window._getFiltroPresenca():null;
+  if(!v){
+    /* user escolheu "Presença ▾" — limpar */
+    if(atual) window._setFiltroPresenca(atual); /* toggle off */
+    return;
+  }
+  if(atual===v) return; /* já está */
+  if(atual) window._setFiltroPresenca(atual); /* limpa primeiro */
+  window._setFiltroPresenca(v);
+};
 function setStatus(s){activeStatus=s;renderAll();}
 function setStatusDropdown(v){activeStatus=v||null;renderAll();}
 function clearAll(){

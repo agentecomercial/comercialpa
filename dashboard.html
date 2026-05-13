@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ADM — TREINAMENTOS</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260513k">
+<link rel="stylesheet" href="assets/css/main.css?v=20260513l">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <!-- SheetJS — leitura de planilhas Excel e CSV -->
@@ -1033,18 +1033,36 @@
                 <input type="file" id="_planilhaFileInput" accept=".xlsx,.xls,.csv,.pdf,*/*" style="display:none;">
               </div>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:70px;flex-shrink:0;">Treinador</span>
-              <div id="trainerFBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+            <div class="filtros-desktop">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:70px;flex-shrink:0;">Treinador</span>
+                <div id="trainerFBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:70px;flex-shrink:0;">Consultor</span>
+                <div id="consultorFBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:70px;flex-shrink:0;">Presença</span>
+                <div id="presencaFBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+                <button class="clear-link" style="margin-left:auto;" onclick="clearAll()">Limpar filtros</button>
+              </div>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:70px;flex-shrink:0;">Consultor</span>
-              <div id="consultorFBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:70px;flex-shrink:0;">Presença</span>
-              <div id="presencaFBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
-              <button class="clear-link" style="margin-left:auto;" onclick="clearAll()">Limpar filtros</button>
+            <!-- Filtros mobile: 3 dropdowns nativos lado a lado -->
+            <div class="filtros-mobile">
+              <select id="filtroTreinadorSel" class="filtro-mob-sel" onchange="_filtroMobTrainer(this.value)">
+                <option value="">Treinador ▾</option>
+              </select>
+              <select id="filtroConsultorSel" class="filtro-mob-sel" onchange="_filtroMobConsultor(this.value)">
+                <option value="">Consultor ▾</option>
+              </select>
+              <select id="filtroPresencaSel" class="filtro-mob-sel" onchange="_filtroMobPresenca(this.value)">
+                <option value="">Presença ▾</option>
+                <option value="pendente">⏳ Pendente</option>
+                <option value="presente">✅ Presente</option>
+                <option value="falta">❌ Falta</option>
+              </select>
+              <button class="clear-link filtro-mob-clear" onclick="clearAll()">Limpar</button>
             </div>
           </div>
           <div id="presencaCountBar" style="padding:6px 14px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--bg2);"></div>
@@ -1818,14 +1836,14 @@ try{
     <script src="assets/js/propostas/proposta-tav.js"></script>
     <script src="assets/js/propostas/proposta-cis.js"></script>
     <script src="assets/js/propostas/proposta-cis-global.js"></script>
-<script src="assets/js/02-main.js?v=20260513k"></script>
+<script src="assets/js/02-main.js?v=20260513l"></script>
 <script src="assets/js/29-login.js"></script>
-<script src="assets/js/30-sync-ferramentas.js?v=20260513k"></script>
+<script src="assets/js/30-sync-ferramentas.js?v=20260513l"></script>
 <script src="assets/js/21-turmas.js"></script>
 <script src="assets/js/22-pdf-consultor.js"></script>
 <script src="assets/js/23-gerenciar-turmas.js"></script>
 <script src="assets/js/24-aba-produto.js"></script>
-<script src="assets/js/25-abas-consultor.js?v=20260513k"></script>
+<script src="assets/js/25-abas-consultor.js?v=20260513l"></script>
 <script src="assets/js/26-aba-treinador.js"></script>
 <script src="assets/js/27-novos-membros.js"></script>
 <script src="assets/js/28-modais-cliente.js"></script>
@@ -1846,7 +1864,7 @@ try{
 ══════════════════════════════════════════════════════════════ -->
 <link rel="stylesheet" href="assets/css/cardClientes.css">
 
-<script src="assets/js/04-card-clientes.js?v=20260513k"></script>
+<script src="assets/js/04-card-clientes.js?v=20260513l"></script>
 
 <script src="assets/js/05-importacao.js"></script>
 
@@ -2406,10 +2424,10 @@ try{
 <script src="assets/js/12-pipeline-v2-patch.js"></script>
 <script src="assets/js/13-funil-vendas.js"></script>
 
-<script src="assets/js/14-notificacoes.js?v=20260513k"></script>
+<script src="assets/js/14-notificacoes.js?v=20260513l"></script>
 <script src="assets/js/15-pipeline-followup.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="assets/js/16-pipeline-leads.js?v=20260513k"></script>
+<script src="assets/js/16-pipeline-leads.js?v=20260513l"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
