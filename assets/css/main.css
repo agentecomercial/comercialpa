@@ -478,11 +478,19 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   .tabs::-webkit-scrollbar{display:none;}
   .tab{flex-shrink:0;font-size:12px;padding:8px 12px;white-space:nowrap;}
 
-  /* Barra de busca + filtro + botão — empilhar */
-  .search-filter-row{flex-direction:column!important;align-items:stretch!important;gap:8px!important;}
-  .search-filter-row .search-bar{width:100%;}
-  .search-filter-row select{width:100%!important;min-width:unset!important;}
-  .search-filter-row .add-btn{width:100%;}
+  /* Header do card Clientes — título separado dos controles em mobile */
+  .tpanel-header > div:first-child{flex-direction:column!important;align-items:stretch!important;gap:8px!important;}
+  /* Barra de busca + filtro + botões — Opção C: tudo em 1 linha (super compacto) */
+  .search-filter-row{flex-direction:row!important;align-items:center!important;gap:6px!important;flex-wrap:nowrap!important;}
+  .search-filter-row .search-bar{flex:1 1 auto;min-width:0;width:auto;}
+  .search-filter-row .search-bar input{width:100%;font-size:12px;padding:8px 10px 8px 28px;}
+  .search-filter-row .search-bar .search-icon{font-size:12px;left:8px;}
+  .search-filter-row select{width:auto!important;min-width:0!important;flex:0 0 auto;font-size:11px!important;padding:7px 6px!important;height:34px!important;}
+  /* Botões de ação viram ícones quadrados em mobile (esconde labels) */
+  .cli-action-btn{width:36px!important;height:36px!important;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+  .cli-action-btn .btn-label{display:none!important;}
+  .cli-action-btn .btn-icon{font-size:16px;line-height:1;}
+  #btnNovoCliente .btn-icon{font-size:22px;font-weight:700;}
 
   /* Tabela → cards no mobile */
   thead{display:none;}
