@@ -8,8 +8,8 @@
   var _notifOpen=false;
 
   /* Helpers locais — _esc e _fmtR só estão disponíveis dentro de outros IIFEs. */
-  function _esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-  function _fmtR(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function _esc(s){ return window._esc(s); }
+  function _fmtR(v){ return (typeof formatVal==='function')?formatVal(v):('R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})); }
 
   /* ── Tipos de notificação ── */
   var NOTIF_ICONS={pagamento:'💰',meta_batida:'🏆',turma_vencendo:'📅',cliente_novo:'👤',cancelamento:'❌',sistema:'🔔'};

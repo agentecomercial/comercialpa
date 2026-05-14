@@ -816,7 +816,7 @@ function _truncarAudit(v){
 function abrirHistoricoTurma(){
   if(!_turmaAtiva||!window._fbGet) return;
   /* Helper local: _esc só está disponível dentro de IIFEs específicas. */
-  function _esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+  function _esc(s){ return window._esc(s); }
   var id=_turmaAtiva.id;
   var modal=document.getElementById('auditModal');
   var body=document.getElementById('auditModalBody');

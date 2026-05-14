@@ -6,13 +6,9 @@
   var _fnlDragSrc=null; /* {v, srcStatus} */
 
   /* Formatador local de moeda (mesmo padrão de _fmtR/_npFmtR — 2 casas decimais) */
-  function _fmtR(v){
-    return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  }
+  function _fmtR(v){ return (typeof formatVal==='function')?formatVal(v):('R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})); }
   /* Escape HTML local (espelha _esc do IIFE principal) */
-  function _esc(s){
-    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+  function _esc(s){ return window._esc(s); }
 
   var COLS=[
     {key:'aberto',   label:'Aberto',    cls:'fnl-aberto'},

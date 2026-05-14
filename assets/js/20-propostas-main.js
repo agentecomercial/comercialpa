@@ -667,7 +667,7 @@ function fecharPropProd(){
 
 function gerarPropostaProduto(){
   // Helper local para escape HTML (prevenir XSS via dados de cliente/consultor)
-  function _escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function _escHtml(s){ return window._esc(s); }
   var p = _PRODUTOS_PROPOSTA[_propProdAtual];
   if(!p){ _showToast('❌ Produto não encontrado.','var(--red)'); return; }
 

@@ -42,8 +42,8 @@
   function _npFmtMoneyInput(v){
     return Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   }
-  function _esc2(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-  function _escJS2(s){return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+  function _esc2(s){ return window._esc(s); }
+  function _escJS2(s){ return window._escJs(s); }
 
   /* ── Modal Metas — 3 campos por consultor ──────────── */
   window.npAbrirModalMeta=function(focoConsultor){

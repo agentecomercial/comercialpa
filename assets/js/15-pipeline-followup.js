@@ -24,7 +24,7 @@
     if(typeof window._mesKey==='function') return window._mesKey();
     var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
   }
-  function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function _esc(s){ return window._esc(s); }
 
   /* ── Carregar do Firebase ───────────────────────────────────── */
   function _fuCarregar(mk){

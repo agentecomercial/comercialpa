@@ -24,9 +24,7 @@
   var COR=['#c8f05a','#60a5fa','#34d399','#f59e0b','#a78bfa','#f472b6','#fb923c','#38bdf8'];
 
   /* ── Helpers ─────────────────────────────────────────── */
-  function _fmtR(v){
-    return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  }
+  function _fmtR(v){ return (typeof formatVal==='function')?formatVal(v):('R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})); }
   function _mesKey(){
     return _npAno+'-'+String(_npMes).padStart(2,'0');
   }
@@ -35,9 +33,7 @@
            'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     return M[_npMes-1]+' / '+_npAno;
   }
-  function _esc(s){
-    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+  function _esc(s){ return window._esc(s); }
   function _avatar(nome,i){
     var cor=COR[i%COR.length];
     var ini=(nome||'?').trim().charAt(0).toUpperCase();

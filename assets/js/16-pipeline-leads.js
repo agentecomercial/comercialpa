@@ -29,7 +29,7 @@
   /* ── Helpers ────────────────────────────────────────────────── */
   function _mk(){ return typeof window._mesKey==='function'?window._mesKey():(function(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');})(); }
   function _id(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
-  function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function _esc(s){ return window._esc(s); }
   function _toast(msg,cor){ if(typeof _showToast==='function') _showToast(msg,cor||'var(--accent)'); }
   /* pool completo de consultores do mês */
   function _consultoresTodos(){ return window._npConsultores&&window._npConsultores.length?window._npConsultores:[]; }
