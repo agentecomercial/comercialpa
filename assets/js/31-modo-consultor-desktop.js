@@ -132,14 +132,33 @@
     return true;
   }
 
+  /* ── Hook em _voltarParaHome: consultor desktop volta para a home
+     em vez de fazer logout (comportamento padrão para não-ADM) ── */
+  function _patchVoltarParaHome(){
+    if(typeof window._voltarParaHome !== 'function') return false;
+    if(window._voltarParaHome.__cldPatched) return true;
+    var _orig = window._voltarParaHome;
+    window._voltarParaHome = function(){
+      if(window._eConsultorDesktop()){
+        _ajustarHomeParaConsultor();
+        if(typeof _mostrarTela === 'function') _mostrarTela('turmasScreen');
+        return;
+      }
+      return _orig.apply(this, arguments);
+    };
+    window._voltarParaHome.__cldPatched = true;
+    return true;
+  }
+
   /* Patches podem precisar aguardar os módulos carregarem. */
   function _aplicarPatchesQuandoPronto(){
     var tries = 0;
     var iv = setInterval(function(){
       var ok1 = _patchFecharPipeline();
       var ok2 = _patchAbrirTelaTurmas();
+      var ok3 = _patchVoltarParaHome();
       tries++;
-      if((ok1 && ok2) || tries > 50){ clearInterval(iv); }
+      if((ok1 && ok2 && ok3) || tries > 50){ clearInterval(iv); }
     }, 100);
   }
 

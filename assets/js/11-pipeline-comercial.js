@@ -488,10 +488,24 @@
     set('npKpiEntrada',_fmtR(kpis.entrada));
     set('npKpiEntradaSub',kpis.qtdEntrada+' entrada'+(kpis.qtdEntrada!==1?'s':''));
 
-    /* Faltam para meta (meta geral se definida, senão soma metas básicas) */
+    /* Faltam para meta (meta geral se definida, senão soma metas básicas).
+       Para consultor: usar meta INDIVIDUAL dele (metaBasica em _npGoals). */
     var metaEquipe=getMetaEquipeMes();
     var _temMetaGeral=!!(window._npMetaGeral&&window._npMetaGeral.valor>0);
     var _somaIndividual=Object.values(_npGoals||{}).reduce(function(s,g){return s+(+(g.metaBasica||g.metaValor||0));},0);
+    var _tipoMeta=_temMetaGeral?' · 🌐 meta geral':(_somaIndividual>0?' · Σ individuais':'');
+    /* Override para consultor: meta individual */
+    var _sessFM=(typeof _getSessao==='function')?_getSessao():null;
+    if(_sessFM && _sessFM.perfil==='consultor'){
+      var _meuNomeFM=String(_sessFM.nome||_sessFM.login||'').toUpperCase().trim();
+      var _meuGoalFM=null;
+      var _goalsFM=window._npGoals||{};
+      for(var _kFM in _goalsFM){
+        if(String(_kFM).toUpperCase().trim()===_meuNomeFM){ _meuGoalFM=_goalsFM[_kFM]; break; }
+      }
+      metaEquipe = _meuGoalFM ? +(_meuGoalFM.metaBasica||_meuGoalFM.metaValor||0) : 0;
+      _tipoMeta=' · meta individual';
+    }
     var faltamCard=document.getElementById('npKpiFaltamCard');
     if(metaEquipe<=0){
       set('npKpiFaltam','--');set('npKpiFaltamSub','Meta não configurada');
@@ -499,7 +513,6 @@
     } else {
       var faltamV=Math.max(metaEquipe-kpis.faturado,0);
       var pctAtg=Math.round(kpis.faturado/metaEquipe*100);
-      var _tipoMeta=_temMetaGeral?' · 🌐 meta geral':(_somaIndividual>0?' · Σ individuais':'');
       if(faltamV===0){
         set('npKpiFaltam','META!');
         set('npKpiFaltamSub','+'+_fmtR(kpis.faturado-metaEquipe)+' acima'+_tipoMeta);
@@ -703,14 +716,9 @@
       return {id:id,nome:info.nome,meta:meta,pct:pct,stats:s};
     });
 
-    /* Em modo consultor: ocultar turmas sem nenhuma venda dele */
-    if(nomeConsultor){
-      cards = cards.filter(function(c){
-        var s=c.stats;
-        return (s.qPago+s.qAberto+s.qNegociacao+s.qEntrada+s.qDesistiu+s.qEstorno) > 0;
-      });
-      if(!cards.length){sec.style.display='none';return;}
-    }
+    /* Em modo consultor: mantém TODAS as turmas do mês, mesmo as sem venda
+       do consultor (card aparece com mini-blocos zerados). Isso garante que
+       o card "Atingimento por Turma" sempre apareça quando há turmas no mês. */
 
     cards.sort(function(a,b){
       if(a.pct!==null&&b.pct===null) return -1;

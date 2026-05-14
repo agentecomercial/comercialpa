@@ -268,11 +268,12 @@ function entrarTurma(id){
   var _metaMob=document.getElementById('turmaMetaLabelMobile'); if(_metaMob) _metaMob.textContent=formatVal(META);
   document.getElementById('metaValLabel').textContent=formatVal(META);
   _mostrarTela('dashboard');
-  // P1: botão ← Turmas visível apenas para ADM
+  // P1: botão ← Turmas visível para ADM e para consultor em desktop
   var _sessBtn=_getSessao?_getSessao():null;
   var _perfilBtn=_sessBtn?_sessBtn.perfil:'adm';
   var _bvt=document.getElementById('btnVoltarTurmas');
-  if(_bvt) _bvt.style.display=(_perfilBtn==='adm')?'':'none';
+  var _isConsDesk=(typeof window._eConsultorDesktop==='function')&&window._eConsultorDesktop();
+  if(_bvt) _bvt.style.display=(_perfilBtn==='adm'||_isConsDesk)?'':'none';
 
   function _aplicarDados(td){
     data=td&&td.data&&td.data.length?td.data:[];
