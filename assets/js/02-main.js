@@ -523,7 +523,7 @@ function voltarTurmas(){
     var op=window._fbUpdate
       ? window._fbUpdate(TURMAS_NODE+'/'+_turmaAtiva.id, patch)
       : window._fbSave(TURMAS_NODE+'/'+_turmaAtiva.id, patch);
-    op.catch(function(e){console.error('[FB] voltarTurmas save erro:',e);});
+    op.catch(function(e){ window._err && window._err('voltarTurmas: salvar dados', e); });
   }
   _resetDirty();
   _turmaAtiva=null;

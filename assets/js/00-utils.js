@@ -38,4 +38,30 @@
         .replace(/'/g,"\\'");
     };
   }
+
+  /* ── Tratamento centralizado de erros ──────────────────────
+     Padrão recomendado para novos catches:
+
+       fbGet(...).then(...).catch(function(e){ window._err('contexto', e); });
+
+     - _err     → console.warn + toast vermelho (quando _showToast disponível)
+     - _errSilent → apenas console.warn (para erros já tratados na UI)
+
+     Comportamento defensivo: nunca lança. Recebe contexto pra
+     facilitar debug.
+  ──────────────────────────────────────────────────────────── */
+  if(!window._err){
+    window._err = function(ctx, err){
+      try{ console.warn('['+ctx+']', err); }catch(_){}
+      if(typeof window._showToast === 'function'){
+        var msg = (err && err.message) ? err.message : (typeof err === 'string' ? err : 'Erro inesperado');
+        try{ window._showToast('❌ '+ctx+': '+msg, 'var(--red)'); }catch(_){}
+      }
+    };
+  }
+  if(!window._errSilent){
+    window._errSilent = function(ctx, err){
+      try{ console.warn('['+ctx+']', err); }catch(_){}
+    };
+  }
 })();
