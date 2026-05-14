@@ -494,9 +494,11 @@
     var _temMetaGeral=!!(window._npMetaGeral&&window._npMetaGeral.valor>0);
     var _somaIndividual=Object.values(_npGoals||{}).reduce(function(s,g){return s+(+(g.metaBasica||g.metaValor||0));},0);
     var _tipoMeta=_temMetaGeral?' · 🌐 meta geral':(_somaIndividual>0?' · Σ individuais':'');
-    /* Override para consultor: progressivo até a meta MASTER do consultor.
-       Fallback: master → minima → basica */
+    /* Override para consultor: SEMPRE progressivo até a meta MASTER.
+       Mesmo após bater Básica ou Mínima, segue mostrando "Falta X para Master".
+       Fallback (se master não cadastrada): minima → basica. */
     var _sessFM=(typeof _getSessao==='function')?_getSessao():null;
+    var _tiersAtingidos = ''; /* Texto de tiers batidos: "🥉✓ 🥈✓" */
     if(_sessFM && _sessFM.perfil==='consultor'){
       var _meuNomeFM=String(_sessFM.nome||_sessFM.login||'').toUpperCase().trim();
       var _meuGoalFM=null;
@@ -509,7 +511,12 @@
         var _mMin=+(_meuGoalFM.metaMinima||0);
         var _mBas=+(_meuGoalFM.metaBasica||_meuGoalFM.metaValor||0);
         metaEquipe = _mMaster || _mMin || _mBas || 0;
-        _tipoMeta = _mMaster ? ' · 🏆 meta master' : (_mMin ? ' · meta mínima' : ' · meta básica');
+        _tipoMeta = _mMaster ? ' · 🏆 master' : (_mMin ? ' · mínima' : ' · básica');
+        /* Tiers já batidos pelo faturado atual */
+        var _fat=kpis.faturado;
+        if(_mBas>0 && _fat>=_mBas) _tiersAtingidos += '🥉✓ ';
+        if(_mMin>0 && _fat>=_mMin) _tiersAtingidos += '🥈✓ ';
+        if(_mMaster>0 && _fat>=_mMaster) _tiersAtingidos += '🥇✓';
       } else {
         metaEquipe = 0;
         _tipoMeta = ' · meta individual';
@@ -522,13 +529,14 @@
     } else {
       var faltamV=Math.max(metaEquipe-kpis.faturado,0);
       var pctAtg=Math.round(kpis.faturado/metaEquipe*100);
+      var _suffix = _tiersAtingidos ? ' · '+_tiersAtingidos.trim() : '';
       if(faltamV===0){
-        set('npKpiFaltam','META!');
-        set('npKpiFaltamSub','+'+_fmtR(kpis.faturado-metaEquipe)+' acima'+_tipoMeta);
+        set('npKpiFaltam','MASTER!');
+        set('npKpiFaltamSub','+'+_fmtR(kpis.faturado-metaEquipe)+' acima'+_tipoMeta+_suffix);
         if(faltamCard) faltamCard.className='np-kpi np-kpi--green';
       } else {
         set('npKpiFaltam',_fmtR(faltamV));
-        set('npKpiFaltamSub',pctAtg+'% atingido'+_tipoMeta);
+        set('npKpiFaltamSub',pctAtg+'% para'+_tipoMeta+_suffix);
         if(faltamCard) faltamCard.className='np-kpi np-kpi--red';
       }
     }

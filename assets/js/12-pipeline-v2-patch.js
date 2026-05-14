@@ -349,7 +349,15 @@
     }
     var _consComVenda=new Set((typeof window._npTodasVendas==='function'?window._npTodasVendas():[]).map(function(v){return (v.consultor||'').trim().toUpperCase();}));
     var _cons=(window._npConsultores||[]).filter(function(n){return _consComVenda.has((n||'').trim().toUpperCase());});
-    if(!_cons.length){grid.innerHTML='<div class="np-empty">Nenhum consultor encontrado neste mês.</div>';return;}
+    /* Para consultor: filtrar para mostrar apenas a meta dele */
+    var _sessMv=(typeof _getSessao==='function')?_getSessao():null;
+    if(_sessMv && _sessMv.perfil==='consultor'){
+      var _meuNomeMv=String(_sessMv.nome||_sessMv.login||'').toUpperCase().trim();
+      _cons = (window._npConsultores||[]).filter(function(n){return String(n).toUpperCase().trim()===_meuNomeMv;});
+      if(!_cons.length){grid.innerHTML='<div class="np-empty">Nenhuma meta vinculada a você neste mês.</div>';return;}
+    } else {
+      if(!_cons.length){grid.innerHTML='<div class="np-empty">Nenhum consultor encontrado neste mês.</div>';return;}
+    }
     var COR=window._npCOR||['#c8f05a','#60a5fa','#34d399','#f59e0b','#a78bfa','#f472b6','#fb923c','#38bdf8'];
     var ranking=typeof window._npPorConsultor==='function'?window._npPorConsultor(todas,'','pago'):[];
     grid.innerHTML=_cons.map(function(nome,i){
