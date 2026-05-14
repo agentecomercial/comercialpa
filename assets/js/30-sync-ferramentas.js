@@ -44,7 +44,10 @@ var _mapMesesSel = [];      // [] = todos os meses
 function abrirTelaTurmas(){
   var _sT=_getSessao?_getSessao():null;
   var _pT=_sT?_sT.perfil:'adm';
-  if(_pT!=='adm'&&_pT!=='ministrante'){_showToast('❌ Acesso restrito.','var(--red)');return;}
+  /* Bloqueio antigo era para todos não-ADM. Liberamos consultor para que ele possa
+     ver a grade de turmas em "Gerenciar Turmas" e entrar em uma para acessar o dashboard.
+     Ações destrutivas (criar/editar/excluir) continuam protegidas individualmente. */
+  if(_pT!=='adm'&&_pT!=='ministrante'&&_pT!=='consultor'){_showToast('❌ Acesso restrito.','var(--red)');return;}
   _mostrarTela('telaTurmasScreen');
   renderTurmasGrid();
   // Restaurar layout persistido após renderizar

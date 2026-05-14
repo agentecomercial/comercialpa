@@ -1,20 +1,16 @@
 /* ═══════════════════════════════════════════════════════════
-   MODO CONSULTOR DESKTOP — V2
+   MODO CONSULTOR DESKTOP — V2.1
    ──────────────────────────────────────────────────────────
    Desktop consultor:
-     - landing page com 2 botões: "Gerenciar Turmas" e "Pipeline Comercial"
-     - dashboard da Pipeline filtra por consultor
+     - após login, vai para a turmasScreen original (home com cards)
+     - card "Mapeamento" oculto (deixa só "Gerenciar Turmas" e "Pipeline Comercial")
+     - Dashboard da Pipeline filtra por consultor
      - Atingimento por Turma com breakdown por status
-   Mobile consultor: comportamento atual preservado (todos os hooks
-     são no-op quando innerWidth < 769).
+   Mobile consultor: comportamento atual preservado.
    ADM: nenhum efeito.
-   ──────────────────────────────────────────────────────────
-   Feature flag de segurança:
-     - Default: ATIVO
-     - Para desligar via console:
-         localStorage.setItem('consultor_desktop_v2_disabled','1'); location.reload();
-     - Para reativar:
-         localStorage.removeItem('consultor_desktop_v2_disabled'); location.reload();
+
+   Feature flag (desliga sem reverter):
+     localStorage.setItem('consultor_desktop_v2_disabled','1'); location.reload();
 ═══════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
@@ -43,8 +39,6 @@
   window._resetModoConsultorDesktop = function(){ _modoCache = null; };
 
   /* ── Filtro central de vendas por consultor logado ────── */
-  /* Reusa estratégia já existente em _npFiltrar (comparação por nome
-     uppercase). Vale para perfil=consultor independente do dispositivo. */
   window._npFiltrarPorPerfil = function(lista){
     if(!Array.isArray(lista)) return [];
     var sess = (typeof _getSessao === 'function') ? _getSessao() : null;
@@ -58,99 +52,52 @@
     });
   };
 
-  /* Helper: nome do consultor para exibição */
   window._nomeConsultorLogado = function(){
     var sess = (typeof _getSessao === 'function') ? _getSessao() : null;
     if(!sess || sess.perfil !== 'consultor') return '';
     return sess.nome || sess.login || '';
   };
 
-  /* ── Landing screen para consultor desktop ─────────────── */
-  function _injetarLandingHTML(){
-    if(document.getElementById('consultorLandingScreen')) return;
-    var div = document.createElement('div');
-    div.id = 'consultorLandingScreen';
-    div.style.display = 'none';
-    div.innerHTML = ''
-      + '<div class="cld-wrap">'
-        + '<div class="cld-header">'
-          + '<div class="cld-title-row">'
-            + '<div>'
-              + '<div class="cld-saudacao" id="cldSaudacao">Olá!</div>'
-              + '<div class="cld-sub">O que você quer fazer agora?</div>'
-            + '</div>'
-            + '<button class="cld-logout" onclick="logout()">Sair</button>'
-          + '</div>'
-        + '</div>'
-        + '<div class="cld-cards">'
-          + '<button class="cld-card" onclick="window._cldAbrirTurmas()">'
-            + '<div class="cld-card-icon">🏫</div>'
-            + '<div class="cld-card-titulo">Gerenciar Turmas</div>'
-            + '<div class="cld-card-desc">Veja suas turmas ativas, alunos e detalhes de cada uma.</div>'
-          + '</button>'
-          + '<button class="cld-card cld-card-accent" onclick="window._cldAbrirPipeline()">'
-            + '<div class="cld-card-icon">📈</div>'
-            + '<div class="cld-card-titulo">Pipeline Comercial</div>'
-            + '<div class="cld-card-desc">Sua pipeline com leads, vendas, metas e ranking.</div>'
-          + '</button>'
-        + '</div>'
-      + '</div>';
-    document.body.appendChild(div);
-
-    /* Registrar na lista global de telas para que _mostrarTela trate corretamente */
-    if(window._TELAS && window._TELAS.indexOf('consultorLandingScreen') < 0){
-      window._TELAS.push('consultorLandingScreen');
+  /* ── Ajusta a turmasScreen original para consultor desktop:
+        oculta o card "Mapeamento" (deixa só Gerenciar Turmas + Pipeline)
+        muda o título do header para o nome do consultor ── */
+  function _ajustarHomeParaConsultor(){
+    if(!window._eConsultorDesktop()) return;
+    var btnMap = document.getElementById('btnMapHome');
+    if(btnMap) btnMap.style.display = 'none';
+    /* Esconder também o botão de "Usuários" do header (ADM-only) */
+    var navUsuarios = document.querySelector('#turmasScreen .home-nav button[onclick*="abrirPainelUsuarios"]');
+    if(navUsuarios) navUsuarios.style.display = 'none';
+    /* Personalizar saudação */
+    var titulo = document.querySelector('#turmasScreen .home-nav-title');
+    if(titulo){
+      var nome = window._nomeConsultorLogado() || 'Consultor';
+      titulo.textContent = 'Febracis · ' + nome.split(' ')[0];
     }
   }
 
-  function _atualizarSaudacao(){
-    var el = document.getElementById('cldSaudacao');
-    if(!el) return;
-    var nome = window._nomeConsultorLogado() || 'Consultor';
-    var h = new Date().getHours();
-    var saud = h < 12 ? 'Bom dia' : (h < 18 ? 'Boa tarde' : 'Boa noite');
-    el.textContent = saud + ', ' + nome.split(' ')[0] + '!';
-  }
-
-  /* Mostrar landing (chamado pelo hook em 29-login.js).
+  /* Mostrar home do consultor desktop (chamada pelo hook em _entrarDashboardEquipe).
      Retorna true se assumiu o fluxo; false se não. */
   window._mostrarLandingConsultorDesktop = function(/* user */){
     if(!window._eConsultorDesktop()) return false;
-    _injetarLandingHTML();
+    _ajustarHomeParaConsultor();
     if(typeof _mostrarTela === 'function'){
-      _mostrarTela('consultorLandingScreen', true);
-    } else {
-      var el = document.getElementById('consultorLandingScreen');
-      if(el) el.style.display = 'flex';
+      _mostrarTela('turmasScreen');
     }
-    _atualizarSaudacao();
     return true;
   };
 
-  /* Navegação da landing → Gerenciar Turmas */
-  window._cldAbrirTurmas = function(){
-    if(typeof _mostrarTela === 'function') _mostrarTela('turmasScreen');
-    if(typeof _mostrarTurmas === 'function') _mostrarTurmas();
-  };
-
-  /* Navegação da landing → Pipeline Comercial.
-     A pipeline funciona standalone (lê pipelineSales global por mês),
-     não exige _turmaAtiva carregada. */
-  window._cldAbrirPipeline = function(){
-    if(typeof window.abrirNovaPipeline === 'function') window.abrirNovaPipeline();
-  };
-
-  /* ── Hook em fecharNovaPipeline: consultor desktop volta pra landing
-     em vez de voltar pra turmasScreen ─────────────────────────────── */
+  /* ── Hook em fecharNovaPipeline: consultor desktop volta para a home (turmasScreen)
+     em vez do comportamento padrão ─────────────────────────────── */
   function _patchFecharPipeline(){
     if(typeof window.fecharNovaPipeline !== 'function') return false;
-    var _orig = window.fecharNovaPipeline;
     if(window.fecharNovaPipeline.__cldPatched) return true;
+    var _orig = window.fecharNovaPipeline;
     window.fecharNovaPipeline = function(){
       var r = _orig.apply(this, arguments);
       if(window._eConsultorDesktop()){
-        if(typeof _mostrarTela === 'function') _mostrarTela('consultorLandingScreen', true);
-        _atualizarSaudacao();
+        _ajustarHomeParaConsultor();
+        if(typeof _mostrarTela === 'function') _mostrarTela('turmasScreen');
       }
       return r;
     };
@@ -158,32 +105,13 @@
     return true;
   }
 
-  /* ── Hook em voltarTurmas para consultor desktop volta pra landing ── */
-  function _patchVoltarTurmas(){
-    if(typeof window.voltarTurmas !== 'function') return false;
-    if(window.voltarTurmas.__cldPatched) return true;
-    var _orig = window.voltarTurmas;
-    window.voltarTurmas = function(){
-      if(window._eConsultorDesktop()){
-        if(typeof _mostrarTela === 'function') _mostrarTela('consultorLandingScreen', true);
-        _atualizarSaudacao();
-        return;
-      }
-      return _orig.apply(this, arguments);
-    };
-    window.voltarTurmas.__cldPatched = true;
-    return true;
-  }
-
-  /* Patches podem precisar aguardar os módulos carregarem.
-     Tentamos algumas vezes em sequência. */
+  /* Patches podem precisar aguardar os módulos carregarem. */
   function _aplicarPatchesQuandoPronto(){
     var tries = 0;
     var iv = setInterval(function(){
-      var ok1 = _patchFecharPipeline();
-      var ok2 = _patchVoltarTurmas();
+      var ok = _patchFecharPipeline();
       tries++;
-      if((ok1 && ok2) || tries > 50){ clearInterval(iv); }
+      if(ok || tries > 50){ clearInterval(iv); }
     }, 100);
   }
 
