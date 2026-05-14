@@ -1,6 +1,10 @@
 # Backups locais (não enviar para o remoto — usar git revert/checkout)
 _backups/
 
+# Previews HTML de design (não fazem parte da app de produção)
+_previews/
+preview-*.html
+
 # Configurações locais do Claude Code (per-machine, não compartilhar)
 .claude/
 
