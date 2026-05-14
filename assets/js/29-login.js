@@ -277,6 +277,7 @@ function logout(){
   sessionStorage.removeItem('adm_logged');
   sessionStorage.removeItem('ci_sessao');
   localStorage.removeItem('ci_sessao_persistente');
+  if(typeof window._resetModoConsultorDesktop==='function') window._resetModoConsultorDesktop();
   _mostrarTela('loginScreen',true);
   document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';
   _turmaAtiva=null;
