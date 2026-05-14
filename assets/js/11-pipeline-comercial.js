@@ -1165,6 +1165,10 @@
     };
     var def=TIPOS[tipo]; if(!def) return;
     var todas=typeof _npTodasVendas==='function'?_npTodasVendas():[];
+    /* Para consultor: filtrar apenas vendas próprias antes de aplicar o filtro de status */
+    todas = (typeof window._npFiltrarPorPerfil==='function')
+      ? window._npFiltrarPorPerfil(todas)
+      : todas;
     var lista=todas.filter(def.filtro);
     var total=lista.reduce(function(s,v){return s+(+(v.valor||0));},0);
     var qtd=lista.length;
