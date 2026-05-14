@@ -413,9 +413,17 @@
     _populaSelectConsultores();
     var el = document.getElementById('npLeadsGrid');
     if(!el) return;
+    /* Para consultor: filtrar apenas leads dele */
+    var _sessLd=(typeof _getSessao==='function')?_getSessao():null;
+    var _isConsLd=_sessLd && _sessLd.perfil==='consultor';
+    var _meuNomeLd=_isConsLd ? String(_sessLd.nome||_sessLd.login||'').toUpperCase().trim() : '';
     var todas = Object.entries(_leads).sort(function(a,b){ return (b[1].criadoEm||0)-(a[1].criadoEm||0); });
     var lista = todas.filter(function(e){
       var l=e[1];
+      if(_isConsLd){
+        var consLd=String(l.consultor||'').toUpperCase().trim();
+        if(consLd!==_meuNomeLd) return false;
+      }
       if(_filtroConsultor && (l.consultor||'')!==_filtroConsultor) return false;
       if(_filtroDist==='sim' && !l.consultor) return false;
       if(_filtroDist==='nao' && l.consultor)  return false;

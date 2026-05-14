@@ -494,7 +494,8 @@
     var _temMetaGeral=!!(window._npMetaGeral&&window._npMetaGeral.valor>0);
     var _somaIndividual=Object.values(_npGoals||{}).reduce(function(s,g){return s+(+(g.metaBasica||g.metaValor||0));},0);
     var _tipoMeta=_temMetaGeral?' · 🌐 meta geral':(_somaIndividual>0?' · Σ individuais':'');
-    /* Override para consultor: meta individual */
+    /* Override para consultor: progressivo até a meta MASTER do consultor.
+       Fallback: master → minima → basica */
     var _sessFM=(typeof _getSessao==='function')?_getSessao():null;
     if(_sessFM && _sessFM.perfil==='consultor'){
       var _meuNomeFM=String(_sessFM.nome||_sessFM.login||'').toUpperCase().trim();
@@ -503,8 +504,16 @@
       for(var _kFM in _goalsFM){
         if(String(_kFM).toUpperCase().trim()===_meuNomeFM){ _meuGoalFM=_goalsFM[_kFM]; break; }
       }
-      metaEquipe = _meuGoalFM ? +(_meuGoalFM.metaBasica||_meuGoalFM.metaValor||0) : 0;
-      _tipoMeta=' · meta individual';
+      if(_meuGoalFM){
+        var _mMaster=+(_meuGoalFM.metaMaster||0);
+        var _mMin=+(_meuGoalFM.metaMinima||0);
+        var _mBas=+(_meuGoalFM.metaBasica||_meuGoalFM.metaValor||0);
+        metaEquipe = _mMaster || _mMin || _mBas || 0;
+        _tipoMeta = _mMaster ? ' · 🏆 meta master' : (_mMin ? ' · meta mínima' : ' · meta básica');
+      } else {
+        metaEquipe = 0;
+        _tipoMeta = ' · meta individual';
+      }
     }
     var faltamCard=document.getElementById('npKpiFaltamCard');
     if(metaEquipe<=0){
@@ -670,11 +679,9 @@
     }
   }
 
-  /* ── Atingimento por Turma ──────────────────────────────────
-     Modo consultor: cards filtrados pelo nome do consultor; cabeçalho
-     mostra "Nome — Turma"; cada card tem breakdown por status.
-     Modo ADM: agrega vendas da turma; sem nome de consultor.
-  ────────────────────────────────────────────────────────────── */
+  /* ── Atingimento por Turma (formato simples, original) ──────
+     Card compacto: nome turma, %, valor, qtd faturado/ativos, badge.
+     Para consultor: filtrado por consultor (valores são só dele). */
   function _npRenderTurmasAtingimento(){
     var sec=document.getElementById('npTurmasAtingimento');
     var grid=document.getElementById('npTurmasAtingimentoGrid');
@@ -682,49 +689,38 @@
     var metas=window._npTurmasMeta||{};
     if(!Object.keys(metas).length){sec.style.display='none';return;}
 
-    /* Aplicar filtro por perfil (consultor vê só as próprias vendas) */
+    /* Vendas filtradas por perfil (consultor vê só as próprias) */
     var vendasBase = (typeof window._npFiltrarPorPerfil === 'function')
       ? window._npFiltrarPorPerfil(_npVendasTurma)
       : _npVendasTurma;
-    var nomeConsultor = (typeof window._nomeConsultorLogado === 'function')
-      ? window._nomeConsultorLogado() : '';
 
-    function _initStats(){
-      return {pago:0,aberto:0,negociacao:0,entrada:0,desistiu:0,estorno:0,
-              qPago:0,qAberto:0,qNegociacao:0,qEntrada:0,qDesistiu:0,qEstorno:0};
-    }
-    var statsTurma={};
+    /* Agrupar realizado por turmaId — apenas PAGO conta para atingimento */
+    var realizado={}, qtdPagosT={}, qtdAtivosT={};
     vendasBase.forEach(function(v){
       if(!v._turmaId) return;
-      var st=String(v.status||'').toLowerCase().trim();
-      var val=+(v.valor||0);
-      if(!statsTurma[v._turmaId]) statsTurma[v._turmaId]=_initStats();
-      var s=statsTurma[v._turmaId];
-      if(st==='pago'){s.pago+=val;s.qPago++;}
-      else if(st==='aberto'){s.aberto+=val;s.qAberto++;}
-      else if(st==='negociacao'){s.negociacao+=val;s.qNegociacao++;}
-      else if(st==='entrada'){s.entrada+=val;s.qEntrada++;}
-      else if(st==='desistiu'){s.desistiu+=val;s.qDesistiu++;}
-      else if(st==='estorno'){s.estorno+=val;s.qEstorno++;}
+      var st=(v.status||'').toLowerCase().trim();
+      if(st==='cancelado') return;
+      qtdAtivosT[v._turmaId]=(qtdAtivosT[v._turmaId]||0)+1;
+      if(st==='pago'){
+        realizado[v._turmaId]=(realizado[v._turmaId]||0)+(+(v.valor||0));
+        qtdPagosT[v._turmaId]=(qtdPagosT[v._turmaId]||0)+1;
+      }
     });
 
     var cards=Object.entries(metas).map(function(e){
       var id=e[0],info=e[1];
-      var s=statsTurma[id]||_initStats();
+      var real=realizado[id]||0;
       var meta=+(info.meta||0);
-      var pct=meta>0?Math.round(s.pago/meta*100):null;
-      return {id:id,nome:info.nome,meta:meta,pct:pct,stats:s};
+      var pct=meta>0?Math.round(real/meta*100):null;
+      return {id:id,nome:info.nome,meta:meta,real:real,pct:pct,
+              qtdPagos:qtdPagosT[id]||0, qtdAtivos:qtdAtivosT[id]||0};
     });
-
-    /* Em modo consultor: mantém TODAS as turmas do mês, mesmo as sem venda
-       do consultor (card aparece com mini-blocos zerados). Isso garante que
-       o card "Atingimento por Turma" sempre apareça quando há turmas no mês. */
 
     cards.sort(function(a,b){
       if(a.pct!==null&&b.pct===null) return -1;
       if(a.pct===null&&b.pct!==null) return 1;
       if(a.pct!==null&&b.pct!==null) return b.pct-a.pct;
-      return b.stats.pago-a.stats.pago;
+      return b.real-a.real;
     });
 
     function _cls(pct){
@@ -744,41 +740,21 @@
       return 'Crítico 🔴';
     }
 
-    function _bloco(label,qtd,valor,cor){
-      return '<div class="np-turma-atg-m" style="border-left:3px solid '+cor+';">'
-        +'<div class="np-turma-atg-m-lbl">'+label+'</div>'
-        +'<div class="np-turma-atg-m-val">'+_fmtR(valor)+'</div>'
-        +'<div class="np-turma-atg-m-qtd">'+qtd+(qtd===1?' venda':' vendas')+'</div>'
-      +'</div>';
-    }
-
     sec.style.display='';
     grid.innerHTML=cards.map(function(c){
       var cls=_cls(c.pct);
       var pctDisp=c.pct!==null?(c.pct>999?'999%+':c.pct+'%'):'—';
       var barW=c.pct!==null?Math.min(c.pct,100):0;
-      var s=c.stats;
-      var cabec = nomeConsultor
-        ? '<div class="np-turma-atg-cons">'+_esc(nomeConsultor)+'</div>'
-          +'<div class="np-turma-atg-nome" title="'+_esc(c.nome)+'">'+_esc(c.nome)+'</div>'
-        : '<div class="np-turma-atg-nome" title="'+_esc(c.nome)+'">'+_esc(c.nome)+'</div>';
       return '<div class="np-turma-atg-card" onclick="window._npAbrirModalTurma(\''+_esc(c.id)+'\')">'
-        +cabec
+        +'<div class="np-turma-atg-nome" title="'+_esc(c.nome)+'">'+_esc(c.nome)+'</div>'
         +'<div class="np-turma-atg-vals">'
           +'<span class="np-turma-atg-pct '+cls+'">'+pctDisp+'</span>'
-          +'<span class="np-turma-atg-sub"><strong>'+_fmtR(s.pago)+'</strong>'+(c.meta>0?'<br><span style="font-size:10px;">meta '+_fmtR(c.meta)+'</span>':'')+'</span>'
+          +'<span class="np-turma-atg-sub">'+_fmtR(c.real)+(c.meta>0?'<br><span style="font-size:10px;">meta '+_fmtR(c.meta)+'</span>':'')+'</span>'
         +'</div>'
         +(c.meta>0?'<div class="np-turma-atg-track"><div class="np-turma-atg-fill '+cls+'" style="width:'+barW+'%"></div></div>':'')
         +(c.meta===0?'<div style="font-size:10px;color:var(--muted);margin-top:4px;">Meta não definida</div>':'')
-        +'<div class="np-turma-atg-mgrid">'
-          +_bloco('PAGO',       s.qPago,       s.pago,       '#34d399')
-          +_bloco('ABERTO',     s.qAberto,     s.aberto,     '#f59e0b')
-          +_bloco('NEGOCIAÇÃO', s.qNegociacao, s.negociacao, '#60a5fa')
-          +_bloco('ENTRADA',    s.qEntrada,    s.entrada,    '#c8f05a')
-          +_bloco('DESISTIU',   s.qDesistiu,   s.desistiu,   '#ef4444')
-          +_bloco('ESTORNO',    s.qEstorno,    s.estorno,    '#a78bfa')
-        +'</div>'
         +'<div class="np-turma-atg-footer">'
+          +'<span>'+c.qtdPagos+' faturado'+(c.qtdPagos!==1?'s':'')+' / '+c.qtdAtivos+' ativo'+(c.qtdAtivos!==1?'s':'')+'</span>'
           +'<span class="np-turma-atg-badge '+cls+'">'+_label(c.pct)+'</span>'
         +'</div>'
         +'</div>';
@@ -967,8 +943,18 @@
     if(!_npConsultores.length){
       grid.innerHTML='<div class="np-empty">Nenhum consultor encontrado.</div>';return;
     }
+    /* Para consultor: mostrar apenas a própria meta */
+    var _sessMt=(typeof _getSessao==='function')?_getSessao():null;
+    var _consList = _npConsultores;
+    if(_sessMt && _sessMt.perfil==='consultor'){
+      var _meuNomeMt=String(_sessMt.nome||_sessMt.login||'').toUpperCase().trim();
+      _consList = _npConsultores.filter(function(n){return String(n).toUpperCase().trim()===_meuNomeMt;});
+      if(!_consList.length){
+        grid.innerHTML='<div class="np-empty">Nenhuma meta vinculada a você neste mês.</div>';return;
+      }
+    }
     var ranking=_npPorConsultor(todas,'','pago');
-    grid.innerHTML=_npConsultores.map(function(nome,i){
+    grid.innerHTML=_consList.map(function(nome,i){
       var goal=_npGoals[nome]||{};
       var meta=+(goal.metaValor||0);
       var metaQ=+(goal.metaQtd||0);
