@@ -7,6 +7,8 @@ function _setSessao(s){sessionStorage.setItem('ci_sessao',JSON.stringify(s));}
 function _clearSessao(){sessionStorage.removeItem('ci_sessao');}
 
 function _entrarDashboardEquipe(user){
+  /* Consultor desktop: a landing assume o fluxo (botões Gerenciar Turmas / Pipeline) */
+  if(typeof window._mostrarLandingConsultorDesktop === 'function' && window._mostrarLandingConsultorDesktop(user)) return;
   _mostrarTela('dashboard'); // oculta tudo imediatamente enquanto carrega
   _carregarTurmaGlobalAtiva(function(){
     if(!_turmaGlobalAtiva){
@@ -277,6 +279,7 @@ function logout(){
   sessionStorage.removeItem('adm_logged');
   sessionStorage.removeItem('ci_sessao');
   localStorage.removeItem('ci_sessao_persistente');
+  if(typeof window._resetModoConsultorDesktop==='function') window._resetModoConsultorDesktop();
   _mostrarTela('loginScreen',true);
   document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';
   _turmaAtiva=null;

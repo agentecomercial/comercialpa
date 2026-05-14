@@ -452,6 +452,12 @@
 
     var COR=window._npCOR||['#c8f05a','#60a5fa','#34d399','#f59e0b','#a78bfa','#f472b6','#fb923c','#38bdf8'];
 
+    /* Filtro por perfil — consultor vê apenas as próprias vendas em KPIs/charts.
+       ADM continua vendo tudo. Ranking (npRenderRanking) é a exceção (global). */
+    todas = (typeof window._npFiltrarPorPerfil === 'function')
+      ? window._npFiltrarPorPerfil(todas)
+      : todas;
+
     /* Sem dados no mes */
     var semDados=_npVendasTurma.length===0&&Object.keys(_npVendasAvulso||{}).length===0;
     if(semDados){
@@ -651,37 +657,68 @@
     }
   }
 
-  /* ── Atingimento por Turma ──────────────────────── */
+  /* ── Atingimento por Turma ──────────────────────────────────
+     Modo consultor: cards filtrados pelo nome do consultor; cabeçalho
+     mostra "Nome — Turma"; cada card tem breakdown por status.
+     Modo ADM: agrega vendas da turma; sem nome de consultor.
+  ────────────────────────────────────────────────────────────── */
   function _npRenderTurmasAtingimento(){
     var sec=document.getElementById('npTurmasAtingimento');
     var grid=document.getElementById('npTurmasAtingimentoGrid');
     if(!sec||!grid) return;
     var metas=window._npTurmasMeta||{};
     if(!Object.keys(metas).length){sec.style.display='none';return;}
-    /* Agrupar realizado por turmaId — apenas PAGO conta para atingimento */
-    var realizado={};
-    _npVendasTurma.forEach(function(v){
+
+    /* Aplicar filtro por perfil (consultor vê só as próprias vendas) */
+    var vendasBase = (typeof window._npFiltrarPorPerfil === 'function')
+      ? window._npFiltrarPorPerfil(_npVendasTurma)
+      : _npVendasTurma;
+    var nomeConsultor = (typeof window._nomeConsultorLogado === 'function')
+      ? window._nomeConsultorLogado() : '';
+
+    function _initStats(){
+      return {pago:0,aberto:0,negociacao:0,entrada:0,desistiu:0,estorno:0,
+              qPago:0,qAberto:0,qNegociacao:0,qEntrada:0,qDesistiu:0,qEstorno:0};
+    }
+    var statsTurma={};
+    vendasBase.forEach(function(v){
       if(!v._turmaId) return;
-      if((v.status||'').toLowerCase().trim()!=='pago') return;
-      realizado[v._turmaId]=(realizado[v._turmaId]||0)+(+(v.valor||0));
+      var st=String(v.status||'').toLowerCase().trim();
+      var val=+(v.valor||0);
+      if(!statsTurma[v._turmaId]) statsTurma[v._turmaId]=_initStats();
+      var s=statsTurma[v._turmaId];
+      if(st==='pago'){s.pago+=val;s.qPago++;}
+      else if(st==='aberto'){s.aberto+=val;s.qAberto++;}
+      else if(st==='negociacao'){s.negociacao+=val;s.qNegociacao++;}
+      else if(st==='entrada'){s.entrada+=val;s.qEntrada++;}
+      else if(st==='desistiu'){s.desistiu+=val;s.qDesistiu++;}
+      else if(st==='estorno'){s.estorno+=val;s.qEstorno++;}
     });
-    /* Montar cards */
+
     var cards=Object.entries(metas).map(function(e){
       var id=e[0],info=e[1];
-      var real=realizado[id]||0;
+      var s=statsTurma[id]||_initStats();
       var meta=+(info.meta||0);
-      var pct=meta>0?Math.round(real/meta*100):null;
-      var qtdPagos=_npVendasTurma.filter(function(v){return v._turmaId===id&&(v.status||'').toLowerCase().trim()==='pago';}).length;
-      var qtdAtivos=_npVendasTurma.filter(function(v){return v._turmaId===id&&(v.status||'').toLowerCase().trim()!=='cancelado';}).length;
-      return {id:id,nome:info.nome,meta:meta,real:real,pct:pct,qtdPagos:qtdPagos,qtdAtivos:qtdAtivos};
+      var pct=meta>0?Math.round(s.pago/meta*100):null;
+      return {id:id,nome:info.nome,meta:meta,pct:pct,stats:s};
     });
-    /* Ordenar: com meta por % desc, depois sem meta por realizado desc */
+
+    /* Em modo consultor: ocultar turmas sem nenhuma venda dele */
+    if(nomeConsultor){
+      cards = cards.filter(function(c){
+        var s=c.stats;
+        return (s.qPago+s.qAberto+s.qNegociacao+s.qEntrada+s.qDesistiu+s.qEstorno) > 0;
+      });
+      if(!cards.length){sec.style.display='none';return;}
+    }
+
     cards.sort(function(a,b){
       if(a.pct!==null&&b.pct===null) return -1;
       if(a.pct===null&&b.pct!==null) return 1;
       if(a.pct!==null&&b.pct!==null) return b.pct-a.pct;
-      return b.real-a.real;
+      return b.stats.pago-a.stats.pago;
     });
+
     function _cls(pct){
       if(pct===null) return 'sem-meta';
       if(pct>=100) return 'c100';
@@ -698,21 +735,42 @@
       if(pct>=25) return 'Atenção 🟠';
       return 'Crítico 🔴';
     }
+
+    function _bloco(label,qtd,valor,cor){
+      return '<div class="np-turma-atg-m" style="border-left:3px solid '+cor+';">'
+        +'<div class="np-turma-atg-m-lbl">'+label+'</div>'
+        +'<div class="np-turma-atg-m-val">'+_fmtR(valor)+'</div>'
+        +'<div class="np-turma-atg-m-qtd">'+qtd+(qtd===1?' venda':' vendas')+'</div>'
+      +'</div>';
+    }
+
     sec.style.display='';
     grid.innerHTML=cards.map(function(c){
       var cls=_cls(c.pct);
       var pctDisp=c.pct!==null?(c.pct>999?'999%+':c.pct+'%'):'—';
       var barW=c.pct!==null?Math.min(c.pct,100):0;
+      var s=c.stats;
+      var cabec = nomeConsultor
+        ? '<div class="np-turma-atg-cons">'+_esc(nomeConsultor)+'</div>'
+          +'<div class="np-turma-atg-nome" title="'+_esc(c.nome)+'">'+_esc(c.nome)+'</div>'
+        : '<div class="np-turma-atg-nome" title="'+_esc(c.nome)+'">'+_esc(c.nome)+'</div>';
       return '<div class="np-turma-atg-card" onclick="window._npAbrirModalTurma(\''+_esc(c.id)+'\')">'
-        +'<div class="np-turma-atg-nome" title="'+_esc(c.nome)+'">'+_esc(c.nome)+'</div>'
+        +cabec
         +'<div class="np-turma-atg-vals">'
           +'<span class="np-turma-atg-pct '+cls+'">'+pctDisp+'</span>'
-          +'<span class="np-turma-atg-sub">'+_fmtR(c.real)+(c.meta>0?'<br><span style="font-size:10px;">meta '+_fmtR(c.meta)+'</span>':'')+'</span>'
+          +'<span class="np-turma-atg-sub"><strong>'+_fmtR(s.pago)+'</strong>'+(c.meta>0?'<br><span style="font-size:10px;">meta '+_fmtR(c.meta)+'</span>':'')+'</span>'
         +'</div>'
         +(c.meta>0?'<div class="np-turma-atg-track"><div class="np-turma-atg-fill '+cls+'" style="width:'+barW+'%"></div></div>':'')
         +(c.meta===0?'<div style="font-size:10px;color:var(--muted);margin-top:4px;">Meta não definida</div>':'')
+        +'<div class="np-turma-atg-mgrid">'
+          +_bloco('PAGO',       s.qPago,       s.pago,       '#34d399')
+          +_bloco('ABERTO',     s.qAberto,     s.aberto,     '#f59e0b')
+          +_bloco('NEGOCIAÇÃO', s.qNegociacao, s.negociacao, '#60a5fa')
+          +_bloco('ENTRADA',    s.qEntrada,    s.entrada,    '#c8f05a')
+          +_bloco('DESISTIU',   s.qDesistiu,   s.desistiu,   '#ef4444')
+          +_bloco('ESTORNO',    s.qEstorno,    s.estorno,    '#a78bfa')
+        +'</div>'
         +'<div class="np-turma-atg-footer">'
-          +'<span>'+c.qtdPagos+' faturado'+(c.qtdPagos!==1?'s':'')+' / '+c.qtdAtivos+' ativo'+(c.qtdAtivos!==1?'s':'')+'</span>'
           +'<span class="np-turma-atg-badge '+cls+'">'+_label(c.pct)+'</span>'
         +'</div>'
         +'</div>';
