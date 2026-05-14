@@ -541,7 +541,7 @@
       }
     }
 
-    /* Performance bar */
+    /* Performance bar — visual gradiente verde→fogo */
     var getCol=typeof window._npGetCol==='function'?window._npGetCol:function(){return{bar:'#888',text:'var(--muted)'};};
     if(metaEquipe>0){
       var perfPct=Math.round(kpis.faturado/metaEquipe*100);
@@ -549,29 +549,34 @@
       var barW=Math.min(perfPct,100);
       var fill=document.getElementById('npPerfFill');
       var pctEl=document.getElementById('npPerfPct');
-      if(fill){fill.style.width=barW+'%';fill.style.background=col.bar;}
-      if(pctEl){pctEl.textContent=perfPct+'%';pctEl.style.color=col.text;}
-      set('npPerfFat','Faturado: '+_fmtR(kpis.faturado)+(_temMetaGeral?' 🌐':''));
-      set('npPerfFalta',faltamV>0?'Faltam: '+_fmtR(faltamV):'Meta atingida!');
-      var perfPanel=document.getElementById('npPerfPanel');
-      if(perfPanel){
-        perfPanel.querySelectorAll('.np-leg').forEach(function(leg){
-          var cls=Array.from(leg.classList).find(function(c){return['c0','c25','c50','c75','c100'].indexOf(c)>=0;});
-          var threshMap={c0:0,c25:25,c50:50,c75:75,c100:100};
-          var thresh=cls!=null?threshMap[cls]:-1;
-          var isActive=(thresh===0&&perfPct<25)||(thresh===25&&perfPct>=25&&perfPct<50)
-            ||(thresh===50&&perfPct>=50&&perfPct<75)||(thresh===75&&perfPct>=75&&perfPct<100)
-            ||(thresh===100&&perfPct>=100);
-          leg.style.opacity=isActive?'1':'0.4';
-          leg.style.transform=isActive?'scale(1.05)':'scale(1)';
-        });
+      var atingiuMeta = perfPct>=100;
+      if(fill){
+        fill.style.width=barW+'%';
+        /* Em vez de cor única, usa gradiente. Quando atinge meta, classe .fire adiciona efeito */
+        fill.style.background=''; /* limpa qualquer style inline antigo */
+        fill.classList.toggle('fire', atingiuMeta);
+      }
+      if(pctEl){pctEl.textContent=perfPct+'%';pctEl.style.color=atingiuMeta?'#ff9500':col.text;}
+      set('npPerfFat','FATURADO: '+_fmtR(kpis.faturado));
+      set('npPerfMeta','META: '+_fmtR(metaEquipe));
+      var faltaEl=document.getElementById('npPerfFalta');
+      if(faltaEl){
+        if(atingiuMeta){
+          faltaEl.innerHTML='META ATINGIDA! 🏆';
+          faltaEl.className='np-perf-falta atingiu';
+        } else {
+          faltaEl.textContent='Faltam: '+_fmtR(faltamV);
+          faltaEl.className='np-perf-falta';
+        }
       }
     } else {
       var fill2=document.getElementById('npPerfFill');
       var pctEl2=document.getElementById('npPerfPct');
-      if(fill2){fill2.style.width='0%';fill2.style.background='rgba(255,255,255,.1)';}
+      if(fill2){fill2.style.width='0%';fill2.style.background='rgba(255,255,255,.1)';fill2.classList.remove('fire');}
       if(pctEl2){pctEl2.textContent='--';pctEl2.style.color='var(--muted)';}
-      set('npPerfFat','Configure metas para ver performance');set('npPerfFalta','');
+      set('npPerfFat','Configure metas para ver performance');
+      set('npPerfMeta','');
+      set('npPerfFalta','');
     }
 
     /* Top 3 */
