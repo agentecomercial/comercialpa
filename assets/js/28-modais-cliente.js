@@ -210,7 +210,17 @@ window._abrirMenuCliente=function(e,nomeCliente,ri){
       if(_riEdit>=0){
         abrirClienteDetalhe(_riEdit);
         setTimeout(function(){
-          _addTreinRow('cdTreinamentosLista');
+          /* Adiciona linha vazia APENAS se ainda não houver uma sem treinamento
+             selecionado — evita duplicação por double-click ou re-render */
+          var _cont=document.getElementById('cdTreinamentosLista');
+          var _temVazia=false;
+          if(_cont){
+            _cont.querySelectorAll('.trein-row').forEach(function(row){
+              var sel=row.querySelector('.trein-cod');
+              if(sel && (!sel.value || sel.value==='-' || sel.value==='')) _temVazia=true;
+            });
+          }
+          if(!_temVazia) _addTreinRow('cdTreinamentosLista');
           var _btns=document.getElementById('cdTreinBtns');
           if(_btns)_btns.style.display='';
         },80);
