@@ -52,16 +52,16 @@ function _concluirLogin(uid,user,loginStr,manter){
     window._fbAuthCreate(_emailMigr, _senhaMigr).then(function(cred){
       var updates = {authUid: cred.user.uid, lastLogin: Date.now()};
       updates['senha'] = null; /* apaga senha em texto plano */
-      window._fbUpdate('usuarios/'+uid, updates).catch(function(){});
+      window._fbUpdate('usuarios/'+uid, updates).catch(function(e){ window._errSilent&&window._errSilent('migrar authUid',e); });
       console.info('[auth] Usuário migrado para Firebase Auth:', loginStr);
     }).catch(function(e){
       /* conta pode já existir — apenas remove a senha local do RTDB */
       if(e.code === 'auth/email-already-in-use'){
-        window._fbUpdate('usuarios/'+uid, {senha: null, lastLogin: Date.now()}).catch(function(){});
+        window._fbUpdate('usuarios/'+uid, {senha: null, lastLogin: Date.now()}).catch(function(e2){ window._errSilent&&window._errSilent('limpar senha legacy',e2); });
       }
     });
   } else if(window._fbUpdate){
-    window._fbUpdate('usuarios/'+uid, {lastLogin: Date.now()}).catch(function(){});
+    window._fbUpdate('usuarios/'+uid, {lastLogin: Date.now()}).catch(function(e){ window._errSilent&&window._errSilent('atualizar lastLogin',e); });
   }
 
   _mostrarTela('dashboard');

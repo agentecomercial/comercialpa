@@ -224,7 +224,7 @@ function _saveTurmas(l){
     // Atualizar ministrante em cada turma individualmente
     if(Array.isArray(l)){
       l.forEach(function(t){
-        if(t&&t.id) window._fbSave(TURMAS_NODE+'/'+t.id+'/ministrante',t.ministrante||null).catch(function(){});
+        if(t&&t.id) window._fbSave(TURMAS_NODE+'/'+t.id+'/ministrante',t.ministrante||null).catch(function(e){ window._errSilent&&window._errSilent('salvar ministrante',e); });
       });
     }
   }

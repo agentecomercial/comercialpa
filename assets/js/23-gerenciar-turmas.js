@@ -525,7 +525,7 @@ function _moverTurma(idx,dir){
   // Atualizar campo ordem e salvar no Firebase
   _gerenciarTurmasList.forEach(function(t,i){
     t.ordem=i;
-    if(window._fbSave) window._fbSave(TURMAS_NODE+'/'+t.id+'/ordem',i).catch(function(){});
+    if(window._fbSave) window._fbSave(TURMAS_NODE+'/'+t.id+'/ordem',i).catch(function(e){ window._errSilent&&window._errSilent('salvar ordem turma',e); });
   });
   _renderGerenciarLista();
 }
