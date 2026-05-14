@@ -112,7 +112,7 @@ window.APP_CONST = {
   PALETTE_SWIM:    ['var(--blue)','var(--accent)','#a78bfa','var(--red)','var(--amber)','var(--green)','#f472b6','#fb923c','#38bdf8','#e879f9'],
   PALETTE_SWIM_BG: ['rgba(96,165,250,.15)','rgba(200,240,90,.15)','rgba(167,139,250,.18)','rgba(255,95,87,.15)','rgba(255,183,64,.15)','rgba(52,211,153,.15)','rgba(244,114,182,.15)','rgba(251,146,60,.15)','rgba(56,189,248,.15)','rgba(232,121,249,.15)'],
   NB_CLS: ['nb-blue','nb-green','nb-amber','nb-pink','nb-purple','nb-orange'],
-  TREINAMENTOS: ['BHP','CEOP','CI','FCIS','FGPC','IF','MAESTRIA','MASTER COACHING','ML5','TAV','CIS-GL','CIS','TCE - BRONZE','TCE - OURO','TCE - BLACK'],
+  TREINAMENTOS: ['BHP','CEOP','CI','FCIS','FGPC','IF','ML5','TAV','MAESTRIA','MASTER COACHING','CIS-GL','CIS','TCE - BRONZE','TCE - OURO','TCE - BLACK'],
 };
 
 // Aliases preservando 100% da API existente
