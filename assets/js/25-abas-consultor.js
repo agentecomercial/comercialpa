@@ -390,6 +390,7 @@ function _renderConsultorDetail(c){
                   +'<span class="mob-name'+(pago?' pago':'')+'">'+d.cliente+'</span>'
                   +'<button class="info-btn'+(hasInfo?' has-info':'')+'" onclick="event.stopPropagation();openClientInfo('+ri+')">i</button>'
                   +'<span class="mob-presenca" data-presenca-ri="'+ri+'">'+(window._presencaBadgeHtml?window._presencaBadgeHtml(ri):'')+'</span>'
+                  +'<button class="mob-plus-btn" onclick="event.stopPropagation();window._abrirMenuCliente(event,\''+d.cliente.replace(/'/g,"\\'")+'\','+ri+')" title="Adicionar / Editar">+</button>'
                 +'</div>'
                 +'<div class="mob-status" style="color:'+stInfo.c+';"><span class="mob-dot" style="background:'+stInfo.c+';"></span>'+stInfo.l+'</div>'
               +'</div>'

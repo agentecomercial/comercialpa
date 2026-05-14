@@ -1088,7 +1088,7 @@ function renderAll(){
 
       return `<tr data-ri="${ri}" style="border-left:${pago?'2px solid #39ff14':'2px solid transparent'};">
         <td style="text-align:left;font-weight:600;text-transform:uppercase;white-space:nowrap;${pago?'color:#39ff14;':''}">
-          <span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}<button class="info-btn${hasInfo?' has-info':''}" onclick="openClientInfo(${ri})">i</button><span data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):''}</span></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}<button class="info-btn${hasInfo?' has-info':''}" onclick="openClientInfo(${ri})">i</button><span data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):''}</span><button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" title="Adicionar / Editar" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:20px;height:20px;cursor:pointer;color:var(--accent);font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button></span>
         </td>
         <td style="text-align:center;white-space:nowrap;padding:3px 5px;">
           <select class="card-sel cs-treinador" data-ri="${ri}" data-campo="treinador" onchange="cardCellChange(this)">${trainOpts}</select>
@@ -1144,6 +1144,7 @@ function renderAll(){
                 <span class="mob-name${pago?' pago':''}">${d.cliente}</span>
                 <button class="info-btn${hasInfo?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button>
                 <span class="mob-presenca" data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):'<span style="color:var(--muted);font-size:10px;">—</span>'}</span>
+                <button class="mob-plus-btn" onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" title="Adicionar / Editar">+</button>
               </div>
               <div class="mob-status" style="color:${stInfo.c};"><span class="mob-dot" style="background:${stInfo.c};"></span>${stInfo.l}</div>
             </div>
