@@ -202,8 +202,6 @@ const IF15_DATA=[
 function _getTurmas(){try{return JSON.parse(localStorage.getItem(TURMAS_KEY))||[];}catch(e){return[];}}
 function _getTurmaData(id){try{return JSON.parse(localStorage.getItem('ci_turma_'+id))||null;}catch(e){return null;}}
 
-function _migrarIF15(){/* desativado */}
-
 /* Salva turma inteira (meta + clientes) em turmas/{id} */
 function _saveTurmaData(id,state){
   if(window._fbSave){

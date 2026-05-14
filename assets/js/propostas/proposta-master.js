@@ -540,7 +540,7 @@
     var heroBgClass = imgSrc ? '' : 'no-img';
     var heroBgStyle = imgSrc ? 'style="background-image:url(\'' + imgSrc + '\')"' : '';
     var aboutVisualContent = imgSrc
-      ? '<img src="' + imgSrc + '" alt="Master Coaching">'
+      ? '<img src="' + imgSrc + '" alt="Master Coaching" loading="lazy">'
       : '<div class="about-visual-symbol">MC</div>';
 
     return {

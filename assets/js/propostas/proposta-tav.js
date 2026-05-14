@@ -586,7 +586,7 @@
     var heroBgClass = imgSrc ? '' : 'no-img';
     var heroBgStyle = imgSrc ? 'style="background-image:url(\'' + imgSrc + '\')"' : '';
     var aboutVisualContent = imgSrc
-      ? '<img src="' + imgSrc + '" alt="TAV">'
+      ? '<img src="' + imgSrc + '" alt="TAV" loading="lazy">'
       : '<div class="about-visual-symbol">TAV</div>';
 
     return {

@@ -484,7 +484,7 @@
     var heroBgClass = imgSrc ? '' : 'no-img';
     var heroBgStyle = imgSrc ? 'style="background-image:url(\'' + imgSrc + '\')"' : '';
     var aboutVisualContent = imgSrc
-      ? '<img src="' + imgSrc + '" alt="Formação de Líderes ML5">'
+      ? '<img src="' + imgSrc + '" alt="Formação de Líderes ML5" loading="lazy">'
       : '<div class="about-visual-symbol">ML5</div>';
 
     return {

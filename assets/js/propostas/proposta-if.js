@@ -549,7 +549,7 @@
     var heroBgClass = imgSrc ? '' : 'no-img';
     var heroBgStyle = imgSrc ? 'style="background-image:url(\'' + imgSrc + '\')"' : '';
     var aboutVisualContent = imgSrc
-      ? '<img src="' + imgSrc + '" alt="Inteligência Financeira">'
+      ? '<img src="' + imgSrc + '" alt="Inteligência Financeira" loading="lazy">'
       : '<div class="about-visual-symbol">IF</div>';
 
     return {

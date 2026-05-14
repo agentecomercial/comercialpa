@@ -8,6 +8,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ADM — TREINAMENTOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/main.css?v=20260514m">
 <!-- Libs externas (jsPDF, autotable, xlsx) carregadas SOB DEMANDA por 00-utils.js
@@ -1867,7 +1873,8 @@ try{
 
 <script defer src="assets/js/04-card-clientes.js?v=20260514a"></script>
 
-<script defer src="assets/js/05-importacao.js"></script>
+<script defer src="assets/js/05-importacao.js?v=20260514o"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260514a"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
@@ -2452,7 +2459,7 @@ try{
       <button class="np-modal-close" onclick="window._ldFecharModal()">✕</button>
     </div>
     <div style="padding:18px 20px;overflow-y:auto;flex:1;">
-      <img id="npLdImgPreview" src="" alt="" style="display:none;width:100%;border-radius:8px;margin-bottom:14px;max-height:200px;object-fit:contain;background:#ffffff;border:1px solid rgba(255,255,255,.08);">
+      <img id="npLdImgPreview" src="" alt="" loading="lazy" style="display:none;width:100%;border-radius:8px;margin-bottom:14px;max-height:200px;object-fit:contain;background:#ffffff;border:1px solid rgba(255,255,255,.08);">
       <div id="npLdIABadge" style="display:none;font-size:11px;background:rgba(200,240,90,.1);border:1px solid rgba(200,240,90,.25);border-radius:8px;padding:6px 10px;margin-bottom:12px;color:var(--accent);">🤖 Dados extraídos automaticamente — confirme antes de salvar</div>
       <div style="margin-bottom:12px;">
         <label style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Nome</label>
@@ -2476,7 +2483,7 @@ try{
 
 <!-- ══ MODAL: IMAGEM AMPLIADA ════════════════════════════════════ -->
 <div class="np-modal-overlay" id="npLeadsImgOverlay" onclick="window._ldFecharImg()" style="align-items:center;justify-content:center;">
-  <img id="npLeadsImgBig" src="" alt="" style="max-width:92vw;max-height:90vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.7);">
+  <img id="npLeadsImgBig" src="" alt="" loading="lazy" style="max-width:92vw;max-height:90vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.7);">
 </div>
 
 <!-- Modal Follow-up -->

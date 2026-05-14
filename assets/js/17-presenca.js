@@ -34,12 +34,6 @@ function _podeEditar(ri){
   return false;
 }
 
-/* ── Próximo status no ciclo ── */
-function _proximoStatus(atual){
-  var idx = PRESENCA_OPTS.findIndex(function(o){ return o.v === atual; });
-  return PRESENCA_OPTS[(idx + 1) % PRESENCA_OPTS.length].v;
-}
-
 /* ── Alterar presença inline ── */
 window._alterarPresenca = function(ri, novoStatus){
   if(!_podeEditar(ri)) return;

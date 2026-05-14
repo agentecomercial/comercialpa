@@ -590,7 +590,7 @@
     var heroBgClass = imgSrc ? '' : 'no-img';
     var heroBgStyle = imgSrc ? 'style="background-image:url(\'' + imgSrc + '\')"' : '';
     var aboutVisualContent = imgSrc
-      ? '<img src="' + imgSrc + '" alt="Método CIS">'
+      ? '<img src="' + imgSrc + '" alt="Método CIS" loading="lazy">'
       : '<div class="about-visual-symbol">CIS</div>';
 
     return {

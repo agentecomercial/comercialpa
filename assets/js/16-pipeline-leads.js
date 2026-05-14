@@ -452,7 +452,7 @@
       var sel = _selecionados[id] ? ' checked' : '';
       var trCls = _selecionados[id] ? ' class="ld-tr-sel"' : '';
       var foto = l.imgBase64
-        ? '<img class="ld-thumb" src="'+l.imgBase64+'" onclick="window._ldVerImg(\''+id+'\')" title="Ver imagem">'
+        ? '<img class="ld-thumb" src="'+l.imgBase64+'" loading="lazy" onclick="window._ldVerImg(\''+id+'\')" title="Ver imagem">'
         : '<div class="ld-thumb-ph">👤</div>';
 
       var st = l.status||'novo';

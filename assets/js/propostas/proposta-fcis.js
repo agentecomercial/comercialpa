@@ -507,7 +507,7 @@
     var heroBgClass = imgSrc ? '' : 'no-img';
     var heroBgStyle = imgSrc ? 'style="background-image:url(\'' + imgSrc + '\')"' : '';
     var aboutVisualContent = imgSrc
-      ? '<img src="' + imgSrc + '" alt="Formação em Coaching Integral Sistêmico">'
+      ? '<img src="' + imgSrc + '" alt="Formação em Coaching Integral Sistêmico" loading="lazy">'
       : '<div class="about-visual-symbol">FCIS</div>';
 
     return {

@@ -729,7 +729,7 @@ function gerarPropostaProduto(){
     +'.consultor-box{text-align:center;font-size:12px;color:#444;padding-top:16px;border-top:1px solid #1a1a1a;}'
     +'</style>'
     +'</head><body>'
-    +'<img class="hero" src="'+_escHtml(p.img)+'" alt="'+_escHtml(p.nome)+'" />'
+    +'<img class="hero" src="'+_escHtml(p.img)+'" alt="'+_escHtml(p.nome)+'" loading="lazy" />'
     +'<div class="container">'
     +'<div class="badge">Proposta Personalizada</div>'
     +'<div class="titulo">'+_escHtml(p.nome)+'</div>'

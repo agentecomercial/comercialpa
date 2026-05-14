@@ -503,7 +503,7 @@
     var heroBgClass = imgSrc ? '' : 'no-img';
     var heroBgStyle = imgSrc ? 'style="background-image:url(\'' + imgSrc + '\')"' : '';
     var aboutVisualContent = imgSrc
-      ? '<img src="' + imgSrc + '" alt="Formação em Gestão de Pessoas com Perfil Comportamental">'
+      ? '<img src="' + imgSrc + '" alt="Formação em Gestão de Pessoas com Perfil Comportamental" loading="lazy">'
       : '<div class="about-visual-symbol">GP</div>';
 
     return {

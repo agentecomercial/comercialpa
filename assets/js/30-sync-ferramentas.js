@@ -750,19 +750,6 @@ function _skelOff(el){
 function _skelCards(n){
   var s='';for(var i=0;i<(n||3);i++)s+='<div class="skeleton sk-card"></div>';return s;
 }
-/* ── Btn loading ── */
-function _withBtnLoading(btn,fn){
-  if(typeof btn==='string')btn=document.getElementById(btn);
-  if(!btn)return fn();
-  btn.classList.add('btn-loading');btn.disabled=true;
-  var p;
-  try{p=fn();}catch(e){btn.classList.remove('btn-loading');btn.disabled=false;throw e;}
-  if(p&&typeof p.then==='function'){
-    return p.then(function(r){btn.classList.remove('btn-loading');btn.disabled=false;return r;},
-                  function(e){btn.classList.remove('btn-loading');btn.disabled=false;throw e;});
-  }
-  btn.classList.remove('btn-loading');btn.disabled=false;return p;
-}
 /* ── Save indicator ── */
 var _saveIndTimer;
 function _setSaveStatus(state,msg){
@@ -774,18 +761,6 @@ function _setSaveStatus(state,msg){
   if(state==='saved'||state==='error'){
     _saveIndTimer=setTimeout(function(){el.classList.remove('visible');},2000);
   }
-}
-/* ── Empty state helper ── */
-function _renderEmpty(el,opts){
-  opts=opts||{};
-  var html='<div class="empty-state">'
-    +(opts.icon?'<div class="empty-state-icon">'+opts.icon+'</div>':'')
-    +(opts.title?'<div class="empty-state-title">'+opts.title+'</div>':'')
-    +(opts.msg?'<div>'+opts.msg+'</div>':'')
-    +(opts.actionLabel&&opts.actionFn?'<button class="btn empty-state-action" onclick="'+opts.actionFn+'()">'+opts.actionLabel+'</button>':'')
-    +'</div>';
-  if(typeof el==='string')el=document.getElementById(el);
-  if(el)el.innerHTML=html;
 }
 /* ═══ AUDIT LOG — helpers ═══════════════════════════════ */
 function _snapshotBefore(){

@@ -543,7 +543,7 @@
     var heroBgClass = imgSrc ? '' : 'no-img';
     var heroBgStyle = imgSrc ? 'style="background-image:url(\'' + imgSrc + '\')"' : '';
     var aboutVisualContent = imgSrc
-      ? '<img src="' + imgSrc + '" alt="Comunicação Eficaz e Oratória Persuasiva">'
+      ? '<img src="' + imgSrc + '" alt="Comunicação Eficaz e Oratória Persuasiva" loading="lazy">'
       : '<div class="about-visual-symbol">CO</div>';
 
     return {
