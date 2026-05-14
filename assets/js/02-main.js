@@ -268,13 +268,11 @@ function entrarTurma(id){
   var _metaMob=document.getElementById('turmaMetaLabelMobile'); if(_metaMob) _metaMob.textContent=formatVal(META);
   document.getElementById('metaValLabel').textContent=formatVal(META);
   _mostrarTela('dashboard');
-  // P1: botão ← Turmas visível para ADM (sempre) e para consultor em desktop
-  // (consultor mobile mantém o botão oculto — fluxo atual preservado)
+  // P1: botão ← Turmas visível apenas para ADM
   var _sessBtn=_getSessao?_getSessao():null;
   var _perfilBtn=_sessBtn?_sessBtn.perfil:'adm';
   var _bvt=document.getElementById('btnVoltarTurmas');
-  var _isConsDesk=(typeof window._eConsultorDesktop==='function') && window._eConsultorDesktop();
-  if(_bvt) _bvt.style.display=(_perfilBtn==='adm'||_isConsDesk)?'':'none';
+  if(_bvt) _bvt.style.display=(_perfilBtn==='adm')?'':'none';
 
   function _aplicarDados(td){
     data=td&&td.data&&td.data.length?td.data:[];
@@ -385,13 +383,6 @@ function entrarTurma(id){
   } else {
     _showToast('⚠️ Nenhum dado encontrado no Firebase para esta turma.','var(--amber)');
     _aplicarDados(dadosJaCarregados||null);
-  }
-  /* Consultor em desktop: abrir Pipeline Comercial automaticamente após
-     a turma carregar. Em mobile e ADM, fluxo atual permanece intacto. */
-  if(typeof window._eConsultorDesktop==='function' && window._eConsultorDesktop()){
-    setTimeout(function(){
-      if(typeof window.abrirNovaPipeline==='function') window.abrirNovaPipeline();
-    }, 150);
   }
   } // end _doEntrar
 

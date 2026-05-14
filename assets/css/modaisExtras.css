@@ -246,15 +246,7 @@ mark.fnl-hl{background:rgba(200,240,90,.28);color:var(--accent);border-radius:2p
 .np-turma-atg-badge.c50{background:rgba(255,224,0,.1);color:#ffe000;}
 .np-turma-atg-badge.c25{background:rgba(255,85,0,.1);color:#ff5500;}
 .np-turma-atg-badge.c0{background:rgba(239,68,68,.12);color:var(--red);}
-/* Card consultor (nome em destaque acima do nome da turma) */
-.np-turma-atg-cons{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
-/* Mini-blocos por status dentro do card de atingimento */
-.np-turma-atg-mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;}
-.np-turma-atg-m{background:var(--surface);border-radius:6px;padding:6px 8px;border-left:3px solid var(--border2);}
-.np-turma-atg-m-lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
-.np-turma-atg-m-val{font-size:11px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;margin-top:2px;}
-.np-turma-atg-m-qtd{font-size:9px;color:var(--muted);margin-top:1px;}
-@media(max-width:640px){.np-turmas-atg-grid{grid-template-columns:1fr;}.np-turma-atg-mgrid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:640px){.np-turmas-atg-grid{grid-template-columns:1fr;}}
 /* Modal turma — indicadores tier + tabela consultores */
 .np-turma-modal-tiers{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
 .np-turma-modal-tier{flex:1;min-width:80px;padding:10px 8px;border-radius:8px;text-align:center;border:1px solid;}
