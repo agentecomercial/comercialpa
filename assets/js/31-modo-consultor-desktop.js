@@ -105,13 +105,41 @@
     return true;
   }
 
+  /* ── Hook em abrirTelaTurmas: consultor desktop entra DIRETAMENTE na turma
+     ativa em vez de ver a grid de turmas ──────────────────────── */
+  function _patchAbrirTelaTurmas(){
+    if(typeof window.abrirTelaTurmas !== 'function') return false;
+    if(window.abrirTelaTurmas.__cldPatched) return true;
+    var _orig = window.abrirTelaTurmas;
+    window.abrirTelaTurmas = function(){
+      if(window._eConsultorDesktop()){
+        /* Entrar direto na turma ativa global (let não é exposto via window) */
+        var idAtiva = null;
+        try{ if(typeof _turmaGlobalAtiva !== 'undefined') idAtiva = _turmaGlobalAtiva; }catch(_){}
+        if(!idAtiva){
+          try{ idAtiva = localStorage.getItem('ci_turma_global_ativa'); }catch(_){}
+        }
+        if(idAtiva && typeof window.entrarTurma === 'function'){
+          window.entrarTurma(idAtiva);
+          return;
+        }
+        if(typeof _showToast === 'function') _showToast('Nenhuma turma ativa disponível.','var(--amber)');
+        return;
+      }
+      return _orig.apply(this, arguments);
+    };
+    window.abrirTelaTurmas.__cldPatched = true;
+    return true;
+  }
+
   /* Patches podem precisar aguardar os módulos carregarem. */
   function _aplicarPatchesQuandoPronto(){
     var tries = 0;
     var iv = setInterval(function(){
-      var ok = _patchFecharPipeline();
+      var ok1 = _patchFecharPipeline();
+      var ok2 = _patchAbrirTelaTurmas();
       tries++;
-      if(ok || tries > 50){ clearInterval(iv); }
+      if((ok1 && ok2) || tries > 50){ clearInterval(iv); }
     }, 100);
   }
 
