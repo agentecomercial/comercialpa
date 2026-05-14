@@ -43,7 +43,17 @@ function renderProduto(){
   const pagos=_isConsRP
     ?data.filter(d=>d&&d.cliente&&d.status==='pago'&&(d.consultor||''). toUpperCase()===_vinculoRP)
     :data.filter(d=>d&&d.cliente&&d.status==='pago');
-  const produtos=[...new Set(data.map(d=>d.treinamento||'—'))].sort();
+  // Produtos: somente treinamentos OFICIAIS (allTreinamentos) — evita dado contaminado
+  // (registros com nome de cliente no campo treinamento, etc.)
+  const _treinOficiais = (typeof allTreinamentos!=='undefined' && Array.isArray(allTreinamentos))
+    ? new Set(allTreinamentos.map(function(t){return String(t||'').trim().toUpperCase();}))
+    : null;
+  function _isProdutoValido(t){
+    if(!t || t==='—' || t==='-') return false;
+    if(!_treinOficiais) return true; // sem lista oficial, aceita qualquer não-vazio
+    return _treinOficiais.has(String(t).trim().toUpperCase());
+  }
+  const produtos=[...new Set(data.map(d=>d.treinamento||'').filter(_isProdutoValido))].sort();
   const consultores=[...new Set(pagos.map(d=>d.consultor))].sort();
   const el=document.getElementById('produtoCruzadaTable');
   if(!el)return;
@@ -156,7 +166,16 @@ function _renderProdutoCruzadaEntrada(){
   if(!comEntrada.length){panel.style.display='none';return;}
   panel.style.display='';
 
-  var produtos=[...new Set(data.map(function(d){return d.treinamento||'—';}))].sort();
+  // Produtos: somente treinamentos OFICIAIS (allTreinamentos) — evita dado contaminado
+  var _treinOf2=(typeof allTreinamentos!=='undefined' && Array.isArray(allTreinamentos))
+    ? new Set(allTreinamentos.map(function(t){return String(t||'').trim().toUpperCase();}))
+    : null;
+  function _isProdValido2(t){
+    if(!t||t==='—'||t==='-') return false;
+    if(!_treinOf2) return true;
+    return _treinOf2.has(String(t).trim().toUpperCase());
+  }
+  var produtos=[...new Set(data.map(function(d){return d.treinamento||'';}).filter(_isProdValido2))].sort();
   var consultores=[...new Set(comEntrada.map(function(d){return d.consultor;}))].sort();
 
   function _sortArrowE(col){
