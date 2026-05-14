@@ -783,10 +783,25 @@ function impLerArquivo(event){
   var ext=file.name.split('.').pop().toLowerCase();
   if(!['xlsx','xls','csv','pdf'].includes(ext)){
     _showToast('❌ Formato inválido. Use .xlsx, .xls, .csv ou .pdf','var(--red)');
+    _impProcessando=false;
+    return;
+  }
+
+  /* Lazy-load: SheetJS (~1MB) só é baixado na 1ª importação */
+  if(typeof XLSX==='undefined' && typeof window._ensureXLSX==='function'){
+    _showToast('⏳ Preparando leitor de planilhas (primeira vez)…','var(--muted)');
+    window._ensureXLSX().then(function(){
+      _impProcessando=false;
+      impLerArquivo({target:{files:[file],value:''}});
+    }).catch(function(){
+      _impProcessando=false;
+      _showToast('❌ Não foi possível carregar o leitor. Verifique sua conexão.','var(--red)');
+    });
     return;
   }
   if(typeof XLSX==='undefined'){
     _showToast('❌ SheetJS não carregado.','var(--red)');
+    _impProcessando=false;
     return;
   }
 

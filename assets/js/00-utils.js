@@ -90,4 +90,44 @@
       }catch(_){}
     };
   }
+
+  /* ── Lazy-load de libs externas ─────────────────────────────
+     Injeta scripts CDN sob demanda. Promise singleton: várias
+     chamadas no início concorrentes vão esperar a mesma carga.
+  ──────────────────────────────────────────────────────────── */
+  function _injectScript(src){
+    return new Promise(function(resolve,reject){
+      var s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.onload = function(){ resolve(); };
+      s.onerror = function(e){ reject(e); };
+      document.head.appendChild(s);
+    });
+  }
+
+  /* XLSX (SheetJS) — usado em Importação de planilhas */
+  var _xlsxPromise = null;
+  if(!window._ensureXLSX){
+    window._ensureXLSX = function(){
+      if(typeof XLSX !== 'undefined') return Promise.resolve();
+      if(_xlsxPromise) return _xlsxPromise;
+      _xlsxPromise = _injectScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+      _xlsxPromise.catch(function(){ _xlsxPromise = null; });
+      return _xlsxPromise;
+    };
+  }
+
+  /* jsPDF + autotable — usado em PDFs (clientes, propostas, consultor) */
+  var _jspdfPromise = null;
+  if(!window._ensureJsPDF){
+    window._ensureJsPDF = function(){
+      if(typeof window.jspdf !== 'undefined') return Promise.resolve();
+      if(_jspdfPromise) return _jspdfPromise;
+      _jspdfPromise = _injectScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+        .then(function(){ return _injectScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js'); });
+      _jspdfPromise.catch(function(){ _jspdfPromise = null; });
+      return _jspdfPromise;
+    };
+  }
 })();

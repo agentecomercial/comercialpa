@@ -70,7 +70,16 @@ function gerarPdfConsultor(acao){
   if(!selecionados.length){_showToast('⚠️ Selecione ao menos um consultor.','var(--amber)');return;}
   var algumStatus=_pdfSecs.pagos||_pdfSecs.em_aberto||_pdfSecs.entrada||_pdfSecs.tabela||_pdfSecs.ranking||_pdfSecs.potencial||_pdfSecs.faturado||_pdfSecs.aberto||_pdfSecs.meta;
   if(!algumStatus){_showToast('⚠️ Selecione ao menos uma seção.','var(--amber)');return;}
-  if(typeof window.jspdf==='undefined'){_showToast('❌ jsPDF não carregado. Use pelo GitHub Pages.','var(--red)');return;}
+  if(typeof window.jspdf==='undefined'){
+    if(typeof window._ensureJsPDF==='function'){
+      _showToast('⏳ Preparando gerador de PDF (primeira vez)…','var(--muted)');
+      window._ensureJsPDF().then(function(){ gerarPdfConsultor(acao); }).catch(function(){
+        _showToast('❌ Erro ao carregar jsPDF.','var(--red)');
+      });
+      return;
+    }
+    _showToast('❌ jsPDF não carregado.','var(--red)');return;
+  }
   var doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   var W=210,mg=14,y=mg;
   var titulo=document.getElementById('dashTitle').textContent||'Relatório de Consultores';

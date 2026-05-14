@@ -335,7 +335,16 @@ function gerarPropostaPDF(){
   });
 
   if(!selecionados.length){_showToast('⚠️ Selecione ao menos um treinamento.','var(--amber)');return;}
-  if(typeof window.jspdf === 'undefined'){_showToast('❌ jsPDF não carregado.','var(--red)');return;}
+  if(typeof window.jspdf === 'undefined'){
+    if(typeof window._ensureJsPDF==='function'){
+      _showToast('⏳ Preparando gerador de PDF (primeira vez)…','var(--muted)');
+      window._ensureJsPDF().then(gerarPropostaPDF).catch(function(){
+        _showToast('❌ Erro ao carregar jsPDF.','var(--red)');
+      });
+      return;
+    }
+    _showToast('❌ jsPDF não carregado.','var(--red)');return;
+  }
 
   var total = selecionados.reduce(function(a,s){return a+s.val;},0);
   // Ler ajustes visuais

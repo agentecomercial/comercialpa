@@ -12,6 +12,13 @@ function _pdfcHabilitarBotoes(habilitar){
 
 function _pdfcVisualizar(){
   if(typeof window.jspdf==='undefined'){
+    if(typeof window._ensureJsPDF==='function'){
+      _showToast('⏳ Preparando gerador de PDF (primeira vez)…','var(--muted)');
+      window._ensureJsPDF().then(_pdfcVisualizar).catch(function(){
+        _showToast('❌ Erro ao carregar jsPDF.','var(--red)');
+      });
+      return;
+    }
     _showToast('❌ jsPDF não carregado.','var(--red)');return;
   }
   var lista=_pdfcOrdenar(_pdfcFiltrar());
@@ -173,6 +180,13 @@ function _pdfcGerar(lista){
 
 function gerarPdfClientes(acao){
   if(typeof window.jspdf==='undefined'){
+    if(typeof window._ensureJsPDF==='function'){
+      _showToast('⏳ Preparando gerador de PDF (primeira vez)…','var(--muted)');
+      window._ensureJsPDF().then(function(){ gerarPdfClientes(acao); }).catch(function(){
+        _showToast('❌ Erro ao carregar jsPDF.','var(--red)');
+      });
+      return;
+    }
     _showToast('❌ jsPDF não carregado.','var(--red)');return;
   }
   // Usa PDF já gerado no preview, ou gera agora se não tiver

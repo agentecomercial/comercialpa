@@ -10,10 +10,9 @@
 <title>ADM — TREINAMENTOS</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/main.css?v=20260514a">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-<!-- SheetJS — leitura de planilhas Excel e CSV -->
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Libs externas (jsPDF, autotable, xlsx) carregadas SOB DEMANDA por 00-utils.js
+     via _ensureJsPDF() / _ensureXLSX() — economia de ~1.5MB no boot. -->
+
 <script id="seed-data">
 // Firebase é a fonte da verdade. Sem seed local.
 </script>
@@ -1743,7 +1742,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260514d"></script>
+<script defer src="assets/js/00-utils.js?v=20260514l"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
