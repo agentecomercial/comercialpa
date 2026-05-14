@@ -128,7 +128,7 @@
       if(_alvo) e.preventDefault();
     });
 
-    console.log('[LongPress] Registrado em telaTurmasScreen ✅');
+    window._log&&window._log('[LongPress] Registrado em telaTurmasScreen ✅');
   }
 
   /* Hook: registrar sempre que a tela de turmas for aberta */

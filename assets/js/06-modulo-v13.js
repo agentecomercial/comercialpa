@@ -441,6 +441,6 @@ window.excluirSelecionados       = window.excluirSelecionados;
 window.verificarSelecao          = window.verificarSelecao;
 window.v13QuickEdit              = window.v13QuickEdit;
 
-console.log('[v13] Módulo selects + máscara BRL + excluir dinâmico carregado ✅');
+window._log&&window._log('[v13] Módulo selects + máscara BRL + excluir dinâmico carregado ✅');
 
 })();

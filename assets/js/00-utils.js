@@ -64,4 +64,30 @@
       try{ console.warn('['+ctx+']', err); }catch(_){}
     };
   }
+
+  /* ── Debug log condicional ──────────────────────────────────
+     Substitui console.log direto. Só imprime se:
+       localStorage.setItem('DEBUG','1')
+     em produção fica silencioso. Para erros reais, use _err.
+  ──────────────────────────────────────────────────────────── */
+  var _DEBUG = false;
+  try{ _DEBUG = localStorage.getItem('DEBUG') === '1'; }catch(_){}
+  if(!window._log){
+    window._log = function(){
+      if(!_DEBUG) return;
+      try{ console.log.apply(console, arguments); }catch(_){}
+    };
+  }
+  /* Helper para ligar/desligar via console:
+       _setDebug(true) | _setDebug(false)  */
+  if(!window._setDebug){
+    window._setDebug = function(on){
+      _DEBUG = !!on;
+      try{
+        if(on) localStorage.setItem('DEBUG','1');
+        else localStorage.removeItem('DEBUG');
+        console.info('[utils] DEBUG =', _DEBUG);
+      }catch(_){}
+    };
+  }
 })();

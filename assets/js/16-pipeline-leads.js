@@ -645,9 +645,9 @@
       Tesseract.recognize(canvas, 'por+eng', _ocrCfg)
         .then(function(result){
           var txt = (result&&result.data&&result.data.text)||'';
-          console.log('[Leads OCR] texto bruto:\n', txt);
+          window._log&&window._log('[Leads OCR] texto bruto:\n', txt);
           var dados = _parsearWhatsApp(txt);
-          console.log('[Leads OCR] dados:', dados);
+          window._log&&window._log('[Leads OCR] dados:', dados);
           callback(dados);
         })
         .catch(function(e){

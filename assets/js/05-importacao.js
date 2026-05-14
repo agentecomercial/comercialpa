@@ -170,7 +170,7 @@ function impProcessarAOA(aoa){
       if (score > bestScore) { bestScore = score; bestIdx = r; }
     }
     if (bestIdx > 0) {
-      console.log('[IMPORT v3] Cabeçalho detectado na linha ' + (bestIdx + 1) + ' (score: ' + bestScore + ')');
+      window._log&&window._log('[IMPORT v3] Cabeçalho detectado na linha ' + (bestIdx + 1) + ' (score: ' + bestScore + ')');
       aoa = aoa.slice(bestIdx);
     }
   })();
@@ -196,10 +196,10 @@ function impProcessarAOA(aoa){
   // Log mapeamento
   console.group('[IMPORT v3] Mapeamento detectado');
   Object.keys(IMP_ALIASES).forEach(function(c){
-    if(mapa[c]!==undefined) console.log('  ✅',c,'→ col',mapa[c],'"'+headers[mapa[c]]+'"');
-    else                     console.log('  ⚠️',c,'→ não encontrado');
+    if(mapa[c]!==undefined) window._log&&window._log('  ✅',c,'→ col',mapa[c],'"'+headers[mapa[c]]+'"');
+    else                     window._log&&window._log('  ⚠️',c,'→ não encontrado');
   });
-  if(mapa.__onboard!==undefined) console.log('  ✅ Onboarding → col',mapa.__onboard,'"'+headers[mapa.__onboard]+'"');
+  if(mapa.__onboard!==undefined) window._log&&window._log('  ✅ Onboarding → col',mapa.__onboard,'"'+headers[mapa.__onboard]+'"');
   else                            console.warn('  ⚠️ Coluna "Status do Onboarding" não encontrada — todas as linhas passam pelo filtro');
   console.groupEnd();
 
@@ -1102,7 +1102,7 @@ function impAplicarSync(diff, criadoPor){
 
   // Inserir novos
   var inseridos = 0;
-  if(diff.inserir.length) console.log('[IMP inserir] primeiro item treinamento:', diff.inserir[0].treinamento, '| total:', diff.inserir.length);
+  if(diff.inserir.length) window._log&&window._log('[IMP inserir] primeiro item treinamento:', diff.inserir[0].treinamento, '| total:', diff.inserir.length);
   diff.inserir.forEach(function(obj){
     data.push({
       cliente:     obj.cliente     || '',

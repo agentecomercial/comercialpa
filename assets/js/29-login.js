@@ -304,14 +304,14 @@ async function _migrarUsuariosParaAuth(){
     try{
       var _cred=await window._fbAuthCreate(_email,_senha);
       await window._fbUpdate('usuarios/'+_uid,{authUid:_cred.user.uid});
-      ok++;console.log('[migração] ✅',_u.nome,'→',_email);
+      ok++;window._log&&window._log('[migração] ✅',_u.nome,'→',_email);
     }catch(_e){
-      if(_e.code==='auth/email-already-in-use'){skip++;console.log('[migração] ⚠️ já existe:',_email);}
+      if(_e.code==='auth/email-already-in-use'){skip++;window._log&&window._log('[migração] ⚠️ já existe:',_email);}
       else{erros++;console.error('[migração] ❌',_u.nome,_e.code||_e.message);}
     }
   }
   var _msg='[migração] Concluída: '+total+' usuários | '+ok+' migrados | '+skip+' pulados | '+erros+' erros.';
-  console.log(_msg);
+  window._log&&window._log(_msg);
   if(typeof _showToast==='function') _showToast('✅ Migração: '+ok+' de '+total+' migrados','var(--accent)');
 }
 window._migrarUsuariosParaAuth=_migrarUsuariosParaAuth;
@@ -338,7 +338,7 @@ async function _migrarMesMetaLegado({dryRun=true}={}){
     }
   }
   var msg='[migração mesMeta] '+(dryRun?'PRÉVIA':'CONCLUÍDA')+': '+total+' turmas | '+skip+' puladas (já têm mesMeta)';
-  console.log(msg);
+  window._log&&window._log(msg);
   console.table(preview);
   if(!dryRun&&typeof _showToast==='function')
     _showToast('✅ mesMeta migrado: '+total+' turmas atualizadas','var(--accent)');

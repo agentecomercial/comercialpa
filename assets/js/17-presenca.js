@@ -330,5 +330,5 @@ if(document.readyState === 'loading'){
 // Expor para re-init após login
 window._presencaInit = _init;
 
-console.log('[Presença] Módulo carregado ✅');
+window._log&&window._log('[Presença] Módulo carregado ✅');
 })();

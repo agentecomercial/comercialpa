@@ -112,7 +112,7 @@
   window._addTreinamentoGerenciar          = window._addTreinamentoGerenciar;
   window._removerTreinamentoGerenciar      = window._removerTreinamentoGerenciar;
 
-  console.log('[GerenciarTreinamentos] Módulo carregado ✅');
+  window._log&&window._log('[GerenciarTreinamentos] Módulo carregado ✅');
 
   /* ── Modal dedicado de gerenciar treinamentos ── */
   window.abrirGerenciarTreinamentosModal = function(){
