@@ -43,17 +43,25 @@ function renderProduto(){
   const pagos=_isConsRP
     ?data.filter(d=>d&&d.cliente&&d.status==='pago'&&(d.consultor||''). toUpperCase()===_vinculoRP)
     :data.filter(d=>d&&d.cliente&&d.status==='pago');
-  // Produtos: somente treinamentos OFICIAIS (allTreinamentos) — evita dado contaminado
-  // (registros com nome de cliente no campo treinamento, etc.)
+  // Produtos: somente treinamentos OFICIAIS (allTreinamentos), na ORDEM da lista oficial
   const _treinOficiais = (typeof allTreinamentos!=='undefined' && Array.isArray(allTreinamentos))
     ? new Set(allTreinamentos.map(function(t){return String(t||'').trim().toUpperCase();}))
     : null;
   function _isProdutoValido(t){
     if(!t || t==='—' || t==='-') return false;
-    if(!_treinOficiais) return true; // sem lista oficial, aceita qualquer não-vazio
+    if(!_treinOficiais) return true;
     return _treinOficiais.has(String(t).trim().toUpperCase());
   }
-  const produtos=[...new Set(data.map(d=>d.treinamento||'').filter(_isProdutoValido))].sort();
+  function _ordemProd(t){
+    if(!allTreinamentos) return 999;
+    var tn=String(t||'').trim().toUpperCase();
+    for(var i=0;i<allTreinamentos.length;i++){
+      if(String(allTreinamentos[i]||'').trim().toUpperCase()===tn) return i;
+    }
+    return 999;
+  }
+  const produtos=[...new Set(data.map(d=>d.treinamento||'').filter(_isProdutoValido))]
+    .sort(function(a,b){return _ordemProd(a)-_ordemProd(b);});
   const consultores=[...new Set(pagos.map(d=>d.consultor))].sort();
   const el=document.getElementById('produtoCruzadaTable');
   if(!el)return;
@@ -166,7 +174,7 @@ function _renderProdutoCruzadaEntrada(){
   if(!comEntrada.length){panel.style.display='none';return;}
   panel.style.display='';
 
-  // Produtos: somente treinamentos OFICIAIS (allTreinamentos) — evita dado contaminado
+  // Produtos: somente treinamentos OFICIAIS, na ORDEM da lista oficial
   var _treinOf2=(typeof allTreinamentos!=='undefined' && Array.isArray(allTreinamentos))
     ? new Set(allTreinamentos.map(function(t){return String(t||'').trim().toUpperCase();}))
     : null;
@@ -175,7 +183,16 @@ function _renderProdutoCruzadaEntrada(){
     if(!_treinOf2) return true;
     return _treinOf2.has(String(t).trim().toUpperCase());
   }
-  var produtos=[...new Set(data.map(function(d){return d.treinamento||'';}).filter(_isProdValido2))].sort();
+  function _ordemProd2(t){
+    if(!allTreinamentos) return 999;
+    var tn=String(t||'').trim().toUpperCase();
+    for(var i=0;i<allTreinamentos.length;i++){
+      if(String(allTreinamentos[i]||'').trim().toUpperCase()===tn) return i;
+    }
+    return 999;
+  }
+  var produtos=[...new Set(data.map(function(d){return d.treinamento||'';}).filter(_isProdValido2))]
+    .sort(function(a,b){return _ordemProd2(a)-_ordemProd2(b);});
   var consultores=[...new Set(comEntrada.map(function(d){return d.consultor;}))].sort();
 
   function _sortArrowE(col){
