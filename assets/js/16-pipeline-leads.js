@@ -624,10 +624,37 @@
     setTimeout(function(){ if(inp){inp.focus();inp.select();} },100);
   };
 
+  /* ── Lazy-load do Tesseract (~2 MB) — só baixa quando user envia 1ª imagem ── */
+  var _tessLoadPromise = null;
+  function _ensureTesseract(){
+    if(typeof Tesseract !== 'undefined') return Promise.resolve();
+    if(_tessLoadPromise) return _tessLoadPromise;
+    _toast('⏳ Preparando OCR (primeira vez)…','var(--muted)');
+    _tessLoadPromise = new Promise(function(resolve, reject){
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+      s.async = true;
+      s.onload = function(){ resolve(); };
+      s.onerror = function(e){ _tessLoadPromise = null; reject(e); };
+      document.head.appendChild(s);
+    });
+    return _tessLoadPromise;
+  }
+
   /* ── Extração OCR (file:// compatível, sem worker persistente) ─ */
   function _extrairOCR(base64, callback){
+    _ensureTesseract().then(function(){
+      _runOCR(base64, callback);
+    }).catch(function(e){
+      console.warn('[Leads OCR] falha ao carregar Tesseract:', e);
+      _toast('❌ Não foi possível carregar a OCR. Verifique sua conexão.','var(--red)');
+      callback({});
+    });
+  }
+
+  function _runOCR(base64, callback){
     if(typeof Tesseract==='undefined'){
-      console.warn('[Leads OCR] Tesseract não carregado');
+      console.warn('[Leads OCR] Tesseract não disponível após carga');
       callback({}); return;
     }
     _toast('🔍 Lendo imagem...','var(--muted)');

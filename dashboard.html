@@ -2422,8 +2422,9 @@ try{
 
 <script defer src="assets/js/14-notificacoes.js?v=20260514a"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script defer src="assets/js/16-pipeline-leads.js?v=20260514d"></script>
+<!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
+     apenas quando o usuário envia a primeira imagem na aba Leads. -->
+<script defer src="assets/js/16-pipeline-leads.js?v=20260514k"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
