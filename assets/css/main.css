@@ -749,29 +749,11 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-perf-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .np-perf-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
 .np-perf-pct{font-size:20px;font-weight:800;}
-.np-perf-wrap{position:relative;padding:18px 0 8px;margin-bottom:8px;}
-.np-perf-track{position:relative;height:14px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:8px;overflow:visible;}
-.np-perf-fill{position:relative;height:100%;border-radius:8px;transition:width .8s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,#0a8c4a 0%,#22c55e 40%,#34d399 70%,#86e85a 90%,#c8f05a 100%);box-shadow:0 0 12px rgba(52,211,153,.4),inset 0 1px 0 rgba(255,255,255,.15);}
-.np-perf-fill.atingiu{
-  background:linear-gradient(90deg,#0a8c4a 0%,#22c55e 35%,#86e85a 60%,#c8f05a 80%,#ffe000 95%,#ff9500 100%);
-  box-shadow:0 0 16px rgba(200,240,90,.5),0 0 6px rgba(255,200,0,.3),inset 0 1px 0 rgba(255,255,255,.25);
-}
-/* Marcadores das 3 metas (básica, mínima, master) sobre a barra */
-.np-perf-mark{position:absolute;top:-14px;width:2px;height:42px;background:rgba(255,255,255,.45);z-index:3;pointer-events:none;}
-.np-perf-mark.met{background:rgba(255,255,255,.95);box-shadow:0 0 6px rgba(255,255,255,.6);}
-.np-perf-mark-l{position:absolute;top:-18px;transform:translateX(-50%);font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
-.np-perf-mark-l.met{color:#fff;}
-.np-perf-mark-v{position:absolute;top:34px;transform:translateX(-50%);font-size:9px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
-.np-perf-info{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;margin-bottom:0;gap:12px;}
-.np-perf-info #npPerfFat{color:var(--green);}
-.np-perf-info .np-perf-meta{color:var(--muted);text-align:center;flex:1;font-weight:600;font-size:11px;}
-.np-perf-info .np-perf-falta{color:var(--amber);text-align:right;}
-.np-perf-info .np-perf-falta.atingiu{color:#ffe000;text-shadow:0 0 8px rgba(255,224,0,.5);}
-@media(max-width:600px){
-  .np-perf-info{flex-direction:column;align-items:stretch;gap:4px;font-size:11px;}
-  .np-perf-info .np-perf-meta{text-align:left;}
-  .np-perf-info .np-perf-falta{text-align:left;}
-}
+.np-perf-track{height:10px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden;margin-bottom:8px;}
+.np-perf-fill{height:100%;border-radius:5px;transition:width .5s ease;}
+.np-perf-info{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:12px;}
+.np-perf-legend{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+@media(max-width:600px){.np-perf-legend{grid-template-columns:repeat(3,1fr);}}
 .np-leg{border-radius:6px;padding:6px 4px;text-align:center;border:1px solid transparent;transition:opacity .2s,transform .2s;}
 .np-leg-r{font-size:8px;font-weight:700;margin-bottom:2px;}
 .np-leg-d{font-size:9px;color:var(--muted);}

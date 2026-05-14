@@ -541,7 +541,7 @@
       }
     }
 
-    /* Performance bar — gradiente + marcadores (consultor) + fogo (master ultrapassada) */
+    /* Performance bar */
     var getCol=typeof window._npGetCol==='function'?window._npGetCol:function(){return{bar:'#888',text:'var(--muted)'};};
     if(metaEquipe>0){
       var perfPct=Math.round(kpis.faturado/metaEquipe*100);
@@ -549,59 +549,29 @@
       var barW=Math.min(perfPct,100);
       var fill=document.getElementById('npPerfFill');
       var pctEl=document.getElementById('npPerfPct');
-      var atingiuMeta = perfPct>=100;
-      if(fill){
-        fill.style.width=barW+'%';
-        fill.style.background=''; /* limpa style inline antigo */
-        fill.classList.toggle('atingiu', atingiuMeta);
-      }
-      if(pctEl){pctEl.textContent=perfPct+'%';pctEl.style.color=atingiuMeta?'#ffe000':col.text;}
-      set('npPerfFat','FATURADO: '+_fmtR(kpis.faturado));
-      set('npPerfMeta','META: '+_fmtR(metaEquipe));
-      var faltaEl=document.getElementById('npPerfFalta');
-      if(faltaEl){
-        if(atingiuMeta){
-          faltaEl.innerHTML='MASTER ATINGIDA! 🏆';
-          faltaEl.className='np-perf-falta atingiu';
-        } else {
-          faltaEl.textContent='Faltam: '+_fmtR(faltamV);
-          faltaEl.className='np-perf-falta';
-        }
-      }
-      /* ── Marcadores das 3 metas (apenas consultor com goal configurado) ── */
-      var markersEl=document.getElementById('npPerfMarkers');
-      if(markersEl){
-        markersEl.innerHTML='';
-        if(_sessFM && _sessFM.perfil==='consultor' && typeof _meuGoalFM!=='undefined' && _meuGoalFM){
-          var _mB=+(_meuGoalFM.metaBasica||_meuGoalFM.metaValor||0);
-          var _mMn=+(_meuGoalFM.metaMinima||0);
-          var _mMs=+(_meuGoalFM.metaMaster||0);
-          var _fatNow=kpis.faturado;
-          function _marker(label,valor,batida){
-            if(!valor||!metaEquipe) return '';
-            var pos=Math.min(100,Math.round(valor/metaEquipe*100));
-            var cls='np-perf-mark'+(batida?' met':'');
-            return '<div class="'+cls+'" style="left:'+pos+'%;">'
-              +'<div class="np-perf-mark-l'+(batida?' met':'')+'">'+label+(batida?' ✓':'')+'</div>'
-              +'<div class="np-perf-mark-v">'+_fmtR(valor)+'</div>'
-            +'</div>';
-          }
-          var marksHtml='';
-          if(_mB>0 && _mB<metaEquipe)   marksHtml += _marker('🥉 Básica',_mB,  _fatNow>=_mB);
-          if(_mMn>0 && _mMn<metaEquipe) marksHtml += _marker('🥈 Mínima',_mMn,_fatNow>=_mMn);
-          if(_mMs>0)                    marksHtml += _marker('🏆 Master',_mMs,_fatNow>=_mMs);
-          markersEl.innerHTML=marksHtml;
-        }
+      if(fill){fill.style.width=barW+'%';fill.style.background=col.bar;}
+      if(pctEl){pctEl.textContent=perfPct+'%';pctEl.style.color=col.text;}
+      set('npPerfFat','Faturado: '+_fmtR(kpis.faturado)+(_temMetaGeral?' 🌐':''));
+      set('npPerfFalta',faltamV>0?'Faltam: '+_fmtR(faltamV):'Meta atingida!');
+      var perfPanel=document.getElementById('npPerfPanel');
+      if(perfPanel){
+        perfPanel.querySelectorAll('.np-leg').forEach(function(leg){
+          var cls=Array.from(leg.classList).find(function(c){return['c0','c25','c50','c75','c100'].indexOf(c)>=0;});
+          var threshMap={c0:0,c25:25,c50:50,c75:75,c100:100};
+          var thresh=cls!=null?threshMap[cls]:-1;
+          var isActive=(thresh===0&&perfPct<25)||(thresh===25&&perfPct>=25&&perfPct<50)
+            ||(thresh===50&&perfPct>=50&&perfPct<75)||(thresh===75&&perfPct>=75&&perfPct<100)
+            ||(thresh===100&&perfPct>=100);
+          leg.style.opacity=isActive?'1':'0.4';
+          leg.style.transform=isActive?'scale(1.05)':'scale(1)';
+        });
       }
     } else {
       var fill2=document.getElementById('npPerfFill');
       var pctEl2=document.getElementById('npPerfPct');
-      if(fill2){fill2.style.width='0%';fill2.style.background='rgba(255,255,255,.1)';fill2.classList.remove('atingiu');}
+      if(fill2){fill2.style.width='0%';fill2.style.background='rgba(255,255,255,.1)';}
       if(pctEl2){pctEl2.textContent='--';pctEl2.style.color='var(--muted)';}
-      set('npPerfFat','Configure metas para ver performance');
-      set('npPerfMeta','');
-      set('npPerfFalta','');
-      var markersEl2=document.getElementById('npPerfMarkers'); if(markersEl2) markersEl2.innerHTML='';
+      set('npPerfFat','Configure metas para ver performance');set('npPerfFalta','');
     }
 
     /* Top 3 */
