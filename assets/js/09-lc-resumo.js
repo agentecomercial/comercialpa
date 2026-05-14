@@ -438,7 +438,6 @@ function lcAbrirDistribuicaoEquilibrado(){
   window._impDistCons=cons;
   window._impDistTotal=semQt;
   window._lcDistIndices=indices;
-  window._lcDistQtdsEquil=qtds;
 
   if(!document.getElementById('impDistModal')){
     var dm=document.createElement('div');

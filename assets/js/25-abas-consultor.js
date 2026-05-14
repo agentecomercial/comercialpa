@@ -417,20 +417,6 @@ function _renderConsultorDetail(c){
   if(typeof window._atualizarBarraPresencaConsultor==='function') window._atualizarBarraPresencaConsultor();
 }
 
-window._toggleGrupo=function(gid){
-  var filhos=document.querySelectorAll('[data-grupo="'+gid+'"]');
-  var subDiv=document.getElementById(gid);
-  var arr=document.getElementById('arr_'+gid);
-  if(filhos.length){
-    var aberto=filhos[0].style.display!=='none';
-    filhos.forEach(function(el){el.style.display=aberto?'none':'';});
-    if(arr) arr.style.transform=aberto?'':'rotate(90deg)';
-  } else if(subDiv){
-    var aberto=subDiv.style.display!=='none';
-    subDiv.style.display=aberto?'none':'';
-    if(arr) arr.style.transform=aberto?'':'rotate(90deg)';
-  }
-};
 var _clienteDetalheIdx=null;
 function abrirClienteDetalhe(ri){
   var d=data[ri];

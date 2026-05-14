@@ -925,15 +925,6 @@
     if(o) o.classList.remove('open');
   };
 
-  window._npToggleConsDetail=function(rowId){
-    var tr=document.getElementById(rowId);
-    var caret=document.getElementById(rowId+'_c');
-    if(!tr) return;
-    var aberto=tr.style.display!=='none';
-    tr.style.display=aberto?'none':'table-row';
-    if(caret) caret.textContent=aberto?'▸':'▾';
-  };
-
   /* ── Vendas ──────────────────────────────────────── */
   var _npSortTurma={col:'',dir:1};
   window.npSortTurma=function(col){

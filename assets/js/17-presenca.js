@@ -77,17 +77,6 @@ window._alterarPresenca = function(ri, novoStatus){
 };
 
 /* ── Ciclo de clique no badge ── */
-window._ciclarPresenca = function(ri){
-  if(!_podeEditar(ri)) {
-    if(typeof _showToast === 'function') _showToast('⛔ Sem permissão para alterar presença.','var(--red)');
-    return;
-  }
-  var d = data[ri];
-  if(!d) return;
-  var prox = _proximoStatus(d.presenca || 'pendente');
-  window._alterarPresenca(ri, prox);
-};
-
 /* ── Abrir dropdown de seleção ── */
 window._abrirDropPresenca = function(e, ri){
   e.stopPropagation();
@@ -267,41 +256,6 @@ function _patchFiltered(){
     return f;
   };
 }
-
-/* ── Modal de histórico ── */
-window._verHistoricoPresenca = function(ri){
-  var d = data[ri];
-  if(!d) return;
-  var log = d.presencaLog || [];
-  var _sl = function(v){ return _opt(v).icon + ' ' + _opt(v).l; };
-  var html = log.length === 0
-    ? '<p style="color:var(--muted);text-align:center;padding:20px;">Nenhuma alteração registrada.</p>'
-    : '<div style="display:flex;flex-direction:column;gap:8px;">'
-      + log.slice().reverse().map(function(e){
-          var dt = new Date(e.em);
-          var dtStr = dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-          return '<div style="padding:10px 14px;background:var(--surface2);border-radius:8px;border-left:3px solid '+_opt(e.para).border+';">'
-            +'<div style="font-size:11px;color:var(--muted);margin-bottom:4px;">'+dtStr+' · <span style="color:var(--text);">'+e.por+'</span></div>'
-            +'<div style="font-size:12px;color:var(--muted);">'+_sl(e.de)+'</div>'
-            +'<div style="font-size:13px;font-weight:700;color:'+_opt(e.para).cor+';margin-top:2px;">→ '+_sl(e.para)+'</div>'
-            +'</div>';
-        }).join('')
-      +'</div>';
-
-  // Reutilizar padrão de modal do projeto
-  var ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:99990;display:flex;align-items:center;justify-content:center;';
-  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
-  ov.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:min(400px,94vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">'
-    +'<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">'
-    +'<div><div style="font-size:14px;font-weight:700;color:var(--text);">Histórico de Presença</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+d.cliente+'</div></div>'
-    +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0 4px;">×</button>'
-    +'</div>'
-    +'<div style="overflow-y:auto;padding:16px 20px;flex:1;">'+html+'</div>'
-    +'</div>';
-  document.body.appendChild(ov);
-};
 
 /* ── Inicializar após DOM pronto ── */
 function _init(){

@@ -529,7 +529,6 @@ function _montarGrid(membros,usuarios){
   window._fecharUrDd=function(){
     var dd=document.getElementById('_urBodyDd');
     if(dd) dd.remove();
-    window._urBodyDdUid=null;
   };
 
   function _abrirUrDd(menuBtn){
@@ -548,7 +547,6 @@ function _montarGrid(membros,usuarios){
     dd.style.background='#12201f';
     dd.style.background='#111d11';
     document.body.appendChild(dd);
-    window._urBodyDdUid=uid;
 
     // ações
     dd.addEventListener('click',function(e){
