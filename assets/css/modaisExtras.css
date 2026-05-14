@@ -256,6 +256,53 @@ mark.fnl-hl{background:rgba(200,240,90,.28);color:var(--accent);border-radius:2p
 .np-turma-atg-m-qtd{font-size:9px;color:var(--muted);margin-top:1px;}
 @media(max-width:640px){.np-turmas-atg-grid{grid-template-columns:1fr;}.np-turma-atg-mgrid{grid-template-columns:repeat(2,1fr);}}
 
+/* ── Modal Turma v2 (combo A+B compacto, KPIs clicáveis) ── */
+.ntm-grid{display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,2.4fr);gap:10px;margin-bottom:14px;align-items:stretch;}
+.ntm-hero{background:linear-gradient(135deg,rgba(200,240,90,.06),transparent);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;min-width:0;}
+.ntm-hero-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+.ntm-hero-pct{font-size:28px;font-weight:700;color:#ffe000;line-height:1.1;margin-top:2px;}
+.ntm-hero-pct.c100{color:var(--green);}.ntm-hero-pct.c75{color:#00f0ff;}.ntm-hero-pct.c50{color:#ffe000;}.ntm-hero-pct.c25{color:#ff5500;}.ntm-hero-pct.c0{color:var(--red);}
+.ntm-hero-meta{font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ntm-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;min-width:0;}
+.ntm-kpi{padding:8px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);cursor:pointer;text-align:left;font-family:inherit;color:inherit;transition:all .15s;min-width:0;}
+.ntm-kpi:hover{transform:translateY(-1px);}
+.ntm-kpi.pago{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.05);}
+.ntm-kpi.pago.ativo{background:rgba(52,211,153,.15);box-shadow:0 0 0 2px rgba(52,211,153,.4);}
+.ntm-kpi.aberto{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05);}
+.ntm-kpi.aberto.ativo{background:rgba(245,158,11,.15);box-shadow:0 0 0 2px rgba(245,158,11,.4);}
+.ntm-kpi.negociacao{border-color:rgba(96,165,250,.3);background:rgba(96,165,250,.05);}
+.ntm-kpi.negociacao.ativo{background:rgba(96,165,250,.15);box-shadow:0 0 0 2px rgba(96,165,250,.4);}
+.ntm-kpi.entrada{border-color:rgba(200,240,90,.3);background:rgba(200,240,90,.05);}
+.ntm-kpi.entrada.ativo{background:rgba(200,240,90,.15);box-shadow:0 0 0 2px rgba(200,240,90,.4);}
+.ntm-kpi-h{display:flex;justify-content:space-between;align-items:center;}
+.ntm-kpi-l{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.ntm-kpi-i{font-size:13px;line-height:1;}
+.ntm-kpi-v{font-size:13px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ntm-kpi.pago .ntm-kpi-v{color:var(--green);}
+.ntm-kpi.aberto .ntm-kpi-v{color:var(--amber);}
+.ntm-kpi.negociacao .ntm-kpi-v{color:var(--blue);}
+.ntm-kpi.entrada .ntm-kpi-v{color:var(--accent);}
+.ntm-kpi-q{font-size:9px;color:var(--muted);margin-top:1px;}
+.ntm-listas-wrap{display:block;}
+.ntm-lista-h{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.ntm-cli-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:6px;margin-bottom:5px;border-left:3px solid;gap:10px;}
+.ntm-cli-row.pago{border-left-color:var(--green);}
+.ntm-cli-row.aberto{border-left-color:var(--amber);}
+.ntm-cli-row.negociacao{border-left-color:var(--blue);}
+.ntm-cli-row.entrada{border-left-color:var(--accent);}
+.ntm-cli-row.desistiu{border-left-color:var(--red);opacity:.7;}
+.ntm-cli-info{min-width:0;flex:1;}
+.ntm-cli-nome{font-size:12px;font-weight:600;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ntm-cli-sub{font-size:10px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ntm-cli-val{font-size:13px;font-weight:700;flex-shrink:0;white-space:nowrap;}
+.ntm-cli-val.pago{color:var(--green);}
+.ntm-empty{padding:18px 14px;text-align:center;font-size:11px;color:var(--muted);font-style:italic;background:var(--surface2);border-radius:6px;}
+/* Responsivo — em telas estreitas, hero vai pra cima e KPIs em 2x2 */
+@media(max-width:720px){
+  .ntm-grid{grid-template-columns:1fr;}
+  .ntm-kpis{grid-template-columns:repeat(2,1fr);}
+}
+
 /* Modal turma — indicadores tier + tabela consultores */
 .np-turma-modal-tiers{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
 .np-turma-modal-tier{flex:1;min-width:80px;padding:10px 8px;border-radius:8px;text-align:center;border:1px solid;}
