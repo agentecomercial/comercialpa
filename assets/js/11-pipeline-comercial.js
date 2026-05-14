@@ -447,55 +447,6 @@
   }
 
   /* ── Dashboard ───────────────────────────────────── */
-  /* ── Canvas de fogo do Performance Bar (mesmo padrão da aba Geral) ── */
-  var _npFireRAF=null, _npFireParticles=[];
-  function _npPerfFireStart(){
-    if(_npFireRAF) return;
-    _animPerfFire();
-  }
-  function _npPerfFireStop(){
-    if(_npFireRAF){ cancelAnimationFrame(_npFireRAF); _npFireRAF=null; }
-    _npFireParticles=[];
-    var cv=document.getElementById('npPerfFire');
-    if(cv){ var ctx=cv.getContext('2d'); ctx.clearRect(0,0,cv.width,cv.height); }
-  }
-  function _animPerfFire(){
-    var cv=document.getElementById('npPerfFire');
-    if(!cv){ _npFireRAF=null; return; }
-    var parent=cv.parentElement;
-    var pw=parent ? parent.getBoundingClientRect().width : 800;
-    cv.width=pw; cv.height=48;
-    var ctx=cv.getContext('2d'); ctx.clearRect(0,0,pw,48);
-    /* Zona de fogo: cobre toda a largura da barra (sobreposto, "ultrapassou master") */
-    var startX=0, zone=pw;
-    for(var i=0;i<Math.max(2,Math.round(zone/8));i++){
-      _npFireParticles.push({
-        x:startX+Math.random()*zone, y:48,
-        vy:-(0.6+Math.random()*1.4),
-        vx:(Math.random()-.5)*.6,
-        size:0.8+Math.random()*4.2,
-        life:1, decay:0.030+Math.random()*0.020
-      });
-    }
-    _npFireParticles=_npFireParticles.filter(function(p){return p.life>0;});
-    _npFireParticles.forEach(function(p){
-      p.x+=p.vx; p.y+=p.vy; p.life-=p.decay;
-      var a=p.life;
-      var r=Math.floor(255*Math.min(1,a*2));
-      var g=Math.floor(180*Math.max(0,a-.3));
-      var grad=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.size);
-      grad.addColorStop(0,'rgba(255,255,'+Math.floor(200*a)+','+a+')');
-      grad.addColorStop(.4,'rgba('+r+','+g+',0,'+(a*.8)+')');
-      grad.addColorStop(1,'rgba(255,50,0,0)');
-      ctx.beginPath();
-      ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
-      ctx.fillStyle=grad;
-      ctx.fill();
-    });
-    if(_npFireParticles.length>500) _npFireParticles=_npFireParticles.slice(-500);
-    _npFireRAF=requestAnimationFrame(_animPerfFire);
-  }
-
   function _npRenderDashboard(todas){
     function set(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
 
@@ -599,7 +550,6 @@
       var fill=document.getElementById('npPerfFill');
       var pctEl=document.getElementById('npPerfPct');
       var atingiuMeta = perfPct>=100;
-      var ultrapassouMaster = kpis.faturado > metaEquipe; /* estritamente acima */
       if(fill){
         fill.style.width=barW+'%';
         fill.style.background=''; /* limpa style inline antigo */
@@ -643,12 +593,6 @@
           markersEl.innerHTML=marksHtml;
         }
       }
-      /* ── Fogo: só ULTRAPASSOU a meta master ── */
-      if(ultrapassouMaster){
-        _npPerfFireStart();
-      } else {
-        _npPerfFireStop();
-      }
     } else {
       var fill2=document.getElementById('npPerfFill');
       var pctEl2=document.getElementById('npPerfPct');
@@ -658,7 +602,6 @@
       set('npPerfMeta','');
       set('npPerfFalta','');
       var markersEl2=document.getElementById('npPerfMarkers'); if(markersEl2) markersEl2.innerHTML='';
-      _npPerfFireStop();
     }
 
     /* Top 3 */

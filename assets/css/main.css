@@ -750,7 +750,6 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-perf-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
 .np-perf-pct{font-size:20px;font-weight:800;}
 .np-perf-wrap{position:relative;padding:18px 0 8px;margin-bottom:8px;}
-.np-perf-fire{position:absolute;left:0;top:-4px;width:100%;height:48px;pointer-events:none;z-index:2;}
 .np-perf-track{position:relative;height:14px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:8px;overflow:visible;}
 .np-perf-fill{position:relative;height:100%;border-radius:8px;transition:width .8s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,#0a8c4a 0%,#22c55e 40%,#34d399 70%,#86e85a 90%,#c8f05a 100%);box-shadow:0 0 12px rgba(52,211,153,.4),inset 0 1px 0 rgba(255,255,255,.15);}
 .np-perf-fill.atingiu{
