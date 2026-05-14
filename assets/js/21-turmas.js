@@ -416,6 +416,17 @@ function renderTurmasGrid(){
         return _ts(b)-_ts(a);
       });
 
+      /* Para consultor: mostrar apenas a turma globalmente ativa.
+         (ADM e ministrante continuam vendo todas.) */
+      var _sCons=_getSessao?_getSessao():null;
+      if(_sCons && _sCons.perfil==='consultor'){
+        if(_turmaGlobalAtiva){
+          turmasFinais=turmasFinais.filter(function(t){return t.id===_turmaGlobalAtiva;});
+        } else {
+          turmasFinais=[];
+        }
+      }
+
       if(turmasFinais.length>0){
         _tturmasCache=turmasFinais;
         _renderTurmasCards(turmasFinais);
