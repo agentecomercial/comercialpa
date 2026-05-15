@@ -40,7 +40,7 @@ function abrirClientesVinculados(nomeConsultor){
   var fv = typeof formatVal==='function' ? formatVal : function(v){ return 'R$ '+v; };
   sts.innerHTML=[
     {l:'Carteira total',   v:fv(totalCarteira), cor:'var(--blue)'},
-    {l:'Faturado',         v:fv(totalPago),     cor:'var(--green)'},
+    {l:'Faturado',         v:fv(totalPago),     cor:'var(--pago)'},
     {l:'Em aberto',        v:fv(totalAberto),   cor:'var(--amber)'},
     {l:'Entradas',         v:fv(totalEntrada),  cor:'var(--accent)'},
     {l:'Clientes pagos',   v:qtdPago+'/'+vinculados.length, cor:'var(--muted)'}
@@ -51,7 +51,7 @@ function abrirClientesVinculados(nomeConsultor){
 
   // Status labels e cores
   var SL  = {pago:'PAGO',aberto:'ABERTO',negociacao:'NEGOCIAÇÃO',desistiu:'DESISTIU',estorno:'ESTORNO',entrada:'ENTRADA','-':'—'};
-  var SCR = {pago:'var(--green)',aberto:'var(--amber)',negociacao:'var(--blue)',desistiu:'var(--red)',estorno:'var(--muted)',entrada:'var(--accent)','-':'var(--muted)'};
+  var SCR = {pago:'var(--pago)',aberto:'var(--amber)',negociacao:'var(--blue)',desistiu:'var(--red)',estorno:'var(--muted)',entrada:'var(--accent)','-':'var(--muted)'};
 
   if(!vinculados.length){
     tbl.innerHTML='<tr><td colspan="6" style="padding:28px;text-align:center;color:var(--muted);">Nenhum cliente vinculado a este consultor.</td></tr>';
@@ -63,7 +63,7 @@ function abrirClientesVinculados(nomeConsultor){
       var stLbl = SL[d.status||'-']||d.status||'—';
       // onclick usa stopPropagation para não fechar o overlay ao clicar na linha
       return '<tr onclick="event.stopPropagation();abrirEdicaoSobreVinculados('+ri+')" title="Clique para editar">'
-        +'<td style="font-weight:600;text-transform:uppercase;white-space:nowrap;'+(ip?'color:#39ff14;':'')+'">'+d.cliente+'</td>'
+        +'<td style="font-weight:600;text-transform:uppercase;white-space:nowrap;'+(ip?'color:var(--pago);':'')+'">'+d.cliente+'</td>'
         +'<td class="center">'+( d.treinamento||'—')+'</td>'
         +'<td class="center" style="font-family:monospace;'+(ip?'color:var(--green);font-weight:700;':'')+'">'+fv(d.valor||0)+'</td>'
         +'<td class="center">'

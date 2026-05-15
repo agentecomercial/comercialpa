@@ -126,7 +126,7 @@ function _updateRemoveBtns(listId){
 function _addTreinRow(listId,cod,val){
   var container=document.getElementById(listId);
   if(!container)return;
-  var opts='<option value="-">— treinamento —</option>';
+  var opts='<option value="-">—</option>';
   var _tl=(typeof allTreinamentos!=='undefined'&&Array.isArray(allTreinamentos))?allTreinamentos:[];
   _tl.forEach(function(t){opts+='<option value="'+t+'"'+(cod===t?' selected':'')+'>'+t+'</option>';});
   var valStr=val?Number(val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';

@@ -15,7 +15,7 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260514m">
+<link rel="stylesheet" href="assets/css/main.css?v=20260515b">
 <!-- Libs externas (jsPDF, autotable, xlsx) carregadas SOB DEMANDA por 00-utils.js
      via _ensureJsPDF() / _ensureXLSX() — economia de ~1.5MB no boot. -->
 
@@ -1012,7 +1012,7 @@
         <div class="tpanel">
           <div class="tpanel-header" style="flex-direction:column;align-items:stretch;gap:8px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-              <span class="panel-title">Clientes</span>
+              <span class="panel-title" id="panelTitleClientes" onclick="window._abrirListaClientesAdm&&window._abrirListaClientesAdm()">Clientes</span>
               <div class="search-filter-row" style="display:flex;align-items:center;gap:8px;">
                 <div class="search-bar"><span class="search-icon">⌕</span><input type="text" id="searchInput" placeholder="Buscar..." oninput="renderAll()" /></div>
                 <select id="statusFilter" class="modal-select" onchange="setStatusDropdown(this.value)" style="padding:6px 10px;font-size:12px;min-width:120px;border-radius:var(--radius-sm);height:36px;">
@@ -1842,18 +1842,18 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260514j"></script>
+<script defer src="assets/js/02-main.js?v=20260515e"></script>
 <script defer src="assets/js/29-login.js?v=20260514f"></script>
 <script defer src="assets/js/30-sync-ferramentas.js?v=20260514a"></script>
 <script defer src="assets/js/31-modo-consultor-desktop.js?v=20260514a"></script>
 <script defer src="assets/js/21-turmas.js?v=20260514a"></script>
-<script defer src="assets/js/22-pdf-consultor.js"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260515a"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260514i"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260514m"></script>
-<script defer src="assets/js/26-aba-treinador.js"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260515a"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260515b"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260515b"></script>
 <script defer src="assets/js/27-novos-membros.js"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260514n"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260515a"></script>
 <script defer src="assets/js/18-usuarios.js"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
 <script defer src="assets/js/20-propostas-main.js?v=20260514a"></script>
@@ -1869,20 +1869,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260515c">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260514a"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260515b"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260514o"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260514a"></script>
+<script defer src="assets/js/05-importacao.js?v=20260515b"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260515e"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260514a">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260515a">
 
-<script defer src="assets/js/06-modulo-v13.js"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260515b"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -1918,7 +1918,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260515a"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -1966,7 +1966,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260515b"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -2421,7 +2421,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260514e"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260515a"></script>
 
 <script defer src="assets/js/12-pipeline-v2-patch.js?v=20260514a"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
@@ -2459,7 +2459,7 @@ try{
       <button class="np-modal-close" onclick="window._ldFecharModal()">✕</button>
     </div>
     <div style="padding:18px 20px;overflow-y:auto;flex:1;">
-      <img id="npLdImgPreview" src="" alt="" loading="lazy" style="display:none;width:100%;border-radius:8px;margin-bottom:14px;max-height:200px;object-fit:contain;background:#ffffff;border:1px solid rgba(255,255,255,.08);">
+      <img id="npLdImgPreview" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" loading="lazy" style="display:none;width:100%;border-radius:8px;margin-bottom:14px;max-height:200px;object-fit:contain;background:#ffffff;border:1px solid rgba(255,255,255,.08);">
       <div id="npLdIABadge" style="display:none;font-size:11px;background:rgba(200,240,90,.1);border:1px solid rgba(200,240,90,.25);border-radius:8px;padding:6px 10px;margin-bottom:12px;color:var(--accent);">🤖 Dados extraídos automaticamente — confirme antes de salvar</div>
       <div style="margin-bottom:12px;">
         <label style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Nome</label>
@@ -2483,7 +2483,7 @@ try{
 
 <!-- ══ MODAL: IMAGEM AMPLIADA ════════════════════════════════════ -->
 <div class="np-modal-overlay" id="npLeadsImgOverlay" onclick="window._ldFecharImg()" style="align-items:center;justify-content:center;">
-  <img id="npLeadsImgBig" src="" alt="" loading="lazy" style="max-width:92vw;max-height:90vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.7);">
+  <img id="npLeadsImgBig" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" loading="lazy" style="max-width:92vw;max-height:90vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.7);">
 </div>
 
 <!-- Modal Follow-up -->

@@ -46,7 +46,7 @@ function togglePdfChip(id,key){
   // Atualizar style inline para chips coloridos
   var ativo=_pdfSecs[key];
   var estilos={
-    pdfChipPagos:    {on:'color:var(--green);border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.07);',  off:'color:var(--muted);border-color:var(--border2);background:var(--surface2);'},
+    pdfChipPagos:    {on:'color:var(--pago);border-color:rgba(57,255,20,.4);background:rgba(57,255,20,.07);',  off:'color:var(--muted);border-color:var(--border2);background:var(--surface2);'},
     pdfChipEmAberto: {on:'color:var(--amber);border-color:rgba(255,183,64,.4);background:rgba(255,183,64,.07);',  off:'color:var(--muted);border-color:var(--border2);background:var(--surface2);'},
     pdfChipEntrada:  {on:'color:var(--blue);border-color:rgba(96,165,250,.4);background:rgba(96,165,250,.07);',   off:'color:var(--muted);border-color:var(--border2);background:var(--surface2);'}
   };

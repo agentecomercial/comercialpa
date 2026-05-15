@@ -175,7 +175,7 @@ function _renderTreinadorDetail(t){
     +'</div>'
     +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Faturado</div>'
-    +'<div style="font-size:13px;font-weight:700;color:var(--green);font-family:\'DM Mono\',monospace;">'+formatVal(pago)+'</div>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--pago);font-family:\'DM Mono\',monospace;">'+formatVal(pago)+'</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nPago+' pago'+(nPago!==1?'s':'')+'</div>'
     +'</div>'
     +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
@@ -220,8 +220,8 @@ function _renderTreinadorDetail(t){
   const sl=s=>s==='pago'?'PAGO':s==='negociacao'?'NEGOCIAÇÃO':s==='desistiu'?'DESISTIU':s==='estorno'?'ESTORNO':s==='-'?'—':'ABERTO';
   document.getElementById('treinadorDetailTable').innerHTML=td.length===0
     ?'<tr class="empty-row"><td colspan="8">Nenhum cliente para este filtro.</td></tr>'
-    :td.map(d=>{const ri=data.indexOf(d),ip=d.status==='pago',hi=!!(d.info&&d.info.trim());return `<tr style="border-left:${ip?'2px solid #39ff14':'2px solid transparent'};">
-      <td style="font-weight:600;text-transform:uppercase;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="openClientInfo(${ri})">i</button><span data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):''}</span></span></td>
+    :td.map(d=>{const ri=data.indexOf(d),ip=d.status==='pago',hi=!!(d.info&&d.info.trim());return `<tr style="border-left:${ip?'2px solid var(--pago)':'2px solid transparent'};">
+      <td style="font-weight:600;text-transform:uppercase;${ip?'color:var(--pago);':''}"><span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}<span data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):''}</span></span></td>
       <td style="text-align:center;">${d.treinamento||'—'}</td>
       <td style="color:var(--muted);">${d.consultor.toUpperCase()}</td>
       <td style="${ip?'font-weight:600;':''}">${formatVal(d.valor)}</td>

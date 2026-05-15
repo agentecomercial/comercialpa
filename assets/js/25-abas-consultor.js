@@ -151,8 +151,8 @@ function abrirPagosModal(){
     pagos.length+' cliente'+(pagos.length!==1?'s':'')+' pagos · Total: <span style="color:'+col.text+';font-weight:700;">'+formatVal(total)+'</span> · '+pct+'% da meta';
   document.getElementById('pagosModalTable').innerHTML=pagos.length===0
     ?'<tr class="empty-row"><td colspan="5">Nenhum cliente pago.</td></tr>'
-    :pagos.map(d=>`<tr style="border-left:2px solid #39ff14;">
-      <td style="font-weight:600;text-transform:uppercase;color:#39ff14;text-align:left;">${d.cliente}</td>
+    :pagos.map(d=>`<tr style="border-left:2px solid var(--pago);">
+      <td style="font-weight:600;text-transform:uppercase;color:var(--pago);text-align:left;">${d.cliente}</td>
       <td style="text-align:center;font-size:12px;">${d.treinamento||'—'}</td>
       <td style="text-align:center;font-size:12px;color:var(--muted);">${d.treinamento==='CI'?d.treinador:'-'}</td>
       <td style="text-align:center;font-size:12px;color:var(--muted);">${d.consultor.toUpperCase()}</td>
@@ -220,9 +220,9 @@ function _renderConsultorDetail(c){
     +'<div style="font-size:13px;font-weight:700;color:var(--text);font-family:\'DM Mono\',monospace;">'+formatVal(potencial)+'</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nPotencial+' em negoc.</div>'
     +'</div>'
-    +'<div onclick="setConsultorStatus(\'pago\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--green)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
+    +'<div onclick="setConsultorStatus(\'pago\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--pago)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Faturado</div>'
-    +'<div style="font-size:13px;font-weight:700;color:var(--green);font-family:\'DM Mono\',monospace;">'+formatVal(pago)+'</div>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--pago);font-family:\'DM Mono\',monospace;">'+formatVal(pago)+'</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nPago+' pago'+(nPago!==1?'s':'')+'</div>'
     +'</div>'
     +'<div onclick="setConsultorStatus(\'aberto\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--amber)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
@@ -257,7 +257,7 @@ function _renderConsultorDetail(c){
   const sl=s=>s==='pago'?'PAGO':s==='negociacao'?'NEGOCIAÇÃO':s==='desistiu'?'DESISTIU':s==='estorno'?'ESTORNO':s==='-'?'—':'ABERTO';
 
   // ── Cores por status (melhoria 3 + spec: PAGO = neon no nome) ──
-  const _statusBorder={pago:'2px solid #39ff14',aberto:'2px solid var(--amber)',negociacao:'2px solid var(--blue)',desistiu:'2px solid var(--red)',estorno:'2px solid rgba(168,85,247,.7)','-':'none'};
+  const _statusBorder={pago:'2px solid var(--pago)',aberto:'2px solid var(--amber)',negociacao:'2px solid var(--blue)',desistiu:'2px solid var(--red)',estorno:'2px solid rgba(168,85,247,.7)','-':'none'};
 
   // ── Renderização bifurcada por perfil (sem alteração de lógica) ──
   const tblEl=document.getElementById('consultorDetailTable');
@@ -300,9 +300,9 @@ function _renderConsultorDetail(c){
           +'<div id="clihdr_'+ri+'" onclick="window._toggleCliAcc('+ri+')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;transition:background .12s;user-select:none;" onmouseover="this.style.background=\'var(--surface3,rgba(255,255,255,.03))\'" onmouseout="this.style.background=\'transparent\'">'
           +'<span id="cliarr_'+ri+'" style="font-size:9px;color:var(--muted);flex-shrink:0;transition:transform .2s;line-height:1;">▶</span>'
           +'<div style="flex:1;min-width:0;">'
-          +'<div style="font-size:13px;font-weight:700;'+(+_ip?'color:#39ff14;':'color:var(--text);')+'text-transform:uppercase;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+d.cliente+'</div>'
+          +'<div style="font-size:13px;font-weight:700;'+(+_ip?'color:var(--pago);':'color:var(--text);')+'text-transform:uppercase;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+d.cliente+'</div>'
           +(function(){
-            var _stMap={'pago':{cor:'#39ff14',l:'Pago'},'negociacao':{cor:'#60a5fa',l:'Negociação'},'desistiu':{cor:'#ff5252',l:'Desistiu'},'estorno':{cor:'#ff5252',l:'Estorno'},'entrada':{cor:'#c8f05a',l:'Entrada'},'aberto':{cor:'#ffaa00',l:'Aberto'}};
+            var _stMap={'pago':{cor:'var(--pago)',l:'Pago'},'negociacao':{cor:'#60a5fa',l:'Negociação'},'desistiu':{cor:'#ff5252',l:'Desistiu'},'estorno':{cor:'#ff5252',l:'Estorno'},'entrada':{cor:'#c8f05a',l:'Entrada'},'aberto':{cor:'#ffaa00',l:'Aberto'}};
             var _stInfo=_stMap[d.status||'']||{cor:'#666',l:'Sem status'};
             var _valTxt=d.valor>0?('<span style="font-size:10px;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums;">'+formatVal(d.valor)+'</span>'):'';
             return '<div style="display:flex;align-items:center;gap:5px;margin-top:3px;">'
@@ -361,7 +361,7 @@ function _renderConsultorDetail(c){
           const entradaTxt=d.entrada>0?'↑ '+formatVal(d.entrada):'—';
           const entradaStyle=d.entrada>0?'color:var(--green);font-weight:600;':'color:var(--muted);';
           _rows+=`<tr style="border-left:${borderLeft};" onclick="abrirClienteDetalhe(${ri})" title="Clique para editar" class="tr-clickable">
-            <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:#39ff14;':''}"><span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}<button class="info-btn${hi?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button><span data-presenca-ri="${ri}" onclick="event.stopPropagation();">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):''}</span><button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:18px;height:18px;cursor:pointer;color:var(--accent);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button></span></td>
+            <td style="font-weight:600;text-transform:uppercase;white-space:nowrap;${ip?'color:var(--pago);':''}"><span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}<span data-presenca-ri="${ri}" onclick="event.stopPropagation();">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):''}</span><button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:18px;height:18px;cursor:pointer;color:var(--accent);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button></span></td>
             <td style="text-align:center;white-space:nowrap;color:var(--muted);font-size:11px;">${treinadorTxt}</td>
             <td style="text-align:center;white-space:nowrap;font-size:11px;color:var(--muted);">—</td>
             <td style="text-align:center;white-space:nowrap;">${formatVal(d.valor)}</td>
@@ -373,7 +373,7 @@ function _renderConsultorDetail(c){
 
       // ── Cards mobile do detalhe do consultor (visualização compacta, click → abre modal) ──
       if(_cdCards){
-        var _statusMap2={pago:{c:'#39ff14',l:'Pago'},aberto:{c:'var(--amber)',l:'Aberto'},negociacao:{c:'var(--blue)',l:'Negociação'},entrada:{c:'var(--accent)',l:'Entrada'},desistiu:{c:'var(--red)',l:'Desistiu'},estorno:{c:'var(--red)',l:'Estorno'},'-':{c:'var(--muted)',l:'Sem status'}};
+        var _statusMap2={pago:{c:'var(--pago)',l:'Pago'},aberto:{c:'var(--amber)',l:'Aberto'},negociacao:{c:'var(--blue)',l:'Negociação'},entrada:{c:'var(--accent)',l:'Entrada'},desistiu:{c:'var(--red)',l:'Desistiu'},estorno:{c:'var(--red)',l:'Estorno'},'-':{c:'var(--muted)',l:'Sem status'}};
         _cdCards.innerHTML=cd.map(function(d){
           var ri=data.indexOf(d), pago=d.status==='pago', hasInfo=!!(d.info&&d.info.trim());
           var stInfo=_statusMap2[d.status||'aberto']||_statusMap2['-'];
@@ -388,13 +388,12 @@ function _renderConsultorDetail(c){
               +'<div class="mob-info">'
                 +'<div class="mob-name-row">'
                   +'<span class="mob-name'+(pago?' pago':'')+'">'+d.cliente+'</span>'
-                  +'<button class="info-btn'+(hasInfo?' has-info':'')+'" onclick="event.stopPropagation();openClientInfo('+ri+')">i</button>'
                   +'<span class="mob-presenca" data-presenca-ri="'+ri+'">'+(window._presencaBadgeHtml?window._presencaBadgeHtml(ri):'')+'</span>'
-                  +'<button class="mob-plus-btn" onclick="event.stopPropagation();window._abrirMenuCliente(event,\''+d.cliente.replace(/'/g,"\\'")+'\','+ri+')" title="Adicionar / Editar">+</button>'
+                  +'<button class="mob-plus-btn" onclick="event.stopPropagation();window._abrirMenuCliente(event,\''+d.cliente.replace(/'/g,"\\'")+'\','+ri+')" title="Adicionar / Editar / Ver informações">+</button>'
                 +'</div>'
                 +'<div class="mob-status" style="color:'+stInfo.c+';"><span class="mob-dot" style="background:'+stInfo.c+';"></span>'+stInfo.l+'</div>'
               +'</div>'
-              +'<div class="mob-val" style="color:'+(pago?'#39ff14':ticketCor)+';">'+formatVal(d.valor||0)+'</div>'
+              +'<div class="mob-val" style="color:'+(pago?'var(--pago)':ticketCor)+';">'+formatVal(d.valor||0)+'</div>'
             +'</div>'
             +'<div class="mob-body">'
               +treinadorBlock

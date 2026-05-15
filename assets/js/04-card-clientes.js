@@ -26,9 +26,9 @@ function cardCellChange(el){
     var trEl = el.closest('tr');
     if(trEl){
       var isPago = val==='pago';
-      trEl.style.borderLeft = isPago?'2px solid #39ff14':'2px solid transparent';
+      trEl.style.borderLeft = isPago?'2px solid var(--pago)':'2px solid transparent';
       var tdNome = trEl.cells[0];
-      if(tdNome) tdNome.style.color = isPago?'#39ff14':'';
+      if(tdNome) tdNome.style.color = isPago?'var(--pago)':'';
       // Atualizar cor do input de valor conforme novo status
       var inpValor = trEl.querySelector('.card-num-valor');
       if(inpValor) _cardCorValor(inpValor, data[ri].valor, isPago);
@@ -71,7 +71,7 @@ function _cardCorValor(inputEl, valor, isPago){
   var v = parseFloat(valor)||0;
   var cor;
   if(isPago){
-    cor = '#39ff14';  // neon quando pago
+    cor = 'var(--pago)';
   } else if(v <= 5000){
     cor = 'var(--blue)';
   } else if(v <= 10000){
@@ -126,14 +126,23 @@ function _cardAtualizarMetricas(){
     var faltam      = Math.max(_META-totalPago,0);
     var pctGeral    = _META>0?Math.round((totalPago/_META)*100):0;
     var e;
+    // Solução D: subtítulos usam DISTINCT só em desktop
+    var _ehDeskKPI = window.innerWidth>=769;
+    var _abArr = _base.filter(function(d){return d.status==='aberto';});
+    var _pgArr = _base.filter(function(d){return d.status==='pago';});
+    var _entArr= _base.filter(function(d){return d.entrada>0;});
+    var _qNeg = _ehDeskKPI&&typeof _contarClientesUnicos==='function' ? _contarClientesUnicos(negociacaoArr) : negociacaoArr.length;
+    var _qAb  = _ehDeskKPI&&typeof _contarClientesUnicos==='function' ? _contarClientesUnicos(_abArr)        : _abArr.length;
+    var _qPg  = _ehDeskKPI&&typeof _contarClientesUnicos==='function' ? _contarClientesUnicos(_pgArr)        : _pgArr.length;
+    var _qEnt = _ehDeskKPI&&typeof _contarClientesUnicos==='function' ? _contarClientesUnicos(_entArr)       : nEnt;
     e=document.getElementById('mTotal');      if(e)e.textContent=formatVal(totalNeg);
-    e=document.getElementById('mTotalSub');   if(e)e.textContent=negociacaoArr.length+' em negociação';
+    e=document.getElementById('mTotalSub');   if(e)e.textContent=_qNeg+' em negociação';
     e=document.getElementById('mAberto');     if(e)e.textContent=formatVal(totalAberto);
-    e=document.getElementById('mAbertoSub');  if(e)e.textContent=_base.filter(function(d){return d.status==='aberto';}).length+' clientes';
+    e=document.getElementById('mAbertoSub');  if(e)e.textContent=_qAb+' cliente'+(_qAb!==1?'s':'');
     e=document.getElementById('mPago');       if(e)e.textContent=formatVal(totalPago);
-    e=document.getElementById('mPagoSub');    if(e)e.textContent=_base.filter(function(d){return d.status==='pago';}).length+' pago(s)';
+    e=document.getElementById('mPagoSub');    if(e)e.textContent=_qPg+' pago(s)';
     e=document.getElementById('mEntradas');   if(e)e.textContent=formatVal(totalEnt);
-    e=document.getElementById('mEntradasSub');if(e)e.textContent=nEnt===0?'Nenhuma entrada':nEnt+' com entrada';
+    e=document.getElementById('mEntradasSub');if(e)e.textContent=_qEnt===0?'Nenhuma entrada':_qEnt+' com entrada';
     e=document.getElementById('mFaltam');     if(e){e.textContent=faltam>0?formatVal(faltam):'META ATINGIDA! 🏆';e.style.color=faltam>0?'var(--red)':'#c8f05a';}
     e=document.getElementById('mPctSub');     if(e)e.innerHTML=pctGeral+'% ATINGIDO';
     e=document.getElementById('geralPct');
@@ -177,7 +186,7 @@ function _cardAtualizarMetricas(){
             +'<div class="tc-pct" style="color:'+tCol.text+';">'+tPct+'%</div>'
             +'<div class="tc-track"><div class="tc-fill" style="width:'+tBw+'%;background:'+tCol.bar+';"></div></div>'
             +'<div class="tc-stats">'
-            +'<div class="tc-stat"><span class="tc-stat-label">Faturado</span><span class="tc-stat-val" style="color:var(--green);">'+formatVal(tP)+'</span></div>'
+            +'<div class="tc-stat"><span class="tc-stat-label">Faturado</span><span class="tc-stat-val" style="color:var(--pago);">'+formatVal(tP)+'</span></div>'
             +'<div class="tc-stat"><span class="tc-stat-label">Potencial</span><span class="tc-stat-val">'+formatVal(tT)+'</span></div>'
             +'<div class="tc-stat"><span class="tc-stat-label">Em aberto</span><span class="tc-stat-val" style="color:var(--amber);">'+formatVal(tA)+'</span></div>'
             +'<div class="tc-stat"><span class="tc-stat-label">Da meta</span><span class="tc-stat-val" style="color:'+tCol.text+';">'+tPct+'%</span></div>'

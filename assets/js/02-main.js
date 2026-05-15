@@ -198,6 +198,29 @@ const IF15_DATA=[
   {cliente:'FERNANDA',consultor:'DANIEL',entrada:0,status:'aberto',treinador:'JOSIANE BORGES',treinamento:'CI',valor:30000},
 ];
 
+/* ── Helpers de contagem (Solução D — distinguir clientes únicos de registros) ── */
+function _contarClientesUnicos(arr){
+  if(!Array.isArray(arr)) return 0;
+  var s = new Set();
+  for(var i=0;i<arr.length;i++){
+    var d = arr[i];
+    if(d && d.cliente) s.add(String(d.cliente).toUpperCase().trim());
+  }
+  return s.size;
+}
+function _contarTreinosCliente(arr, nomeCliente){
+  if(!Array.isArray(arr)||!nomeCliente) return 0;
+  var alvo = String(nomeCliente).toUpperCase().trim();
+  var n = 0;
+  for(var i=0;i<arr.length;i++){
+    var d = arr[i];
+    if(d && d.cliente && String(d.cliente).toUpperCase().trim()===alvo && d.treinamento && d.treinamento!=='-' && d.treinamento!=='') n++;
+  }
+  return n;
+}
+window._contarClientesUnicos = _contarClientesUnicos;
+window._contarTreinosCliente = _contarTreinosCliente;
+
 /* ── Helpers de turma — tudo vai para turmas/{id} no Firebase ── */
 function _getTurmas(){try{return JSON.parse(localStorage.getItem(TURMAS_KEY))||[];}catch(e){return[];}}
 function _getTurmaData(id){try{return JSON.parse(localStorage.getItem('ci_turma_'+id))||null;}catch(e){return null;}}
@@ -979,6 +1002,13 @@ function renderAll(){
     : data.filter(function(d){return d&&d.cliente;});
   var _btnNC=document.getElementById('btnNovoCliente');
   if(_btnNC)_btnNC.style.display=_isAdm?'':'none';
+  // Título "Clientes" clicável: só ADM + desktop ≥ 769px
+  var _ptCli=document.getElementById('panelTitleClientes');
+  if(_ptCli){
+    var _ehAdmDesk=_isAdm && window.innerWidth>=769;
+    _ptCli.classList.toggle('pt-clickable',_ehAdmDesk);
+    if(_ehAdmDesk) _ptCli.title='Abrir lista completa de clientes'; else _ptCli.removeAttribute('title');
+  }
   // Atualizar botões filtro
   allTrainers.forEach(t=>{const b=document.getElementById('ft_'+t);if(b)b.className='fbtn'+(activeTrainer===t?' active':'');});
   allConsultors.forEach(c=>{const b=document.getElementById('fc_'+c);if(b)b.className='fbtn'+(activeConsultor===c?' active':'');});
@@ -1000,13 +1030,21 @@ function renderAll(){
   const needlePct=Math.round((META/(META*1.5))*100);
 
   document.getElementById('mTotal').textContent=formatVal(totalNegociacao);
-  document.getElementById('mTotalSub').textContent=clientesNegociacao.length+' em negociação';
+  // Solução D: subtítulos dos KPIs usam DISTINCT (clientes únicos) só em desktop
+  var _ehDeskKPI = window.innerWidth>=769;
+  var _abertos = _base.filter(d=>d.status==='aberto');
+  var _pagos   = _base.filter(d=>d.status==='pago');
+  var _qNeg    = _ehDeskKPI ? _contarClientesUnicos(clientesNegociacao) : clientesNegociacao.length;
+  var _qAb     = _ehDeskKPI ? _contarClientesUnicos(_abertos)            : _abertos.length;
+  var _qPg     = _ehDeskKPI ? _contarClientesUnicos(_pagos)              : _pagos.length;
+  var _qEnt    = _ehDeskKPI ? _contarClientesUnicos(clientesEntrada)     : clientesEntrada.length;
+  document.getElementById('mTotalSub').textContent=_qNeg+' em negociação';
   document.getElementById('mAberto').textContent=formatVal(totalAberto);
-  document.getElementById('mAbertoSub').textContent=_base.filter(d=>d.status==='aberto').length+' clientes';
+  document.getElementById('mAbertoSub').textContent=_qAb+' cliente'+(_qAb!==1?'s':'');
   document.getElementById('mPago').textContent=formatVal(totalPago);
-  document.getElementById('mPagoSub').textContent=_base.filter(d=>d.status==='pago').length+' pago(s)';
+  document.getElementById('mPagoSub').textContent=_qPg+' pago(s)';
   document.getElementById('mEntradas').textContent=formatVal(totalEntradas);
-  document.getElementById('mEntradasSub').textContent=clientesEntrada.length===0?'Nenhuma entrada':clientesEntrada.length+' com entrada';
+  document.getElementById('mEntradasSub').textContent=_qEnt===0?'Nenhuma entrada':_qEnt+' com entrada';
   document.getElementById('mFaltam').textContent=faltam>0?formatVal(faltam):'META ATINGIDA! 🏆';
   document.getElementById('mFaltam').style.color=faltam>0?'var(--red)':'#c8f05a';
   document.getElementById('mPctSub').innerHTML=pctGeral+'% ATINGIDO'+(ultrapassado>0?' · <span style="color:#c8f05a;font-weight:600;">+'+formatVal(ultrapassado)+' ACIMA</span>':'');
@@ -1036,7 +1074,7 @@ function renderAll(){
       <div class="tc-pct" style="color:${col.text};">${pct}%</div>
       <div class="tc-track"><div class="tc-fill" style="width:${bw}%;background:${col.bar};box-shadow:0 0 15px 10px ${hexToRgba(col.bar,.35)},0 0 10px 10px ${hexToRgba(col.bar,.45)};"></div></div>
       <div class="tc-stats">
-        <div class="tc-stat"><span class="tc-stat-label">Faturado</span><span class="tc-stat-val" style="color:var(--green);">${formatVal(tP)}</span></div>
+        <div class="tc-stat"><span class="tc-stat-label">Faturado</span><span class="tc-stat-val" style="color:var(--pago);">${formatVal(tP)}</span></div>
         <div class="tc-stat"><span class="tc-stat-label">Potencial</span><span class="tc-stat-val">${formatVal(tT)}</span></div>
         <div class="tc-stat"><span class="tc-stat-label">Em aberto</span><span class="tc-stat-val" style="color:var(--amber);">${formatVal(tA)}</span></div>
         <div class="tc-stat"><span class="tc-stat-label">Da meta</span><span class="tc-stat-val">${pct}%</span></div>
@@ -1060,7 +1098,7 @@ function renderAll(){
       const entEdit = d.entrada? d.entrada.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
 
       // Fix 7: treinamento — opção vazia obrigatória, NUNCA pré-selecionar
-      const treinOpts='<option value="">— vazio —</option>'
+      const treinOpts='<option value="">—</option>'
         +allTreinamentos.map(t=>`<option value="${t}"${(d.treinamento||'')=== t?' selected':''}>${t}</option>`).join('');
 
       // Treinador com selected
@@ -1084,9 +1122,9 @@ function renderAll(){
                       : d.valor > 0         ? 'var(--blue)'
                       : 'var(--muted)';
 
-      return `<tr data-ri="${ri}" style="border-left:${pago?'2px solid #39ff14':'2px solid transparent'};">
-        <td style="text-align:left;font-weight:600;text-transform:uppercase;white-space:nowrap;${pago?'color:#39ff14;':''}">
-          <span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}<button class="info-btn${hasInfo?' has-info':''}" onclick="openClientInfo(${ri})">i</button><span data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):''}</span><button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" title="Adicionar / Editar" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:20px;height:20px;cursor:pointer;color:var(--accent);font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button></span>
+      return `<tr data-ri="${ri}" style="border-left:${pago?'2px solid var(--pago)':'2px solid transparent'};">
+        <td style="text-align:left;font-weight:600;text-transform:uppercase;white-space:nowrap;${pago?'color:var(--pago);':''}">
+          <span style="display:inline-flex;align-items:center;gap:6px;">${d.cliente}<span data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):''}</span><button onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" title="Adicionar / Editar / Ver informações" style="background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:20px;height:20px;cursor:pointer;color:var(--accent);font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">+</button></span>
         </td>
         <td style="text-align:center;white-space:nowrap;padding:3px 5px;">
           <select class="card-sel cs-treinador" data-ri="${ri}" data-campo="treinador" onchange="cardCellChange(this)">${trainOpts}</select>
@@ -1100,7 +1138,7 @@ function renderAll(){
         <td style="text-align:center;white-space:nowrap;padding:3px 6px;min-width:100px;vertical-align:middle;">
           <input type="text" inputmode="numeric" class="card-num-input card-num-valor" data-ri="${ri}" data-campo="valor"
             value="${valEdit}" oninput="cardMoneyMask(this)" onchange="cardNumChange(this)" placeholder="0,00"
-            style="color:${pago?'#39ff14':d.valor<=5000?'var(--blue)':d.valor<=10000?'var(--amber)':'var(--green)'};font-weight:${pago?'700':'600'};">
+            style="color:${pago?'var(--pago)':d.valor<=5000?'var(--blue)':d.valor<=10000?'var(--amber)':'var(--green)'};font-weight:${pago?'700':'600'};">
         </td>
         <td style="text-align:center;white-space:nowrap;padding:3px 5px;vertical-align:middle;">
           <select class="card-sel ${statusCls}" data-ri="${ri}" data-campo="status" onchange="cardCellChange(this);cardUpdateStatusClass(this)">${statOpts}</select>
@@ -1119,13 +1157,13 @@ function renderAll(){
     if(f.length===0){
       _ccEl.innerHTML='<div class="mob-empty">Nenhum cliente para os filtros selecionados.</div>';
     } else {
-      const _statusMap={pago:{c:'#39ff14',l:'Pago'},aberto:{c:'var(--amber)',l:'Aberto'},negociacao:{c:'var(--blue)',l:'Negociação'},entrada:{c:'var(--accent)',l:'Entrada'},desistiu:{c:'var(--red)',l:'Desistiu'},estorno:{c:'var(--red)',l:'Estorno'},'-':{c:'var(--muted)',l:'Sem status'}};
+      const _statusMap={pago:{c:'var(--pago)',l:'Pago'},aberto:{c:'var(--amber)',l:'Aberto'},negociacao:{c:'var(--blue)',l:'Negociação'},entrada:{c:'var(--accent)',l:'Entrada'},desistiu:{c:'var(--red)',l:'Desistiu'},estorno:{c:'var(--red)',l:'Estorno'},'-':{c:'var(--muted)',l:'Sem status'}};
       _ccEl.innerHTML=f.map(d=>{
         const ri=data.indexOf(d), pago=d.status==='pago', hasInfo=!!(d.info&&d.info.trim());
         const valEdit = d.valor  ? d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})  : '';
         const entEdit = d.entrada? d.entrada.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
         const isCI = d.treinamento === 'CI';
-        const treinOpts='<option value="">— vazio —</option>'+allTreinamentos.map(t=>`<option value="${t}"${(d.treinamento||'')===t?' selected':''}>${t}</option>`).join('');
+        const treinOpts='<option value="">—</option>'+allTreinamentos.map(t=>`<option value="${t}"${(d.treinamento||'')===t?' selected':''}>${t}</option>`).join('');
         const trainOpts=`<option value="-"${(d.treinador||'-')==='-'?' selected':''}>—</option>`+allTrainers.map(t=>`<option value="${t}"${d.treinador===t?' selected':''}>${t.toUpperCase()}</option>`).join('');
         const consOpts=`<option value=""${!d.consultor?' selected':''}>—</option>`+allConsultors.map(c=>`<option value="${c}"${d.consultor===c?' selected':''}>${c.toUpperCase()}</option>`).join('');
         const statOpts=[
@@ -1140,13 +1178,12 @@ function renderAll(){
             <div class="mob-info">
               <div class="mob-name-row">
                 <span class="mob-name${pago?' pago':''}">${d.cliente}</span>
-                <button class="info-btn${hasInfo?' has-info':''}" onclick="event.stopPropagation();openClientInfo(${ri})">i</button>
                 <span class="mob-presenca" data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):'<span style="color:var(--muted);font-size:10px;">—</span>'}</span>
-                <button class="mob-plus-btn" onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" title="Adicionar / Editar">+</button>
+                <button class="mob-plus-btn" onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" title="Adicionar / Editar / Ver informações">+</button>
               </div>
               <div class="mob-status" style="color:${stInfo.c};"><span class="mob-dot" style="background:${stInfo.c};"></span>${stInfo.l}</div>
             </div>
-            <div class="mob-val" style="color:${pago?'#39ff14':ticketCor};">${formatVal(d.valor||0)}</div>
+            <div class="mob-val" style="color:${pago?'var(--pago)':ticketCor};">${formatVal(d.valor||0)}</div>
           </div>
           <div class="mob-body">
             <div class="mob-field"><span class="mob-field-label">Treinamento</span>
@@ -1159,7 +1196,7 @@ function renderAll(){
               <select class="card-sel cs-consultor mob-sel" data-ri="${ri}" data-campo="consultor" onchange="cardCellChange(this)">${consOpts}</select>
             </div>
             <div class="mob-field"><span class="mob-field-label">Valor</span>
-              <input type="text" inputmode="numeric" class="card-num-input mob-input" data-ri="${ri}" data-campo="valor" value="${valEdit}" oninput="cardMoneyMask(this)" onchange="cardNumChange(this)" placeholder="0,00" style="color:${pago?'#39ff14':ticketCor};font-weight:${pago?'700':'600'};">
+              <input type="text" inputmode="numeric" class="card-num-input mob-input" data-ri="${ri}" data-campo="valor" value="${valEdit}" oninput="cardMoneyMask(this)" onchange="cardNumChange(this)" placeholder="0,00" style="color:${pago?'var(--pago)':ticketCor};font-weight:${pago?'700':'600'};">
             </div>
             <div class="mob-field"><span class="mob-field-label">Entrada</span>
               <input type="text" inputmode="numeric" class="card-num-input mob-input" data-ri="${ri}" data-campo="entrada" value="${entEdit}" oninput="cardMoneyMask(this)" onchange="cardNumChange(this)" placeholder="—" style="color:var(--blue);">
@@ -1255,4 +1292,20 @@ function renderAll(){
     if(_tabTxt==='produto') renderProduto();
   }
 }
+
+/* Atalho: clique no título "CLIENTES" da aba Geral abre o modal Lista de Clientes.
+   Restrito a ADM em viewport ≥ 769px (desktop). */
+window._abrirListaClientesAdm = function(){
+  var sess = (typeof _getSessao==='function') ? _getSessao() : null;
+  if(!sess || sess.perfil !== 'adm') return;
+  if(window.innerWidth < 769) return;
+  if(typeof abrirListaClientes === 'function') abrirListaClientes();
+};
+window.addEventListener('resize', function(){
+  var el = document.getElementById('panelTitleClientes');
+  if(!el) return;
+  var sess = (typeof _getSessao==='function') ? _getSessao() : null;
+  var ehAdmDesk = !!(sess && sess.perfil === 'adm') && window.innerWidth >= 769;
+  el.classList.toggle('pt-clickable', ehAdmDesk);
+});
 

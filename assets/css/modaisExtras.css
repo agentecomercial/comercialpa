@@ -158,9 +158,9 @@
 .fnl-entrada .fnl-col-header{background:rgba(255,183,64,.08);}
 .fnl-entrada .fnl-col-title{color:var(--amber);}
 .fnl-entrada .fnl-col-count{background:rgba(255,183,64,.15);color:var(--amber);}
-.fnl-pago .fnl-col-header{background:rgba(52,211,153,.08);}
-.fnl-pago .fnl-col-title{color:var(--green);}
-.fnl-pago .fnl-col-count{background:rgba(52,211,153,.15);color:var(--green);}
+.fnl-pago .fnl-col-header{background:rgba(57,255,20,.08);}
+.fnl-pago .fnl-col-title{color:var(--pago);}
+.fnl-pago .fnl-col-count{background:var(--pago-bg);color:var(--pago);}
 .fnl-cancelado .fnl-col-header{background:rgba(255,95,87,.08);}
 .fnl-cancelado .fnl-col-title{color:var(--red);}
 .fnl-cancelado .fnl-col-count{background:rgba(255,95,87,.15);color:var(--red);}
@@ -200,7 +200,7 @@ body.tab-funil .fnl-search-wrap{display:flex;align-items:center;}
 .fnl-busca-val{text-align:right;white-space:nowrap;}
 .fnl-busca-val>span{font-weight:700;color:var(--text);}
 .fnl-busca-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;text-transform:uppercase;white-space:nowrap;}
-.fnl-busca-badge.pago{background:rgba(52,211,153,.15);color:var(--green);}
+.fnl-busca-badge.pago{background:var(--pago-bg);color:var(--pago);}
 .fnl-busca-badge.entrada{background:rgba(255,183,64,.15);color:var(--amber);}
 .fnl-busca-badge.aberto{background:rgba(96,165,250,.15);color:var(--blue);}
 .fnl-busca-badge.cancelado{background:rgba(255,95,87,.15);color:var(--red);}
@@ -278,7 +278,7 @@ mark.fnl-hl{background:rgba(200,240,90,.28);color:var(--accent);border-radius:2p
 .ntm-kpi-l{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
 .ntm-kpi-i{font-size:13px;line-height:1;}
 .ntm-kpi-v{font-size:13px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ntm-kpi.pago .ntm-kpi-v{color:var(--green);}
+.ntm-kpi.pago .ntm-kpi-v{color:var(--pago);}
 .ntm-kpi.aberto .ntm-kpi-v{color:var(--amber);}
 .ntm-kpi.negociacao .ntm-kpi-v{color:var(--blue);}
 .ntm-kpi.entrada .ntm-kpi-v{color:var(--accent);}
@@ -286,7 +286,7 @@ mark.fnl-hl{background:rgba(200,240,90,.28);color:var(--accent);border-radius:2p
 .ntm-listas-wrap{display:block;}
 .ntm-lista-h{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
 .ntm-cli-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:6px;margin-bottom:5px;border-left:3px solid;gap:10px;}
-.ntm-cli-row.pago{border-left-color:var(--green);}
+.ntm-cli-row.pago{border-left-color:var(--pago);}
 .ntm-cli-row.aberto{border-left-color:var(--amber);}
 .ntm-cli-row.negociacao{border-left-color:var(--blue);}
 .ntm-cli-row.entrada{border-left-color:var(--accent);}
@@ -295,7 +295,7 @@ mark.fnl-hl{background:rgba(200,240,90,.28);color:var(--accent);border-radius:2p
 .ntm-cli-nome{font-size:12px;font-weight:600;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ntm-cli-sub{font-size:10px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ntm-cli-val{font-size:13px;font-weight:700;flex-shrink:0;white-space:nowrap;}
-.ntm-cli-val.pago{color:var(--green);}
+.ntm-cli-val.pago{color:var(--pago);}
 .ntm-empty{padding:18px 14px;text-align:center;font-size:11px;color:var(--muted);font-style:italic;background:var(--surface2);border-radius:6px;}
 /* Responsivo — em telas estreitas, hero vai pra cima e KPIs em 2x2 */
 @media(max-width:720px){

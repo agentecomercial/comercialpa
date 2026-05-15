@@ -261,6 +261,7 @@ function impProcessarAOA(aoa){
 function impGerarResumoConsultores(dados){
   var mapa={};
   dados.forEach(function(d){
+    if(!d) return; // skip null entries
     var k=(d.consultor&&d.consultor.trim())?d.consultor.trim():'SEM CONSULTOR';
     mapa[k]=(mapa[k]||0)+1;
   });
@@ -733,7 +734,7 @@ function impRenderPrevia(res){
     +'<th style="padding:9px 10px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">Obs</th>'
     +'</tr>';
 
-  var STATUS_COR={pago:'var(--green)',aberto:'var(--amber)',negociacao:'var(--blue)',desistiu:'var(--red)',estorno:'var(--muted)',entrada:'var(--accent)'};
+  var STATUS_COR={pago:'var(--pago)',aberto:'var(--amber)',negociacao:'var(--blue)',desistiu:'var(--red)',estorno:'var(--muted)',entrada:'var(--accent)'};
   var preview=dadosImportacao.slice(0,300);
 
   document.getElementById('importPreviewBody').innerHTML=preview.map(function(d,i){

@@ -278,13 +278,26 @@
 .lc-footer{padding:12px 24px;border-top:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .lc-count{font-size:12px;color:var(--muted);}
 .lc-status-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
-.lc-status-pago{background:var(--green-bg);color:var(--green);}
+.lc-status-pago{background:var(--pago-bg);color:var(--pago);}
 .lc-status-aberto{background:var(--amber-bg);color:var(--amber);}
 .lc-status-entrada{background:var(--blue-bg);color:var(--blue);}
 .lc-status-negociacao{background:rgba(168,85,247,.15);color:#a855f7;}
 .lc-status-desistiu{background:var(--red-bg);color:var(--red);}
 .lc-status-estorno{background:rgba(255,255,255,.07);color:var(--muted);}
 .lc-status-default{background:rgba(255,255,255,.07);color:var(--muted);}
+
+/* Wrapper flex da célula Treinamento — select à esquerda, "+" à direita sem sobreposição */
+.lc-cell-trein-wrap{display:flex;align-items:center;gap:6px;justify-content:center;}
+.lc-cell-trein-wrap .lc-cell-select{flex:1 1 auto;min-width:0;}
+
+/* Botão "+" inline para adicionar outro treinamento ao mesmo cliente (modal Lista de Clientes) */
+.lc-plus-trein{background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.3);border-radius:50%;width:20px;height:20px;cursor:pointer;color:var(--accent);font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;font-family:inherit;flex-shrink:0;flex-grow:0;transition:all .15s;}
+.lc-plus-trein:hover{background:rgba(200,240,90,.28);transform:scale(1.12);}
+
+/* Sub-row (2º+ treino do mesmo cliente) — célula Cliente em itálico, indentada, com └ */
+tr.lc-sub-row .lc-cell-cliente{padding-left:24px!important;}
+.lc-sub-cliente{font-size:11px;font-weight:500;color:var(--muted);font-style:italic;}
+.lc-sub-cliente::before{content:"└ ";color:rgba(255,255,255,.18);font-style:normal;margin-right:3px;font-weight:400;}
 
 /* ══ CARD CLIENTES — SELECTs inline ══ */
 .card-sel{
@@ -314,7 +327,7 @@
 /* Req 2 — Consultor: expande sem quebrar, mostra nome completo */
 td:has(.cs-consultor){min-width:60px;white-space:nowrap;}
 .card-sel.cs-treinador{color:var(--amber);border-color:rgba(255,183,64,.2);}
-.card-sel.cs-status-pago{color:var(--green);}
+.card-sel.cs-status-pago{color:var(--pago);}
 .card-sel.cs-status-aberto{color:var(--amber);}
 .card-sel.cs-status-negociacao{color:var(--blue);}
 .card-sel.cs-status-desistiu{color:var(--red);}

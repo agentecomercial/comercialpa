@@ -206,7 +206,7 @@ function _v13InjetarSelectsGerenciar(){
     var tdT = tr.cells[2];
     if(tdT && tdT.querySelector('input[data-campo="treinamento"]')){
       var opts = trein.map(function(v){
-        return '<option value="'+v+'"'+(v===(d.treinamento||'')?' selected':'')+'>'+( v||'— Treinamento —')+'</option>';
+        return '<option value="'+v+'"'+(v===(d.treinamento||'')?' selected':'')+'>'+( v||'—')+'</option>';
       }).join('');
       tdT.innerHTML = '<select class="lc-cell-input v13-cell-select" data-idx="'+idx+'" data-campo="treinamento" onchange="lcCellChange(this)">'+opts+'</select>';
     }
@@ -357,7 +357,7 @@ function _v13InjetarSelectsTabela(){
 
     // Status (td[5]) — substituir o badge por select
     if(tds[5] && !tds[5].querySelector('select')){
-      var STATUS_COR={aberto:'var(--amber)',pago:'var(--green)',entrada:'var(--accent)',negociacao:'var(--blue)',desistiu:'var(--red)',estorno:'var(--muted)','-':'var(--muted)'};
+      var STATUS_COR={aberto:'var(--amber)',pago:'var(--pago)',entrada:'var(--accent)',negociacao:'var(--blue)',desistiu:'var(--red)',estorno:'var(--muted)','-':'var(--muted)'};
       var optsS = V13_STATUS.map(function(v){
         return '<option value="'+v+'"'+(v===(d.status||'-')?' selected':'')+'>'+V13_STATUS_LABEL[v]+'</option>';
       }).join('');
@@ -382,7 +382,7 @@ window.v13QuickEdit = function(el){
   }
   if(typeof window.markUnsaved==='function') window.markUnsaved();
   // Atualizar cor do select de status em tempo real
-  var STATUS_COR={aberto:'var(--amber)',pago:'var(--green)',entrada:'var(--accent)',negociacao:'var(--blue)',desistiu:'var(--red)',estorno:'var(--muted)','-':'var(--muted)'};
+  var STATUS_COR={aberto:'var(--amber)',pago:'var(--pago)',entrada:'var(--accent)',negociacao:'var(--blue)',desistiu:'var(--red)',estorno:'var(--muted)','-':'var(--muted)'};
   if(campo==='status'){
     var cor = STATUS_COR[val]||'var(--muted)';
     el.style.color = cor;

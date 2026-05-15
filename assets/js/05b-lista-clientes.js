@@ -20,7 +20,7 @@ function abrirListaClientes(){
     var isAdm=typeof _getSessao==='function'&&((_getSessao()||{}).perfil==='adm');
     if(isAdm){
       var arr=(typeof data!=='undefined'&&Array.isArray(data))?data:[];
-      var sem=arr.filter(function(d){return !d.consultor||!d.consultor.trim();}).length;
+      var sem=arr.filter(function(d){return d&&(!d.consultor||!d.consultor.trim());}).length;
       if(sem>0){btn.textContent='⚖ Distribuir sem consultor ('+sem+')';btn.style.display='';}
       else btn.style.display='none';
     } else {
@@ -44,9 +44,10 @@ function lcRenderizar(filtro){
   var arr = (typeof data !== 'undefined' && Array.isArray(data)) ? data : [];
   var q   = (filtro || '').toLowerCase().trim();
 
-  // Montar lista de índices filtrados
+  // Montar lista de índices filtrados (ignora entradas null)
   _lcIndicesFiltrados = [];
   arr.forEach(function(r, i){
+    if(!r) return; // skip entradas null/undefined (lixo de splice/Firebase)
     if(!q){
       _lcIndicesFiltrados.push(i);
     } else if(
@@ -59,11 +60,25 @@ function lcRenderizar(filtro){
     }
   });
 
+  // Ordenar agrupando linhas do mesmo cliente (ordem original como tiebreak — estável)
+  _lcIndicesFiltrados.sort(function(a,b){
+    var rA=arr[a], rB=arr[b];
+    if(!rA&&!rB) return 0;
+    if(!rA) return 1;
+    if(!rB) return -1;
+    var ca=(rA.cliente||'').toLowerCase();
+    var cb=(rB.cliente||'').toLowerCase();
+    if(ca<cb) return -1;
+    if(ca>cb) return 1;
+    return a-b;
+  });
+
   if(!_lcIndicesFiltrados.length){
     tbody.innerHTML = '';
     vazio.style.display = 'block';
     count.textContent   = '0 clientes';
-    if(sub) sub.textContent = arr.length + ' clientes no total — nenhum encontrado.';
+    var _totU0 = (typeof _contarClientesUnicos==='function')?_contarClientesUnicos(arr):arr.length;
+    if(sub) sub.textContent = _totU0 + ' cliente'+(_totU0!==1?'s':'')+' · '+arr.length+' treinamento'+(arr.length!==1?'s':'')+' no total — nenhum encontrado.';
     lcAtualizarMassaBar();
     return;
   }
@@ -81,11 +96,15 @@ function lcRenderizar(filtro){
   var _consLst  = (typeof allConsultors!=='undefined'&&Array.isArray(allConsultors))?allConsultors:[];
 
   var html = '';
+  var _prevCliente = null; // tracking para detectar sub-rows (2º+ treino do mesmo cliente)
   _lcIndicesFiltrados.forEach(function(realIdx){
     var r = arr[realIdx];
+    if(!r) return; // guard defensivo (caso de race com splice/listener)
+    var _ehSubRow = (r.cliente||'') === _prevCliente && _prevCliente !== '';
+    _prevCliente = r.cliente || '';
 
     // SELECT treinamento — Fix 7: opção vazia obrigatória, nunca pré-preencher
-    var treinOpts = '<option value="">— vazio —</option>'
+    var treinOpts = '<option value="">—</option>'
       + _treinLst.map(function(t){
           return '<option value="'+t+'"'+((r.treinamento||'')=== t?' selected':'')+'>'+t+'</option>';
         }).join('');
@@ -116,18 +135,23 @@ function lcRenderizar(filtro){
                     : Number(r.valor||0) > 0         ? 'var(--blue)'
                     : 'var(--muted)';
 
-    html += '<tr data-idx="'+realIdx+'">'
+    html += '<tr data-idx="'+realIdx+'"'+(_ehSubRow?' class="lc-sub-row"':'')+'>'
       // Checkbox — Fix 2: mantido no modal Gerenciar
       +'<td style="text-align:center;width:36px;">'
         +'<input type="checkbox" class="lc-row-chk" data-idx="'+realIdx+'" onchange="lcOnChkChange()" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer;">'
       +'</td>'
-      // Cliente — texto fixo (edição via botão "i" no card, só ADM)
-      +'<td style="text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">'
-        +'<span style="font-size:12px;font-weight:600;color:var(--text);">'+_lcEsc(r.cliente||'')+'</span>'
+      // Cliente — sub-row mostra "└" cinza + texto itálico menor
+      +'<td class="lc-cell-cliente" style="text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">'
+        +(_ehSubRow
+          ? '<span class="lc-sub-cliente">'+_lcEsc(r.cliente||'')+'</span>'
+          : '<span style="font-size:12px;font-weight:600;color:var(--text);">'+_lcEsc(r.cliente||'')+'</span>')
       +'</td>'
-      // Treinamento — SELECT com opção vazia
+      // Treinamento — SELECT com opção vazia + botão "+" para adicionar outro treino ao mesmo cliente
       +'<td style="text-align:center;vertical-align:middle;">'
-        +'<select class="lc-cell-select" data-idx="'+realIdx+'" data-campo="treinamento" onchange="lcCellChange(this)">'+treinOpts+'</select>'
+        +'<div class="lc-cell-trein-wrap">'
+          +'<select class="lc-cell-select" data-idx="'+realIdx+'" data-campo="treinamento" onchange="lcCellChange(this)">'+treinOpts+'</select>'
+          +'<button class="lc-plus-trein" onclick="lcAddTreinoCliente('+realIdx+')" title="Adicionar outro treinamento a este cliente">+</button>'
+        +'</div>'
       +'</td>'
       // Treinador — SELECT âmbar
       +'<td class="lc-cell-treinador" style="text-align:center;vertical-align:middle;">'
@@ -157,8 +181,15 @@ function lcRenderizar(filtro){
   });
 
   tbody.innerHTML = html;
-  count.textContent = _lcIndicesFiltrados.length + ' cliente' + (_lcIndicesFiltrados.length!==1?'s':'') + (q?' encontrado'+(_lcIndicesFiltrados.length!==1?'s':''):'');
-  if(sub) sub.textContent = 'Total no sistema: '+arr.length+' cliente'+(arr.length!==1?'s':'')+'. Edição inline ativada.';
+  // Solução D: contagens duplas (clientes únicos · treinamentos)
+  var _filtArr = _lcIndicesFiltrados.map(function(i){return arr[i];}).filter(function(d){return d;});
+  var _filtUnicos = (typeof _contarClientesUnicos==='function')?_contarClientesUnicos(_filtArr):_lcIndicesFiltrados.length;
+  var _totUnicos  = (typeof _contarClientesUnicos==='function')?_contarClientesUnicos(arr):arr.length;
+  count.textContent = _filtUnicos + ' cliente' + (_filtUnicos!==1?'s':'')
+    + ' · ' + _lcIndicesFiltrados.length + ' treinamento' + (_lcIndicesFiltrados.length!==1?'s':'')
+    + (q?' (filtrados)':'');
+  if(sub) sub.textContent = 'Total no sistema: '+_totUnicos+' cliente'+(_totUnicos!==1?'s':'')
+    +' com '+arr.length+' treinamento'+(arr.length!==1?'s':'')+' cadastrado'+(arr.length!==1?'s':'')+'. Edição inline ativada.';
   lcAtualizarMassaBar();
 }
 
@@ -366,7 +397,7 @@ function lcAplicarMassa(){
   if(typeof renderAll==='function') renderAll();
   if(typeof renderConsultor==='function') renderConsultor();
 
-  if(typeof _showToast==='function') _showToast('✅ '+alterados+' cliente'+(alterados!==1?'s':'')+' alterado'+(alterados!==1?'s':'')+'!','var(--accent)');
+  if(typeof _showToast==='function') _showToast('✅ '+alterados+' registro'+(alterados!==1?'s':'')+' alterado'+(alterados!==1?'s':'')+'!','var(--accent)');
 }
 
 /* Excluir linha individual */
@@ -394,7 +425,7 @@ function lcExcluirSelecionados(){
   lcRenderizar(document.getElementById('lcSearchInput').value||'');
   if(typeof renderAll==='function') renderAll();
   if(typeof renderConsultor==='function') renderConsultor();
-  if(typeof _showToast==='function') _showToast('🗑 '+sels.length+' cliente'+(sels.length!==1?'s':'')+' excluído'+(sels.length!==1?'s':'')+'!','var(--red)');
+  if(typeof _showToast==='function') _showToast('🗑 '+sels.length+' registro'+(sels.length!==1?'s':'')+' excluído'+(sels.length!==1?'s':'')+'!','var(--red)');
 }
 
 /* Salvar tudo */
@@ -422,6 +453,39 @@ function lcFiltrar(){
   lcRenderizar(q);
 }
 
+/* Adiciona um novo treinamento ao mesmo cliente.
+   Copia consultor + treinador do registro de origem; treinamento/valor/status zerados.
+   Aparece imediatamente abaixo (agrupado por nome de cliente no sort do renderizar). */
+function lcAddTreinoCliente(refIdx){
+  if(!Array.isArray(data) || !data[refIdx]) return;
+  var src = data[refIdx];
+  var novo = {
+    cliente:     src.cliente,
+    consultor:   src.consultor || '',
+    treinador:   src.treinador || '-',
+    treinamento: '',
+    valor:       0,
+    status:      'aberto',
+    entrada:     0,
+    info:        ''
+  };
+  data.push(novo);
+  if(typeof markUnsaved==='function') markUnsaved();
+  if(typeof saveStorage==='function') saveStorage();
+  // Re-render e tenta focar no select do novo treino
+  lcRenderizar((document.getElementById('lcSearchInput')||{}).value || '');
+  // Sincronizar com Firebase se disponível
+  if(typeof _fbSave==='function' && typeof _turmaAtiva!=='undefined' && _turmaAtiva){
+    var _tid=(_turmaAtiva&&_turmaAtiva.id)||_turmaAtiva;
+    if(_tid && typeof _tid==='string'){
+      _fbSave('turmas/'+_tid+'/clientes', data).catch(function(e){console.warn('[LC] Firebase save:',e);});
+    }
+  }
+  // Solução D: contar treinos atuais do cliente para feedback rico
+  var _qtdTreinos = (typeof _contarTreinosCliente==='function')?_contarTreinosCliente(data, src.cliente):0;
+  if(typeof _showToast==='function') _showToast('+ Treinamento adicionado a '+(src.cliente||'cliente')+(_qtdTreinos>1?' (agora '+_qtdTreinos+' treinamentos)':''),'var(--accent)');
+}
+
 // Expor globalmente
 window.abrirListaClientes  = abrirListaClientes;
 window.fecharListaClientes = fecharListaClientes;
@@ -439,6 +503,7 @@ window.lcSelecionarPorDe   = lcSelecionarPorDe;
 window.lcEditarNomeCliente  = lcEditarNomeCliente;
 window.lcSalvarNomeCliente  = lcSalvarNomeCliente;
 window.lcCancelarNomeCliente= lcCancelarNomeCliente;
+window.lcAddTreinoCliente   = lcAddTreinoCliente;
 
 // BLOQUEIOS: modal NÃO fecha com ESC nem backdrop
 // (backdrop bloqueado via onclick="event.stopPropagation()" no HTML)

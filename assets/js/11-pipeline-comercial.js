@@ -1284,7 +1284,7 @@
       metaCor=tierAtual.pct>=75?'var(--accent)':tierAtual.pct>=50?'var(--amber)':'var(--red)';
     }
     document.getElementById('npConsDetalheKpis').innerHTML=
-       kpiCard('Faturado',_fmtR(faturado),qtdPago+' pago'+(qtdPago!==1?'s':''),'var(--green)')
+       kpiCard('Faturado',_fmtR(faturado),qtdPago+' pago'+(qtdPago!==1?'s':''),'var(--pago)')
       +kpiCard('Em aberto',_fmtR(emAberto),qtdAberto+' em aberto','var(--amber)')
       +kpiCard('Entrada',_fmtR(emEntrada),qtdEntrada+' entrada'+(qtdEntrada!==1?'s':''),'var(--accent)')
       +kpiCard('Em negociação',_fmtR(emNegociacao),qtdNegociacao+' negocia'+(qtdNegociacao!==1?'ções':'ção'),'var(--blue)')
