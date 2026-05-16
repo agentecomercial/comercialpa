@@ -186,17 +186,20 @@ window._checkCITreinador=_checkCITreinador;
 window._updateRemoveBtns=_updateRemoveBtns;
 
 window._abrirMenuCliente=function(e,nomeCliente,ri){
-  e.stopPropagation();
+  e=e||window.event;
+  if(e){ try{e.stopPropagation();}catch(_){} try{if(e.stopImmediatePropagation)e.stopImmediatePropagation();}catch(_){} try{e.preventDefault&&e.preventDefault();}catch(_){} }
   // Remove menu anterior se existir
   var old=document.getElementById('_menuCliente');
   if(old){ old.remove(); return; }
 
-  var btn=e.currentTarget;
-  var rect=btn.getBoundingClientRect();
+  // currentTarget pode ser null após re-render — fallback para target/activeElement
+  var btn=(e&&(e.currentTarget||e.target))||document.activeElement;
+  var rect=(btn&&btn.getBoundingClientRect)?btn.getBoundingClientRect():{bottom:120,left:80,right:120,top:100};
 
   var menu=document.createElement('div');
   menu.id='_menuCliente';
-  menu.style.cssText='position:fixed;z-index:99999;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:6px;min-width:200px;'
+  // z-index máximo (acima de qualquer modal/overlay/drawer) + pointer-events explícito
+  menu.style.cssText='position:fixed;z-index:2147483647;pointer-events:auto;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:6px;min-width:200px;'
     +'box-shadow:0 16px 48px rgba(0,0,0,.75);display:flex;flex-direction:column;gap:2px;';
   menu.style.top=(rect.bottom+6)+'px';
   menu.style.left=Math.min(rect.left,window.innerWidth-220)+'px';
@@ -242,8 +245,12 @@ window._abrirMenuCliente=function(e,nomeCliente,ri){
 
   document.body.appendChild(menu);
   setTimeout(function(){
-    document.addEventListener('click',function _c(){ menu.remove(); document.removeEventListener('click',_c); });
-  },0);
+    document.addEventListener('click',function _c(ev){
+      if(ev && ev.target && menu.contains(ev.target)) return; // click dentro do menu não fecha
+      menu.remove();
+      document.removeEventListener('click',_c);
+    });
+  },50);
 };
 
 function openAddModalConsultor(){
@@ -359,6 +366,104 @@ function openClientInfo(idx){
   const d=data[idx];
   document.getElementById('clientInfoSub').textContent=d.cliente+' · '+d.treinador+' · '+d.consultor;
   document.getElementById('clientInfoText').value=d.info||'';
+  // Extrato (Opção 2): cards colapsáveis por treinamento (expande array d.treinamentos[])
+  var extratoBlock=document.getElementById('clientInfoExtratoBlock');
+  if(extratoBlock){
+    var _nome=String(d.cliente||'').toUpperCase().trim();
+    var _todas=Array.isArray(data)?data.filter(function(x){
+      return x && x.cliente && String(x.cliente).toUpperCase().trim()===_nome;
+    }):[];
+    // ── Achatar: cada item da UI representa UM treinamento ──
+    // Se a linha tem d.treinamentos[] array, expandir cada sub; senão usar campo simples.
+    var _items=[];
+    _todas.forEach(function(t){
+      var ri=data.indexOf(t);
+      if(Array.isArray(t.treinamentos) && t.treinamentos.length>0){
+        t.treinamentos.forEach(function(sub,arrIdx){
+          // Cada sub-treinamento tem seu próprio entrada/formaPagamento/parcelas;
+          // valores no nível da linha servem só como fallback de migração legacy.
+          _items.push({
+            ri:ri, arrIdx:arrIdx, source:'array',
+            cod: (sub && sub.cod) || '—',
+            valor: (sub && sub.valor!=null) ? sub.valor : 0,
+            entrada: (sub && sub.entrada!=null) ? sub.entrada : (t.entrada||0),
+            status: (sub && sub.status) || t.status || 'aberto',
+            formaPagamento: (sub && sub.formaPagamento) || t.formaPagamento || '',
+            parcelas: (sub && sub.parcelas && sub.parcelas>0) ? sub.parcelas : ((t.parcelas && t.parcelas>0) ? t.parcelas : 1)
+          });
+        });
+      } else {
+        _items.push({
+          ri:ri, arrIdx:null, source:'single',
+          cod: t.treinamento||'—',
+          valor: t.valor||0,
+          entrada: t.entrada||0,
+          status: t.status||'aberto',
+          formaPagamento: t.formaPagamento||'',
+          parcelas: (t.parcelas && t.parcelas>0) ? t.parcelas : 1
+        });
+      }
+    });
+    var _totPago=0;
+    _items.forEach(function(it){ if(it.status==='pago') _totPago += (it.valor||0); });
+    var _fmt=function(v){ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); };
+    var _esc=function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+    var _html=_items.map(function(it,_i){
+      var isPago= it.status==='pago';
+      var stCls = isPago?'pago':(it.status==='aberto'?'aberto':'neutro');
+      var trein = _esc(String(it.cod||'—').toUpperCase());
+      var forma = _esc(String(it.formaPagamento||'').toUpperCase());
+      var parc  = it.parcelas || 1;
+      var stBd  = isPago?'Pago':(it.status==='aberto'?'Aberto':_esc((it.status||'').toUpperCase()));
+      var valStr= _fmt(it.valor);
+      var entStr= _fmt(it.entrada);
+      var dsArr = (it.arrIdx!=null) ? (' data-arr-idx="'+it.arrIdx+'"') : '';
+      var openCls = _i===0 ? ' open' : '';
+      // Opções do dropdown FORMA DE PGTO
+      var _formasPgto=['DINHEIRO','PIX','CARTÃO DE CRÉDITO','CARTÃO DE DÉBITO','BOLETO','TRANSFERÊNCIA','PARCELADO','APP / CARTEIRA','OUTROS'];
+      var _formaOpts='<option value="">— SELECIONE —</option>'+_formasPgto.map(function(f){
+        return '<option value="'+f+'"'+(forma===f?' selected':'')+'>'+f+'</option>';
+      }).join('');
+      // PIX, DÉBITO e TRANSFERÊNCIA são à vista → bloqueia parcelas em 1x
+      var _semParc = window._ciFormaSemParcelas && window._ciFormaSemParcelas(forma);
+      var _parcEfetivo = _semParc ? 1 : parc;
+      // Opções do dropdown PARCELAS (1x a 12x)
+      var _parcOpts='';
+      for(var _p=1;_p<=12;_p++){
+        _parcOpts+='<option value="'+_p+'"'+(_parcEfetivo===_p?' selected':'')+'>'+_p+'x</option>';
+      }
+      var _parcDisabledAttr = _semParc ? ' disabled' : '';
+      return '<div class="ci-tcard '+stCls+openCls+'" data-ri="'+it.ri+'"'+dsArr+'>'
+        +'<div class="ci-tcard-sum" onclick="window._ciToggleCard(this.parentNode)">'
+          +'<span class="ci-tcard-cod '+stCls+'">'+trein+'</span>'
+          +'<span class="ci-tcard-val '+stCls+'">'+valStr+'</span>'
+          +'<span class="ci-tcard-st '+stCls+'">'+stBd+'</span>'
+          +'<span class="ci-tcard-arrow">▶</span>'
+        +'</div>'
+        +'<div class="ci-tcard-det" onclick="event.stopPropagation()">'
+          +'<div class="ci-tcard-form-row">'
+            +'<div><label class="ci-tcard-l">Valor</label>'
+              +'<input class="ci-tcard-v '+stCls+'" data-ri="'+it.ri+'"'+dsArr+' data-campo="valor" value="'+valStr+'" oninput="window._ciNumChange(this)"></div>'
+            +'<div><label class="ci-tcard-l">Entrada</label>'
+              +'<input class="ci-tcard-v entrada" data-ri="'+it.ri+'"'+dsArr+' data-campo="entrada" value="'+entStr+'" oninput="window._ciNumChange(this)" placeholder="R$ 0,00"></div>'
+          +'</div>'
+          +'<div class="ci-tcard-form-row">'
+            +'<div><label class="ci-tcard-l">FORMA DE PGTO</label>'
+              +'<select class="ci-tcard-v ci-tcard-sel" data-ri="'+it.ri+'"'+dsArr+' data-campo="formaPagamento" onchange="window._ciSelectChange(this)">'+_formaOpts+'</select></div>'
+            +'<div><label class="ci-tcard-l">PARCELAS</label>'
+              +'<select class="ci-tcard-v ci-tcard-sel parcelas" data-ri="'+it.ri+'"'+dsArr+' data-campo="parcelas" onchange="window._ciSelectChange(this)"'+_parcDisabledAttr+'>'+_parcOpts+'</select></div>'
+          +'</div>'
+        +'</div>'
+      +'</div>';
+    }).join('');
+    var _cntEl=document.getElementById('clientInfoCount');
+    var _totEl=document.getElementById('clientInfoTotalPago');
+    var _listEl=document.getElementById('clientInfoIvList');
+    if(_cntEl) _cntEl.textContent=_items.length;
+    if(_totEl) _totEl.textContent=_fmt(_totPago);
+    if(_listEl) _listEl.innerHTML=_html;
+    extratoBlock.style.display=_items.length?'':'none';
+  }
   var _sessCI=_getSessao?_getSessao():null;
   var _perfilCI=_sessCI?_sessCI.perfil:'adm';
   var _soLeitura=_perfilCI==='consultor';
@@ -382,6 +487,8 @@ function closeClientInfo(){document.getElementById('clientInfoOverlay').classLis
 function saveClientInfo(){
   if(_ciIdx===null)return;
   data[_ciIdx].info=document.getElementById('clientInfoText').value.trim();
+  // Forma de pagamento e parcelas agora vivem dentro de cada card de treinamento
+  // (editados via _ciTextChange / _ciParcChange — já persistem ao digitar).
   var inpNome=document.getElementById('clientInfoNome');
   if(inpNome&&document.getElementById('clientInfoNomeCampo').style.display!=='none'){
     var novoNome=inpNome.value.trim().toUpperCase();
@@ -390,6 +497,98 @@ function saveClientInfo(){
   closeClientInfo();markUnsaved();saveStorage();renderAll();renderConsultor();renderTreinador();
 }
 function clearClientInfo(){if(_ciIdx===null)return;data[_ciIdx].info='';closeClientInfo();markUnsaved();saveStorage();renderAll();}
+
+/* ── Cards expansíveis no modal "Ver informações" (Opção 2 — Entrada editável) ── */
+window._ciToggleCard=function(card){
+  if(!card) return;
+  card.classList.toggle('open');
+};
+window._ciNumChange=function(inp){
+  var ri=parseInt(inp.getAttribute('data-ri'),10);
+  var campo=inp.getAttribute('data-campo');
+  var arrIdxAttr=inp.getAttribute('data-arr-idx');
+  if(isNaN(ri)||!data[ri]||!campo) return;
+  var raw=String(inp.value||'').trim().replace(/R\$\s*/gi,'').replace(/\./g,'').replace(',','.');
+  var val=parseFloat(raw)||0;
+  // Se há arrIdx e a linha tem treinamentos[], escreve dentro do sub correspondente
+  if(arrIdxAttr!=null && arrIdxAttr!==''){
+    var ai=parseInt(arrIdxAttr,10);
+    if(Array.isArray(data[ri].treinamentos) && data[ri].treinamentos[ai]){
+      data[ri].treinamentos[ai][campo]=val;
+      // Para valor: recompor data[ri].valor como soma dos subs (para agregações)
+      if(campo==='valor'){
+        data[ri].valor=data[ri].treinamentos.reduce(function(s,t){return s+(t&&t.valor||0);},0);
+      }
+    } else {
+      data[ri][campo]=val;
+    }
+  } else {
+    // Sem arrIdx → linha simples, salva no nível da linha
+    data[ri][campo]=val;
+  }
+  if(typeof markUnsaved==='function') markUnsaved();
+  if(typeof saveStorage==='function') saveStorage();
+};
+window._ciTextChange=function(inp){
+  var ri=parseInt(inp.getAttribute('data-ri'),10);
+  var campo=inp.getAttribute('data-campo');
+  if(isNaN(ri)||!data[ri]||!campo) return;
+  data[ri][campo]=String(inp.value||'').trim().toUpperCase();
+  if(typeof markUnsaved==='function') markUnsaved();
+  if(typeof saveStorage==='function') saveStorage();
+};
+window._ciParcChange=function(inp){
+  var ri=parseInt(inp.getAttribute('data-ri'),10);
+  if(isNaN(ri)||!data[ri]) return;
+  var v=String(inp.value||'').toLowerCase().replace('x','').trim();
+  var n=parseInt(v,10);
+  data[ri].parcelas=(n>0?n:1);
+  if(typeof markUnsaved==='function') markUnsaved();
+  if(typeof saveStorage==='function') saveStorage();
+};
+/* Formas de pagamento que NÃO permitem parcelamento (sempre à vista 1x) */
+window._ciFormaSemParcelas=function(forma){
+  var f=String(forma||'').toUpperCase().trim();
+  return f==='PIX' || f==='CARTÃO DE DÉBITO' || f==='TRANSFERÊNCIA';
+};
+window._ciSelectChange=function(sel){
+  var ri=parseInt(sel.getAttribute('data-ri'),10);
+  var campo=sel.getAttribute('data-campo');
+  var arrIdxAttr=sel.getAttribute('data-arr-idx');
+  if(isNaN(ri)||!data[ri]||!campo) return;
+  // Resolve alvo: sub se houver arrIdx + treinamentos[], senão linha
+  var alvo=data[ri];
+  if(arrIdxAttr!=null && arrIdxAttr!==''){
+    var ai=parseInt(arrIdxAttr,10);
+    if(Array.isArray(data[ri].treinamentos) && data[ri].treinamentos[ai]){
+      // Garantir que o sub é um objeto editável
+      if(!data[ri].treinamentos[ai]) data[ri].treinamentos[ai]={};
+      alvo=data[ri].treinamentos[ai];
+    }
+  }
+  if(campo==='parcelas'){
+    alvo.parcelas=parseInt(sel.value,10)||1;
+  } else if(campo==='formaPagamento'){
+    var novaForma=String(sel.value||'').toUpperCase();
+    alvo.formaPagamento=novaForma;
+    // Achar o select de parcelas IRMÃO neste card e travar/destravar
+    var card=sel.closest('.ci-tcard');
+    var selParc=card?card.querySelector('select[data-campo="parcelas"]'):null;
+    if(selParc){
+      if(window._ciFormaSemParcelas(novaForma)){
+        selParc.value='1';
+        selParc.disabled=true;
+        alvo.parcelas=1;
+      } else {
+        selParc.disabled=false;
+      }
+    }
+  } else {
+    alvo[campo]=sel.value;
+  }
+  if(typeof markUnsaved==='function') markUnsaved();
+  if(typeof saveStorage==='function') saveStorage();
+};
 
 /* ═══════════════════════════════════════════
    TÍTULO / INFO / PERÍODO

@@ -150,7 +150,7 @@ function lcRenderizar(filtro){
       +'<td style="text-align:center;vertical-align:middle;">'
         +'<div class="lc-cell-trein-wrap">'
           +'<select class="lc-cell-select" data-idx="'+realIdx+'" data-campo="treinamento" onchange="lcCellChange(this)">'+treinOpts+'</select>'
-          +'<button class="lc-plus-trein" onclick="lcAddTreinoCliente('+realIdx+')" title="Adicionar outro treinamento a este cliente">+</button>'
+          +'<button class="lc-plus-trein" onclick="event.stopPropagation();window._abrirMenuCliente&&window._abrirMenuCliente(event,\''+String(r.cliente||'').replace(/\'/g,"\\'")+'\','+realIdx+')" title="Adicionar / Editar / Ver informações">+</button>'
         +'</div>'
       +'</td>'
       // Treinador — SELECT âmbar

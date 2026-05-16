@@ -1157,55 +1157,67 @@ function renderAll(){
     if(f.length===0){
       _ccEl.innerHTML='<div class="mob-empty">Nenhum cliente para os filtros selecionados.</div>';
     } else {
-      const _statusMap={pago:{c:'var(--pago)',l:'Pago'},aberto:{c:'var(--amber)',l:'Aberto'},negociacao:{c:'var(--blue)',l:'Negociação'},entrada:{c:'var(--accent)',l:'Entrada'},desistiu:{c:'var(--red)',l:'Desistiu'},estorno:{c:'var(--red)',l:'Estorno'},'-':{c:'var(--muted)',l:'Sem status'}};
-      _ccEl.innerHTML=f.map(d=>{
-        const ri=data.indexOf(d), pago=d.status==='pago', hasInfo=!!(d.info&&d.info.trim());
-        const valEdit = d.valor  ? d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})  : '';
-        const entEdit = d.entrada? d.entrada.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
-        const isCI = d.treinamento === 'CI';
-        const treinOpts='<option value="">—</option>'+allTreinamentos.map(t=>`<option value="${t}"${(d.treinamento||'')===t?' selected':''}>${t}</option>`).join('');
-        const trainOpts=`<option value="-"${(d.treinador||'-')==='-'?' selected':''}>—</option>`+allTrainers.map(t=>`<option value="${t}"${d.treinador===t?' selected':''}>${t.toUpperCase()}</option>`).join('');
-        const consOpts=`<option value=""${!d.consultor?' selected':''}>—</option>`+allConsultors.map(c=>`<option value="${c}"${d.consultor===c?' selected':''}>${c.toUpperCase()}</option>`).join('');
-        const statOpts=[
-          {v:'aberto',l:'ABERTO'},{v:'pago',l:'PAGO'},{v:'negociacao',l:'NEGOCIAÇÃO'},
-          {v:'entrada',l:'ENTRADA'},{v:'desistiu',l:'DESISTIU'},{v:'estorno',l:'ESTORNO'},{v:'-',l:'—'}
-        ].map(s=>`<option value="${s.v}"${(d.status||'aberto')===s.v?' selected':''}>${s.l}</option>`).join('');
-        const stInfo=_statusMap[d.status||'aberto']||_statusMap['-'];
-        const ticketCor = d.valor >= 10000.01 ? 'var(--green)' : d.valor >= 5001 ? 'var(--amber)' : d.valor > 0 ? 'var(--blue)' : 'var(--muted)';
-        return `<div class="mob-card${pago?' pago':''}" id="mobcard_${ri}">
-          <div class="mob-header" onclick="window._toggleClienteMobile(${ri})">
-            <span class="mob-arrow">▶</span>
-            <div class="mob-info">
-              <div class="mob-name-row">
-                <span class="mob-name${pago?' pago':''}">${d.cliente}</span>
-                <span class="mob-presenca" data-presenca-ri="${ri}">${window._presencaBadgeHtml?window._presencaBadgeHtml(ri):'<span style="color:var(--muted);font-size:10px;">—</span>'}</span>
-                <button class="mob-plus-btn" onclick="event.stopPropagation();window._abrirMenuCliente(event,'${d.cliente.replace(/'/g,"\\'")}',${ri})" title="Adicionar / Editar / Ver informações">+</button>
-              </div>
-              <div class="mob-status" style="color:${stInfo.c};"><span class="mob-dot" style="background:${stInfo.c};"></span>${stInfo.l}</div>
-            </div>
-            <div class="mob-val" style="color:${pago?'var(--pago)':ticketCor};">${formatVal(d.valor||0)}</div>
-          </div>
-          <div class="mob-body">
-            <div class="mob-field"><span class="mob-field-label">Treinamento</span>
-              <select class="card-sel mob-sel" data-ri="${ri}" data-campo="treinamento" onchange="cardCellChange(this);window._mobToggleTreinador(${ri});">${treinOpts}</select>
-            </div>
-            <div class="mob-field mob-field-treinador" style="display:${isCI?'flex':'none'};"><span class="mob-field-label">Treinador</span>
-              <select class="card-sel cs-treinador mob-sel" data-ri="${ri}" data-campo="treinador" onchange="cardCellChange(this)">${trainOpts}</select>
-            </div>
-            <div class="mob-field"><span class="mob-field-label">Consultor</span>
-              <select class="card-sel cs-consultor mob-sel" data-ri="${ri}" data-campo="consultor" onchange="cardCellChange(this)">${consOpts}</select>
-            </div>
-            <div class="mob-field"><span class="mob-field-label">Valor</span>
-              <input type="text" inputmode="numeric" class="card-num-input mob-input" data-ri="${ri}" data-campo="valor" value="${valEdit}" oninput="cardMoneyMask(this)" onchange="cardNumChange(this)" placeholder="0,00" style="color:${pago?'var(--pago)':ticketCor};font-weight:${pago?'700':'600'};">
-            </div>
-            <div class="mob-field"><span class="mob-field-label">Entrada</span>
-              <input type="text" inputmode="numeric" class="card-num-input mob-input" data-ri="${ri}" data-campo="entrada" value="${entEdit}" oninput="cardMoneyMask(this)" onchange="cardNumChange(this)" placeholder="—" style="color:var(--blue);">
-            </div>
-            <div class="mob-field"><span class="mob-field-label">Status</span>
-              <select class="card-sel mob-sel cs-status-${d.status||'aberto'}" data-ri="${ri}" data-campo="status" onchange="cardCellChange(this);cardUpdateStatusClass(this)">${statOpts}</select>
-            </div>
-          </div>
-        </div>`;
+      // === MOBILE AGREGADO POR CLIENTE (Opção 6) ===
+      // Agrupa registros do mesmo cliente em um único card com totais e pílulas.
+      const _grupos={};
+      const _ordem=[];
+      f.forEach(function(d){
+        if(!d||!d.cliente) return;
+        const _nome=String(d.cliente).toUpperCase().trim();
+        if(!_grupos[_nome]){
+          _grupos[_nome]={
+            cliente:d.cliente,
+            consultores:new Set(),
+            treinos:[],
+            anchorRi:data.indexOf(d),
+            totalPago:0,totalAberto:0,totalGeral:0,
+            qtdPagos:0,qtdAbertos:0,qtdTotal:0
+          };
+          _ordem.push(_nome);
+        }
+        const g=_grupos[_nome];
+        if(d.consultor) g.consultores.add(d.consultor);
+        g.treinos.push({cod:d.treinamento||'—', status:d.status||'aberto', valor:d.valor||0, ri:data.indexOf(d)});
+        g.qtdTotal++;
+        if(d.status==='pago'){ g.totalPago+=(d.valor||0); g.qtdPagos++; }
+        else if(d.status==='aberto'){ g.totalAberto+=(d.valor||0); g.qtdAbertos++; }
+        g.totalGeral+=(d.valor||0);
+      });
+      const _escAttr=function(s){return String(s||'').replace(/'/g,"\\'");};
+      _ccEl.innerHTML=_ordem.map(function(nome){
+        const g=_grupos[nome];
+        const pago = g.qtdTotal>0 && g.qtdPagos===g.qtdTotal;
+        const resumoSt = g.qtdTotal+' treino'+(g.qtdTotal!==1?'s':'')
+          + ' · '+g.qtdPagos+' pago'+(g.qtdPagos!==1?'s':'')
+          + (g.qtdAbertos>0?' · '+g.qtdAbertos+' aberto'+(g.qtdAbertos!==1?'s':''):'');
+        const consultorList = Array.from(g.consultores).map(function(c){return String(c).toUpperCase();}).join(', ') || '—';
+        const pills = g.treinos.map(function(t){
+          const cls = t.status==='pago'?'p':(t.status==='aberto'?'a':'n');
+          return '<span class="mob-trein-pill '+cls+'">'+String(t.cod||'—').toUpperCase()+'</span>';
+        }).join('');
+        const presencaHtml = window._presencaBadgeHtml ? window._presencaBadgeHtml(g.anchorRi) : '<span style="color:var(--muted);font-size:10px;">—</span>';
+        return '<div class="mob-card mob-card-agg'+(pago?' pago':'')+'" id="mobcard_'+g.anchorRi+'">'
+          + '<div class="mob-header">'
+          +   '<div class="mob-info">'
+          +     '<div class="mob-name-row">'
+          +       '<span class="mob-name'+(pago?' pago':'')+'">'+g.cliente+'</span>'
+          +       '<span class="mob-presenca" data-presenca-ri="'+g.anchorRi+'">'+presencaHtml+'</span>'
+          +       '<button class="mob-plus-btn" onclick="event.stopPropagation();window._abrirMenuCliente(event,\''+_escAttr(g.cliente)+'\','+g.anchorRi+')" title="Adicionar / Editar / Ver informações">+</button>'
+          +     '</div>'
+          +   '</div>'
+          + '</div>'
+          + '<div class="mob-agg-body">'
+          +   '<div class="mob-agg-row"><span class="mob-agg-k">Treinos</span><span class="mob-agg-v">'+resumoSt+'</span></div>'
+          +   '<div class="mob-agg-row"><span class="mob-agg-k">Consultor</span><span class="mob-agg-v">'+consultorList+'</span></div>'
+          +   '<div class="mob-agg-row"><span class="mob-agg-k">Pago</span><span class="mob-agg-v pago">'+formatVal(g.totalPago)+'</span></div>'
+          +   (g.totalAberto>0?'<div class="mob-agg-row"><span class="mob-agg-k">Em aberto</span><span class="mob-agg-v aberto">'+formatVal(g.totalAberto)+'</span></div>':'')
+          +   '<div class="mob-agg-pills">'+pills+'</div>'
+          +   '<div class="mob-agg-total">'
+          +     '<span>Total na carteira</span>'
+          +     '<span class="mob-agg-total-v">'+formatVal(g.totalGeral)+'</span>'
+          +   '</div>'
+          + '</div>'
+          + '</div>';
       }).join('');
     }
   }
