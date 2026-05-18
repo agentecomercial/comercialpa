@@ -15,7 +15,7 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=2026-MOB-FILT-O3-V2">
+<link rel="stylesheet" href="assets/css/main.css?v=2026-MOB-FILT-O8-V1">
 <link rel="stylesheet" href="assets/css/themes.css?v=2026-THEMES-110">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
@@ -1037,9 +1037,11 @@
         <div class="tpanel">
           <div class="tpanel-header" style="flex-direction:column;align-items:stretch;gap:8px;">
             <!-- TUDO EM UMA ÚNICA LINHA: título + busca + 4 filtros + botões de ação -->
-            <div class="cli-bar-unica" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;overflow:visible;">
+            <div class="cli-bar-unica" id="cliBarUnica" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;overflow:visible;">
               <span class="panel-title" id="panelTitleClientes" onclick="window._abrirListaClientesAdm&&window._abrirListaClientesAdm()" style="flex-shrink:0;">Clientes</span>
               <div class="search-bar" style="flex:0 1 200px;min-width:140px;"><span class="search-icon">⌕</span><input type="text" id="searchInput" placeholder="Buscar..." oninput="renderAll()" /></div>
+              <!-- Toggle de filtros (mobile only) -->
+              <button type="button" class="mob-filt-toggle" id="mobFiltToggle" onclick="window._mobFiltToggle&&window._mobFiltToggle()" aria-expanded="false">🎛 Filtros<span class="badge" id="mobFiltBadge" hidden>0</span><span class="caret">▾</span></button>
               <i class="cli-row-break"></i>
 
               <!-- 4 filtros multi-select lado a lado -->
@@ -1980,7 +1982,7 @@ try{
 <script defer src="assets/js/31-modo-consultor-desktop.js?v=20260514a"></script>
 <script defer src="assets/js/33-relatorio-supremo.js?v=20260516w"></script>
 <script defer src="assets/js/34-ms-status-filter.js?v=2026-MS-STATUS-V1"></script>
-<script defer src="assets/js/35-ms-filters.js?v=2026-MS-FILT-V12-DASH-DRAG"></script>
+<script defer src="assets/js/35-ms-filters.js?v=2026-MOB-FILT-O8-V1"></script>
 <script defer src="assets/js/36-col-filter.js?v=2026-COL-FILTER-V3-DRAG"></script>
 <script defer src="assets/js/37-theme-picker.js?v=2026-THEMES-110"></script>
 <script defer src="assets/js/38-audit-treinamentos.js?v=2026-AUDIT-V1"></script>

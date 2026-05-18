@@ -677,10 +677,12 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 }
 
 /* ────────────────────────────────────────────────────────────
-   MOBILE · OPÇÃO 03 — busca inline no header + pills em row
-   3 linhas: [search | ··· | +]  ·  [pills scroll]  ·  [× Limpar]
+   MOBILE · OPÇÃO 08 — busca + toggle "Filtros" + painel expansível
+   Row 1: [search | 🎛 Filtros | +]
+   Painel (quando aberto): lista vertical com label + dropdown por filtro
 ─────────────────────────────────────────────────────────────── */
-.cli-row-break{display:none;} /* invisível no desktop */
+.cli-row-break{display:none;}    /* invisível no desktop */
+.mob-filt-toggle{display:none;}  /* invisível no desktop */
 @media (max-width:768px){
   .cli-bar-unica{
     display:flex !important;
@@ -690,54 +692,117 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
     padding:8px 4px;
     width:100%;
   }
-  /* Esconde título "Clientes" e legado .filtros-mobile (substituído pela barra) */
+  /* Esconde elementos que viram parte do painel */
   .cli-bar-unica .panel-title{ display:none !important; }
   .cli-bar-unica .cli-spacer{ display:none !important; }
-  .filtros-mobile{ display:none !important; }
+  .cli-bar-unica .cli-menu{ display:none !important; }       /* ··· — agrupado dentro do painel ou removido no mobile */
+  .filtros-mobile{ display:none !important; }                 /* legado redundante */
 
-  /* Row breakers — força quebra de linha no flex-wrap */
+  /* Row breakers */
   .cli-bar-unica .cli-row-break{
     display:block; flex-basis:100%; height:0; margin:0; padding:0;
   }
 
-  /* ROW 1: busca expansiva + kebab + botão "+" */
+  /* ROW 1: busca expansiva + toggle "Filtros" + botão "+" */
   .cli-bar-unica .search-bar{
     order:1; flex:1 1 0; min-width:120px; max-width:none;
     height:36px; align-self:center;
   }
   .cli-bar-unica .search-bar input{ width:100%; height:auto; }
-  .cli-bar-unica .cli-menu{ order:2; flex:0 0 auto; }
+
+  .cli-bar-unica .mob-filt-toggle{
+    order:2; display:inline-flex; align-items:center; gap:5px;
+    height:36px; padding:0 11px;
+    background:var(--surface2); border:1px solid var(--border2);
+    border-radius:8px;
+    color:var(--text); font-size:11px; font-weight:700;
+    text-transform:uppercase; letter-spacing:.04em;
+    cursor:pointer; font-family:inherit; flex-shrink:0;
+    transition:all .15s;
+  }
+  .cli-bar-unica .mob-filt-toggle .caret{font-size:9px;opacity:.7;transition:transform .2s;}
+  .cli-bar-unica .mob-filt-toggle .badge{
+    background:var(--accent); color:#000;
+    border-radius:99px; padding:0 6px;
+    font-size:9px; font-weight:800;
+    font-family:'DM Mono',monospace;
+  }
+  .cli-bar-unica .mob-filt-toggle.open{
+    background:rgba(200,240,90,.12);
+    border-color:rgba(200,240,90,.4);
+    color:var(--accent);
+  }
+  .cli-bar-unica .mob-filt-toggle.open .caret{transform:rotate(180deg);}
+
   .cli-bar-unica #btnNovoCliente,
-  .cli-bar-unica .add-btn.cli-action-btn{ order:3; flex:0 0 auto; }
-  /* Esconde o LABEL do botão + (mantém só o ícone +) */
-  .cli-bar-unica #btnNovoCliente .btn-label{ display:none !important; }
-  .cli-bar-unica #btnNovoCliente{
+  .cli-bar-unica .add-btn.cli-action-btn{
+    order:3; flex:0 0 auto;
     width:36px;height:36px;padding:0;border-radius:8px;
     display:inline-flex;align-items:center;justify-content:center;
   }
+  .cli-bar-unica #btnNovoCliente .btn-label{ display:none !important; }
   .cli-bar-unica #btnNovoCliente .btn-icon{font-size:16px;}
 
-  /* BREAK 1 entre row 1 e row 2 */
+  /* BREAK depois da row 1 */
   .cli-bar-unica .cli-row-break:first-of-type{ order:4; }
 
-  /* ROW 2: TODOS + 4 filtros — INLINE, não full-width */
+  /* PAINEL DE FILTROS — escondido por default, abre quando .mob-filt-open */
   .cli-bar-unica .ms-status,
-  .cli-bar-unica .ms-filt{
-    order:5; flex:0 0 auto; min-width:auto; width:auto;
-  }
-  .cli-bar-unica .ms-status-trigger,
-  .cli-bar-unica .ms-filt-trigger{
-    width:auto !important;          /* sobrescreve o 100% global */
-    min-width:auto;
-    height:32px;padding:0 10px;
-  }
-
-  /* BREAK 2 entre row 2 e row 3 */
-  .cli-bar-unica .cli-row-break:nth-of-type(2){ order:7; }
-
-  /* ROW 3: Limpar alinhado à direita */
+  .cli-bar-unica .ms-filt,
   .cli-bar-unica .cli-clear-icon{
-    order:8; margin-left:auto;
+    display:none !important;
+  }
+  .cli-bar-unica.mob-filt-open{
+    background:rgba(200,240,90,.025);
+    border-radius:10px;
+    padding:8px;
+  }
+  .cli-bar-unica.mob-filt-open .ms-status,
+  .cli-bar-unica.mob-filt-open .ms-filt{
+    display:flex !important;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    width:100%;
+    min-width:0;
+    flex:0 0 100%;
+    padding:8px 12px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    order:10;
+  }
+  .cli-bar-unica.mob-filt-open .ms-status{order:11;}
+  .cli-bar-unica.mob-filt-open #msFiltTreinamento{order:12;}
+  .cli-bar-unica.mob-filt-open #msFiltTreinador{order:13;}
+  .cli-bar-unica.mob-filt-open #msFiltConsultor{order:14;}
+  .cli-bar-unica.mob-filt-open #msFiltPresenca{order:15;}
+
+  /* Adiciona LABEL antes do trigger via ::before */
+  .cli-bar-unica.mob-filt-open .ms-status::before,
+  .cli-bar-unica.mob-filt-open .ms-filt::before{
+    font-size:10px;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.06em;
+    white-space:nowrap;flex-shrink:0;
+  }
+  .cli-bar-unica.mob-filt-open .ms-status::before{content:"Status";}
+  .cli-bar-unica.mob-filt-open #msFiltTreinamento::before{content:"Treinamento";}
+  .cli-bar-unica.mob-filt-open #msFiltTreinador::before{content:"Treinador";}
+  .cli-bar-unica.mob-filt-open #msFiltConsultor::before{content:"Consultor";}
+  .cli-bar-unica.mob-filt-open #msFiltPresenca::before{content:"Presença";}
+
+  /* Triggers internos: width:auto pra não esticar */
+  .cli-bar-unica.mob-filt-open .ms-status-trigger,
+  .cli-bar-unica.mob-filt-open .ms-filt-trigger{
+    width:auto !important;min-width:120px;
+    height:30px;padding:0 10px;flex-shrink:0;
+  }
+
+  /* Limpar no fim do painel, alinhado à direita */
+  .cli-bar-unica.mob-filt-open .cli-clear-icon{
+    display:inline-flex !important;
+    order:99; margin-left:auto; align-self:flex-end;
+    margin-top:4px;
   }
 }
 

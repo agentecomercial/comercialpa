@@ -29,6 +29,38 @@
   if(!window.activeTreinamentoSet)  window.activeTreinamentoSet  = new Set();
 
   /* ──────────────────────────────────────────────
+     MOBILE · OPÇÃO 08 — toggle do painel de filtros
+     Mantém estado e atualiza badge de contagem
+  ────────────────────────────────────────────── */
+  window._mobFiltToggle = function(){
+    var bar = document.getElementById('cliBarUnica');
+    var btn = document.getElementById('mobFiltToggle');
+    if(!bar || !btn) return;
+    var abrindo = !bar.classList.contains('mob-filt-open');
+    bar.classList.toggle('mob-filt-open', abrindo);
+    btn.classList.toggle('open', abrindo);
+    btn.setAttribute('aria-expanded', abrindo ? 'true' : 'false');
+  };
+  window._mobFiltAtualizarBadge = function(){
+    var badge = document.getElementById('mobFiltBadge');
+    if(!badge) return;
+    var n = 0;
+    if(window.activeStatusSet)       n += window.activeStatusSet.size;
+    if(window.activeTreinamentoSet)  n += window.activeTreinamentoSet.size;
+    if(window.activeTrainerSet)      n += window.activeTrainerSet.size;
+    if(window.activeConsultorSet)    n += window.activeConsultorSet.size;
+    if(window.activePresencaSet)     n += window.activePresencaSet.size;
+    badge.textContent = n;
+    badge.hidden = (n === 0);
+  };
+  /* Atualiza badge automaticamente quando algum filtro muda */
+  document.addEventListener('change', function(ev){
+    if(ev.target && ev.target.matches && ev.target.matches('.ms-filt-pop input,.ms-status-pop input')){
+      setTimeout(window._mobFiltAtualizarBadge, 30);
+    }
+  });
+
+  /* ──────────────────────────────────────────────
      Toggle de abertura do popover (compartilhado)
   ────────────────────────────────────────────── */
   window._msFiltToggle = function(id){
