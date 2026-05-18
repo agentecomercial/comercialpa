@@ -10,6 +10,7 @@
     {id:'resumo',     ico:'💰', label:'Resumo financeiro',  on:true},
     {id:'pagos',      ico:'✅', label:'Treinos pagos',      on:true},
     {id:'entradas',   ico:'💵', label:'Entradas',           on:true},
+    {id:'negociacao', ico:'🤝', label:'Em negociação',      on:false},
     {id:'aberto',     ico:'⏳', label:'Em aberto',          on:false},
     {id:'consultor',  ico:'🏆', label:'Ranking consultores',on:true},
     {id:'treinador',  ico:'🎯', label:'Ranking treinadores',on:false},
@@ -20,18 +21,35 @@
   var _sel = {}; // {id: true/false}
   SECOES.forEach(function(s){ _sel[s.id]=s.on; });
 
+  // Exibição de colunas/sufixos no relatório: liga/desliga partes da linha de detalhe.
+  // consultor=true mostra "· NOME DO CONSULTOR" no final; forma=true mostra "· FORMA Nx" antes.
+  var _exibir = { consultor: true, forma: true };
+
   function _fmtR(v){ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
   function _pad(s,n){ s=String(s||''); while(s.length<n) s+=' '; return s.slice(0,n); }
   function _padL(s,n){ s=String(s||''); while(s.length<n) s=' '+s; return s; }
   function _now(){ var d=new Date(); var p=function(n){return n<10?'0'+n:n;}; return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes()); }
 
+  // 'YYYY-MM-DD' → 'dd/mm' (sem ano)
+  function _fmtDataCurta(iso){
+    var m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(!m) return String(iso||'');
+    return m[3]+'/'+m[2];
+  }
+  // 'YYYY-MM-DD' → 'dd/mm/aaaa'
+  function _fmtDataLonga(iso){
+    var m = String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(!m) return String(iso||'');
+    return m[3]+'/'+m[2]+'/'+m[1];
+  }
+
   function _turmaTxt(){
     var t = (typeof _turmaAtiva!=='undefined' && _turmaAtiva) ? _turmaAtiva : null;
     var nome = t && (t.titulo||t.nome) || 'TURMA';
     var per  = '';
-    if(t && t.periodStart && t.periodEnd) per = t.periodStart+' → '+t.periodEnd;
-    else if(t && t.periodStart) per = 'A partir de '+t.periodStart;
-    else if(t && t.periodEnd) per = 'Até '+t.periodEnd;
+    if(t && t.periodStart && t.periodEnd) per = _fmtDataCurta(t.periodStart)+' → '+_fmtDataLonga(t.periodEnd);
+    else if(t && t.periodStart) per = 'A partir de '+_fmtDataLonga(t.periodStart);
+    else if(t && t.periodEnd) per = 'Até '+_fmtDataLonga(t.periodEnd);
     return {nome:String(nome).toUpperCase(), periodo:per};
   }
 
@@ -48,12 +66,18 @@
         status:    d.status||'aberto'
       };
       if(Array.isArray(d.treinamentos) && d.treinamentos.length>0){
-        d.treinamentos.forEach(function(sub){
+        d.treinamentos.forEach(function(sub, i){
           if(!sub) return;
+          // Entrada: usa sub.entrada; APENAS o primeiro sub herda d.entrada quando nenhum sub tem entrada.
+          var _entFlatS = Number(sub.entrada!=null?sub.entrada:0)||0;
+          if(_entFlatS===0 && i===0){
+            var _algumSubEnt = d.treinamentos.some(function(t){return t && Number(t.entrada||0)>0;});
+            if(!_algumSubEnt) _entFlatS = Number(d.entrada||0)||0;
+          }
           itens.push(Object.assign({}, base, {
             treinamento:    String(sub.cod||d.treinamento||'—').toUpperCase(),
             valor:          Number(sub.valor!=null?sub.valor:0)||0,
-            entrada:        Number(sub.entrada!=null?sub.entrada:(d.entrada||0))||0,
+            entrada:        _entFlatS,
             formaPagamento: String(sub.formaPagamento||d.formaPagamento||'').toUpperCase(),
             parcelas:       (sub.parcelas&&sub.parcelas>0)?sub.parcelas:((d.parcelas&&d.parcelas>0)?d.parcelas:1),
             status:         (sub.status||d.status||'aberto')
@@ -72,16 +96,18 @@
     return itens;
   }
 
+
   // ── BUILDERS por seção ─────────────────────────────────────────
   var SEP_LIN = '═══════════════════════════════════════════════════';
   var SEP_DOT = '───────────────────────────────────────────────────';
 
   function _bResumo(itens){
-    var totPago=0, qtdPago=0, totEntrada=0, qtdEntrada=0;
-    var clientesPagos=new Set(), clientesEntrada=new Set();
+    var totPago=0, qtdPago=0, totEntrada=0, qtdEntrada=0, totNeg=0, qtdNeg=0;
+    var clientesPagos=new Set(), clientesEntrada=new Set(), clientesNeg=new Set();
     itens.forEach(function(it){
       if(it.status==='pago'){ totPago+=it.valor; qtdPago++; clientesPagos.add(it.cliente); }
       if(it.entrada>0){ totEntrada+=it.entrada; qtdEntrada++; clientesEntrada.add(it.cliente); }
+      if(it.status==='negociacao'){ totNeg+=it.valor; qtdNeg++; clientesNeg.add(it.cliente); }
     });
     var tg = totPago+totEntrada;
     return [
@@ -90,10 +116,27 @@
       SEP_LIN,
       'Total faturado (PAGO):  '+_padL(_fmtR(totPago),14)+'  ·  '+qtdPago+' treino'+(qtdPago!==1?'s':'')+'  ·  '+clientesPagos.size+' cliente'+(clientesPagos.size!==1?'s':''),
       'Total em entradas:      '+_padL(_fmtR(totEntrada),14)+'  ·  '+clientesEntrada.size+' cliente'+(clientesEntrada.size!==1?'s':''),
+      'Em negociação:          '+_padL(_fmtR(totNeg),14)+'  ·  '+qtdNeg+' treino'+(qtdNeg!==1?'s':'')+'  ·  '+clientesNeg.size+' cliente'+(clientesNeg.size!==1?'s':''),
       SEP_DOT,
-      'TOTAL GERAL:            '+_padL(_fmtR(tg),14),
+      'TOTAL GERAL (faturado): '+_padL(_fmtR(tg),14),
       ''
     ].join('\n');
+  }
+
+  // PIX, DÉBITO e TRANSFERÊNCIA são sempre à vista — não mostra "Nx"
+  function _semParcelas(forma){
+    var f = String(forma||'').toUpperCase().trim();
+    return f==='PIX' || f==='CARTÃO DE DÉBITO' || f==='TRANSFERÊNCIA';
+  }
+  function _fmtForma(it){
+    if(!_exibir.forma) return '';
+    if(!it.formaPagamento) return '';
+    if(_semParcelas(it.formaPagamento)) return ' · '+it.formaPagamento;
+    return ' · '+it.formaPagamento+(it.parcelas>1?' '+it.parcelas+'x':' 1x');
+  }
+  function _sufConsultor(it){
+    if(!_exibir.consultor) return '';
+    return ' · '+(it.consultor||'—');
   }
 
   function _bPagos(itens){
@@ -102,8 +145,7 @@
     if(!pagos.length) return SEP_LIN+'\n✅ TREINAMENTOS PAGOS (0)\n'+SEP_LIN+'\nNenhum pagamento registrado.\n';
     var linhas = pagos.map(function(it,i){
       var n=String(i+1).padStart(2,'0');
-      var pgto = it.formaPagamento ? (' · '+it.formaPagamento+(it.parcelas>1?' '+it.parcelas+'x':' 1x')) : '';
-      return n+'. '+_pad(it.cliente,22)+' · '+_pad(it.treinamento,15)+' · '+_padL(_fmtR(it.valor),13)+pgto+' · '+it.consultor;
+      return n+'. '+_pad(it.cliente,22)+' · '+_pad(it.treinamento,15)+' · '+_padL(_fmtR(it.valor),13)+_fmtForma(it)+_sufConsultor(it);
     });
     return [
       SEP_LIN,
@@ -118,8 +160,9 @@
     if(!ents.length) return SEP_LIN+'\n💵 ENTRADAS RECEBIDAS (0)\n'+SEP_LIN+'\nNenhuma entrada registrada.\n';
     var linhas = ents.map(function(it,i){
       var n=String(i+1).padStart(2,'0');
-      var pgto = it.formaPagamento ? (' · '+it.formaPagamento) : '';
-      return n+'. '+_pad(it.cliente,22)+' · '+_pad(it.treinamento,15)+' · '+_padL(_fmtR(it.entrada),13)+pgto+' · '+it.consultor;
+      // Entrada também respeita: PIX/Débito/Transferência sem "Nx"
+      var pgto = (_exibir.forma && it.formaPagamento) ? (' · '+it.formaPagamento) : '';
+      return n+'. '+_pad(it.cliente,22)+' · '+_pad(it.treinamento,15)+' · '+_padL(_fmtR(it.entrada),13)+pgto+_sufConsultor(it);
     });
     return [
       SEP_LIN,
@@ -129,17 +172,33 @@
   }
 
   function _bAberto(itens){
-    var abs = itens.filter(function(it){return it.status==='aberto'||it.status==='negociacao';})
+    var abs = itens.filter(function(it){return it.status==='aberto';})
                    .sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
     if(!abs.length) return SEP_LIN+'\n⏳ EM ABERTO (0)\n'+SEP_LIN+'\nNada em aberto.\n';
+    var totAberto = abs.reduce(function(s,it){return s+(it.valor||0);},0);
     var linhas = abs.map(function(it,i){
       var n=String(i+1).padStart(2,'0');
-      var st = it.status==='negociacao' ? 'NEGOCIAÇÃO' : 'ABERTO';
-      return n+'. '+_pad(it.cliente,22)+' · '+_pad(it.treinamento,15)+' · '+_padL(_fmtR(it.valor),13)+' · '+st+' · '+it.consultor;
+      return n+'. '+_pad(it.cliente,22)+' · '+_pad(it.treinamento,15)+' · '+_padL(_fmtR(it.valor),13)+_sufConsultor(it);
     });
     return [
       SEP_LIN,
-      '⏳ EM ABERTO ('+abs.length+')',
+      '⏳ EM ABERTO ('+abs.length+' · '+_fmtR(totAberto)+')',
+      SEP_LIN
+    ].concat(linhas).join('\n')+'\n';
+  }
+
+  function _bNegociacao(itens){
+    var neg = itens.filter(function(it){return it.status==='negociacao';})
+                   .sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+    if(!neg.length) return SEP_LIN+'\n🤝 EM NEGOCIAÇÃO (0)\n'+SEP_LIN+'\nNada em negociação.\n';
+    var totNeg = neg.reduce(function(s,it){return s+(it.valor||0);},0);
+    var linhas = neg.map(function(it,i){
+      var n=String(i+1).padStart(2,'0');
+      return n+'. '+_pad(it.cliente,22)+' · '+_pad(it.treinamento,15)+' · '+_padL(_fmtR(it.valor),13)+_sufConsultor(it);
+    });
+    return [
+      SEP_LIN,
+      '🤝 EM NEGOCIAÇÃO ('+neg.length+' · '+_fmtR(totNeg)+')',
       SEP_LIN
     ].concat(linhas).join('\n')+'\n';
   }
@@ -167,21 +226,46 @@
   }
 
   function _bTopTreinamentos(itens){
-    var mapa = {};
-    itens.forEach(function(it){
-      if(it.status!=='pago') return;
-      var k = it.treinamento||'—';
-      if(!mapa[k]) mapa[k]={total:0, qtd:0};
-      mapa[k].total += it.valor;
-      mapa[k].qtd++;
-    });
-    var rank = Object.keys(mapa).map(function(k){return {nome:k,total:mapa[k].total,qtd:mapa[k].qtd};})
-                   .sort(function(a,b){return b.total-a.total;});
-    if(!rank.length) return SEP_LIN+'\n📚 TOP TREINAMENTOS (0)\n'+SEP_LIN+'\nSem dados.\n';
-    var linhas = rank.slice(0,5).map(function(r,i){
-      return (i+1)+'º '+_pad(r.nome,18)+' · '+_padL(_fmtR(r.total),14)+'  ·  '+r.qtd+' venda'+(r.qtd!==1?'s':'');
-    });
-    return [SEP_LIN, '📚 TOP 5 TREINAMENTOS (por valor pago)', SEP_LIN].concat(linhas).join('\n')+'\n';
+    // Agrupa por treinamento, ordena pelo MAIS VENDIDO/NEGOCIADO (quantidade desc)
+    function _agruparPor(statusAlvo){
+      var mapa = {};
+      itens.forEach(function(it){
+        if(it.status!==statusAlvo) return;
+        var k = it.treinamento||'—';
+        if(!mapa[k]) mapa[k]={total:0, qtd:0};
+        mapa[k].total += it.valor;
+        mapa[k].qtd++;
+      });
+      return Object.keys(mapa).map(function(k){return {nome:k,total:mapa[k].total,qtd:mapa[k].qtd};})
+                 .sort(function(a,b){return (b.qtd-a.qtd) || (b.total-a.total);});
+    }
+    var rankPago = _agruparPor('pago');
+    var rankNeg  = _agruparPor('negociacao');
+    if(!rankPago.length && !rankNeg.length){
+      return SEP_LIN+'\n📚 TOP TREINAMENTOS (0)\n'+SEP_LIN+'\nSem dados.\n';
+    }
+    var blocos = [SEP_LIN, '📚 TOP TREINAMENTOS', SEP_LIN];
+    if(rankPago.length){
+      var totalPagos = rankPago.reduce(function(s,r){return s+r.total;},0);
+      var totalQtdPagos = rankPago.reduce(function(s,r){return s+r.qtd;},0);
+      blocos.push('');
+      blocos.push('✅ PAGOS ('+rankPago.length+' treinamento'+(rankPago.length!==1?'s':'')+'):');
+      rankPago.forEach(function(r,i){
+        blocos.push((i+1)+'º '+_pad(r.nome,18)+' · '+_padL(_fmtR(r.total),14)+'  ·  '+r.qtd+' venda'+(r.qtd!==1?'s':''));
+      });
+      blocos.push('   '+_pad('TOTAL',18)+' · '+_padL(_fmtR(totalPagos),14)+'  ·  '+totalQtdPagos+' venda'+(totalQtdPagos!==1?'s':''));
+    }
+    if(rankNeg.length){
+      var totalNegs = rankNeg.reduce(function(s,r){return s+r.total;},0);
+      var totalQtdNegs = rankNeg.reduce(function(s,r){return s+r.qtd;},0);
+      blocos.push('');
+      blocos.push('🤝 EM NEGOCIAÇÃO ('+rankNeg.length+' treinamento'+(rankNeg.length!==1?'s':'')+'):');
+      rankNeg.forEach(function(r,i){
+        blocos.push((i+1)+'º '+_pad(r.nome,18)+' · '+_padL(_fmtR(r.total),14)+'  ·  '+r.qtd+' negociaç'+(r.qtd!==1?'ões':'ão'));
+      });
+      blocos.push('   '+_pad('TOTAL',18)+' · '+_padL(_fmtR(totalNegs),14)+'  ·  '+totalQtdNegs+' negociaç'+(totalQtdNegs!==1?'ões':'ão'));
+    }
+    return blocos.join('\n')+'\n';
   }
 
   function _bMeta(itens){
@@ -211,12 +295,13 @@
     var t = _turmaTxt();
     var itens = _coletaItens();
     var partes = [];
-    partes.push('📊 RELATÓRIO SUPREMO — '+t.nome);
+    partes.push('📊 RELATÓRIO — '+t.nome);
     if(t.periodo) partes.push('Período: '+t.periodo);
     partes.push('');
     if(_sel.resumo)     partes.push(_bResumo(itens));
     if(_sel.pagos)      partes.push(_bPagos(itens));
     if(_sel.entradas)   partes.push(_bEntradas(itens));
+    if(_sel.negociacao) partes.push(_bNegociacao(itens));
     if(_sel.aberto)     partes.push(_bAberto(itens));
     if(_sel.consultor)  partes.push(_bRanking(itens,'consultor','RANKING CONSULTORES','🏆'));
     if(_sel.treinador)  partes.push(_bRanking(itens,'treinador','RANKING TREINADORES','🎯'));
@@ -233,7 +318,8 @@
       resumo: 3,
       pagos:  itens.filter(function(it){return it.status==='pago';}).length,
       entradas: itens.filter(function(it){return it.entrada>0;}).length,
-      aberto: itens.filter(function(it){return it.status==='aberto'||it.status==='negociacao';}).length,
+      negociacao: itens.filter(function(it){return it.status==='negociacao';}).length,
+      aberto: itens.filter(function(it){return it.status==='aberto';}).length,
       consultor: 3,
       treinador: 3,
       topTrein: 5,
@@ -251,7 +337,7 @@
     var cnt = _contagensSecao();
     var listEl = document.getElementById('supSecoes');
     if(listEl){
-      listEl.innerHTML = SECOES.map(function(s){
+      var htmlSecoes = SECOES.map(function(s){
         var on = !!_sel[s.id];
         return '<div class="sup-side-item'+(on?' on':'')+'" data-sec="'+s.id+'" onclick="window._supToggle(\''+s.id+'\')">'
           +'<div class="dot">'+(on?'✓':'')+'</div>'
@@ -259,6 +345,26 @@
           +'<span class="cnt">'+(cnt[s.id]!=null?cnt[s.id]:'')+'</span>'
         +'</div>';
       }).join('');
+
+      // Grupo: EXIBIR no detalhe (toggles que removem sufixos das linhas)
+      var htmlExibir = '<div class="sup-side-group">'
+        + '<div class="sup-side-grouph">⚙️ Exibir no detalhe</div>'
+        + (function(){
+            var defs = [
+              {id:'consultor', label:'Nome do consultor'},
+              {id:'forma',     label:'Forma de pagamento'}
+            ];
+            return defs.map(function(d){
+              var on = !!_exibir[d.id];
+              return '<div class="sup-side-item small'+(on?' on':'')+'" data-exib="'+d.id+'" onclick="window._supToggleExibir(\''+d.id+'\')">'
+                +'<div class="dot">'+(on?'✓':'')+'</div>'
+                +'<span class="nm">'+d.label+'</span>'
+              +'</div>';
+            }).join('');
+          })()
+        + '</div>';
+
+      listEl.innerHTML = htmlSecoes + htmlExibir;
     }
     _renderPreview();
   }
@@ -299,8 +405,23 @@
     _renderPreview();
   };
 
+  window._supToggleExibir = function(campo){
+    if(!(campo in _exibir)) return;
+    _exibir[campo] = !_exibir[campo];
+    var item = document.querySelector('.sup-side-item[data-exib="'+campo+'"]');
+    if(item){
+      var on = _exibir[campo];
+      item.classList.toggle('on', on);
+      var dot = item.querySelector('.dot');
+      if(dot) dot.textContent = on?'✓':'';
+    }
+    _renderPreview();
+  };
+
   window._supMarcarTodos = function(marcar){
     SECOES.forEach(function(s){ _sel[s.id]=!!marcar; });
+    // "Marcar tudo" / "Limpar" também aplicam aos toggles de exibir colunas
+    Object.keys(_exibir).forEach(function(k){ _exibir[k] = !!marcar; });
     _renderModal();
   };
 
@@ -347,6 +468,493 @@
     document.body.removeChild(a);
     setTimeout(function(){URL.revokeObjectURL(url);},800);
     if(typeof _showToast==='function') _showToast('💾 '+fname,'var(--accent)');
+  };
+
+  /* PDF — Corporate minimal (Preview 01): papel branco · serif executiva · preto/ocre/cinza */
+  window._supBaixarPdf = function(){
+    if(typeof _ensureJsPDF!=='function'){
+      if(typeof _showToast==='function') _showToast('jsPDF não disponível.','var(--red)');
+      return;
+    }
+    if(typeof _showToast==='function') _showToast('⏳ Gerando PDF...','var(--muted)');
+    _ensureJsPDF().then(function(){
+      try{
+        var jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        if(!jsPDFCtor){ if(typeof _showToast==='function') _showToast('jsPDF não inicializou.','var(--red)'); return; }
+        var doc = new jsPDFCtor({orientation:'portrait',unit:'mm',format:'a4'});
+        var t = _turmaTxt();
+        var fname = 'relatorio-supremo-'+String(t.nome||'turma').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+new Date().toISOString().slice(0,10)+'.pdf';
+
+        var pageW = doc.internal.pageSize.getWidth();   // 210
+        var pageH = doc.internal.pageSize.getHeight();  // 297
+        var margem = 12;
+        var maxW = pageW - margem*2;
+
+        // ── Paleta Corporate Minimal (Preview 01) ──────────────
+        var PRETO    = [17, 17, 17];
+        var OCRE     = [201, 161, 74];
+        var CINZA    = [102, 102, 102];
+        var HAIRLINE = [230, 230, 230];
+        var ZEBRA    = [250, 250, 250];
+
+        function _dataAgora(){
+          var d = new Date();
+          var dd = String(d.getDate()).padStart(2,'0');
+          var mm = String(d.getMonth()+1).padStart(2,'0');
+          return dd + '.' + mm + '.' + d.getFullYear();
+        }
+
+        // ── BRAND BAR Corporate (faixa ocre topo · título serif · linha hairline) ──
+        doc.setFillColor(OCRE[0], OCRE[1], OCRE[2]);
+        doc.rect(0, 0, pageW, 2.5, 'F');
+
+        // "RELATÓRIO EXECUTIVO" — uppercase letterspaced em ocre
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(8);
+        doc.setTextColor(OCRE[0], OCRE[1], OCRE[2]);
+        doc.text('R E L A T Ó R I O   E X E C U T I V O', margem, 14);
+
+        // Título grande serif. Como o jsPDF padrão usa WinAnsi e não suporta "→" (U+2192),
+        // partimos a string nos "→" e desenhamos a seta como gráfico entre os pedaços.
+        doc.setFont('times','normal');
+        doc.setFontSize(26);
+        doc.setTextColor(PRETO[0], PRETO[1], PRETO[2]);
+        var _tituloTop = String(t.nome||'TURMA').toUpperCase();
+        if(t.periodo) _tituloTop += '  ·  ' + String(t.periodo).toUpperCase();
+
+        function _drawSetaPdf(x, baseline, len){
+          // Seta horizontal proporcional à fonte 26pt — centrada na altura "x-height"
+          var cy = baseline - 2.2; // ajusta visual para alinhar com letras maiúsculas
+          var lw = 0.6;
+          doc.setDrawColor(PRETO[0], PRETO[1], PRETO[2]);
+          doc.setLineWidth(lw);
+          // hasta horizontal
+          doc.line(x, cy, x + len, cy);
+          // ponta (V apontando para direita)
+          doc.line(x + len - 2.2, cy - 1.6, x + len, cy);
+          doc.line(x + len - 2.2, cy + 1.6, x + len, cy);
+        }
+
+        function _drawTituloComSeta(texto, x, y){
+          var partes = String(texto).split('→');
+          if(partes.length < 2){
+            doc.text(texto, x, y);
+            return;
+          }
+          var cursor = x;
+          for(var i=0; i<partes.length; i++){
+            var p = partes[i];
+            doc.text(p, cursor, y);
+            cursor += doc.getTextWidth(p);
+            if(i < partes.length - 1){
+              // espaço + seta + espaço
+              var setaLen = 6.5;
+              var gap = 0.8;
+              _drawSetaPdf(cursor + gap, y, setaLen);
+              cursor += gap + setaLen + gap;
+            }
+          }
+        }
+
+        _drawTituloComSeta(_tituloTop, margem, 26);
+
+        // Subtítulo cinza
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(9);
+        doc.setTextColor(CINZA[0], CINZA[1], CINZA[2]);
+        var _sessao = (typeof _getSessao==='function') ? _getSessao() : null;
+        var _nomeGer = _sessao ? (_sessao.nome||_sessao.login||'') : '';
+        var _subTop  = 'Gerado em ' + _dataAgora() + (_nomeGer ? (' por ' + _nomeGer) : '');
+        doc.text(_subTop, margem, 33);
+
+        // Linha hairline preta separadora
+        doc.setDrawColor(PRETO[0], PRETO[1], PRETO[2]);
+        doc.setLineWidth(0.3);
+        doc.line(margem, 39, pageW - margem, 39);
+
+        var y = 50;
+
+        function _quebraPagina(necessario){
+          if(y + necessario > pageH - margem - 10){
+            doc.addPage();
+            y = margem + 6;
+          }
+        }
+
+        // H2: label uppercase ocre + linha ocre fina embaixo
+        function _drawH2(titulo){
+          _quebraPagina(14);
+          y += 6;
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(8.5);
+          doc.setTextColor(OCRE[0], OCRE[1], OCRE[2]);
+          doc.text(String(titulo).toUpperCase(), margem, y);
+          y += 2;
+          doc.setDrawColor(OCRE[0], OCRE[1], OCRE[2]);
+          doc.setLineWidth(0.25);
+          doc.line(margem, y, pageW - margem, y);
+          y += 6;
+        }
+
+        // Sub-h2: dentro de uma seção, pequeno bold preto
+        function _drawSub(titulo){
+          _quebraPagina(8);
+          y += 3;
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(9);
+          doc.setTextColor(PRETO[0], PRETO[1], PRETO[2]);
+          doc.text(String(titulo).toUpperCase(), margem, y);
+          y += 5;
+        }
+
+        // KV: label serif esquerda · valor serif bold direita · hairline embaixo
+        function _drawKv(label, valor){
+          _quebraPagina(7);
+          doc.setFont('times','normal');
+          doc.setFontSize(11);
+          doc.setTextColor(PRETO[0], PRETO[1], PRETO[2]);
+          var labelMax = maxW - 50;
+          var labelTrunc = String(label||'');
+          if(doc.getTextWidth(labelTrunc) > labelMax){
+            while(labelTrunc.length > 5 && doc.getTextWidth(labelTrunc+'…') > labelMax) labelTrunc = labelTrunc.slice(0,-1);
+            labelTrunc += '…';
+          }
+          doc.text(labelTrunc, margem, y);
+
+          doc.setFont('times','bold');
+          doc.text(String(valor||''), pageW - margem, y, {align:'right'});
+
+          y += 2.5;
+          doc.setDrawColor(HAIRLINE[0], HAIRLINE[1], HAIRLINE[2]);
+          doc.setLineWidth(0.15);
+          doc.line(margem, y, pageW - margem, y);
+          y += 4;
+        }
+
+        // Linha de total: border-top preto grosso + label bold + valor ocre
+        function _drawTotal(label, valor){
+          _quebraPagina(11);
+          y += 3;
+          doc.setDrawColor(PRETO[0], PRETO[1], PRETO[2]);
+          doc.setLineWidth(0.6);
+          doc.line(margem, y, pageW - margem, y);
+          y += 6;
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(11);
+          doc.setTextColor(PRETO[0], PRETO[1], PRETO[2]);
+          doc.text(String(label||'').toUpperCase(), margem, y);
+          doc.setFont('times','bold');
+          doc.setFontSize(13);
+          doc.setTextColor(OCRE[0], OCRE[1], OCRE[2]);
+          doc.text(String(valor||''), pageW - margem, y, {align:'right'});
+          y += 6;
+        }
+
+        // Header de tabela: uppercase cinza + border-bottom preto
+        function _drawTableHead(cols, widths){
+          _quebraPagina(9);
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(7.5);
+          doc.setTextColor(CINZA[0], CINZA[1], CINZA[2]);
+          var x = margem;
+          cols.forEach(function(c, i){
+            var w = widths[i];
+            var tx = c.r ? (x + w - 1) : (x + 1);
+            doc.text(String(c.label||'').toUpperCase(), tx, y, {align: c.r ? 'right' : 'left'});
+            x += w;
+          });
+          y += 1.5;
+          doc.setDrawColor(PRETO[0], PRETO[1], PRETO[2]);
+          doc.setLineWidth(0.4);
+          doc.line(margem, y, pageW - margem, y);
+          y += 4;
+        }
+
+        // Linha de tabela
+        function _drawTableRow(cells, widths){
+          _quebraPagina(7);
+          doc.setFontSize(8.5);
+          doc.setTextColor(40, 40, 40);
+          var x = margem;
+          cells.forEach(function(cell, i){
+            var w = widths[i];
+            var tx = cell.r ? (x + w - 1) : (x + 1);
+            doc.setFont(cell.r ? 'times' : 'helvetica', cell.bold ? 'bold' : 'normal');
+            var texto = String(cell.text||'');
+            // trunca se passar do width disponível (com folga de 2mm)
+            var limite = w - 2;
+            if(doc.getTextWidth(texto) > limite){
+              while(texto.length > 3 && doc.getTextWidth(texto+'…') > limite) texto = texto.slice(0,-1);
+              texto += '…';
+            }
+            doc.text(texto, tx, y, {align: cell.r ? 'right' : 'left'});
+            x += w;
+          });
+          y += 1.8;
+          doc.setDrawColor(HAIRLINE[0], HAIRLINE[1], HAIRLINE[2]);
+          doc.setLineWidth(0.1);
+          doc.line(margem, y, pageW - margem, y);
+          y += 3.5;
+        }
+
+        // Linha de ranking: numeral romano ocre + nome + valor + sub
+        function _drawRankRow(pos, nome, valor, meta){
+          _quebraPagina(10);
+          doc.setFont('times','italic');
+          doc.setFontSize(13);
+          doc.setTextColor(OCRE[0], OCRE[1], OCRE[2]);
+          doc.text(String(pos||''), margem, y);
+
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(10);
+          doc.setTextColor(PRETO[0], PRETO[1], PRETO[2]);
+          doc.text(String(nome||''), margem + 12, y);
+
+          doc.setFont('times','bold');
+          doc.setFontSize(11);
+          doc.text(String(valor||''), pageW - margem, y, {align:'right'});
+
+          if(meta){
+            doc.setFont('helvetica','normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(CINZA[0], CINZA[1], CINZA[2]);
+            doc.text(String(meta), pageW - margem, y + 3.5, {align:'right'});
+            y += 4.5;
+          } else {
+            y += 1.5;
+          }
+          doc.setDrawColor(HAIRLINE[0], HAIRLINE[1], HAIRLINE[2]);
+          doc.setLineWidth(0.15);
+          doc.line(margem, y, pageW - margem, y);
+          y += 4;
+        }
+
+        // ── Coleta dados ───────────────────────────────────────
+        var itens = _coletaItens();
+
+        // Forma de pagamento formatada (PIX/DÉBITO/TRANSF não mostram parcelas)
+        function _formaPgto(it){
+          if(!it.formaPagamento) return '—';
+          var x = String(it.formaPagamento||'').toUpperCase().trim();
+          var semParc = (x==='PIX'||x==='CARTÃO DE DÉBITO'||x==='TRANSFERÊNCIA');
+          return it.formaPagamento + (semParc ? '' : ' ' + (it.parcelas>1?it.parcelas:'1') + 'x');
+        }
+
+        // Tabela com colunas dinâmicas — Forma e Consultor podem ser ocultados via _exibir
+        function _tabelaItens(lista, opts){
+          opts = opts || {};
+          var cols = [
+            {label:'Cliente',     w:48, get:function(it){return it.cliente||'—';}},
+            {label:'Treinamento', w:36, get:function(it){return it.treinamento||'—';}},
+            {label:'Valor', r:true, w:26, bold:true, get:function(it){return _fmtR(opts.usaEntrada ? it.entrada : it.valor);}}
+          ];
+          if(_exibir.forma)     cols.push({label:'Forma',     w:30, get:function(it){return _formaPgto(it);}});
+          if(_exibir.consultor) cols.push({label:'Consultor', w:42, get:function(it){return it.consultor||'—';}});
+
+          // Redistribui o espaço sobrando entre as colunas de texto (Cliente/Treinamento)
+          var somaW = cols.reduce(function(s,c){return s+c.w;},0);
+          var sobra = maxW - somaW;
+          if(sobra > 0){
+            // metade para Cliente, metade para Treinamento
+            cols[0].w += Math.floor(sobra/2);
+            cols[1].w += sobra - Math.floor(sobra/2);
+          }
+          var widths = cols.map(function(c){return c.w;});
+
+          _drawTableHead(cols.map(function(c){return {label:c.label, r:!!c.r};}), widths);
+          lista.forEach(function(it){
+            _drawTableRow(cols.map(function(c){
+              return {text:c.get(it), r:!!c.r, bold:!!c.bold};
+            }), widths);
+          });
+        }
+
+        // ══════ Renderiza cada seção ativada ══════
+        // RESUMO
+        if(_sel.resumo){
+          _drawH2('Resumo Financeiro');
+          var totPago=0,qtdPago=0,totEnt=0,totNeg=0,qtdNeg=0;
+          var cliPagos=new Set(),cliEnt=new Set(),cliNeg=new Set();
+          itens.forEach(function(it){
+            if(it.status==='pago'){totPago+=it.valor;qtdPago++;cliPagos.add(it.cliente);}
+            if(it.entrada>0){totEnt+=it.entrada;cliEnt.add(it.cliente);}
+            if(it.status==='negociacao'){totNeg+=it.valor;qtdNeg++;cliNeg.add(it.cliente);}
+          });
+          _drawKv('Total faturado (PAGO) · '+qtdPago+' treinos · '+cliPagos.size+' clientes', _fmtR(totPago));
+          _drawKv('Total em entradas · '+cliEnt.size+' clientes', _fmtR(totEnt));
+          _drawKv('Em negociação · '+qtdNeg+' treinos · '+cliNeg.size+' clientes', _fmtR(totNeg));
+          _drawTotal('Total Geral', _fmtR(totPago+totEnt));
+        }
+
+        // PAGOS
+        if(_sel.pagos){
+          var pagos = itens.filter(function(it){return it.status==='pago';}).sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+          _drawH2('Treinamentos Pagos ('+pagos.length+')');
+          if(pagos.length) _tabelaItens(pagos);
+          else _drawKv('Nenhum pagamento registrado.', '—');
+        }
+
+        // ENTRADAS
+        if(_sel.entradas){
+          var ents = itens.filter(function(it){return it.entrada>0;}).sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+          _drawH2('Entradas Recebidas ('+ents.length+')');
+          if(ents.length) _tabelaItens(ents, {usaEntrada:true});
+          else _drawKv('Nenhuma entrada registrada.', '—');
+        }
+
+        // NEGOCIAÇÃO
+        if(_sel.negociacao){
+          var negs = itens.filter(function(it){return it.status==='negociacao';}).sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+          var totN = negs.reduce(function(s,it){return s+it.valor;},0);
+          _drawH2('Em Negociação ('+negs.length+' · '+_fmtR(totN)+')');
+          if(negs.length) _tabelaItens(negs);
+          else _drawKv('Nada em negociação.', '—');
+        }
+
+        // ABERTO
+        if(_sel.aberto){
+          var abs = itens.filter(function(it){return it.status==='aberto';}).sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+          var totA = abs.reduce(function(s,it){return s+it.valor;},0);
+          _drawH2('Em Aberto ('+abs.length+' · '+_fmtR(totA)+')');
+          if(abs.length) _tabelaItens(abs);
+          else _drawKv('Nada em aberto.', '—');
+        }
+
+        var _roman = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV'];
+
+        // RANKING CONSULTORES
+        if(_sel.consultor){
+          _drawH2('Ranking de Consultores');
+          var mp = {};
+          itens.forEach(function(it){ if(it.status!=='pago') return; var k=it.consultor||'—'; if(!mp[k])mp[k]={total:0,t:0,c:new Set()}; mp[k].total+=it.valor; mp[k].t++; mp[k].c.add(it.cliente); });
+          var rk = Object.keys(mp).map(function(k){return {nome:k,total:mp[k].total,t:mp[k].t,c:mp[k].c.size};}).sort(function(a,b){return b.total-a.total;});
+          if(!rk.length) _drawKv('Sem dados de pagos.','—');
+          rk.forEach(function(r,i){
+            _drawRankRow(_roman[i]||(i+1)+'.', r.nome, _fmtR(r.total), r.t+' treinos · '+r.c+' clientes');
+          });
+        }
+
+        // RANKING TREINADORES
+        if(_sel.treinador){
+          _drawH2('Ranking de Treinadores');
+          var mt = {};
+          itens.forEach(function(it){ if(it.status!=='pago') return; var k=it.treinador||'—'; if(!mt[k])mt[k]={total:0,t:0,c:new Set()}; mt[k].total+=it.valor; mt[k].t++; mt[k].c.add(it.cliente); });
+          var rkt = Object.keys(mt).map(function(k){return {nome:k,total:mt[k].total,t:mt[k].t,c:mt[k].c.size};}).sort(function(a,b){return b.total-a.total;});
+          if(!rkt.length) _drawKv('Sem dados.','—');
+          rkt.forEach(function(r,i){
+            _drawRankRow(_roman[i]||(i+1)+'.', r.nome, _fmtR(r.total), r.t+' treinos · '+r.c+' clientes');
+          });
+        }
+
+        // TOP TREINAMENTOS
+        if(_sel.topTrein){
+          _drawH2('Top Treinamentos');
+          function _aggTrein(stAlvo){
+            var m={}; itens.forEach(function(it){ if(it.status!==stAlvo) return; var k=it.treinamento||'—'; if(!m[k])m[k]={total:0,q:0}; m[k].total+=it.valor; m[k].q++; });
+            return Object.keys(m).map(function(k){return {nome:k,total:m[k].total,q:m[k].q};}).sort(function(a,b){return (b.q-a.q) || (b.total-a.total);});
+          }
+          var rpagos = _aggTrein('pago');
+          var rnegs  = _aggTrein('negociacao');
+          if(rpagos.length){
+            _drawSub('Pagos ('+rpagos.length+' treinamento'+(rpagos.length!==1?'s':'')+')');
+            var totalP=0, totalQp=0;
+            rpagos.forEach(function(r){
+              totalP+=r.total; totalQp+=r.q;
+              _drawKv(r.nome+' · '+r.q+' venda'+(r.q!==1?'s':''), _fmtR(r.total));
+            });
+            _drawTotal('Total Pagos ('+totalQp+' venda'+(totalQp!==1?'s':'')+')', _fmtR(totalP));
+          }
+          if(rnegs.length){
+            _drawSub('Em Negociação ('+rnegs.length+' treinamento'+(rnegs.length!==1?'s':'')+')');
+            var totalN=0, totalQn=0;
+            rnegs.forEach(function(r){
+              totalN+=r.total; totalQn+=r.q;
+              _drawKv(r.nome+' · '+r.q+' negociaç'+(r.q!==1?'ões':'ão'), _fmtR(r.total));
+            });
+            _drawTotal('Total Negociação ('+totalQn+' negociaç'+(totalQn!==1?'ões':'ão')+')', _fmtR(totalN));
+          }
+          if(!rpagos.length && !rnegs.length) _drawKv('Sem dados.','—');
+        }
+
+        // META
+        if(_sel.meta){
+          _drawH2('Meta vs Realizado');
+          var META = (typeof window.META==='number'?window.META:(typeof META!=='undefined'?META:0));
+          if(!META||META<=0) _drawKv('Meta não definida.','—');
+          else {
+            var pg = itens.filter(function(it){return it.status==='pago';}).reduce(function(s,it){return s+it.valor;},0);
+            var pct = Math.round((pg/META)*100);
+            var falta = Math.max(META-pg,0);
+            var acima = Math.max(pg-META,0);
+            _drawKv('Meta', _fmtR(META));
+            _drawKv('Realizado ('+pct+'%)', _fmtR(pg));
+            if(falta>0) _drawKv('Faltam', _fmtR(falta));
+            else _drawKv('Acima da meta', _fmtR(acima));
+          }
+        }
+
+        // ASSINATURA
+        if(_sel.assinatura){
+          _drawH2('Gerado por');
+          var s2 = (typeof _getSessao==='function')?_getSessao():null;
+          var nomeAssin = s2 ? (s2.nome||s2.login||'—') : '—';
+          _drawKv(nomeAssin, _now());
+        }
+
+        // Rodapé Corporate: linha hairline + texto pequeno cinza centralizado
+        var totalPgs = doc.internal.getNumberOfPages();
+        for(var pg=1; pg<=totalPgs; pg++){
+          doc.setPage(pg);
+          doc.setDrawColor(HAIRLINE[0], HAIRLINE[1], HAIRLINE[2]);
+          doc.setLineWidth(0.2);
+          doc.line(margem, pageH - 12, pageW - margem, pageH - 12);
+          doc.setFont('helvetica','normal');
+          doc.setFontSize(7);
+          doc.setTextColor(CINZA[0], CINZA[1], CINZA[2]);
+          doc.text(
+            'FEBRACIS · CONFIDENCIAL · ' + (t.nome||'') + ' · Pág. ' + pg + '/' + totalPgs,
+            pageW/2, pageH - 7,
+            {align:'center'}
+          );
+        }
+
+        doc.save(fname);
+        if(typeof _showToast==='function') _showToast('📄 '+fname,'var(--accent)');
+      } catch(e){
+        if(typeof _showToast==='function') _showToast('Falha PDF: '+(e.message||e),'var(--red)');
+      }
+    }).catch(function(){
+      if(typeof _showToast==='function') _showToast('Falha ao carregar jsPDF.','var(--red)');
+    });
+  };
+
+  /* WhatsApp — copia o relatório com markdown WhatsApp (*bold* em headers).
+     Não abre o WhatsApp; usuário cola onde quiser (chat, grupo, etc). */
+  window._supWhatsApp = function(){
+    var txt = _gerarRelatorio();
+    // Aplica markdown WhatsApp: linhas que começam com emoji + texto = bold
+    // (WhatsApp renderiza *texto* como negrito)
+    txt = txt.split('\n').map(function(ln){
+      var trimmed = ln.trim();
+      // Detecta linhas-título (começam com emoji + letra maiúscula)
+      if(/^[📊💰✅💵🤝⏳🏆🎯📚✍️🥇🥈🥉]\s+[A-ZÀ-Ý]/.test(trimmed) && trimmed.length<80){
+        return '*'+trimmed+'*';
+      }
+      // Sub-blocos como "✅ PAGOS (top 5):" também viram bold
+      if(/^[✅🤝]\s+[A-ZÀ-Ý].*:$/.test(trimmed)) return '*'+trimmed+'*';
+      // Linhas "TOTAL GERAL:" ou similares também
+      if(/^TOTAL\s/.test(trimmed)) return '*'+ln+'*';
+      return ln;
+    }).join('\n');
+
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){
+        if(typeof _showToast==='function') _showToast('💬 Copiado para WhatsApp · Cole no chat (Ctrl+V)','var(--pago)');
+      }).catch(function(){ _supCopiarFallback(txt); });
+    } else {
+      _supCopiarFallback(txt);
+      if(typeof _showToast==='function') _showToast('💬 Copiado para WhatsApp','var(--pago)');
+    }
   };
 
   // Mostrar/esconder botão Supremo conforme perfil/viewport

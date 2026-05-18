@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agente Comercial IA · Suíte completa</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0e27;--bg2:#0f1438;--card:#151b3d;--card2:#1a2147;
+    --text:#e8ecff;--muted:#9aa3c7;--line:#1f2752;
+    --accent:#6366f1;--accent2:#8b5cf6;--green:#10b981;--gold:#fbbf24;
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6}
+  .container{max-width:1100px;margin:0 auto;padding:48px 24px}
+  .header{text-align:center;margin-bottom:48px}
+  .logo{font-size:13px;font-weight:800;letter-spacing:.3em;color:var(--accent);text-transform:uppercase;margin-bottom:14px}
+  h1{font-size:40px;font-weight:900;line-height:1.1;letter-spacing:-.02em;margin-bottom:14px}
+  h1 em{font-style:normal;background:linear-gradient(135deg,#a5b4fc,#c4b5fd,#f0abfc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{color:var(--muted);font-size:16px;max-width:680px;margin:0 auto}
+
+  .grupo{margin-bottom:40px}
+  .grupo-titulo{font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;text-decoration:none;color:inherit;transition:.2s;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
+  .card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 14px 40px rgba(99,102,241,.15)}
+  .card-emoji{font-size:32px}
+  .card h3{font-size:17px;font-weight:800;margin-top:4px}
+  .card p{color:var(--muted);font-size:13px;flex:1}
+  .card-tag{display:inline-block;background:rgba(16,185,129,.15);color:#6ee7b7;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.05em;text-transform:uppercase;margin-top:8px;align-self:flex-start}
+  .card-tag.bonus{background:rgba(251,191,36,.15);color:#fde68a}
+  .card-tag.core{background:rgba(99,102,241,.15);color:#a5b4fc}
+
+  .footer{text-align:center;margin-top:60px;padding-top:30px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="logo">Agente Comercial IA</div>
+    <h1>Sua suíte <em>comercial completa</em></h1>
+    <p class="sub">Tudo que você precisa pra prospectar, qualificar, fechar e expandir — em ferramentas standalone que rodam direto no navegador, com seus dados salvos localmente.</p>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">🚀 Operação core</div>
+    <div class="cards">
+      <a href="pipeline.html" class="card">
+        <div class="card-emoji">⚡</div>
+        <h3>Pipeline visual</h3>
+        <p>Kanban com 6 etapas, drag-drop, importação de planilha, exportação CSV, persistência local.</p>
+        <span class="card-tag core">Core</span>
+      </a>
+      <a href="dashboard.html" class="card">
+        <div class="card-emoji">📊</div>
+        <h3>Dashboard de metas</h3>
+        <p>Acompanhe Mínima/Básica/Super em tempo real. Funil, projeção, ritmo necessário por dia.</p>
+        <span class="card-tag core">Core</span>
+      </a>
+      <a href="usuarios.html" class="card">
+        <div class="card-emoji">👥</div>
+        <h3>Gestão de usuários</h3>
+        <p>Cadastre admin, gestor e consultor. Defina papéis, status, metas individuais.</p>
+        <span class="card-tag core">Core</span>
+      </a>
+      <a href="trilhas.html" class="card">
+        <div class="card-emoji">🎓</div>
+        <h3>Trilhas de treinamento</h3>
+        <p>SPIN Selling, DISC e Tour de Crescimento Empresarial. 15 aulas com progresso salvo.</p>
+        <span class="card-tag core">Core</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">🎁 Bônus do plano anual</div>
+    <div class="cards">
+      <a href="../caderno-prompts-comercial.html" class="card">
+        <div class="card-emoji">📕</div>
+        <h3>Caderno de Prompts (200)</h3>
+        <p>200 prompts validados — 100 pro Gestor, 100 pro Closer. Botão "Baixar PDF" pra imprimir.</p>
+        <span class="card-tag bonus">Bônus anual</span>
+      </a>
+      <a href="biblioteca-cold-call.html" class="card">
+        <div class="card-emoji">📞</div>
+        <h3>Biblioteca Cold Call DISC</h3>
+        <p>16 scripts prontos: 4 perfis × 4 cenários (apresentação, retomada, indicação, follow-up).</p>
+        <span class="card-tag bonus">Bônus anual</span>
+      </a>
+      <a href="calculadora-turnover.html" class="card">
+        <div class="card-emoji">📈</div>
+        <h3>Calculadora de Turnover</h3>
+        <p>Diagnóstico que você entrega pro cliente. Custo total, taxa, benchmark e ações.</p>
+        <span class="card-tag bonus">Bônus anual</span>
+      </a>
+      <a href="ebook-closer-raiz.html" class="card">
+        <div class="card-emoji">📘</div>
+        <h3>E-book Closer Raiz</h3>
+        <p>7 capítulos sobre o método de fechamento sem rodeio. Imprimível como PDF.</p>
+        <span class="card-tag bonus">Bônus anual</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">🤖 Já incluído (Founder Beta)</div>
+    <div class="cards">
+      <a href="../agente-comercial.html" class="card">
+        <div class="card-emoji">🧠</div>
+        <h3>Agente IA com DISC</h3>
+        <p>Conversa com IA treinada em DISC + tom impositivo + base do livro Decifre e Influencie Pessoas.</p>
+        <span class="card-tag">Pronto</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="footer">
+    Agente Comercial IA · Suíte standalone · Funciona offline · Dados salvos no seu navegador
+  </div>
+
+</div>
+
+</body>
+</html>

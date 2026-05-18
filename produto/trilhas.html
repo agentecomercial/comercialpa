@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trilhas de Treinamento · Agente Comercial IA</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0e27;--bg2:#0f1438;--card:#151b3d;--card2:#1a2147;
+    --text:#e8ecff;--muted:#9aa3c7;--line:#1f2752;
+    --accent:#6366f1;--accent2:#8b5cf6;--green:#10b981;--gold:#fbbf24;--red:#ef4444;--blue:#3b82f6;
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6}
+  button{font-family:inherit;cursor:pointer;border:none}
+
+  .topbar{background:rgba(10,14,39,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+  .logo{font-weight:800;font-size:16px;background:linear-gradient(135deg,#a5b4fc,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:13px;margin-left:18px;font-weight:600}
+  .nav-links a:hover,.nav-links a.active{color:var(--text)}
+
+  .container{max-width:1200px;margin:0 auto;padding:32px 24px}
+  h1{font-size:30px;font-weight:800;margin-bottom:6px;letter-spacing:-.02em}
+  .head-sub{color:var(--muted);font-size:15px;margin-bottom:32px;max-width:760px}
+
+  /* TRILHAS GRID */
+  .trilhas{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+  .trilha-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;cursor:pointer;transition:.2s;position:relative;overflow:hidden}
+  .trilha-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 14px 40px rgba(99,102,241,.15)}
+  .trilha-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:14px 14px 0 0}
+  .trilha-card.spin::before{background:linear-gradient(90deg,#3b82f6,#6366f1)}
+  .trilha-card.disc::before{background:linear-gradient(90deg,#fbbf24,#ef4444,#10b981,#3b82f6)}
+  .trilha-card.tour::before{background:linear-gradient(90deg,#10b981,#8b5cf6)}
+  .trilha-emoji{font-size:36px;margin-bottom:14px}
+  .trilha-card h3{font-size:20px;font-weight:800;margin-bottom:6px}
+  .trilha-card p{color:var(--muted);font-size:14px;margin-bottom:16px}
+  .trilha-meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);padding-top:14px;border-top:1px solid var(--line)}
+  .trilha-progress{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;margin:10px 0}
+  .trilha-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .6s}
+  .trilha-card.completa .trilha-progress-fill{background:linear-gradient(90deg,#10b981,#34d399)}
+
+  /* LESSON VIEW */
+  .lesson-view{display:none}
+  .lesson-view.ativa{display:block}
+  .voltar{background:transparent;color:var(--muted);font-size:13px;font-weight:600;padding:6px 12px;border-radius:6px;border:1px solid var(--line);margin-bottom:20px;display:inline-flex;align-items:center;gap:6px}
+  .voltar:hover{color:var(--text);border-color:var(--accent)}
+
+  .lesson-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:20px;flex-wrap:wrap}
+  .lesson-tag{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  .lesson-title{font-size:26px;font-weight:800;letter-spacing:-.01em}
+
+  .lesson-grid{display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:flex-start}
+  @media(max-width:780px){.lesson-grid{grid-template-columns:1fr}}
+
+  /* SIDEBAR LESSONS */
+  .sidebar{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;position:sticky;top:80px}
+  .sidebar h4{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:10px;padding:0 6px}
+  .lesson-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text);transition:.15s;margin-bottom:2px}
+  .lesson-link:hover{background:var(--bg2)}
+  .lesson-link.ativa{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:700}
+  .lesson-link .num{background:var(--bg2);width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--muted)}
+  .lesson-link.ativa .num{background:rgba(255,255,255,.2);color:#fff}
+  .lesson-link.completa .num{background:var(--green);color:#fff}
+  .lesson-link.completa .num::before{content:'✓'}
+  .lesson-link.completa .num span{display:none}
+
+  /* CONTENT */
+  .content{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:32px}
+  .content h2{font-size:22px;font-weight:800;margin-bottom:14px;color:var(--text)}
+  .content h3{font-size:17px;font-weight:700;margin:24px 0 10px;color:#a5b4fc}
+  .content p{margin-bottom:14px;color:var(--text)}
+  .content ul,.content ol{margin:12px 0 16px 24px}
+  .content li{margin-bottom:6px;color:var(--text)}
+  .content blockquote{border-left:4px solid var(--accent);background:rgba(99,102,241,.06);padding:14px 18px;margin:16px 0;border-radius:0 8px 8px 0;font-style:italic;color:#c4b5fd}
+  .content .destaque{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);padding:14px 16px;border-radius:8px;margin:14px 0;font-size:14px}
+  .content .destaque strong{color:var(--gold)}
+  .content code{background:var(--bg2);padding:2px 6px;border-radius:4px;font-family:'Monaco',monospace;font-size:13px;color:#a5b4fc}
+
+  .lesson-actions{display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:24px;border-top:1px solid var(--line);gap:12px;flex-wrap:wrap}
+  .btn{padding:11px 18px;border-radius:8px;font-weight:700;font-size:13px;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(99,102,241,.4)}
+  .btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+  .btn-ghost{background:var(--bg2);color:var(--text);border:1px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--accent)}
+
+  .badge-completa{background:rgba(16,185,129,.15);color:#6ee7b7;font-size:11px;font-weight:700;padding:5px 10px;border-radius:12px;text-transform:uppercase;letter-spacing:.05em}
+
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--card);border:1px solid var(--green);color:var(--green);padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:200;display:none}
+  .toast.show{display:block}
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">🎓 Trilhas de Treinamento</div>
+  <div class="nav-links">
+    <a href="pipeline.html">Pipeline</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="biblioteca-cold-call.html">Cold Call</a>
+    <a href="trilhas.html" class="active">Trilhas</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- HOME -->
+  <div id="home">
+    <h1>Trilhas de Autoaprendizado</h1>
+    <p class="head-sub">3 trilhas guiadas pra você dominar os fundamentos da venda consultiva. Avance no seu ritmo. Marque cada aula como concluída — seu progresso fica salvo.</p>
+    <div class="trilhas" id="trilhas"></div>
+  </div>
+
+  <!-- LESSON VIEW -->
+  <div class="lesson-view" id="lessonView">
+    <button class="voltar" onclick="voltarHome()">← Voltar pras trilhas</button>
+    <div class="lesson-header">
+      <div>
+        <div class="lesson-tag" id="trilhaTag"></div>
+        <div class="lesson-title" id="trilhaTitulo"></div>
+      </div>
+      <div id="trilhaProgressInfo" style="font-size:12px;color:var(--muted);text-align:right"></div>
+    </div>
+    <div class="lesson-grid">
+      <div class="sidebar">
+        <h4>Aulas da trilha</h4>
+        <div id="lessonsLista"></div>
+      </div>
+      <div class="content" id="lessonContent"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TRILHAS = {
+  spin: {
+    nome:'SPIN Selling',
+    emoji:'🎯',
+    cor:'spin',
+    desc:'O método de venda consultiva mais usado no mundo. 5 aulas pra dominar perguntas de Situação, Problema, Implicação e Necessidade.',
+    aulas:[
+      {
+        titulo:'O que é SPIN Selling',
+        conteudo:`<h2>O que é SPIN Selling</h2>
+<p>SPIN é um método de venda consultiva criado por Neil Rackham nos anos 1980, baseado na análise de mais de 35.000 calls de venda reais. A descoberta foi anti-intuitiva: vendedores top não falam mais — eles <strong>perguntam mais e melhor</strong>.</p>
+<h3>O acrônimo</h3>
+<ul>
+<li><strong>S</strong>ituation — Situação (contexto factual)</li>
+<li><strong>P</strong>roblem — Problema (dor que o cliente tem)</li>
+<li><strong>I</strong>mplication — Implicação (custo de não resolver)</li>
+<li><strong>N</strong>eed-payoff — Necessidade de solução (o ganho)</li>
+</ul>
+<h3>Por que funciona</h3>
+<p>SPIN funciona porque inverte a lógica tradicional. Em vez de você apresentar quanto seu produto é bom, você faz o cliente verbalizar o tamanho da dor dele. Quando ele diz em voz alta "isso tá custando 80 mil por mês", a apresentação do produto fica fácil — ele já decidiu sozinho que precisa de solução.</p>
+<blockquote>"O cliente que disse o tamanho do problema dele em voz alta não consegue mais fingir que ele é pequeno."</blockquote>
+<h3>SPIN vs script tradicional</h3>
+<p>Script tradicional: você fala 70%, o cliente fala 30%. Você apresenta produto, ele decide se compra.</p>
+<p>SPIN: você fala 30%, o cliente fala 70%. Você faz pergunta, ele descobre a dor sozinho. Você só conecta a solução no final.</p>
+<div class="destaque"><strong>Importante:</strong> SPIN não é mágica. É disciplina. Você vai precisar resistir à vontade de "vender logo" e ficar nas perguntas até o cliente verbalizar a dor. As primeiras 10 calls vão ser estranhas. Depois vira automático.</div>
+<h3>Quando usar SPIN</h3>
+<p>SPIN funciona melhor em vendas consultivas, B2B, com ticket médio-alto e ciclo médio (semanas a meses). Em venda transacional rápida (pra consumidor final, ticket baixo), o método é overkill — uma simples apresentação direta resolve.</p>
+<p>Se sua venda envolve: múltiplos decisores, comparação com concorrentes, customização da solução, valor acima de R$ 10 mil — SPIN é seu melhor amigo.</p>`
+      },
+      {
+        titulo:'Perguntas de Situação',
+        conteudo:`<h2>Perguntas de Situação</h2>
+<p>Perguntas de Situação são factuais — pra entender o contexto do cliente. Você usa POUCO. Apenas o suficiente pra não ser ignorante na conversa que vem depois.</p>
+<h3>Exemplos por segmento</h3>
+<p><strong>Vendendo software de pipeline:</strong></p>
+<ul>
+<li>Quantos consultores no time comercial?</li>
+<li>Como vocês organizam o pipeline hoje? Planilha, CRM?</li>
+<li>Qual o ticket médio de venda?</li>
+<li>Ciclo médio de fechamento?</li>
+</ul>
+<p><strong>Vendendo consultoria:</strong></p>
+<ul>
+<li>Quanto tempo a operação tá nesse formato atual?</li>
+<li>Quem mais participa da decisão?</li>
+<li>Já tentaram resolver isso de alguma forma?</li>
+</ul>
+<h3>O erro fatal</h3>
+<p>Vendedor médio gasta 20-30 minutos em Situação. Pergunta tudo. "Quantos funcionários? Faturamento? Há quanto tempo no mercado? Onde tá localizada a sede?". O cliente fica entediado, sente que tá sendo entrevistado por censo, perde paciência.</p>
+<div class="destaque"><strong>Regra:</strong> máximo 3-5 perguntas de Situação. Se você precisar saber mais, pesquise no LinkedIn ANTES da call. Use a call pra entrar na DOR — não pra coletar dados que estão públicos.</div>
+<h3>Como conduzir bem</h3>
+<p>Faça as perguntas em sequência rápida, com transições suaves: "Entendi. E pra organizar o pipeline, vocês usam ferramenta ou planilha?". Pergunta-resposta-conexão-pergunta.</p>
+<p>Pergunte só o que vai usar depois nas perguntas de Problema. Se a resposta da Situação não vai impactar como você vai abordar o Problema, corta a pergunta.</p>
+<h3>Treino prático</h3>
+<p>Pega um lead seu real. Escreve as 4 perguntas de Situação que VOCÊ faria amanhã. Compare com o que você normalmente pergunta. Você provavelmente faz mais — e provavelmente vai cortar 2 ou 3.</p>
+<blockquote>"Situação é só o aquecimento. A música boa começa quando você entra em Problema."</blockquote>`
+      },
+      {
+        titulo:'Perguntas de Problema',
+        conteudo:`<h2>Perguntas de Problema</h2>
+<p>Aqui você começa a colher ouro. Perguntas de Problema fazem o cliente verbalizar as dores que ele já vive. Você não tá criando problema — tá ativando consciência sobre o que ele já sente mas não articula.</p>
+<h3>A estrutura clássica</h3>
+<p>Toda pergunta de Problema gira em torno de:</p>
+<ul>
+<li>O que tá <strong>frustrando</strong>?</li>
+<li>O que tá <strong>travado</strong>?</li>
+<li>Onde vocês <strong>perdem</strong>?</li>
+<li>O que <strong>incomoda</strong>?</li>
+</ul>
+<h3>Exemplos potentes</h3>
+<p><strong>Pra venda B2B:</strong></p>
+<ul>
+<li>Em qual etapa do funil vocês mais perdem oportunidade?</li>
+<li>O que mais frustra você na operação atual?</li>
+<li>Quando foi a última vez que um deal escapou e você ficou puto?</li>
+<li>Qual processo hoje toma tempo demais e gera pouco resultado?</li>
+<li>Se você pudesse mudar UMA coisa na rotina do time, qual seria?</li>
+</ul>
+<h3>A regra do silêncio</h3>
+<p>Faça a pergunta. AGUENTE o silêncio. O cliente vai pensar 5-10 segundos antes de responder — e nesse tempo o cérebro dele tá processando e priorizando dores. NÃO INTERROMPA. Não complete a pergunta. Não dê exemplos. Espera.</p>
+<p>Quem fala primeiro depois da pergunta entrega controle. Faça a pergunta, encara, espera. O closer raiz silencia.</p>
+<h3>Como anotar</h3>
+<p>Anote LITERALMENTE o que o cliente disse. Mesmas palavras. Não traduza pro seu jargão. Se ele disse "a galera tá largando o pipeline", você anota "galera larga pipeline". Vai usar essas palavras DELE depois na apresentação. Soa familiar pra ele = compra mais rápido.</p>
+<div class="destaque"><strong>Pegada psicológica:</strong> quando você devolve a frase exata do cliente, ele sente "esse cara me entendeu". Quando você traduz pro seu vocabulário ("você tá tendo um desafio de qualificação top-of-funnel"), ele sente "esse cara não entendeu, só vomitou jargão".</div>
+<h3>Quantas perguntas</h3>
+<p>4-6 perguntas de Problema é o doce. Menos de 3 e você não cobriu o suficiente. Mais de 7 e o cliente sente interrogatório. Cada pergunta deve abrir uma frente nova de dor, não repetir a anterior em palavras diferentes.</p>
+<blockquote>"O problema do meu cliente vale ouro — pra mim e pra ele. Pra mim, porque vai virar minha apresentação. Pra ele, porque até verbalizar, ele não tinha clareza do tamanho."</blockquote>`
+      },
+      {
+        titulo:'Perguntas de Implicação',
+        conteudo:`<h2>Perguntas de Implicação</h2>
+<p>Esse é o passo que separa amador de profissional. Você pega a dor que o cliente articulou em "Problema" e amplia o impacto dela. O objetivo: fazer ele perceber que o buraco é maior do que ele inicialmente achou.</p>
+<h3>A fórmula</h3>
+<p>Pega a dor → conecta com consequência → quantifica → projeta no futuro.</p>
+<p>Exemplo. Cliente disse: "A gente perde leads no follow-up porque o consultor esquece."</p>
+<p>Implicação 1 (consequência imediata): "E quando perde lead no follow-up, em quanto isso impacta o fechamento mensal?"</p>
+<p>Implicação 2 (consequência cadeia): "Esses leads que esfriam, eles ficam pra concorrente?"</p>
+<p>Implicação 3 (futuro): "Se continuar nesse ritmo mais 6 meses, o que acontece com a meta anual?"</p>
+<p>Implicação 4 (emocional): "Como o time se sente quando isso acontece? Reflete no clima?"</p>
+<h3>Por que isso muda tudo</h3>
+<p>Antes da Implicação, o cliente tinha uma "questãozinha". Depois, ele percebe que tem um BURACO. E buraco grande exige solução grande. Aqui você cria a urgência ECONÔMICA da decisão.</p>
+<div class="destaque"><strong>Regra de ouro:</strong> a Implicação deve ser LIDERADA pelo cliente. Você pergunta, ele dimensiona. Se você falar "isso deve estar custando 50 mil por mês", soa como pressão. Se ELE falar "calculei aqui, deve estar uns 50 mil por mês", soa como verdade dele.</div>
+<h3>Quanto vale uma Implicação bem feita</h3>
+<p>Estudo de Rackham mostrou que vendedores top fazem 4x mais perguntas de Implicação que vendedores médios. Vendedor médio pergunta sobre o problema, ouve, e parte pra solução. Top fica nas implicações 5-10 minutos. Esse tempo "investido" multiplica por 3-5 a taxa de fechamento.</p>
+<h3>Exemplos por dor</h3>
+<p><strong>Cliente diz:</strong> "Os leads chegam frios."</p>
+<p><strong>Implicações:</strong></p>
+<ul>
+<li>Quanto tempo o consultor gasta esquentando lead frio?</li>
+<li>Esse tempo sai de quê — de prospecção nova ou de fechamento de quente?</li>
+<li>Vocês já calcularam o custo de oportunidade?</li>
+<li>Se o tempo fosse direcionado pra leads quentes, qual seria o impacto na meta?</li>
+</ul>
+<p>Vê como cada pergunta amplia o problema sem o cliente perceber? No final, ele tá quase pedindo pra você apresentar a solução.</p>
+<blockquote>"Implicação é o ponto onde a venda nasce. Antes dela, o cliente acha que pode resolver depois. Depois dela, ele entende que precisa resolver agora."</blockquote>`
+      },
+      {
+        titulo:'Perguntas de Necessidade de Solução',
+        conteudo:`<h2>Perguntas de Necessidade de Solução</h2>
+<p>Última etapa do SPIN — e a mais elegante. Aqui você inverte. Em vez de continuar amplificando dor, você faz o cliente projetar o ALÍVIO. Faz ele se vender a si mesmo a solução.</p>
+<h3>A diferença que muda tudo</h3>
+<p>Em Implicação você perguntou: "Quanto tá custando esse problema?"</p>
+<p>Em Necessidade de Solução você pergunta: "Se você tivesse uma forma de resolver isso, quanto valeria?"</p>
+<p>O cliente responde — e a resposta dele vira sua âncora de preço, sua justificativa de ROI, e seu argumento de fechamento. Tudo de uma vez.</p>
+<h3>Exemplos</h3>
+<ul>
+<li>Se você pudesse ver onde cada lead tá em tempo real, o que mudaria pra você?</li>
+<li>Se a gente reduzisse esse problema em 30%, qual seria o impacto na meta?</li>
+<li>Vale a pena investigar uma solução que aumenta sua taxa de conversão em 20%?</li>
+<li>Se o seu time conseguisse fazer follow-up automático, isso liberaria tempo pra fazer o quê?</li>
+<li>Imagina que esse processo dura 5 minutos em vez de 1 hora — onde vocês investiriam o tempo livre?</li>
+</ul>
+<h3>O efeito psicológico</h3>
+<p>Quando o cliente articula o ganho com SUAS palavras, ele cria um compromisso mental. É a famosa "ilusão de propriedade" da psicologia: ideia que parece ter sido sua é defendida muito mais do que ideia que parece ter sido imposta.</p>
+<div class="destaque"><strong>Truque avançado:</strong> depois da resposta dele, você devolve com uma reformulação positiva: "Então, se eu entendi, o que você tá buscando é (X) e (Y). E isso geraria (Z) de impacto. Tá certo?". Ele confirma. Você acaba de criar a tese da apresentação que vem a seguir.</div>
+<h3>O passe pra apresentação</h3>
+<p>Depois de 2-3 perguntas de Necessidade de Solução, o cliente tá maduro pra você apresentar. Você diz: "Beleza, com base no que você me contou — e no que você acabou de descrever como ideal — deixa eu te mostrar como a gente atende exatamente isso."</p>
+<p>A apresentação que vem agora não é "sobre o produto". É "sobre a solução do problema dele". Conexão direta. Taxa de conversão dispara.</p>
+<h3>Resumo do método</h3>
+<ol>
+<li>Situação (3-5 perguntas) — entende o terreno</li>
+<li>Problema (4-6 perguntas) — colhe dores</li>
+<li>Implicação (5-10 perguntas) — amplia impacto</li>
+<li>Necessidade de Solução (2-3 perguntas) — faz o cliente articular o ganho</li>
+<li>Apresentação direta da solução conectada à dor verbalizada</li>
+</ol>
+<blockquote>"Se você fizer SPIN bem, sua apresentação dura 10 minutos e o cliente já tá pedindo o contrato. Se você pular SPIN, sua apresentação dura 1 hora e o cliente pede pra pensar."</blockquote>
+<p style="margin-top:24px"><strong>🎉 Trilha SPIN concluída!</strong> Você dominou o esqueleto da venda consultiva. Pratica em 3 calls esta semana e marca como completa quando tiver feito.</p>`
+      }
+    ]
+  },
+  disc: {
+    nome:'DISC',
+    emoji:'🎨',
+    cor:'disc',
+    desc:'Aprenda a identificar os 4 perfis comportamentais e adaptar seu estilo de venda. Decisão é emocional — DISC te dá o mapa.',
+    aulas:[
+      {
+        titulo:'Os 4 perfis DISC',
+        conteudo:`<h2>Os 4 perfis DISC</h2>
+<p>DISC é um modelo comportamental que classifica pessoas em 4 perfis dominantes. Não é teste de personalidade — é leitura de COMO essa pessoa toma decisão. Closer profissional lê o perfil em 90 segundos e adapta o estilo.</p>
+<h3>Os 4 perfis</h3>
+<p><strong>D — Dominância</strong> 🔴<br>
+Direto, orientado a resultado, decide rápido, gosta de controle.</p>
+<p><strong>I — Influência</strong> 🟡<br>
+Sociável, otimista, comunicativo, gosta de estar no centro.</p>
+<p><strong>S — Estabilidade</strong> 🟢<br>
+Calmo, paciente, leal, evita conflito, valoriza segurança.</p>
+<p><strong>C — Conformidade</strong> 🔵<br>
+Analítico, detalhista, lógico, busca precisão e dados.</p>
+<h3>Eixos do modelo</h3>
+<p>DISC se organiza em 2 eixos:</p>
+<ul>
+<li><strong>Ritmo:</strong> rápido (D, I) vs lento (S, C)</li>
+<li><strong>Foco:</strong> tarefa (D, C) vs pessoa (I, S)</li>
+</ul>
+<p>Combinando os dois:</p>
+<ul>
+<li>Rápido + Tarefa = D</li>
+<li>Rápido + Pessoa = I</li>
+<li>Lento + Pessoa = S</li>
+<li>Lento + Tarefa = C</li>
+</ul>
+<div class="destaque"><strong>Importante:</strong> ninguém é 100% de um perfil. Cada pessoa tem um dominante e um secundário. A ideia é identificar o DOMINANTE pra adaptar o estilo — sem rotular ninguém.</div>
+<h3>Por que isso importa pra venda</h3>
+<p>Decisão de compra é 80% emocional, 20% racional. As pessoas compram por motivos emocionais e justificam por motivos racionais. O DISC te diz QUE EMOÇÃO mover em cada perfil.</p>
+<ul>
+<li>D compra por <strong>resultado</strong> (o que vou ganhar?)</li>
+<li>I compra por <strong>pertencimento</strong> (vou parecer legal?)</li>
+<li>S compra por <strong>segurança</strong> (vou estar protegido?)</li>
+<li>C compra por <strong>certeza</strong> (a decisão é correta?)</li>
+</ul>
+<p>Vendedor que apresenta resultado pra um C perdeu. Vendedor que apresenta dados pra um I perdeu. A apresentação tem que ser TRADUZIDA pro perfil do interlocutor.</p>
+<blockquote>"Vendedor que fala igual com todo mundo é aquele que perde 75% das vendas — porque acerta só com 25% da população (os parecidos com ele)."</blockquote>
+<h3>Os 3 sinais pra identificar em 90s</h3>
+<ol>
+<li><strong>Velocidade da fala</strong> — rápido (D ou I) vs lento (S ou C)</li>
+<li><strong>Foco do conteúdo</strong> — pessoas (I ou S) vs tarefa/dado (D ou C)</li>
+<li><strong>Reação a pressão</strong> — avança (D), vibra (I), recua (S), questiona (C)</li>
+</ol>
+<p>Cruzando esses 3 sinais nos primeiros minutos da call, você fecha o perfil dominante e adapta o estilo. As próximas 4 aulas detalham cada perfil.</p>`
+      },
+      {
+        titulo:'Perfil D — Dominância',
+        conteudo:`<h2>Perfil D — Dominância 🔴</h2>
+<p>O perfil mais "perigoso" pra vendedor médio — porque exige cortar a gordura. D não tem paciência pra ladainha. Vai direto.</p>
+<h3>Como reconhecer</h3>
+<ul>
+<li>Fala rápido, frases curtas</li>
+<li>Interrompe</li>
+<li>Decide na hora — pra bem ou pra mal</li>
+<li>Odeia detalhe técnico</li>
+<li>Foco em resultado, não em processo</li>
+<li>Postura confiante (às vezes arrogante)</li>
+<li>Pergunta "quanto?" ou "quando?" cedo</li>
+</ul>
+<h3>Como vender</h3>
+<p><strong>Seja conciso.</strong> Apresente em 30 segundos o que outros vendedores apresentam em 10 minutos. Resultado primeiro, processo depois (se ele perguntar).</p>
+<p><strong>Dê controle.</strong> Frases tipo "você decide", "como preferir", "no seu ritmo" funcionam. D quer sentir que está no comando.</p>
+<p><strong>Ofereça opções binárias.</strong> "Terça às 10h ou quinta às 14h?" — não "qual horário você prefere?". D não quer escolher entre infinito — quer escolher entre 2.</p>
+<p><strong>Mostre dados de impacto rápido.</strong> "Implementação em 5 dias, ROI em 60 dias." Números concretos com prazo curto.</p>
+<h3>O que NÃO fazer</h3>
+<ul>
+<li>Não comece com "tudo bem? como está a família?"</li>
+<li>Não conte história longa de outro cliente</li>
+<li>Não enrole com "deixa eu te apresentar a empresa"</li>
+<li>Não faça muitas perguntas de Situação — vai pra Problema rápido</li>
+<li>Não use linguagem emotiva ("você vai amar", "é incrível")</li>
+</ul>
+<h3>Frases que abrem D</h3>
+<blockquote>"Vou ser direto: aqui é o problema, aqui é a solução, aqui é o número. Topa?"</blockquote>
+<blockquote>"Sei que sua agenda tá cheia. 5 minutos pra você decidir se faz sentido continuar ou não. OK?"</blockquote>
+<h3>Como fechar</h3>
+<p>D fecha rápido se você pedir rápido. NÃO espere ele "amadurecer". Faça a pergunta direta: "Bora fechar?" ou "Quando começamos — segunda ou quarta?". Se ele disser sim, manda contrato em 1 hora. Se ele disser não, agradece e tira da fila — D respeita gente que não insiste.</p>
+<div class="destaque"><strong>Pegada cultural:</strong> em ambiente brasileiro, muitos D top de empresa esperam pegar o vendedor "no susto" pra ver como reage. Quem treme, perde respeito. Quem mantém postura firme, ganha. Não recue, não se desculpe — responda direto e devolva o controle pra ele.</div>
+<h3>Treino prático</h3>
+<p>Identifica 3 leads atuais que você suspeita serem D. Reescreva sua próxima abertura pra cada um — versão D. Compare com sua abertura padrão. Provavelmente vai cortar 50% das palavras.</p>`
+      },
+      {
+        titulo:'Perfil I — Influência',
+        conteudo:`<h2>Perfil I — Influência 🟡</h2>
+<p>O perfil mais "vendedor-friendly" — adora conversar, é receptivo, abre rápido. O risco é se perder na conversa e não fechar.</p>
+<h3>Como reconhecer</h3>
+<ul>
+<li>Sociável, expansivo</li>
+<li>Conversador (às vezes prolixo)</li>
+<li>Otimista — vê oportunidade em tudo</li>
+<li>Adora história e caso real</li>
+<li>Foge de planilha e número técnico</li>
+<li>Fala muito de pessoas e relacionamento</li>
+<li>Se anima fácil — mas também se distrai fácil</li>
+</ul>
+<h3>Como vender</h3>
+<p><strong>Crie clima primeiro.</strong> Comece com leve aquecimento social. "E aí, tudo certo? Ouvi falar bem de você do [indicador]." 2-3 minutos.</p>
+<p><strong>Conte cases.</strong> Pinta histórias de outros clientes — gente real, situação parecida, transformação visível. I aprende por história, não por planilha.</p>
+<p><strong>Use entusiasmo.</strong> Linguagem com energia, sem exagero falso. "Esse cliente tava acabado, e em 60 dias virou referência no setor — você precisa ouvir como aconteceu."</p>
+<p><strong>Pinte a imagem do depois.</strong> "Imagina o time todo batendo meta, clima leve, gestão tranquila — é exatamente o que aconteceu na empresa X."</p>
+<h3>O que NÃO fazer</h3>
+<ul>
+<li>Não despeje dado ou planilha logo de cara</li>
+<li>Não fale com tom técnico/formal frio</li>
+<li>Não corte a conversa abruptamente</li>
+<li>Não esqueça de pedir o pedido — I se distrai e adia eternamente</li>
+</ul>
+<h3>Frases que abrem I</h3>
+<blockquote>"Cara, você não vai acreditar no que aconteceu com a [empresa]. Deixa eu te contar — em 5 minutos."</blockquote>
+<blockquote>"Tô ligando porque imaginei que essa história fosse te fascinar."</blockquote>
+<h3>O perigo do perfil I</h3>
+<p>I é o cliente que diz "ADOREI, vamos fazer!" e depois some por 3 semanas. Não porque mudou de ideia — porque se distraiu com outras 5 ideias. Você tem que CRIAR ÂNCORA antes da call acabar:</p>
+<ul>
+<li>Mande convite no calendário durante a call</li>
+<li>Marque próximo passo com data específica</li>
+<li>Mande link de assinatura por WhatsApp na hora</li>
+<li>Combine ligação curta de 5 min em 48h pra "destravar qualquer coisa"</li>
+</ul>
+<h3>Como fechar</h3>
+<p>I fecha por entusiasmo. Crie momento de "vamos fazer!" e fecha na hora. Frase tipo: "Cara, vamos detonar isso? Te mando o contrato agora, na sexta a gente já tá rodando — combinado?"</p>
+<p>Sua reação importa. Quando ele disser sim, vibre. I quer sentir que comprou algo "incrível", não algo "razoável". Se você ficar morno, ele esfria.</p>
+<div class="destaque"><strong>Pegada psicológica:</strong> I valoriza pertencimento. Mencionar quem mais usa ("Os 3 maiores players do setor já estão com a gente") ativa medo de ficar de fora — e fecha mais rápido que desconto.</div>`
+      },
+      {
+        titulo:'Perfil S — Estabilidade',
+        conteudo:`<h2>Perfil S — Estabilidade 🟢</h2>
+<p>O perfil mais difícil de fechar rápido — e o mais leal depois de fechado. S decide devagar, quer segurança, evita conflito. Mas quando vira cliente, fica anos.</p>
+<h3>Como reconhecer</h3>
+<ul>
+<li>Calmo, fala devagar</li>
+<li>Paciente, ouve sem interromper</li>
+<li>Faz pergunta sobre processo e suporte</li>
+<li>Quer saber quem mais decidiu igual</li>
+<li>Evita confronto e pressão</li>
+<li>Frases típicas: "preciso pensar", "vou conversar com o time", "vou ver com calma"</li>
+</ul>
+<h3>Como vender</h3>
+<p><strong>Dê segurança.</strong> Mostre processo passo a passo. "Primeiro a gente faz X. Aí Y. Em 30 dias, Z." Estrutura tira ansiedade.</p>
+<p><strong>Não pressione.</strong> Sem "última chance", "promoção limitada", "só hoje". S sente pressão e foge. Substitua por "fica à vontade pra decidir no seu ritmo".</p>
+<p><strong>Ofereça garantia.</strong> Trial, devolução, primeiros 30 dias com saída. Garantia destrava S.</p>
+<p><strong>Dê tempo pra consultar.</strong> "Você quer falar com seu time antes? Posso participar dessa conversa pra ajudar a explicar?"</p>
+<p><strong>Use prova social estável.</strong> "Empresa X tá com a gente há 5 anos. Renovou 4 vezes." Estabilidade gera estabilidade.</p>
+<h3>O que NÃO fazer</h3>
+<ul>
+<li>Não force decisão na primeira call</li>
+<li>Não use linguagem agressiva ("vamos fechar!", "decide agora!")</li>
+<li>Não menospreze o tempo dele de processar</li>
+<li>Não seja rude com perguntas "óbvias" — pra S não são óbvias</li>
+<li>Não suma entre calls — S valoriza presença constante</li>
+</ul>
+<h3>Frases que abrem S</h3>
+<blockquote>"Sem pressa nenhuma. Vou te apresentar com calma e você decide quando se sentir confortável."</blockquote>
+<blockquote>"Sei que decisões assim envolvem o time. Quer que eu participe da reunião pra ajudar a esclarecer pro pessoal?"</blockquote>
+<h3>Como fechar</h3>
+<p>S fecha por confiança acumulada — não por evento isolado. Você precisa de 2-4 contatos em vez de 1. Cada contato deve adicionar um pouco mais de segurança: caso novo, garantia, depoimento, número.</p>
+<p>Quando perceber que ele tá próximo, faça a pergunta SUAVE: "Posso te mandar a proposta pra você revisar com calma essa semana?". Não "vamos fechar?" — mas "posso te mandar pra você revisar?". A diferença é tudo pra S.</p>
+<div class="destaque"><strong>Pegada cultural:</strong> S é fiel até a morte se você cumprir o que prometeu. Mas se sentir traído (promessa quebrada, atendimento ruim), some sem nem reclamar — e nunca mais volta. Pós-venda com S é OBRIGATÓRIO.</div>
+<h3>Treino prático</h3>
+<p>Pense num lead que tá te ignorando há semanas. Provavelmente é S. Tente uma abordagem nova: liga sem oferecer nada. "Oi, só passando pra ver como você tá. Sem cobrança." S responde — porque sente o cuidado genuíno.</p>`
+      },
+      {
+        titulo:'Perfil C — Conformidade',
+        conteudo:`<h2>Perfil C — Conformidade 🔵</h2>
+<p>O perfil que MAIS questiona — e o que MAIS valida sua expertise. C compra de quem mostra trabalho. Detesta exagero, adora dado.</p>
+<h3>Como reconhecer</h3>
+<ul>
+<li>Analítico, lógico</li>
+<li>Faz pergunta técnica detalhada</li>
+<li>Pede estudo de caso, dado, comparativo</li>
+<li>Compara com 3+ concorrentes em planilha</li>
+<li>Lento pra decidir — quer auditar tudo</li>
+<li>Detesta vendedor que exagera</li>
+<li>Frases típicas: "tem dado sobre isso?", "qual a fonte?", "como vocês comparam com X?"</li>
+</ul>
+<h3>Como vender</h3>
+<p><strong>Apresente dados, não promessas.</strong> "Implementamos em 47 empresas do segmento, com NPS médio de 72 e retenção de 89% em 24 meses." Específico e auditável.</p>
+<p><strong>Ofereça referências comerciais.</strong> Permita que C ligue pra cliente atual seu. C valoriza muito poder verificar fora do controle do vendedor.</p>
+<p><strong>Seja preciso em horário e prazo.</strong> Marque "10h00" não "10h da manhã". Cumpra cronogramas. C nota e pontua.</p>
+<p><strong>Tenha resposta pra cada pergunta técnica.</strong> Se não souber, fale "vou checar e te respondo até amanhã às 14h" — e cumpra. Nunca invente.</p>
+<p><strong>Antecipe a objeção.</strong> "Sei que você vai comparar com X e Y. Te mando agora os 3 documentos comparativos pra você analisar."</p>
+<h3>O que NÃO fazer</h3>
+<ul>
+<li>Não use superlativo ("o melhor do mercado", "incomparável")</li>
+<li>Não venda com história/emoção</li>
+<li>Não seja vago em prazo ou número</li>
+<li>Não esconda informação — C detecta e desconfia geral</li>
+<li>Não pressione pra fechar antes da análise dele terminar</li>
+</ul>
+<h3>Frases que abrem C</h3>
+<blockquote>"Tenho 6 estudos de caso documentados, com números antes/depois. Posso te mandar agora pra você analisar antes da nossa reunião?"</blockquote>
+<blockquote>"Sei que você tá comparando opções. Vou te entregar a documentação completa pra você fazer a auditoria comparativa de forma justa."</blockquote>
+<h3>O grande segredo</h3>
+<p>C escolhe o fornecedor que MENOS ESCONDE. Transparência radical é a melhor estratégia comercial com perfil C. Preço aberto, contrato disponível, dados de retenção, lista de funcionalidades faltantes — tudo na mesa.</p>
+<p>Soa contraintuitivo, mas funciona: vendedor que admite "essa funcionalidade a gente não tem ainda, tá no roadmap pra Q3" ganha mais credibilidade que vendedor que finge ter tudo. C valoriza honestidade técnica acima de qualquer feature.</p>
+<h3>Como fechar</h3>
+<p>C fecha quando termina a análise — nem antes, nem depois. Sua pergunta de fechamento com C deve ser: "Que documentação ainda falta pra fechar sua análise?" — não "vamos fechar?". Você tá ajudando a auditoria dele a terminar.</p>
+<p>Quando ele disser "tá tudo OK", aí sim: "Top. Te mando o contrato em 1 hora pra você passar pro jurídico. Combinado?"</p>
+<div class="destaque"><strong>Pegada empresarial:</strong> C tende a ser CFO, COO, técnico sênior, jurídico. É o "decisor de bastidores" que muitas vezes tem poder de veto. Mesmo quando ele não é o comprador final, vender bem pra C destrava as outras peças.</div>
+<p style="margin-top:24px"><strong>🎉 Trilha DISC concluída!</strong> Você dominou os 4 perfis. Pratica identificando perfil em cada call essa semana — em 30 calls você vira fluente.</p>`
+      }
+    ]
+  },
+  tour: {
+    nome:'Tour de Crescimento Empresarial',
+    emoji:'🚀',
+    cor:'tour',
+    desc:'Plano de 5 etapas pra escalar uma operação comercial — do diagnóstico ao plano de 90 dias. Pra gestor que quer estruturar.',
+    aulas:[
+      {
+        titulo:'Diagnóstico inicial — onde você está hoje',
+        conteudo:`<h2>Diagnóstico inicial</h2>
+<p>Antes de planejar pra onde ir, você tem que saber EXATAMENTE onde tá. 70% dos planos comerciais falham porque foram desenhados sobre suposição, não sobre dado. Essa aula te dá o framework de diagnóstico em 4 dimensões.</p>
+<h3>As 4 dimensões a auditar</h3>
+<p><strong>1. Resultado financeiro</strong></p>
+<ul>
+<li>Receita média mensal últimos 12 meses</li>
+<li>Variação mês a mês — sazonal ou aleatória?</li>
+<li>Ticket médio</li>
+<li>Margem por venda</li>
+<li>Custo de aquisição (CAC) por canal</li>
+</ul>
+<p><strong>2. Funil comercial</strong></p>
+<ul>
+<li>Leads que entram por mês (top of funnel)</li>
+<li>Taxa de qualificação (lead → MQL)</li>
+<li>Taxa de conversão (MQL → SQL → fechamento)</li>
+<li>Ciclo médio de venda em dias</li>
+<li>Onde mais cai oportunidade</li>
+</ul>
+<p><strong>3. Time</strong></p>
+<ul>
+<li>Quantos vendedores hoje</li>
+<li>Performance individual (quem bate / quem não bate)</li>
+<li>Senioridade média</li>
+<li>Turnover últimos 12 meses</li>
+<li>Quanto tempo em rampa pra novo vendedor</li>
+</ul>
+<p><strong>4. Processo e ferramenta</strong></p>
+<ul>
+<li>Onde tá o pipeline hoje (CRM, planilha, cabeça)</li>
+<li>Quem audita pipeline e com que frequência</li>
+<li>Reuniões comerciais existentes (1:1, daily, semanal)</li>
+<li>Ferramentas em uso e adoção real</li>
+</ul>
+<h3>O exercício prático</h3>
+<p>Reserva 2 horas em uma terça-feira. Bloqueia agenda. Sem reunião, sem WhatsApp.</p>
+<p>Abre uma planilha. Cria 4 abas — uma por dimensão. Preenche TUDO que você sabe ou consegue puxar. O que faltar, anota como "X — não tenho dado".</p>
+<p>Quando terminar, tem 2 categorias:</p>
+<ol>
+<li>Dados que você tem (use pra basear plano)</li>
+<li>Dados que faltam (planeje como coletar nos próximos 30 dias)</li>
+</ol>
+<div class="destaque"><strong>Verdade desconfortável:</strong> a maioria dos gestores comerciais não tem 50% das respostas dessas perguntas. Não tem culpa — operação corre, ninguém para pra medir. Mas sem essa parada, qualquer "plano" é suposição.</div>
+<h3>O semáforo do diagnóstico</h3>
+<p>Pra cada métrica, classifique:</p>
+<ul>
+<li>🟢 <strong>Verde</strong> — dentro ou acima do que você queria</li>
+<li>🟡 <strong>Amarelo</strong> — preocupante, precisa atenção</li>
+<li>🔴 <strong>Vermelho</strong> — crítico, prioridade máxima</li>
+</ul>
+<p>O resultado é seu mapa. As 3 métricas vermelhas viram seus 3 focos do trimestre.</p>
+<blockquote>"Plano comercial sem diagnóstico é roteiro de filme escrito por quem nunca leu o livro."</blockquote>`
+      },
+      {
+        titulo:'Funil estratégico — desenhando o caminho',
+        conteudo:`<h2>Funil estratégico</h2>
+<p>Funil comercial não é organograma — é máquina. Cada etapa tem entrada, processamento, saída e taxa de conversão. Quem trata funil como máquina ajusta peça por peça. Quem trata como conceito vago não ajusta nada.</p>
+<h3>As 5 etapas universais</h3>
+<ol>
+<li><strong>Atração</strong> — pessoa toma conhecimento da sua empresa</li>
+<li><strong>Captura</strong> — vira lead (deixou contato)</li>
+<li><strong>Qualificação</strong> — você confirma que tem fit</li>
+<li><strong>Proposta</strong> — você apresenta solução e preço</li>
+<li><strong>Fechamento</strong> — assinatura e pagamento</li>
+</ol>
+<p>Algumas operações têm sub-etapas (reunião de discovery, pré-proposta, negociação) — mas o esqueleto é esse. Mapeia o seu, com taxa de conversão entre cada etapa.</p>
+<h3>Identificando o gargalo</h3>
+<p>Onde você perde mais oportunidade no funil hoje?</p>
+<p>Fórmula: olha as taxas de conversão entre etapas. A MENOR é o gargalo principal. Não o ponto onde tem MENOS leads (isso é resultado), mas onde MAIS leads vazam.</p>
+<p>Exemplo concreto:</p>
+<ul>
+<li>100 leads atraídos no mês</li>
+<li>30 capturados (taxa 30%)</li>
+<li>20 qualificados (taxa 67%)</li>
+<li>10 com proposta (taxa 50%)</li>
+<li>3 fechados (taxa 30%)</li>
+</ul>
+<p>Onde tá o gargalo? <strong>Atração → Captura</strong>: 70% dos atraídos não viraram lead. Esse é o foco. Não adianta otimizar fechamento (30%) se você tá perdendo 70% lá no início.</p>
+<h3>Lei da maior alavanca</h3>
+<p>Subir a taxa de conversão da etapa MAIS larga do funil é o que dá maior retorno. Subir captura de 30% pra 40% pode dobrar suas vendas. Subir fechamento de 30% pra 40% mal move o ponteiro porque chegou pouco lead lá.</p>
+<div class="destaque"><strong>Regra prática:</strong> trabalhe SEMPRE a etapa mais larga primeiro. Quando ela tiver taxa boa, mova pra próxima. Tentar otimizar tudo simultaneamente é fórmula de fracasso.</div>
+<h3>Métricas por etapa</h3>
+<p><strong>Atração:</strong> alcance, impressões, custo por mil (CPM), tráfego</p>
+<p><strong>Captura:</strong> taxa de conversão, custo por lead (CPL), qualidade do lead</p>
+<p><strong>Qualificação:</strong> tempo até primeiro contato, taxa de qualificação, motivos de descarte</p>
+<p><strong>Proposta:</strong> ticket médio, ciclo da etapa, % que recebe contraproposta</p>
+<p><strong>Fechamento:</strong> taxa de fechamento, ticket fechado, motivos de perda</p>
+<h3>Cadência de revisão</h3>
+<p>Reveja taxa de conversão por etapa toda semana, em reunião de 30 min. Identifique movimento (subindo, descendo, estável). Se descer 2 semanas seguidas, investigue. Se subir, documente o que mudou pra escalar.</p>
+<blockquote>"Funil sem revisão semanal vira aquário esquecido — você só repara quando os peixes já morreram."</blockquote>`
+      },
+      {
+        titulo:'Estrutura de time — quem faz o quê',
+        conteudo:`<h2>Estrutura de time</h2>
+<p>Time comercial bem estruturado triplica o resultado. Time mal estruturado anula o talento individual. Aula sobre como organizar funções, hierarquia e responsabilidades.</p>
+<h3>Os 4 papéis no time comercial</h3>
+<p><strong>1. SDR (Sales Development Representative)</strong></p>
+<p>Faz prospecção ativa. Liga, manda mensagem, qualifica. Não fecha — entrega lead pronto pro closer. Permite especialização: SDR é craque em cold call, closer é craque em fechar.</p>
+<p><strong>2. Closer (Account Executive)</strong></p>
+<p>Pega o lead qualificado pelo SDR e fecha. Discovery, apresentação, negociação, assinatura. É o "fechador" propriamente dito.</p>
+<p><strong>3. Customer Success</strong></p>
+<p>Pega cliente fechado e cuida da entrega, retenção, expansão. Renovação, upsell, indicação. Quem tá no Customer Success vê 4x mais oportunidade de receita do que vendedor novo.</p>
+<p><strong>4. Gestor comercial</strong></p>
+<p>Não vende — orquestra. Define estratégia, acompanha pipeline, faz coaching individual, decide investimento e contratação.</p>
+<h3>Por que separar SDR e Closer</h3>
+<p>Closer faturando R$ 30k/mês NÃO PODE gastar 4 horas por dia ligando lead frio. Cada hora dele em prospecção é R$ 200-500 jogados fora — porque a hora dele em fechamento vale múltiplos disso.</p>
+<p>SDR custa 3-5x menos que closer. Se um SDR entrega 30 leads qualificados por mês, e closer fecha 30% deles a R$ 10k cada, são R$ 90k de receita gerada — pra um custo de SDR de R$ 4-8k. ROI de 11x.</p>
+<h3>Quando criar cada função</h3>
+<p>Se sua operação fatura até R$ 50k/mês: <strong>1 vendedor</strong> faz tudo (SDR + closer + CS).</p>
+<p>R$ 50-200k/mês: <strong>1 SDR + 1 closer</strong>. Separa a tarefa repetitiva da tarefa de alto valor.</p>
+<p>R$ 200-500k/mês: <strong>2 SDRs + 2 closers + 1 CS</strong>. Cresce volume mantendo qualidade.</p>
+<p>R$ 500k-1M/mês: estrutura completa com gestor dedicado.</p>
+<div class="destaque"><strong>Erro comum:</strong> contratar mais closer quando o gargalo é prospecção. Você vai ter closer ocioso, frustrado, indo embora. Antes de adicionar closer, verifique se o SDR tá entregando lead suficiente. Se não, contrate SDR primeiro.</div>
+<h3>Métrica por papel</h3>
+<ul>
+<li><strong>SDR:</strong> N de leads qualificados/mês, taxa de conexão, taxa de qualificação</li>
+<li><strong>Closer:</strong> Taxa de fechamento, ticket médio, ciclo de venda</li>
+<li><strong>CS:</strong> Taxa de renovação, NPS, expansão (upsell/cross-sell)</li>
+<li><strong>Gestor:</strong> Saúde do funil, performance do time como um todo, retenção do time</li>
+</ul>
+<h3>O perfil ideal por papel</h3>
+<p>SDR: jovem, energético, alta tolerância à rejeição, organizado.</p>
+<p>Closer: experiente, articulado, lê bem perfil, fecha bem objeção.</p>
+<p>CS: empático, paciente, entende o produto profundamente, gosta de relacionamento longo.</p>
+<p>Gestor: visão sistêmica, dá feedback bem, motivador, decisor sob pressão.</p>
+<blockquote>"Vendedor genérico que faz tudo é receita pra mediocridade média. Especialização é receita pra excelência."</blockquote>`
+      },
+      {
+        titulo:'Métricas que importam',
+        conteudo:`<h2>Métricas que importam</h2>
+<p>Todo mundo mede algumas coisas. Pouca gente mede as coisas certas. Aula sobre as 8 métricas que separam operação amadora de operação madura.</p>
+<h3>As 8 métricas críticas</h3>
+<p><strong>1. CAC — Custo de Aquisição de Cliente</strong></p>
+<p>Quanto você gasta pra adquirir 1 cliente? Inclui marketing + vendas + ferramentas / N de novos clientes.</p>
+<p>Se CAC tá subindo mês a mês, sua operação tá ficando ineficiente. Ação imediata: investigar canal mais caro e otimizar.</p>
+<p><strong>2. LTV — Lifetime Value</strong></p>
+<p>Quanto cada cliente paga ao longo do tempo todo que fica com você? Ticket médio × tempo médio de retenção.</p>
+<p>Se LTV/CAC for menor que 3, sua operação não escala. Pra escalar com saúde, LTV deve ser pelo menos 3x o CAC.</p>
+<p><strong>3. Ciclo de venda</strong></p>
+<p>Quantos dias do primeiro contato até o fechamento? Mais curto = mais escalável.</p>
+<p>Se seu ciclo é 60 dias, dobrar receita exige 2x mais leads. Se ciclo é 30 dias, pode dobrar com 1x mais leads + processo mais ágil.</p>
+<p><strong>4. Taxa de conversão por etapa</strong></p>
+<p>Já vimos no funil estratégico — entre cada etapa, qual o %.</p>
+<p><strong>5. Ticket médio</strong></p>
+<p>Receita do mês / N de vendas. Subir ticket é a alavanca mais rápida pra crescer.</p>
+<p>Como subir: empacotar, vender plano superior, agregar serviço, ajustar precificação.</p>
+<p><strong>6. Taxa de retenção</strong></p>
+<p>% de clientes que ficam de um período pro próximo. Saúde do produto e do CS.</p>
+<p>Retenção baixa (abaixo de 80% anual em SaaS) significa balde furado — quanto mais você enche, mais vaza.</p>
+<p><strong>7. NPS — Net Promoter Score</strong></p>
+<p>De 0 a 10, quão provável é o cliente te indicar pra alguém?</p>
+<p>NPS &gt; 50 é excelente. Entre 30-50 é bom. Abaixo de 30 é alarme.</p>
+<p><strong>8. Receita por vendedor</strong></p>
+<p>Receita total / N de vendedores. Mede produtividade média.</p>
+<p>Se receita por vendedor cai com novas contratações, você tá adicionando peso, não força. Investigue.</p>
+<h3>O dashboard mínimo viável</h3>
+<p>Não precisa medir tudo no dia 1. Comece com 4 métricas:</p>
+<ol>
+<li>Receita do mês (resultado)</li>
+<li>Pipeline ativo (futuro próximo)</li>
+<li>Taxa de fechamento (eficiência)</li>
+<li>NPS (saúde do cliente)</li>
+</ol>
+<p>Olhe TODA SEGUNDA. 30 minutos. Anota tendências. Quando essas 4 estiverem estáveis e sob controle, adicione mais 2.</p>
+<div class="destaque"><strong>Cuidado com vaidade:</strong> "número de seguidores", "tráfego do site", "leads gerados" são métricas-de-vaidade. Sobem mas não significam dinheiro. Foque em métricas-de-receita.</div>
+<h3>Frequência de revisão</h3>
+<ul>
+<li>Diária: receita acumulada do mês, fechamentos do dia</li>
+<li>Semanal: pipeline, taxa de conversão, leads novos</li>
+<li>Mensal: CAC, LTV, retenção, NPS</li>
+<li>Trimestral: estratégia, mercado, time</li>
+</ul>
+<blockquote>"Operação que não mede, otimiza no instinto. Operação que mede certo, otimiza com cirurgia."</blockquote>`
+      },
+      {
+        titulo:'Plano de 90 dias',
+        conteudo:`<h2>Plano de 90 dias</h2>
+<p>Última aula da trilha. Você diagnosticou (aula 1), desenhou funil (2), estruturou time (3) e definiu métricas (4). Agora junta tudo num plano executável de 90 dias.</p>
+<h3>Por que 90 dias</h3>
+<p>30 dias é curto demais — não dá pra mover mudança estrutural.</p>
+<p>1 ano é longo demais — vai mudar 50% do contexto antes do prazo.</p>
+<p>90 dias é o sweet spot: tempo suficiente pra implantar e medir, curto o suficiente pra manter foco.</p>
+<h3>Estrutura do plano (1 página, no máximo 2)</h3>
+<p><strong>1. Foco principal (1 frase)</strong></p>
+<p>Em 1 frase, o que vai ser o foco desses 90 dias. Exemplo: "Triplicar a taxa de qualificação no top of funnel."</p>
+<p>Se você tem 3 focos, tem zero foco. Escolha UM.</p>
+<p><strong>2. Indicador-chave (1 número)</strong></p>
+<p>Qual UM número vai medir sucesso ao final dos 90 dias. Exemplo: "Taxa de qualificação MQL passar de 30% pra 50%."</p>
+<p>Esse número vira sua estrela polar. Toda decisão dos próximos 90 dias deve ser perguntada: "Isso me aproxima desse número?". Se não, descarta.</p>
+<p><strong>3. As 5 ações principais</strong></p>
+<p>O que VOCÊ vai fazer (não o que o time vai fazer). 5 ações específicas, com prazo. Exemplo:</p>
+<ul>
+<li>Semana 1-2: redesenhar critério de qualificação</li>
+<li>Semana 3-4: treinar SDR no novo critério</li>
+<li>Semana 5-6: revisar resultado e ajustar</li>
+<li>Semana 7-9: escalar pra novos canais</li>
+<li>Semana 10-12: documentar processo final</li>
+</ul>
+<p><strong>4. O que VAI parar</strong></p>
+<p>Foco também é cortar. O que você vai PARAR de fazer pra dedicar atenção ao novo foco?</p>
+<p>Exemplo: "Vou parar de participar das reuniões de marketing toda semana. Delego pro líder de marketing e revejo só o resultado mensal."</p>
+<p><strong>5. Riscos e plano B</strong></p>
+<p>O que pode dar errado e como você vai contornar. Pelo menos 2 cenários.</p>
+<h3>Cadência de revisão</h3>
+<ul>
+<li>Toda <strong>semana</strong>: 30 minutos. "Como tá indo? O que travou? O que ajustar?"</li>
+<li>Todo <strong>mês</strong>: 1 hora. Revisão profunda do indicador-chave.</li>
+<li>Final dos 90 dias: retrospectiva. O que funcionou, o que não, o que aprendi.</li>
+</ul>
+<h3>O segredo da execução</h3>
+<p>Plano vale 10%. Execução vale 90%. Toda segunda de manhã, primeira coisa do dia, abre seu plano de 90 dias e olha:</p>
+<ol>
+<li>Estou no caminho do indicador-chave?</li>
+<li>O que faço HOJE pra mover ele 1 passo?</li>
+<li>O que tá me desviando do foco?</li>
+</ol>
+<p>Esse ritual de 10 minutos toda segunda é o que separa quem executa de quem só planeja.</p>
+<div class="destaque"><strong>Verdade dura:</strong> a maioria dos planos de 90 dias morre na 3ª semana porque o gestor não revisa. Coloca lembrete no calendário pra revisão semanal — religiosamente.</div>
+<h3>Próximo ciclo</h3>
+<p>Quando termina os 90 dias, você não tira férias e volta. Você abre o próximo plano de 90 dias — com base no que aprendeu nos primeiros 90.</p>
+<p>Operação que cresce de verdade rola num ciclo perpétuo de planos de 90 dias, cada um se construindo sobre o anterior. Em 4 ciclos (1 ano), a operação inteira foi reformada.</p>
+<blockquote>"Quem planeja 1 ano à frente engana a si mesmo. Quem planeja 90 dias à frente entrega resultado e aprende rápido."</blockquote>
+<p style="margin-top:24px"><strong>🎉 Trilha completa!</strong> Você concluiu o Tour de Crescimento Empresarial. Agora é executar — escreve seu primeiro plano de 90 dias hoje mesmo, não amanhã.</p>`
+      }
+    ]
+  }
+};
+
+let progresso = JSON.parse(localStorage.getItem('trilhas_progresso') || '{}');
+let trilhaAtual = null;
+let aulaAtual = 0;
+
+function salvarProgresso(){ localStorage.setItem('trilhas_progresso', JSON.stringify(progresso)); }
+function progressoTrilha(tid){
+  const t = TRILHAS[tid];
+  const feitas = (progresso[tid] || []).length;
+  return { feitas, total:t.aulas.length, pct:Math.round(feitas/t.aulas.length*100) };
+}
+
+function renderHome(){
+  const ts = Object.entries(TRILHAS).map(([tid, t])=>{
+    const p = progressoTrilha(tid);
+    const completa = p.feitas === p.total;
+    return `
+      <div class="trilha-card ${t.cor} ${completa?'completa':''}" onclick="abrirTrilha('${tid}')">
+        <div class="trilha-emoji">${t.emoji}</div>
+        <h3>${t.nome}</h3>
+        <p>${t.desc}</p>
+        <div class="trilha-progress"><div class="trilha-progress-fill" style="width:${p.pct}%"></div></div>
+        <div class="trilha-meta">
+          <span>${p.feitas}/${p.total} aulas · ${p.pct}%</span>
+          <span>${completa?'✅ Concluída':p.feitas>0?'Em andamento':'Não iniciada'}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('trilhas').innerHTML = ts;
+}
+
+function abrirTrilha(tid){
+  trilhaAtual = tid;
+  aulaAtual = 0;
+  document.getElementById('home').style.display = 'none';
+  document.getElementById('lessonView').classList.add('ativa');
+  renderLesson();
+}
+
+function voltarHome(){
+  document.getElementById('home').style.display = 'block';
+  document.getElementById('lessonView').classList.remove('ativa');
+  renderHome();
+  trilhaAtual = null;
+}
+
+function renderLesson(){
+  if(!trilhaAtual) return;
+  const t = TRILHAS[trilhaAtual];
+  const aula = t.aulas[aulaAtual];
+  const feitas = progresso[trilhaAtual] || [];
+  document.getElementById('trilhaTag').textContent = t.emoji + ' ' + t.nome;
+  document.getElementById('trilhaTitulo').textContent = aula.titulo;
+  document.getElementById('trilhaProgressInfo').innerHTML = `Aula ${aulaAtual+1} de ${t.aulas.length}<br>Progresso: ${feitas.length}/${t.aulas.length}`;
+
+  const lista = t.aulas.map((a,i)=>`
+    <div class="lesson-link ${i===aulaAtual?'ativa':''} ${feitas.includes(i)?'completa':''}" onclick="irParaAula(${i})">
+      <span class="num"><span>${i+1}</span></span>
+      <span>${a.titulo}</span>
+    </div>
+  `).join('');
+  document.getElementById('lessonsLista').innerHTML = lista;
+
+  const completa = feitas.includes(aulaAtual);
+  document.getElementById('lessonContent').innerHTML = `
+    ${aula.conteudo}
+    <div class="lesson-actions">
+      <button class="btn btn-ghost" onclick="prevAula()" ${aulaAtual===0?'disabled':''} style="${aulaAtual===0?'opacity:.4;cursor:not-allowed':''}">← Anterior</button>
+      <div style="display:flex;gap:10px;align-items:center">
+        ${completa?'<span class="badge-completa">✓ Concluída</span>':`<button class="btn btn-success" onclick="marcarConcluida()">✓ Marcar como concluída</button>`}
+        <button class="btn btn-primary" onclick="proxAula()" ${aulaAtual===t.aulas.length-1?'disabled':''} style="${aulaAtual===t.aulas.length-1?'opacity:.4;cursor:not-allowed':''}">Próxima →</button>
+      </div>
+    </div>
+  `;
+  window.scrollTo(0,0);
+}
+
+function irParaAula(i){ aulaAtual = i; renderLesson(); }
+function prevAula(){ if(aulaAtual>0){ aulaAtual--; renderLesson(); } }
+function proxAula(){
+  const t = TRILHAS[trilhaAtual];
+  if(aulaAtual < t.aulas.length-1){ aulaAtual++; renderLesson(); }
+}
+
+function marcarConcluida(){
+  if(!progresso[trilhaAtual]) progresso[trilhaAtual] = [];
+  if(!progresso[trilhaAtual].includes(aulaAtual)){
+    progresso[trilhaAtual].push(aulaAtual);
+    salvarProgresso();
+    toast('Aula concluída! 🎉');
+  }
+  renderLesson();
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+renderHome();
+</script>
+</body>
+</html>

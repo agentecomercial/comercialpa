@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Cold Call DISC · 16 Scripts</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0e27;--bg2:#0f1438;--card:#151b3d;--card2:#1a2147;
+    --text:#e8ecff;--muted:#9aa3c7;--line:#1f2752;
+    --accent:#6366f1;--accent2:#8b5cf6;--green:#10b981;--gold:#fbbf24;
+    --d:#ef4444;--i:#fbbf24;--s:#10b981;--c:#3b82f6;
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+  button{font-family:inherit;cursor:pointer;border:none}
+  .topbar{background:rgba(10,14,39,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+  .logo{font-weight:800;font-size:16px;background:linear-gradient(135deg,#a5b4fc,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:13px;margin-left:18px;font-weight:600}
+  .nav-links a:hover,.nav-links a.active{color:var(--text)}
+  .container{max-width:1200px;margin:0 auto;padding:32px 24px}
+  h1{font-size:28px;font-weight:800;margin-bottom:8px;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:15px;max-width:780px;margin-bottom:24px}
+
+  .legenda{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:32px}
+  .leg{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .leg-title{font-weight:800;font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .leg-title .dot{width:14px;height:14px;border-radius:50%}
+  .leg-desc{color:var(--muted);font-size:12px;line-height:1.4}
+
+  /* TOOLBAR */
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+  .filtro{background:var(--card);color:var(--muted);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--line);transition:.2s}
+  .filtro:hover{color:var(--text)}
+  .filtro.ativo{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
+
+  /* SCRIPTS */
+  .scripts{display:grid;grid-template-columns:1fr;gap:14px}
+  .script{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .script-head{padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;background:linear-gradient(90deg,var(--card),var(--card2))}
+  .script-head:hover{background:linear-gradient(90deg,var(--card2),var(--card))}
+  .script-titulo{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .perfil-badge{font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px;letter-spacing:.05em;color:#fff}
+  .perfil-D{background:var(--d)}.perfil-I{background:var(--i);color:#1a1a1a}.perfil-S{background:var(--s)}.perfil-C{background:var(--c)}
+  .script-cenario{font-weight:700;font-size:15px}
+  .script-perfil-nome{font-size:12px;color:var(--muted)}
+  .script-toggle{font-size:18px;color:var(--muted);transition:.2s}
+  .script.aberto .script-toggle{transform:rotate(180deg)}
+  .script-body{padding:0 22px;max-height:0;overflow:hidden;transition:max-height .3s}
+  .script.aberto .script-body{max-height:3000px;padding:18px 22px 22px}
+
+  .bloco{margin-bottom:14px}
+  .bloco-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:6px}
+  .bloco-tex{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:14px;line-height:1.6;white-space:pre-wrap}
+  .bloco-tex.script-fala{font-family:Georgia,serif;font-style:italic;color:#e8ecff;border-left:3px solid var(--accent)}
+  .checklist{list-style:none;padding-left:0}
+  .checklist li{padding:6px 0;color:var(--muted);font-size:13px;display:flex;gap:8px;align-items:flex-start}
+  .checklist li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0}
+  .alerta{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:12px 14px;border-radius:8px;font-size:13px;margin-top:10px}
+  .copiar{background:var(--bg2);color:var(--muted);font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid var(--line);transition:.2s}
+  .copiar:hover{color:var(--text);border-color:var(--accent)}
+
+  @media print{
+    .topbar,.toolbar,.copiar,.script-toggle{display:none!important}
+    .script-body{max-height:none!important;padding:18px 22px 22px!important}
+    .script{break-inside:avoid;border-color:#999!important}
+    body{background:#fff;color:#000}
+    .bloco-tex{background:#f5f5f5;border-color:#ddd;color:#000}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">📞 Biblioteca Cold Call DISC</div>
+  <div class="nav-links">
+    <a href="pipeline.html">Pipeline</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="biblioteca-cold-call.html" class="active">Cold Call</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <h1>Biblioteca de Cold Call DISC</h1>
+  <p class="sub">16 scripts prontos pra ligar sem improvisar. Identifica o perfil DISC do seu lead, escolhe o cenário e segue o roteiro. Cada script tem abertura, condução, gatilho e fechamento adaptados ao perfil.</p>
+
+  <div class="legenda">
+    <div class="leg"><div class="leg-title"><span class="dot" style="background:var(--d)"></span>D · Dominância</div><div class="leg-desc">Direto, decide rápido, odeia perder tempo. Vá ao ponto, mostre resultado, dê controle.</div></div>
+    <div class="leg"><div class="leg-title"><span class="dot" style="background:var(--i)"></span>I · Influência</div><div class="leg-desc">Sociável, otimista, gosta de história. Crie clima, use entusiasmo, conte casos.</div></div>
+    <div class="leg"><div class="leg-title"><span class="dot" style="background:var(--s)"></span>S · Estabilidade</div><div class="leg-desc">Calmo, evita conflito, decide devagar. Dê segurança, mostre processo, sem pressão.</div></div>
+    <div class="leg"><div class="leg-title"><span class="dot" style="background:var(--c)"></span>C · Conformidade</div><div class="leg-desc">Analítico, quer dados, pede comprovação. Apresente números, evidências, ROI claro.</div></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="filtro ativo" data-filtro="todos">Todos os 16</button>
+    <button class="filtro" data-filtro="D">🔴 Perfil D</button>
+    <button class="filtro" data-filtro="I">🟡 Perfil I</button>
+    <button class="filtro" data-filtro="S">🟢 Perfil S</button>
+    <button class="filtro" data-filtro="C">🔵 Perfil C</button>
+    <button class="filtro" style="margin-left:auto" onclick="window.print()">🖨 Imprimir / PDF</button>
+    <button class="filtro" onclick="abrirTodos()">⬇ Expandir todos</button>
+  </div>
+
+  <div class="scripts" id="scripts"></div>
+
+</div>
+
+<script>
+const SCRIPTS = [
+  // ───────── PERFIL D ─────────
+  {
+    perfil:'D', perfilNome:'Dominância',
+    cenario:'Apresentação inicial (cold call)',
+    contexto:'Primeiro contato, lead nunca falou com você. Cliente direto, ocupado. Você tem 30 segundos pra prender ou perder.',
+    abertura:`[Nome do lead]? Aqui é [seu nome] da [empresa]. Vou ser direto: tô ligando porque [empresa do lead] tá num momento de [pista que você levantou — crescimento/expansão/contratação]. Tenho um caso de uma empresa parecida que aumentou [resultado] em [tempo]. Posso te dar 90 segundos pra explicar?`,
+    conducao:`Se ele disser sim, você tem 90 segundos. Use assim:
+"Em 3 frases:
+(1) O problema que outras empresas como a sua tinham era [problema concreto];
+(2) A gente entregou [resultado mensurável] em [prazo curto];
+(3) Quero te mostrar como isso funciona — agendo 20 minutos terça às 10h ou quinta às 14h. Qual encaixa?"`,
+    gatilho:`Use a urgência da agenda DELE: "Sei que sua agenda tá cheia. Por isso quero ser eficiente — 20 min, fim de papo. Se não fizer sentido, paramos."`,
+    fechamento:`Não dê escolha de "se quer". Dê escolha de "quando":
+"Terça 10h ou quinta 14h?" — força decisão binária. Se ele falar "depois te falo", você responde: "Top. Te ligo amanhã às 9h pra fechar agenda. Combinado?"`,
+    checklist:['Abrir falando o nome dele e o seu, sem rodeio','Trazer dado/pista que você levantou ANTES de ligar','Pedir explicitamente os 90 segundos','Oferecer 2 opções fechadas de horário','Nunca terminar sem próximo passo agendado'],
+    erro:'Não comece com "tudo bem?" ou "como vai?". Perfil D vê isso como perda de tempo e corta a ligação.'
+  },
+  {
+    perfil:'D', perfilNome:'Dominância',
+    cenario:'Retomada de lead frio (>15 dias sem contato)',
+    contexto:'Vocês conversaram, ele esfriou. Pode ser que perdeu interesse, ou tá ocupado, ou outra prioridade entrou. Vá DIRETO ao ponto — perfil D respeita franqueza.',
+    abertura:`[Nome], [seu nome] aqui da [empresa]. A gente conversou há [X] dias sobre [tópico] e a coisa esfriou. Pergunta direta: você ainda tá interessado ou já resolveu de outra forma? Sem rodeio — qualquer resposta serve, só preciso saber pra parar de te incomodar ou seguir adiante.`,
+    conducao:`Se ele disser que tá ocupado: "Entendi. Te chamo daqui a [X dias]?"
+Se ele disser que perdeu interesse: "Beleza. Posso te perguntar o que mudou? Em 30 segundos." (descobre objeção real)
+Se ele disser que tá interessado: "Ótimo. O que tá te travando? 1 frase."`,
+    gatilho:`A franqueza é o gatilho. Perfil D respeita gente que não enrola e não força amizade. Mostra que você não tá ali pra "manter relacionamento" — tá ali pra fechar.`,
+    fechamento:`Se interesse: agenda call de 20 min em 48h. Não mais que isso.
+Se sem interesse: "Tranquilo. Te tiro da lista. Boa sorte." E REALMENTE tira. Perfil D respeita quem cumpre palavra.`,
+    checklist:['Reconhecer abertamente que esfriou','Perguntar diretamente se ainda tem interesse','Aceitar a resposta seca sem se ofender','Cumprir prazo curto pra retomar','Tirar da lista se ele pedir'],
+    erro:'Não tente "reativar" com conversa fiada ("vi um artigo que você ia gostar"). Perfil D detecta a manipulação e queima sua credibilidade pra sempre.'
+  },
+  {
+    perfil:'D', perfilNome:'Dominância',
+    cenario:'Indicação (alguém te apresentou)',
+    contexto:'Um cliente ou conhecido te indicou. Use o nome do indicador como abridor — encurta o caminho.',
+    abertura:`[Nome], aqui é [seu nome]. [Quem indicou] me passou seu contato e disse pra eu te ligar diretamente. Ele tá usando [solução] na [empresa dele] e bateu [resultado] em [prazo]. Imaginei que a [empresa do lead] tivesse desafio parecido. Faz sentido conversar 15 minutos?`,
+    conducao:`Reforça o nome do indicador uma vez ("Por isso o [indicador] foi taxativo: vai falar com o [seu nome]").
+Vai direto ao ponto da reunião: o que vai cobrir, quanto tempo, qual o output esperado.`,
+    gatilho:`Prova social via referência forte. Perfil D respeita resultado validado por par dele. Não enche linguiça — cita o nome 1-2x e segue.`,
+    fechamento:`"Hoje à tarde 15h ou amanhã 10h?" — agenda na primeira ligação. Não mande "WhatsApp depois pra confirmar". Perfil D fecha agenda na hora ou nunca mais responde.`,
+    checklist:['Nome do indicador na primeira frase','Resultado concreto que ele atingiu','Pedir 15 min — não 30, não 1h','Oferecer 2 horários nas próximas 48h','Confirmar agenda no próprio ato'],
+    erro:'Não esperar que ele diga "manda detalhes por email pra eu pensar". Pra perfil D, isso = nunca. Insista em fechar agenda agora.'
+  },
+  {
+    perfil:'D', perfilNome:'Dominância',
+    cenario:'Follow-up de proposta enviada',
+    contexto:'Mandou proposta há alguns dias. Sem resposta. Perfil D não responde porque já decidiu (sim ou não) e não vê motivo de "atualizar você". Ligue.',
+    abertura:`[Nome], [seu nome] aqui. Mandei a proposta na [data]. Pergunta direta: tá fechando, tá fora ou tem pendência? Qualquer das três respostas funciona.`,
+    conducao:`Se "fechando": "Ótimo. Quando assina? Te mando o contrato hoje."
+Se "fora": "Entendi. O que pesou? 1 frase só, pra eu aprender." (descobre objeção real)
+Se "pendência": "Qual?" — escuta e resolve agora ou agenda call de 30 min nas próximas 48h.`,
+    gatilho:`Pressão controlada e respeitosa. Você tá pedindo posicionamento — não tá insistindo. Perfil D respeita quem pede resposta de adulto.`,
+    fechamento:`Se "fechando": pede pra assinar até [data] — "Pra eu travar agenda de implementação." Cria deadline real.
+Se "fora": "Tranquilo. Fica no meu radar — se mudar contexto em 3 meses, te chamo. Ok?"
+Se "pendência": resolve ou agenda. Sai com decisão.`,
+    checklist:['Ligar — não mandar email','Apresentar 3 opções fechadas (sim/não/pendência)','Aceitar não com elegância','Criar deadline pra fechamento se sim','Nunca encerrar sem próximo passo'],
+    erro:'Não mande "só passando pra ver se chegou a proposta". Perfil D lê isso como você sendo passivo. Pergunte SEMPRE pelo posicionamento.'
+  },
+
+  // ───────── PERFIL I ─────────
+  {
+    perfil:'I', perfilNome:'Influência',
+    cenario:'Apresentação inicial (cold call)',
+    contexto:'Lead extrovertido, sociável, gosta de conversar. Crie clima antes de vender — o sim dele é emocional, não racional.',
+    abertura:`Oi [Nome]! Tudo bem? Aqui é o [seu nome] da [empresa]! Tô te ligando porque vi seu nome [contexto — post no LinkedIn / evento / indicação] e fiquei animado pra te conhecer. Tem 5 minutinhos? Quero te contar uma história rápida que acho que vai te interessar.`,
+    conducao:`Conta uma história curta de outro cliente parecido com ele:
+"Tô falando porque a [Empresa X] — que é parecida com a [empresa do lead] — tava enfrentando [problema]. A galera de lá topou um teste, e em [prazo] eles [resultado emocional: time motivado, vendedor batendo meta, clima virou]. Aí pensei: a [empresa do lead] não pode ficar de fora disso!"`,
+    gatilho:`Entusiasmo + FOMO (medo de ficar de fora). Perfil I não compra por planilha — compra porque "quer fazer parte". Você é o entusiasmado convidando ele pra festa.`,
+    fechamento:`"Que tal a gente sentar pra um café virtual de 30 min? Vou te mostrar tudo, conto uns cases bem legais, e você decide se quer entrar nessa onda. Quinta às 10h, beleza?"
+Use linguagem leve. Perfil I detesta agenda formal demais.`,
+    checklist:['Cumprimento caloroso, energia alta','Contar história curta com nome de outra empresa','Usar linguagem coloquial e emoção','Convidar pra "café virtual" não "reunião"','Reservar momento pra ele falar — perfil I AMA falar'],
+    erro:'Não despeje dados, números, gráficos no primeiro contato. Perfil I desliga emocionalmente — vê como "frio" ou "enrolado".'
+  },
+  {
+    perfil:'I', perfilNome:'Influência',
+    cenario:'Retomada de lead frio',
+    contexto:'Sumiu não por falta de interesse — sumiu porque entrou outro projeto, outra prioridade, esqueceu. Reaqueça com afeto.',
+    abertura:`[Nome]!! Tudo certo? Aqui é o [seu nome]! Ô, sumi um pouco mas você tava na minha cabeça. Lembrei de você ontem porque [gatilho específico — uma notícia, um post, algo dele]. Como tá tudo aí?`,
+    conducao:`Deixa ele falar 1-2 minutos sobre como tá. Escuta de verdade — perfil I lê falsidade na hora.
+Depois: "Olha, tô te ligando porque uma coisa que a gente conversou ficou martelando aqui. Tô convencido que dá pra a gente fazer [resultado] na [empresa do lead]. Topa retomar a conversa?"`,
+    gatilho:`Você lembrar dele = ele se sente especial. Perfil I valoriza relacionamento autêntico (não falso).`,
+    fechamento:`"Bora marcar um papo essa semana? Quarta de manhã ou quinta de tarde?" — dá opções leves.
+Se ele falar "manda mensagem depois", você responde: "Vou mandar agora um convite pelo WhatsApp pra você não esquecer. Combinado?"`,
+    checklist:['Energia alta na retomada — sem peso, sem culpa','Citar algo específico que mostra que você lembrou dele','Deixar espaço pra ele falar de si','Renovar a promessa do que vocês iam construir juntos','Mandar convite agora pra ancorar'],
+    erro:'Não mande "tô só passando pra dar oi" sem objetivo. Perfil I curte conversa, mas seu trabalho ainda é vender. Junte calor humano + intenção clara.'
+  },
+  {
+    perfil:'I', perfilNome:'Influência',
+    cenario:'Indicação (alguém te apresentou)',
+    contexto:'Perfil I AMA indicação. É a melhor abertura possível — usa muito.',
+    abertura:`Oiii [Nome]! Tudo bem? Aqui é [seu nome]! Olha, o [indicador] me passou teu contato e disse: "Tem que falar com a/o [Nome], a química vai ser ótima!" Já fiquei animado, e tô te ligando.`,
+    conducao:`Conte como você conheceu o indicador, o que ele tá fazendo, qual resultado ele teve. Cria conexão pelo elo comum.
+"Trabalho com o [indicador] há [tempo] e ele tá [resultado dele]. Quando ele falou de você, falei: 'Preciso conhecer'."`,
+    gatilho:`Pertencimento. Perfil I quer fazer parte do "círculo" do indicador. Você é o portal.`,
+    fechamento:`"Bora trocar uma ideia de 30 min essa semana? Vou te apresentar tudo, cont uns cases — e quem sabe a gente forma um grupinho com o [indicador] pra tomar um café depois."
+A promessa de socializar fecha mais rápido que o produto.`,
+    checklist:['Reforçar o vínculo com o indicador (3+ menções)','Pintar a imagem de "vamos fazer isso juntos"','Sugerir momento social além da reunião','Dar opções de horário leve','Fechar agenda na própria ligação'],
+    erro:'Não trate como reunião formal. Perfil I quer sentir que tá entrando num grupo seleto de gente legal — não numa proposta comercial.'
+  },
+  {
+    perfil:'I', perfilNome:'Influência',
+    cenario:'Follow-up de proposta enviada',
+    contexto:'Perfil I gosta da proposta mas se distrai e adia. Não é "não" — é "eu vou olhar com calma" e nunca olha. Você tem que reaquecer com energia.',
+    abertura:`[Nome]!! Tudo certo? Aqui é [seu nome]! Cara, tava aqui pensando em você — mandei a proposta na [data] e fiquei super curioso pra saber sua impressão. Topa um papo de 10 minutos pra a gente comentar?`,
+    conducao:`Se ele falar "ainda não olhei": "Sem problema! Que tal a gente olhar JUNTOS agora? Em 10 minutos eu te mostro o que importa. Você tá no computador?"
+Se ele falar "olhei mas tenho dúvidas": "Que ótimo que você olhou! Manda as dúvidas, vamos detonar uma a uma."
+Se ele falar "preciso pensar": "Beleza, mas me deixa entender — o que tá pesando? Em 30 segundos."`,
+    gatilho:`Você quer saber a OPINIÃO dele. Perfil I adora opinar, ser ouvido, ser protagonista. Vira conversa.`,
+    fechamento:`Se ele dá sinal verde: "Top demais! Te mando o contrato agora e na sexta a gente já tá rodando — combinado?"
+Vibre quando fechar. Perfil I quer sentir que tá comprando algo "incrível" — sua reação valida.`,
+    checklist:['Energia alta, sem cobrança','Pedir a opinião dele em vez de "decisão"','Oferecer ler a proposta JUNTO com ele se travou','Celebrar quando ele avança','Enviar contrato no calor do entusiasmo'],
+    erro:'Não mande email frio "atualizando o status". Perfil I esquece. LIGUE — pessoalmente, com voz, com vida.'
+  },
+
+  // ───────── PERFIL S ─────────
+  {
+    perfil:'S', perfilNome:'Estabilidade',
+    cenario:'Apresentação inicial (cold call)',
+    contexto:'Lead calmo, paciente, evita confronto. Não compra rápido — precisa confiar no processo, na sua marca, em você. Vá devagar.',
+    abertura:`Oi, [Nome]? Aqui é [seu nome] da [empresa]. Tudo bem com você? Eu sei que você não tava esperando essa ligação, então quero ser respeitoso com seu tempo. Tô te procurando porque a gente trabalha com [solução] pra empresas como a [empresa do lead] e queria te apresentar com calma. Você tem 5 minutinhos agora ou prefere agendar pra outro momento?`,
+    conducao:`Se ele topar agora: "Posso te explicar em 3 etapas? (1) Quem somos. (2) Como funciona. (3) Como ajudamos empresas parecidas com a sua. Pode ser?"
+Vá narrando com calma. Pause. Pergunte "tá fazendo sentido?". Perfil S decide quando se sente seguro.`,
+    gatilho:`Confiança. Perfil S compra de quem ele sente que é estável, ético, não pressiona. Sua calma é o ativo.`,
+    fechamento:`"Olha, sem pressa nenhuma. Que tal eu te mandar um material curtinho com o resumo, e na semana que vem a gente conversa de novo? Posso te chamar na quarta às 14h?"
+Dá tempo pra processar. Marca próximo passo concreto.`,
+    checklist:['Pedir permissão antes de continuar','Falar devagar, sem interromper','Estruturar a explicação em etapas claras','Oferecer material pra processar com calma','Marcar 2º contato com data e hora específicas'],
+    erro:'Não tente fechar agenda na primeira ligação com sense de urgência. Perfil S vai sentir pressão e fugir. Plante a semente, regue na próxima.'
+  },
+  {
+    perfil:'S', perfilNome:'Estabilidade',
+    cenario:'Retomada de lead frio',
+    contexto:'Esfriou porque ficou inseguro, ou porque a vida engoliu. Não pressione — abra o canal sem pressão.',
+    abertura:`Oi [Nome], aqui é o [seu nome]. Espero que você esteja bem! Tô te ligando porque a gente conversou há um tempinho sobre [tema] e ficou em standby. Não tô aqui pra cobrar nada — só queria saber como você tá e se ainda faz sentido essa conversa.`,
+    conducao:`Deixa ele responder. Escuta sem interromper. Se ele disser que ficou inseguro: "Faz total sentido. Conta pra mim qual foi o ponto que pegou?"
+Se ele disser que tá com outras prioridades: "Imagino. Como tá indo? Posso te ajudar de alguma forma — sem compromisso?"`,
+    gatilho:`Empatia genuína. Perfil S responde a quem demonstra cuidado real (e detecta cuidado falso na hora).`,
+    fechamento:`"Olha, sem pressa. Que tal eu te chamar daqui a [duas semanas / um mês] pra ver como tá? Sem compromisso, só pra retomar o contato."
+A paciência é a venda.`,
+    checklist:['Abrir sem cobrança','Validar o motivo da pausa sem questionar','Oferecer ajuda em vez de pedir compra','Combinar próximo contato com prazo confortável','Cumprir o prazo combinado religiosamente'],
+    erro:'Não use linguagem de "última chance" ou "promoção limitada" com perfil S. Pressão = fuga. Eles compram quando confiam, não quando têm medo.'
+  },
+  {
+    perfil:'S', perfilNome:'Estabilidade',
+    cenario:'Indicação (alguém te apresentou)',
+    contexto:'Perfil S confia muito em indicação — desde que o indicador seja alguém que ele respeita. Use isso com cuidado.',
+    abertura:`Oi [Nome], tudo bem? Aqui é o [seu nome]. O [indicador] me passou seu contato — vocês trabalham juntos há um tempo, certo? Ele falou de você com muito carinho e disse que faria sentido a gente se conhecer. Você tem 10 minutos pra um papo?`,
+    conducao:`Conte como o indicador chegou em você, há quanto tempo trabalham juntos, qual processo ele teve. Detalhes constroem confiança.
+"O [indicador] começou com a gente em [data], passou por [etapas], e hoje [resultado]. Ele acredita que a [empresa do lead] tem desafio parecido."`,
+    gatilho:`Confiança transferida. Perfil S compra a referência do indicador antes de comprar o produto. Você tá emprestando credibilidade.`,
+    fechamento:`"Que tal a gente marcar uma conversa de 30 min? Posso até convidar o [indicador] pra entrar 5 minutos no início, se você preferir. Te deixo confortável com o que for melhor."
+Oferecer presença do indicador é poderoso.`,
+    checklist:['Reforçar a relação dele com o indicador','Detalhar a jornada do indicador com você','Oferecer presença do indicador na call (se possível)','Marcar com folga de tempo (3-7 dias)','Confirmar 1 dia antes da reunião'],
+    erro:'Não use o nome do indicador como se fosse "moeda". Perfil S detecta uso oportunista e desliga. O indicador é vínculo — não passe.'
+  },
+  {
+    perfil:'S', perfilNome:'Estabilidade',
+    cenario:'Follow-up de proposta enviada',
+    contexto:'Perfil S leva tempo pra decidir. Não tá te ignorando — tá processando, conversando com o time, ponderando. Acompanhe sem pressão.',
+    abertura:`Oi [Nome], aqui é o [seu nome]. Tudo bem? Tô te ligando só pra ver como tá o processo de análise da proposta. Não tô com pressa nenhuma — quero te apoiar no que você precisar pra tomar a melhor decisão.`,
+    conducao:`Se ele disser "ainda tô olhando": "Tranquilo. Tá tendo dúvida em algum ponto específico? Posso esclarecer agora ou agendar uma call só pra revisar."
+Se ele disser "tô esperando o time": "Faz sentido. Quem mais tá envolvido? Posso participar da reunião com seu time pra ajudar a explicar?"
+Se ele disser "tô com receio": "Conta pra mim qual o receio. Vamos olhar juntos."`,
+    gatilho:`Apoio, não pressão. Perfil S sente que você tá ali pra ajudar a decidir — não pra empurrar. Isso baixa a guarda.`,
+    fechamento:`"Olha, fica à vontade. Te chamo daqui a [3-5 dias] pra ver como tá. E se aparecer qualquer dúvida no meio do caminho, me chama no WhatsApp — respondo na hora."
+Disponibilidade gera segurança.`,
+    checklist:['Abrir sem cobrança nenhuma','Oferecer ajuda em cada possível objeção','Disponibilidade pra falar com time decisor','Acompanhar com prazos suaves (3-7 dias)','Reafirmar que não tem pressa'],
+    erro:'Não pergunte "você decidiu?" com perfil S. Pergunte "como posso te ajudar a decidir?". A diferença muda tudo.'
+  },
+
+  // ───────── PERFIL C ─────────
+  {
+    perfil:'C', perfilNome:'Conformidade',
+    cenario:'Apresentação inicial (cold call)',
+    contexto:'Analítico, quer dados, evidências, processo. Não compra promessa — compra prova. Estrutura sua fala como apresentação técnica.',
+    abertura:`[Nome], aqui é [seu nome] da [empresa]. Sou breve: nossa solução já foi implantada em [N] empresas do segmento [X], com aumento médio de [métrica] de [Z%] em [prazo]. Tenho um caso específico documentado da [empresa parecida com a do lead] — se eu te enviar agora por email, você analisa e a gente conversa em 48h?`,
+    conducao:`Apresente em estrutura: número, dado, fonte, resultado.
+"São 3 pontos:
+(1) Implementação: [X dias], com [Y horas] de envolvimento do seu time;
+(2) Resultados medidos em 6 estudos de caso públicos;
+(3) Garantia contratual de [métrica] ou [consequência clara]."
+Sem floreio. Sem entusiasmo exagerado. Dados.`,
+    gatilho:`Evidência. Perfil C compra de quem mostra TRABALHO, dados públicos, estudos, comparativos.`,
+    fechamento:`"Vou te enviar agora: (1) o estudo de caso da [empresa parecida]; (2) nossa metodologia em PDF; (3) duas referências comerciais que você pode contatar diretamente. Te ligo na quinta às 10h pra revisar — combinado?"
+Marque a próxima call em horário cheio (10h00, 14h00 — não 10h05 nem 14h30). Perfil C aprecia precisão.`,
+    checklist:['Apresentar números reais nos primeiros 30 segundos','Oferecer estudo de caso específico do segmento','Estruturar fala em pontos numerados','Oferecer 2 referências comerciais pra contatar','Agendar em horário cheio com data confirmada'],
+    erro:'Não exagere ("nosso produto é o melhor do mercado"). Perfil C desliga na primeira frase sem prova. Diga "5 dos 10 maiores players do segmento usam".'
+  },
+  {
+    perfil:'C', perfilNome:'Conformidade',
+    cenario:'Retomada de lead frio',
+    contexto:'Esfriou porque a análise dele continua aberta — talvez tá comparando com 3 outros fornecedores. Volte com dado novo.',
+    abertura:`[Nome], aqui é [seu nome]. Tô te ligando porque saiu um benchmark novo do [setor/instituto] na [data] que me fez lembrar da nossa conversa. Os dados são relevantes pra decisão que você tá analisando — quer que eu mande agora?`,
+    conducao:`Mande o material por email durante a ligação (faz no momento).
+"Acabei de te enviar. Os pontos críticos são: (1) [dado X], (2) [dado Y], (3) [dado Z comparativo]. Esse último é o que mais bate com seu caso."
+Pergunte: "Qual desses chama mais sua atenção?"`,
+    gatilho:`Informação nova e relevante. Perfil C respeita quem traz valor sem pedir nada em troca.`,
+    fechamento:`"Vou te dar 3 dias pra processar. Te ligo na sexta às 14h — combinado? Se aparecer dúvida antes, me chama por email."
+Sem pressão. Com prazo claro.`,
+    checklist:['Trazer DADO novo, não só "passando pra ver"','Mandar material durante a ligação','Apontar 3 pontos críticos do material','Perguntar qual é mais relevante pra ele','Agendar próximo contato com data fixa'],
+    erro:'Não retome com "tô só passando pra saber se ainda tá interessado". Perfil C lê isso como você não tendo nada novo a oferecer e enterra de vez.'
+  },
+  {
+    perfil:'C', perfilNome:'Conformidade',
+    cenario:'Indicação (alguém te apresentou)',
+    contexto:'Perfil C valoriza indicação MAS ainda quer validar com dados. Use o indicador como abridor + traga prova rápido.',
+    abertura:`[Nome], aqui é [seu nome]. O [indicador] sugeriu que eu te procurasse. Ele tá usando nossa solução há [tempo] e me passou os números: [métrica X] subiu [Y%] em [prazo Z]. Como ele falou que sua operação tem aspectos parecidos, fez sentido pra mim te ligar. Posso te enviar o estudo de caso dele agora?`,
+    conducao:`Apresente o caso do indicador como dado, não como história emotiva.
+"O [indicador] tinha [problema mensurável]. Implementamos [solução] em [prazo]. Resultado: [número antes] → [número depois]. Tá tudo documentado, posso te mostrar."`,
+    gatilho:`Indicação + evidência quantitativa. Perfil C cruza as duas pra construir confiança.`,
+    fechamento:`"Te mando 3 coisas em 1 hora: (1) caso do [indicador] resumido; (2) nossa metodologia; (3) preçário transparente. Conversamos quinta às 10h — combinado?"
+Transparência precoce em preço pontua muito alto com perfil C.`,
+    checklist:['Citar indicador + métrica numérica logo','Oferecer estudo de caso documentado','Mandar metodologia escrita','Apresentar preço/preçário antes da reunião','Marcar reunião com pauta clara'],
+    erro:'Não venda "amizade" via indicação. Perfil C vê isso como tentativa de driblar a análise. A indicação abre a porta — os dados é que vendem.'
+  },
+  {
+    perfil:'C', perfilNome:'Conformidade',
+    cenario:'Follow-up de proposta enviada',
+    contexto:'Perfil C tá fazendo planilha comparando você com concorrentes. Não tá te ignorando — tá auditando. Apareça com mais informação.',
+    abertura:`[Nome], aqui é [seu nome]. Tô te ligando pra revisar a proposta. Imagino que você esteja comparando — é natural. Quero te oferecer 3 coisas: (1) referências comerciais que você pode ligar; (2) nossos dados de retenção dos últimos 12 meses; (3) o contrato em si pra você revisar com seu jurídico. Posso enviar agora?`,
+    conducao:`Mostre que você é quem mais facilita a auditoria dele.
+"Sei que vocês estão olhando outras opções. Sugestão: pegue 3 fornecedores, pede pra cada um a mesma documentação, e compara em planilha. Aqui vai a nossa contribuição completa."
+Ofereça transparência total — preço, contrato, cláusulas, exit, suporte.`,
+    gatilho:`Disponibilidade radical de informação. Perfil C escolhe o fornecedor que MENOS esconde.`,
+    fechamento:`"Te mando tudo nas próximas 2 horas. Liga pra essas 2 referências (te passo). Quinta 10h a gente revisa todas as dúvidas — sem pressão de fechar, só pra esclarecer. Combinado?"
+Mantenha precisão de horário.`,
+    checklist:['Antecipar que ele tá comparando','Oferecer referências comerciais pra contato direto','Mandar contrato + dados de retenção sem ser pedido','Sugerir auditoria comparativa estruturada','Marcar revisão sem pressão de fechar'],
+    erro:'Não tente "vender" no follow-up. Perfil C decidiu sozinho — seu papel é só remover atritos. Pressão = perde pra concorrente que entregou mais documentação.'
+  }
+];
+
+const cont = document.getElementById('scripts');
+function renderScripts(filtro='todos'){
+  const lista = filtro==='todos' ? SCRIPTS : SCRIPTS.filter(s=>s.perfil===filtro);
+  cont.innerHTML = lista.map((s,i)=>`
+    <div class="script" data-perfil="${s.perfil}">
+      <div class="script-head" onclick="this.parentElement.classList.toggle('aberto')">
+        <div class="script-titulo">
+          <span class="perfil-badge perfil-${s.perfil}">${s.perfil} · ${s.perfilNome}</span>
+          <span>
+            <div class="script-cenario">${s.cenario}</div>
+            <div class="script-perfil-nome">${s.contexto.slice(0,80)}${s.contexto.length>80?'...':''}</div>
+          </span>
+        </div>
+        <span class="script-toggle">▼</span>
+      </div>
+      <div class="script-body">
+        <div class="bloco"><div class="bloco-label">📍 Contexto</div><div class="bloco-tex">${s.contexto}</div></div>
+        <div class="bloco"><div class="bloco-label">🎬 Abertura (o que falar primeiro)</div><div class="bloco-tex script-fala">${s.abertura}</div></div>
+        <div class="bloco"><div class="bloco-label">🔄 Condução (como guiar a conversa)</div><div class="bloco-tex">${s.conducao}</div></div>
+        <div class="bloco"><div class="bloco-label">⚡ Gatilho (por que funciona com esse perfil)</div><div class="bloco-tex">${s.gatilho}</div></div>
+        <div class="bloco"><div class="bloco-label">🎯 Fechamento (como sair da call)</div><div class="bloco-tex">${s.fechamento}</div></div>
+        <div class="bloco"><div class="bloco-label">✅ Checklist tático</div><ul class="checklist">${s.checklist.map(c=>`<li>${c}</li>`).join('')}</ul></div>
+        <div class="alerta"><strong>⚠️ Erro mortal:</strong> ${s.erro}</div>
+        <button class="copiar" style="margin-top:14px" onclick="copiar(${i}, event)">📋 Copiar script completo</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function copiar(idx, ev){
+  ev.stopPropagation();
+  const s = SCRIPTS[idx];
+  const txt = `[${s.perfil} · ${s.perfilNome}] ${s.cenario}\n\nCONTEXTO\n${s.contexto}\n\nABERTURA\n${s.abertura}\n\nCONDUÇÃO\n${s.conducao}\n\nGATILHO\n${s.gatilho}\n\nFECHAMENTO\n${s.fechamento}\n\nCHECKLIST\n${s.checklist.map(c=>'- '+c).join('\n')}\n\nERRO MORTAL: ${s.erro}`;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const b = ev.target;
+    const orig = b.textContent;
+    b.textContent = '✅ Copiado!';
+    setTimeout(()=>b.textContent = orig, 2000);
+  });
+}
+
+function abrirTodos(){
+  document.querySelectorAll('.script').forEach(s=>s.classList.add('aberto'));
+}
+
+document.querySelectorAll('.filtro[data-filtro]').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('.filtro[data-filtro]').forEach(x=>x.classList.remove('ativo'));
+    b.classList.add('ativo');
+    renderScripts(b.dataset.filtro);
+  };
+});
+
+renderScripts();
+</script>
+</body>
+</html>

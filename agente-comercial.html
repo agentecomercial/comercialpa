@@ -2673,6 +2673,7 @@
       <button class="nav-btn" data-view="pipeline" onclick="navegar('pipeline')">📊 Pipeline</button>
       <button class="nav-btn" data-view="treino" onclick="navegar('treino')">🎓 Treinamento</button>
       <button class="nav-btn" data-view="biblioteca" onclick="navegar('biblioteca')">📚 Biblioteca</button>
+      <button class="nav-btn" data-view="disc" onclick="navegar('disc')">🧠 DISC</button>
       <button class="nav-btn" data-view="metricas" onclick="navegar('metricas')">📈 Métricas</button>
       <button class="nav-btn gestor-only" data-view="time" onclick="navegar('time')">👥 Time</button>
       <button class="nav-btn" data-view="config" onclick="navegar('config')">⚙️ Config</button>
@@ -3108,7 +3109,7 @@
           </div>
 
           <div class="form-group">
-            <label>👹 Perfil do cliente fictício <span style="color:var(--muted);font-weight:400;font-size:11px;">(específico do produto ativo)</span></label>
+            <label>🎭 Perfil do cliente fictício <span style="color:var(--muted);font-weight:400;font-size:11px;">(específico do produto ativo)</span></label>
             <div class="profile-grid" id="profile-grid"></div>
             <button class="icon-btn" onclick="cenarioAleatorio()" style="margin-top:8px;">🎲 Sortear cenário aleatório</button>
           </div>
@@ -3165,72 +3166,7 @@
             </div>
           </div>
 
-          <!-- ===== MODO MULTI-TURNO ===== -->
-          <div id="treino-multi-turno" style="display:none;">
-
-            <!-- Estado: sem conversa -->
-            <div id="treino-multi-vazio">
-              <div class="conversa-empty">
-                <div style="font-size:30px;margin-bottom:6px;">💬</div>
-                <p style="margin:6px 0;">Simule uma conversa completa com o cliente fictício. Você troca turnos com a IA, ela reage como o perfil escolhido, e ao final você recebe uma avaliação consolidada.</p>
-              </div>
-              <div id="modo-api-toggle-wrap" class="multi-step-card" style="margin-bottom:10px;">
-                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;font-size:13px;">
-                  <input type="checkbox" id="modo-api-toggle" onchange="trocarModoApi(this.checked)"
-                    style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
-                  <span><strong>⚡ Conversa automática</strong> <span id="modo-api-status" style="color:var(--muted);font-weight:400;font-size:11.5px;"></span></span>
-                </label>
-              </div>
-              <div class="actions">
-                <button class="btn-primary" onclick="iniciarConversaTreino()">▶️ INICIAR CONVERSA</button>
-              </div>
-            </div>
-
-            <!-- Estado: conversa em andamento -->
-            <div id="treino-multi-ativo" style="display:none;">
-              <div class="conversa-header" id="conversa-header"></div>
-
-              <div class="chat-treino" id="chat-treino"></div>
-
-              <!-- Próximo turno: depois de iniciar, primeiro espera fala do cliente vinda do Claude -->
-              <div class="multi-step-card" id="step-colar-cliente">
-                <div class="step-label">📥 Próximo passo: cole a fala do cliente</div>
-                <p class="subtitle" style="margin:0 0 8px 0;">Cole no Claude.ai (Projeto "Treinamento Febracis") o prompt que foi copiado, e cole aqui a fala que ele gerou como cliente.</p>
-                <textarea id="multi-fala-cliente" rows="3" placeholder="Cole aqui a fala que o Claude escreveu como cliente fictício..."
-                  style="width:100%;resize:vertical;"></textarea>
-                <div class="flex-row" style="margin-top:8px;">
-                  <button class="icon-btn primary" onclick="colarFalaCliente()">✓ Adicionar fala do cliente</button>
-                </div>
-              </div>
-
-              <!-- Sua resposta como consultor -->
-              <div class="multi-step-card" id="step-responder-consultor" style="display:none;">
-                <div class="step-label">💬 Sua resposta como consultor</div>
-                <textarea id="multi-resposta-consultor" rows="3" placeholder="Sua próxima fala como consultor..."
-                  style="width:100%;resize:vertical;"></textarea>
-                <div class="flex-row" style="margin-top:8px;">
-                  <button class="icon-btn primary" onclick="enviarTurnoConsultor()">📋 GERAR PROMPT DESTE TURNO</button>
-                </div>
-              </div>
-
-              <!-- Encerrar / cancelar -->
-              <div class="actions" style="margin-top:10px;">
-                <button class="btn-primary" onclick="encerrarTreino()">🏁 ENCERRAR E AVALIAR</button>
-                <button class="btn-secondary" onclick="cancelarTreino()">✕ Cancelar treino</button>
-              </div>
-
-              <!-- Cole avaliação consolidada (aparece após Encerrar) -->
-              <div class="multi-step-card" id="step-avaliacao-consolidada" style="display:none;">
-                <div class="step-label">📥 Cole avaliação consolidada</div>
-                <p class="subtitle" style="margin:0 0 8px 0;">Cole no Claude o prompt de avaliação copiado, e cole aqui a resposta com o bloco [META].</p>
-                <textarea id="multi-avaliacao-ia" rows="6" placeholder="Cole aqui a resposta completa do Claude com o bloco [META]..."
-                  style="width:100%;resize:vertical;"></textarea>
-                <div class="flex-row" style="margin-top:8px;">
-                  <button class="icon-btn primary" onclick="processarAvaliacaoConsolidada()">💾 Salvar treino</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Multi-turno mora no modal #modal-treino-conversa (aberto via toggle "💬 Conversa completa") -->
         </div>
 
         <div class="card">
@@ -3250,6 +3186,235 @@
     </section>
 
     <!-- ============================================== -->
+    <!-- VIEW: BIBLIOTECA DISC (consulta rápida)         -->
+    <!-- ============================================== -->
+    <section class="view" id="view-disc">
+
+      <div class="card" style="margin-bottom: 14px;">
+        <h2>🧠 Biblioteca DISC + Jung + Valores</h2>
+        <p class="subtitle">Consulta rápida durante a conversa. Base teórica do livro <strong>Decifre e Influencie Pessoas</strong> (Paulo Vieira & Deibson Silva, 2018) — DISC de Marston, Tipos Psicológicos de Jung e Valores de Spranger.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card" style="border-left:4px solid var(--hot);">
+          <h2>🎯 D — DOMINÂNCIA</h2>
+          <p class="subtitle">Fator do controle e da assertividade. Como lida com adversidades.</p>
+          <table style="width:100%;font-size:13px;line-height:1.6;">
+            <tr><td style="color:var(--muted);width:40%;">Palavra-chave</td><td><strong>Intolerância</strong></td></tr>
+            <tr><td style="color:var(--muted);">Emoção</td><td>Raiva</td></tr>
+            <tr><td style="color:var(--muted);">Motivador</td><td>Desafio / Poder</td></tr>
+            <tr><td style="color:var(--muted);">Comunicação</td><td>Direta / Objetiva</td></tr>
+            <tr><td style="color:var(--muted);">Decisão</td><td>Racional / Rápida</td></tr>
+          </table>
+          <h3 style="margin-top:14px;font-size:13px;">😨 6 Medos do D</h3>
+          <ul style="font-size:12.5px;line-height:1.6;margin:6px 0 0 18px;">
+            <li>Falhar</li>
+            <li>Perder poder e autoridade</li>
+            <li>Perder autonomia / liberdade</li>
+            <li>Submeter-se a alguém</li>
+            <li>Perder posição em competição</li>
+            <li>Reconhecer próprios erros</li>
+          </ul>
+          <h3 style="margin-top:14px;font-size:13px;">🎙️ Como abordá-lo</h3>
+          <ul style="font-size:12.5px;line-height:1.6;margin:6px 0 0 18px;">
+            <li>Vá direto ao ponto, em 2 frases</li>
+            <li>Apresente opções claras (decisão dele)</li>
+            <li>Foco em resultado e ROI mensurável</li>
+            <li>Fechamento alternativo (A ou B)</li>
+            <li>Pavio curto: nunca seja lento</li>
+          </ul>
+        </div>
+
+        <div class="card" style="border-left:4px solid var(--warm);">
+          <h2>💛 I — INFLUÊNCIA</h2>
+          <p class="subtitle">Fator da comunicação e sociabilidade. Como lida com pessoas.</p>
+          <table style="width:100%;font-size:13px;line-height:1.6;">
+            <tr><td style="color:var(--muted);width:40%;">Palavra-chave</td><td><strong>Sociável</strong></td></tr>
+            <tr><td style="color:var(--muted);">Emoção</td><td>Otimismo</td></tr>
+            <tr><td style="color:var(--muted);">Motivador</td><td>Reconhecimento social / Status</td></tr>
+            <tr><td style="color:var(--muted);">Comunicação</td><td>Informal / Pessoal</td></tr>
+            <tr><td style="color:var(--muted);">Decisão</td><td>Emocional / Rápida</td></tr>
+          </table>
+          <h3 style="margin-top:14px;font-size:13px;">😨 Medos do I</h3>
+          <ul style="font-size:12.5px;line-height:1.6;margin:6px 0 0 18px;">
+            <li>Rejeição</li>
+            <li>Ficar sozinho ou esquecido</li>
+            <li>Frustrar expectativas alheias</li>
+            <li>Não ser reconhecido</li>
+            <li>Perder o prazer e o entusiasmo</li>
+          </ul>
+          <h3 style="margin-top:14px;font-size:13px;">🎙️ Como abordá-lo</h3>
+          <ul style="font-size:12.5px;line-height:1.6;margin:6px 0 0 18px;">
+            <li>Comece com small talk genuíno</li>
+            <li>Dê espaço para ele falar de si</li>
+            <li>Valide ideias e sonhos</li>
+            <li>Use prova social (cases, vídeos)</li>
+            <li>Crie senso de pertencimento</li>
+          </ul>
+        </div>
+
+        <div class="card" style="border-left:4px solid var(--green);">
+          <h2>🌱 S — eSTABILIDADE</h2>
+          <p class="subtitle">Fator do equilíbrio e da empatia. Como lida com mudanças.</p>
+          <table style="width:100%;font-size:13px;line-height:1.6;">
+            <tr><td style="color:var(--muted);width:40%;">Palavra-chave</td><td><strong>Previsibilidade</strong></td></tr>
+            <tr><td style="color:var(--muted);">Emoção</td><td>Apatia (observável)</td></tr>
+            <tr><td style="color:var(--muted);">Motivador</td><td>Segurança / Harmonia</td></tr>
+            <tr><td style="color:var(--muted);">Comunicação</td><td>Suave / Empática</td></tr>
+            <tr><td style="color:var(--muted);">Decisão</td><td>Emocional / Demorada</td></tr>
+          </table>
+          <h3 style="margin-top:14px;font-size:13px;">😨 Medos do S</h3>
+          <ul style="font-size:12.5px;line-height:1.6;margin:6px 0 0 18px;">
+            <li>Cenários imprevisíveis</li>
+            <li>Ousar e arriscar</li>
+            <li>Decepcionar ou ser decepcionado</li>
+            <li>Perder o autocontrole</li>
+            <li>Lidar com conflitos abertos</li>
+          </ul>
+          <h3 style="margin-top:14px;font-size:13px;">🎙️ Como abordá-lo</h3>
+          <ul style="font-size:12.5px;line-height:1.6;margin:6px 0 0 18px;">
+            <li>Ritmo calmo, sem pressão</li>
+            <li>Demonstre previsibilidade do método</li>
+            <li>Evite confronto direto</li>
+            <li>Dê garantias e prove segurança</li>
+            <li>Mostre impacto gradual na rotina</li>
+          </ul>
+        </div>
+
+        <div class="card" style="border-left:4px solid #b388ff;">
+          <h2>📋 C — CONFORMIDADE</h2>
+          <p class="subtitle">Fator da estrutura e do detalhe. Como lida com regras.</p>
+          <table style="width:100%;font-size:13px;line-height:1.6;">
+            <tr><td style="color:var(--muted);width:40%;">Palavra-chave</td><td><strong>Crítico</strong></td></tr>
+            <tr><td style="color:var(--muted);">Emoção</td><td>Medo</td></tr>
+            <tr><td style="color:var(--muted);">Motivador</td><td>Informação / Padrões altos</td></tr>
+            <tr><td style="color:var(--muted);">Comunicação</td><td>Formal / Específica</td></tr>
+            <tr><td style="color:var(--muted);">Decisão</td><td>Racional / Demorada</td></tr>
+          </table>
+          <h3 style="margin-top:14px;font-size:13px;">😨 Medos do C</h3>
+          <ul style="font-size:12.5px;line-height:1.6;margin:6px 0 0 18px;">
+            <li>Cometer falhas</li>
+            <li>Não ter informação suficiente</li>
+            <li>Receber críticas ao trabalho</li>
+            <li>Fazer escolha equivocada</li>
+            <li>Desviar das regras estabelecidas</li>
+          </ul>
+          <h3 style="margin-top:14px;font-size:13px;">🎙️ Como abordá-lo</h3>
+          <ul style="font-size:12.5px;line-height:1.6;margin:6px 0 0 18px;">
+            <li>Traga dados, números, comprovação</li>
+            <li>Seja específico, evite generalidades</li>
+            <li>Respeite o tempo de análise dele</li>
+            <li>Mostre o método estruturado</li>
+            <li>Antecipe e responda objeções com fatos</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <h2>🧬 Tipos Psicológicos (Carl Jung)</h2>
+        <p class="subtitle">3 dimensões que se somam ao DISC. O cliente combina uma de cada par:</p>
+        <div class="grid-2" style="margin-top:10px;">
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">⚡ Atitude</h3>
+            <p style="font-size:12.5px;line-height:1.6;"><strong>Extrovertido:</strong> energiza-se na interação, fala mais, age primeiro, busca o externo.<br>
+            <strong>Introvertido:</strong> energiza-se no silêncio, reflete antes de falar, busca o interno.</p>
+            <p style="font-size:11.5px;color:var(--muted);">D e I são extrovertidos · S e C são introvertidos</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">👁️ Percepção</h3>
+            <p style="font-size:12.5px;line-height:1.6;"><strong>Sensação:</strong> capta pelos 5 sentidos. Quer dado concreto, fato, exemplo prático.<br>
+            <strong>Intuição:</strong> capta possibilidades. Quer visão de futuro, conceito, "e se?".</p>
+            <p style="font-size:11.5px;color:var(--muted);">S e C tendem a Sensação · D e I tendem a Intuição</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">⚖️ Julgamento</h3>
+            <p style="font-size:12.5px;line-height:1.6;"><strong>Pensamento:</strong> decide por lógica, causa-efeito, critério impessoal.<br>
+            <strong>Sentimento:</strong> decide por valores pessoais, impacto humano, harmonia.</p>
+            <p style="font-size:11.5px;color:var(--muted);">D e C tendem a Pensamento · I e S tendem a Sentimento</p>
+          </div>
+          <div style="background:var(--green-dim);border:1px solid var(--green);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;color:var(--green);">💡 Como usar na venda</h3>
+            <p style="font-size:12.5px;line-height:1.6;">Cliente <strong>Sensação</strong> + <strong>Pensamento</strong> → traga planilha, dados, ROI.<br>
+            Cliente <strong>Intuição</strong> + <strong>Sentimento</strong> → traga visão, transformação, história inspiradora.<br>
+            Errar essa leitura é a causa nº1 de "não consegui fechar mesmo dizendo tudo certo".</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <h2>💎 Os 6 Valores (Eduard Spranger)</h2>
+        <p class="subtitle">O que move o cliente a comprar. Identifique pelo que ele MAIS valoriza na fala.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:10px;">
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+            <h3 style="margin:0 0 4px 0;font-size:13px;">📚 Teórico</h3>
+            <p style="font-size:11.5px;color:var(--muted);margin:0 0 4px 0;">Conhecimento, verdade, método.</p>
+            <p style="font-size:11.5px;line-height:1.5;"><em>"Antes de fechar, quero entender a metodologia."</em> Venda: mostre estrutura científica, base teórica, prova de mecanismo.</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+            <h3 style="margin:0 0 4px 0;font-size:13px;">💰 Econômico</h3>
+            <p style="font-size:11.5px;color:var(--muted);margin:0 0 4px 0;">Utilidade, ROI, custo-benefício.</p>
+            <p style="font-size:11.5px;line-height:1.5;"><em>"Quanto vou faturar a mais?"</em> Venda: ROI, payback, multiplicação de receita.</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+            <h3 style="margin:0 0 4px 0;font-size:13px;">🎨 Estético</h3>
+            <p style="font-size:11.5px;color:var(--muted);margin:0 0 4px 0;">Harmonia, beleza, qualidade de vida.</p>
+            <p style="font-size:11.5px;line-height:1.5;"><em>"Quero qualidade de vida, não só dinheiro."</em> Venda: equilíbrio, sair do operacional, propósito.</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+            <h3 style="margin:0 0 4px 0;font-size:13px;">🤝 Social</h3>
+            <p style="font-size:11.5px;color:var(--muted);margin:0 0 4px 0;">Altruísmo, servir, ajudar.</p>
+            <p style="font-size:11.5px;line-height:1.5;"><em>"Quero impactar minha equipe."</em> Venda: como o cliente vai transformar a vida dos outros.</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+            <h3 style="margin:0 0 4px 0;font-size:13px;">👑 Político</h3>
+            <p style="font-size:11.5px;color:var(--muted);margin:0 0 4px 0;">Poder, status, liderança.</p>
+            <p style="font-size:11.5px;line-height:1.5;"><em>"Quero ser referência no mercado."</em> Venda: legado, posição de liderança, exclusividade.</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+            <h3 style="margin:0 0 4px 0;font-size:13px;">🕊️ Religioso</h3>
+            <p style="font-size:11.5px;color:var(--muted);margin:0 0 4px 0;">Convicção, propósito, missão.</p>
+            <p style="font-size:11.5px;line-height:1.5;"><em>"Preciso estar alinhado com meus valores."</em> Venda: amarre o produto à filosofia/causa do cliente.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <h2>🌐 As 8 Instâncias de Conexão</h2>
+        <p class="subtitle">A dor que abre a venda quase sempre vem de uma instância travada. Identifique pela fala do cliente.</p>
+        <ol style="font-size:12.5px;line-height:1.7;margin-top:10px;padding-left:22px;">
+          <li><strong>Eu (consigo mesmo)</strong> — autoestima, diálogos internos. <em>"Tô perdido", "não me reconheço".</em></li>
+          <li><strong>Cônjuge</strong> — relação conjugal. <em>"Minha esposa não aguenta mais".</em></li>
+          <li><strong>Lar / família próxima</strong> — quem mora junto. <em>"Não tô presente em casa".</em></li>
+          <li><strong>Profissional / trabalho</strong> — empresa, carreira. <em>"Tô no operacional 100%".</em> 🎯 <strong>Mais comum nas dores Febracis.</strong></li>
+          <li><strong>Parentes</strong> — irmãos, sobrinhos. <em>"Briga de irmão na sociedade".</em></li>
+          <li><strong>Sociais (amizades)</strong> — círculo de amigos. <em>"Perdi meus amigos pra empresa".</em></li>
+          <li><strong>Comunidade / sociedade</strong> — pessoas que ele não conhece. <em>"Quero deixar legado".</em></li>
+          <li><strong>Deus / propósito</strong> — sentido maior. <em>"Sinto que tô fora do meu propósito".</em></li>
+        </ol>
+        <div style="background:var(--green-dim);border:1px solid var(--green);border-radius:10px;padding:12px;margin-top:14px;font-size:12.5px;line-height:1.6;">
+          <strong style="color:var(--green);">💡 Truque pro fechamento:</strong> quando o cliente solta dor de uma instância, AMPLIFIQUE Implicação cruzando: <em>"se você não resolve a empresa (4), não resolve o casamento (2) — e nenhuma das duas você resolve esgotado (1)"</em>. Isso é o coração do SPIN aplicado às instâncias.
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <h2>🧠 Q.E. &gt; Q.I. na venda</h2>
+        <p style="font-size:12.5px;line-height:1.6;">O cliente que decide rápido nem sempre é o mais inteligente — é o mais conectado emocionalmente. Inteligência Emocional (Daniel Goleman) tem 2 dimensões:</p>
+        <div class="grid-2" style="margin-top:10px;">
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">🪞 Eu → Eu (pessoal)</h3>
+            <p style="font-size:12.5px;line-height:1.6;">Como o consultor se conecta consigo. Se ele tá inseguro, ansioso ou querendo "vencer" o cliente, perde. Se está em paz, escutando, observando — extrai o melhor da própria capacidade.</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">🤝 Eu → Outro (social)</h3>
+            <p style="font-size:12.5px;line-height:1.6;">Como o consultor se conecta com o cliente. Empatia, leitura de DISC, leitura de Jung, leitura de Valor. Tudo isso é Q.E. social — o que separa o vendedor competente do consultor que fecha.</p>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px;font-style:italic;">"A chave para grandes realizações está na capacidade de estabelecer conexões positivas com o outro." — Paulo Vieira & Deibson Silva</p>
+      </div>
+
+    </section>
+
+    <!-- ============================================== -->
     <!-- VIEW: BIBLIOTECA                                -->
     <!-- ============================================== -->
     <section class="view" id="view-biblioteca">
@@ -3264,9 +3429,28 @@
           <button class="prompt-tab" onclick="trocarBibTab('respostas')">💬 Respostas de Elite</button>
           <button class="prompt-tab" onclick="trocarBibTab('spin')">🎯 Perguntas SPIN</button>
           <button class="prompt-tab" onclick="trocarBibTab('roi')">💰 Calculadora de ROI</button>
+          <button class="prompt-tab" onclick="trocarBibTab('turnover')">💸 Custo de Turnover</button>
+          <button class="prompt-tab" onclick="trocarBibTab('cac')">📊 CAC / LTV</button>
         </div>
 
         <div class="prompt-section active" id="bib-cases">
+          <p class="subtitle" style="margin-bottom: 14px;">25 cases reais de transformação por método Febracis. Filtre por setor pra puxar o case que conversa com o lead.</p>
+          <div class="row" style="margin-bottom: 14px;">
+            <div>
+              <label for="cases-setor-filtro">Setor</label>
+              <select id="cases-setor-filtro" onchange="renderizarCases()">
+                <option value="todos">Todos os setores</option>
+                <option value="varejo">🛒 Varejo / Comércio</option>
+                <option value="servicos">🏢 Serviços / Consultoria</option>
+                <option value="industria">🏭 Indústria</option>
+                <option value="tecnologia">💻 Tecnologia / SaaS</option>
+                <option value="saude">💉 Saúde / Estética</option>
+                <option value="construcao">🏗️ Construção / Imobiliária</option>
+                <option value="educacao">📚 Educação</option>
+                <option value="alimentacao">🍽️ Alimentação</option>
+              </select>
+            </div>
+          </div>
           <div class="cases-list" id="cases-list"></div>
         </div>
 
@@ -3322,6 +3506,147 @@
           </div>
           <button class="btn-primary" onclick="calcularROI()" style="flex: none;">💰 Calcular impacto</button>
           <div id="roi-resultado" style="margin-top: 14px;"></div>
+        </div>
+
+        <div class="prompt-section" id="bib-turnover">
+          <p class="subtitle" style="margin-bottom: 14px;">Quanto sai do caixa com cada contratação errada e desligamento. Base: SHRM, Gallup e Deloitte — turnover custa de 3x a 6x o salário mensal por colaborador desligado (rescisão + recrutamento + rampa + perda de conhecimento).</p>
+
+          <div class="form-group">
+            <label for="to-salario">Salário médio do colaborador desligado (R$)</label>
+            <input type="number" id="to-salario" placeholder="Ex: 4500">
+          </div>
+          <div class="form-group">
+            <label for="to-qtd">Nº de desligamentos no período</label>
+            <input type="number" id="to-qtd" value="1" min="1">
+          </div>
+          <div class="form-group">
+            <label>Multiplicador de custo (escolha o cenário)</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-2); cursor:pointer; font-size:13px;"><input type="radio" name="to-mult" value="3"> Conservador <strong>3x</strong></label>
+              <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-2); cursor:pointer; font-size:13px;"><input type="radio" name="to-mult" value="4.5" checked> Realista <strong>4,5x</strong></label>
+              <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-2); cursor:pointer; font-size:13px;"><input type="radio" name="to-mult" value="6"> Pesado <strong>6x</strong></label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Período base dos desligamentos informados</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-2); cursor:pointer; font-size:13px;"><input type="radio" name="to-periodo" value="mes" checked> Mês</label>
+              <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-2); cursor:pointer; font-size:13px;"><input type="radio" name="to-periodo" value="tri"> Trimestre</label>
+              <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-2); cursor:pointer; font-size:13px;"><input type="radio" name="to-periodo" value="sem"> Semestre</label>
+              <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-2); cursor:pointer; font-size:13px;"><input type="radio" name="to-periodo" value="ano"> Ano</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="to-investimento">Investimento médio em treinamento por colaborador (R$) — opcional, gera o gancho "isso pagaria X capacitações"</label>
+            <input type="number" id="to-investimento" placeholder="Ex: 5000">
+          </div>
+
+          <button class="btn-primary" onclick="calcularTurnover()" style="flex: none;">💸 Calcular custo de turnover</button>
+
+          <details style="margin-top: 14px; border:1px solid var(--border-strong); border-radius:8px; padding:10px 14px; background:var(--bg-2);">
+            <summary style="cursor:pointer; font-weight:600; font-size:14px;">📐 Ver fórmula usada no cálculo</summary>
+            <div style="margin-top:12px; font-size:13px; line-height:1.6;">
+
+              <p><strong>1. Custo unitário por desligamento</strong></p>
+              <pre style="background:var(--bg-1); padding:8px 12px; border-radius:6px; overflow-x:auto; font-size:12px;">custoUnit = salário × multiplicador</pre>
+              <p style="opacity:0.85;">Onde multiplicador ∈ {3 · 4,5 · 6}. Ex: R$ 4.500 × 4,5 = <strong>R$ 20.250</strong>.</p>
+
+              <p style="margin-top:14px;"><strong>2. Breakdown do custo unitário</strong></p>
+              <pre style="background:var(--bg-1); padding:8px 12px; border-radius:6px; overflow-x:auto; font-size:12px;">rescisão CLT     = custoUnit × 0,33   (33%)
+recrutamento     = custoUnit × 0,17   (17%)
+rampa/treino     = custoUnit × 0,33   (33%)
+perda+retrabalho = custoUnit × 0,17   (17%)</pre>
+
+              <p style="margin-top:14px;"><strong>3. Normalização para taxa mensal</strong></p>
+              <pre style="background:var(--bg-1); padding:8px 12px; border-radius:6px; overflow-x:auto; font-size:12px;">desligamentosPorMes = qtd ÷ mesesDoPeríodo
+
+mesesDoPeríodo: Mês=1 · Trimestre=3 · Semestre=6 · Ano=12</pre>
+              <p style="opacity:0.85;">Ex: 2 desligamentos por trimestre → 2 ÷ 3 = <strong>0,67 / mês</strong>.</p>
+
+              <p style="margin-top:14px;"><strong>4. Extrapolação nos 4 períodos</strong></p>
+              <pre style="background:var(--bg-1); padding:8px 12px; border-radius:6px; overflow-x:auto; font-size:12px;">cMes = desligPorMes × custoUnit × 1
+cTri = desligPorMes × custoUnit × 3
+cSem = desligPorMes × custoUnit × 6
+cAno = desligPorMes × custoUnit × 12</pre>
+
+              <p style="margin-top:14px;"><strong>5. Gancho comercial (se houver investimento)</strong></p>
+              <pre style="background:var(--bg-1); padding:8px 12px; border-radius:6px; overflow-x:auto; font-size:12px;">capacitaçõesPagas = floor(cAno ÷ investimentoMédio)</pre>
+
+              <p style="margin-top:14px; font-size:12px; opacity:0.8;"><strong>Fontes:</strong> SHRM (<em>The Cost of Replacing an Employee</em>), Gallup <em>State of the Workplace</em>, Deloitte <em>Talent Acquisition</em>, Work Institute <em>Retention Report</em>, Center for American Progress. Multiplicador 3x-6x é a faixa de consenso de mercado. Proporção 33/17/33/17 derivada da composição típica de custos: rescisão CLT (~1,5 salário com encargos), recrutamento+seleção, 2-3 meses de rampa, perda de cliente/conhecimento + retrabalho do gestor.</p>
+            </div>
+          </details>
+
+          <div id="turnover-resultado" style="margin-top: 14px;"></div>
+        </div>
+
+        <div class="prompt-section" id="bib-cac">
+          <p class="subtitle" style="margin-bottom: 14px;">Quanto custa adquirir 1 cliente novo (CAC) e em quanto tempo ele se paga (Payback). Se preencher ticket+retenção, libera o LTV e o ratio LTV:CAC com semáforo de mercado (Bessemer / David Skok).</p>
+
+          <div class="form-group">
+            <label for="cac-mkt">Investimento em marketing no período (R$)</label>
+            <input type="number" id="cac-mkt" placeholder="Ex: 15000">
+          </div>
+          <div class="form-group">
+            <label for="cac-vendas">Investimento em vendas/comercial no período (R$) — salário + comissão + ferramentas. Opcional.</label>
+            <input type="number" id="cac-vendas" placeholder="Ex: 8000">
+          </div>
+          <div class="form-group">
+            <label for="cac-clientes">Nº de clientes novos conquistados no período</label>
+            <input type="number" id="cac-clientes" placeholder="Ex: 12" min="1">
+          </div>
+          <div class="form-group">
+            <label>Período base</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-2); cursor:pointer; font-size:13px;"><input type="radio" name="cac-periodo" value="mes" checked> Mês</label>
+              <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-2); cursor:pointer; font-size:13px;"><input type="radio" name="cac-periodo" value="tri"> Trimestre</label>
+              <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-2); cursor:pointer; font-size:13px;"><input type="radio" name="cac-periodo" value="sem"> Semestre</label>
+              <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-2); cursor:pointer; font-size:13px;"><input type="radio" name="cac-periodo" value="ano"> Ano</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cac-ticket">Ticket médio mensal do cliente (R$) — opcional. Libera Payback e LTV.</label>
+            <input type="number" id="cac-ticket" placeholder="Ex: 800">
+          </div>
+          <div class="form-group">
+            <label for="cac-margem">Margem bruta (%) — opcional. Default 100% (use 30-60% pra negócios físicos com COGS).</label>
+            <input type="number" id="cac-margem" placeholder="Ex: 40" min="1" max="100">
+          </div>
+          <div class="form-group">
+            <label for="cac-retencao">Retenção média do cliente (meses) — opcional. Junto com ticket libera LTV:CAC.</label>
+            <input type="number" id="cac-retencao" placeholder="Ex: 18" min="1">
+          </div>
+
+          <button class="btn-primary" onclick="calcularCAC()" style="flex: none;">📊 Calcular CAC e LTV</button>
+
+          <details style="margin-top: 14px; border:1px solid var(--border-strong); border-radius:8px; padding:10px 14px; background:var(--bg-2);">
+            <summary style="cursor:pointer; font-weight:600; font-size:14px;">📐 Ver fórmulas usadas no cálculo</summary>
+            <div style="margin-top:12px; font-size:13px; line-height:1.6;">
+
+              <p><strong>1. CAC (Customer Acquisition Cost) — completo</strong></p>
+              <pre style="background:var(--bg-1); padding:8px 12px; border-radius:6px; overflow-x:auto; font-size:12px;">CAC = (Marketing + Vendas) ÷ Clientes novos</pre>
+              <p style="opacity:0.85;">Inclui salário do time comercial, comissão, bônus e ferramentas. Versão de livro (Brad Sugars, David Skok, HubSpot).</p>
+
+              <p style="margin-top:14px;"><strong>2. LTV (Lifetime Value)</strong></p>
+              <pre style="background:var(--bg-1); padding:8px 12px; border-radius:6px; overflow-x:auto; font-size:12px;">LTV = Ticket × (Margem ÷ 100) × Retenção</pre>
+              <p style="opacity:0.85;">Ex: ticket R$ 800 × margem 40% × 18 meses = LTV R$ 5.760.</p>
+
+              <p style="margin-top:14px;"><strong>3. Payback do CAC</strong></p>
+              <pre style="background:var(--bg-1); padding:8px 12px; border-radius:6px; overflow-x:auto; font-size:12px;">Payback (meses) = CAC ÷ (Ticket × Margem)</pre>
+              <p style="opacity:0.85;">Quantos meses o cliente paga pra cobrir o que custou pra adquirir.</p>
+
+              <p style="margin-top:14px;"><strong>4. Ratio LTV:CAC — semáforo de mercado</strong></p>
+              <pre style="background:var(--bg-1); padding:8px 12px; border-radius:6px; overflow-x:auto; font-size:12px;">Ratio = LTV ÷ CAC
+
+🔴 &lt; 1     prejuízo (cliente sai antes de pagar)
+🟡 1 a 3   apertado (sobrevive, não escala)
+🟢 3 a 5   saudável (referência SaaS / serviços)
+🟢 &gt; 5     escalável (acelerar OU subexplorando CAC)</pre>
+
+              <p style="margin-top:14px; font-size:12px; opacity:0.8;"><strong>Fontes:</strong> David Skok (<em>SaaS Metrics 2.0</em>), Bessemer Venture Partners (<em>State of the Cloud</em>), Brad Sugars (<em>Instant Cashflow</em>), HubSpot Customer Acquisition Reports. O ratio LTV:CAC ≥ 3 é o consenso de mercado pra crescimento sustentável.</p>
+            </div>
+          </details>
+
+          <div id="cac-resultado" style="margin-top: 14px;"></div>
         </div>
       </div>
     </section>
@@ -3425,22 +3750,25 @@
           <button class="icon-btn primary" onclick="acaoCriarConsultor()" style="margin-top:8px;">Criar consultor</button>
 
           <h2 style="margin-top:24px;">📋 Logs de acesso (todo o time)</h2>
-          <div class="flex-row" style="margin-bottom:10px;">
+          <div class="flex-row" style="margin-bottom:10px;gap:6px;flex-wrap:wrap;">
             <button class="icon-btn" onclick="renderizarLogsGlobais()">Atualizar</button>
+            <button class="icon-btn" onclick="limparLogsAcessoGlobais()" style="background:rgba(255,80,80,0.12);border-color:var(--hot);color:var(--hot);">🗑️ Limpar logs</button>
           </div>
           <div id="time-logs-globais" style="max-height:240px;overflow-y:auto;"></div>
 
           <h2 style="margin-top:24px;">🎓 Treinamento da equipe</h2>
           <p class="subtitle" style="margin-bottom:10px;">Quem treina, quem evolui, quem precisa de atenção.</p>
-          <div class="flex-row" style="margin-bottom:10px;">
+          <div class="flex-row" style="margin-bottom:10px;gap:6px;flex-wrap:wrap;">
             <button class="icon-btn" onclick="renderizarTreinoEquipe()">Atualizar</button>
+            <button class="icon-btn" onclick="limparTodosTreinosEquipe()" style="background:rgba(255,80,80,0.12);border-color:var(--hot);color:var(--hot);">🗑️ Limpar treinos da equipe</button>
           </div>
           <div id="time-treino-dashboard" style="margin-bottom:14px;"></div>
 
           <h2 style="margin-top:24px;">🛡️ Auditoria administrativa</h2>
           <p class="subtitle" style="margin-bottom:10px;">Histórico de ações dos gestores.</p>
-          <div class="flex-row" style="margin-bottom:10px;">
+          <div class="flex-row" style="margin-bottom:10px;gap:6px;flex-wrap:wrap;">
             <button class="icon-btn" onclick="renderizarAuditoria()">Atualizar</button>
+            <button class="icon-btn" onclick="limparAuditoria()" style="background:rgba(255,80,80,0.12);border-color:var(--hot);color:var(--hot);">🗑️ Limpar auditoria</button>
           </div>
           <div id="time-auditoria" style="max-height:240px;overflow-y:auto;"></div>
         </div>
@@ -3668,6 +3996,28 @@
           onkeydown="if(event.key==='Enter') confirmarTrocaSenhaTemporaria()">
         <button class="icon-btn primary" onclick="confirmarTrocaSenhaTemporaria()" style="font-size:15px;padding:12px;">Salvar e entrar</button>
       </div>
+
+      <!-- Reset de senha do gestor (autosserviço local) -->
+      <div id="login-reset-link" style="margin-top:6px;text-align:center;width:100%;">
+        <a href="javascript:void(0)" onclick="abrirResetGestor()" style="font-size:12px;color:var(--muted);text-decoration:underline;">🔓 Esqueci a senha</a>
+      </div>
+
+      <div id="login-reset-panel" style="display:none;flex-direction:column;gap:12px;width:100%;">
+        <div style="font-size:14px;font-weight:600;text-align:center;color:var(--warm);margin-bottom:4px;">🔓 Reset de senha</div>
+        <div style="font-size:12px;color:var(--muted);text-align:center;line-height:1.5;">Use isto APENAS se você é o dono deste dispositivo e esqueceu sua senha. Os dados são preservados — só a senha é trocada. A operação fica registrada na auditoria.</div>
+        <input type="text" id="reset-username" placeholder="Seu usuário (login)"
+          style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-2);color:var(--text);font-size:15px;font-family:inherit;"
+          oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9.]/g,'')">
+        <input type="text" id="reset-confirmacao" placeholder="Frase de confirmação: RESET-&lt;USUARIO&gt;"
+          style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-2);color:var(--text);font-size:13px;font-family:Consolas,monospace;">
+        <input type="password" id="reset-nova-senha" placeholder="Nova senha (mín. 4 caracteres)"
+          style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-2);color:var(--text);font-size:15px;font-family:inherit;">
+        <input type="password" id="reset-confirma-senha" placeholder="Confirme a nova senha"
+          style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-2);color:var(--text);font-size:15px;font-family:inherit;"
+          onkeydown="if(event.key==='Enter') confirmarResetGestor()">
+        <button class="icon-btn primary" onclick="confirmarResetGestor()" style="font-size:15px;padding:12px;">Trocar senha agora</button>
+        <button class="icon-btn" onclick="cancelarResetGestor()" style="font-size:13px;padding:9px;">Cancelar</button>
+      </div>
     </div>
   </div>
 
@@ -3810,16 +4160,40 @@
         </div>
 
         <div class="prompt-section active" id="prompt-section-lead">
-          <div class="prompt-box-wrap">
+          <div class="flex-row gestor-only" style="margin-bottom:8px;gap:6px;flex-wrap:wrap;">
+            <button class="icon-btn" onclick="editarPrompt('lead')">✏️ Editar prompt (gestor)</button>
+            <button class="icon-btn" onclick="restaurarPromptDefault('lead')" style="background:rgba(255,80,80,0.12);border-color:var(--hot);color:var(--hot);">🔄 Restaurar padrão</button>
+            <span id="prompt-status-lead" style="color:var(--muted);font-size:11px;align-self:center;"></span>
+          </div>
+          <div class="prompt-box-wrap" id="prompt-view-lead">
             <button class="copy-btn-big" onclick="copiarPrompt(this, 'lead')">📋 COPIAR</button>
             <div class="prompt-box" id="prompt-display-lead"></div>
+          </div>
+          <div id="prompt-edit-lead" style="display:none;">
+            <textarea id="prompt-textarea-lead" rows="20" style="width:100%;font-family:Consolas,monospace;font-size:12px;resize:vertical;"></textarea>
+            <div class="flex-row" style="margin-top:8px;gap:6px;">
+              <button class="icon-btn primary" onclick="salvarPromptCustom('lead')">💾 Salvar prompt</button>
+              <button class="icon-btn" onclick="cancelarEdicaoPrompt('lead')">Cancelar</button>
+            </div>
           </div>
         </div>
 
         <div class="prompt-section" id="prompt-section-treino">
-          <div class="prompt-box-wrap">
+          <div class="flex-row gestor-only" style="margin-bottom:8px;gap:6px;flex-wrap:wrap;">
+            <button class="icon-btn" onclick="editarPrompt('treino')">✏️ Editar prompt (gestor)</button>
+            <button class="icon-btn" onclick="restaurarPromptDefault('treino')" style="background:rgba(255,80,80,0.12);border-color:var(--hot);color:var(--hot);">🔄 Restaurar padrão</button>
+            <span id="prompt-status-treino" style="color:var(--muted);font-size:11px;align-self:center;"></span>
+          </div>
+          <div class="prompt-box-wrap" id="prompt-view-treino">
             <button class="copy-btn-big" onclick="copiarPrompt(this, 'treino')">📋 COPIAR</button>
             <div class="prompt-box" id="prompt-display-treino"></div>
+          </div>
+          <div id="prompt-edit-treino" style="display:none;">
+            <textarea id="prompt-textarea-treino" rows="20" style="width:100%;font-family:Consolas,monospace;font-size:12px;resize:vertical;"></textarea>
+            <div class="flex-row" style="margin-top:8px;gap:6px;">
+              <button class="icon-btn primary" onclick="salvarPromptCustom('treino')">💾 Salvar prompt</button>
+              <button class="icon-btn" onclick="cancelarEdicaoPrompt('treino')">Cancelar</button>
+            </div>
           </div>
         </div>
       </div>
@@ -4010,6 +4384,87 @@
     </div>
   </div>
 
+  <!-- MODAL CONVERSA MULTI-TURNO (treinamento ativo) -->
+  <div class="modal-overlay" id="modal-treino-conversa">
+    <div class="modal modal-large" style="max-width:1300px;width:95vw;max-height:95vh;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px;">
+        <div>
+          <h2 style="margin:0 0 4px 0;">💬 Conversa de Treinamento</h2>
+          <p class="subtitle" style="margin:0;">Simule uma conversa completa com o cliente fictício e receba avaliação consolidada ao final.</p>
+        </div>
+        <button class="icon-btn" onclick="fecharModalConversa()" style="font-size:18px;padding:4px 12px;line-height:1;" title="Fechar (não cancela a conversa)">✕</button>
+      </div>
+
+      <!-- Estado: sem conversa — resumo da seleção + toggle modo API + iniciar -->
+      <div id="treino-multi-vazio">
+        <div id="resumo-selecao-multi" class="multi-step-card" style="margin-bottom:10px;"></div>
+        <div class="conversa-empty">
+          <div style="font-size:28px;margin-bottom:4px;">💬</div>
+          <p style="margin:4px 0 0 0;">Você troca turnos com a IA, ela reage como o perfil escolhido, e ao final você recebe avaliação consolidada (nota, técnicas usadas, turno crítico e reescrita).</p>
+        </div>
+        <div id="modo-api-toggle-wrap" class="multi-step-card" style="margin-bottom:10px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;font-size:13px;">
+            <input type="checkbox" id="modo-api-toggle" onchange="trocarModoApi(this.checked)"
+              style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
+            <span><strong>⚡ Conversa automática</strong> <span id="modo-api-status" style="color:var(--muted);font-weight:400;font-size:11.5px;"></span></span>
+          </label>
+        </div>
+        <div class="actions">
+          <button class="btn-primary" onclick="iniciarConversaTreino()">▶️ INICIAR CONVERSA</button>
+          <button class="btn-secondary" onclick="fecharModalConversa()">Voltar</button>
+        </div>
+      </div>
+
+      <!-- Estado: conversa em andamento -->
+      <div id="treino-multi-ativo" style="display:none;">
+        <div class="conversa-header" id="conversa-header"></div>
+
+        <div class="chat-treino" id="chat-treino" style="max-height:60vh;min-height:280px;"></div>
+
+        <div class="multi-step-card" id="step-colar-cliente">
+          <div class="step-label">📥 Próximo passo: cole a fala do cliente</div>
+          <p class="subtitle" style="margin:0 0 8px 0;">Cole no Claude.ai (Projeto "Treinamento Febracis") o prompt copiado, e cole aqui a fala que ele gerou como cliente.</p>
+          <textarea id="multi-fala-cliente" rows="3" placeholder="Cole aqui a fala que o Claude escreveu como cliente fictício..."
+            style="width:100%;resize:vertical;"></textarea>
+          <div class="flex-row" style="margin-top:8px;">
+            <button class="icon-btn primary" onclick="colarFalaCliente()">✓ Adicionar fala do cliente</button>
+          </div>
+        </div>
+
+        <div class="multi-step-card" id="step-responder-consultor" style="display:none;">
+          <div class="step-label">💬 Sua resposta como consultor</div>
+          <textarea id="multi-resposta-consultor" rows="3" placeholder="Sua próxima fala como consultor (digite ou use o microfone)..."
+            style="width:100%;resize:vertical;"></textarea>
+          <div class="flex-row" style="margin-top:8px;gap:6px;flex-wrap:wrap;">
+            <button class="icon-btn primary" onclick="enviarTurnoConsultor()">📋 ENVIAR TURNO</button>
+            <button class="icon-btn" id="btn-voz-multi" onclick="ditarVoz('multi-resposta-consultor', 'btn-voz-multi', '🎙️ Falar')">🎙️ Falar</button>
+          </div>
+        </div>
+
+        <div class="actions" style="margin-top:10px;">
+          <button class="btn-primary" onclick="encerrarTreino()">🏁 ENCERRAR E AVALIAR</button>
+          <button class="icon-btn" onclick="encerrarManualClaude()" title="Pula a API, copia o prompt e abre o cole-resposta — pra usar com Claude.ai (Max)">📋 Avaliar manual (Claude.ai)</button>
+          <button class="btn-secondary" onclick="zerarConversa()" style="background:rgba(255,80,80,0.12);border-color:var(--hot);color:var(--hot);">🔄 Zerar conversa</button>
+          <button class="icon-btn" onclick="fecharModalConversa()" style="margin-left:auto;">Fechar (mantém conversa)</button>
+        </div>
+
+        <div class="multi-step-card" id="step-avaliacao-consolidada" style="display:none;">
+          <div class="step-label">📥 Cole avaliação consolidada</div>
+          <p class="subtitle" style="margin:0 0 8px 0;">Cole no Claude o prompt de avaliação copiado, e cole aqui a resposta com o bloco [META].</p>
+          <div class="flex-row" style="margin-bottom:8px;gap:6px;flex-wrap:wrap;">
+            <button class="icon-btn" onclick="recopiarPromptAvaliacao()">📋 Copiar prompt de novo</button>
+            <button class="icon-btn primary" onclick="abrirClaudeComPromptAvaliacao()">🤖 Abrir Claude.ai (cola com Ctrl+V)</button>
+          </div>
+          <textarea id="multi-avaliacao-ia" rows="6" placeholder="Cole aqui a resposta completa do Claude com o bloco [META]..."
+            style="width:100%;resize:vertical;"></textarea>
+          <div class="flex-row" style="margin-top:8px;">
+            <button class="icon-btn primary" onclick="processarAvaliacaoConsolidada()">💾 Salvar treino</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL DETALHE DE TREINO MULTI-TURNO -->
   <div class="modal-overlay" id="modal-treino-detalhe">
     <div class="modal modal-large">
@@ -4075,7 +4530,7 @@
     // SYSTEM PROMPTS
     // =========================================================================
 
-    const SYSTEM_PROMPT_LEAD = `Você é o AGENTE COMERCIAL FEBRACIS, especialista estratégico em vendas consultivas que apoia consultores comerciais da Febracis a fechar matrículas em treinamentos do método Paulo Vieira / Febracis.
+    let SYSTEM_PROMPT_LEAD = `Você é o AGENTE COMERCIAL FEBRACIS, especialista estratégico em vendas consultivas que apoia consultores comerciais da Febracis a fechar matrículas em treinamentos do método Paulo Vieira / Febracis.
 
 ⚠️ **ATENÇÃO — PRODUTO MULTITREINAMENTO:** o consultor escolhe na interface qual treinamento está vendendo nesta análise. O bloco "📦 PRODUTO ATIVO PARA ESTA ANÁLISE" virá no contexto da mensagem do consultor (junto com a fala do cliente). TODA a análise (DISC, SPIN, espelhamento, técnicas de fechamento, frase pronta) deve estar 100% calibrada para o treinamento ativo informado — formato, público-alvo, conteúdos, dores e objeções específicas. Se o cliente perguntar algo fora do escopo do treinamento ativo (ex: pergunta sobre TCE quando o ativo é outro), redirecione cordialmente.
 
@@ -4213,6 +4668,29 @@ Em TODA análise você DEVE identificar o perfil DISC dominante do cliente pela 
 **OBS DOS AUTORES:** *"Quanto mais intenso um fator, maiores são as chances de um indivíduo ser reconhecido por seus defeitos — e não por suas qualidades."* Quando o cliente apresenta os "defeitos" do perfil dele (D arrogante, I exibicionista, S apático, C perfeccionista paralisado), aplique a flexibilização correspondente em vez de confrontar.
 
 **Perfis são misturas.** Identifique o DOMINANTE (1) e o secundário (1) se claro. Ex: "DC" = direto + técnico. "IS" = sociável + cauteloso. A combinação muda a abordagem.
+
+# 🧬 TIPOS PSICOLÓGICOS (JUNG) — leitura complementar ao DISC
+
+DISC diz **como** o cliente se comporta; Jung diz **como ele processa informação e decide**. Sempre que possível, infira pela fala 3 eixos:
+
+- **Atitude — Extrovertido (E) vs Introvertido (I):** E pensa falando (longo, expansivo, repete ideia). I pensa antes de falar (frase curta, pausa, "deixa eu pensar"). Calibra **ritmo da abordagem** — E aceita áudio longo, I prefere texto e tempo.
+- **Percepção — Sensação (S) vs Intuição (N):** S quer **fato concreto, número, exemplo, prova** ("me mostra um caso, quanto custa, quantos alunos"). N quer **possibilidade, visão, futuro** ("e se eu...", "imagina", "esse mercado tá indo pra onde"). Calibra **tipo de argumento** — S = case com número, N = projeção de cenário.
+- **Julgamento — Pensamento (T) vs Sentimento (F):** T decide por **lógica e ROI** ("isso faz sentido financeiramente?"). F decide por **valores pessoais e impacto humano** ("isso é certo? como afeta minha família/time?"). Calibra **gatilho de fechamento** — T = ROI, F = transformação humana.
+
+⚠️ **Erro comum a evitar:** despejar planilha num Intuitivo (ele desliga) ou pintar visão pra um Sensação (ele desconfia da empresa).
+
+# 💎 VALORES DOMINANTES (SPRANGER) — o que o cliente cobra que o produto resolva
+
+Cada cliente tem 1-2 valores dominantes. Identifique pela fala — ele vai puxar conversa pro valor dele e cobrar que você amarre o Tour/produto a esse valor.
+
+- **Econômico** ($) — cobra ROI, preço, retorno, escala. *Sinais:* "quanto rende", "se paga em quanto tempo", "qual o ROI". Amarra o produto ao **lucro mensurável**.
+- **Político** (poder) — cobra status, autoridade, comando, posição. *Sinais:* "quem mais foi", "alunos do meu nível", "executivos como eu". Amarra ao **círculo e poder**.
+- **Social** (humano) — cobra impacto em pessoas, time, família. *Sinais:* "meu time", "minha família", "quero impactar". Amarra à **transformação humana** que o método gera.
+- **Teórico** (conhecimento) — cobra método, ciência, dado, profundidade. *Sinais:* "qual a metodologia", "como funciona", "tem base científica". Amarra ao **rigor metodológico (CIS, MOPRO, Método dos Dígitos)**.
+- **Estético** (qualidade de vida) — cobra equilíbrio, beleza, harmonia, lifestyle. *Sinais:* "qualidade de vida", "tempo pra mim", "tô esgotado". Amarra a **liberdade do operacional**.
+- **Religioso** (propósito) — cobra alinhamento, sentido maior, transcendência. *Sinais:* "propósito", "legado", "sentido", "missão". Amarra ao **propósito empresarial e legado**.
+
+⚠️ **Regra:** falar só de ROI pra um Político é insulto disfarçado de pitch. Falar só de status pra um Econômico parece superficial. Identifique e calibre — está no Output como seção própria.
 
 # 📚 BANCO DE OBJEÇÕES
 
@@ -4393,6 +4871,21 @@ Quando o setor for identificado, PUXE perguntas deste banco em vez de improvisar
 **Por quê esta técnica:** [1 linha justificando à luz da maturidade e dos sinais]
 **Frase pronta** (calibrada à fala do cliente, usando palavras dele): "[exemplo executável que o consultor pode mandar AGORA]"
 
+## 🌐 Instância de Conexão Identificada
+**Instância dominante na dor:** [1=Eu / 2=Cônjuge / 3=Lar / 4=Profissional / 5=Parentes / 6=Sociais / 7=Comunidade / 8=Propósito] — [nome]
+**Evidência:** "[frase exata do cliente]"
+**Cruzamento de Implicação:** [como amarrar essa instância em outra pra amplificar — ex: "instância 4 (empresa) trava → afeta instância 2 (cônjuge) e instância 1 (autoestima); cobre essa cadeia na próxima fala"]
+
+## 🧬 Leitura Jung + Valor Dominante
+**Jung — Atitude:** [E / I — 1 evidência da fala]
+**Jung — Percepção:** [S / N — 1 evidência] → **argumento que ele aceita:** [case com número | projeção de cenário]
+**Jung — Julgamento:** [T / F — 1 evidência] → **gatilho de fechamento:** [ROI | transformação humana]
+
+**Valor Spranger dominante:** [Econômico / Político / Social / Teórico / Estético / Religioso]
+**Como amarrar o produto a esse valor em 1 frase:** "[frase pronta]"
+
+⚠️ Se a fala for muito curta pra inferir com segurança, escreva "Sinal insuficiente — coletar mais dados" no eixo correspondente. Não chute.
+
 ## 🧠 Perfil Comportamental (DISC) — APENAS se INCLUIR_DISC=SIM
 **Perfil dominante: [D / I / S / C]** ([nome completo] — emoji)
 **Secundário (se claro):** [letra]
@@ -4449,7 +4942,14 @@ Justifique em 1 linha o porquê do score.
 ### 📊 Versão C (DADOS — pra Conformes)
 [Tom técnico, com números específicos, metodologia, comprovações. Pergunta precisa.]
 
-A mensagem DEVE: (1) reconhecer o que o cliente disse, (2) reposicionar com metodologia Paulo Vieira, (3) terminar com pergunta SPIN ou convite que avance pra próxima etapa, (4) JÁ ESTAR CALIBRADA AO PERFIL DISC identificado, (5) ANCORAR pelo menos 2 das palavras-chave extraídas em 🪞 Espelhamento — usando as MESMAS palavras do cliente, não sinônimos.
+A mensagem DEVE: (1) reconhecer o que o cliente disse, (2) reposicionar com metodologia Paulo Vieira, (3) terminar com pergunta SPIN ou convite que avance pra próxima etapa, (4) JÁ ESTAR CALIBRADA AO PERFIL DISC identificado, (5) ANCORAR pelo menos 2 das palavras-chave extraídas em 🪞 Espelhamento — usando as MESMAS palavras do cliente, não sinônimos, (6) AMARRAR ao Valor Spranger dominante identificado (não apenas falar de preço pra um Político ou de status pra um Econômico), (7) RESPEITAR o eixo Jung — Sensação recebe número/case, Intuição recebe cenário/projeção.
+
+**Checklist Q.E. (Goleman) antes de entregar a resposta — autoauditoria obrigatória:**
+- [ ] Não atropela o cliente nem ignora a emoção que ele expressou
+- [ ] Não é robótica nem técnica seca — tem conexão humana
+- [ ] Não busca "vencer" o cliente; busca conectar com ele
+- [ ] Empatia vem ANTES da técnica (validar → reposicionar → perguntar)
+Se algum item falhar, REESCREVA antes de entregar.
 
 Adapte ao canal:
 - WhatsApp texto: 3-6 linhas, quebras estratégicas, 1 emoji no máximo
@@ -4521,6 +5021,30 @@ NUNCA invente preço, data ou condição.
 5. **Marcar, não pedir**: agendamento, canal e próximo passo são DECISÃO sua, não consulta. "Te mando 16h um áudio de 3 minutos." Não "fica bom às 16h?". O cliente impositivo respeita autoridade — quem pede licença sinaliza dependência.
 6. **Imperativo afirmativo** quando for direcionar: "me explica", "me conta", "me passa", "me diz". Não "queria saber", "gostaria de entender".
 
+# 🌐 AS 8 INSTÂNCIAS DE CONEXÃO (Paulo Vieira / livro Decifre e Influencie)
+
+O lead não é só um CPF e um cartão de crédito. Ele é um humano que se relaciona em 8 instâncias simultâneas, e a dor que abre a venda quase sempre vem de uma dessas instâncias travada. Identifique pela fala do cliente qual instância está em crise e amarre o produto ao destravamento dela.
+
+1. **Eu (consigo mesmo)** — autoestima, diálogos internos, vitimização. *Sinais na fala:* "tô perdido", "não me reconheço mais", "não sei mais o que eu quero".
+2. **Cônjuge** — relação conjugal. *Sinais:* "minha esposa não aguenta mais isso", "tô em crise no casamento", "já nem converso direito".
+3. **Lar / família próxima** — quem mora junto (filhos, pais). *Sinais:* "meu filho ta dando trabalho", "não tô presente em casa".
+4. **Profissional / trabalho** — empresa, carreira, equipe. *Sinais:* "minha empresa travou", "perdi a direção", "time não entrega", "tô no operacional 100%". **(É a instância MAIS comum nas dores Febracis.)**
+5. **Parentes** — irmãos, sobrinhos etc. *Sinais:* "briga de irmão na sociedade", "minha família não aceita".
+6. **Sociais (amizades)** — círculo de amigos. *Sinais:* "perdi meus amigos pra empresa", "ninguém entende o que eu passo".
+7. **Comunidade / sociedade** — pessoas que ele não conhece. *Sinais:* "quero impactar mais gente", "quero deixar legado".
+8. **Deus / propósito** — sentido maior. *Sinais:* "sinto que tô fora do meu propósito", "preciso de algo maior que dinheiro".
+
+**Como usar:** quando o cliente solta uma dor de uma instância (ex: "eu vivo no operacional, tô doente, minha esposa não aguenta"), AMPLIFIQUE Implicação cruzando instâncias: "se você não resolve a empresa (instância 4), não resolve o casamento (instância 2) — e nenhuma das duas você resolve esgotado (instância 1)".
+
+# 🧠 Q.E. > Q.I. NA VENDA
+
+O cliente que decide rápido nem sempre é o mais inteligente — é o mais conectado emocionalmente. Q.E. (inteligência emocional) tem 2 dimensões (Daniel Goleman):
+
+- **Competências pessoais (Eu→Eu):** o consultor que se conecta consigo extrai o melhor de si. Se ele tá inseguro, ansioso ou querendo "vencer" o cliente, perde.
+- **Competências sociais (Eu→Outro):** o consultor que se conecta com o cliente extrai o melhor da conversa. Empatia, leitura de DISC, leitura de Jung, leitura de Valor — tudo isso é Q.E. social.
+
+**Princípio Febracis (livro):** "A chave para grandes realizações está na capacidade de estabelecer conexões positivas com o outro." — A reescrita técnica que você sugere ao consultor SEMPRE deve ter alta inteligência emocional: nunca atropela o cliente, nunca é robótica, nunca é só técnica seca. É técnica + conexão.
+
 # ⛔ PRINCÍPIOS
 
 1. NUNCA invente preço, data, cidade, desconto.
@@ -4532,7 +5056,7 @@ NUNCA invente preço, data ou condição.
 
 Aguarde o consultor enviar contexto + fala do cliente.`;
 
-    const SYSTEM_PROMPT_TREINO = `Você é o SIMULADOR DE TREINAMENTO COMERCIAL FEBRACIS. Treina consultores comerciais por meio de role-play.
+    let SYSTEM_PROMPT_TREINO = `Você é o SIMULADOR DE TREINAMENTO COMERCIAL FEBRACIS. Treina consultores comerciais por meio de role-play.
 
 ⚠️ **PRODUTO MULTITREINAMENTO:** o consultor escolhe na interface qual treinamento está praticando. O bloco "📦 PRODUTO ATIVO" virá no contexto da mensagem do consultor (junto com o perfil do cliente fictício). TODA a simulação e avaliação deve estar 100% calibrada para o produto ativo informado.
 
@@ -4579,12 +5103,20 @@ Conversa multi-turno. Você assume APENAS o papel de cliente fictício — não 
 - \`💬 HISTÓRICO_CONVERSA\` (modo cópia/colar): leia o histórico inteiro que vem no user message e responda como o cliente continuaria, reagindo ao último turno do consultor.
 - \`💬 TURNO_CONSULTOR\` ou mensagem simples do consultor (modo API): você já tem o histórico no contexto (mensagens anteriores do thread); responda como o cliente reagindo a esta nova fala do consultor.
 
-**Regras do modo turno:**
-- Responda APENAS como cliente. Sem avaliação, sem [META], sem feedback técnico.
+**Regras do modo turno (LEIA E OBEDEÇA):**
+- Você é **SEMPRE e APENAS o CLIENTE fictício**. NUNCA é o consultor, nunca é o Paulo Vieira, nunca é narrador.
+- ⛔ **NUNCA explique, descreva ou pitch o produto** (Tour, BHP, FCIS etc). Quem pitch é o consultor — você só REAGE como cliente.
+- ⛔ **NUNCA chame o consultor pelo nome** (ex: "Certo, Ana Paula" — Ana Paula é a CLIENTE, ou seja, VOCÊ; nunca chame ninguém pelo nome).
+- ⛔ **NUNCA continue/expanda a fala do consultor**. Se o consultor explicou algo, você REAGE como cliente: questiona, duvida, pede mais detalhe, aceita parcial, contra-argumenta. Você NÃO complementa a explicação dele.
+- ✅ Sempre na 1ª pessoa do cliente: "eu acho", "minha clínica", "no meu caso".
+- Sem avaliação, sem [META], sem feedback técnico, sem markdown decorativo.
 - Tamanho proporcional ao canal (WhatsApp = curto; presencial = mais longo).
 - Mantenha o DISC e a objeção pivot. Suba a aposta às vezes, recue às vezes — gente de verdade.
-- Sem markdown decorativo — escreva como mensagem real.
+- **Verbalize dor de instância** quando fizer sentido na conversa: cliente real solta "minha esposa não aguenta", "meu filho ta sumido", "não me reconheço mais", "sinto que perdi propósito" — não só dor empresarial. Faz parte do treino do consultor LER a instância correta.
+- **Calibre Jung pelo perfil:** Sensação cobra dado/case ("me dá um número", "tem case de [setor]?"). Intuição cobra cenário ("e onde isso vai?", "imagina daqui 2 anos"). Pensamento decide por lógica ("isso fecha matemática?"). Sentimento decide por valores ("isso é certo? como afeta meu time?"). Não interprete o perfil — encarne.
 - Se o consultor "fechar" claramente (marca visita/agenda/avança), reconheça: feche a venda OU sugira encerrar com a frase \`[ENCERRAR_TREINO_SUGERIDO]\` ao final.
+
+**Teste rápido antes de enviar sua resposta:** se sua mensagem ESTÁ explicando o produto, dando dados sobre o evento, ou chamando alguém pelo nome — você ERROU o papel. Reescreva como CLIENTE reagindo, antes de enviar.
 
 ---
 
@@ -4605,7 +5137,13 @@ O consultor encerrou a conversa. Avalie o CONJUNTO de turnos como uma performanc
 [Diga qual turno do consultor (índice 0-based dos turnos COMO CONSULTOR — turno 0 = primeira fala dele) foi o mais decisivo no rumo da conversa. Explique por quê.]
 
 ### 💡 Reescrita do turno crítico
-[Reescrita pronta-pra-copiar do turno crítico, calibrada ao DISC e produto.]
+[Reescrita pronta-pra-copiar do turno crítico, calibrada ao DISC, Valor, Instância e produto.]
+
+### 🌐 Leitura de Instância e Q.E.
+**Instância(s) de dor que o cliente verbalizou:** [ex: 4 (profissional) e 2 (cônjuge)]
+**O consultor leu e cruzou as instâncias?** [Sim — turno X | Parcial | Não — sugestão de como deveria ter cruzado]
+**Q.E. — Eu→Eu (estado interno do consultor):** [Equilibrado | Ansioso/correndo | Querendo "vencer" — cite turno]
+**Q.E. — Eu→Outro (leitura do cliente):** [Leu DISC+Jung+Valor | Leu parcialmente | Pitch padrão — cite turno]
 
 ## 🎯 Resultado da conversa
 [Diga em 1 linha: a conversa fechou, esfriou ou continua ambígua.]
@@ -4618,15 +5156,35 @@ TECNICA_USADA: [técnica dominante usada pelo consultor ao longo da conversa]
 TURNO_CRITICO_INDEX: [número inteiro 0-based do turno do CONSULTOR mais fraco]
 REESCRITA_TURNO_CRITICO: [frase pronta de até 300 caracteres]
 RESULTADO: [um de: fechou | esfriou | continua]
+INSTANCIA_DOR: [número(s) 1-8, separados por vírgula se múltiplas — ex: 4 ou 4,2]
+QE_CONSULTOR: [um de: alto | medio | baixo — alto = leu cliente e regulou estado interno; baixo = atropelou ou tentou vencer]
 [/META]
 
 ---
 
 # 🧠 BASE METODOLÓGICA (TODOS OS MODOS)
 
-- **SPIN Selling:** Situação → Problema → Implicação → Necessidade de solução
-- **DISC:** D=Dominante, I=Influente, S=Estável, C=Conforme — calibre tom pelo DISC do perfil
-- **Linguagem Paulo Vieira:** direta, propositiva, sem rodeios
+Você simula clientes calibrando 3 dimensões (todas vêm prontas no bloco do perfil — não invente):
+
+- **DISC (Marston):** D=Dominante, I=Influente, S=Estável, C=Conforme. Define palavra-chave, emoção observável, motivador, comunicação, tomada de decisão e medos. **Use o bloco "Como o consultor deve abordá-lo" pra avaliar se ele acertou ou errou o tom.**
+- **Tipos Psicológicos (Jung):** Atitude (Extrovertido/Introvertido), Percepção (Sensação/Intuição), Julgamento (Pensamento/Sentimento). Calibra ritmo de fala, profundidade de informação que o cliente exige e como ele decide:
+  - **Sensação** → quer dado concreto, fato, exemplo. **Intuição** → quer possibilidades, visão.
+  - **Pensamento** → decide por lógica. **Sentimento** → decide por valores pessoais e impacto humano.
+- **Valores (Spranger):** Teórico, Econômico, Estético, Social, Político, Religioso. O cliente vai puxar conversa pro valor dominante dele e cobrar que o consultor amarre o produto a esse valor:
+  - Econômico cobra ROI/preço; Político cobra status/poder; Social cobra impacto humano; Estético cobra qualidade de vida; Teórico cobra método/conhecimento; Religioso cobra alinhamento com convicção/propósito.
+- **SPIN Selling (Rackham):** Situação → Problema → Implicação → Necessidade de solução. É a metodologia que o consultor DEVE usar — você avalia se ele aplicou.
+- **Linguagem Paulo Vieira:** direta, propositiva, sem rodeios; "resultados extraordinários", "alta performance", "decisão de líder".
+- **8 Instâncias de Conexão (Vieira/Decifre e Influencie):** 1=Eu, 2=Cônjuge, 3=Lar, 4=Profissional (mais comum), 5=Parentes, 6=Sociais, 7=Comunidade, 8=Propósito. Como cliente, você verbaliza a dor de UMA dessas instâncias (geralmente a 4, mas pode soltar a 2 ou a 1 sob pressão). Como avaliador, cobre se o consultor leu a instância e cruzou com outra na Implicação ("se a empresa trava, o casamento trava — porque você chega esgotado").
+- **Q.E. > Q.I. (Goleman/Vieira):** vendas grandes fecham por conexão emocional, não por argumento técnico. Cobre 2 dimensões na avaliação:
+  - **Eu→Eu (competência pessoal do consultor):** ele estava ansioso, querendo "vencer" o cliente, com tom de pressa? Isso vaza no texto e afasta. Detecte e aponte.
+  - **Eu→Outro (competência social):** ele leu o cliente (DISC + Jung + Valor + Instância) ou despejou pitch padrão? Validou a emoção antes da técnica?
+
+**Na avaliação (modos 🅐 e 🅒), aponte explicitamente quando o consultor:**
+- ignorou o DISC do cliente (ex: foi rápido demais com um S, ou enrolou demais com um D)
+- ignorou a Percepção Jung (deu visão pra um Sensação que queria dado, ou despejou planilha num Intuição)
+- ignorou o Valor dominante (falou só de preço pra um Político que queria status, ou só de status pra um Econômico que queria ROI)
+- ignorou a Instância em crise (cliente abriu dor conjugal/propósito e o consultor voltou pro pitch de empresa sem reconhecer)
+- falhou em Q.E. — atropelou a emoção, foi seco/robótico, ou tentou "vencer" em vez de conectar
 
 # 🎙️ REGRAS DE LINGUAGEM (avaliar a fala do consultor por isso)
 
@@ -4655,6 +5213,21 @@ RESULTADO: [um de: fechou | esfriou | continua]
 5. O bloco [META] é OBRIGATÓRIO nos modos 🅐 e 🅒 — sem markdown dentro do [META]. NÃO inclua [META] no modo 🅑.
 
 Aguarde o user message — siga o cabeçalho.`;
+
+    // Defaults imutáveis — usados pra restaurar e detectar customização
+    const DEFAULT_SYSTEM_PROMPT_LEAD = SYSTEM_PROMPT_LEAD;
+    const DEFAULT_SYSTEM_PROMPT_TREINO = SYSTEM_PROMPT_TREINO;
+    const PROMPT_OVERRIDE_KEY = { lead: 'agente_febracis_prompt_lead', treino: 'agente_febracis_prompt_treino' };
+
+    function aplicarOverridePrompts() {
+      try {
+        var lead = localStorage.getItem(PROMPT_OVERRIDE_KEY.lead);
+        if (lead) SYSTEM_PROMPT_LEAD = lead;
+        var treino = localStorage.getItem(PROMPT_OVERRIDE_KEY.treino);
+        if (treino) SYSTEM_PROMPT_TREINO = treino;
+      } catch(e) {}
+    }
+    aplicarOverridePrompts();
 
     // =========================================================================
     // CATÁLOGO DE TREINAMENTOS — definido em js/data/treinamentos.js
@@ -5010,7 +5583,7 @@ Aguarde o user message — siga o cabeçalho.`;
     function renderAvatar(profile, size) {
       size = size || 64;
       if (profile && profile.avatarDataUrl) {
-        return '<img src="' + escapeHtml(profile.avatarDataUrl) + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="Avatar">';
+        return '<img src="' + escapeHtml(profile.avatarDataUrl) + '" loading="lazy" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="Avatar">';
       }
       var iniciais = ((profile && profile.nome) || '?').split(' ').slice(0,2).map(function(w) { return w[0] || ''; }).join('').toUpperCase() || '?';
       var cor = avatarCorPorNome((profile && profile.nome) || '');
@@ -5211,6 +5784,8 @@ Aguarde o user message — siga o cabeçalho.`;
       if (id === 'modal-setup') {
         document.getElementById('prompt-display-lead').textContent = SYSTEM_PROMPT_LEAD;
         document.getElementById('prompt-display-treino').textContent = SYSTEM_PROMPT_TREINO;
+        atualizarStatusPromptCustom('lead');
+        atualizarStatusPromptCustom('treino');
       }
       if (id === 'modal-templates') renderizarTemplates();
       document.getElementById(id).classList.add('active');
@@ -5243,6 +5818,77 @@ Aguarde o user message — siga o cabeçalho.`;
     function copiarPrompt(btn, qual) {
       const texto = (qual === 'lead') ? SYSTEM_PROMPT_LEAD : SYSTEM_PROMPT_TREINO;
       copiarTexto(texto, btn);
+    }
+
+    function getPromptAtual(qual) {
+      return qual === 'lead' ? SYSTEM_PROMPT_LEAD : SYSTEM_PROMPT_TREINO;
+    }
+
+    function getPromptDefault(qual) {
+      return qual === 'lead' ? DEFAULT_SYSTEM_PROMPT_LEAD : DEFAULT_SYSTEM_PROMPT_TREINO;
+    }
+
+    function setPromptRuntime(qual, valor) {
+      if (qual === 'lead') SYSTEM_PROMPT_LEAD = valor;
+      else SYSTEM_PROMPT_TREINO = valor;
+    }
+
+    function atualizarStatusPromptCustom(qual) {
+      var el = document.getElementById('prompt-status-' + qual);
+      if (!el) return;
+      var personalizado = getPromptAtual(qual) !== getPromptDefault(qual);
+      el.textContent = personalizado ? '✏️ Versão personalizada ativa' : '✓ Padrão de fábrica';
+      el.style.color = personalizado ? 'var(--warm)' : 'var(--muted)';
+    }
+
+    async function editarPrompt(qual) {
+      if (!ehGestor()) { toast('Acesso restrito ao gestor', 'error'); return; }
+      var ok = await verificarSenhaGestor('Confirme sua senha pra editar o prompt');
+      if (!ok) return;
+      // Preenche textarea com valor atual e troca a UI
+      setVal('prompt-textarea-' + qual, getPromptAtual(qual));
+      document.getElementById('prompt-view-' + qual).style.display = 'none';
+      document.getElementById('prompt-edit-' + qual).style.display = '';
+    }
+
+    function cancelarEdicaoPrompt(qual) {
+      document.getElementById('prompt-edit-' + qual).style.display = 'none';
+      document.getElementById('prompt-view-' + qual).style.display = '';
+    }
+
+    function salvarPromptCustom(qual) {
+      if (!ehGestor()) { toast('Acesso restrito ao gestor', 'error'); return; }
+      var novo = (val('prompt-textarea-' + qual) || '').trim();
+      if (!novo) { toast('Prompt vazio — use Restaurar padrão se quiser voltar', 'error'); return; }
+      try {
+        localStorage.setItem(PROMPT_OVERRIDE_KEY[qual], novo);
+        setPromptRuntime(qual, novo);
+        AUDIT.log('editou_prompt', { qual: qual, tamanho: novo.length });
+        toast('Prompt ' + (qual === 'lead' ? 'Lead' : 'Treinamento') + ' salvo (' + novo.length + ' chars)', 'success');
+        cancelarEdicaoPrompt(qual);
+        // Atualiza display
+        document.getElementById('prompt-display-' + qual).textContent = novo;
+        atualizarStatusPromptCustom(qual);
+      } catch(e) { toast('Erro ao salvar: ' + e.message, 'error'); }
+    }
+
+    async function restaurarPromptDefault(qual) {
+      if (!ehGestor()) { toast('Acesso restrito ao gestor', 'error'); return; }
+      if (getPromptAtual(qual) === getPromptDefault(qual)) {
+        toast('Já está no padrão', 'info');
+        return;
+      }
+      if (!confirm('Restaurar o prompt ' + (qual === 'lead' ? 'Lead' : 'Treinamento') + ' pro padrão de fábrica? Sua versão personalizada será descartada.')) return;
+      var ok = await verificarSenhaGestor('Confirme sua senha pra restaurar o padrão');
+      if (!ok) return;
+      try {
+        localStorage.removeItem(PROMPT_OVERRIDE_KEY[qual]);
+        setPromptRuntime(qual, getPromptDefault(qual));
+        AUDIT.log('restaurou_prompt', { qual: qual });
+        toast('Prompt ' + (qual === 'lead' ? 'Lead' : 'Treinamento') + ' restaurado', 'success');
+        document.getElementById('prompt-display-' + qual).textContent = getPromptDefault(qual);
+        atualizarStatusPromptCustom(qual);
+      } catch(e) { toast('Erro: ' + e.message, 'error'); }
     }
 
     // =========================================================================
@@ -5327,7 +5973,7 @@ Aguarde o user message — siga o cabeçalho.`;
     // VOZ (Web Speech API)
     // =========================================================================
     let recognition = null;
-    function ditarVoz(targetId) {
+    function ditarVoz(targetId, btnId, labelOriginal) {
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         toast('Reconhecimento de voz não suportado neste navegador.', 'error');
         return;
@@ -5338,7 +5984,9 @@ Aguarde o user message — siga o cabeçalho.`;
       recognition.interimResults = true;
       recognition.continuous = false;
 
-      const btn = document.getElementById('btn-voz');
+      const btnIdResolvido = btnId || 'btn-voz';
+      const btn = document.getElementById(btnIdResolvido);
+      const labelPadrao = labelOriginal || '🎙️ Voz';
       if (btn) btn.textContent = '🔴 Gravando...';
       toast('Fale agora — pare de falar para terminar', 'info');
 
@@ -5351,14 +5999,14 @@ Aguarde o user message — siga o cabeçalho.`;
         }
         const target = document.getElementById(targetId);
         if (target) target.value = (textoFinal + interim).trim();
-        salvarFormulario();
+        if (typeof salvarFormulario === 'function') salvarFormulario();
       };
       recognition.onerror = function (e) {
         toast('Erro no reconhecimento: ' + e.error, 'error');
-        if (btn) btn.textContent = '🎙️ Voz';
+        if (btn) btn.textContent = labelPadrao;
       };
       recognition.onend = function () {
-        if (btn) btn.textContent = '🎙️ Voz';
+        if (btn) btn.textContent = labelPadrao;
         toast('Gravação encerrada', 'success');
       };
       recognition.start();
@@ -6778,6 +7426,112 @@ Aguarde o user message — siga o cabeçalho.`;
     // =========================================================================
     const PERFIS_TREINO_POR_PRODUTO = (window.FebracisData && window.FebracisData.PERFIS_TREINO_POR_PRODUTO) || {};
 
+    // =========================================================================
+    // ENRIQUECIMENTO DISC + Jung + Spranger
+    // (base teórica: livro "Decifre e Influencie Pessoas", Paulo Vieira & Deibson Silva)
+    // =========================================================================
+    const DISC_RESUMO = {
+      D: {
+        palavraChave: 'Intolerância',
+        emocao: 'Raiva',
+        motivador: 'Desafio / Poder / Resultados imediatos',
+        comunicacao: 'Direta, objetiva, sem rodeios',
+        decisao: 'Racional e rápida',
+        medos: ['falhar', 'perder o poder e a autonomia', 'submeter-se a alguém', 'perder posição em competição', 'reconhecer os próprios erros'],
+        comoLidar: ['vá direto ao ponto, sem rodeios', 'apresente opções claras (deixe a decisão com ele)', 'foque em resultados e ROI', 'evite detalhes técnicos demais', 'mostre o que ele ganha em fechar agora']
+      },
+      I: {
+        palavraChave: 'Sociável',
+        emocao: 'Otimismo',
+        motivador: 'Reconhecimento social / Status',
+        comunicacao: 'Informal, pessoal, com energia',
+        decisao: 'Emocional e rápida',
+        medos: ['rejeição', 'ficar sozinho ou esquecido', 'frustrar expectativas alheias', 'não ser reconhecido', 'perder o prazer e o entusiasmo'],
+        comoLidar: ['comece com small talk genuíno', 'dê espaço para ele falar de si', 'valide ideias e sonhos dele', 'use prova social (quem mais tá fazendo)', 'crie senso de pertencimento']
+      },
+      S: {
+        palavraChave: 'Previsibilidade',
+        emocao: 'Apatia (observável)',
+        motivador: 'Segurança e harmonia',
+        comunicacao: 'Suave, empática, paciente',
+        decisao: 'Emocional e demorada',
+        medos: ['cenários imprevisíveis', 'ter que ousar e arriscar', 'decepcionar ou ser decepcionado', 'perder o autocontrole', 'lidar com conflitos abertos'],
+        comoLidar: ['ritmo calmo, sem pressão', 'demonstre previsibilidade do método', 'evite confronto direto', 'dê garantias e prove segurança', 'mostre como o impacto na rotina será gradual']
+      },
+      C: {
+        palavraChave: 'Crítico',
+        emocao: 'Medo',
+        motivador: 'Informação / Padrões altos / Estar conforme regras',
+        comunicacao: 'Formal, específica, com dados',
+        decisao: 'Racional e demorada',
+        medos: ['cometer falhas', 'não ter informação suficiente', 'receber críticas ao trabalho', 'fazer escolha equivocada', 'desviar das regras'],
+        comoLidar: ['traga dados, números, comprovação', 'seja específico, evite generalidades', 'respeite o tempo de análise dele', 'mostre o método estruturado', 'antecipe e responda objeções com fatos']
+      },
+      DC: {
+        palavraChave: 'Crítico-determinado',
+        emocao: 'Frustração analítica',
+        motivador: 'Resultados com qualidade técnica',
+        comunicacao: 'Direta + específica',
+        decisao: 'Racional, rápida quando há dados',
+        medos: ['falhar por falta de informação', 'submeter-se sem ter analisado', 'comprometer a qualidade do resultado'],
+        comoLidar: ['traga dado E resultado, juntos', 'seja preciso e direto', 'mostre método com prova de execução']
+      },
+      DI: {
+        palavraChave: 'Decidido-influente',
+        emocao: 'Impaciência otimista',
+        motivador: 'Liderar e ser reconhecido',
+        comunicacao: 'Direta + carismática',
+        decisao: 'Emocional e rápida',
+        medos: ['perder o poder e a visibilidade', 'ser ignorado', 'falhar em público'],
+        comoLidar: ['valorize a liderança dele', 'fale de visão e legado', 'feche rápido, sem detalhes excessivos']
+      }
+    };
+
+    // Tipos Psicológicos de Jung — derivados de DISC + contexto
+    function inferirTipoJung(perfil) {
+      var disc = (perfil && perfil.disc) || 'D';
+      // Atitude (E/I): D e I são extrovertidos; S e C são introvertidos
+      var atitude = (disc.indexOf('D') >= 0 || disc.indexOf('I') >= 0) ? 'Extrovertido' : 'Introvertido';
+      // Percepção (S/N): C e S tendem a Sensação (concreto, dados); D e I tendem a Intuição (visão, possibilidades)
+      var percepcao = (disc.indexOf('C') >= 0 || disc === 'S') ? 'Sensação' : 'Intuição';
+      // Julgamento (T/F): D e C tendem a Pensamento (lógica); I e S tendem a Sentimento (relação)
+      var julgamento = (disc.indexOf('D') >= 0 || disc.indexOf('C') >= 0) ? 'Pensamento' : 'Sentimento';
+      return { atitude: atitude, percepcao: percepcao, julgamento: julgamento };
+    }
+
+    // Valores de Spranger — heurística baseada em palavras-chave do contexto/objeção
+    function inferirValoresSpranger(perfil) {
+      if (!perfil) return [];
+      var texto = ((perfil.contexto || '') + ' ' + (perfil.objecaoPivot || '') + ' ' + (perfil.descricao || '')).toLowerCase();
+      var valores = [];
+      var dicio = {
+        Econômico: ['preço', 'caro', 'custo', 'roi', 'retorno', 'lucro', 'investimento', 'dinheiro', 'fatura', 'orçamento', 'economiz'],
+        Teórico: ['estud', 'aprend', 'método', 'metodologia', 'pesquis', 'curso', 'conhec', 'cético', 'analítico', 'dados', 'evidência'],
+        Político: ['poder', 'liderar', 'comand', 'crescer', 'expansão', 'status', 'reconhec', 'autoridade', 'patriarca', 'sucessão', 'empresário consolidado'],
+        Social: ['ajud', 'equipe', 'pessoas', 'time', 'famíl', 'colaborador', 'comunidade', 'servir', 'altruí', 'cuidar'],
+        Estético: ['qualidade de vida', 'harmonia', 'bem-estar', 'equilíbrio', 'arte', 'beleza', 'experiência', 'estilo de vida', 'feminin'],
+        Religioso: ['propósito', 'missão', 'fé', 'espirit', 'crença', 'valores', 'convicç', 'tradição', 'ideal']
+      };
+      Object.keys(dicio).forEach(function(v) {
+        for (var i = 0; i < dicio[v].length; i++) {
+          if (texto.indexOf(dicio[v][i]) >= 0) { valores.push(v); break; }
+        }
+      });
+      // fallback por DISC se nada bater
+      if (!valores.length) {
+        var disc = perfil.disc || 'D';
+        if (disc.indexOf('D') >= 0) valores.push('Político');
+        else if (disc.indexOf('I') >= 0) valores.push('Social');
+        else if (disc === 'S') valores.push('Estético');
+        else if (disc.indexOf('C') >= 0) valores.push('Teórico');
+      }
+      return valores.slice(0, 2); // máximo 2 valores dominantes
+    }
+
+    function getDiscResumo(disc) {
+      return DISC_RESUMO[disc] || DISC_RESUMO[disc && disc.charAt(0)] || DISC_RESUMO.D;
+    }
+
     function getPerfisDoTreinamentoAtivo() {
       const treino = getTreinamentoAtivo();
       return PERFIS_TREINO_POR_PRODUTO[treino.id] || [];
@@ -6842,13 +7596,32 @@ Aguarde o user message — siga o cabeçalho.`;
 
     function montarBlocoPerfilFicticio(perfil) {
       if (!perfil) return '# 🎯 PERFIL DO CLIENTE FICTÍCIO\n\n[perfil não definido — escolha um na interface]';
+      var resumo = getDiscResumo(perfil.disc);
+      var jung = inferirTipoJung(perfil);
+      var valores = inferirValoresSpranger(perfil);
+
       return '# 🎯 PERFIL DO CLIENTE FICTÍCIO\n\n' +
+        '## Identidade\n' +
         '- **Nome do perfil:** ' + perfil.emoji + ' ' + perfil.nome + '\n' +
-        '- **DISC dominante:** ' + perfil.disc + '\n' +
         '- **Frase típica:** "' + perfil.descricao.replace(/^"|"$/g, '') + '"\n' +
         '- **Contexto comportamental:** ' + perfil.contexto + '\n' +
         '- **Objeção pivot:** ' + perfil.objecaoPivot + '\n\n' +
-        '⚠️ Você deve simular ESTE perfil específico, não generalizar. Use o DISC para calibrar o tom da resposta.';
+        '## DISC (Marston)\n' +
+        '- **Fator dominante:** ' + perfil.disc + ' — ' + resumo.palavraChave + '\n' +
+        '- **Emoção observável:** ' + resumo.emocao + '\n' +
+        '- **Motivador interno:** ' + resumo.motivador + '\n' +
+        '- **Estilo de comunicação:** ' + resumo.comunicacao + '\n' +
+        '- **Tomada de decisão:** ' + resumo.decisao + '\n' +
+        '- **Medos a explorar (com cuidado):** ' + resumo.medos.join('; ') + '\n\n' +
+        '## Tipos Psicológicos (Jung)\n' +
+        '- **Atitude:** ' + jung.atitude + ' — ' + (jung.atitude === 'Extrovertido' ? 'fala mais, age primeiro, energiza-se na interação' : 'reflete antes de falar, energiza-se no silêncio') + '\n' +
+        '- **Percepção:** ' + jung.percepcao + ' — ' + (jung.percepcao === 'Sensação' ? 'pede dados concretos, fatos, exemplos práticos' : 'capta possibilidades, intuição, visão de futuro') + '\n' +
+        '- **Julgamento:** ' + jung.julgamento + ' — ' + (jung.julgamento === 'Pensamento' ? 'decide por lógica e causa-efeito' : 'decide por valores pessoais e impacto humano') + '\n\n' +
+        '## Valores prováveis (Spranger)\n' +
+        '- **' + (valores.join(' + ') || '—') + '** — use isso pra adivinhar o que ele MAIS valoriza ao decidir comprar\n\n' +
+        '## Como o consultor deve abordá-lo\n' +
+        resumo.comoLidar.map(function(d) { return '- ' + d; }).join('\n') + '\n\n' +
+        '⚠️ Simule ESTE perfil específico, não generalize. Use TODOS esses planos (DISC + Jung + Valores) para calibrar tom, ritmo, vocabulário e objeções. A objeção pivot é o gatilho central — volte sempre a ela se o consultor não soube tratá-la.';
     }
 
     function gerarTreinoPrompt() {
@@ -7097,13 +7870,24 @@ Aguarde o user message — siga o cabeçalho.`;
     function aplicarModoTreino() {
       var modo = DB.data.modoTreinoPreferido || 'single';
       var single = document.getElementById('treino-single-shot');
-      var multi = document.getElementById('treino-multi-turno');
       if (single) single.style.display = modo === 'single' ? '' : 'none';
-      if (multi) multi.style.display = modo === 'multi' ? '' : 'none';
       document.querySelectorAll('#modo-treino-toggle .modo-btn').forEach(function(b) {
         b.classList.toggle('ativo', b.getAttribute('data-modo') === modo);
       });
-      if (modo === 'multi') atualizarUIMultiTurno();
+      var modal = document.getElementById('modal-treino-conversa');
+      if (modo === 'multi') {
+        if (modal) modal.classList.add('active');
+        atualizarUIMultiTurno();
+      } else {
+        if (modal) modal.classList.remove('active');
+      }
+    }
+
+    function fecharModalConversa() {
+      // Fecha o modal sem cancelar a conversa — volta o toggle pro single-shot
+      DB.data.modoTreinoPreferido = 'single';
+      DB.save();
+      aplicarModoTreino();
     }
 
     function atualizarUIMultiTurno() {
@@ -7116,16 +7900,17 @@ Aguarde o user message — siga o cabeçalho.`;
       var toggle = document.getElementById('modo-api-toggle');
       var statusEl = document.getElementById('modo-api-status');
       if (toggle && statusEl) {
-        var keyOk = temAnthropicKey();
+        var provider = provedorIaAtivo();
+        var keyOk = !!provider;
         toggle.disabled = !keyOk;
         if (!keyOk) {
           DB.data.modoApiPreferido = false;
           toggle.checked = false;
-          statusEl.textContent = '— sem chave Anthropic em api-key.js (modo cópia/colar segue funcionando)';
+          statusEl.textContent = '— sem chave Anthropic ou Gemini em api-key.js (modo cópia/colar segue funcionando)';
         } else {
           toggle.checked = !!DB.data.modoApiPreferido;
           statusEl.textContent = toggle.checked
-            ? '— IA responde sozinha via API ' + MODELO_ANTHROPIC_DEFAULT
+            ? '— IA responde sozinha via ' + rotuloProvedor(provider)
             : '— se desligado, usa o fluxo de cópia/colar com Claude.ai';
         }
       }
@@ -7133,6 +7918,7 @@ Aguarde o user message — siga o cabeçalho.`;
       if (!conv || conv.status !== 'ativo') {
         vazio.style.display = '';
         ativo.style.display = 'none';
+        renderizarResumoSelecaoMulti();
         return;
       }
 
@@ -7146,22 +7932,27 @@ Aguarde o user message — siga o cabeçalho.`;
         var badgeApi = conv.modoApi
           ? ' <span style="background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:700;letter-spacing:0.3px;">⚡ AUTO</span>'
           : '';
+        var n = conv.turnos.length;
+        var corContador = n >= MAX_TURNOS_TREINO ? 'var(--hot)' : (n >= MAX_TURNOS_TREINO - 4 ? 'var(--warm)' : 'var(--muted)');
+        var alertaProx = (n >= MAX_TURNOS_TREINO - 4 && n < MAX_TURNOS_TREINO) ? ' ⚠️ próximo do limite' : '';
+        var alertaCheio = n >= MAX_TURNOS_TREINO ? ' 🛑 limite atingido — encerre e avalie' : '';
         header.innerHTML =
           '<div><strong>' + escapeHtml(treinamentoNome) + '</strong> · ' +
             escapeHtml(conv.perfilNome || '') + ' <span style="color:var(--muted);">(' + escapeHtml(conv.perfilDisc || '') + ')</span>' + badgeApi + '</div>' +
           '<div style="color:var(--muted);font-size:11px;">' +
             'Etapa: ' + escapeHtml(conv.etapa || '') + ' · Canal: ' + escapeHtml(conv.canal || '') +
-            ' · ' + (conv.turnos.length) + ' turno(s)' +
+            ' · <span style="color:' + corContador + ';font-weight:700;">' + n + '/' + MAX_TURNOS_TREINO + ' turnos</span>' +
+            '<span style="color:' + corContador + ';">' + alertaProx + alertaCheio + '</span>' +
           '</div>';
       }
 
       renderizarChatTreino();
 
-      // estado: aguardando avaliação consolidada (só copy/paste)
+      // estado: aguardando avaliação consolidada (copy/paste OU fallback do API quando [META] não veio)
       var stepAval = document.getElementById('step-avaliacao-consolidada');
       var stepCliente = document.getElementById('step-colar-cliente');
       var stepConsultor = document.getElementById('step-responder-consultor');
-      if (conv.aguardandoAvaliacao && !conv.modoApi) {
+      if (conv.aguardandoAvaliacao) {
         if (stepCliente) stepCliente.style.display = 'none';
         if (stepConsultor) stepConsultor.style.display = 'none';
         if (stepAval) stepAval.style.display = '';
@@ -7184,9 +7975,27 @@ Aguarde o user message — siga o cabeçalho.`;
       }
     }
 
+    function renderizarResumoSelecaoMulti() {
+      var alvo = document.getElementById('resumo-selecao-multi');
+      if (!alvo) return;
+      var treinamento = getTreinamentoAtivo();
+      var perfil = getPerfilTreinoAtivo();
+      var etapa = getLabel('treino-etapa');
+      var canal = getLabel('treino-canal');
+      var perfilTxt = perfil ? (perfil.emoji + ' ' + perfil.nome + ' (' + perfil.disc + ')') : '<span style="color:var(--warm);">Nenhum perfil selecionado — feche e escolha um</span>';
+      alvo.innerHTML =
+        '<div class="step-label">📦 Você vai treinar com</div>' +
+        '<div style="font-size:13px;line-height:1.7;">' +
+          '<div><strong>Produto:</strong> ' + escapeHtml(treinamento.emoji + ' ' + treinamento.nome) + '</div>' +
+          '<div><strong>Perfil:</strong> ' + perfilTxt + '</div>' +
+          '<div><strong>Etapa:</strong> ' + escapeHtml(etapa) + ' · <strong>Canal:</strong> ' + escapeHtml(canal) + '</div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Pra trocar produto/perfil/etapa, feche este modal e ajuste os campos no card de treinamento.</div>';
+    }
+
     function trocarModoApi(ativar) {
-      if (ativar && !temAnthropicKey()) {
-        toast('Cole sua chave Anthropic em js/data/api-key.js para usar o modo automático.', 'error');
+      if (ativar && !temIaConfigurada()) {
+        toast('Cole sua chave Anthropic ou Gemini em js/data/api-key.js para usar o modo automático.', 'error');
         var t = document.getElementById('modo-api-toggle');
         if (t) t.checked = false;
         return;
@@ -7224,7 +8033,7 @@ Aguarde o user message — siga o cabeçalho.`;
       var etapa = getLabel('treino-etapa');
       var canal = getLabel('treino-canal');
 
-      var modoApi = !!DB.data.modoApiPreferido && temAnthropicKey();
+      var modoApi = !!DB.data.modoApiPreferido && temIaConfigurada();
 
       DB.data.conversaTreinoAtual = {
         id: uid(),
@@ -7258,6 +8067,10 @@ Aguarde o user message — siga o cabeçalho.`;
     function colarFalaCliente() {
       var conv = DB.data.conversaTreinoAtual;
       if (!conv || conv.status !== 'ativo') { toast('Inicie a conversa primeiro', 'error'); return; }
+      if (conv.turnos.length >= MAX_TURNOS_TREINO) {
+        toast('Limite de ' + MAX_TURNOS_TREINO + ' turnos atingido — clique em Encerrar e Avaliar.', 'error');
+        return;
+      }
       var texto = val('multi-fala-cliente');
       if (!texto) { toast('Cole a fala do cliente', 'error'); return; }
 
@@ -7279,6 +8092,10 @@ Aguarde o user message — siga o cabeçalho.`;
       var conv = DB.data.conversaTreinoAtual;
       if (!conv || conv.status !== 'ativo') { toast('Inicie a conversa primeiro', 'error'); return; }
 
+      if (conv.turnos.length >= MAX_TURNOS_TREINO) {
+        toast('Limite de ' + MAX_TURNOS_TREINO + ' turnos atingido — clique em Encerrar e Avaliar.', 'error');
+        return;
+      }
       if (conv.modoApi) { enviarTurnoConsultorApi(); return; }
 
       var resposta = val('multi-resposta-consultor');
@@ -7320,6 +8137,73 @@ Aguarde o user message — siga o cabeçalho.`;
       return linhas.join('\n');
     }
 
+    function montarPromptAvaliacaoTexto(conv) {
+      var treinamento = TREINAMENTOS.find(function(t) { return t.id === conv.treinamentoId; }) || getTreinamentoAtivo();
+      var perfis = PERFIS_TREINO_POR_PRODUTO[conv.treinamentoId] || [];
+      var perfil = perfis.find(function(p) { return p.id === conv.perfilId; }) || getPerfilTreinoAtivo();
+      var nConsultor = conv.turnos.filter(function(t) { return t.autor === 'consultor'; }).length;
+
+      return montarBlocoProduto(treinamento) + '\n\n---\n\n' +
+        montarBlocoPerfilFicticio(perfil) + '\n\n---\n\n' +
+        '# 📍 CENÁRIO\n\n- **Etapa:** ' + conv.etapa + '\n- **Canal:** ' + conv.canal + '\n\n' +
+        montarBlocoHistoricoConversa(conv.turnos) + '\n\n' +
+        '# 🎯 AVALIAÇÃO_CONSOLIDADA\n\n' +
+        'A conversa terminou. Avalie a performance do CONSULTOR ao longo dos ' + nConsultor + ' turnos dele. ' +
+        'Siga o formato 🅒 do system prompt. Sua resposta DEVE TERMINAR com o bloco [META] EXATAMENTE neste formato:\n\n' +
+        '[META]\n' +
+        'NOTA: <0-10 com 1 decimal>\n' +
+        'PONTOS_FORTES: <texto curto, separado por ;>\n' +
+        'PONTOS_FRACOS: <texto curto, separado por ;>\n' +
+        'TECNICA_USADA: <técnica dominante>\n' +
+        'TURNO_CRITICO_INDEX: <inteiro 0-based dos turnos do consultor>\n' +
+        'REESCRITA_TURNO_CRITICO: <frase pronta de até 300 chars>\n' +
+        'RESULTADO: <fechou | esfriou | continua>\n' +
+        '[/META]';
+    }
+
+    function recopiarPromptAvaliacao() {
+      var conv = DB.data.conversaTreinoAtual;
+      if (!conv) { toast('Sem conversa ativa', 'error'); return; }
+      var prompt = montarPromptAvaliacaoTexto(conv);
+      copiarTexto(prompt).then(function() {
+        toast('Prompt de avaliação copiado de novo — cole no Claude.ai.', 'success');
+      });
+    }
+
+    function abrirClaudeComPromptAvaliacao() {
+      var conv = DB.data.conversaTreinoAtual;
+      if (!conv) { toast('Sem conversa ativa', 'error'); return; }
+      var prompt = montarPromptAvaliacaoTexto(conv);
+      copiarTexto(prompt).then(function() {
+        toast('Prompt copiado! Abrindo Claude.ai... cole com Ctrl+V no chat e cole a resposta de volta aqui.', 'success');
+        window.open('https://claude.ai/new', '_blank', 'noopener');
+      }).catch(function() {
+        toast('Falha ao copiar — use o botão "Copiar prompt de novo" e depois abra claude.ai manualmente', 'error');
+      });
+    }
+
+    function encerrarManualClaude() {
+      var conv = DB.data.conversaTreinoAtual;
+      if (!conv || conv.status !== 'ativo') { toast('Sem conversa ativa', 'error'); return; }
+      var nConsultor = conv.turnos.filter(function(t) { return t.autor === 'consultor'; }).length;
+      if (nConsultor < 2) {
+        toast('Treino curto demais — faça pelo menos 2 turnos como consultor antes de encerrar.', 'error');
+        return;
+      }
+      fallbackAvaliacaoManual(conv);
+    }
+
+    function fallbackAvaliacaoManual(conv, motivo) {
+      // Cai pro modo cópia/colar — gera prompt, copia pra clipboard, abre textarea manual
+      conv.aguardandoAvaliacao = true;
+      DB.save();
+      var prompt = montarPromptAvaliacaoTexto(conv);
+      copiarTexto(prompt).then(function() {
+        toast((motivo ? motivo + ' ' : '') + 'Prompt de avaliação copiado — cole no Claude.ai (Max) e cole a resposta no campo abaixo.', 'info');
+      });
+      atualizarUIMultiTurno();
+    }
+
     function encerrarTreino() {
       var conv = DB.data.conversaTreinoAtual;
       if (!conv || conv.status !== 'ativo') { toast('Sem conversa ativa', 'error'); return; }
@@ -7332,24 +8216,7 @@ Aguarde o user message — siga o cabeçalho.`;
         return;
       }
 
-      var treinamento = TREINAMENTOS.find(function(t) { return t.id === conv.treinamentoId; }) || getTreinamentoAtivo();
-      var perfis = PERFIS_TREINO_POR_PRODUTO[conv.treinamentoId] || [];
-      var perfil = perfis.find(function(p) { return p.id === conv.perfilId; }) || getPerfilTreinoAtivo();
-
-      var userMsg = montarBlocoProduto(treinamento) + '\n\n---\n\n' +
-        montarBlocoPerfilFicticio(perfil) + '\n\n---\n\n' +
-        '# 📍 CENÁRIO\n\n- **Etapa:** ' + conv.etapa + '\n- **Canal:** ' + conv.canal + '\n\n' +
-        montarBlocoHistoricoConversa(conv.turnos) + '\n\n' +
-        '# 🎯 AVALIAÇÃO_CONSOLIDADA\n\n' +
-        'A conversa terminou. Avalie o conjunto da performance do CONSULTOR ao longo dos ' + turnosConsultor + ' turnos dele. Siga o formato 🅒 do system prompt — incluindo o bloco [META] obrigatório com TURNO_CRITICO_INDEX (0-based dos turnos do consultor), REESCRITA_TURNO_CRITICO e RESULTADO.';
-
-      conv.aguardandoAvaliacao = true;
-      DB.save();
-
-      copiarTexto(userMsg).then(function() {
-        toast('Prompt de avaliação copiado. Cole no Claude e cole a resposta abaixo.', 'success');
-      });
-      atualizarUIMultiTurno();
+      fallbackAvaliacaoManual(conv);
     }
 
     function processarAvaliacaoConsolidada() {
@@ -7434,16 +8301,57 @@ Aguarde o user message — siga o cabeçalho.`;
       toast('Treino cancelado', 'info');
     }
 
+    function zerarConversa() {
+      var conv = DB.data.conversaTreinoAtual;
+      if (!conv) return;
+      if (!confirm('Zerar a conversa atual? Os turnos serão descartados sem salvar.')) return;
+      DB.data.conversaTreinoAtual = null;
+      DB.save();
+      atualizarUIMultiTurno();
+      toast('Conversa zerada — clique em Iniciar para começar uma nova', 'info');
+    }
+
     // =========================================================================
-    // TREINAMENTO — MODO API DIRETA (Anthropic)
+    // TREINAMENTO — MODO API DIRETA (Anthropic / Gemini)
     // =========================================================================
 
     var MODELO_ANTHROPIC_DEFAULT = 'claude-sonnet-4-6';
+    var MODELO_GEMINI_DEFAULT = 'gemini-2.5-flash';
+    var MODELOS_GEMINI_FALLBACK = ['gemini-2.5-flash', 'gemini-2.0-flash']; // tenta nessa ordem se 429
+    var MAX_TURNOS_TREINO = 20;
     var _treinoApiBusy = false;
 
     function temAnthropicKey() {
       var k = (window.FebracisData && window.FebracisData.API_KEY_ANTHROPIC) || '';
       return typeof k === 'string' && k.indexOf('sk-ant-') === 0;
+    }
+
+    function temGeminiKey() {
+      var k = (window.FebracisData && window.FebracisData.API_KEY_GEMINI) || '';
+      return typeof k === 'string' && k.indexOf('AIza') === 0;
+    }
+
+    function provedorIaAtivo() {
+      if (temAnthropicKey()) return 'anthropic';
+      if (temGeminiKey()) return 'gemini';
+      return null;
+    }
+
+    function temIaConfigurada() {
+      return provedorIaAtivo() !== null;
+    }
+
+    function rotuloProvedor(p) {
+      if (p === 'anthropic') return 'Claude ' + MODELO_ANTHROPIC_DEFAULT;
+      if (p === 'gemini') return 'Gemini ' + MODELO_GEMINI_DEFAULT;
+      return '—';
+    }
+
+    async function chamarIaAPI(messages, opts) {
+      var provider = provedorIaAtivo();
+      if (provider === 'anthropic') return chamarClaudeAPI(messages, opts);
+      if (provider === 'gemini') return chamarGeminiAPI(messages, opts);
+      throw new Error('Nenhuma chave de IA configurada em api-key.js');
     }
 
     function montarPrimeiraMensagemApi(treinamento, perfil, etapa, canal) {
@@ -7479,7 +8387,19 @@ Aguarde o user message — siga o cabeçalho.`;
         var nConsultor = conv.turnos.filter(function(t) { return t.autor === 'consultor'; }).length;
         messages.push({
           role: 'user',
-          content: '# 🎯 AVALIAÇÃO_CONSOLIDADA\n\nA conversa terminou. Avalie o conjunto da performance do CONSULTOR ao longo dos ' + nConsultor + ' turnos dele. Siga o formato 🅒 do system prompt — incluindo o bloco [META] obrigatório com TURNO_CRITICO_INDEX (0-based dos turnos do consultor), REESCRITA_TURNO_CRITICO e RESULTADO.'
+          content: '# 🎯 AVALIAÇÃO_CONSOLIDADA\n\n' +
+            'A conversa terminou. Avalie a performance do CONSULTOR ao longo dos ' + nConsultor + ' turnos dele.\n\n' +
+            'Siga o formato 🅒 do system prompt. Sua resposta DEVE TERMINAR com o bloco [META] EXATAMENTE neste formato (sem markdown dentro do META):\n\n' +
+            '[META]\n' +
+            'NOTA: <0-10 com 1 decimal>\n' +
+            'PONTOS_FORTES: <texto curto, separado por ;>\n' +
+            'PONTOS_FRACOS: <texto curto, separado por ;>\n' +
+            'TECNICA_USADA: <técnica dominante>\n' +
+            'TURNO_CRITICO_INDEX: <inteiro 0-based dos turnos do consultor>\n' +
+            'REESCRITA_TURNO_CRITICO: <frase pronta de até 300 chars>\n' +
+            'RESULTADO: <fechou | esfriou | continua>\n' +
+            '[/META]\n\n' +
+            '⛔ Se você não terminar com o bloco [META] exato, o app NÃO consegue salvar o treino e tudo é perdido. Não esqueça.'
         });
       }
       return messages;
@@ -7490,6 +8410,7 @@ Aguarde o user message — siga o cabeçalho.`;
       var key = window.FebracisData.API_KEY_ANTHROPIC;
       var modelo = opts.modelo || MODELO_ANTHROPIC_DEFAULT;
       var maxTokens = opts.maxTokens || 1024;
+      var temperature = typeof opts.temperature === 'number' ? opts.temperature : 0.85;
 
       var resp;
       try {
@@ -7504,6 +8425,7 @@ Aguarde o user message — siga o cabeçalho.`;
           body: JSON.stringify({
             model: modelo,
             max_tokens: maxTokens,
+            temperature: temperature,
             system: SYSTEM_PROMPT_TREINO,
             messages: messages
           })
@@ -7527,6 +8449,100 @@ Aguarde o user message — siga o cabeçalho.`;
         data.content.forEach(function(b) { if (b.type === 'text') texto += b.text; });
       }
       return texto.trim();
+    }
+
+    async function chamarGeminiAPI(messages, opts) {
+      opts = opts || {};
+      // Se opts.modelo for explícito, só esse. Senão, tenta o default + fallbacks.
+      var modelos = opts.modelo ? [opts.modelo] : MODELOS_GEMINI_FALLBACK.slice();
+      var ultimoErro;
+      for (var i = 0; i < modelos.length; i++) {
+        try {
+          return await _chamarGeminiUmModelo(modelos[i], messages, opts);
+        } catch (err) {
+          ultimoErro = err;
+          // Só faz fallback se for 429 (quota) e tiver próximo modelo na fila
+          if (err && err.is429 && i < modelos.length - 1) {
+            if (typeof setBusyMultiTurno === 'function') {
+              setBusyMultiTurno(true, 'Cota do ' + modelos[i] + ' estourou — tentando ' + modelos[i+1] + '...');
+            }
+            continue;
+          }
+          throw err;
+        }
+      }
+      throw ultimoErro || new Error('Falha em todos os modelos Gemini');
+    }
+
+    async function _chamarGeminiUmModelo(modelo, messages, opts) {
+      var key = window.FebracisData.API_KEY_GEMINI;
+      var maxTokens = opts.maxTokens || 1024;
+      var temperature = typeof opts.temperature === 'number' ? opts.temperature : 0.85;
+
+      // Converte formato Anthropic (role:'assistant') → Gemini (role:'model')
+      var contents = messages.map(function(m) {
+        return {
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        };
+      });
+
+      var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + modelo + ':generateContent?key=' + encodeURIComponent(key);
+      var body = JSON.stringify({
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT_TREINO }] },
+        contents: contents,
+        generationConfig: { maxOutputTokens: maxTokens, temperature: temperature }
+      });
+
+      // Tenta até 2x no mesmo modelo (backoff curto pra rate limit por minuto)
+      for (var tentativa = 1; tentativa <= 2; tentativa++) {
+        var resp;
+        try {
+          resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+          });
+        } catch (err) {
+          throw new Error('Falha de rede ao chamar a API: ' + (err.message || err));
+        }
+
+        if (resp.ok) {
+          var data = await resp.json();
+          var texto = '';
+          if (data && data.candidates && data.candidates[0]) {
+            var cand = data.candidates[0];
+            if (cand.content && Array.isArray(cand.content.parts)) {
+              cand.content.parts.forEach(function(p) { if (p.text) texto += p.text; });
+            }
+          }
+          if (!texto) {
+            var bloqueado = data && data.promptFeedback && data.promptFeedback.blockReason;
+            if (bloqueado) throw new Error('Gemini bloqueou o conteúdo: ' + bloqueado);
+          }
+          return texto.trim();
+        }
+
+        // 503 = sobrecarregado: 1 retry com backoff
+        if (resp.status === 503 && tentativa === 1) {
+          if (typeof setBusyMultiTurno === 'function') {
+            setBusyMultiTurno(true, modelo + ' sobrecarregado, esperando 4s...');
+          }
+          await new Promise(function(r) { setTimeout(r, 4000); });
+          continue;
+        }
+
+        var errMsg = 'Erro HTTP ' + resp.status;
+        try {
+          var errJson = await resp.json();
+          if (errJson && errJson.error && errJson.error.message) errMsg += ' · ' + errJson.error.message;
+        } catch(e) {}
+
+        var erro = new Error(errMsg);
+        erro.status = resp.status;
+        erro.is429 = resp.status === 429;
+        throw erro;
+      }
     }
 
     function setBusyMultiTurno(busy, mensagem) {
@@ -7555,7 +8571,7 @@ Aguarde o user message — siga o cabeçalho.`;
       setBusyMultiTurno(true, 'Cliente fictício se preparando...');
       try {
         var messages = montarMessagesApi(conv, 'iniciar');
-        var falaCliente = await chamarClaudeAPI(messages, { maxTokens: 800 });
+        var falaCliente = await chamarIaAPI(messages, { maxTokens: 800 });
         if (!falaCliente) throw new Error('Resposta vazia da IA');
         var sugereEncerrar = /\[ENCERRAR_TREINO_SUGERIDO\]/i.test(falaCliente);
         var textoLimpo = falaCliente.replace(/\[ENCERRAR_TREINO_SUGERIDO\]/gi, '').trim();
@@ -7576,6 +8592,11 @@ Aguarde o user message — siga o cabeçalho.`;
     async function enviarTurnoConsultorApi() {
       var conv = DB.data.conversaTreinoAtual;
       if (!conv || conv.status !== 'ativo') { toast('Sem conversa ativa', 'error'); return; }
+      if (conv.turnos.length >= MAX_TURNOS_TREINO - 1) {
+        // -1 porque vamos adicionar consultor + cliente (2 turnos) — limite atinge no próximo cliente
+        toast('Limite de ' + MAX_TURNOS_TREINO + ' turnos próximo — clique em Encerrar e Avaliar.', 'error');
+        return;
+      }
       var resposta = val('multi-resposta-consultor');
       if (!resposta) { toast('Escreva sua resposta', 'error'); return; }
 
@@ -7587,7 +8608,7 @@ Aguarde o user message — siga o cabeçalho.`;
       setBusyMultiTurno(true, 'Cliente pensando...');
       try {
         var messages = montarMessagesApi(conv, 'turno');
-        var falaCliente = await chamarClaudeAPI(messages, { maxTokens: 800 });
+        var falaCliente = await chamarIaAPI(messages, { maxTokens: 800 });
         if (!falaCliente) throw new Error('Resposta vazia da IA');
         var sugereEncerrar = /\[ENCERRAR_TREINO_SUGERIDO\]/i.test(falaCliente);
         var textoLimpo = falaCliente.replace(/\[ENCERRAR_TREINO_SUGERIDO\]/gi, '').trim();
@@ -7615,11 +8636,20 @@ Aguarde o user message — siga o cabeçalho.`;
       setBusyMultiTurno(true, 'Avaliando a conversa...');
       try {
         var messages = montarMessagesApi(conv, 'avaliacao');
-        var avaliacao = await chamarClaudeAPI(messages, { maxTokens: 2000 });
+        var avaliacao = await chamarIaAPI(messages, { maxTokens: 3500, temperature: 0.4 });
         if (!avaliacao) throw new Error('Resposta vazia da IA');
 
         var matchMeta = avaliacao.match(/\[META\]([\s\S]*?)\[\/META\]/i);
-        if (!matchMeta) throw new Error('Bloco [META] não encontrado na resposta da IA');
+        if (!matchMeta) {
+          // Fallback: joga a resposta crua no textarea manual pra usuário editar/completar
+          conv.aguardandoAvaliacao = true;
+          DB.save();
+          setBusyMultiTurno(false);
+          atualizarUIMultiTurno();
+          setVal('multi-avaliacao-ia', avaliacao);
+          toast('A IA não fechou o bloco [META]. Resposta dela está no campo abaixo — complete o [META] e clique Salvar.', 'error');
+          return;
+        }
 
         var meta = matchMeta[1];
         var getKey = function(k) {
@@ -7675,7 +8705,12 @@ Aguarde o user message — siga o cabeçalho.`;
         toast('Treino registrado: ' + nota + '/10 · ' + turnosConsultor + ' turnos · ' + emoji + ' ' + resultado, 'success');
         renderizarTreinoHistory();
       } catch (err) {
-        toast('Erro ao avaliar: ' + err.message + ' — você pode tentar de novo ou cancelar.', 'error');
+        // Falhou na API: cai pro modo cópia/colar pra usuário usar Claude.ai (Max) ou outro
+        setBusyMultiTurno(false);
+        var motivo = err && err.is429
+          ? '⚠️ Cota dos modelos Gemini esgotada hoje.'
+          : '⚠️ Erro ao avaliar via API: ' + (err.message || 'desconhecido') + '.';
+        fallbackAvaliacaoManual(DB.data.conversaTreinoAtual, motivo);
       } finally {
         setBusyMultiTurno(false);
         atualizarUIMultiTurno();
@@ -7737,125 +8772,480 @@ Aguarde o user message — siga o cabeçalho.`;
     // BIBLIOTECA — CASES, RESPOSTAS, ROI
     // =========================================================================
     const CASES_POR_SETOR = [
-      {
-        setor: 'Varejo', icone: '🛒', titulo: 'Rede de lojas que multiplicou faturamento em 18 meses',
-        texto: 'Empresário de varejo com 4 lojas, faturamento estagnado em R$ 800k/mês há 2 anos. Aplicou o Método dos Dígitos no marketing digital + estruturou time de vendas com KPIs claros. Em 18 meses: 9 lojas, R$ 2,4mi/mês.'
-      },
-      {
-        setor: 'Serviços', icone: '🏢', titulo: 'Consultoria que saiu de R$ 50k para R$ 400k/mês',
-        texto: 'Consultor solo virou empresa de consultoria com 12 colaboradores. Estruturou processos de prospecção (SPIN), criou times comerciais e aumentou ticket médio 4x.'
-      },
-      {
-        setor: 'Saúde / Estética', icone: '💉', titulo: 'Clínica que dobrou agenda em 6 meses',
-        texto: 'Clínica de estética com agenda em 60% de ocupação. Aplicou marketing digital direcionado + treinou time de recepção em vendas consultivas. Resultado: 95% de ocupação e ticket 30% maior.'
-      },
-      {
-        setor: 'Indústria', icone: '🏭', titulo: 'Indústria familiar que se profissionalizou',
-        texto: 'Empresa familiar com sucessão complicada. Aplicou planejamento estratégico Febracis, definiu KPIs por área, montou conselho. Faturamento subiu 70% em 24 meses, sucessão estruturada.'
-      },
-      {
-        setor: 'Tecnologia', icone: '💻', titulo: 'Startup B2B que escalou vendas',
-        texto: 'SaaS B2B com 12 clientes em 8 meses (CAC alto demais). Reestruturou pitch comercial com SPIN, definiu ICP claro. Em 6 meses: 89 clientes, CAC reduzido em 60%.'
-      },
-      {
-        setor: 'Alimentação', icone: '🍽️', titulo: 'Restaurante que virou rede',
-        texto: 'Restaurante único, fila de espera mas margem ruim. Aplicou Método dos Dígitos, otimizou cardápio e posicionamento. Hoje: 4 unidades, margem 3x maior.'
-      },
-      {
-        setor: 'Construção / Imobiliária', icone: '🏗️', titulo: 'Imobiliária que profissionalizou vendas',
-        texto: 'Imobiliária com 6 corretores, conversão baixa. Treinou time inteiro em SPIN + roteiros padronizados. VGV 2,5x em 12 meses.'
-      },
-      {
-        setor: 'Educação', icone: '📚', titulo: 'Escola que dobrou matrículas',
-        texto: 'Escola particular com queda de matrículas. Aplicou marketing digital + processo comercial estruturado. 2x matrículas em 1 ciclo.'
-      }
+      // ===== VAREJO (4) =====
+      { setor: 'varejo', setorNome: 'Varejo', icone: '🛒', titulo: 'Rede de lojas que multiplicou faturamento em 18 meses', texto: 'Empresário com 4 lojas, faturamento estagnado em R$ 800k/mês há 2 anos. Aplicou o Método dos Dígitos no marketing digital + estruturou time com KPIs claros. Em 18 meses: 9 lojas, R$ 2,4mi/mês.' },
+      { setor: 'varejo', setorNome: 'Varejo', icone: '🛒', titulo: 'Loja de roupas que dobrou o ticket médio em 90 dias', texto: 'Boutique feminina com ticket de R$ 180. Treinou vendedoras em venda consultiva + estruturou cross-sell. Em 90 dias: ticket R$ 380 e conversão de visita 2,3x maior.' },
+      { setor: 'varejo', setorNome: 'Varejo', icone: '🛒', titulo: 'Distribuidora regional que profissionalizou a rota', texto: 'Distribuidora de bebidas com 14 representantes sem padrão. Implementou roteirização + script SPIN por canal. Em 6 meses: cobertura 60% maior e PA (positivação) subiu de 38% pra 71%.' },
+      { setor: 'varejo', setorNome: 'Varejo', icone: '🛒', titulo: 'Pet shop bairrista que virou rede de 4 unidades', texto: 'Loja única com fila e dono no balcão 12h/dia. Estruturou recompra programada + plano de saúde pet. Em 14 meses: 4 unidades, dono fora do operacional, recompra 68%.' },
+
+      // ===== SERVIÇOS (4) =====
+      { setor: 'servicos', setorNome: 'Serviços', icone: '🏢', titulo: 'Consultoria que saiu de R$ 50k para R$ 400k/mês', texto: 'Consultor solo virou empresa com 12 colaboradores. Estruturou prospecção (SPIN), criou times comerciais e aumentou ticket médio 4x. Receita 8x em 24 meses.' },
+      { setor: 'servicos', setorNome: 'Serviços', icone: '🏢', titulo: 'Agência que dobrou MRR cortando 40% dos clientes ruins', texto: 'Agência de marketing com 60 clientes, margem ruim. Aplicou ICP rigoroso, demitiu 24 contas que pagavam pouco. Em 8 meses: 36 clientes, MRR 2,1x e margem operacional 4x.' },
+      { setor: 'servicos', setorNome: 'Serviços', icone: '🏢', titulo: 'Escritório de advocacia que triplicou ticket virando empresarial', texto: 'Banca cível pessoa física, ticket R$ 4k. Migrou pra contencioso empresarial com sócios estruturados. Ticket médio R$ 14k, faturamento 3,2x em 18 meses.' },
+      { setor: 'servicos', setorNome: 'Serviços', icone: '🏢', titulo: 'Arquitetura que migrou de PF pra projetos corporativos', texto: 'Estúdio com 4 sócios, projetos residenciais brigando preço. Reposicionou pra projetos comerciais B2B (varejo + escritórios). Em 12 meses: ticket 6x e fila de espera.' },
+
+      // ===== SAÚDE (3) =====
+      { setor: 'saude', setorNome: 'Saúde / Estética', icone: '💉', titulo: 'Clínica que dobrou agenda em 6 meses', texto: 'Clínica de estética com agenda em 60% de ocupação. Aplicou marketing digital direcionado + treinou recepção em venda consultiva. Resultado: 95% de ocupação e ticket 30% maior.' },
+      { setor: 'saude', setorNome: 'Saúde / Estética', icone: '💉', titulo: 'Odonto que parou de competir por preço', texto: 'Consultório com 3 dentistas brigando pelo Smile e Sorriso. Estruturou planos premium + jornada de recompra com follow-up automatizado. Em 9 meses: ticket 2,4x e zero campanhas de desconto.' },
+      { setor: 'saude', setorNome: 'Saúde / Estética', icone: '💉', titulo: 'Estúdio de pilates de 2 virou rede de 7 unidades', texto: 'Donas com 2 estúdios e teto de receita. Padronizaram operação + criaram modelo de microfranquia. Em 22 meses: 7 unidades, faturamento 4,8x, donas só estratégicas.' },
+
+      // ===== INDÚSTRIA (3) =====
+      { setor: 'industria', setorNome: 'Indústria', icone: '🏭', titulo: 'Indústria familiar que se profissionalizou', texto: 'Empresa com sucessão complicada. Aplicou planejamento estratégico Febracis, definiu KPIs por área, montou conselho. Faturamento subiu 70% em 24 meses, sucessão estruturada.' },
+      { setor: 'industria', setorNome: 'Indústria', icone: '🏭', titulo: 'Metalúrgica que dobrou margem com conselho', texto: 'Metalúrgica de médio porte, sócios brigando há 3 anos. Estruturou conselho com membro externo + KPIs financeiros mensais. Margem operacional saiu de 8% pra 19% em 18 meses.' },
+      { setor: 'industria', setorNome: 'Indústria', icone: '🏭', titulo: 'Fábrica de cosméticos que parou de depender do dono', texto: 'Dono no chão de fábrica 14h/dia. Criou comitê executivo, contratou COO interno via méritos. Em 12 meses: dono fora do operacional, faturamento +35%, lançou 2 marcas novas.' },
+
+      // ===== TECNOLOGIA (3) =====
+      { setor: 'tecnologia', setorNome: 'Tecnologia / SaaS', icone: '💻', titulo: 'Startup B2B que escalou vendas', texto: 'SaaS B2B com 12 clientes em 8 meses (CAC alto demais). Reestruturou pitch comercial com SPIN, definiu ICP claro. Em 6 meses: 89 clientes, CAC reduzido em 60%.' },
+      { setor: 'tecnologia', setorNome: 'Tecnologia / SaaS', icone: '💻', titulo: 'Agência de tráfego que virou SaaS', texto: 'Agência com 40 contas pagando R$ 2k/mês. Empacotou metodologia em SaaS self-service. Em 14 meses: 600 contas pagantes, MRR 5x, margem de software.' },
+      { setor: 'tecnologia', setorNome: 'Tecnologia / SaaS', icone: '💻', titulo: 'Software house que cortou churn pela metade', texto: 'Software de gestão para clínicas, churn de 7%/mês (insustentável). Redefiniu ICP, melhorou onboarding em 30 dias. Em 6 meses: churn 3,1%/mês, NPS de 22 pra 64.' },
+
+      // ===== ALIMENTAÇÃO (3) =====
+      { setor: 'alimentacao', setorNome: 'Alimentação', icone: '🍽️', titulo: 'Restaurante que virou rede', texto: 'Restaurante único, fila de espera mas margem ruim. Aplicou Método dos Dígitos, otimizou cardápio e posicionamento. Hoje: 4 unidades, margem 3x maior.' },
+      { setor: 'alimentacao', setorNome: 'Alimentação', icone: '🍽️', titulo: 'Hamburgeria de bairro virou rede regional', texto: 'Hamburgeria artesanal com 1 ponto. Padronizou ficha técnica + treinou gerentes em P&L de unidade. Em 20 meses: 6 unidades em 3 cidades, margem operacional estável em 22%.' },
+      { setor: 'alimentacao', setorNome: 'Alimentação', icone: '🍽️', titulo: 'Confeitaria artesanal que estruturou delivery próprio', texto: 'Doceria com vendas dependendo de iFood. Lançou app/site próprio + programa de assinatura. Em 9 meses: 60% das vendas fora do iFood, ticket 1,8x e CAC orgânico.' },
+
+      // ===== CONSTRUÇÃO / IMOBILIÁRIA (3) =====
+      { setor: 'construcao', setorNome: 'Construção / Imobiliária', icone: '🏗️', titulo: 'Imobiliária que profissionalizou vendas', texto: 'Imobiliária com 6 corretores, conversão baixa. Treinou time inteiro em SPIN + roteiros padronizados. VGV 2,5x em 12 meses.' },
+      { setor: 'construcao', setorNome: 'Construção / Imobiliária', icone: '🏗️', titulo: 'Construtora regional que parou de queimar caixa', texto: 'Construtora com 3 obras simultâneas e DRE no vermelho 9 meses. Implementou orçamento por obra + comitê semanal de caixa. Em 12 meses: 3 obras lucrativas e fundo de reserva de 4 meses.' },
+      { setor: 'construcao', setorNome: 'Construção / Imobiliária', icone: '🏗️', titulo: 'Loja de materiais que triplicou margem', texto: 'Loja de construção brigando preço com home center. Estruturou venda técnica para construtores + crédito empresarial. Em 14 meses: margem operacional saiu de 6% pra 19%.' },
+
+      // ===== EDUCAÇÃO (2) =====
+      { setor: 'educacao', setorNome: 'Educação', icone: '📚', titulo: 'Escola que dobrou matrículas', texto: 'Escola particular com queda de matrículas. Aplicou marketing digital + processo comercial estruturado. 2x matrículas em 1 ciclo.' },
+      { setor: 'educacao', setorNome: 'Educação', icone: '📚', titulo: 'Curso técnico virou referência regional via inbound', texto: 'Curso técnico de saúde com captação 100% panfleto. Migrou pra inbound (blog + redes) e processo comercial inside sales. Em 12 meses: matrículas 3,4x, CAC 40% menor.' }
     ];
 
     const PERGUNTAS_SPIN_POR_SETOR = [
       {
         setor: 'varejo', setorNome: 'Varejo / Comércio', icone: '🛒',
-        S: ['Quantas lojas você tem hoje? Qual o ticket médio?', 'Qual canal vende mais — presencial ou digital?', 'Quem decide compras estratégicas — você ou tem sócio?'],
-        P: ['Qual loja vende menos? Por quê?', 'O time de vendas tem meta clara ou cada um vende como acha?', 'Sua margem está crescendo ou caindo nos últimos 6 meses?'],
-        I: ['Se essa loja seguir performando assim, em 12 meses você abre nova ou fecha essa?', 'Quanto faturamento você acha que está deixando na mesa por mês?', 'Quando foi a última vez que você tirou férias sem o WhatsApp da loja tocando?'],
-        N: ['Se você triplicasse a conversão dessa loja sem aumentar custo, isso te liberaria pra abrir mais 2?', 'Se seu time vendesse no padrão da melhor loja, o que mudaria na sua operação?', 'Vale a pena estruturar isso agora ou prefere continuar como está mais 12 meses?']
+        S: [
+          'Quantas lojas você tem hoje?',
+          'Qual o ticket médio por venda?',
+          'Qual canal vende mais — presencial, digital ou marketplace?',
+          'Quem decide compras estratégicas — você ou tem sócio?',
+          'Quantos vendedores no time todo?',
+          'Há quanto tempo no varejo?',
+          'Sua margem operacional média está em quanto?'
+        ],
+        P: [
+          'Qual loja vende menos? Você sabe por quê?',
+          'O time tem meta clara ou cada um vende como acha?',
+          'Sua margem está crescendo ou caindo nos últimos 6 meses?',
+          'A taxa de conversão de visita pra venda é controlada?',
+          'Cliente que entra na sua loja volta ou compra 1 vez e some?',
+          'Você sabe quem é seu vendedor top e como ele vende?'
+        ],
+        I: [
+          'Se essa loja seguir assim, em 12 meses você abre nova ou fecha essa?',
+          'Quanto faturamento você está deixando na mesa por mês?',
+          'Quando foi a última vez que tirou férias sem o WhatsApp da loja tocando?',
+          'Se um vendedor-chave sair amanhã, sua melhor loja para?',
+          'Sem padrão, em 3 anos sua rede é o dobro ou ainda essa?',
+          'Você tá vendendo ou só repondo o que o cliente já pediu?'
+        ],
+        N: [
+          'Se você triplicasse a conversão dessa loja sem aumentar custo, abriria mais 2?',
+          'Se o time vendesse no padrão da sua melhor loja, qual o novo faturamento?',
+          'Se você saísse do operacional 60 dias, a operação roda ou para?',
+          'Se a recompra dobrasse, ainda precisaria brigar preço?',
+          'O que mudaria pra sua família se sua margem subisse 5 pontos?',
+          'Vale estruturar isso agora ou prefere continuar 12 meses no mesmo lugar?'
+        ]
       },
       {
         setor: 'servicos', setorNome: 'Serviços / Consultoria', icone: '🏢',
-        S: ['Quantos clientes ativos? Como você capta hoje — indicação, marketing, prospecção?', 'Sua receita é recorrente ou projeto?', 'Você é founder-led ou tem time comercial?'],
-        P: ['Qual o gargalo: trazer cliente novo, fechar proposta, ou entregar?', 'Onde você gasta mais energia que não dá retorno?', 'Quanto da sua semana é operacional vs estratégico?'],
-        I: ['Sem resolver isso, sua empresa cresce ou estagna nos próximos 12 meses?', 'Quanto sua hora vale e quanto você está usando em coisa que não escala?', 'Se você ficasse 30 dias fora, a empresa para?'],
-        N: ['Se você dobrasse o ticket médio mantendo mesmo nº de clientes, mudaria sua operação inteira?', 'Se trouxesse processo comercial estruturado, ficaria menos preso ao operacional?', 'Vale a pena resolver isso agora?']
+        S: [
+          'Quantos clientes ativos hoje?',
+          'Sua receita é recorrente ou projeto?',
+          'Como você capta — indicação, marketing, prospecção ativa?',
+          'Você é founder-led ou tem time comercial?',
+          'Qual seu ticket médio mensal por cliente?',
+          'Quantos colaboradores totais?',
+          'Há quanto tempo no mercado?'
+        ],
+        P: [
+          'Qual o gargalo: trazer cliente, fechar proposta ou entregar?',
+          'Onde você gasta mais energia que não dá retorno?',
+          'Quanto da sua semana é operacional vs estratégico?',
+          'Você sabe seu ICP claramente ou aceita qualquer cliente?',
+          'Cliente seu fica quantos meses em média antes de sair?',
+          'Você cobra por hora, projeto ou valor — e está confortável com isso?'
+        ],
+        I: [
+          'Sem resolver isso, sua empresa cresce ou estagna nos próximos 12 meses?',
+          'Quanto sua hora vale e quanto você usa em coisa que não escala?',
+          'Se você ficasse 30 dias fora, a empresa para?',
+          'Cada cliente errado que entra te custa quantos meses até descobrir?',
+          'Sem ICP, sua margem cresce ou só seu volume?',
+          'Em 5 anos, com mesma estrutura, você ainda está executando?'
+        ],
+        N: [
+          'Se dobrasse o ticket médio mantendo mesmo nº de clientes, mudaria sua operação?',
+          'Se trouxesse processo comercial, ficaria menos preso ao operacional?',
+          'Se filtrasse só clientes ICP, qual o novo NPS e a nova margem?',
+          'Se a empresa rodasse sem você 90 dias, o que você faria com esse tempo?',
+          'Se cobrasse por valor em vez de hora, o teto sumiria?',
+          'Vale a pena resolver isso agora?'
+        ]
       },
       {
         setor: 'industria', setorNome: 'Indústria', icone: '🏭',
-        S: ['Quantos colaboradores? Empresa familiar ou profissionalizada?', 'Quem decide compras estratégicas?', 'Há quanto tempo no mercado?'],
-        P: ['O time bate meta consistentemente ou depende de pessoas-chave?', 'Sua margem está crescendo ou caindo?', 'Há quanto tempo não muda processo?'],
-        I: ['Se um sócio sair ou você ficar 30 dias fora, a empresa para?', 'Quanto isso te impede de tirar férias / investir / vender no futuro?', 'Em 5 anos, com mesma estrutura, a empresa cresce ou esmorece?'],
-        N: ['Se você tivesse uma gestão que rodasse sem você 90 dias, faria diferença real?', 'Se o time tivesse KPIs claros e bater por mérito, mudaria sua noite de domingo?', 'Vale a pena estruturar agora ou prefere apagar incêndio mais 12 meses?']
+        S: [
+          'Quantos colaboradores no total?',
+          'Empresa familiar ou profissionalizada?',
+          'Quem decide compras estratégicas?',
+          'Há quanto tempo no mercado?',
+          'Sua margem operacional média?',
+          'Tem conselho consultivo ou só os sócios?',
+          'Faturamento médio mensal?'
+        ],
+        P: [
+          'O time bate meta consistentemente ou depende de pessoas-chave?',
+          'Sua margem está crescendo ou caindo?',
+          'Há quanto tempo não muda processo de produção/vendas?',
+          'Sucessão está mapeada ou é tabu?',
+          'Você tem KPI por área ou só DRE no fim do mês?',
+          'Sócios alinhados ou cada um puxa pra um lado?'
+        ],
+        I: [
+          'Se um sócio sair ou você ficar 30 dias fora, a empresa para?',
+          'Quanto isso te impede de tirar férias, investir, vender no futuro?',
+          'Em 5 anos, com mesma estrutura, cresce ou esmorece?',
+          'Sem sucessão, o patrimônio que construiu vira ativo ou passivo pros filhos?',
+          'Cada decisão concentrada em você é quantas oportunidades perdidas?',
+          'Concorrente profissionalizado em 3 anos te come ou você dá conta?'
+        ],
+        N: [
+          'Se tivesse uma gestão que rodasse sem você 90 dias, faria diferença real?',
+          'Se o time tivesse KPIs claros, mudaria sua noite de domingo?',
+          'Se montasse conselho com membro externo, que decisões você desbloquearia?',
+          'Se a sucessão estivesse pronta, qual o valor que você poderia tirar do negócio?',
+          'Se a margem subisse 5 pontos, qual a nova capacidade de investir?',
+          'Vale estruturar agora ou prefere apagar incêndio mais 12 meses?'
+        ]
       },
       {
         setor: 'tecnologia', setorNome: 'Tecnologia / SaaS', icone: '💻',
-        S: ['MRR atual? Quantos clientes? CAC e LTV?', 'Time comercial estruturado ou founder-led?', 'Você tem ICP definido ou aceita qualquer um?'],
-        P: ['Pitch padronizado ou cada vendedor inventa?', 'Sua taxa de fechamento está ok ou você vende muito barato?', 'Churn está mapeado ou é caixa-preta?'],
-        I: ['Com CAC alto e churn não-mapeado, em quanto tempo você queima caixa?', 'Investidor cobra crescimento — você consegue entregar no ritmo atual?', 'Sem método comercial, escala ou estagna em 200k MRR?'],
-        N: ['Se sua taxa de fechamento dobrasse com SPIN estruturado, mudaria seu round de captação?', 'Se cada vendedor virasse 30% melhor, qual o novo MRR em 6 meses?', 'Vale resolver agora ou esperar próximo round?']
+        S: [
+          'MRR atual? Quantos clientes pagantes?',
+          'CAC e LTV — você mede?',
+          'Time comercial estruturado ou founder-led?',
+          'Você tem ICP definido ou aceita qualquer um?',
+          'Churn mensal está em quanto?',
+          'Captou rodada? Em qual estágio?',
+          'Quantos canais de aquisição rodam hoje?'
+        ],
+        P: [
+          'Pitch padronizado ou cada vendedor inventa?',
+          'Taxa de fechamento está ok ou você vende muito barato?',
+          'Churn está mapeado ou é caixa-preta?',
+          'Onboarding entrega valor em 30 dias ou cliente fica perdido?',
+          'NPS é medido sistematicamente ou anedotico?',
+          'Você sabe por qual canal vem o cliente que mais paga e fica?'
+        ],
+        I: [
+          'Com CAC alto e churn não-mapeado, em quanto tempo queima caixa?',
+          'Investidor cobra crescimento — você entrega no ritmo atual?',
+          'Sem método comercial, escala ou trava em 200k MRR?',
+          'Se o churn não cair, qual a runway até precisar de novo round?',
+          'Cada cliente errado custa quantos meses de CS até detectar?',
+          'Sem ICP claro, valuation reflete o produto ou o caos?'
+        ],
+        N: [
+          'Se a taxa de fechamento dobrasse com SPIN, mudaria seu round?',
+          'Se cada vendedor virasse 30% melhor, qual o MRR em 6 meses?',
+          'Se o churn caísse pela metade, a runway dobra?',
+          'Se filtrasse só ICP, NPS sobe e LTV junto — qual valuation?',
+          'Se o onboarding entregasse valor em 14 dias, qual o impacto em recompra?',
+          'Vale resolver agora ou esperar próximo round?'
+        ]
       },
       {
         setor: 'saude', setorNome: 'Saúde / Estética', icone: '💉',
-        S: ['Quantos profissionais? Taxa de ocupação da agenda?', 'Ticket médio por procedimento? Recompra ou single-shot?', 'Como gera lead — indicação, mídia, ativo?'],
-        P: ['Recepção converte ou só agenda?', 'Cliente que entra uma vez volta ou some?', 'Você compete por preço ou por valor?'],
-        I: ['Com agenda em 60%, quanto você fatura a menos por mês?', 'E se sua recepção fosse treinada em vendas, isso muda quanto?', 'Sem recompra mapeada, você cresce ou só roda?'],
-        N: ['Se você dobrasse a recompra de cliente atual, isso te tira da briga por preço?', 'Se a agenda fosse 95% ocupada, abriria nova unidade?', 'Vale resolver isso esse semestre?']
+        S: [
+          'Quantos profissionais ativos hoje?',
+          'Taxa de ocupação da agenda?',
+          'Ticket médio por procedimento?',
+          'Recompra ou single-shot é a maioria?',
+          'Como gera lead — indicação, mídia, ativo?',
+          'Tem recepção própria treinada ou terceirizada?',
+          'Faturamento médio mensal por profissional?'
+        ],
+        P: [
+          'Recepção converte ou só agenda?',
+          'Cliente que entra uma vez volta ou some?',
+          'Você compete por preço ou por valor percebido?',
+          'Pacote/programa fechado existe ou é tudo avulso?',
+          'Você sabe seu CAC por canal ou tudo entra junto?',
+          'Profissionais sentem dono do resultado ou são funcionários horistas?'
+        ],
+        I: [
+          'Com agenda em 60%, quanto você fatura a menos por mês?',
+          'Se a recepção fosse treinada em vendas, isso muda quanto?',
+          'Sem recompra mapeada, você cresce ou só roda?',
+          'Cada paciente que não volta é quanto de LTV perdido?',
+          'Em 24 meses concorrendo só por preço, sua margem aguenta?',
+          'Se 1 profissional-chave sai, quantos pacientes vão junto?'
+        ],
+        N: [
+          'Se dobrasse a recompra do cliente atual, sai da briga por preço?',
+          'Se a agenda fosse 95% ocupada, abriria nova unidade?',
+          'Se vendesse pacote em vez de avulso, mudaria seu DRE?',
+          'Se a recepção convertesse 30% mais, qual o novo faturamento?',
+          'Se profissionais virassem sócios de produto, mudaria a retenção deles?',
+          'Vale resolver isso esse semestre?'
+        ]
       },
       {
         setor: 'construcao', setorNome: 'Construção / Imobiliária', icone: '🏗️',
-        S: ['Quantos corretores? VGV mensal?', 'Como gera lead — portal, indicação, ativo?', 'Tem time interno ou parceria com imobiliária?'],
-        P: ['Conversão de visita pra venda? O time tem roteiro ou cada um inventa?', 'Por que cliente foge antes de assinar?', 'Sua margem por unidade é boa ou virou commodity?'],
-        I: ['Cada visita não-fechada é quanto de comissão perdida?', 'Sem método, você cresce ou só roda no mesmo lugar?', 'Em 12 meses, com mesmo time, abre novo empreendimento ou para?'],
-        N: ['Se cada corretor virasse 30% melhor com SPIN padronizado, em quanto multiplica seu VGV?', 'Se a conversão dobrasse, justifica abrir novo lançamento?', 'Vale estruturar agora?']
+        S: [
+          'Quantos corretores ativos?',
+          'VGV mensal médio?',
+          'Como gera lead — portal, indicação, ativo, mídia?',
+          'Tem time interno ou só parceria com imobiliárias?',
+          'Ticket médio do imóvel que vocês movimentam?',
+          'Quantos lançamentos por ano?',
+          'Conversão de visita pra venda é medida?'
+        ],
+        P: [
+          'O time tem roteiro padrão ou cada corretor inventa?',
+          'Por que cliente foge antes de assinar?',
+          'Sua margem por unidade é boa ou virou commodity?',
+          'Você sabe em qual etapa do funil mais lead morre?',
+          'Quem são os 20% de corretores que fazem 80% das vendas — e por quê?',
+          'Visita marcada vira proposta ou some no caminho?'
+        ],
+        I: [
+          'Cada visita não-fechada é quanto de comissão perdida?',
+          'Sem método, você cresce ou só roda no mesmo lugar?',
+          'Em 12 meses com mesmo time, abre novo empreendimento ou para?',
+          'Se um corretor TOP sai, quantos meses até reposição?',
+          'Sem padrão, sua marca tá construindo confiança ou queimando lead?',
+          'Concorrente com SPIN te tira o cliente em quanto tempo?'
+        ],
+        N: [
+          'Se cada corretor virasse 30% melhor, em quanto multiplica o VGV?',
+          'Se a conversão dobrasse, justifica abrir novo lançamento?',
+          'Se padronizasse roteiro, quantos meses de treino do novato você economiza?',
+          'Se o pós-venda gerasse 2 indicações por cliente, qual o novo CAC?',
+          'Se você dependesse menos do dono nas negociações, quantas você desbloquearia?',
+          'Vale estruturar agora?'
+        ]
       },
       {
         setor: 'educacao', setorNome: 'Educação', icone: '📚',
-        S: ['Quantos alunos ativos? Renovação ano a ano?', 'Origem das matrículas — orgânico, mídia paga, indicação?', 'Você tem time comercial ou só atendimento?'],
-        P: ['Por que a evasão acontece? Marketing traz lead qualificado ou volume?', 'Time comercial existe ou recepção que vende?', 'Ticket competitivo ou você compete por preço?'],
-        I: ['Cada aluno que evade é quanto em LTV?', 'Sem método comercial, sua escola cresce ou só repõe quem sai?', 'Em 3 anos, com mesma estrutura, dobra ou estagna?'],
-        N: ['Se a captação dobrasse mantendo a evasão atual, isso justifica reestruturar o comercial?', 'Se a evasão caísse 30%, mudaria seu fluxo de caixa?', 'Vale resolver antes do próximo ciclo?']
+        S: [
+          'Quantos alunos ativos hoje?',
+          'Renovação ano a ano (taxa)?',
+          'Origem das matrículas — orgânico, mídia paga, indicação?',
+          'Você tem time comercial ou recepção atende?',
+          'Ticket médio anual?',
+          'Há quanto tempo a escola opera?',
+          'Quantos cursos/níveis vocês oferecem?'
+        ],
+        P: [
+          'Por que a evasão acontece — preço, qualidade, distância, conveniência?',
+          'Marketing traz lead qualificado ou volume sem fit?',
+          'Time comercial existe ou recepção que vende sem método?',
+          'Você compete por preço ou por valor da formação?',
+          'Pais (ou aluno) recebem follow-up depois da matrícula?',
+          'Você sabe o NPS dos pais e dos alunos?'
+        ],
+        I: [
+          'Cada aluno que evade é quanto em LTV?',
+          'Sem método comercial, a escola cresce ou só repõe quem sai?',
+          'Em 3 anos com mesma estrutura, dobra ou estagna?',
+          'Sem indicação ativa, qual a sustentabilidade dos próximos 5 ciclos?',
+          'Se a concorrência baixa preço, você sobrevive na qualidade?',
+          'Cada matrícula errada custa quantos meses até a evasão?'
+        ],
+        N: [
+          'Se a captação dobrasse mantendo a evasão, justifica reestruturar comercial?',
+          'Se a evasão caísse 30%, mudaria o fluxo de caixa?',
+          'Se cada pai indicasse 1 família, qual o CAC zero?',
+          'Se a recepção virasse comercial treinado, qual a nova conversão?',
+          'Se o NPS subisse 20 pontos, mudaria a renovação?',
+          'Vale resolver antes do próximo ciclo?'
+        ]
       },
       {
         setor: 'alimentacao', setorNome: 'Alimentação / Food Service', icone: '🍽️',
-        S: ['Quantas unidades? Ticket médio? Margem operacional?', 'Você é dono presente ou tem gerente?', 'Cardápio está estável ou rotaciona?'],
-        P: ['Você vende fila ou margem?', 'Funcionário roda muito ou fica?', 'Cardápio testa preço ou repete?'],
-        I: ['Margem ruim com fila cheia significa que você trabalha pro funcionário e fornecedor. Quanto disso é estrutural?', 'Sem método de gestão, você abre nova unidade ou trava?', 'Em 5 anos, com mesma operação, sai do operacional ou continua refém?'],
-        N: ['Se sua margem dobrasse mantendo o mesmo movimento, abriria nova unidade ou tiraria pró-labore decente?', 'Se o time rodasse sem você, mudaria sua vida?', 'Vale resolver agora?']
+        S: [
+          'Quantas unidades você opera?',
+          'Ticket médio por mesa/pedido?',
+          'Margem operacional média por unidade?',
+          'Você é dono presente ou tem gerente em cada loja?',
+          'Cardápio está estável ou rotaciona?',
+          'Mix de delivery vs salão (%)?',
+          'Quantos colaboradores totais?'
+        ],
+        P: [
+          'Você vende fila ou margem?',
+          'Funcionário roda muito ou fica?',
+          'Cardápio testa preço ou repete?',
+          'Você sabe seu CMV real por prato ou é estimativa?',
+          'iFood é parceiro ou refém da plataforma?',
+          'Há um gerente forte ou tudo passa por você?'
+        ],
+        I: [
+          'Margem ruim com fila cheia significa que você trabalha pro funcionário e fornecedor — quanto disso é estrutural?',
+          'Sem método de gestão, abre nova unidade ou trava?',
+          'Em 5 anos com mesma operação, sai do operacional ou continua refém?',
+          'Se o iFood mudar regra amanhã, sua receita aguenta?',
+          'Sem ficha técnica, cada prato vendido é lucro ou prejuízo silencioso?',
+          'Sem cultura, próximo gerente que sai leva quantos clientes junto?'
+        ],
+        N: [
+          'Se a margem dobrasse mantendo movimento, abriria nova unidade ou tirava pró-labore decente?',
+          'Se o time rodasse sem você, mudaria sua vida?',
+          'Se a marca tivesse delivery próprio com 30% das vendas, mudaria sua dependência?',
+          'Se o ticket subisse 20% via cross-sell estruturado, qual o novo DRE?',
+          'Se o CMV caísse 3 pontos com ficha técnica, isso é um carro novo por ano?',
+          'Vale resolver agora?'
+        ]
       },
       {
         setor: 'universal', setorNome: 'Universais (sem setor identificado)', icone: '🎯',
-        S: ['Como sua empresa está hoje no [tema]?', 'Quem decide [decisão chave]?', 'Há quanto tempo o tema está assim?'],
-        P: ['Qual o maior gargalo da sua empresa hoje?', 'O que tira seu sono em relação ao negócio?', 'Onde você sente que está deixando dinheiro na mesa?'],
-        I: ['Se isso continuar, daqui a 12 meses onde você estará?', 'Quanto isso já te custou nos últimos 6 meses (em dinheiro ou energia)?', 'Como isso impacta seu sócio / família / time?'],
-        N: ['Se você tivesse [solução ideal], que diferença real faria?', 'Quanto vale resolver isso pra você hoje?', 'Vale priorizar agora ou prefere continuar mais 12 meses?']
+        S: [
+          'Há quanto tempo você está nesse negócio?',
+          'Qual o faturamento médio mensal hoje?',
+          'Quantos colaboradores no total?',
+          'Quem decide as decisões estratégicas — você sozinho ou tem sócio?',
+          'Você tem conselho consultivo ou se aconselha sozinho?',
+          'Sua receita é recorrente, projeto ou transacional?',
+          'Quem é seu cliente ideal — perfil claro ou genérico?',
+          'Margem operacional atual está em quanto?',
+          'Como o cliente te conhece hoje — indicação, mídia, ativo?',
+          'Você tem KPIs por área ou só DRE no fim do mês?',
+          'Como está sua base de caixa em meses de operação?',
+          'Quantas horas/semana você gasta no operacional vs estratégico?',
+          'Tem time comercial estruturado ou cada vendedor inventa?',
+          'Há quanto tempo não muda processo central?',
+          'Quantos canais de aquisição rodam ativamente?',
+          'Você mede NPS, retenção e LTV ou anedótico?',
+          'Quando foi a última vez que tirou férias de verdade?',
+          'Concorrência principal é quem — e por que ela existe?',
+          'Você é dependente de um cliente ou canal?',
+          'Sucessão está pensada ou tabu?',
+          'Quantas decisões importantes passam só por você?',
+          'Sua margem cresceu ou caiu nos últimos 12 meses?',
+          'Time roda no mérito ou no clima?',
+          'Você sabe por que sua melhor venda foi a melhor?',
+          'Faturamento atual é teto ou base?'
+        ],
+        P: [
+          'Qual o maior gargalo da sua empresa hoje?',
+          'O que tira seu sono em relação ao negócio?',
+          'Onde você sente que está deixando dinheiro na mesa?',
+          'Qual decisão você adia há mais de 6 meses e não sabe por quê?',
+          'O que dependia de você 5 anos atrás e ainda depende hoje?',
+          'Quando alguém pergunta "qual sua estratégia?", você responde rápido ou enrola?',
+          'Sua equipe vai pra guerra com você ou se esconde quando aperta?',
+          'Cliente reclama de quê com mais frequência?',
+          'Você sabe por que os clientes que somem foram embora?',
+          'Quem são os 20% que fazem 80% — e o que eles fazem diferente?',
+          'Você está crescendo por método ou por sorte/mercado?',
+          'Sua melhor decisão dos últimos 3 anos foi sua ou caiu no colo?',
+          'Há decisões que você toma cansado, no fim do dia?',
+          'Em qual área você sente que improvisa porque não tem método?',
+          'Onde você gasta mais energia sem retorno proporcional?',
+          'Tem dívida (financeira ou emocional) com sócio, time ou família?',
+          'Sua liderança forma gente ou substitui gente?',
+          'O que você sabe que precisa parar de fazer e ainda não parou?',
+          'Cliente reclama de preço ou de valor entregue?',
+          'Sua margem atual permite errar ou cada erro custa caro?',
+          'Você bate meta na ponta da agulha ou com folga?',
+          'Existe alguém na empresa que sabe o que você sabe?',
+          'Quantas decisões cabem só na sua cabeça?',
+          'Quando o time discorda, eles falam ou silenciam?',
+          'Você está cansado ou esgotado — e há quanto tempo?'
+        ],
+        I: [
+          'Se isso continuar, daqui a 12 meses onde sua empresa vai estar?',
+          'Quanto isso já te custou nos últimos 6 meses (em dinheiro ou energia)?',
+          'Como isso impacta seu sócio, sua família, seu time?',
+          'Em 5 anos com mesma estrutura, você está livre ou ainda executando?',
+          'Se você ficar 60 dias fora amanhã, o que para?',
+          'Concorrente com método em 24 meses te come ou você reage a tempo?',
+          'Cada decisão concentrada em você é quantas oportunidades perdidas?',
+          'Quanto da sua margem de hoje é fruto de mercado em alta — e some quando o ciclo virar?',
+          'Sem sucessão, o patrimônio que construiu vira ativo ou passivo?',
+          'Quanto tempo da sua vida você troca por uma operação que não escala?',
+          'Se o mercado cair 20% amanhã, sua empresa sobrevive 12 meses?',
+          'Funcionário-chave que sai amanhã leva quantos clientes junto?',
+          'Sem método, próximo nível chega ou é fantasia?',
+          'Quantos casamentos, jantares, viagens você já trocou pelo operacional?',
+          'Sem clareza estratégica, sua decisão é sua ou do mercado?',
+          'Cada cliente errado que entra custa quantos meses até detectar?',
+          'Sem KPI, seu time é mérito ou clima?',
+          'Sem indicação ativa, sua sustentabilidade dura quantos ciclos?',
+          'Em quanto tempo seu modelo atual fica obsoleto?',
+          'Empresa sem método é dependente de quem — você ou da sorte?',
+          'Quantas vezes a mesma crise repetiu nos últimos 3 anos?',
+          'Sem sucessão emocional, sua aposentadoria é negócio ou prejuízo?',
+          'Cada decisão adiada custa o quê em janela de oportunidade?',
+          'Sem cultura forte, gente boa fica ou só passa?',
+          'O custo da inação é maior do que o custo de mudar — você já calculou?'
+        ],
+        N: [
+          'Se você tivesse a solução ideal, que diferença real faria?',
+          'Quanto vale resolver isso pra você hoje?',
+          'Vale priorizar agora ou prefere continuar mais 12 meses como está?',
+          'Se o time tivesse autonomia com método, sua agenda mudaria como?',
+          'Se a empresa rodasse sem você 90 dias, o que você faria?',
+          'Se a margem subisse 5 pontos, qual a nova capacidade de investir?',
+          'Se cada vendedor virasse 30% melhor, qual o novo faturamento?',
+          'Se filtrasse só clientes ICP, qual a nova margem e o novo NPS?',
+          'Se a sucessão estivesse pronta, qual o valor que você poderia tirar?',
+          'Se a indicação fosse sistêmica, qual o novo CAC?',
+          'Se sua melhor decisão virasse padrão, quantas vezes ela se repetiria?',
+          'Se você dependesse menos de você, sua família te teria mais?',
+          'Se houvesse conselho com membro externo, quais decisões desbloqueariam?',
+          'Se o NPS subisse 20 pontos, mudaria a recompra?',
+          'Se padronizasse onboarding, quantos meses economiza por novo cliente?',
+          'Se cada erro custasse menos, sua tolerância pra inovar seria qual?',
+          'Se o operacional tivesse dono, sua mente livraria o quê?',
+          'Se a empresa valesse 3x mais em 5 anos, mudaria sua decisão hoje?',
+          'Se a próxima crise pegasse você com método, ela seria oportunidade?',
+          'Se você liderasse com clareza, quantos esforços paralelos sumiriam?',
+          'Se houvesse playbook comercial, quantos meses de treino você economiza?',
+          'Se você fosse mentor de outro empresário hoje, o que recomendaria pra si?',
+          'Se essa solução estivesse pronta em 30 dias, qual o ROI estimado?',
+          'Se você confiasse no time pra decidir, sua semana mudaria como?',
+          'Vale resolver agora ou prefere repetir os mesmos 12 meses?'
+        ]
       }
     ];
 
     const RESPOSTAS_ELITE = [
       { tag: 'Tá caro', texto: '"Entendo. Mas me responde uma coisa: nos últimos 6 meses, sem ter o método, quanto você acha que sua empresa deixou de faturar? Se a resposta for mais de R$ 30 mil, esse Tour já se pagou. O caro é continuar perdendo o que você nem sabe que tá perdendo."' },
+      { tag: 'Não tenho dinheiro agora', texto: '"Compreendo. Mas empresário com caixa apertado é o que mais precisa parar de perder por falta de método — porque sem método, mês que vem o caixa tá igual ou pior. Te pergunto: você prefere ajustar agora ou daqui a 6 meses, quando o problema dobrou?"' },
+      { tag: 'Crise / momento ruim', texto: '"Justamente por isso. Crise é quando o método separa quem fica do quem some. Os empresários que cresceram 3x na pandemia não foram os mais talentosos — foram os que tinham método quando o mercado mudou. Você quer ser esse cara em 12 meses ou continuar reagindo ao mercado?"' },
       { tag: 'Vou pensar', texto: '"Justo. Mas pra eu te ajudar de verdade: o que exatamente você precisa pensar? Se for sobre se vai funcionar, te apresento 3 cases do seu setor. Se for sobre tempo, vou te mostrar como isso se encaixa. O que você tá pesando?"' },
+      { tag: 'Vou ver com calma', texto: '"Sem problema. Pra você não ter que voltar do zero quando olhar de novo, te mando 1 página com os 3 pontos centrais — isso te economiza 30 minutos depois. Quando você acha que volta a olhar, sexta ou começo da semana?"' },
       { tag: 'Falar com sócio', texto: '"Faz total sentido. Decisão dessa magnitude exige alinhamento. Me ajuda a entender uma coisa: se fosse só sua decisão, você iria? E o que você gostaria que eu te enviasse pra apresentar pro seu sócio com clareza?"' },
+      { tag: 'Falar com esposa(o)', texto: '"Faz sentido. Decisão de líder se conversa em casa. Te mando 1 vídeo curto da própria esposa do Paulo Vieira falando como o método mudou a vida dela e da família — pra ela ter contexto. Em qual número mando, no seu ou no dela?"' },
       { tag: 'Sem tempo', texto: '"Empresário sem tempo é exatamente quem mais precisa do Tour. Você está no operacional 100% — o Tour ensina como sair desse lugar. 1 dia agora vale 1 ano de operação errada. Quando seria o pior momento de sua agenda nos próximos 30 dias?"' },
+      { tag: 'Tô apagando incêndio', texto: '"E o que apaga incêndio é processo, não correria. Mais um mês na correria não muda nada — o método ensina a sair desse modo. Você quer continuar 12 meses no mesmo lugar ou trocar 1 dia agora pelos próximos 12 fora desse caos?"' },
       { tag: 'Já fiz outros', texto: '"Concordo, a maioria é motivacional sem método. Diferença do Tour: é a metodologia que escalou a Febracis de R$ 300k a R$ 400 milhões e está dentro de Petrobras, Bradesco, Amazon. Você vai sair com ações pra implementar na segunda-feira, não com motivação."' },
+      { tag: 'Já tenho coach/mentor', texto: '"Que bom que você investe em desenvolvimento. Mas coach trabalha com você 1:1 — Tour traz METODOLOGIA validada em 16 mil análises mensais e cases corporativos como Petrobras. Não substitui seu coach, complementa: ele te ajuda a executar, o método te dá o quê executar."' },
       { tag: 'Não conheço Paulo Vieira', texto: '"Justo, te apresento. Paulo Vieira é fundador da Febracis, maior escola de negócios da América Latina. 26 anos, 70 milhões de pessoas impactadas, 3 bilhões em faturamento. Empresa GPTW e RA1000. Te mando 1 vídeo curto dele falando do método — 3 minutos. Posso enviar?"' },
+      { tag: 'Empresa pequena demais', texto: '"Tour foi feito exatamente pra esse momento. Empresário pequeno que quer ficar grande precisa de método agora — empresário grande no Tour já chega errando. A maioria dos cases que viraram empresas de R$ 50mi começou aqui quando faturavam R$ 50k. É o seu salto."' },
+      { tag: 'Empresa grande demais / já passei dessa fase', texto: '"Empresários de R$ 100mi+ frequentam o Tour, e o feedback é o mesmo: ‘percebi 3 coisas óbvias que minha empresa não faz’. O Tour não é por tamanho, é por método. Você já tem escala. Tour te dá a próxima alavanca, não a primeira."' },
+      { tag: 'Estou começando agora', texto: '"Melhor momento. Empresário começando que pega método cedo não passa pelos erros caros que outros pagaram. Tour vai te dar 5 anos de aprendizado em 1 dia. Você quer construir certo do zero ou aprender do jeito caro?"' },
+      { tag: 'Acho que não é pra mim', texto: '"Posso te perguntar o que te fez achar isso? Pra eu não te empurrar algo que não serve, prefiro entender. Se realmente não for o momento, te oriento outro caminho. Mas pode ser também que tenha algo no formato que você ainda não viu — me conta?"' },
+      { tag: 'Quero garantia', texto: '"Garantia total na vida não existe — em treinamento, em casamento, em investimento. O que existe é prova: 16 mil empresários por mês passando pelo método, RA1000, GPTW e clientes Fortune 500. Se isso não é prova, nada é. A garantia que você precisa vem do método, não de uma cláusula."' },
+      { tag: 'Quero condição especial / desconto', texto: '"Trato você de igual: o investimento é o mesmo pra todos. Mas pra te ajudar a entrar agora, posso te oferecer flexibilidade na forma de pagamento — fica em quantas vezes pra caber no seu fluxo? Te mostro o parcelamento que faz sentido."' },
       { tag: 'Manda mais material', texto: '"Mando, mas antes — pra te enviar o material certo, me responde uma pergunta: qual é o maior gargalo da sua empresa hoje? É time, é vendas, é processo? Pergunto porque cada material é diferente, e quero te entregar o que vai te servir, não material genérico."' },
+      { tag: 'Vou ver o site', texto: '"O site mostra 30% do método — o melhor está no Tour ao vivo. Mas pra você ganhar tempo, te mando agora 2 links exatos: depoimento de empresário do seu setor + 1 vídeo do método aplicado. Isso vai te poupar 1 hora navegando. Pode ser?"' },
+      { tag: 'Próximo ano', texto: '"Entendo. Mas o próximo ano começa com a base que você construir agora. Se você esperar 12 meses pra resolver, em janeiro do ano que vem você vai estar exatamente onde está hoje. O Tour antecipa esse 1 ano de aprendizado. Vale começar com base ou começar do zero?"' },
+      { tag: 'Final do ano / Janeiro', texto: '"Justamente esse é o pior cálculo. Empresário que vira o ano sem método entra em janeiro reagindo de novo. Quem entra em janeiro com plano feito em novembro fecha o ano +30%. Qual janeiro você quer viver?"' },
+      { tag: 'Estou de mudança / processo difícil agora', texto: '"Compreendo. E é por isso mesmo: momento de mudança é onde método importa mais. Sem clareza você toma decisão pelo cansaço, não pela estratégia. Tour te tira da reação e te coloca na escolha. Quando seria a melhor janela nos próximos 30-45 dias?"' },
+      { tag: 'Indecisão pura (não sei)', texto: '"Empresário forte decide. Indecisão é o sintoma de que falta clareza — e clareza é justamente o que o método entrega. Te pergunto direto: o que precisa acontecer pra você sentir que é hora? Quero entender pra te dar exatamente isso."' },
       { tag: 'Encerramento educado (3 dias sem resposta)', texto: '"Pablo aqui de novo. Como você não respondeu, fico em dúvida: você quer continuar essa conversa ou prefere que eu arquive e te procure daqui 3 meses? Sem pressão, só não quero ficar te incomodando se não for o momento. Me responde só com SIM ou NÃO."' }
     ];
 
     function renderizarBiblioteca() {
-      // Cases
-      let casesHtml = '';
-      CASES_POR_SETOR.forEach(function (c) {
-        casesHtml += '<div class="case-item"><h4>' + c.icone + ' ' + escapeHtml(c.setor) + ' — ' + escapeHtml(c.titulo) + '</h4><p>' + escapeHtml(c.texto) + '</p>' +
-          '<button class="icon-btn" style="margin-top: 8px; padding: 5px 10px; font-size: 11px;" onclick="copiarTexto(this.previousElementSibling.previousElementSibling.textContent + \' \' + this.previousElementSibling.textContent, this)">📋 Copiar</button></div>';
-      });
-      document.getElementById('cases-list').innerHTML = casesHtml;
+      renderizarCases();
 
       // Respostas
       let respHtml = '';
@@ -7867,6 +9257,22 @@ Aguarde o user message — siga o cabeçalho.`;
 
       // Perguntas SPIN
       renderizarBancoSPIN();
+    }
+
+    function renderizarCases() {
+      const setorEl = document.getElementById('cases-setor-filtro');
+      const filtro = setorEl ? setorEl.value : 'todos';
+      const lista = filtro === 'todos' ? CASES_POR_SETOR : CASES_POR_SETOR.filter(function (c) { return c.setor === filtro; });
+      let html = '';
+      if (lista.length === 0) {
+        html = '<p class="subtitle">Nenhum case encontrado pra este setor.</p>';
+      } else {
+        lista.forEach(function (c) {
+          html += '<div class="case-item"><h4>' + c.icone + ' ' + escapeHtml(c.setorNome) + ' — ' + escapeHtml(c.titulo) + '</h4><p>' + escapeHtml(c.texto) + '</p>' +
+            '<button class="icon-btn" style="margin-top: 8px; padding: 5px 10px; font-size: 11px;" onclick="copiarTexto(this.previousElementSibling.previousElementSibling.textContent + \' \' + this.previousElementSibling.textContent, this)">📋 Copiar</button></div>';
+        });
+      }
+      document.getElementById('cases-list').innerHTML = html;
     }
 
     const SPIN_ESTAGIO_LABEL = {
@@ -7925,7 +9331,7 @@ Aguarde o user message — siga o cabeçalho.`;
     }
 
     function trocarBibTab(qual) {
-      const tabs = ['cases', 'respostas', 'spin', 'roi'];
+      const tabs = ['cases', 'respostas', 'spin', 'roi', 'turnover', 'cac'];
       document.querySelectorAll('#view-biblioteca .prompt-tab').forEach(function (t, idx) {
         t.classList.toggle('active', tabs[idx] === qual);
       });
@@ -7971,6 +9377,336 @@ Aguarde o user message — siga o cabeçalho.`;
       html += '<button class="icon-btn primary" style="margin-top: 8px;" onclick="copiarTexto(\'' + fraseCliente.replace(/'/g, "\\'") + '\', this)">📋 Copiar frase</button></div>';
 
       document.getElementById('roi-resultado').innerHTML = html;
+    }
+
+    function calcularTurnover() {
+      const sal = parseFloat(val('to-salario'));
+      const qtd = parseInt(val('to-qtd')) || 1;
+      const multEl = document.querySelector('input[name="to-mult"]:checked');
+      const perEl = document.querySelector('input[name="to-periodo"]:checked');
+      const mult = multEl ? parseFloat(multEl.value) : 4.5;
+      const periodo = perEl ? perEl.value : 'mes';
+      const invest = parseFloat(val('to-investimento')) || 0;
+
+      if (!sal || sal < 500) {
+        toast('Informe um salário válido', 'error');
+        return;
+      }
+
+      const fmt = function (n) { return n.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); };
+      const labelMult = mult === 3 ? 'Conservador (3x)' : mult === 6 ? 'Pesado (6x)' : 'Realista (4,5x)';
+      const explicMult = mult === 3
+        ? 'Cargo operacional simples (atendente, auxiliar, operador júnior). Substituição rápida e treino curto.'
+        : mult === 6
+          ? 'Cargo estratégico, gestão ou especialista sênior (gerente, key account, líder técnico). Rampa de 6+ meses e perda alta de conhecimento.'
+          : 'Cargo técnico ou de média complexidade (vendedor, analista, supervisor, técnico). Rampa de 2-3 meses. É a média de mercado.';
+
+      // Custo unitário por desligamento
+      const custoUnit = sal * mult;
+      // Breakdown didático (proporções de mercado: ~33% direto / ~67% indireto)
+      const direto = custoUnit * 0.33;     // rescisão CLT
+      const recrut = custoUnit * 0.17;     // recrutamento + seleção
+      const rampa = custoUnit * 0.33;      // treino + baixa produtividade até 3 meses
+      const perda = custoUnit * 0.17;      // perda de cliente/conhecimento + retrabalho gestor
+
+      // Custo total no período informado
+      const custoPeriodo = custoUnit * qtd;
+
+      // Fator pra normalizar pra mês (qtd informada / quantos meses cobrem o período)
+      const fatoresMes = { mes: 1, tri: 3, sem: 6, ano: 12 };
+      const mesesPeriodo = fatoresMes[periodo];
+      const desligPorMes = qtd / mesesPeriodo;
+
+      // Extrapolações
+      const cMes = desligPorMes * custoUnit;
+      const cTri = cMes * 3;
+      const cSem = cMes * 6;
+      const cAno = cMes * 12;
+
+      const periodoLabel = { mes: 'mês', tri: 'trimestre', sem: 'semestre', ano: 'ano' }[periodo];
+
+      let html = '<div class="steps-box">';
+      html += '<h3>💸 Custo de Turnover — Diagnóstico</h3>';
+      html += '<p><strong>Cenário:</strong> ' + qtd + ' desligamento(s) por ' + periodoLabel + ', salário médio R$ ' + fmt(sal) + ', cenário ' + labelMult + '.</p>';
+      html += '<p style="margin-top:6px; font-size:13px; opacity:0.85;"><strong>📖 ' + labelMult + ':</strong> ' + explicMult + '</p>';
+
+      html += '<p style="margin-top: 14px;"><strong>📅 Quanto sai do caixa, mantido esse ritmo de desligamentos:</strong></p>';
+      const mark = function (key, label, val) {
+        const isSel = key === periodo;
+        const bg = isSel ? 'background: rgba(220,38,38,0.12); border-radius:6px; padding:4px 8px;' : '';
+        const tag = isSel ? ' ← período informado' : '';
+        return '<li style="' + bg + '">Por ' + label + ': <strong style="color:var(--hot);">R$ ' + fmt(val) + '</strong>' + tag + '</li>';
+      };
+      html += '<ul style="margin-left: 20px; margin-top: 6px; list-style:none; padding-left:0;">';
+      html += mark('mes', 'mês', cMes);
+      html += mark('tri', 'trimestre', cTri);
+      html += mark('sem', 'semestre', cSem);
+      html += mark('ano', 'ano', cAno);
+      html += '</ul>';
+
+      html += '<p style="margin-top: 14px;"><strong>🔍 Onde esse dinheiro evapora (por desligamento):</strong></p>';
+      html += '<ul style="margin-left: 20px; margin-top: 6px; font-size: 13px;">';
+      html += '<li>Rescisão CLT (multa FGTS + aviso + férias + 13º): <strong>R$ ' + fmt(direto) + '</strong></li>';
+      html += '<li>Recrutamento e seleção: <strong>R$ ' + fmt(recrut) + '</strong></li>';
+      html += '<li>Treino e rampa (3 meses de baixa produtividade): <strong>R$ ' + fmt(rampa) + '</strong></li>';
+      html += '<li>Perda de cliente/conhecimento + retrabalho do gestor: <strong>R$ ' + fmt(perda) + '</strong></li>';
+      html += '<li style="margin-top:6px;">Total por colaborador desligado: <strong style="color:var(--hot);">R$ ' + fmt(custoUnit) + '</strong></li>';
+      html += '</ul>';
+
+      if (invest > 0) {
+        const capacitacoes = Math.floor(cAno / invest);
+        html += '<p style="margin-top: 14px; padding: 10px 12px; background: var(--bg-2); border-left: 3px solid var(--green); border-radius: 6px;"><strong>💡 Gancho:</strong> com o que sai do caixa em <strong>1 ano</strong> de turnover (R$ ' + fmt(cAno) + '), você pagaria <strong>' + capacitacoes + ' capacitações completas</strong> de R$ ' + fmt(invest) + ' — ou seja, formaria o time inteiro em vez de demitir e recontratar.</p>';
+      }
+
+      html += '<p style="margin-top: 12px; font-size: 12px; opacity: 0.75;">Fontes: SHRM (Society for Human Resource Management), Gallup, Deloitte. Faixa de mercado: 3x a 6x salário mensal por desligamento (CLT médio com encargos).</p>';
+      html += '</div>';
+
+      // Frase pronta pro consultor — formatada em parágrafos pra WhatsApp
+      let fraseCliente = 'Fiz uma conta rápida pra você:\n\n' +
+        '• ' + qtd + ' desligamento(s) por ' + periodoLabel + '\n' +
+        '• Salário médio: *R$ ' + fmt(sal) + '*\n\n' +
+        'Sua empresa queima:\n' +
+        '👉 *R$ ' + fmt(cMes) + ' por mês*\n' +
+        '👉 *R$ ' + fmt(cAno) + ' por ANO*\n\n' +
+        '_Só com turnover (rescisão + recrutamento + rampa + perda de conhecimento)._\n\n' +
+        'É dinheiro saindo do caixa por contratar errado e mandar embora.';
+      if (invest > 0) {
+        const capacitacoes = Math.floor(cAno / invest);
+        fraseCliente += '\n\n💡 Esse mesmo valor anual pagaria *' + capacitacoes + ' capacitações completas* do seu time — em vez de demitir e recontratar, você forma gente que entrega.';
+      }
+      fraseCliente += '\n\n*Quer ver como o método trava esse rombo?*';
+
+      window._turnoverFrase = fraseCliente;
+      html += '<div style="margin-top: 14px;"><label>💬 Frase pra mandar pro cliente</label>';
+      html += '<div style="background: var(--bg-2); border: 1px solid var(--border-strong); border-left: 3px solid var(--green); border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.6;">' + escapeHtml(fraseCliente) + '</div>';
+      html += '<button class="icon-btn primary" style="margin-top: 8px;" onclick="copiarTexto(window._turnoverFrase, this)">📋 Copiar frase</button>';
+
+      // Diagnóstico completo pra colar no WhatsApp
+      // helper: alinhar tabela em monospace (WhatsApp ```...``` renderiza com largura fixa)
+      const padRight = function (s, n) { s = String(s); while (s.length < n) s += ' '; return s; };
+      const padLeft = function (s, n) { s = String(s); while (s.length < n) s = ' ' + s; return s; };
+      const tabelaCusto =
+        padRight('Rescisão CLT', 18)     + padLeft('R$ ' + fmt(direto), 12) + '\n' +
+        padRight('Recrutamento', 18)     + padLeft('R$ ' + fmt(recrut), 12) + '\n' +
+        padRight('Rampa/treino', 18)     + padLeft('R$ ' + fmt(rampa), 12) + '\n' +
+        padRight('Perda/retrabalho', 18) + padLeft('R$ ' + fmt(perda), 12);
+      const tabelaProjecao =
+        padRight('Mês', 12)       + padLeft('R$ ' + fmt(cMes), 14) + '\n' +
+        padRight('Trimestre', 12) + padLeft('R$ ' + fmt(cTri), 14) + '\n' +
+        padRight('Semestre', 12) + padLeft('R$ ' + fmt(cSem), 14) + '\n' +
+        padRight('Ano', 12)       + padLeft('R$ ' + fmt(cAno), 14) + '  🔥';
+
+      const diag = '💸 *DIAGNÓSTICO DE TURNOVER*\n\n' +
+        '📋 *CENÁRIO*\n' +
+        '• Desligamentos: ' + qtd + ' por ' + periodoLabel + '\n' +
+        '• Salário médio: *R$ ' + fmt(sal) + '*\n' +
+        '• Multiplicador: ' + labelMult + '\n' +
+        '_' + explicMult + '_\n\n' +
+        '💥 *CUSTO POR DESLIGAMENTO*\n' +
+        '*R$ ' + fmt(custoUnit) + '*\n' +
+        '```\n' + tabelaCusto + '\n```\n\n' +
+        '📅 *PROJEÇÃO DO ROMBO*\n' +
+        '```\n' + tabelaProjecao + '\n```\n\n' +
+        (invest > 0 ? '💡 _Esse valor anual pagaria *' + Math.floor(cAno / invest) + ' capacitações* de R$ ' + fmt(invest) + ' cada — em vez de demitir e recontratar, formaria seu time inteiro._\n\n' : '') +
+        'ℹ️ *Sobre o multiplicador (3x–6x)*\n' +
+        '• *Conservador 3x* — operacional simples\n' +
+        '• *Realista 4,5x* — técnico/médio (média de mercado)\n' +
+        '• *Pesado 6x* — estratégico/gestão\n' +
+        '_Inclui: rescisão CLT (~33%) + recrutamento (~17%) + rampa (~33%) + perda de cliente/conhecimento (~17%)._\n\n' +
+        '📚 _Fonte: SHRM / Gallup / Deloitte._';
+      window._turnoverDiag = diag;
+      html += '<button class="icon-btn" style="margin-top: 8px; margin-left: 6px;" onclick="copiarTexto(window._turnoverDiag, this)">📋 Copiar diagnóstico completo</button>';
+
+      // Versão enxuta — direto ao ponto pra WhatsApp/áudio
+      const curto = '💸 *R$ ' + fmt(cMes) + '/mês* — ou *R$ ' + fmt(cAno) + '/ano* — saindo do seu caixa só com turnover (rescisão + recontratação + rampa). É dinheiro de contratar errado e mandar embora. Quer ver como travar isso?';
+      window._turnoverCurto = curto;
+      html += '<button class="icon-btn" style="margin-top: 8px; margin-left: 6px;" onclick="copiarTexto(window._turnoverCurto, this)">⚡ Copiar versão curta</button></div>';
+
+      document.getElementById('turnover-resultado').innerHTML = html;
+    }
+
+    function calcularCAC() {
+      const mkt = parseFloat(val('cac-mkt')) || 0;
+      const vendas = parseFloat(val('cac-vendas')) || 0;
+      const clientes = parseInt(val('cac-clientes')) || 0;
+      const perEl = document.querySelector('input[name="cac-periodo"]:checked');
+      const periodo = perEl ? perEl.value : 'mes';
+      const ticket = parseFloat(val('cac-ticket')) || 0;
+      const margem = parseFloat(val('cac-margem')) || 100;
+      const retencao = parseInt(val('cac-retencao')) || 0;
+
+      const investimentoTotal = mkt + vendas;
+      if (investimentoTotal < 100 || clientes < 1) {
+        toast('Informe ao menos investimento em marketing e clientes novos', 'error');
+        return;
+      }
+
+      const fmt = function (n) { return n.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); };
+      const fmt2 = function (n) { return n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); };
+      const padRight = function (s, n) { s = String(s); while (s.length < n) s += ' '; return s; };
+      const padLeft = function (s, n) { s = String(s); while (s.length < n) s = ' ' + s; return s; };
+
+      const periodoLabel = { mes: 'mês', tri: 'trimestre', sem: 'semestre', ano: 'ano' }[periodo];
+
+      // CAC unitário
+      const cac = investimentoTotal / clientes;
+
+      // Extrapolação do investimento (mantido o ritmo)
+      const fatoresMes = { mes: 1, tri: 3, sem: 6, ano: 12 };
+      const mesesPeriodo = fatoresMes[periodo];
+      const investPorMes = investimentoTotal / mesesPeriodo;
+      const iMes = investPorMes;
+      const iTri = investPorMes * 3;
+      const iSem = investPorMes * 6;
+      const iAno = investPorMes * 12;
+
+      // Métricas avançadas (se ticket informado)
+      const margemDec = margem / 100;
+      const ltv = ticket && retencao ? ticket * margemDec * retencao : 0;
+      const payback = ticket ? cac / (ticket * margemDec) : 0;
+      const pctTicket = ticket ? (cac / ticket) * 100 : 0;
+      const ratio = ltv > 0 ? ltv / cac : 0;
+
+      // Diagnóstico do ratio
+      let ratioStatus = '', ratioCor = '', ratioMsg = '';
+      if (ratio > 0) {
+        if (ratio < 1) { ratioStatus = '🔴 PREJUÍZO'; ratioCor = 'var(--hot)'; ratioMsg = 'Você gasta mais pra trazer cliente do que ele te paga ao longo da vida. Insustentável.'; }
+        else if (ratio < 3) { ratioStatus = '🟡 APERTADO'; ratioCor = 'var(--warn)'; ratioMsg = 'Sobrevive mas não escala. Ratio saudável é >3x. Cortar CAC ou aumentar retenção/ticket.'; }
+        else if (ratio <= 5) { ratioStatus = '🟢 SAUDÁVEL'; ratioCor = 'var(--green)'; ratioMsg = 'Está na faixa de mercado (Bessemer/SaaS: 3-5x). Pode escalar com calma.'; }
+        else { ratioStatus = '🟢 ESCALÁVEL'; ratioCor = 'var(--green)'; ratioMsg = 'Acima de 5x — você pode pisar no acelerador OU está subinvestindo em aquisição. Aumentar CAC pode acelerar crescimento.'; }
+      }
+
+      // Diagnóstico do payback
+      let paybackStatus = '', paybackMsg = '';
+      if (payback > 0) {
+        if (payback < 12) { paybackStatus = '🟢'; paybackMsg = 'Saudável — recupera em menos de 1 ano.'; }
+        else if (payback <= 18) { paybackStatus = '🟡'; paybackMsg = 'Apertado — referência de mercado é < 12 meses.'; }
+        else { paybackStatus = '🔴'; paybackMsg = 'Crítico — queima caixa. Cliente leva mais de 1,5 ano pra se pagar.'; }
+      }
+
+      // Render HTML
+      let html = '<div class="steps-box">';
+      html += '<h3>📊 CAC / LTV — Diagnóstico</h3>';
+      html += '<p><strong>Cenário:</strong> R$ ' + fmt(investimentoTotal) + ' investidos no ' + periodoLabel + ' → ' + clientes + ' cliente(s) novo(s).</p>';
+
+      html += '<p style="margin-top: 14px; padding: 12px; background: var(--bg-2); border-left: 3px solid var(--hot); border-radius: 6px;"><strong>💰 CAC (Custo de Aquisição):</strong> <span style="color:var(--hot); font-size:20px; font-weight:700;">R$ ' + fmt(cac) + '</span> por cliente</p>';
+
+      html += '<p style="margin-top: 14px;"><strong>🔍 Composição do investimento:</strong></p>';
+      html += '<ul style="margin-left: 20px; margin-top: 6px; font-size: 13px;">';
+      html += '<li>Marketing: <strong>R$ ' + fmt(mkt) + '</strong></li>';
+      if (vendas > 0) html += '<li>Vendas/comercial (salário + comissão + ferramentas): <strong>R$ ' + fmt(vendas) + '</strong></li>';
+      html += '<li>Total investido no ' + periodoLabel + ': <strong>R$ ' + fmt(investimentoTotal) + '</strong></li>';
+      html += '</ul>';
+
+      html += '<p style="margin-top: 14px;"><strong>📅 Investimento extrapolado (mantido o ritmo):</strong></p>';
+      const markI = function (key, label, val) {
+        const isSel = key === periodo;
+        const bg = isSel ? 'background: rgba(220,38,38,0.12); border-radius:6px; padding:4px 8px;' : '';
+        const tag = isSel ? ' ← período informado' : '';
+        return '<li style="' + bg + '">Por ' + label + ': <strong>R$ ' + fmt(val) + '</strong>' + tag + '</li>';
+      };
+      html += '<ul style="margin-left: 20px; margin-top: 6px; list-style:none; padding-left:0;">';
+      html += markI('mes', 'mês', iMes);
+      html += markI('tri', 'trimestre', iTri);
+      html += markI('sem', 'semestre', iSem);
+      html += markI('ano', 'ano', iAno);
+      html += '</ul>';
+
+      if (ticket > 0) {
+        html += '<p style="margin-top: 14px;"><strong>💎 Análise unitária do cliente:</strong></p>';
+        html += '<ul style="margin-left: 20px; margin-top: 6px; font-size: 13px;">';
+        html += '<li>Ticket médio mensal: <strong>R$ ' + fmt(ticket) + '</strong> (margem ' + margem + '%)</li>';
+        html += '<li>CAC representa: <strong>' + fmt2(pctTicket) + '%</strong> do ticket mensal</li>';
+        html += '<li>Payback do CAC: <strong>' + paybackStatus + ' ' + fmt2(payback) + ' meses</strong> — <em>' + paybackMsg + '</em></li>';
+        if (ltv > 0) {
+          html += '<li>LTV (Lifetime Value): <strong>R$ ' + fmt(ltv) + '</strong> <em>(ticket × margem × ' + retencao + ' meses de retenção)</em></li>';
+          html += '<li>Ratio <strong>LTV:CAC = ' + fmt2(ratio) + 'x</strong> <span style="color:' + ratioCor + '; font-weight:700;">' + ratioStatus + '</span></li>';
+        }
+        html += '</ul>';
+        if (ltv > 0) {
+          html += '<p style="margin-top: 10px; padding: 10px 12px; background: var(--bg-2); border-left: 3px solid ' + ratioCor + '; border-radius: 6px; font-size:13px;"><strong>Diagnóstico:</strong> ' + ratioMsg + '</p>';
+        }
+      } else {
+        html += '<p style="margin-top: 12px; font-size:12px; opacity:0.75;">💡 Preencha <strong>ticket médio</strong> + <strong>retenção</strong> pra liberar Payback, LTV e ratio LTV:CAC com semáforo de mercado.</p>';
+      }
+
+      html += '<p style="margin-top: 14px; font-size: 12px; opacity: 0.75;">Fontes: David Skok (SaaS Metrics 2.0), Bessemer Venture Partners, Brad Sugars, HubSpot. Ratio LTV:CAC ≥ 3 é o consenso pra crescimento sustentável.</p>';
+      html += '</div>';
+
+      // ========== Cópia: 3 versões ==========
+
+      // 1. Frase enxuta (parágrafos com 👉)
+      let frase = 'Fiz uma conta rápida do seu funil:\n\n' +
+        '• Investimento no ' + periodoLabel + ': *R$ ' + fmt(investimentoTotal) + '*\n' +
+        '• Clientes novos: *' + clientes + '*\n\n' +
+        'Custo pra trazer 1 cliente:\n' +
+        '👉 *CAC = R$ ' + fmt(cac) + '*';
+      if (ticket > 0) {
+        frase += '\n\nE pra recuperar isso:\n' +
+          '👉 *Payback = ' + fmt2(payback) + ' meses* ' + paybackStatus;
+        if (ltv > 0) {
+          frase += '\n👉 *LTV:CAC = ' + fmt2(ratio) + 'x* ' + ratioStatus;
+        }
+      }
+      frase += '\n\n*Quer ver como o método ajusta esse funil pra cada real investido virar mais cliente — e cada cliente render mais tempo?*';
+      window._cacFrase = frase;
+
+      // 2. Diagnóstico completo (tabelas monoespaçadas)
+      const tabelaInvest =
+        padRight('Marketing', 16) + padLeft('R$ ' + fmt(mkt), 14) + '\n' +
+        (vendas > 0 ? padRight('Vendas/comercial', 16) + padLeft('R$ ' + fmt(vendas), 14) + '\n' : '') +
+        padRight('TOTAL', 16) + padLeft('R$ ' + fmt(investimentoTotal), 14);
+      const tabelaProj =
+        padRight('Mês', 12) + padLeft('R$ ' + fmt(iMes), 14) + '\n' +
+        padRight('Trimestre', 12) + padLeft('R$ ' + fmt(iTri), 14) + '\n' +
+        padRight('Semestre', 12) + padLeft('R$ ' + fmt(iSem), 14) + '\n' +
+        padRight('Ano', 12) + padLeft('R$ ' + fmt(iAno), 14);
+
+      let diag = '📊 *DIAGNÓSTICO CAC / LTV*\n\n' +
+        '📋 *CENÁRIO*\n' +
+        '• Período: ' + periodoLabel + '\n' +
+        '• Investimento: *R$ ' + fmt(investimentoTotal) + '*\n' +
+        '• Clientes novos: *' + clientes + '*\n\n' +
+        '💰 *CAC (Custo de Aquisição)*\n' +
+        '*R$ ' + fmt(cac) + '* por cliente\n\n' +
+        '🔍 *Composição do investimento*\n' +
+        '```\n' + tabelaInvest + '\n```\n\n' +
+        '📅 *Investimento extrapolado (mesmo ritmo)*\n' +
+        '```\n' + tabelaProj + '\n```\n';
+
+      if (ticket > 0) {
+        diag += '\n💎 *Análise unitária do cliente*\n' +
+          '• Ticket médio: *R$ ' + fmt(ticket) + '* (margem ' + margem + '%)\n' +
+          '• CAC = ' + fmt2(pctTicket) + '% do ticket mensal\n' +
+          '• *Payback: ' + fmt2(payback) + ' meses* ' + paybackStatus + '\n' +
+          '_' + paybackMsg + '_\n';
+        if (ltv > 0) {
+          diag += '• *LTV: R$ ' + fmt(ltv) + '* (ticket × margem × ' + retencao + ' meses)\n' +
+            '• *Ratio LTV:CAC = ' + fmt2(ratio) + 'x* ' + ratioStatus + '\n' +
+            '_' + ratioMsg + '_\n';
+        }
+      }
+      diag += '\nℹ️ *Benchmarks de mercado*\n' +
+        '• Payback < 12 meses 🟢 / 12-18 🟡 / >18 🔴\n' +
+        '• LTV:CAC <1 🔴 / 1-3 🟡 / 3-5 🟢 / >5 escalável\n\n' +
+        '📚 _Fonte: David Skok (SaaS Metrics 2.0), Bessemer VP, HubSpot, Brad Sugars._';
+      window._cacDiag = diag;
+
+      // 3. Versão curta
+      let curto = '📊 Seu *CAC = R$ ' + fmt(cac) + '* por cliente novo';
+      if (ticket > 0) curto += ' · Payback ' + fmt2(payback) + ' meses ' + paybackStatus;
+      if (ltv > 0) curto += ' · LTV:CAC ' + fmt2(ratio) + 'x ' + ratioStatus;
+      curto += '. Quer ver onde tá o vazamento e como cada real virar mais cliente?';
+      window._cacCurto = curto;
+
+      // Botões
+      html += '<div style="margin-top: 14px;"><label>💬 Frase pra mandar pro cliente</label>';
+      html += '<div style="background: var(--bg-2); border: 1px solid var(--border-strong); border-left: 3px solid var(--green); border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">' + escapeHtml(frase) + '</div>';
+      html += '<button class="icon-btn primary" style="margin-top: 8px;" onclick="copiarTexto(window._cacFrase, this)">📋 Copiar frase</button>';
+      html += '<button class="icon-btn" style="margin-top: 8px; margin-left: 6px;" onclick="copiarTexto(window._cacDiag, this)">📋 Copiar diagnóstico completo</button>';
+      html += '<button class="icon-btn" style="margin-top: 8px; margin-left: 6px;" onclick="copiarTexto(window._cacCurto, this)">⚡ Copiar versão curta</button></div>';
+
+      document.getElementById('cac-resultado').innerHTML = html;
     }
 
     // =========================================================================
@@ -8679,6 +10415,65 @@ Aguarde o user message — siga o cabeçalho.`;
       inicializarApp();
     }
 
+    function abrirResetGestor() {
+      document.getElementById('login-form-section').style.display = 'none';
+      document.getElementById('login-reset-link').style.display = 'none';
+      var p = document.getElementById('login-reset-panel');
+      p.style.display = 'flex';
+      var _err = document.getElementById('login-erro'); if (_err) _err.style.display = 'none';
+      var u = document.getElementById('reset-username'); if (u) u.value = '';
+      var c = document.getElementById('reset-confirmacao'); if (c) c.value = '';
+      var n = document.getElementById('reset-nova-senha'); if (n) n.value = '';
+      var cs = document.getElementById('reset-confirma-senha'); if (cs) cs.value = '';
+      setTimeout(function () { var el = document.getElementById('reset-username'); if (el) el.focus(); }, 50);
+    }
+
+    function cancelarResetGestor() {
+      document.getElementById('login-reset-panel').style.display = 'none';
+      document.getElementById('login-form-section').style.display = 'flex';
+      document.getElementById('login-reset-link').style.display = 'block';
+      var _err = document.getElementById('login-erro'); if (_err) _err.style.display = 'none';
+    }
+
+    async function confirmarResetGestor() {
+      var username = ((document.getElementById('reset-username') || {}).value || '').toLowerCase().trim();
+      var confirmacao = ((document.getElementById('reset-confirmacao') || {}).value || '').trim();
+      var nova = (document.getElementById('reset-nova-senha') || {}).value || '';
+      var conf = (document.getElementById('reset-confirma-senha') || {}).value || '';
+
+      if (!username) { mostrarErroPainel('Informe o usuário.'); return; }
+      var profile = PROFILES.findByUsername(username);
+      if (!profile) { mostrarErroPainel('Usuário não encontrado neste dispositivo.'); return; }
+
+      var fraseEsperada = 'RESET-' + username.toUpperCase();
+      if (confirmacao !== fraseEsperada) {
+        mostrarErroPainel('Frase de confirmação incorreta. Digite exatamente: ' + fraseEsperada);
+        return;
+      }
+      if (nova.length < 4) { mostrarErroPainel('Senha precisa ter ao menos 4 caracteres.'); return; }
+      if (nova !== conf) { mostrarErroPainel('As senhas não conferem.'); return; }
+
+      try {
+        var salt = gerarSalt();
+        var hash = await hashSenhaCrypto(nova, salt);
+        PROFILES.update(profile.id, { senhaHash: hash, senhaSalt: salt, senhaTemporaria: false });
+
+        // Auditoria — registra que a senha foi resetada via autosserviço
+        try {
+          if (typeof AUDIT !== 'undefined' && AUDIT.log) {
+            AUDIT.log('reset_senha_autosservico', { targetId: profile.id, targetUsername: profile.username, viaTela: 'login' });
+          }
+        } catch (e) {}
+
+        toast('Senha de "' + profile.username + '" trocada. Faça login com a nova senha.', 'success');
+        cancelarResetGestor();
+        var u = document.getElementById('login-username'); if (u) u.value = profile.username;
+        var s = document.getElementById('login-senha'); if (s) { s.value = ''; setTimeout(function () { s.focus(); }, 100); }
+      } catch (e) {
+        mostrarErroPainel('Erro ao trocar senha: ' + (e && e.message ? e.message : e));
+      }
+    }
+
     async function criarPrimeiroGestor() {
       var nome = ((document.getElementById('setup-nome') || {}).value || '').trim();
       var username = ((document.getElementById('setup-username') || {}).value || '').toLowerCase().trim();
@@ -8744,6 +10539,29 @@ Aguarde o user message — siga o cabeçalho.`;
     // =========================================================================
     function profileAtivo() { return PROFILES.get(SESSION.profileId()); }
     function ehGestor() { var p = profileAtivo(); return !!(p && p.role === 'gestor'); }
+
+    async function verificarSenhaGestor(motivo) {
+      var profile = profileAtivo();
+      if (!profile || profile.role !== 'gestor') {
+        toast('Acesso restrito ao gestor', 'error');
+        return false;
+      }
+      if (!profile.senhaHash || !profile.senhaSalt) {
+        toast('Conta sem senha definida', 'error');
+        return false;
+      }
+      var senha = prompt('🔒 ' + (motivo || 'Confirme sua senha de gestor para continuar') + ':');
+      if (senha === null) return false; // cancelou
+      if (!senha) { toast('Senha vazia', 'error'); return false; }
+      try {
+        var hash = await hashSenhaCrypto(senha, profile.senhaSalt);
+        if (hash !== profile.senhaHash) { toast('Senha incorreta', 'error'); return false; }
+        return true;
+      } catch (e) {
+        toast('Erro ao validar senha: ' + e.message, 'error');
+        return false;
+      }
+    }
     function exigirGestor() {
       if (!ehGestor()) { toast('Acesso restrito ao gestor.', 'error'); return false; }
       return true;
@@ -8954,10 +10772,15 @@ Aguarde o user message — siga o cabeçalho.`;
       if (!profile) return;
       var raw = localStorage.getItem(profile.dbKey);
       var data = raw ? JSON.parse(raw) : {};
-      var treinos = (data.treinos || []).slice(0, 10);
+      var treinos = (data.treinos || []).slice(0, 50);
       AUDIT.log('viu_treinos', { targetId: profileId, targetUsername: profile.username });
 
-      var html = '<h3 style="margin:0 0 10px 0;">Últimos treinos de ' + escapeHtml(profile.nome) + '</h3>';
+      var topo = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">' +
+        '<button class="icon-btn" onclick="renderizarTreinoEquipe()">← Voltar</button>' +
+        (treinos.length ? '<button class="icon-btn" onclick="limparTreinosGestor(\'' + profileId + '\')" style="background:rgba(255,80,80,0.12);border-color:var(--hot);color:var(--hot);">🗑️ Limpar histórico inteiro</button>' : '') +
+        '</div>';
+
+      var html = '<h3 style="margin:0 0 10px 0;">Treinos de ' + escapeHtml(profile.nome) + ' <span style="color:var(--muted);font-weight:400;font-size:13px;">(' + treinos.length + ')</span></h3>';
       if (!treinos.length) html += '<p style="color:var(--muted);">Sem treinos ainda.</p>';
       treinos.forEach(function(t) {
         var nota = typeof t.nota === 'number' ? t.nota + '/10' : '— sem nota';
@@ -8965,22 +10788,77 @@ Aguarde o user message — siga o cabeçalho.`;
         var tipoIcon = ehMulti ? '💬' : '📚';
         var resultadoStr = ehMulti ? ({ fechou: ' · ✅ fechou', esfriou: ' · ❄️ esfriou', continua: ' · ⏳ continua' }[t.resultado] || '') : '';
         var turnosStr = ehMulti ? ' · ' + (t.numTurnosConsultor || 0) + ' turnos' : '';
-        var btnDetalhe = ehMulti ? '<button class="icon-btn" onclick="abrirDetalheTreinoGestor(\'' + profileId + '\',\'' + t.id + '\')" style="margin-top:8px;padding:4px 10px;font-size:11px;">Ver conversa completa</button>' : '';
+        var btnDetalhe = ehMulti ? '<button class="icon-btn" onclick="abrirDetalheTreinoGestor(\'' + profileId + '\',\'' + t.id + '\')" style="padding:4px 10px;font-size:11px;">Ver conversa completa</button>' : '';
+        var btnExcluir = '<button class="icon-btn" onclick="excluirTreinoGestor(\'' + profileId + '\',\'' + t.id + '\')" style="padding:4px 10px;font-size:11px;background:rgba(255,80,80,0.12);border-color:var(--hot);color:var(--hot);">🗑️ Excluir</button>';
         html += '<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;font-size:12px;">' +
-          '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">' +
+          '<div style="display:flex;justify-content:space-between;margin-bottom:6px;gap:8px;">' +
             '<strong>' + tipoIcon + ' ' + escapeHtml(t.treinamentoNome || '—') + ' · ' + escapeHtml(t.perfilLabel || '') + (t.perfilDisc ? ' · ' + t.perfilDisc : '') + turnosStr + resultadoStr + '</strong>' +
-            '<span style="color:var(--green);font-weight:700;">' + nota + '</span>' +
+            '<span style="color:var(--green);font-weight:700;white-space:nowrap;">' + nota + '</span>' +
           '</div>' +
           '<div style="color:var(--muted);font-size:11px;margin-bottom:6px;">' + escapeHtml(t.etapa || '') + ' · ' + escapeHtml(t.canal || '') + ' · ' + fmtData(t.timestamp) + '</div>' +
           (t.resposta ? '<div style="background:var(--bg);padding:6px 8px;border-radius:6px;font-size:11px;color:var(--text);"><strong>' + (ehMulti ? 'Última fala dele:' : 'Resposta dele:') + '</strong> ' + escapeHtml(t.resposta.slice(0, 300)) + (t.resposta.length > 300 ? '...' : '') + '</div>' : '') +
           (t.pontosFracos ? '<div style="margin-top:6px;font-size:11px;color:var(--warm);"><strong>⚠️</strong> ' + escapeHtml(t.pontosFracos) + '</div>' : '') +
-          btnDetalhe +
+          '<div class="flex-row" style="margin-top:8px;gap:6px;flex-wrap:wrap;">' + btnDetalhe + btnExcluir + '</div>' +
           '</div>';
       });
 
-      // Modal-like display in same area
       var alvo = document.getElementById('time-treino-dashboard');
-      alvo.innerHTML = '<button class="icon-btn" onclick="renderizarTreinoEquipe()" style="margin-bottom:10px;">← Voltar</button>' + html;
+      alvo.innerHTML = topo + html;
+    }
+
+    async function excluirTreinoGestor(profileId, treinoId) {
+      if (!ehGestor()) { toast('Acesso restrito ao gestor', 'error'); return; }
+      var profile = PROFILES.get(profileId);
+      if (!profile) return;
+      if (!confirm('Excluir este treino do histórico de ' + profile.nome + '? Ação não pode ser desfeita.')) return;
+      var ok = await verificarSenhaGestor('Confirme sua senha pra excluir o treino');
+      if (!ok) return;
+      try {
+        var raw = localStorage.getItem(profile.dbKey);
+        var data = raw ? JSON.parse(raw) : {};
+        var treinos = data.treinos || [];
+        var antes = treinos.length;
+        data.treinos = treinos.filter(function(t) { return t.id !== treinoId; });
+        if (data.treinos.length === antes) { toast('Treino não encontrado', 'error'); return; }
+        localStorage.setItem(profile.dbKey, JSON.stringify(data));
+        AUDIT.log('excluiu_treino', { targetId: profileId, targetUsername: profile.username, treinoId: treinoId });
+        // Se o gestor está apagando do PRÓPRIO histórico carregado, atualiza DB.data também
+        if (profileId === SESSION.profileId()) {
+          DB.data.treinos = data.treinos;
+        }
+        toast('Treino excluído', 'success');
+        verTreinosConsultor(profileId);
+        renderizarTreinoEquipe();
+        if (typeof renderizarTreinoHistory === 'function') renderizarTreinoHistory();
+      } catch(e) { toast('Erro ao excluir: ' + e.message, 'error'); }
+    }
+
+    async function limparTreinosGestor(profileId) {
+      if (!ehGestor()) { toast('Acesso restrito ao gestor', 'error'); return; }
+      var profile = PROFILES.get(profileId);
+      if (!profile) return;
+      var confirmacao = prompt('⚠️ ATENÇÃO: vai apagar TODOS os treinos de ' + profile.nome + '. Isso é irreversível.\n\nPara confirmar, digite o usuário: ' + profile.username);
+      if (confirmacao !== profile.username) {
+        if (confirmacao !== null) toast('Usuário não confere — cancelado', 'info');
+        return;
+      }
+      var ok = await verificarSenhaGestor('Confirme sua senha pra limpar o histórico de ' + profile.nome);
+      if (!ok) return;
+      try {
+        var raw = localStorage.getItem(profile.dbKey);
+        var data = raw ? JSON.parse(raw) : {};
+        var qtd = (data.treinos || []).length;
+        data.treinos = [];
+        localStorage.setItem(profile.dbKey, JSON.stringify(data));
+        AUDIT.log('limpou_treinos', { targetId: profileId, targetUsername: profile.username, qtdRemovidos: qtd });
+        if (profileId === SESSION.profileId()) {
+          DB.data.treinos = [];
+        }
+        toast('Histórico apagado: ' + qtd + ' treino(s) removido(s)', 'success');
+        verTreinosConsultor(profileId);
+        renderizarTreinoEquipe();
+        if (typeof renderizarTreinoHistory === 'function') renderizarTreinoHistory();
+      } catch(e) { toast('Erro ao limpar: ' + e.message, 'error'); }
     }
 
     function abrirDetalheTreinoGestor(profileId, treinoId) {
@@ -9001,6 +10879,70 @@ Aguarde o user message — siga o cabeçalho.`;
         (typeof t.nota === 'number' ? t.nota + '/10' : '—') + ' · ' + resultadoTxt;
       document.getElementById('modal-treino-conteudo').innerHTML = renderHtmlChatTreino(t);
       abrirModal('modal-treino-detalhe');
+    }
+
+    async function limparLogsAcessoGlobais() {
+      if (!ehGestor()) { toast('Acesso restrito ao gestor', 'error'); return; }
+      if (!confirm('⚠️ Apagar TODOS os logs de acesso de TODOS os usuários do time?\n\nIrreversível.')) return;
+      var ok = await verificarSenhaGestor('Confirme sua senha pra limpar os logs de acesso');
+      if (!ok) return;
+      var qtdTotal = 0;
+      try {
+        PROFILES.load().forEach(function(p) {
+          try {
+            var raw = localStorage.getItem(p.dbKey);
+            if (!raw) return;
+            var data = JSON.parse(raw);
+            qtdTotal += (data.acessos || []).length;
+            data.acessos = [];
+            localStorage.setItem(p.dbKey, JSON.stringify(data));
+            if (p.id === SESSION.profileId() && DB.data) DB.data.acessos = [];
+          } catch(e) {}
+        });
+        AUDIT.log('limpou_logs_acesso', { qtdRemovidos: qtdTotal });
+        toast('Logs apagados: ' + qtdTotal + ' registro(s) removido(s)', 'success');
+        renderizarLogsGlobais();
+      } catch(e) { toast('Erro: ' + e.message, 'error'); }
+    }
+
+    async function limparTodosTreinosEquipe() {
+      if (!ehGestor()) { toast('Acesso restrito ao gestor', 'error'); return; }
+      if (!confirm('⚠️ Apagar TODOS os treinos de TODOS os consultores do time?\n\nIrreversível.')) return;
+      var ok = await verificarSenhaGestor('Confirme sua senha pra limpar treinos de toda a equipe');
+      if (!ok) return;
+      var qtdTotal = 0;
+      try {
+        PROFILES.load().forEach(function(p) {
+          try {
+            var raw = localStorage.getItem(p.dbKey);
+            if (!raw) return;
+            var data = JSON.parse(raw);
+            qtdTotal += (data.treinos || []).length;
+            data.treinos = [];
+            localStorage.setItem(p.dbKey, JSON.stringify(data));
+            if (p.id === SESSION.profileId() && DB.data) DB.data.treinos = [];
+          } catch(e) {}
+        });
+        AUDIT.log('limpou_treinos_equipe', { qtdRemovidos: qtdTotal });
+        toast('Treinos apagados: ' + qtdTotal + ' registro(s) removido(s) em toda a equipe', 'success');
+        renderizarTreinoEquipe();
+        if (typeof renderizarTreinoHistory === 'function') renderizarTreinoHistory();
+      } catch(e) { toast('Erro: ' + e.message, 'error'); }
+    }
+
+    async function limparAuditoria() {
+      if (!ehGestor()) { toast('Acesso restrito ao gestor', 'error'); return; }
+      if (!confirm('⚠️ Apagar TODA a auditoria administrativa? Isso remove o histórico de ações dos gestores.\n\nIrreversível.')) return;
+      var ok = await verificarSenhaGestor('Confirme sua senha pra limpar a auditoria');
+      if (!ok) return;
+      try {
+        var qtd = AUDIT.load().length;
+        // Registra esta ação ANTES de limpar — fica como única entrada na nova auditoria
+        localStorage.removeItem(AUDIT.KEY);
+        AUDIT.log('limpou_auditoria', { qtdRemovidos: qtd });
+        toast('Auditoria apagada: ' + qtd + ' registro(s) removido(s)', 'success');
+        renderizarAuditoria();
+      } catch(e) { toast('Erro: ' + e.message, 'error'); }
     }
 
     function combinarLogsGlobais() {
@@ -9302,6 +11244,7 @@ Aguarde o user message — siga o cabeçalho.`;
     window.limparTreino = limparTreino;
     window.trocarBibTab = trocarBibTab;
     window.renderizarBancoSPIN = renderizarBancoSPIN;
+    window.renderizarCases = renderizarCases;
     window.calcularROI = calcularROI;
     window.aplicarTemplate = aplicarTemplate;
     window.processarImportWhats = processarImportWhats;

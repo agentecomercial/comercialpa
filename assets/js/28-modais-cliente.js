@@ -40,7 +40,8 @@ function saveEdit(){
   const nome=document.getElementById('mCliente').value.trim();if(!nome){document.getElementById('mCliente').focus();return;}
   const trein=document.getElementById('mTreinamento').value,ic=trein==='CI';
   data[editIdx].cliente=nome.toUpperCase();
-  data[editIdx].treinamento=trein;
+  if(typeof window._setTreinamentoScalar==='function') window._setTreinamentoScalar(data[editIdx], trein);
+  else data[editIdx].treinamento=trein;
   data[editIdx].treinador=ic?document.getElementById('mTreinador').value:'-';
   const consultorSalvo=document.getElementById('mConsultor').value;
   data[editIdx].consultor=consultorSalvo;
@@ -418,7 +419,7 @@ function openClientInfo(idx){
       var valStr= _fmt(it.valor);
       var entStr= _fmt(it.entrada);
       var dsArr = (it.arrIdx!=null) ? (' data-arr-idx="'+it.arrIdx+'"') : '';
-      var openCls = _i===0 ? ' open' : '';
+      var openCls = ''; // todos os cards começam FECHADOS ao abrir o modal
       // Opções do dropdown FORMA DE PGTO
       var _formasPgto=['DINHEIRO','PIX','CARTÃO DE CRÉDITO','CARTÃO DE DÉBITO','BOLETO','TRANSFERÊNCIA','PARCELADO','APP / CARTEIRA','OUTROS'];
       var _formaOpts='<option value="">— SELECIONE —</option>'+_formasPgto.map(function(f){
@@ -433,6 +434,11 @@ function openClientInfo(idx){
         _parcOpts+='<option value="'+_p+'"'+(_parcEfetivo===_p?' selected':'')+'>'+_p+'x</option>';
       }
       var _parcDisabledAttr = _semParc ? ' disabled' : '';
+      // Status por sub-treinamento (essencial quando cliente tem múltiplos treinos: um pago, outro aberto)
+      var _statusOpts = [
+        {v:'aberto',l:'ABERTO'},{v:'pago',l:'PAGO'},{v:'entrada',l:'ENTRADA'},
+        {v:'negociacao',l:'NEGOCIAÇÃO'},{v:'desistiu',l:'DESISTIU'},{v:'estorno',l:'ESTORNO'}
+      ].map(function(s){return '<option value="'+s.v+'"'+(it.status===s.v?' selected':'')+'>'+s.l+'</option>';}).join('');
       return '<div class="ci-tcard '+stCls+openCls+'" data-ri="'+it.ri+'"'+dsArr+'>'
         +'<div class="ci-tcard-sum" onclick="window._ciToggleCard(this.parentNode)">'
           +'<span class="ci-tcard-cod '+stCls+'">'+trein+'</span>'
@@ -452,6 +458,10 @@ function openClientInfo(idx){
               +'<select class="ci-tcard-v ci-tcard-sel" data-ri="'+it.ri+'"'+dsArr+' data-campo="formaPagamento" onchange="window._ciSelectChange(this)">'+_formaOpts+'</select></div>'
             +'<div><label class="ci-tcard-l">PARCELAS</label>'
               +'<select class="ci-tcard-v ci-tcard-sel parcelas" data-ri="'+it.ri+'"'+dsArr+' data-campo="parcelas" onchange="window._ciSelectChange(this)"'+_parcDisabledAttr+'>'+_parcOpts+'</select></div>'
+          +'</div>'
+          +'<div class="ci-tcard-form-row" style="grid-template-columns:1fr;">'
+            +'<div><label class="ci-tcard-l">STATUS DESTE TREINAMENTO</label>'
+              +'<select class="ci-tcard-v ci-tcard-sel status" data-ri="'+it.ri+'"'+dsArr+' data-campo="status" onchange="window._ciSelectChange(this)">'+_statusOpts+'</select></div>'
           +'</div>'
         +'</div>'
       +'</div>';
@@ -558,12 +568,13 @@ window._ciSelectChange=function(sel){
   if(isNaN(ri)||!data[ri]||!campo) return;
   // Resolve alvo: sub se houver arrIdx + treinamentos[], senão linha
   var alvo=data[ri];
+  var ehSub=false;
   if(arrIdxAttr!=null && arrIdxAttr!==''){
     var ai=parseInt(arrIdxAttr,10);
     if(Array.isArray(data[ri].treinamentos) && data[ri].treinamentos[ai]){
-      // Garantir que o sub é um objeto editável
       if(!data[ri].treinamentos[ai]) data[ri].treinamentos[ai]={};
       alvo=data[ri].treinamentos[ai];
+      ehSub=true;
     }
   }
   if(campo==='parcelas'){
@@ -571,7 +582,6 @@ window._ciSelectChange=function(sel){
   } else if(campo==='formaPagamento'){
     var novaForma=String(sel.value||'').toUpperCase();
     alvo.formaPagamento=novaForma;
-    // Achar o select de parcelas IRMÃO neste card e travar/destravar
     var card=sel.closest('.ci-tcard');
     var selParc=card?card.querySelector('select[data-campo="parcelas"]'):null;
     if(selParc){
@@ -581,6 +591,29 @@ window._ciSelectChange=function(sel){
         alvo.parcelas=1;
       } else {
         selParc.disabled=false;
+      }
+    }
+  } else if(campo==='status'){
+    alvo.status=sel.value;
+    // Re-render do extrato inteiro para refletir status (mudança de cor de borda/badge)
+    if(typeof _ciIdx==='number' && _ciIdx!==null && typeof openClientInfo==='function'){
+      // Re-render apenas o bloco extrato (não reabre modal todo)
+      var d=data[_ciIdx];
+      if(d){
+        // Forçar reprocessar bloco extrato com o novo status
+        setTimeout(function(){
+          var card2=document.querySelector('.ci-tcard[data-ri="'+ri+'"]'+(ehSub?'[data-arr-idx="'+arrIdxAttr+'"]':''));
+          if(card2){
+            var stCls = alvo.status==='pago'?'pago':(alvo.status==='aberto'?'aberto':'neutro');
+            card2.classList.remove('pago','aberto','neutro');
+            card2.classList.add(stCls);
+            var cod = card2.querySelector('.ci-tcard-cod');
+            var val = card2.querySelector('.ci-tcard-val');
+            var bd  = card2.querySelector('.ci-tcard-st');
+            [cod,val,bd].forEach(function(el){ if(el){ el.classList.remove('pago','aberto','neutro'); el.classList.add(stCls); }});
+            if(bd) bd.textContent = alvo.status==='pago'?'Pago':(alvo.status==='aberto'?'Aberto':String(alvo.status||'').toUpperCase());
+          }
+        },0);
       }
     }
   } else {

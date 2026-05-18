@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Turnover · Agente Comercial IA</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0e27;--bg2:#0f1438;--card:#151b3d;--card2:#1a2147;
+    --text:#e8ecff;--muted:#9aa3c7;--line:#1f2752;
+    --accent:#6366f1;--accent2:#8b5cf6;--green:#10b981;--gold:#fbbf24;--red:#ef4444;
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+  button{font-family:inherit;cursor:pointer;border:none}
+  input{font-family:inherit;background:var(--bg2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:14px;width:100%}
+  input:focus{outline:none;border-color:var(--accent)}
+
+  .topbar{background:rgba(10,14,39,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+  .logo{font-weight:800;font-size:16px;background:linear-gradient(135deg,#a5b4fc,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:13px;margin-left:18px;font-weight:600}
+  .nav-links a:hover,.nav-links a.active{color:var(--text)}
+
+  .container{max-width:1200px;margin:0 auto;padding:32px 24px}
+  h1{font-size:28px;font-weight:800;margin-bottom:8px;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:15px;margin-bottom:28px;max-width:760px}
+
+  .grid{display:grid;grid-template-columns:1fr 1.4fr;gap:20px;align-items:flex-start}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .panel h3{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .field-help{font-size:11px;color:var(--muted);margin-top:4px;font-style:italic}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  /* Resultado */
+  .res-hero{background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(251,191,36,.1));border:1px solid rgba(239,68,68,.3);border-radius:14px;padding:24px;margin-bottom:14px}
+  .res-hero-label{font-size:12px;color:#fca5a5;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:6px}
+  .res-hero-val{font-size:42px;font-weight:800;color:#fca5a5;line-height:1;margin-bottom:8px}
+  .res-hero-sub{font-size:13px;color:var(--muted)}
+
+  .res-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+  .res-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .res-card-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:4px}
+  .res-card-val{font-size:18px;font-weight:800}
+  .res-card-val.green{color:var(--green)}.res-card-val.gold{color:var(--gold)}.res-card-val.red{color:#fca5a5}.res-card-val.blue{color:#a5b4fc}
+
+  .breakdown{background:var(--card2);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .breakdown h4{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:10px}
+  .breakdown-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--line)}
+  .breakdown-row:last-child{border:none;font-weight:700;color:var(--gold);padding-top:10px}
+
+  .benchmark{background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.05));border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+  .benchmark-bar{height:18px;background:var(--bg2);border-radius:9px;overflow:hidden;position:relative;margin:10px 0 6px}
+  .benchmark-zona{position:absolute;top:0;height:100%;font-size:9px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .zona-bom{left:0;width:30%;background:rgba(16,185,129,.6)}
+  .zona-medio{left:30%;width:30%;background:rgba(251,191,36,.5)}
+  .zona-ruim{left:60%;width:40%;background:rgba(239,68,68,.5)}
+  .benchmark-marker{position:absolute;top:-4px;width:4px;height:26px;background:#fff;border-radius:2px;transition:left .6s}
+  .benchmark-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+
+  .acoes{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .acoes h4{font-size:13px;font-weight:700;margin-bottom:10px;color:#a5b4fc}
+  .acoes ul{list-style:none}
+  .acoes li{padding:6px 0;font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:flex-start}
+  .acoes li::before{content:'→';color:var(--accent);font-weight:700;flex-shrink:0}
+
+  .btn-acoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .btn{padding:11px 18px;border-radius:8px;font-weight:700;font-size:13px;transition:.2s}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+  .btn-ghost{background:var(--card);color:var(--text);border:1px solid var(--line)}
+
+  @media print{
+    .topbar,.btn-acoes,form .field-help{display:none!important}
+    body{background:#fff;color:#000}
+    .panel,.res-hero,.breakdown,.benchmark,.acoes{background:#fff;border-color:#ccc;color:#000}
+    .res-hero-val,.res-card-val{color:#000!important}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">📊 Calculadora de Turnover</div>
+  <div class="nav-links">
+    <a href="pipeline.html">Pipeline</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="biblioteca-cold-call.html">Cold Call</a>
+    <a href="calculadora-turnover.html" class="active">Turnover</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <h1>Calculadora de Custo de Turnover</h1>
+  <p class="sub">Indicador pra você levar pro cliente. Preencha os dados da operação dele e mostre quanto o turnover tá custando — em R$ por ano. É a melhor abertura de conversa pra vender qualquer solução de retenção, treinamento ou consultoria.</p>
+
+  <div class="grid">
+
+    <div class="panel">
+      <h3>📋 Dados da empresa</h3>
+      <form id="form" oninput="calcular()">
+
+        <div class="field">
+          <label>Número de colaboradores</label>
+          <input type="number" id="total" value="50" min="1">
+          <div class="field-help">Total de funcionários ativos hoje</div>
+        </div>
+
+        <div class="field">
+          <label>Saídas nos últimos 12 meses</label>
+          <input type="number" id="saidas" value="14" min="0">
+          <div class="field-help">Demissões + pedidos de demissão</div>
+        </div>
+
+        <div class="field">
+          <label>Salário médio mensal (R$)</label>
+          <input type="number" id="salario" value="3500" min="0" step="100">
+          <div class="field-help">Salário bruto médio do nível que mais sai</div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Custo de contratação (% salário anual)</label>
+            <input type="number" id="custoCont" value="30" min="0" max="200" step="5">
+            <div class="field-help">Recrutamento, seleção, exames</div>
+          </div>
+          <div class="field">
+            <label>Tempo de rampa (meses)</label>
+            <input type="number" id="rampa" value="3" min="0" max="24">
+            <div class="field-help">Até atingir produtividade plena</div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Custo de demissão (% salário anual)</label>
+            <input type="number" id="custoDem" value="25" min="0" max="100" step="5">
+            <div class="field-help">Rescisão, multa FGTS, aviso</div>
+          </div>
+          <div class="field">
+            <label>Produtividade na rampa (%)</label>
+            <input type="number" id="prodRampa" value="50" min="0" max="100" step="5">
+            <div class="field-help">% de produtividade durante rampa</div>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+    <div>
+
+      <div class="res-hero">
+        <div class="res-hero-label">💸 Custo total estimado do turnover (12 meses)</div>
+        <div class="res-hero-val" id="custoTotal">R$ 0</div>
+        <div class="res-hero-sub" id="custoTotalSub">Esse valor sai do caixa todo ano enquanto a taxa não cai</div>
+      </div>
+
+      <div class="res-grid">
+        <div class="res-card">
+          <div class="res-card-label">Taxa de turnover</div>
+          <div class="res-card-val red" id="taxa">0%</div>
+        </div>
+        <div class="res-card">
+          <div class="res-card-label">Custo por saída</div>
+          <div class="res-card-val gold" id="custoPorSaida">R$ 0</div>
+        </div>
+        <div class="res-card">
+          <div class="res-card-label">% sobre folha anual</div>
+          <div class="res-card-val blue" id="pctFolha">0%</div>
+        </div>
+        <div class="res-card">
+          <div class="res-card-label">Equivale a</div>
+          <div class="res-card-val green" id="equivale">— colaboradores</div>
+        </div>
+      </div>
+
+      <div class="benchmark">
+        <h4 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:6px">📈 Comparativo com mercado brasileiro</h4>
+        <div class="benchmark-bar">
+          <div class="benchmark-zona zona-bom">Saudável (até 10%)</div>
+          <div class="benchmark-zona zona-medio">Médio (10-20%)</div>
+          <div class="benchmark-zona zona-ruim">Crítico (20%+)</div>
+          <div class="benchmark-marker" id="marker" style="left:0%"></div>
+        </div>
+        <div class="benchmark-labels"><span>0%</span><span>10%</span><span>20%</span><span>30%+</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px" id="benchmarkTxt">—</div>
+      </div>
+
+      <div class="breakdown">
+        <h4>🧮 Como esse custo é composto</h4>
+        <div class="breakdown-row"><span>Custo de contratação</span><span id="bdCont">R$ 0</span></div>
+        <div class="breakdown-row"><span>Custo de demissão</span><span id="bdDem">R$ 0</span></div>
+        <div class="breakdown-row"><span>Perda de produtividade na rampa</span><span id="bdRampa">R$ 0</span></div>
+        <div class="breakdown-row"><span>TOTAL ANUAL</span><span id="bdTotal">R$ 0</span></div>
+      </div>
+
+      <div class="acoes" id="acoesBox">
+        <h4>🎯 Ações recomendadas</h4>
+        <ul id="acoesList"></ul>
+      </div>
+
+      <div class="btn-acoes">
+        <button class="btn btn-primary" onclick="window.print()">🖨 Gerar relatório PDF</button>
+        <button class="btn btn-ghost" onclick="copiarResumo()">📋 Copiar resumo</button>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function fmt(v){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(v||0); }
+function pct(v,casas=1){ return (v||0).toFixed(casas)+'%'; }
+
+function calcular(){
+  const total = +document.getElementById('total').value || 0;
+  const saidas = +document.getElementById('saidas').value || 0;
+  const salario = +document.getElementById('salario').value || 0;
+  const custoCont = (+document.getElementById('custoCont').value || 0)/100;
+  const custoDem = (+document.getElementById('custoDem').value || 0)/100;
+  const rampa = +document.getElementById('rampa').value || 0;
+  const prodRampa = (+document.getElementById('prodRampa').value || 0)/100;
+
+  const taxa = total > 0 ? (saidas/total)*100 : 0;
+  const salarioAnual = salario * 12;
+  const custoContrPorSaida = salarioAnual * custoCont;
+  const custoDemPorSaida = salarioAnual * custoDem;
+  const perdaProdPorSaida = (salario * rampa) * (1 - prodRampa);
+  const custoPorSaida = custoContrPorSaida + custoDemPorSaida + perdaProdPorSaida;
+  const custoTotal = custoPorSaida * saidas;
+  const folhaAnual = salarioAnual * total;
+  const pctFolha = folhaAnual > 0 ? (custoTotal/folhaAnual)*100 : 0;
+  const equivColabs = salarioAnual > 0 ? (custoTotal/salarioAnual) : 0;
+
+  document.getElementById('custoTotal').textContent = fmt(custoTotal);
+  document.getElementById('custoTotalSub').textContent = `Equivale a ${pct(pctFolha,1)} da folha anual da operação`;
+  document.getElementById('taxa').textContent = pct(taxa,1);
+  document.getElementById('custoPorSaida').textContent = fmt(custoPorSaida);
+  document.getElementById('pctFolha').textContent = pct(pctFolha,1);
+  document.getElementById('equivale').textContent = equivColabs.toFixed(1) + ' colaboradores/ano';
+  document.getElementById('bdCont').textContent = fmt(custoContrPorSaida * saidas);
+  document.getElementById('bdDem').textContent = fmt(custoDemPorSaida * saidas);
+  document.getElementById('bdRampa').textContent = fmt(perdaProdPorSaida * saidas);
+  document.getElementById('bdTotal').textContent = fmt(custoTotal);
+
+  // Benchmark marker
+  const markerPos = Math.min(100, taxa/30*100);
+  document.getElementById('marker').style.left = markerPos + '%';
+  let bench = '';
+  if(taxa <= 10) bench = '✅ Sua taxa está em zona saudável. Foco em manter cultura e onboarding.';
+  else if(taxa <= 20) bench = '⚠️ Taxa em zona média. Já vale investigar causas e estruturar plano de retenção.';
+  else bench = '🚨 Taxa em zona crítica. Custo do turnover é prioridade — provavelmente há problemas estruturais (gestão, salário, cultura ou processo seletivo).';
+  document.getElementById('benchmarkTxt').textContent = bench;
+
+  // Ações recomendadas (variam pela taxa)
+  const acoes = [];
+  if(taxa > 20){
+    acoes.push('Revisar processo seletivo: talvez esteja contratando perfil errado pro cargo');
+    acoes.push('Aplicar entrevista de desligamento sistemática (E-DESC) pra mapear causa raiz');
+    acoes.push('Auditar estilo de liderança dos gestores diretos das áreas com mais saída');
+    acoes.push('Comparar salários internos com mercado — Catho/Glassdoor/PageGroup');
+  }
+  if(taxa > 10){
+    acoes.push('Estruturar onboarding de 90 dias com check-ins semanais');
+    acoes.push('Implementar pesquisa de clima trimestral (eNPS ou similar)');
+    acoes.push('Treinar líderes em DISC e feedback estruturado');
+  }
+  acoes.push('Documentar causas das saídas pra ter histórico (cor amarela vs vermelha)');
+  acoes.push('Calcular essa métrica trimestralmente — turnover é tendência, não foto');
+
+  document.getElementById('acoesList').innerHTML = acoes.map(a=>`<li>${a}</li>`).join('');
+}
+
+function copiarResumo(){
+  const total = document.getElementById('total').value;
+  const saidas = document.getElementById('saidas').value;
+  const taxa = document.getElementById('taxa').textContent;
+  const custoTotal = document.getElementById('custoTotal').textContent;
+  const custoPorSaida = document.getElementById('custoPorSaida').textContent;
+  const pctF = document.getElementById('pctFolha').textContent;
+  const txt = `📊 DIAGNÓSTICO DE TURNOVER\n\nColaboradores: ${total}\nSaídas em 12 meses: ${saidas}\nTaxa de turnover: ${taxa}\n\nCUSTO ANUAL ESTIMADO: ${custoTotal}\nCusto por saída: ${custoPorSaida}\n% sobre folha anual: ${pctF}\n\n${document.getElementById('benchmarkTxt').textContent}\n\nGerado por Calculadora de Turnover · Agente Comercial IA`;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copiado!';
+    setTimeout(()=>btn.textContent = orig, 2000);
+  });
+}
+
+calcular();
+</script>
+</body>
+</html>

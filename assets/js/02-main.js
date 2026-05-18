@@ -84,6 +84,13 @@ let sortCol=null,sortDir=1,entradaRealizada=false,addEntradaRealizada=false;
 let savedData='[]',data=[];
 let allTrainers=[],allConsultors=[];
 
+/* Getter dinâmico p/ data/allTrainers/allConsultors — necessário porque
+   essas variáveis são REATRIBUÍDAS em runtime (ex: data = s.data) e
+   atribuir window.data uma vez não acompanha as mudanças. */
+window.__getData         = function(){ return data; };
+window.__getAllTrainers  = function(){ return allTrainers; };
+window.__getAllConsultors = function(){ return allConsultors; };
+
 /* ═══════════════════════════════════════════
    PERMISSÕES PADRÃO POR PERFIL
 ═══════════════════════════════════════════ */
@@ -120,6 +127,14 @@ const allTreinamentos = APP_CONST.TREINAMENTOS;
 const PALETTE_T = APP_CONST.PALETTE_T;
 const PALETTE_C = APP_CONST.PALETTE_C;
 const NB_CLS = APP_CONST.NB_CLS;
+
+/* Exposição explícita ao window:
+   const/let no top-level de scripts clássicos NÃO criam propriedades
+   em window. Outros módulos (ex: 35-ms-filters.js dentro de IIFE) podem
+   falhar ao acessá-las. Exportamos as referências aqui — como são arrays
+   mutados via push/splice (nunca reatribuídos), a sincronização é
+   automática entre `allTreinamentos` e `window.allTreinamentos`. */
+window.allTreinamentos = allTreinamentos;
 
 function _normalizeUid(str){
   return str.toLowerCase()
@@ -732,21 +747,294 @@ function salvarNovaTurma(){
 }
 
 /* ═══════════════════════════════════════════
+   MIGRAÇÃO DEFENSIVA — modelo híbrido d.treinamento (scalar)
+   ↔ d.treinamentos[] (array). Garante que TODO d carregado tenha
+   AMBOS preenchidos e coerentes. Idempotente (rodar 2x = igual).
+═══════════════════════════════════════════ */
+function _migrarTreinamentosHibrido(arr){
+  if(!Array.isArray(arr)) return arr;
+  arr.forEach(function(d){
+    if(!d) return;
+    var temArray  = Array.isArray(d.treinamentos) && d.treinamentos.length>0;
+    var temScalar = d.treinamento && String(d.treinamento).trim()!=='' && String(d.treinamento)!=='—';
+    if(!temArray && temScalar){
+      // CASO A: legado puro → cria array com 1 sub a partir dos campos do nível-row
+      d.treinamentos = [{
+        cod:            String(d.treinamento),
+        valor:          Number(d.valor||0)||0,
+        entrada:        Number(d.entrada||0)||0,
+        status:         d.status || 'aberto',
+        formaPagamento: d.formaPagamento || '',
+        parcelas:       (d.parcelas&&d.parcelas>0) ? d.parcelas : 1
+      }];
+    } else if(temArray){
+      // CASO B: tem array → garante que scalar reflete o primeiro sub
+      // (não força quando o scalar atual já bate com algum sub — preserva preferência)
+      var codsArr = d.treinamentos.map(function(t){return String(t&&t.cod||'').toUpperCase();});
+      var scalarUp = String(d.treinamento||'').toUpperCase();
+      if(!scalarUp || codsArr.indexOf(scalarUp)===-1){
+        d.treinamento = d.treinamentos[0].cod || d.treinamento || '';
+      }
+      // Coerência de ENTRADA: se d.entrada > 0 mas nenhum sub tem entrada,
+      // deposita no primeiro sub (evita perda no achatamento e dupla contagem).
+      var rowEnt = Number(d.entrada||0)||0;
+      if(rowEnt > 0){
+        var algumSubTemEntrada = d.treinamentos.some(function(t){return t && Number(t.entrada||0)>0;});
+        if(!algumSubTemEntrada){
+          d.treinamentos[0] = d.treinamentos[0] || {};
+          d.treinamentos[0].entrada = rowEnt;
+        }
+      }
+      // Coerência de VALOR: se algum sub não tem valor mas d.valor>0 e há só 1 sub,
+      // deposita d.valor nesse sub.
+      if(d.treinamentos.length===1){
+        var s0 = d.treinamentos[0] || {};
+        var subVal = Number(s0.valor||0)||0;
+        var rowVal = Number(d.valor||0)||0;
+        if(subVal===0 && rowVal>0){ s0.valor = rowVal; d.treinamentos[0] = s0; }
+      }
+    }
+    // CASO C (sem array nem scalar): deixa como está — cliente sem treinamento é válido
+
+    // ── REGRA DE NEGÓCIO: sobrescreve d.status com o status EFETIVO ──
+    // Garante que TODOS os consumidores que leem d.status (rankings, cards de
+    // treinador/consultor, lista de turmas, PDFs, supremo, etc.) fiquem coerentes
+    // com o Faturado/Aberto/Negociação. A regra está em _statusEfetivoCliente:
+    //   • 1 sub: status do sub, ou 'negociacao' se tem entrada
+    //   • 2+ subs: todos pagos = 'pago'; algum aberto = 'aberto'
+    if(typeof _statusEfetivoCliente === 'function'){
+      var statusEfetivo = _statusEfetivoCliente(d);
+      if(statusEfetivo) d.status = statusEfetivo;
+    }
+  });
+  return arr;
+}
+window._migrarTreinamentosHibrido = _migrarTreinamentosHibrido;
+
+/* Escreve no scalar legado E sincroniza com d.treinamentos[].
+   Uso: lugares que alteram só o "treinamento principal" do cliente
+   (edição rápida, importação sync, etc.) sem perder coerência. */
+function _setTreinamentoScalar(d, novoCod){
+  if(!d) return;
+  var cod = String(novoCod||'').trim();
+  d.treinamento = cod;
+  if(!Array.isArray(d.treinamentos) || d.treinamentos.length===0){
+    // sem array — cria com 1 sub a partir dos campos do nível-row
+    if(cod){
+      d.treinamentos = [{
+        cod:            cod,
+        valor:          Number(d.valor||0)||0,
+        entrada:        Number(d.entrada||0)||0,
+        status:         d.status || 'aberto',
+        formaPagamento: d.formaPagamento || '',
+        parcelas:       (d.parcelas&&d.parcelas>0) ? d.parcelas : 1
+      }];
+    } else {
+      d.treinamentos = [];
+    }
+    return;
+  }
+  // tem array — atualiza o PRIMEIRO sub para refletir o novo cod
+  // (não mexe nos demais — preserva múltiplas compras do cliente)
+  d.treinamentos[0] = d.treinamentos[0] || {};
+  d.treinamentos[0].cod = cod;
+}
+window._setTreinamentoScalar = _setTreinamentoScalar;
+
+/* Achata data[] em uma lista flat de "compras" (1 item por sub-treinamento).
+   Cliente com treinamentos=[A,B,C] vira 3 itens; cliente legado com
+   só d.treinamento='X' vira 1 item. Cada item preserva _ri (índice
+   original em data[]) e _ai (índice no sub-array) para edição. */
+function _achatarItens(arr){
+  arr = (arr && arr.length) ? arr : (typeof data!=='undefined' ? data : []);
+  var out = [];
+  (arr||[]).forEach(function(d, ri){
+    if(!d || !d.cliente) return;
+    var base = {
+      _ri:       ri,
+      cliente:   d.cliente,
+      consultor: d.consultor || '—',
+      treinador: d.treinador || '—',
+      info:      d.info || ''
+    };
+    if(Array.isArray(d.treinamentos) && d.treinamentos.length>0){
+      // Detecta se algum sub do array já tem entrada > 0 (evita dupla contagem)
+      var _algumSubTemEntrada = d.treinamentos.some(function(t){return t && Number(t.entrada||0)>0;});
+      // O sub elegível para herdar d.entrada é o PRIMEIRO sub NÃO PAGO
+      // (entrada é dinheiro ainda devido — não faz sentido depositar num sub já quitado).
+      var _idxElegivelEntrada = _idxSubElegivelEntrada(d);
+      d.treinamentos.forEach(function(sub, ai){
+        if(!sub) return;
+        var _entFlat = Number(sub.entrada!=null?sub.entrada:0)||0;
+        if(_entFlat===0 && ai===_idxElegivelEntrada && !_algumSubTemEntrada){
+          _entFlat = Number(d.entrada||0)||0;
+        }
+        out.push(Object.assign({}, base, {
+          _ai:             ai,
+          treinamento:     String(sub.cod || d.treinamento || '—'),
+          valor:           Number(sub.valor!=null?sub.valor:0)||0,
+          entrada:         _entFlat,
+          status:          sub.status || d.status || 'aberto',
+          formaPagamento:  sub.formaPagamento || d.formaPagamento || '',
+          parcelas:        (sub.parcelas&&sub.parcelas>0) ? sub.parcelas
+                          : ((d.parcelas&&d.parcelas>0) ? d.parcelas : 1)
+        }));
+      });
+    } else {
+      out.push(Object.assign({}, base, {
+        _ai:             -1,
+        treinamento:     String(d.treinamento || '—'),
+        valor:           Number(d.valor||0)||0,
+        entrada:         Number(d.entrada||0)||0,
+        status:          d.status || 'aberto',
+        formaPagamento:  d.formaPagamento || '',
+        parcelas:        (d.parcelas&&d.parcelas>0) ? d.parcelas : 1
+      }));
+    }
+  });
+  return out;
+}
+window._achatarItens = _achatarItens;
+
+/* Retorna true se o cliente d possui o produto `produto` em qualquer lugar:
+   - scalar legado d.treinamento
+   - array d.treinamentos[].cod
+   Aceita produto=null|'null' como "qualquer produto". */
+function _clientePossuiProduto(d, produto){
+  if(!d) return false;
+  if(produto===null || produto==='null' || produto==='') return true;
+  var alvo = String(produto);
+  if(String(d.treinamento||'—') === alvo) return true;
+  if(Array.isArray(d.treinamentos) && d.treinamentos.some(function(t){ return t && String(t.cod||'')===alvo; })) return true;
+  return false;
+}
+window._clientePossuiProduto = _clientePossuiProduto;
+
+/* Verifica se o cliente d possui um sub-compra do produto com o status pedido.
+   Considera status NO SUB primeiro (sub.status); se não tem, herda d.status.
+   Usado por filtros que cruzam (produto × status) — ex: "pagos do produto IF". */
+function _clientePossuiProdutoComStatus(d, produto, statusAlvo){
+  if(!d || !d.cliente) return false;
+  var alvoStatus = String(statusAlvo||'').toLowerCase();
+  var alvoProd   = produto;
+  function _statusEfetivo(sub){
+    var s = (sub && sub.status) || d.status || 'aberto';
+    return String(s||'').toLowerCase();
+  }
+  if(Array.isArray(d.treinamentos) && d.treinamentos.length>0){
+    return d.treinamentos.some(function(t){
+      if(!t) return false;
+      if(alvoProd!==null && alvoProd!=='null' && alvoProd!==''){
+        if(String(t.cod||'') !== String(alvoProd)) return false;
+      }
+      if(alvoStatus && _statusEfetivo(t) !== alvoStatus) return false;
+      return true;
+    });
+  }
+  // Cliente legado puro (sem array)
+  if(alvoProd!==null && alvoProd!=='null' && alvoProd!==''){
+    if(String(d.treinamento||'—') !== String(alvoProd)) return false;
+  }
+  if(alvoStatus && String(d.status||'').toLowerCase() !== alvoStatus) return false;
+  return true;
+}
+window._clientePossuiProdutoComStatus = _clientePossuiProdutoComStatus;
+
+/* Status EFETIVO do cliente — regra de negócio:
+   • 0 ou 1 sub:
+     - sub.status==='pago' → 'pago'
+     - sub.entrada > 0     → 'negociacao'
+     - senão               → sub.status (fallback d.status)
+   • 2+ subs:
+     - todos pagos          → 'pago'
+     - algum em aberto      → 'aberto'
+     - senão                → primeiro status não-pago encontrado
+   Usado em KPIs (Faturado/Aberto/Negociação) e no Card Produto.
+   Não altera d.status nos dados — é cálculo on-the-fly. */
+function _statusEfetivoCliente(d){
+  if(!d) return 'aberto';
+  function _ss(t){ return (t && t.status) || d.status || 'aberto'; }
+  var subs = Array.isArray(d.treinamentos) && d.treinamentos.length ? d.treinamentos : null;
+  if(!subs){
+    return d.status || 'aberto';
+  }
+  if(subs.length >= 2){
+    if(subs.every(function(t){return _ss(t)==='pago';})) return 'pago';
+    if(subs.some(function(t){return _ss(t)==='aberto';})) return 'aberto';
+    if(subs.some(function(t){return _ss(t)==='negociacao';})) return 'negociacao';
+    return _ss(subs[0]);
+  }
+  // 1 sub
+  var st = _ss(subs[0]);
+  if(st === 'pago') return 'pago';
+  var temEntrada = Number((subs[0] && subs[0].entrada) || 0) > 0 || Number(d.entrada || 0) > 0;
+  if(temEntrada) return 'negociacao';
+  return st;
+}
+window._statusEfetivoCliente = _statusEfetivoCliente;
+
+/* Retorna o índice do PRIMEIRO sub elegível a receber o fallback de d.entrada.
+   Heurística: primeiro sub NÃO PAGO (faz sentido — entrada é dinheiro ainda devido).
+   Se todos os subs estão pagos, retorna 0 (caso raro com d.entrada > 0). */
+function _idxSubElegivelEntrada(d){
+  if(!d || !Array.isArray(d.treinamentos) || !d.treinamentos.length) return -1;
+  for(var i=0; i<d.treinamentos.length; i++){
+    var t = d.treinamentos[i];
+    if(!t) continue;
+    var st = (t.status || d.status || 'aberto');
+    if(st !== 'pago') return i;
+  }
+  return 0;
+}
+window._idxSubElegivelEntrada = _idxSubElegivelEntrada;
+
+/* ═══════════════════════════════════════════
    PERSISTÊNCIA
 ═══════════════════════════════════════════ */
-function saveStorage(){
+/* Worker real do save — escreve no Firebase + envia broadcast.
+   Não chamado direto: passa pelo RTBuffer p/ coalescer edições rápidas. */
+function _saveStorageNow(){
   if(_turmaAtiva&&(window._fbUpdate||window._fbSave)){
     var patch=_buildPatch();
+    if(window.RTBus) window.RTBus.emit('save:start', { patch: patch });
     var op=window._fbUpdate
       ? window._fbUpdate(TURMAS_NODE+'/'+_turmaAtiva.id, patch)
       : window._fbSave(TURMAS_NODE+'/'+_turmaAtiva.id, patch);
-    op.catch(function(e){ console.error('[FB] saveStorage erro:',e); });
+    op.then(function(){
+      if(window.RTBus) window.RTBus.emit('save:ok', { patch: patch });
+    }).catch(function(e){
+      console.error('[FB] saveStorage erro:',e);
+      if(window.RTBus) window.RTBus.emit('save:fail', { patch: patch, err: e });
+    });
   }
   try{window._bc.postMessage({data,_turmaId:_turmaAtiva?_turmaAtiva.id:null});}catch(e){}
 }
+
+/* saveStorage agora coalesce chamadas via RTBuffer (F2):
+   - múltiplas edições em <300ms viram 1 só write ao Firebase
+   - reduz tráfego de rede + render no eco
+   Fallback p/ comportamento antigo se RTBuffer não carregou. */
+function saveStorage(){
+  if(window.RTBuffer){
+    var key = 'saveStorage:' + (_turmaAtiva ? _turmaAtiva.id : 'none');
+    window.RTBuffer.schedule(key, _saveStorageNow, 300);
+  } else {
+    _saveStorageNow();
+  }
+}
+
+/* Força save imediato (ex: ao trocar turma, beforeunload).
+   Cancela pendentes do RTBuffer e roda já. */
+function saveStorageNow(){
+  if(window.RTBuffer && _turmaAtiva){
+    window.RTBuffer.cancel('saveStorage:' + _turmaAtiva.id);
+  }
+  _saveStorageNow();
+}
+window.saveStorageNow = saveStorageNow;
 function applyState(s){
   if(!s)return;
-  if(s.data&&s.data.length)data=s.data;
+  if(s.data&&s.data.length){ data=s.data; _migrarTreinamentosHibrido(data); }
   if(s.titulo){const el=document.getElementById('dashTitle');if(el)el.textContent=s.titulo;}
   if(s.info&&document.getElementById('infoBarText')){document.getElementById('infoBarText').textContent=s.info;document.getElementById('infoBar').style.display='block';}
   if(s.periodText){
@@ -835,6 +1123,23 @@ function setStatus(s){activeStatus=s;renderAll();}
 function setStatusDropdown(v){activeStatus=v||null;renderAll();}
 function clearAll(){
   activeTrainer=null;activeConsultor=null;activeStatus=null;activeCliente=null;
+  // Limpa os 5 multi-selects (status, treinador, consultor, presença, treinamento)
+  if(window.activeStatusSet)       window.activeStatusSet.clear();
+  if(window.activeTrainerSet)      window.activeTrainerSet.clear();
+  if(window.activeConsultorSet)    window.activeConsultorSet.clear();
+  if(window.activePresencaSet)     window.activePresencaSet.clear();
+  if(window.activeTreinamentoSet)  window.activeTreinamentoSet.clear();
+  // Re-renderiza popovers para refletir estado vazio
+  if(typeof window._msFiltRebuildAll === 'function') window._msFiltRebuildAll();
+  var _pop=document.getElementById('statusFilterPop');
+  if(_pop){
+    _pop.querySelectorAll('input[type=checkbox]').forEach(function(c){ c.checked=false; });
+  }
+  var _lbl=document.getElementById('statusFilterLabel');
+  if(_lbl) _lbl.textContent='TODOS';
+  var _allChk=document.getElementById('msStatus_all');
+  if(_allChk){ _allChk.checked=false; _allChk.indeterminate=false; }
+  // Legacy <select> caso ainda exista em algum lugar
   var _sf=document.getElementById('statusFilter');if(_sf)_sf.value='';
   /* Limpar filtro de presença (estado global no módulo 17-presenca) */
   if(typeof window._getFiltroPresenca==='function' && typeof window._setFiltroPresenca==='function'){
@@ -877,11 +1182,81 @@ function setTreinadorStatus(s){
 }
 function filtered(){
   const q=(document.getElementById('searchInput')?.value||'').toLowerCase().trim();
+  // Multi-selects (card Clientes aba Geral): se Set tem items, usa Set;
+  // senão cai no legacy single (activeTrainer/activeConsultor/activeStatus).
+  const _statusSet       = (window.activeStatusSet       && window.activeStatusSet.size       > 0) ? window.activeStatusSet       : null;
+  const _trainerSet      = (window.activeTrainerSet      && window.activeTrainerSet.size      > 0) ? window.activeTrainerSet      : null;
+  const _consultorSet    = (window.activeConsultorSet    && window.activeConsultorSet.size    > 0) ? window.activeConsultorSet    : null;
+  const _presencaSet     = (window.activePresencaSet     && window.activePresencaSet.size     > 0) ? window.activePresencaSet     : null;
+  const _treinamentoSet  = (window.activeTreinamentoSet  && window.activeTreinamentoSet.size  > 0) ? window.activeTreinamentoSet  : null;
+
+  const _matchStatus = function(d){
+    if(_statusSet){
+      if(_statusSet.has('entrada') && d.entrada > 0) return true;
+      if(_statusSet.has(d.status)) return true;
+      return false;
+    }
+    if(!activeStatus) return true;
+    return (activeStatus==='entrada' ? d.entrada>0 : d.status===activeStatus);
+  };
+  const _matchTrainer = function(d){
+    if(_trainerSet) return _trainerSet.has(d.treinador);
+    if(!activeTrainer) return true;
+    return d.treinador === activeTrainer;
+  };
+  const _matchConsultor = function(d){
+    if(_consultorSet) return _consultorSet.has(d.consultor);
+    if(!activeConsultor) return true;
+    return d.consultor === activeConsultor;
+  };
+  const _matchPresenca = function(d){
+    // Se o módulo 17-presenca define filtro single (_getFiltroPresenca), respeita;
+    // se há Set, prevalece.
+    if(_presencaSet){
+      var p = d.presenca || 'pendente';
+      return _presencaSet.has(p);
+    }
+    if(typeof window._getFiltroPresenca === 'function'){
+      var single = window._getFiltroPresenca();
+      if(single){
+        var p2 = d.presenca || 'pendente';
+        return single === p2;
+      }
+    }
+    return true;
+  };
+  /* Treinamento: cliente passa se PELO MENOS UM treinamento dele (scalar ou
+     array) está nos selecionados. Comparação case-insensitive + trim para
+     tolerar clientes legados com case/whitespace diferente (ex: "if",
+     "TCE BLACK" vs "TCE - BLACK"). */
+  const _normTrein = function(s){ return String(s||'').toUpperCase().trim().replace(/\s+/g,' '); };
+  const _treinamentoSetNorm = _treinamentoSet
+    ? new Set(Array.from(_treinamentoSet).map(_normTrein))
+    : null;
+  const _matchTreinamento = function(d){
+    if(!_treinamentoSetNorm) return true;
+    // Opção "—": clientes sem treinamento atribuído (scalar vazio/'-'/'—')
+    if(_treinamentoSetNorm.has('—')){
+      var scalarRaw = String(d.treinamento||'').trim();
+      if(!scalarRaw || scalarRaw === '-' || scalarRaw === '—') return true;
+    }
+    if(d.treinamento && _treinamentoSetNorm.has(_normTrein(d.treinamento))) return true;
+    if(Array.isArray(d.treinamentos)){
+      for(var i=0; i<d.treinamentos.length; i++){
+        var t = d.treinamentos[i];
+        if(t && t.cod && _treinamentoSetNorm.has(_normTrein(t.cod))) return true;
+      }
+    }
+    return false;
+  };
+
   let f=data.filter(d=>d&&d.cliente).filter(d=>
-    (!activeTrainer||d.treinador===activeTrainer)&&
-    (!activeConsultor||d.consultor===activeConsultor)&&
+    _matchTrainer(d)&&
+    _matchConsultor(d)&&
+    _matchTreinamento(d)&&
     (!activeCliente||(d.cliente===activeCliente&&d.entrada>0))&&
-    (!activeStatus||(activeStatus==='entrada'?d.entrada>0:d.status===activeStatus))&&
+    _matchStatus(d)&&
+    _matchPresenca(d)&&
     (!q||d.cliente.toLowerCase().includes(q)||(d.treinador||'').toLowerCase().includes(q)||(d.consultor||'').toLowerCase().includes(q)||(d.treinamento||'').toLowerCase().includes(q))
   );
   if(sortCol){f=[...f].sort((a,b)=>{const av=a[sortCol],bv=b[sortCol];if(typeof av==='number')return(av-bv)*sortDir;return String(av).localeCompare(String(bv),'pt-BR')*sortDir;});}
@@ -1016,9 +1391,11 @@ function renderAll(){
   var _sf=document.getElementById('statusFilter');
   if(_sf)_sf.value=activeStatus||'';
 
-  const totalPago=_base.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
-  const totalAberto=_base.filter(d=>d.status==='aberto').reduce((a,d)=>a+d.valor,0);
-  const clientesNegociacao=_base.filter(d=>d.status==='negociacao');
+  // Usa status EFETIVO (considera subs do array) — não só d.status.
+  // Cliente com 2+ subs e algum em aberto = 'aberto' mesmo que d.status seja 'pago'.
+  const totalPago=_base.filter(d=>_statusEfetivoCliente(d)==='pago').reduce((a,d)=>a+d.valor,0);
+  const totalAberto=_base.filter(d=>_statusEfetivoCliente(d)==='aberto').reduce((a,d)=>a+d.valor,0);
+  const clientesNegociacao=_base.filter(d=>_statusEfetivoCliente(d)==='negociacao');
   const totalNegociacao=clientesNegociacao.reduce((a,d)=>a+d.valor,0);
   const clientesEntrada=_base.filter(d=>d.entrada>0);
   const totalEntradas=clientesEntrada.reduce((a,d)=>a+d.entrada,0);
@@ -1032,8 +1409,9 @@ function renderAll(){
   document.getElementById('mTotal').textContent=formatVal(totalNegociacao);
   // Solução D: subtítulos dos KPIs usam DISTINCT (clientes únicos) só em desktop
   var _ehDeskKPI = window.innerWidth>=769;
-  var _abertos = _base.filter(d=>d.status==='aberto');
-  var _pagos   = _base.filter(d=>d.status==='pago');
+  // Contagens com status EFETIVO (mesma regra dos totais acima — evita divergência).
+  var _abertos = _base.filter(d=>_statusEfetivoCliente(d)==='aberto');
+  var _pagos   = _base.filter(d=>_statusEfetivoCliente(d)==='pago');
   var _qNeg    = _ehDeskKPI ? _contarClientesUnicos(clientesNegociacao) : clientesNegociacao.length;
   var _qAb     = _ehDeskKPI ? _contarClientesUnicos(_abertos)            : _abertos.length;
   var _qPg     = _ehDeskKPI ? _contarClientesUnicos(_pagos)              : _pagos.length;
@@ -1159,29 +1537,33 @@ function renderAll(){
     } else {
       // === MOBILE AGREGADO POR CLIENTE (Opção 6) ===
       // Agrupa registros do mesmo cliente em um único card com totais e pílulas.
+      // Achata d.treinamentos[] em itens flat — 1 pílula por sub-compra real.
       const _grupos={};
       const _ordem=[];
-      f.forEach(function(d){
-        if(!d||!d.cliente) return;
-        const _nome=String(d.cliente).toUpperCase().trim();
+      const _flatGrupo = (typeof _achatarItens==='function') ? _achatarItens(f) : f.map(function(d){
+        return {_ri:data.indexOf(d),_ai:-1,cliente:d.cliente,consultor:d.consultor,treinamento:d.treinamento,status:d.status||'aberto',valor:d.valor||0};
+      });
+      _flatGrupo.forEach(function(it){
+        if(!it||!it.cliente) return;
+        const _nome=String(it.cliente).toUpperCase().trim();
         if(!_grupos[_nome]){
           _grupos[_nome]={
-            cliente:d.cliente,
+            cliente:it.cliente,
             consultores:new Set(),
             treinos:[],
-            anchorRi:data.indexOf(d),
+            anchorRi:it._ri,
             totalPago:0,totalAberto:0,totalGeral:0,
             qtdPagos:0,qtdAbertos:0,qtdTotal:0
           };
           _ordem.push(_nome);
         }
         const g=_grupos[_nome];
-        if(d.consultor) g.consultores.add(d.consultor);
-        g.treinos.push({cod:d.treinamento||'—', status:d.status||'aberto', valor:d.valor||0, ri:data.indexOf(d)});
+        if(it.consultor) g.consultores.add(it.consultor);
+        g.treinos.push({cod:it.treinamento||'—', status:it.status||'aberto', valor:it.valor||0, ri:it._ri});
         g.qtdTotal++;
-        if(d.status==='pago'){ g.totalPago+=(d.valor||0); g.qtdPagos++; }
-        else if(d.status==='aberto'){ g.totalAberto+=(d.valor||0); g.qtdAbertos++; }
-        g.totalGeral+=(d.valor||0);
+        if(it.status==='pago'){ g.totalPago+=(it.valor||0); g.qtdPagos++; }
+        else if(it.status==='aberto'){ g.totalAberto+=(it.valor||0); g.qtdAbertos++; }
+        g.totalGeral+=(it.valor||0);
       });
       const _escAttr=function(s){return String(s||'').replace(/'/g,"\\'");};
       _ccEl.innerHTML=_ordem.map(function(nome){

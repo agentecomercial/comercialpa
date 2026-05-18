@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Closer Raiz · O método de fechamento sem rodeio</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0e27;--paper:#f7f4ec;--text:#1c1c1c;--muted:#666;
+    --accent:#8b1e2b;--accent2:#c2410c;--gold:#b8860b;
+    --line:#d4cfc1;--card:#fff;
+  }
+  body{font-family:Georgia,'Times New Roman',serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.7}
+  button{font-family:inherit;cursor:pointer;border:none}
+
+  /* TOPBAR DARK */
+  .topbar{background:rgba(10,14,39,.95);color:#e8ecff;backdrop-filter:blur(12px);border-bottom:1px solid #1f2752;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50;font-family:-apple-system,sans-serif;font-size:13px}
+  .logo{font-weight:800;background:linear-gradient(135deg,#a5b4fc,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .nav-links a{color:#9aa3c7;text-decoration:none;margin-left:18px;font-weight:600}
+  .nav-links a.active{color:#fff}
+  .topbar button{background:transparent;color:#9aa3c7;border:1px solid #1f2752;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600}
+
+  .book{background:var(--paper);max-width:780px;margin:0 auto;padding:60px 56px;box-shadow:0 0 60px rgba(0,0,0,.4)}
+  @media(max-width:780px){.book{padding:40px 24px}}
+
+  /* CAPA */
+  .capa{text-align:center;padding:40px 0 60px;border-bottom:3px double var(--accent);margin-bottom:60px}
+  .capa-tag{font-size:11px;font-weight:700;letter-spacing:.3em;color:var(--accent);text-transform:uppercase;margin-bottom:20px}
+  .capa h1{font-size:64px;font-weight:900;letter-spacing:-.02em;line-height:1;margin-bottom:14px;color:var(--text);font-family:Georgia,serif}
+  .capa h1 em{font-style:italic;color:var(--accent)}
+  .capa .subtitulo{font-size:19px;color:var(--muted);font-style:italic;margin-bottom:30px}
+  .capa .autor{font-size:13px;font-weight:700;letter-spacing:.15em;color:var(--gold);text-transform:uppercase}
+
+  /* SUMÁRIO */
+  .sumario{background:#fff;border:1px solid var(--line);padding:30px 36px;margin-bottom:50px;border-radius:4px}
+  .sumario h3{font-size:14px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .sumario ol{list-style:none;counter-reset:cap}
+  .sumario li{counter-increment:cap;padding:8px 0;border-bottom:1px dotted var(--line);display:flex;justify-content:space-between;font-size:14px}
+  .sumario li:last-child{border:none}
+  .sumario li::before{content:counter(cap,decimal-leading-zero) " · "; color:var(--accent);font-weight:700;margin-right:10px}
+  .sumario li a{color:var(--text);text-decoration:none;flex:1}
+  .sumario li a:hover{color:var(--accent)}
+  .sumario li span{color:var(--muted);font-size:12px}
+
+  /* CAPÍTULOS */
+  .cap{margin-bottom:60px}
+  .cap-num{font-size:13px;font-weight:700;letter-spacing:.3em;color:var(--accent);text-transform:uppercase;margin-bottom:12px}
+  .cap h2{font-size:38px;font-weight:900;line-height:1.1;margin-bottom:20px;letter-spacing:-.02em}
+  .cap h2 em{font-style:italic;color:var(--accent)}
+  .cap p{margin-bottom:18px;text-align:justify;hyphens:auto}
+  .cap p.lead{font-size:18px;font-style:italic;color:var(--muted);border-left:3px solid var(--accent);padding-left:18px;margin:24px 0}
+  .cap h3{font-size:22px;font-weight:700;margin:32px 0 14px;color:var(--accent)}
+  .cap h4{font-size:16px;font-weight:700;margin:22px 0 10px;letter-spacing:.05em;text-transform:uppercase;color:var(--text)}
+  .cap blockquote{border-left:4px solid var(--gold);background:rgba(184,134,11,.06);padding:18px 24px;margin:22px 0;font-style:italic;color:var(--text);font-size:16px}
+  .cap .destaque{background:rgba(139,30,43,.08);border:1px solid rgba(139,30,43,.2);padding:18px 22px;border-radius:4px;margin:22px 0;font-size:14px}
+  .cap .destaque strong{color:var(--accent)}
+  .cap ul,.cap ol{margin:14px 0 18px 28px}
+  .cap li{margin-bottom:8px}
+  .cap .pillar{font-family:'Georgia',serif;font-size:16px;font-weight:700;color:var(--accent);text-align:center;margin:30px 0;padding:14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);letter-spacing:.05em}
+  .cap .frase-final{font-size:17px;font-style:italic;text-align:center;margin:30px 0 0;color:var(--accent);padding:0 20px}
+
+  .separador{text-align:center;color:var(--accent);font-size:18px;margin:40px 0;letter-spacing:.5em}
+
+  /* RODAPE */
+  .rodape{text-align:center;padding:40px 0 20px;border-top:3px double var(--accent);margin-top:60px;color:var(--muted);font-size:12px;font-style:italic}
+
+  @media print{
+    .topbar{display:none!important}
+    body{background:#fff}
+    .book{box-shadow:none;max-width:none;padding:30px 50px}
+    .cap{page-break-inside:avoid}
+    .cap h2{page-break-after:avoid}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">📘 E-book Closer Raiz</div>
+  <div class="nav-links">
+    <a href="pipeline.html">Pipeline</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="biblioteca-cold-call.html">Cold Call</a>
+    <a href="calculadora-turnover.html">Turnover</a>
+    <a href="ebook-closer-raiz.html" class="active">E-book</a>
+    <button onclick="window.print()">🖨 Salvar PDF</button>
+  </div>
+</div>
+
+<div class="book">
+
+  <!-- CAPA -->
+  <div class="capa">
+    <div class="capa-tag">Bônus exclusivo · Plano Anual</div>
+    <h1>Closer <em>Raiz</em></h1>
+    <div class="subtitulo">O método de fechamento sem rodeio</div>
+    <div class="autor">Agente Comercial IA · 2026</div>
+  </div>
+
+  <!-- SUMÁRIO -->
+  <div class="sumario">
+    <h3>Sumário</h3>
+    <ol>
+      <li><a href="#cap1">O que é ser Closer Raiz</a><span>filosofia</span></li>
+      <li><a href="#cap2">O funil sem mentira</a><span>qualificação</span></li>
+      <li><a href="#cap3">A arte de perguntar</a><span>SPIN aplicado</span></li>
+      <li><a href="#cap4">Lendo o perfil em 90 segundos</a><span>DISC prático</span></li>
+      <li><a href="#cap5">Apresentação sem floreio</a><span>proposta direta</span></li>
+      <li><a href="#cap6">O pedido — a pergunta que fecha</a><span>fechamento</span></li>
+      <li><a href="#cap7">Pós-fechamento que indica</a><span>relacionamento</span></li>
+    </ol>
+  </div>
+
+  <!-- CAP 1 -->
+  <article class="cap" id="cap1">
+    <div class="cap-num">Capítulo 01</div>
+    <h2>O que é ser <em>Closer Raiz</em></h2>
+
+    <p class="lead">Closer raiz não é o vendedor que enrola pra parecer simpático. É quem chega, escuta, faz a pergunta certa e pede a venda — sem se desculpar por estar vendendo.</p>
+
+    <p>Vou te dizer uma verdade que ninguém fala em curso de vendas: a maior parte dos vendedores não fecha porque tem vergonha de pedir o pedido. Eles fazem dezenas de calls bonitas, com slides, com rapport, com "vamos pensar juntos" — e na hora de fechar, recuam. Mandam mais material. Marcam mais reunião. Esperam o cliente decidir sozinho. E o cliente nunca decide sozinho.</p>
+
+    <p>O closer raiz quebra esse ciclo. Ele entende que vender bem não é manipular ninguém — é ajudar alguém a tomar uma decisão que ele já estava postergando. E isso exige firmeza, não fofura.</p>
+
+    <h3>Os 4 pilares do closer raiz</h3>
+
+    <p><strong>1. Honestidade radical.</strong> Se o seu produto não serve pra aquele cliente, você fala. Cara a cara. "Olha, pelo que você me contou, acho que não somos a melhor opção. Te indico fulano." Você perde a venda — e ganha a confiança. Ganha indicação. Ganha o cliente quando o problema dele mudar.</p>
+
+    <p><strong>2. Direção clara.</strong> Toda call tem objetivo definido antes de começar. "Hoje a gente vai cobrir A, B e C, e ao final você vai sair com decisão de seguir ou não." Sem call que termina em "te mando material e a gente vê". Closer raiz nunca termina sem próximo passo definido — com data, hora e ação.</p>
+
+    <p><strong>3. Coragem de pedir.</strong> Se o lead tá pronto, você pede. "Quer fechar?" — três palavras que separam closer de apresentador. A maioria treme aqui. Closer raiz pratica essa pergunta até virar reflexo.</p>
+
+    <p><strong>4. Detachment do resultado.</strong> Você quer fechar, claro. Mas não DEPENDE daquele fechamento pra existir. Quando o cliente sente que você precisa daquela venda, ele recua. Quando sente que você tá ali pra ajudar — e que se não der certo, paciência —, ele se aproxima.</p>
+
+    <p class="pillar">Honestidade · Direção · Coragem · Desapego</p>
+
+    <h3>O que closer raiz NÃO é</h3>
+
+    <p>Não é o "bom de papo" que distrai o cliente até ele assinar. Não é o caçador agressivo que pressiona até o sim. Não é o consultor passivo que espera o cliente "amadurecer".</p>
+
+    <p>Closer raiz é o profissional que faz pergunta dura, escuta a resposta inteira, e responde com a verdade — mesmo que a verdade derrube a venda daquele dia. Porque sabe que cliente comprado por verdade fica. Cliente comprado por pressão sai na primeira oportunidade — e ainda fala mal de você no caminho.</p>
+
+    <blockquote>"Se você precisa enganar pra vender, seu produto é fraco ou seu preço é alto demais. Conserta uma das duas coisas."</blockquote>
+
+    <p class="frase-final">Esse livro é pra quem quer fechar mais — sem perder o sono.</p>
+  </article>
+
+  <div class="separador">✦ ✦ ✦</div>
+
+  <!-- CAP 2 -->
+  <article class="cap" id="cap2">
+    <div class="cap-num">Capítulo 02</div>
+    <h2>O funil <em>sem mentira</em></h2>
+
+    <p class="lead">Você não precisa de mais leads. Você precisa de menos leads errados ocupando seu calendário.</p>
+
+    <p>Pergunta direta: dos últimos 30 leads que entraram no seu pipeline, quantos eram REALMENTE candidatos a comprar? Se você for honesto, a resposta é: menos da metade. O resto é vapor — gente que não tinha orçamento, não tinha autoridade, não tinha urgência, ou simplesmente não tinha o problema que você resolve.</p>
+
+    <p>O closer raiz qualifica brutalmente cedo. Não porque é arrogante — porque respeita o tempo dele e o do cliente. Conversa ruim de 1 hora gasta o que poderia ser 4 conversas boas de 15 minutos.</p>
+
+    <h3>O método BANT na versão raiz</h3>
+
+    <p>Você já ouviu falar em BANT — Budget, Authority, Need, Timing. Vou te dar a versão sem rodeio, perguntada na primeira call:</p>
+
+    <h4>Budget — orçamento</h4>
+    <p>Pergunta direta: <em>"Pra esse tipo de solução, vocês trabalham com qual faixa de investimento?"</em> Se ele falar "depende do que você apresentar", você responde: <em>"Justo. Mas pra eu não te apresentar coisa fora da realidade — vocês compraram algo parecido antes? Quanto pagaram?"</em> Se ainda assim ele empacar, você apresenta sua faixa: <em>"Nossas soluções ficam entre X e Y. Tá dentro do que faz sentido pra você?"</em></p>
+
+    <h4>Authority — autoridade</h4>
+    <p><em>"Quem mais entra na decisão final?"</em> Se ele disser "só eu", confirma: <em>"Top, então se a gente fechar hoje, fecha hoje?"</em>. Se aparecer mais alguém, você pede pra incluir: <em>"Faz sentido a gente fazer a próxima call com vocês dois? Em vez de você ter que repetir tudo depois."</em></p>
+
+    <h4>Need — necessidade</h4>
+    <p><em>"O que te fez procurar uma solução agora? O que tá doendo?"</em> Se a dor não for clara, suspeite. Lead que não tem dor não compra — só compara opções por curiosidade.</p>
+
+    <h4>Timing — prazo</h4>
+    <p><em>"Quando vocês precisam ter isso rodando? Tem alguma data limite?"</em> Sem prazo = sem fechamento. Closer raiz cria prazo se o lead não tem: <em>"Tô abrindo agenda de implementação pra junho. Se a gente fechar até dia 20, te garanto entrada nessa janela."</em></p>
+
+    <div class="destaque"><strong>Regra de ouro:</strong> se o lead falha em 2 das 4 perguntas, ele não é qualificado. Reduza pra atendimento curto via email e foque sua energia nos qualificados. Não tente "convencer" não-qualificado a virar qualificado — você só queima sua semana.</div>
+
+    <h3>O perigo do pipeline gordo</h3>
+
+    <p>Vendedor médio adora pipeline cheio. "Olha quanto lead eu tenho!" — fala como se fosse troféu. Mas pipeline gordo de lead morno = ilusão de produtividade. Você acorda, vê 80 oportunidades abertas, sente que tem trabalho — e termina o mês com 2 fechamentos.</p>
+
+    <p>Closer raiz tem pipeline magro de qualificados quentes. Prefere 8 oportunidades reais que 80 fantasmas. Trabalha cada uma com profundidade. Atualiza notas após cada interação. Sabe exatamente onde cada negócio tá travado e o que precisa pra mover.</p>
+
+    <p class="frase-final">Pipeline real é o que você consegue defender em 30 segundos pro seu gestor. Se você não consegue defender, é vapor.</p>
+  </article>
+
+  <div class="separador">✦ ✦ ✦</div>
+
+  <!-- CAP 3 -->
+  <article class="cap" id="cap3">
+    <div class="cap-num">Capítulo 03</div>
+    <h2>A arte de <em>perguntar</em></h2>
+
+    <p class="lead">O melhor closer fala 30% da reunião. Os outros 70% ele escuta — porque é na resposta do cliente que mora a venda.</p>
+
+    <p>Existe uma metodologia chamada SPIN, criada por Neil Rackham nos anos 80, que documentou em 35 mil calls reais por que vendedores ganham ou perdem negócios complexos. A descoberta foi anti-intuitiva: ganha quem pergunta mais — e pergunta MELHOR.</p>
+
+    <p>SPIN é acrônimo de Situation, Problem, Implication, Need-payoff. Vou traduzir pra português raiz: Situação, Problema, Implicação, Necessidade-de-solução.</p>
+
+    <h3>Situação — o terreno</h3>
+    <p>Perguntas factuais sobre o contexto do cliente. Use POUCO — só o necessário pra você não ser ignorante na conversa.</p>
+    <ul>
+      <li>"Quantas pessoas no time comercial?"</li>
+      <li>"Qual o ticket médio de venda hoje?"</li>
+      <li>"Como vocês organizam o pipeline atualmente?"</li>
+    </ul>
+    <p><strong>Cuidado:</strong> vendedor ruim faz 20 minutos de Situação. O cliente fica entediado. Limite a 3-4 perguntas. Você não tá fazendo censo — tá entrando na dor.</p>
+
+    <h3>Problema — onde dói</h3>
+    <p>Perguntas que expõem o desafio que ele já vive. Você não tá criando o problema — tá fazendo ele verbalizar.</p>
+    <ul>
+      <li>"Em qual etapa do funil vocês mais perdem oportunidade?"</li>
+      <li>"O que mais frustra você na operação atual?"</li>
+      <li>"Quando foi a última vez que um deal escapou e você ficou puto?"</li>
+    </ul>
+    <p>Aqui ele começa a falar a verdade. Anote tudo. Use as palavras DELE depois — não traduza pro seu jargão.</p>
+
+    <h3>Implicação — o custo de não resolver</h3>
+    <p>Esse é o passo que separa amador de profissional. Você pega o problema que ele descreveu e amplia o impacto.</p>
+    <ul>
+      <li>"E quando você perde esse tipo de deal, quanto isso representa no mês?"</li>
+      <li>"O time inteiro fica frustrado quando isso acontece?"</li>
+      <li>"Esse problema tá afetando a meta trimestral de vocês?"</li>
+      <li>"Se continuar assim mais 6 meses, o que acontece?"</li>
+    </ul>
+    <p>Você tá fazendo o cliente RACIONALIZAR o tamanho do problema dele. Antes da implicação, ele acha que tem uma "questãozinha". Depois, ele percebe que tem um BURACO. E buraco grande exige solução grande.</p>
+
+    <h3>Necessidade de solução — a luz no fim do túnel</h3>
+    <p>Agora você inverte. Pergunta sobre o futuro com a solução.</p>
+    <ul>
+      <li>"Se você tivesse uma forma de ver onde cada lead tá em tempo real, o que mudaria pra você?"</li>
+      <li>"Vale a pena investigar uma solução que reduza isso em 30%?"</li>
+      <li>"Se a gente ajustasse esse processo, qual seria o impacto na meta de vocês?"</li>
+    </ul>
+    <p>Aqui ele se vende a si mesmo. É ele dizendo, com palavras dele, que precisa do que você oferece. Sua apresentação depois fica fácil — você só vai conectar o que ele disse a ferramenta concreta.</p>
+
+    <blockquote>"O cliente que disse o tamanho do problema dele em voz alta não consegue mais fingir que ele é pequeno."</blockquote>
+
+    <h3>O erro que mata</h3>
+
+    <p>Vendedor médio pula da Situação direto pra apresentação do produto. Pula Problema. Pula Implicação. Pula Necessidade de solução. Resultado: o cliente ouve apresentação de algo que ele não decidiu que precisa. Recusa. Vendedor culpa o produto, o preço, a concorrência.</p>
+
+    <p>Closer raiz NUNCA apresenta solução antes do cliente verbalizar a dor. Mesmo que demore 40 minutos pra chegar lá, ele segura a apresentação. Porque sabe que apresentar antes da hora é jogar dinheiro fora.</p>
+
+    <p class="frase-final">Quem pergunta lidera. Quem responde segue. Você quer estar de qual lado da mesa?</p>
+  </article>
+
+  <div class="separador">✦ ✦ ✦</div>
+
+  <!-- CAP 4 -->
+  <article class="cap" id="cap4">
+    <div class="cap-num">Capítulo 04</div>
+    <h2>Lendo o perfil em <em>90 segundos</em></h2>
+
+    <p class="lead">Você não vende pro produto. Você vende pra uma pessoa. E pessoas diferentes compram de formas diferentes.</p>
+
+    <p>DISC é um modelo de comportamento que classifica gente em 4 perfis dominantes. Não é teste de personalidade — é leitura de COMO essa pessoa toma decisão. Closer raiz lê o perfil do lead nos primeiros 90 segundos da conversa e adapta o estilo.</p>
+
+    <h3>D — Dominância</h3>
+    <p><strong>Como você reconhece:</strong> fala rápido, vai direto ao ponto, interrompe, decide na hora, odeia detalhe.</p>
+    <p><strong>Como você vende:</strong> seja conciso. Resultado primeiro, processo depois. Dê controle ("você decide"). Ofereça opções binárias ("A ou B"). Não enrole.</p>
+    <p><strong>Frase que abre:</strong> "Vou ser direto: aqui é o problema, aqui é a solução, aqui é o número. Topa?"</p>
+
+    <h3>I — Influência</h3>
+    <p><strong>Como você reconhece:</strong> sociável, conversador, otimista, gosta de história, foge de número.</p>
+    <p><strong>Como você vende:</strong> crie clima primeiro. Conte casos. Use entusiasmo. Pinte a imagem do "depois". Faça ele se sentir parte de algo legal.</p>
+    <p><strong>Frase que abre:</strong> "Cara, deixa eu te contar como a empresa X virou o jogo — você vai amar essa história."</p>
+
+    <h3>S — Estabilidade</h3>
+    <p><strong>Como você reconhece:</strong> calmo, paciente, evita conflito, faz pergunta sobre processo, decide devagar.</p>
+    <p><strong>Como você vende:</strong> dê segurança. Mostre processo passo a passo. Não pressione. Ofereça garantia. Dê tempo pra ele consultar o time.</p>
+    <p><strong>Frase que abre:</strong> "Sem pressa. Quero te apresentar com calma e você decide quando se sentir confortável."</p>
+
+    <h3>C — Conformidade</h3>
+    <p><strong>Como você reconhece:</strong> analítico, faz pergunta técnica, pede dado, compara com concorrente, lento.</p>
+    <p><strong>Como você vende:</strong> apresente dados, números, estudos, comparativos. Ofereça referências comerciais. Seja preciso em horários e prazos. Tenha resposta pra cada pergunta técnica.</p>
+    <p><strong>Frase que abre:</strong> "Te mando o estudo de caso da empresa X com os números, e a gente revisa juntos quinta às 10h em ponto."</p>
+
+    <h3>Como ler em 90 segundos</h3>
+
+    <p>Não precisa de teste DISC formal. Use 3 sinais:</p>
+
+    <ol>
+      <li><strong>Velocidade da fala</strong> — rápido (D ou I) vs lento (S ou C)</li>
+      <li><strong>Foco do conteúdo</strong> — pessoas (I ou S) vs tarefa (D ou C)</li>
+      <li><strong>Reação a pressão</strong> — avança (D) vs recua (S) vs questiona (C) vs vibra (I)</li>
+    </ol>
+
+    <p>Cruzando essas 3, você fecha o perfil. Adapta o tom. Sem manipular — só falando a língua que ele entende melhor.</p>
+
+    <div class="destaque"><strong>Importante:</strong> ninguém é 100% de um perfil. Cada pessoa tem perfil dominante e secundário. Trate o perfil como ponto de partida, não rótulo. Se você adaptar 70% certo, já tá MUITO à frente do vendedor médio que adapta 0%.</div>
+
+    <p class="frase-final">Vendedor que fala igual com todo mundo é aquele que perde 75% das vendas — porque acerta só com 25% da população (os parecidos com ele).</p>
+  </article>
+
+  <div class="separador">✦ ✦ ✦</div>
+
+  <!-- CAP 5 -->
+  <article class="cap" id="cap5">
+    <div class="cap-num">Capítulo 05</div>
+    <h2>Apresentação <em>sem floreio</em></h2>
+
+    <p class="lead">Sua apresentação não é sobre você. É sobre como você resolve o problema que o cliente acabou de te contar.</p>
+
+    <p>O vendedor médio apresenta o produto. O closer raiz apresenta a solução do problema do cliente. A diferença parece sutil mas é gigante. Vou te dar a estrutura exata de uma apresentação que fecha.</p>
+
+    <h3>Estrutura em 4 blocos (15-20 minutos)</h3>
+
+    <h4>Bloco 1: Espelho (2 min)</h4>
+    <p>Recapitule o que ele te contou na descoberta. Use palavras DELE. "Pelo que você me contou: vocês têm 6 consultores, perdem em média 4 deals por mês na etapa de proposta, e isso representa cerca de R$ 80 mil por mês não fechado. A meta trimestral tá em 78%. Tá certo isso?"</p>
+    <p>Espera ele confirmar. Esse "sim" abre a porta pra todo o resto.</p>
+
+    <h4>Bloco 2: Diagnóstico (3 min)</h4>
+    <p>Conecte a dor a uma causa raiz. Não inventa — usa o que ele disse + o que você sabe do setor. "Empresas como a sua geralmente perdem na proposta porque o consultor não tá fazendo qualificação cedo o suficiente, e quando manda proposta o lead já tá com 3 concorrentes na mesa."</p>
+
+    <h4>Bloco 3: A ponte (8-10 min)</h4>
+    <p>Mostre como sua solução resolve EXATAMENTE o que ele descreveu. Use 3 features no máximo — não despeje funcionalidade, foque no que importa pra DOR DELE. Se sua ferramenta tem 50 funcionalidades mas a dor é qualificação cedo, fala 5 minutos sobre qualificação cedo. Pula o resto.</p>
+    <p>Estrutura: <em>"Esse problema [recapitula a dor]. A gente resolve [como, com qual feature]. Resultado típico: [número específico de cliente parecido]."</em></p>
+
+    <h4>Bloco 4: Investimento + caminho (3 min)</h4>
+    <p>Apresente preço aberto. Sem floreio, sem desculpa. "São R$ X por consultor por mês. Pra 6 consultores, fica R$ Y. Implementação em 7 dias úteis. Depois, vocês usam."</p>
+    <p>Esse bloco é onde 90% dos vendedores tremem. Closer raiz fala o número com a mesma naturalidade que falaria do horário do almoço.</p>
+
+    <h3>O que NÃO fazer</h3>
+
+    <ul>
+      <li>Não comece com "deixa eu te apresentar quem somos" — ele não pediu sua biografia</li>
+      <li>Não use slide de "nossos diferenciais" — diferencial só importa se resolve a dor dele</li>
+      <li>Não apresente caso de cliente que nada tem a ver com ele — escolha cuidadosamente o caso espelho</li>
+      <li>Não fale mais de 25 minutos seguidos — pause, pergunte "tá fazendo sentido?", deixe ele participar</li>
+      <li>Não termine com "alguma dúvida?" — termine com "qual o próximo passo natural pra você?"</li>
+    </ul>
+
+    <blockquote>"Apresentação que vende é a que faz o cliente pensar 'esse cara entendeu meu problema melhor do que eu mesmo'. Não a que faz ele pensar 'que produto bonito'."</blockquote>
+
+    <p class="frase-final">Apresenta menos. Conecta mais. Vende.</p>
+  </article>
+
+  <div class="separador">✦ ✦ ✦</div>
+
+  <!-- CAP 6 -->
+  <article class="cap" id="cap6">
+    <div class="cap-num">Capítulo 06</div>
+    <h2>O pedido — a pergunta que <em>fecha</em></h2>
+
+    <p class="lead">Toda venda é decidida no momento em que você pergunta — ou deixa de perguntar. Closer raiz pergunta.</p>
+
+    <p>Vou te dizer o que separa o vendedor que ganha 5 mil do que ganha 50 mil: a coragem de fazer A pergunta. Não a apresentação. Não o produto. Não o conhecimento técnico. A coragem de olhar pro cliente e dizer:</p>
+
+    <p style="text-align:center;font-size:24px;font-weight:700;color:var(--accent);margin:30px 0">"Bora fechar?"</p>
+
+    <p>Existem variações:</p>
+    <ul>
+      <li>"Topa começar?"</li>
+      <li>"Posso te mandar o contrato hoje?"</li>
+      <li>"Quando você quer começar — segunda ou quarta?"</li>
+      <li>"Vamos fazer isso?"</li>
+    </ul>
+
+    <p>Todas elas têm uma coisa em comum: PEDEM o pedido. Não sugerem. Não esperam. Não "deixam o cliente pensar". Pedem.</p>
+
+    <h3>Por que você não pergunta</h3>
+
+    <p>Vou ser cirúrgico aqui: você não pergunta porque tem medo do não. E você tem medo do não porque amarrou seu valor pessoal ao resultado da venda. Quando o cliente diz "não", você ouve "você não vale".</p>
+
+    <p>Não vale.</p>
+
+    <p>Cliente que diz não tá te dando informação valiosa. Tá te economizando 3 meses de follow-up que ia dar em nada. Tá te liberando pra atender outros 3 leads no mesmo tempo. Tá te ensinando alguma objeção que você não tinha mapeado.</p>
+
+    <p>Closer raiz adora ouvir não. Porque sabe que cada não te leva mais perto do próximo sim — e que a única coisa pior que ouvir não é não ouvir nada e ficar 6 meses esperando.</p>
+
+    <h3>Os 4 sinais de que ele tá pronto</h3>
+
+    <p>Não pergunte aleatoriamente. Pergunte quando o lead te der os sinais:</p>
+
+    <ol>
+      <li><strong>Pergunta sobre como começar.</strong> "E aí, como funciona o onboarding?" "Vocês instalam ou eu mesmo configuro?" — ele já tá visualizando uso. PERGUNTE.</li>
+      <li><strong>Negocia condição comercial.</strong> "Tem desconto à vista?" "Posso pagar em 3x?" — ele já decidiu, só tá ajustando termo. PERGUNTE.</li>
+      <li><strong>Inclui terceiros.</strong> "Vou apresentar pro meu sócio amanhã" — quer envolver o decisor. PERGUNTE pra incluir o sócio na próxima call e fechar com os dois.</li>
+      <li><strong>Silêncio confortável.</strong> Você terminou de apresentar, ele tá pensando. NÃO FALE. Aguente o silêncio. Quem fala primeiro, perde. Espere. Se ele não falar em 15 segundos, você fala: "E aí, qual o próximo passo natural?"</li>
+    </ol>
+
+    <h3>O que fazer com cada resposta</h3>
+
+    <h4>"Sim, vamos"</h4>
+    <p>Não comemore demais — fecha rápido. "Top. Te mando o contrato em 1 hora. Quando você assina?" Crie momentum. Quanto mais tempo passa entre o sim e a assinatura, mais o cliente recua.</p>
+
+    <h4>"Tô quase decidido, mas..."</h4>
+    <p>Acolha a objeção. NÃO descarta. "Conta pra mim." Escuta. Pergunta "esse é o único ponto?". Quando ele confirmar, você responde com argumento direto. Aí pergunta de novo: "Resolvido isso, fechamos?"</p>
+
+    <h4>"Preciso pensar"</h4>
+    <p>Closer raiz NUNCA aceita "preciso pensar" como resposta final. "Pensar em quê especificamente?" Se ele articular, você ataca o ponto. Se ele não conseguir articular, é desinteresse fingido — você responde: "Tranquilo, te ligo na sexta. Mas preciso saber: hoje, qual sua probabilidade de fechar — alta, média ou baixa?"</p>
+
+    <h4>"Não vai dar"</h4>
+    <p>Aceita. Pergunta o motivo. "Qual o ponto principal?" Anota. Agradece. Pergunta se pode te chamar daqui a 6 meses pra ver se mudou contexto. NÃO TENTA REVERTER NA HORA — você queima credibilidade. Não fechou hoje, fica em fila de retorno qualificado.</p>
+
+    <blockquote>"Eu fecho 30% das vendas que eu peço. Eu fecho 0% das vendas que eu não peço. A matemática é simples — pede mais."</blockquote>
+
+    <p class="frase-final">A diferença entre apresentador e closer cabe em 3 palavras: "Bora fechar?". Diga elas.</p>
+  </article>
+
+  <div class="separador">✦ ✦ ✦</div>
+
+  <!-- CAP 7 -->
+  <article class="cap" id="cap7">
+    <div class="cap-num">Capítulo 07</div>
+    <h2>Pós-fechamento que <em>indica</em></h2>
+
+    <p class="lead">Sua venda mais lucrativa não é a primeira. É a indicação que ela vai gerar — se você fizer o pós direito.</p>
+
+    <p>Closer raiz sabe que cliente fechado é começo, não fim. O contrato assinado é o ponto zero do relacionamento. E é nesse relacionamento que mora 60% da sua receita futura: indicação, expansão, renovação.</p>
+
+    <p>Vendedor médio some depois do contrato assinado. Some — literalmente. Aparece de novo só quando precisa renovar, e aí o cliente já esfriou, já negociou desconto pesado, já pensou em trocar de fornecedor. Closer raiz não some. Ele constrói presença leve mas constante.</p>
+
+    <h3>O ritmo do pós-venda raiz</h3>
+
+    <h4>Dia 0 — assinatura</h4>
+    <p>Mande mensagem pessoal de boas-vindas. Não automatizada. "Pablo, tô animado pra começar essa parceria. Combinado o que a gente alinhou. Qualquer coisa, me chama direto. Bora pra cima."</p>
+
+    <h4>Dia 7 — primeiro check-in</h4>
+    <p>Liga ou WhatsApp. "Como tá o início? Funcionou tudo? Algo emperrou?" Se algo emperrou, resolve na hora ou escala. Mostra que você não sumiu.</p>
+
+    <h4>Dia 30 — primeiro resultado</h4>
+    <p>Aqui você pede o primeiro feedback escrito. "Cara, manda 2 frases pra mim sobre o que tá funcionando até agora. Vou usar pra mostrar pra outros clientes — e te marco quando publicar." Cliente que vê o nome dele estampado vira fã.</p>
+
+    <h4>Dia 60 — pedido de indicação</h4>
+    <p>Se o resultado tá bom, pede indicação. Não tenha vergonha. <em>"Quem você conhece que tá com problema parecido com o que você tinha? Posso fazer uma apresentação?"</em> Vai dar dois nomes em média. Liga nos dois.</p>
+
+    <h4>Dia 90+ — virou parceiro</h4>
+    <p>A partir daqui, você não é mais "vendedor" pra esse cliente. É parceiro estratégico. Manda artigo relevante. Convida pra evento. Apresenta pra outros clientes complementares. Vira referência mútua.</p>
+
+    <h3>O pedido de indicação que funciona</h3>
+
+    <p>Existe um script pra pedir indicação que funciona infinitamente melhor que "tem alguém pra me indicar?". Use exatamente isto:</p>
+
+    <div class="destaque">
+      <strong>Script raiz de indicação:</strong><br><br>
+      "[Nome], você tá usando a gente há [X tempo] e o resultado foi [resultado específico]. Pergunta pra você: tem alguém na sua rede que tá enfrentando o mesmo problema que você tinha quando a gente começou? Especificamente, quem você acha que ia se beneficiar do que a gente faz?"<br><br>
+      <em>Pausa. Espera ele pensar.</em><br><br>
+      "Se você lembrar de duas pessoas, eu já fico feliz. Posso te ligar amanhã pra você me passar os contatos? Aí eu falo direto, em seu nome."
+    </div>
+
+    <p>Funciona porque: (1) lembra do resultado dele primeiro, (2) limita pedido a 2 pessoas (parece factível), (3) marca prazo concreto pra ele não esquecer, (4) tira a fricção dele ter que fazer apresentação — você faz.</p>
+
+    <h3>O cliente que indica é o cliente que fica</h3>
+
+    <p>Tem uma magia psicológica em pedir indicação: o cliente que te indicou ASSUME compromisso com sua marca. Ele apostou o nome dele em você. Daí pra frente, ele é seu defensor. Aceita imperfeição menor. Aguenta atraso pequeno. Renova sem questionar.</p>
+
+    <p>Cliente que nunca te indicou = cliente passageiro. Cliente que indicou 3 pessoas = cliente vitalício.</p>
+
+    <blockquote>"O closer médio vende uma vez. O closer raiz vende uma vez e cria 5 outras vendas a partir dessa primeira. A multiplicação tá no pós, não no pitch."</blockquote>
+
+    <p class="frase-final">Não é o que você fala antes da assinatura que constrói carreira. É o que você faz depois.</p>
+  </article>
+
+  <div class="separador">✦ ✦ ✦</div>
+
+  <!-- ENCERRAMENTO -->
+  <article class="cap">
+    <div class="cap-num">Encerramento</div>
+    <h2>O que fazer <em>amanhã</em></h2>
+
+    <p>Você leu até aqui. Agora vai a parte que separa quem só consome conteúdo de quem aplica.</p>
+
+    <h3>Sua semana de implementação</h3>
+
+    <p><strong>Hoje:</strong> Pega seu pipeline aberto. Aplica o filtro BANT. Marca de vermelho todo lead que falha em 2+ critérios. Decide se atende rápido ou descarta.</p>
+
+    <p><strong>Amanhã:</strong> Liga pros 3 leads mais quentes. Em vez de fazer apresentação, faz SPIN — pergunta de Situação, Problema, Implicação, Necessidade.</p>
+
+    <p><strong>Quarta:</strong> Identifica o perfil DISC dos 3 leads e ajusta seu tom em cada uma das 3 calls de follow-up.</p>
+
+    <p><strong>Quinta:</strong> Numa dessas calls, em algum momento, faz A pergunta. "Bora fechar?" — exatamente assim. Quero saber qual foi a reação.</p>
+
+    <p><strong>Sexta:</strong> Pega seus 3 maiores clientes ativos. Manda mensagem de check-in. Pede indicação pelo script do capítulo 7.</p>
+
+    <p>Em 5 dias você vai ter (1) pipeline mais limpo, (2) 3 conversas mais profundas, (3) pelo menos 1 pedido de fechamento direto, (4) 3 pedidos de indicação ativos.</p>
+
+    <p>Faz isso 4 semanas seguidas e você vira outra pessoa profissionalmente. Sem mentira.</p>
+
+    <h3>O último conselho</h3>
+
+    <p>Você não vai aplicar tudo de uma vez. Tudo bem. Pega UM capítulo. Dominar bem 1 técnica é melhor que aplicar mal 7. Comece pelo capítulo que mais te incomodou ler — porque esse é o gap real seu.</p>
+
+    <blockquote>"O closer raiz não nasce. Faz. Erra. Refaz. Pede ajuda. Pratica. Esse livro é só o pontapé — o resto é você."</blockquote>
+
+    <p class="frase-final">Bora fechar.</p>
+  </article>
+
+  <div class="rodape">
+    Closer Raiz · Bônus exclusivo do plano anual<br>
+    Agente Comercial IA · 2026
+  </div>
+
+</div>
+
+</body>
+</html>

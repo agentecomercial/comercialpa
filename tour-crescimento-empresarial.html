@@ -549,12 +549,32 @@
   body.print-mode .nav-bar { position: relative; }
   body.print-mode .speaker-notes, body.print-mode .overview-grid { display: none !important; }
   @media print {
-    body { background: #fff !important; }
-    .stage { background: transparent !important; }
+    @page { size: landscape; margin: 0; }
+    html, body { width: 100%; height: auto; overflow: visible !important; background: #0a0f0a !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .stage { position: relative !important; inset: auto !important; height: auto !important; padding: 0 !important; display: block !important; background: #0a0f0a !important; }
     .stage::before { display: none !important; }
-    .nav-bar, .speaker-notes, .overview-grid, .shortcuts-hint { display: none !important; }
-    .slide { page-break-after: always; box-shadow: none; }
-    body.print-mode .deck { width: 100% !important; height: auto !important; }
+    .nav-bar, .speaker-notes, .overview-grid, .shortcuts-hint, #notesBtn, #ovBtn, #vertBtn, #printBtn, #fsBtn { display: none !important; }
+    body.print-mode .deck {
+      width: 100% !important; height: auto !important;
+      transform: none !important; box-shadow: none !important;
+      border-radius: 0 !important; margin: 0 !important;
+      aspect-ratio: auto !important;
+    }
+    body.print-mode .slide {
+      position: relative !important; inset: auto !important;
+      width: 1366px !important; height: 768px !important;
+      opacity: 1 !important; visibility: visible !important;
+      page-break-after: always !important; break-after: page !important;
+      margin: 0 !important; border-bottom: none !important;
+      box-shadow: none !important; border-radius: 0 !important;
+      transform: scale(var(--print-scale, 1)) !important;
+      transform-origin: top left !important;
+    }
+    body.print-mode .slide:last-child { page-break-after: auto !important; break-after: auto !important; }
+    body.print-mode .slide::after { display: none !important; }
+    /* Anima nada na impressão */
+    body.print-mode .slide.active *,
+    body.print-mode .slide * { animation: none !important; transition: none !important; }
   }
 
   /* === Atalhos hint === */
@@ -562,7 +582,7 @@
   .shortcuts-hint kbd { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); border-radius: 4px; padding: 1px 5px; font-family: monospace; font-size: 9px; color: #d8e0d8; min-width: 14px; text-align: center; }
   .shortcuts-hint .sep { color: #3a423a; }
   @media (max-width: 1180px) { .shortcuts-hint { display: none; } }
-  body.notes-mode #notesBtn, body.overview-mode #ovBtn, body.print-mode #printBtn { background: rgba(58,255,108,0.25); }
+  body.notes-mode #notesBtn, body.overview-mode #ovBtn, body.print-mode #vertBtn { background: rgba(58,255,108,0.25); }
 </style>
 </head>
 <body>
@@ -588,7 +608,7 @@
           <span class="badge">Resultado Garantido</span>
         </div>
       </div>
-      <div class="pdf-canvas-wrap photo-frame"><img class="pdf-img" data-pdf-page="2" data-crop="0.55,0,0.45,1" alt=""></div>
+      <div class="pdf-canvas-wrap photo-frame"><img class="pdf-img" loading="lazy" data-pdf-page="2" data-crop="0.55,0,0.45,1" alt=""></div>
     </div>
   </section>
 
@@ -609,7 +629,7 @@
         </div>
         <div class="banner-billion">Mais de <strong>R$ 3 BILHÕES</strong> gerados aos clientes</div>
       </div>
-      <div class="pdf-canvas-wrap photo-frame portrait"><img class="pdf-img" data-pdf-page="4" data-crop="0.025,0.04,0.32,0.78" alt=""></div>
+      <div class="pdf-canvas-wrap photo-frame portrait"><img class="pdf-img" loading="lazy" data-pdf-page="4" data-crop="0.025,0.04,0.32,0.78" alt=""></div>
     </div>
   </section>
 
@@ -644,7 +664,7 @@
           <li>Estratégias usadas por empresas bilionárias</li>
         </ul>
       </div>
-      <div class="pdf-canvas-wrap photo-frame"><img class="pdf-img" data-pdf-page="7" data-crop="0.55,0,0.45,1" alt=""></div>
+      <div class="pdf-canvas-wrap photo-frame"><img class="pdf-img" loading="lazy" data-pdf-page="7" data-crop="0.55,0,0.45,1" alt=""></div>
     </div>
   </section>
 
@@ -1324,12 +1344,13 @@
     <div class="counter" id="counter">1 / 25</div>
     <div class="section-indicator green" id="sectionInd">Tour Crescimento Empresarial</div>
     <div class="shortcuts-hint">
-      <kbd>N</kbd>Notas <span class="sep">·</span> <kbd>O</kbd>Overview <span class="sep">·</span> <kbd>P</kbd>Imprimir
+      <kbd>N</kbd>Notas <span class="sep">·</span> <kbd>O</kbd>Overview <span class="sep">·</span> <kbd>P</kbd>Vertical <span class="sep">·</span> <kbd>Ctrl+P</kbd>Imprimir
     </div>
   </div>
   <button class="nav-btn" id="notesBtn" title="Notas do apresentador (N)">📝 Notas</button>
   <button class="nav-btn" id="ovBtn" title="Overview de slides (O)">▦ Overview</button>
-  <button class="nav-btn" id="printBtn" title="Modo vertical / impressão (P)">🖨 Imprimir</button>
+  <button class="nav-btn" id="vertBtn" title="Modo vertical (P)">📋 Vertical</button>
+  <button class="nav-btn" id="printBtn" title="Imprimir todas as páginas (Ctrl+P)">🖨 Imprimir</button>
   <button class="nav-btn" id="nextBtn">Próximo →</button>
   <button class="nav-btn" id="fsBtn" title="Tela cheia (F11)" onclick="toggleFullscreen()">⛶ Tela Cheia</button>
 </nav>
@@ -1523,14 +1544,43 @@
       fitDeck();
     }
   }
+
+  // Imprime/gera PDF de todas as páginas. Ativa print-mode, dispara o diálogo,
+  // e restaura o estado ao fim (independente de o usuário cancelar).
+  function printDeck() {
+    const wasPrintMode = document.body.classList.contains('print-mode');
+    if (!wasPrintMode) {
+      document.body.classList.add('print-mode');
+      slides.forEach(s => s.classList.add('active'));
+      document.documentElement.style.setProperty('--deck-scale', 1);
+    }
+    const restore = () => {
+      window.removeEventListener('afterprint', restore);
+      if (!wasPrintMode) {
+        document.body.classList.remove('print-mode');
+        slides.forEach((s, idx) => s.classList.toggle('active', idx === current));
+        fitDeck();
+      }
+    };
+    window.addEventListener('afterprint', restore);
+    // Pequeno delay pra layout assentar antes do diálogo
+    setTimeout(() => {
+      window.print();
+      // Fallback caso afterprint não dispare (alguns navegadores)
+      setTimeout(restore, 1000);
+    }, 120);
+  }
+
   document.getElementById('notesBtn').addEventListener('click', toggleNotes);
   document.getElementById('ovBtn').addEventListener('click', toggleOverview);
-  document.getElementById('printBtn').addEventListener('click', togglePrint);
+  document.getElementById('vertBtn').addEventListener('click', togglePrint);
+  document.getElementById('printBtn').addEventListener('click', printDeck);
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     const k = e.key.toLowerCase();
     if (k === 'n') { toggleNotes(); }
     else if (k === 'o') { toggleOverview(); }
+    else if (k === 'p' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); printDeck(); }
     else if (k === 'p' && !e.ctrlKey && !e.metaKey) { togglePrint(); }
     else if (e.key === 'Escape') {
       document.body.classList.remove('overview-mode');

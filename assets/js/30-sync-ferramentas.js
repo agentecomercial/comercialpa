@@ -449,6 +449,7 @@ function atualizarDados(){
       fbData.data=fbArray;
       localStorage.setItem('ci_turma_'+id,JSON.stringify(fbData));
       data=fbArray;
+      if(typeof _migrarTreinamentosHibrido==='function') _migrarTreinamentosHibrido(data);
       if(fbData.titulo) document.getElementById('dashTitle').textContent=fbData.titulo;
       if(fbData.periodText){
         _periodText=fbData.periodText;_periodStart=fbData.periodStart||'';_periodEnd=fbData.periodEnd||'';
@@ -835,6 +836,7 @@ function forcarSincFirebase(){
     if(fbData&&fbData.data&&fbData.data.length){
       localStorage.setItem('ci_turma_'+id,JSON.stringify(fbData));
       data=fbData.data;
+      if(typeof _migrarTreinamentosHibrido==='function') _migrarTreinamentosHibrido(data);
       if(fbData.titulo){document.getElementById('dashTitle').textContent=fbData.titulo;}
       if(fbData.info){document.getElementById('infoBarText').textContent=fbData.info;document.getElementById('infoBar').style.display='block';}
       if(fbData.periodText){
@@ -853,7 +855,7 @@ function forcarSincFirebase(){
     _showToast('❌ Erro ao conectar ao Firebase: '+(e&&e.message?e.message:e),'var(--red)');
   });
 }
-function discardChanges(){try{data=JSON.parse(savedData);}catch(e){}document.getElementById('saveBar').classList.remove('visible');renderAll();}
+function discardChanges(){try{data=JSON.parse(savedData);if(typeof _migrarTreinamentosHibrido==='function') _migrarTreinamentosHibrido(data);}catch(e){}document.getElementById('saveBar').classList.remove('visible');renderAll();}
 function desfazerUltimo(){
   const b=localStorage.getItem(BACKUP_KEY);if(!b){alert('Nenhum backup disponível.');return;}
   if(!confirm('Desfazer último save?'))return;
@@ -899,6 +901,7 @@ function importarBackup(ev){
       const s=JSON.parse(e.target.result);
       if(!s.data||!Array.isArray(s.data))throw new Error('Arquivo inválido — campo "data" ausente.');
       data=s.data;
+      if(typeof _migrarTreinamentosHibrido==='function') _migrarTreinamentosHibrido(data);
       savedData=JSON.stringify(data);
       applyState(s);
       if(s.titulo){
@@ -1001,4 +1004,28 @@ function _fecharTopbarMenuFora(e){
   if(!menu) return;
   if(menu.contains(e.target)||(btn&&btn.contains(e.target))) return;
   window._closeTopbarMenu();
+}
+
+/* ── Kebab "⋯" DESKTOP — agrupa ações (Sincronizar/Exportar/Importar/Atualizar/Histórico) ── */
+window._toggleTopbarActionsMenu=function(ev){
+  if(ev) ev.stopPropagation();
+  var m=document.getElementById('topbarActionsMenu');
+  if(!m) return;
+  var abrindo=!m.classList.contains('open');
+  m.classList.toggle('open',abrindo);
+  if(abrindo){
+    setTimeout(function(){
+      document.addEventListener('click',_fecharTopbarActionsFora,{once:true});
+    },10);
+  }
+};
+window._closeTopbarActionsMenu=function(){
+  var m=document.getElementById('topbarActionsMenu');
+  if(m) m.classList.remove('open');
+};
+function _fecharTopbarActionsFora(e){
+  var m=document.getElementById('topbarActionsMenu');
+  if(!m) return;
+  if(m.contains(e.target)) return;
+  window._closeTopbarActionsMenu();
 }

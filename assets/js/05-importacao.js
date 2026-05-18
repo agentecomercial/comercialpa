@@ -240,21 +240,63 @@ function impProcessarAOA(aoa){
       var _match=_TCE_TIPOS.find(function(t){return _trNorm.startsWith(t);});
       treinamentoRaw=_match||treinamentoRaw; /* mantém original se não bater */
     }
+    var _valorImp = impParseNum(_get(row,'valor'));
+    var _statusImp = impNormStatus(_get(row,'status'));
+    var _entradaImp = impParseNum(_get(row,'entrada'));
     resultado.push({
       cliente:     clienteRaw,
       consultor:   upper?_get(row,'consultor').toUpperCase():_get(row,'consultor'),
       treinamento: treinamentoRaw,
-      valor:       impParseNum(_get(row,'valor')),
-      status:      impNormStatus(_get(row,'status')),
-      entrada:     impParseNum(_get(row,'entrada')),
+      treinamentos: treinamentoRaw ? [{
+        cod:     String(treinamentoRaw),
+        valor:   _valorImp,
+        entrada: _entradaImp,
+        status:  _statusImp,
+        formaPagamento: '',
+        parcelas: 1
+      }] : [],
+      valor:       _valorImp,
+      status:      _statusImp,
+      entrada:     _entradaImp,
       info:        _get(row,'acao'),
       _importKey:  impGerarKey(clienteRaw)
     });
   }
 
-  /* debug log removido */
+  /* Consolida múltiplas linhas do mesmo cliente em 1 registro com treinamentos[].
+     Chave: cliente + consultor (mesmo cliente com 2 consultores fica separado).
+     Status do nível-row vira o "mais avançado" (pago > aberto > negociação). */
+  var _consolidado = [];
+  var _mapaCons = {};
+  var _ordemStatus = {desistiu:0,estorno:0,negociacao:1,aberto:2,pago:3};
+  resultado.forEach(function(r){
+    var chave = (r.cliente||'').toUpperCase().trim() + '||' + (r.consultor||'').toUpperCase().trim();
+    if(!_mapaCons[chave]){
+      _mapaCons[chave] = r;
+      _consolidado.push(r);
+      return;
+    }
+    var ex = _mapaCons[chave];
+    // adiciona sub-treinamento (se houver)
+    if(r.treinamento){
+      ex.treinamentos = ex.treinamentos || [];
+      ex.treinamentos.push({
+        cod:            String(r.treinamento),
+        valor:          Number(r.valor||0)||0,
+        entrada:        Number(r.entrada||0)||0,
+        status:         r.status || 'aberto',
+        formaPagamento: '',
+        parcelas:       1
+      });
+    }
+    // nível-row: valor soma; entrada soma; status pega o "mais avançado"
+    ex.valor = (Number(ex.valor||0)||0) + (Number(r.valor||0)||0);
+    ex.entrada = (Number(ex.entrada||0)||0) + (Number(r.entrada||0)||0);
+    if((_ordemStatus[r.status]||0) > (_ordemStatus[ex.status]||0)) ex.status = r.status;
+    if(r.info && !ex.info) ex.info = r.info;
+  });
 
-  return {dados:resultado, total:aoa.length-1, filtrado:filtrado, dup:0, semNome:semNome};
+  return {dados:_consolidado, total:aoa.length-1, filtrado:filtrado, dup:resultado.length-_consolidado.length, semNome:semNome};
 }
 
 /* ── Resumo dinâmico por consultor ──────────────────────────── */
@@ -994,7 +1036,10 @@ function impSincronizarTurma(novos){
     else {
       var ex=mapaExistentes[key];
       /* Atualizar treinamento se a planilha traz valor novo */
-      if(n.treinamento) ex.treinamento=n.treinamento;
+      if(n.treinamento){
+        if(typeof window._setTreinamentoScalar==='function') window._setTreinamentoScalar(ex, n.treinamento);
+        else ex.treinamento=n.treinamento;
+      }
       manter.push(ex);
     }
   });
@@ -1112,7 +1157,10 @@ function impAplicarSync(diff, criadoPor){
     (data||[]).forEach(function(d){
       if(!d._importado) return;
       var key=d._importKey||impGerarKey(d.cliente);
-      if(mapaNovoTrein[key]) d.treinamento=mapaNovoTrein[key];
+      if(mapaNovoTrein[key]){
+        if(typeof window._setTreinamentoScalar==='function') window._setTreinamentoScalar(d, mapaNovoTrein[key]);
+        else d.treinamento=mapaNovoTrein[key];
+      }
     });
   }
 

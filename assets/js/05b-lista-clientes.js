@@ -373,7 +373,9 @@ function lcAplicarMassa(){
       d.status = stPara; mudou = true;
     }
     if(treinPara && (!treinDe || d.treinamento === treinDe)){
-      d.treinamento = treinPara; mudou = true;
+      if(typeof window._setTreinamentoScalar==='function') window._setTreinamentoScalar(d, treinPara);
+      else d.treinamento = treinPara;
+      mudou = true;
     }
     if(mudou) alterados++;
   });

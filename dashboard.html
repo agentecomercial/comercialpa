@@ -15,7 +15,20 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260516b">
+<link rel="stylesheet" href="assets/css/main.css?v=2026-NOVO-CLI-GERAL-V1">
+<link rel="stylesheet" href="assets/css/themes.css?v=2026-THEMES-PREMIUM-30">
+<script>
+  // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
+  try {
+    localStorage.removeItem('selected_theme_v1');
+    var _saved = localStorage.getItem('selected_theme_v2');
+    if(_saved){
+      document.addEventListener('DOMContentLoaded', function(){
+        document.body.classList.add('theme-' + _saved);
+      });
+    }
+  } catch(e){}
+</script>
 <!-- Libs externas (jsPDF, autotable, xlsx) carregadas SOB DEMANDA por 00-utils.js
      via _ensureJsPDF() / _ensureXLSX() — economia de ~1.5MB no boot. -->
 
@@ -57,6 +70,10 @@
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
       <button class="title-edit-btn" onclick="abrirPainelUsuarios()" style="color:var(--blue);border-color:rgba(96,165,250,.3);">👥 Usuários</button>
+      <div class="theme-picker" id="themePickerHome">
+        <button class="title-edit-btn" onclick="_themePickerToggle(event,'themePickerHome')" title="Escolher tema visual">🎨 Tema</button>
+        <div class="theme-picker-pop"></div>
+      </div>
       <button class="notif-bell" id="notifBell1" onclick="_notifToggle(event)" title="Notificações">🔔<span class="notif-badge" id="notifBadge1" hidden>0</span></button>
       <button class="logout-btn" onclick="logout()">Sair</button>
     </div>
@@ -925,12 +942,18 @@
     </div>
     <div class="topbar-right">
       <span id="turmaMetaLabel" class="topbar-meta-inline" style="font-size:12px;color:var(--muted);">META: <strong style="color:var(--text);">R$ 115.000,00</strong></span>
-      <button class="title-edit-btn topbar-action" onclick="sincronizar()" style="color:var(--blue);border-color:rgba(96,165,250,.3);">🔄 Sincronizar</button>
-      <button class="title-edit-btn topbar-action" id="btnExportar" onclick="exportarBackup()">⬇ Exportar</button>
-      <button class="title-edit-btn topbar-action" onclick="document.getElementById('_importFileInput').click()" style="color:var(--amber);border-color:rgba(255,183,64,.3);" title="Importar backup JSON">⬆ Importar</button>
       <input type="file" id="_importFileInput" accept=".json" style="display:none;" onchange="importarBackup(event)">
-      <button class="title-edit-btn topbar-action" onclick="atualizarDados()" style="color:var(--accent);border-color:rgba(200,240,90,.3);" title="Buscar atualizações do servidor">↻ Atualizar</button>
-      <button class="title-edit-btn topbar-action" onclick="abrirHistoricoTurma()" title="Histórico de alterações" style="color:var(--muted);">🕓 Histórico</button>
+      <!-- Kebab DESKTOP — agrupa ações secundárias -->
+      <div class="topbar-actions-menu topbar-action" id="topbarActionsMenu">
+        <button class="topbar-actions-trigger" onclick="_toggleTopbarActionsMenu(event)" title="Ações" aria-label="Ações">⋯</button>
+        <div class="topbar-actions-pop">
+          <button class="topbar-actions-item" onclick="_closeTopbarActionsMenu();sincronizar()" style="color:var(--blue);"><span class="ic">🔄</span>Sincronizar</button>
+          <button class="topbar-actions-item" onclick="_closeTopbarActionsMenu();exportarBackup()"><span class="ic">⬇</span>Exportar</button>
+          <button class="topbar-actions-item" onclick="_closeTopbarActionsMenu();document.getElementById('_importFileInput').click()" style="color:var(--amber);"><span class="ic">⬆</span>Importar</button>
+          <button class="topbar-actions-item" onclick="_closeTopbarActionsMenu();atualizarDados()" style="color:var(--accent);"><span class="ic">↻</span>Atualizar</button>
+          <button class="topbar-actions-item" onclick="_closeTopbarActionsMenu();abrirHistoricoTurma()"><span class="ic">🕓</span>Histórico</button>
+        </div>
+      </div>
       <button class="notif-bell" id="notifBell2" onclick="_notifToggle(event)" title="Notificações">🔔<span class="notif-badge" id="notifBadge2" hidden>0</span></button>
       <button class="logout-btn topbar-action" onclick="logout()">Sair</button>
       <!-- Kebab menu (mobile only) -->
@@ -951,6 +974,7 @@
     <button class="topbar-menu-item" onclick="_closeTopbarMenu();exportarBackup()"><span class="ico">⬇</span>Exportar</button>
     <button class="topbar-menu-item" onclick="_closeTopbarMenu();document.getElementById('_importFileInput').click()" style="color:var(--amber);"><span class="ico">⬆</span>Importar</button>
     <button class="topbar-menu-item" onclick="_closeTopbarMenu();abrirHistoricoTurma()"><span class="ico">🕓</span>Histórico</button>
+    <button class="topbar-menu-item" onclick="_closeTopbarMenu();setTimeout(function(){window._themePickerToggle&&window._themePickerToggle();},50)"><span class="ico">🎨</span>Tema</button>
     <button class="topbar-menu-item" onclick="_closeTopbarMenu();setTimeout(function(){window._notifToggle&&window._notifToggle();},50)"><span class="ico">🔔</span>Notificações<span class="topbar-menu-badge" id="topbarMenuNotifBadge" hidden>0</span></button>
     <button class="topbar-menu-item topbar-menu-sair" onclick="_closeTopbarMenu();logout()"><span class="ico">⏻</span>Sair</button>
   </div>
@@ -1011,52 +1035,92 @@
       <div class="bottom-grid">
         <div class="tpanel">
           <div class="tpanel-header" style="flex-direction:column;align-items:stretch;gap:8px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-              <span class="panel-title" id="panelTitleClientes" onclick="window._abrirListaClientesAdm&&window._abrirListaClientesAdm()">Clientes</span>
-              <div class="search-filter-row" style="display:flex;align-items:center;gap:8px;">
-                <div class="search-bar"><span class="search-icon">⌕</span><input type="text" id="searchInput" placeholder="Buscar..." oninput="renderAll()" /></div>
-                <select id="statusFilter" class="modal-select" onchange="setStatusDropdown(this.value)" style="padding:6px 10px;font-size:12px;min-width:120px;border-radius:var(--radius-sm);height:36px;">
-                  <option value="">Todos</option>
-                  <option value="aberto">Aberto</option>
-                  <option value="pago">Pago</option>
-                  <option value="negociacao">Negociação</option>
-                  <option value="entrada">Entrada</option>
-                  <option value="desistiu">Desistiu</option>
-                  <option value="estorno">Estorno</option>
-                </select>
-                <button class="add-btn cli-action-btn" id="btnNovoCliente" onclick="openAddModal()" title="Novo cliente"><span class="btn-icon">+</span><span class="btn-label"> Novo cliente</span></button>
-                <button class="btn-secondary cli-action-btn" id="btnListaClientes"
-                  onclick="abrirListaClientes()"
-                  title="Ver todos os clientes">
-                  <span class="btn-icon">👥</span><span class="btn-label"> Clientes</span>
+            <!-- TUDO EM UMA ÚNICA LINHA: título + busca + 4 filtros + botões de ação -->
+            <div class="cli-bar-unica" style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow:visible;">
+              <span class="panel-title" id="panelTitleClientes" onclick="window._abrirListaClientesAdm&&window._abrirListaClientesAdm()" style="flex-shrink:0;">Clientes</span>
+              <div class="search-bar" style="flex:0 1 200px;min-width:140px;"><span class="search-icon">⌕</span><input type="text" id="searchInput" placeholder="Buscar..." oninput="renderAll()" /></div>
+
+              <!-- 4 filtros multi-select lado a lado -->
+              <div class="ms-status" id="statusFilterMS">
+                <button type="button" class="ms-status-trigger" id="statusFilterTrigger"
+                  aria-haspopup="listbox" aria-expanded="false" onclick="_msStatusToggle()">
+                  <span class="ms-status-label" id="statusFilterLabel">STATUS</span>
+                  <span class="ms-status-caret">▾</span>
                 </button>
-                <button class="btn-secondary cli-action-btn" id="btnImportarPlanilha"
-                  onclick="openImportModal()"
-                  title="Importar de Excel, CSV ou Google Sheets">
-                  <span class="btn-icon">📊</span><span class="btn-label"> Importar Planilha</span>
+                <div class="ms-status-pop" id="statusFilterPop" role="listbox" aria-multiselectable="true">
+                  <label class="ms-status-opt ms-status-all" data-val="__all">
+                    <input type="checkbox" id="msStatus_all" onchange="_msStatusToggleAll(this.checked)">
+                    <span>TODOS</span>
+                  </label>
+                  <div class="ms-status-sep"></div>
+                  <label class="ms-status-opt" data-val="aberto"><input type="checkbox" data-val="aberto" onchange="_msStatusOnChange()"><span>ABERTO</span></label>
+                  <label class="ms-status-opt" data-val="pago"><input type="checkbox" data-val="pago" onchange="_msStatusOnChange()"><span>PAGO</span></label>
+                  <label class="ms-status-opt" data-val="negociacao"><input type="checkbox" data-val="negociacao" onchange="_msStatusOnChange()"><span>NEGOCIAÇÃO</span></label>
+                  <label class="ms-status-opt" data-val="entrada"><input type="checkbox" data-val="entrada" onchange="_msStatusOnChange()"><span>ENTRADA</span></label>
+                  <label class="ms-status-opt" data-val="desistiu"><input type="checkbox" data-val="desistiu" onchange="_msStatusOnChange()"><span>DESISTIU</span></label>
+                  <label class="ms-status-opt" data-val="estorno"><input type="checkbox" data-val="estorno" onchange="_msStatusOnChange()"><span>ESTORNO</span></label>
+                </div>
+              </div>
+              <div class="ms-filt" id="msFiltTreinamento">
+                <button type="button" class="ms-filt-trigger" onclick="_msFiltToggle('msFiltTreinamento')">
+                  <span class="ms-filt-label">TREINAMENTO</span>
+                  <span class="ms-filt-caret">▾</span>
                 </button>
-                <button class="btn-supremo cli-action-btn" id="btnSupremo"
-                  onclick="window.abrirSupremo&&window.abrirSupremo()"
-                  title="Relatório supremo — copia para WhatsApp/email da chefia">
-                  <span class="btn-icon">🏆</span><span class="btn-label"> SUPREMO</span>
+                <div class="ms-filt-pop" role="listbox" aria-multiselectable="true"></div>
+              </div>
+              <div class="ms-filt" id="msFiltTreinador">
+                <button type="button" class="ms-filt-trigger" onclick="_msFiltToggle('msFiltTreinador')">
+                  <span class="ms-filt-label">TREINADOR</span>
+                  <span class="ms-filt-caret">▾</span>
                 </button>
-                <input type="file" id="_planilhaFileInput" accept=".xlsx,.xls,.csv,.pdf,*/*" style="display:none;">
+                <div class="ms-filt-pop" role="listbox" aria-multiselectable="true"></div>
               </div>
-            </div>
-            <div class="filtros-desktop">
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:70px;flex-shrink:0;">Treinador</span>
-                <div id="trainerFBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+              <div class="ms-filt" id="msFiltConsultor">
+                <button type="button" class="ms-filt-trigger" onclick="_msFiltToggle('msFiltConsultor')">
+                  <span class="ms-filt-label">CONSULTOR</span>
+                  <span class="ms-filt-caret">▾</span>
+                </button>
+                <div class="ms-filt-pop" role="listbox" aria-multiselectable="true"></div>
               </div>
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:70px;flex-shrink:0;">Consultor</span>
-                <div id="consultorFBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+              <div class="ms-filt" id="msFiltPresenca">
+                <button type="button" class="ms-filt-trigger" onclick="_msFiltToggle('msFiltPresenca')">
+                  <span class="ms-filt-label">PRESENÇA</span>
+                  <span class="ms-filt-caret">▾</span>
+                </button>
+                <div class="ms-filt-pop" role="listbox" aria-multiselectable="true"></div>
               </div>
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:70px;flex-shrink:0;">Presença</span>
-                <div id="presencaFBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
-                <button class="clear-link" style="margin-left:auto;" onclick="clearAll()">Limpar filtros</button>
+
+              <!-- Limpar filtros como ícone discreto -->
+              <button class="cli-clear-icon" onclick="clearAll()" title="Limpar todos os filtros" aria-label="Limpar filtros">×</button>
+
+              <!-- Espaçador empurra ações para a direita -->
+              <div style="flex:1 1 0;min-width:8px;"></div>
+
+              <!-- Botão primário (sempre visível) -->
+              <button class="add-btn cli-action-btn" id="btnNovoCliente" onclick="openAddModal()" title="Novo cliente"><span class="btn-icon">+</span><span class="btn-label"> Novo cliente</span></button>
+
+              <!-- Menu kebab "···" com ações secundárias -->
+              <div class="cli-menu" id="cliBarMenu">
+                <button type="button" class="cli-menu-trigger" onclick="_cliMenuToggle(event)" title="Mais ações" aria-haspopup="menu" aria-expanded="false">⋯</button>
+                <div class="cli-menu-pop" role="menu">
+                  <button type="button" class="cli-menu-item" id="btnListaClientes" onclick="abrirListaClientes();_cliMenuClose();" role="menuitem">
+                    <span class="ic">👥</span><span>Lista de Clientes</span>
+                  </button>
+                  <button type="button" class="cli-menu-item" id="btnImportarPlanilha" onclick="openImportModal();_cliMenuClose();" role="menuitem">
+                    <span class="ic">📊</span><span>Importar Planilha</span>
+                  </button>
+                  <button type="button" class="cli-menu-item" id="btnSupremo" onclick="window.abrirSupremo&&window.abrirSupremo();_cliMenuClose();" role="menuitem">
+                    <span class="ic">🏆</span><span>Relatório SUPREMO</span>
+                  </button>
+                </div>
               </div>
+
+              <input type="file" id="_planilhaFileInput" accept=".xlsx,.xls,.csv,.pdf,*/*" style="display:none;">
+
+              <!-- Containers legados ocultos -->
+              <div id="trainerFBtns" style="display:none;"></div>
+              <div id="consultorFBtns" style="display:none;"></div>
+              <div id="presencaFBtns" style="display:none;"></div>
             </div>
             <!-- Filtros mobile: 3 dropdowns nativos lado a lado -->
             <div class="filtros-mobile">
@@ -1133,7 +1197,7 @@
           </div>
           <!-- Botão + Novo cliente: linha própria, centralizado, largura total -->
           <div id="rowNovoClienteConsultor" style="display:none;padding:14px 0 8px;text-align:center;">
-            <button id="btnNovoClienteConsultor" class="btn-novo-consultor" onclick="openAddModalConsultor()" style="width:100%;padding:9px 0px;font-size:11px;border-radius:20px;text-align:center;display:inline-block;margin:0 auto;background:linear-gradient(180deg,#d4f565,#c8f05a);color:#0f0f0f;border:1px solid var(--accent);font-weight:700;box-shadow:0 2px 6px rgba(200,240,90,.5);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;">+ Novo cliente</button>
+            <button id="btnNovoClienteConsultor" class="btn-novo-consultor" onclick="openAddModalConsultor()">+ Novo cliente</button>
           </div>
           <div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
@@ -1220,18 +1284,38 @@
         <span class="rotate-warning-text">Vire o celular na horizontal para melhor visualização</span>
       </div>
       <div class="tpanel">
-        <div class="tpanel-header">
+        <div class="tpanel-header" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
           <span class="panel-title">Consultor × Produto — Clientes Pagos</span>
+          <div class="col-filter" id="colFilterPagos">
+            <button type="button" class="col-filter-trigger" onclick="_colFilterToggle('colFilterPagos')" title="Filtrar colunas (treinamentos)">
+              <span class="cf-ic">🎛</span>
+              <span class="cf-label">COLUNAS</span>
+              <span class="cf-caret">▾</span>
+            </button>
+            <div class="col-filter-pop" data-target="produtoCruzadaTable">
+              <!-- populado dinamicamente por 36-col-filter.js -->
+            </div>
+          </div>
         </div>
         <div style="overflow-x:auto;">
           <table id="produtoCruzadaTable" style="min-width:100%;"></table>
         </div>
       </div>
 
-      <!-- Tabela Consultor × Produto — Entrada Realizada (exibida apenas quando houver entrada) -->
-      <div class="tpanel" id="produtoEntradaPanel" style="margin-top:20px;display:none;">
-        <div class="tpanel-header">
-          <span class="panel-title">Consultor × Produto — Clientes Entrada Realizada</span>
+      <!-- Tabela Consultor × Produto — Clientes Entrada (logo abaixo de Clientes Pagos) -->
+      <div class="tpanel" id="produtoEntradaPanel" style="margin-top:20px;">
+        <div class="tpanel-header" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <span class="panel-title">Consultor × Produto — Clientes Entrada</span>
+          <div class="col-filter" id="colFilterEntrada">
+            <button type="button" class="col-filter-trigger" onclick="_colFilterToggle('colFilterEntrada')" title="Filtrar colunas (treinamentos)">
+              <span class="cf-ic">🎛</span>
+              <span class="cf-label">COLUNAS</span>
+              <span class="cf-caret">▾</span>
+            </button>
+            <div class="col-filter-pop" data-target="produtoCruzadaEntradaTable">
+              <!-- populado dinamicamente por 36-col-filter.js -->
+            </div>
+          </div>
         </div>
         <div style="overflow-x:auto;">
           <table id="produtoCruzadaEntradaTable" style="min-width:100%;"></table>
@@ -1353,8 +1437,10 @@
     </div>
     <div class="sup-actions">
       <button class="sup-btn-cancel" onclick="window.fecharSupremo&&window.fecharSupremo()">Cancelar</button>
-      <button class="sup-btn-dl" onclick="window._supBaixarTxt&&window._supBaixarTxt()">💾 Baixar .txt</button>
-      <button class="sup-btn-copy" onclick="window._supCopiar&&window._supCopiar()">📋 COPIAR RELATÓRIO</button>
+      <button class="sup-btn-dl" onclick="window._supBaixarTxt&&window._supBaixarTxt()" title="Baixar como arquivo .txt">💾 .txt</button>
+      <button class="sup-btn-dl" onclick="window._supBaixarPdf&&window._supBaixarPdf()" title="Baixar como PDF">📄 PDF</button>
+      <button class="sup-btn-wpp" onclick="window._supWhatsApp&&window._supWhatsApp()" title="Compartilhar no WhatsApp">💬 WhatsApp</button>
+      <button class="sup-btn-copy" onclick="window._supCopiar&&window._supCopiar()">📋 COPIAR</button>
     </div>
   </div>
 </div>
@@ -1886,22 +1972,26 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260515f"></script>
+<script defer src="assets/js/02-main.js?v=2026-MS-TREIN-V5-REVERT"></script>
 <script defer src="assets/js/29-login.js?v=20260514f"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260514a"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=2026-TOPBAR-KEBAB-V1"></script>
 <script defer src="assets/js/31-modo-consultor-desktop.js?v=20260514a"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260516a"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260516w"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=2026-MS-STATUS-V1"></script>
+<script defer src="assets/js/35-ms-filters.js?v=2026-MS-FILT-V12-DASH-DRAG"></script>
+<script defer src="assets/js/36-col-filter.js?v=2026-COL-FILTER-V3-DRAG"></script>
+<script defer src="assets/js/37-theme-picker.js?v=2026-THEMES-PREMIUM-30"></script>
 <script defer src="assets/js/21-turmas.js?v=20260514a"></script>
 <script defer src="assets/js/22-pdf-consultor.js?v=20260515a"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260515a"></script>
+<script defer src="assets/js/24-aba-produto.js?v=2026-COL-FILTER-V2-ORD"></script>
 <script defer src="assets/js/25-abas-consultor.js?v=20260515b"></script>
 <script defer src="assets/js/26-aba-treinador.js?v=20260515b"></script>
 <script defer src="assets/js/27-novos-membros.js"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260516b"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=2026-CI-FECHADO-V1"></script>
 <script defer src="assets/js/18-usuarios.js"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260514a"></script>
+<script defer src="assets/js/20-propostas-main.js?v=2026-EXEC-FIN-V6-SEM-JORNADA"></script>
 <script defer src="assets/js/17-presenca.js?v=20260514e"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
@@ -1918,8 +2008,8 @@ try{
 
 <script defer src="assets/js/04-card-clientes.js?v=20260515b"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260515b"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260515g"></script>
+<script defer src="assets/js/05-importacao.js?v=20260516p"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260516p"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
@@ -1978,7 +2068,24 @@ try{
      COMPATIBILIDADE: botão "↻ Atualizar" continua funcionando
      como fallback; o sistema funciona mesmo sem realtime.
 ══════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/08-realtime.js"></script>
+<!-- ════════════════════════════════════════════════════════════════
+     ENGINE REALTIME (F1-F6) — vanilla, file://-safe
+     F1 rt-core/subs: Event Bus + Subscription Manager (anti memory-leak)
+     F2 rt-buffer:    Debounce/coalesce de mutações
+     F3 rt-render:    Render granular (opt-in)
+     F4 rt-presence:  Online/offline + badge
+     F5 rt-optimistic: Rollback automático em erro
+     F6 rt-tx:        Transactional writes (anti race condition)
+     Carregam ANTES do 08-realtime.js
+═════════════════════════════════════════════════════════════════ -->
+<script defer src="assets/js/realtime/rt-core.js?v=2026-RT-F6"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=2026-RT-F6"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=2026-RT-F6"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=2026-RT-F6"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=2026-RT-F6"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=2026-RT-F6"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=2026-RT-F6"></script>
+<script defer src="assets/js/08-realtime.js?v=2026-RT-F6"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">

@@ -138,7 +138,10 @@
     });
   }
 
-  /* ── Iniciar listener da turma ativa ── */
+  /* ── Iniciar listener da turma ativa ──
+     Agora usa RTSubs (F1) com scope 'turma' para auto-cleanup.
+     Quando entrarTurma() é chamado novamente, listener antigo é
+     desligado automaticamente via RTBus.emit('turma:leave'). */
   var _escutarAttempts = 0;
   function _escutarTurmaAtiva(){
     var id = (typeof _turmaAtiva!=='undefined' && _turmaAtiva) ? _turmaAtiva.id : null;
@@ -148,15 +151,17 @@
       return;
     }
     _escutarAttempts = 0;
-    if(_listeners['turma_'+id]) return; // já escutando
 
     var TURMAS = typeof TURMAS_NODE!=='undefined' ? TURMAS_NODE : 'turmas';
     var path   = TURMAS+'/'+id;
 
-    if(typeof window._fbListen==='function'){
-      window._fbListen(path, function(snapshot){
-        _onClientesChange(snapshot);
-      });
+    // RTSubs.add já desliga listener antigo no mesmo path (sem duplicar)
+    if(window.RTSubs && typeof window._fbListen==='function'){
+      window.RTSubs.add(path, _onClientesChange, { scope: 'turma' });
+      _listeners['turma_'+id] = true;
+    } else if(typeof window._fbListen==='function'){
+      // Fallback se RTSubs não carregou: comportamento antigo
+      window._fbListen(path, _onClientesChange);
       _listeners['turma_'+id] = true;
     } else {
       console.error('[RT] _fbListen não disponível ainda — tentando novamente...');
@@ -165,19 +170,21 @@
     }
   }
 
-  /* ── Iniciar listeners de usuários e turmas ── */
+  /* ── Listeners GLOBAIS (vivem na sessão inteira, scope 'global') ── */
   function _escutarUsuarios(){
-    if(typeof window._fbListen==='function'){
+    if(window.RTSubs && typeof window._fbListen==='function'){
+      window.RTSubs.add('usuarios', _onUsuariosChange, { scope: 'global' });
+    } else if(typeof window._fbListen==='function'){
       window._fbListen('usuarios', _onUsuariosChange);
-      /* debug log removido */
     }
   }
 
   function _escutarTurmas(){
     var TURMAS = typeof TURMAS_NODE!=='undefined' ? TURMAS_NODE : 'turmas';
-    if(typeof window._fbListen==='function'){
+    if(window.RTSubs && typeof window._fbListen==='function'){
+      window.RTSubs.add(TURMAS, _onTurmasChange, { scope: 'global' });
+    } else if(typeof window._fbListen==='function'){
       window._fbListen(TURMAS, _onTurmasChange);
-      /* debug log removido */
     }
   }
 
@@ -197,14 +204,20 @@
       // Verificar repetidamente até a turma ser selecionada
       _escutarTurmaAtiva();
 
-      // Quando o usuário entrar em uma turma, re-registrar o listener
+      // Quando o usuário entrar em uma turma, re-registrar o listener.
+      // RTBus emite turma:leave (limpa scope 'turma' → RTSubs desliga listeners antigos)
+      // e turma:enter (novo listener será adicionado em _escutarTurmaAtiva).
       var _origEntrarTurma = window.entrarTurma;
       if(typeof _origEntrarTurma==='function'){
         window.entrarTurma = function(id){
+          var _turmaAntiga = (typeof _turmaAtiva!=='undefined' && _turmaAtiva) ? _turmaAtiva.id : null;
+          if(_turmaAntiga && window.RTBus){
+            window.RTBus.emit('turma:leave', { id: _turmaAntiga });
+          }
           _origEntrarTurma.apply(this, arguments);
-          // Após entrar na turma, dar tempo para _turmaAtiva ser definido
           setTimeout(function(){
-            delete _listeners['turma_'+id]; // forçar re-registro
+            delete _listeners['turma_'+id]; // forçar re-registro local
+            if(window.RTBus) window.RTBus.emit('turma:enter', { id: id });
             _escutarTurmaAtiva();
           }, 800);
         };

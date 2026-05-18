@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agente Comercial IA — Pipeline + DISC + 200 prompts prontos</title>
+<meta name="description" content="O sistema que transforma seus consultores em closers. Pipeline visual, agente IA com DISC e 200 prompts validados. Lista de espera aberta.">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0e27; --bg2:#0f1438; --card:#151b3d;
+    --text:#e8ecff; --muted:#9aa3c7; --line:#1f2752;
+    --accent:#6366f1; --accent2:#8b5cf6; --green:#10b981; --gold:#fbbf24;
+  }
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+  .container{max-width:1140px;margin:0 auto;padding:0 24px}
+
+  /* NAV */
+  nav{position:sticky;top:0;background:rgba(10,14,39,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);z-index:100;padding:14px 0}
+  .nav-inner{display:flex;justify-content:space-between;align-items:center}
+  .logo{font-weight:800;font-size:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .nav-cta{background:var(--accent);color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;transition:.2s}
+  .nav-cta:hover{background:var(--accent2)}
+
+  /* HERO */
+  .hero{padding:80px 0 60px;text-align:center;position:relative}
+  .hero::before{content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(99,102,241,.15),transparent 60%);z-index:-1}
+  .badge-pre{display:inline-block;background:rgba(99,102,241,.15);color:#a5b4fc;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:24px;border:1px solid rgba(99,102,241,.3)}
+  h1{font-size:clamp(32px,5vw,56px);font-weight:800;line-height:1.1;letter-spacing:-.02em;margin-bottom:24px}
+  h1 .gradient{background:linear-gradient(135deg,#a5b4fc,#c4b5fd,#f0abfc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .subtitle{font-size:clamp(16px,2vw,20px);color:var(--muted);max-width:720px;margin:0 auto 36px}
+  .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:48px}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:16px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:16px;transition:.2s;box-shadow:0 10px 40px rgba(99,102,241,.3);border:none;cursor:pointer}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 50px rgba(99,102,241,.5)}
+  .btn-ghost{background:transparent;color:var(--text);padding:16px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:16px;border:1px solid var(--line);transition:.2s}
+  .btn-ghost:hover{border-color:var(--accent);color:#a5b4fc}
+  .hero-meta{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+  .hero-meta span::before{content:'✓ ';color:var(--green);font-weight:700}
+
+  /* MOCKUP */
+  .mockup{margin:0 auto 80px;max-width:900px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .mockup-bar{background:#0a0e27;padding:12px 16px;display:flex;gap:6px;border-bottom:1px solid var(--line)}
+  .mockup-bar span{width:12px;height:12px;border-radius:50%;background:#444}
+  .mockup-bar span:nth-child(1){background:#ff5f56}
+  .mockup-bar span:nth-child(2){background:#ffbd2e}
+  .mockup-bar span:nth-child(3){background:#27c93f}
+  .mockup-body{padding:30px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .mock-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:18px}
+  .mock-card-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+  .mock-card-val{font-size:24px;font-weight:800}
+  .mock-card-val.green{color:var(--green)}
+  .mock-card-val.gold{color:var(--gold)}
+  .mock-card-val.red{color:#ff5252}
+  .mock-card-sub{font-size:12px;color:var(--muted);margin-top:4px}
+  .mock-card-sub.red{color:#fca5a5}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1100px;margin:0 auto 80px}
+  @media(max-width:780px){.compare{grid-template-columns:1fr}}
+  .compare .mockup{margin:0}
+  .compare-tag{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px}
+  .compare-tag.before{background:rgba(255,82,82,.12);color:#ff8a8a;border:1px solid rgba(255,82,82,.3)}
+  .compare-tag.after{background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+  .compare-col{display:flex;flex-direction:column;align-items:center}
+  .compare-col .mockup{width:100%}
+  .mockup.before{border-color:rgba(255,82,82,.25)}
+  .mockup.after{border-color:rgba(16,185,129,.25);box-shadow:0 30px 80px rgba(16,185,129,.15)}
+  .mockup-body.stack{display:flex;flex-direction:column;gap:10px;padding:20px}
+  .mockup-body.stack .mock-card{display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px}
+  .mockup-body.stack .mock-card-val{font-size:20px}
+
+  /* SECTION */
+  section{padding:80px 0}
+  .section-label{display:block;text-align:center;color:var(--accent);font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+  h2{font-size:clamp(28px,4vw,42px);font-weight:800;text-align:center;margin-bottom:20px;letter-spacing:-.02em}
+  .section-sub{text-align:center;color:var(--muted);max-width:640px;margin:0 auto 56px;font-size:17px}
+
+  /* PROBLEM */
+  .problem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+  .problem-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px}
+  .problem-icon{font-size:32px;margin-bottom:14px}
+  .problem-card h3{font-size:18px;margin-bottom:10px;color:#fca5a5}
+  .problem-card p{color:var(--muted);font-size:15px}
+
+  /* FEATURES */
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+  .feature{background:linear-gradient(135deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:14px;padding:32px;transition:.3s}
+  .feature:hover{border-color:var(--accent);transform:translateY(-4px)}
+  .feature-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:18px}
+  .feature h3{font-size:20px;font-weight:700;margin-bottom:10px}
+  .feature p{color:var(--muted);font-size:15px}
+
+  /* PRICING */
+  .pricing{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:960px;margin:0 auto}
+  .price-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:36px 28px;position:relative}
+  .price-card.popular{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 20px 60px rgba(99,102,241,.2)}
+  .price-card.popular::before{content:'MAIS POPULAR';position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.05em}
+  .price-name{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+  .price-val{font-size:36px;font-weight:800;margin-bottom:4px}
+  .price-val small{font-size:14px;color:var(--muted);font-weight:500}
+  .price-old{display:block;font-size:14px;color:var(--muted);text-decoration:line-through;font-weight:500;margin-bottom:2px}
+  .price-lote{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:8px;font-size:12px}
+  .price-lote-tag{color:var(--gold);font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:10px}
+  .price-lote-val{color:var(--muted)}
+  .price-lote-val strong{color:var(--text);font-weight:700}
+  .billing-toggle{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;margin:0 auto 36px;gap:4px}
+  .billing-toggle button{background:transparent;border:none;color:var(--muted);padding:10px 22px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;display:flex;align-items:center;gap:8px}
+  .billing-toggle button.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.4)}
+  .billing-toggle .save-tag{background:rgba(16,185,129,.2);color:#6ee7b7;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px}
+  .billing-toggle button.active .save-tag{background:rgba(255,255,255,.2);color:#fff}
+  .toggle-wrap{text-align:center}
+  .price-anual{display:none}
+  body[data-billing="anual"] .price-mensal{display:none}
+  body[data-billing="anual"] .price-anual{display:block}
+  body[data-billing="anual"] .price-off,
+  body[data-billing="anual"] .price-old,
+  body[data-billing="anual"] .price-lote{display:none}
+  .price-anual-info{font-size:12px;color:#6ee7b7;margin-top:6px;font-weight:600}
+  .save-badge{display:inline-block;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:13px;font-weight:800;padding:6px 12px;border-radius:8px;margin-bottom:10px;box-shadow:0 4px 14px rgba(16,185,129,.3)}
+  .bonus-anual{max-width:920px;margin:0 auto 36px;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(99,102,241,.08));border:1px solid rgba(16,185,129,.3);border-radius:16px;padding:28px 32px}
+  .bonus-anual-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(16,185,129,.2);color:#6ee7b7;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:14px}
+  .bonus-anual h3{font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text)}
+  .bonus-anual h3 em{font-style:normal;background:linear-gradient(135deg,#6ee7b7,#a5b4fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .bonus-anual .bonus-sub{font-size:14px;color:var(--muted);margin-bottom:20px}
+  .bonus-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  .bonus-item{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;gap:12px;align-items:flex-start}
+  .bonus-icon{font-size:22px;flex-shrink:0;line-height:1}
+  .bonus-item-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;line-height:1.3}
+  .bonus-item-desc{font-size:12px;color:var(--muted);line-height:1.4}
+  .price-off{display:inline-block;background:rgba(16,185,129,.15);color:#6ee7b7;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.05em;margin-left:6px;vertical-align:middle}
+  .price-sub{color:var(--muted);font-size:13px;margin-bottom:24px}
+  .price-list{list-style:none}
+  .price-list li{padding:8px 0;font-size:14px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+  .price-list li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0}
+
+  /* WAITLIST */
+  .waitlist{background:linear-gradient(135deg,var(--card),var(--bg2));border:1px solid var(--accent);border-radius:20px;padding:56px 32px;text-align:center;position:relative;overflow:hidden}
+  .waitlist::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(139,92,246,.2),transparent 70%);z-index:0}
+  .waitlist > *{position:relative;z-index:1}
+  .waitlist h2{margin-bottom:14px}
+  .waitlist p{color:var(--muted);margin-bottom:32px;max-width:540px;margin-left:auto;margin-right:auto}
+  .form{display:flex;gap:10px;max-width:520px;margin:0 auto;flex-wrap:wrap}
+  .form input{flex:1;min-width:240px;padding:16px 18px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:15px;font-family:inherit}
+  .form input:focus{outline:none;border-color:var(--accent)}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;max-width:520px;margin-left:auto;margin-right:auto}
+  .form-row input{width:100%}
+  @media(max-width:540px){.form-row{grid-template-columns:1fr}}
+  .form-note{color:var(--muted);font-size:12px;margin-top:14px}
+  .success{display:none;background:rgba(16,185,129,.15);border:1px solid var(--green);color:#6ee7b7;padding:20px;border-radius:10px;max-width:520px;margin:0 auto;font-weight:600}
+
+  /* FOOTER */
+  footer{padding:40px 0;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:13px;margin-top:40px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container nav-inner">
+    <div class="logo">Agente Comercial IA</div>
+    <a href="#waitlist" class="nav-cta">Entrar na lista</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <span class="badge-pre">🚀 Lançamento em breve · Vagas limitadas</span>
+    <h1>Transforme seus consultores em <span class="gradient">closers que batem meta</span></h1>
+    <p class="subtitle">Pipeline visual, agente IA treinado em DISC e 200 prompts validados de prospecção a fechamento. Tudo num só lugar — pronto pra usar amanhã.</p>
+    <div class="hero-cta">
+      <a href="#waitlist" class="btn-primary">Quero acesso antecipado</a>
+      <a href="#features" class="btn-ghost">Ver como funciona</a>
+    </div>
+    <div class="hero-meta">
+      <span>Lote 1: 50% OFF pros 100 primeiros</span>
+      <span>Sem cartão pra entrar na lista</span>
+      <span>Cancele quando quiser</span>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="compare">
+    <div class="compare-col">
+      <div class="compare-tag before">🔥 Antes — operação no caos</div>
+      <div class="mockup before">
+        <div class="mockup-bar"><span></span><span></span><span></span></div>
+        <div class="mockup-body stack">
+          <div class="mock-card">
+            <div><div class="mock-card-label">Pipeline (planilha desatualizada)</div><div class="mock-card-val red">R$ 180.000</div></div>
+            <div class="mock-card-sub red">⚠️ 9 leads sem follow-up</div>
+          </div>
+          <div class="mock-card">
+            <div><div class="mock-card-label">Faltam pra meta Básica</div><div class="mock-card-val red">R$ 58.000</div></div>
+            <div class="mock-card-sub red">52% · faltam 8 dias</div>
+          </div>
+          <div class="mock-card">
+            <div><div class="mock-card-label">Fechamentos do mês</div><div class="mock-card-val red">R$ 105.000</div></div>
+            <div class="mock-card-sub red">−12% vs anterior</div>
+          </div>
+          <div class="mock-card">
+            <div><div class="mock-card-label">Time batendo meta</div><div class="mock-card-val red">4 de 9</div></div>
+            <div class="mock-card-sub red">Gestor descobre tarde</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="compare-col">
+      <div class="compare-tag after">✅ Depois — com o Agente Comercial IA</div>
+      <div class="mockup after">
+        <div class="mockup-bar"><span></span><span></span><span></span></div>
+        <div class="mockup-body stack">
+          <div class="mock-card">
+            <div><div class="mock-card-label">Pipeline ativo (tempo real)</div><div class="mock-card-val green">R$ 330.000</div></div>
+            <div class="mock-card-sub">+83% vs antes</div>
+          </div>
+          <div class="mock-card">
+            <div><div class="mock-card-label">Faltam pra meta Básica</div><div class="mock-card-val gold">R$ 20.000</div></div>
+            <div class="mock-card-sub">83% · no ritmo certo</div>
+          </div>
+          <div class="mock-card">
+            <div><div class="mock-card-label">Fechamentos do mês</div><div class="mock-card-val green">R$ 178.700</div></div>
+            <div class="mock-card-sub">+70% vs antes</div>
+          </div>
+          <div class="mock-card">
+            <div><div class="mock-card-label">Time batendo meta</div><div class="mock-card-val green">7 de 9</div></div>
+            <div class="mock-card-sub">Alertas automáticos</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section style="background:linear-gradient(180deg,transparent,rgba(99,102,241,.05))">
+  <div class="container">
+    <span class="section-label">O problema</span>
+    <h2>Seu time de vendas tá perdendo dinheiro<br>todo dia que passa</h2>
+    <p class="section-sub">E a culpa não é deles — é da falta de método e ferramenta.</p>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">😵</div>
+        <h3>Pipeline em planilha</h3>
+        <p>Ninguém olha. Ninguém atualiza. O gestor descobre que perdeu o lead 3 semanas depois.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">🤷</div>
+        <h3>Consultor improvisa no 1:1</h3>
+        <p>Sem SPIN, sem MEDDIC, sem leitura de DISC. Cada call é uma roleta russa.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">📉</div>
+        <h3>Meta opaca, motivação zero</h3>
+        <p>Consultor não sabe quanto falta pro bônus. Gestor não sabe quem tá patinando.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="container">
+    <span class="section-label">A solução</span>
+    <h2>Tudo que seu time precisa<br>num único sistema</h2>
+    <p class="section-sub">Construído por quem vive a operação comercial todo dia.</p>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">📊</div>
+        <h3>Pipeline visual em tempo real</h3>
+        <p>Kanban com etapas customizáveis, alertas de oportunidade fria e previsão de fechamento por consultor.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎯</div>
+        <h3>Metas Mínima/Básica/Super</h3>
+        <p>Cards mostram exatamente quanto falta pra cada tier. O consultor sabe onde tá. O gestor também.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🤖</div>
+        <h3>Agente IA com DISC</h3>
+        <p>Treinado em "Decifre e Influencie Pessoas". Adapta script de fechamento ao perfil do cliente automaticamente.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📚</div>
+        <h3>200 prompts validados</h3>
+        <p>De pesquisa pré-call a follow-up pós-venda. Caderno do Gestor + Caderno do Closer, prontos pra Ctrl+C.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📥</div>
+        <h3>Importação de planilha</h3>
+        <p>Sobe seu CSV, o sistema cria os usuários, distribui leads e já liga o pipeline. Zero retrabalho.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎓</div>
+        <h3>Treinamentos integrados</h3>
+        <p>Trilhas SPIN, DISC e tour de crescimento direto na ferramenta. Onboarding de novo consultor em 2 dias.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:linear-gradient(180deg,transparent,rgba(139,92,246,.05))">
+  <div class="container">
+    <span class="section-label">Investimento</span>
+    <h2>Plano que cabe no seu time</h2>
+    <p class="section-sub">Lote 1 com 50% OFF pros 100 primeiros. O valor de entrada fica travado enquanto sua assinatura estiver ativa. Modelo 100% autoaprendizado — você usa, aprende e vende mais sem depender de ninguém.</p>
+    <div class="toggle-wrap">
+      <div class="billing-toggle">
+        <button type="button" class="active" data-bill="mensal" onclick="setBilling('mensal')">Mensal</button>
+        <button type="button" data-bill="anual" onclick="setBilling('anual')">Anual <span class="save-tag">25% OFF</span></button>
+      </div>
+    </div>
+    <div class="bonus-anual">
+      <div class="bonus-anual-tag">🎁 Exclusivo plano anual</div>
+      <h3>Leva <em>4 bônus que nunca serão vendidos avulso</em></h3>
+      <p class="bonus-sub">Pacote de ativos que aceleram seu fechamento desde o primeiro dia — só quem assina anual recebe.</p>
+      <div class="bonus-grid">
+        <div class="bonus-item"><span class="bonus-icon">📕</span><div><div class="bonus-item-title">Caderno de prompts em PDF</div><div class="bonus-item-desc">200 prompts prontos pra imprimir e usar</div></div></div>
+        <div class="bonus-item"><span class="bonus-icon">🎯</span><div><div class="bonus-item-title">Biblioteca de cold call DISC</div><div class="bonus-item-desc">16 scripts (4 perfis × 4 cenários)</div></div></div>
+        <div class="bonus-item"><span class="bonus-icon">📊</span><div><div class="bonus-item-title">Calculadora de turnover</div><div class="bonus-item-desc">Entregue indicadores prontos pro seu cliente</div></div></div>
+        <div class="bonus-item"><span class="bonus-icon">📘</span><div><div class="bonus-item-title">E-book Closer Raiz</div><div class="bonus-item-desc">O método de fechamento sem rodeio</div></div></div>
+      </div>
+    </div>
+    <div class="pricing">
+      <div class="price-card">
+        <div class="price-name">Smart <span class="price-off">−50%</span></div>
+        <span class="price-old">de R$ 22 por</span>
+        <div class="price-mensal">
+          <div class="price-val">R$ 11<small>/consultor/mês</small></div>
+        </div>
+        <div class="price-anual">
+          <div class="save-badge">Você economiza R$ 35</div>
+          <div class="price-val">R$ 97<small>/consultor/ano</small></div>
+          <div class="price-anual-info">≈ R$ 8,08/mês · 27% OFF</div>
+        </div>
+        <div class="price-sub">Pra quem tá começando a estruturar</div>
+        <div class="price-lote"><span class="price-lote-tag">⚡ Lote 2</span><span class="price-lote-val">entra a <strong>R$ 22</strong></span></div>
+        <ul class="price-list">
+          <li>Pipeline visual em tempo real</li>
+          <li>Metas Mínima/Básica/Super</li>
+          <li>Importação de planilha</li>
+          <li>Até 2 consultores</li>
+        </ul>
+      </div>
+      <div class="price-card popular">
+        <div class="price-name">Starter <span class="price-off">−50%</span></div>
+        <span class="price-old">de R$ 44 por</span>
+        <div class="price-mensal">
+          <div class="price-val">R$ 22<small>/consultor/mês</small></div>
+        </div>
+        <div class="price-anual">
+          <div class="save-badge">Você economiza R$ 67</div>
+          <div class="price-val">R$ 197<small>/consultor/ano</small></div>
+          <div class="price-anual-info">≈ R$ 16,42/mês · 25% OFF</div>
+        </div>
+        <div class="price-sub">Pra times que já vendem e querem escalar</div>
+        <div class="price-lote"><span class="price-lote-tag">⚡ Lote 2</span><span class="price-lote-val">entra a <strong>R$ 44</strong></span></div>
+        <ul class="price-list">
+          <li>Tudo do Smart</li>
+          <li>200 prompts comerciais (Gestor + Closer)</li>
+          <li>Trilhas de autoaprendizado SPIN/DISC</li>
+          <li>Relatórios pro gestor</li>
+          <li>Até 5 consultores</li>
+        </ul>
+      </div>
+      <div class="price-card">
+        <div class="price-name">Pro <span class="price-off">−50%</span></div>
+        <span class="price-old">de R$ 66 por</span>
+        <div class="price-mensal">
+          <div class="price-val">R$ 33<small>/consultor/mês</small></div>
+        </div>
+        <div class="price-anual">
+          <div class="save-badge">Você economiza R$ 99</div>
+          <div class="price-val">R$ 297<small>/consultor/ano</small></div>
+          <div class="price-anual-info">≈ R$ 24,75/mês · 25% OFF</div>
+        </div>
+        <div class="price-sub">Pra operação que quer fechar mais 1:1</div>
+        <div class="price-lote"><span class="price-lote-tag">⚡ Lote 2</span><span class="price-lote-val">entra a <strong>R$ 66</strong></span></div>
+        <ul class="price-list">
+          <li>Tudo do Starter</li>
+          <li>Agente IA com DISC integrado</li>
+          <li>Tour de crescimento empresarial</li>
+          <li>Caderno de prompts ilimitado</li>
+          <li>Até 10 consultores</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:32px;text-align:center;background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:24px;max-width:720px;margin-left:auto;margin-right:auto">
+      <div style="font-size:15px;color:var(--text);margin-bottom:6px"><strong>Time com mais de 10 consultores?</strong></div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:14px">Fazemos um plano sob medida pra sua operação — com condição especial pra quem entra no Lote 1.</div>
+      <a href="#waitlist" class="btn-ghost" style="display:inline-block">Solicitar plano customizado</a>
+    </div>
+  </div>
+</section>
+
+<section id="waitlist">
+  <div class="container">
+    <div class="waitlist">
+      <span class="section-label">Acesso antecipado</span>
+      <h2>Garante o Lote 1 com 50% OFF</h2>
+      <p>Os 100 primeiros entram pelo preço de fundador e mantêm o valor travado enquanto a assinatura estiver ativa. Quando o Lote 1 fechar, abrimos o Lote 2 com preço maior. Você só paga quando a ferramenta lançar — e se decidir continuar.</p>
+      <form class="form" id="waitlistForm" onsubmit="return enviarLista(event)">
+        <div class="form-row">
+          <input type="text" name="nome" placeholder="Seu nome" required>
+          <input type="text" name="empresa" placeholder="Empresa" required>
+        </div>
+        <input type="email" name="email" placeholder="Seu melhor e-mail" required>
+        <input type="tel" name="whatsapp" placeholder="WhatsApp (com DDD)" required>
+        <select name="tamanho" required style="flex:1;min-width:240px;padding:16px 18px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:15px;font-family:inherit">
+          <option value="">Quantos consultores tem seu time?</option>
+          <option>1-2 (Smart)</option>
+          <option>3-5 (Starter)</option>
+          <option>6-10 (Pro)</option>
+          <option>10+ (plano customizado)</option>
+        </select>
+        <button type="submit" class="btn-primary" style="width:100%">Quero meu acesso antecipado</button>
+        <p class="form-note">🔒 Sem spam. Você só recebe o convite de acesso quando lançarmos. Preços e condições podem ser revistos com aviso prévio de 30 dias. Cancele a qualquer momento, sem fidelidade.</p>
+      </form>
+      <div class="success" id="success">✅ Pronto! Você está na lista. Em breve te chamamos no WhatsApp.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    © 2026 Agente Comercial IA · Feito por quem vende todo dia
+  </div>
+</footer>
+
+<script>
+function setBilling(modo){
+  document.body.dataset.billing = modo;
+  document.querySelectorAll('.billing-toggle button').forEach(b=>b.classList.toggle('active', b.dataset.bill===modo));
+}
+async function enviarLista(e){
+  e.preventDefault();
+  const f = e.target;
+  const btn = f.querySelector('button[type=submit]');
+  const txtOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  const dados = {
+    nome: f.nome.value, empresa: f.empresa.value,
+    email: f.email.value, whatsapp: f.whatsapp.value,
+    tamanho: f.tamanho.value, data: new Date().toISOString()
+  };
+
+  try{
+    const r = await fetch('https://formspree.io/f/mojrpega', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body: JSON.stringify(dados)
+    });
+    if(!r.ok) throw new Error('falha no envio');
+    f.style.display='none';
+    document.getElementById('success').style.display='block';
+  }catch(err){
+    btn.disabled = false;
+    btn.textContent = txtOriginal;
+    alert('Erro ao enviar. Tente novamente em alguns segundos ou chame no WhatsApp.');
+  }
+  return false;
+}
+</script>
+</body>
+</html>

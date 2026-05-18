@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>30 Temas — Previsualização</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═════════════════════════════════════════════════════════════
+   Reset + grade da página
+═════════════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{font-family:'DM Sans',sans-serif;background:#0a0a12;color:#e8e8e8;min-height:100vh;}
+body{padding:30px 20px;}
+.page-head{max-width:1400px;margin:0 auto 30px;text-align:center;}
+.page-head h1{font-size:28px;letter-spacing:.04em;font-weight:700;margin-bottom:8px;background:linear-gradient(135deg,#c8f05a,#39ff14);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.page-head p{color:#888;font-size:13px;letter-spacing:.05em;}
+
+.grid{
+  max-width:1400px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:720px){.grid{grid-template-columns:1fr;}}
+
+/* ═════════════════════════════════════════════════════════════
+   Cada theme-frame é um "envelope" que cria um fundo com
+   gradient/blob para o glass blur ter algo pra desfocar
+═════════════════════════════════════════════════════════════ */
+.theme-frame{
+  position:relative;border-radius:18px;overflow:hidden;
+  padding:14px;min-height:560px;
+  isolation:isolate; /* contexto novo p/ stacking */
+}
+.theme-frame::before{
+  content:"";position:absolute;inset:0;z-index:-1;
+  /* fundo decorativo por padrão — cada tema sobrescreve */
+}
+.theme-label{
+  position:absolute;top:8px;left:14px;
+  font-size:10px;letter-spacing:.18em;font-weight:700;
+  color:rgba(255,255,255,.45);text-transform:uppercase;
+  font-family:'DM Mono',monospace;
+}
+.theme-number{
+  position:absolute;top:8px;right:14px;
+  font-size:10px;letter-spacing:.1em;font-weight:700;
+  color:rgba(255,255,255,.25);
+  font-family:'DM Mono',monospace;
+}
+
+/* ═════════════════════════════════════════════════════════════
+   COMPONENTES MOCKUP (estrutura compartilhada)
+═════════════════════════════════════════════════════════════ */
+.mock{position:relative;margin-top:28px;display:flex;flex-direction:column;gap:10px;}
+
+/* TopBar */
+.m-topbar{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;}
+.m-topbar .m-title{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;flex:1;}
+.m-topbar .m-btn{padding:5px 10px;font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border-radius:99px;cursor:default;border:1px solid;}
+
+/* Stats */
+.m-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.m-stat{padding:10px;border-radius:10px;}
+.m-stat .lbl{font-size:8px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:4px;}
+.m-stat .val{font-size:18px;font-weight:700;letter-spacing:-.02em;}
+
+/* Filter bar */
+.m-fbar{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:12px;flex-wrap:wrap;}
+.m-fbar .m-pill{padding:5px 10px;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:99px;border:1px solid;}
+.m-fbar .m-cta{padding:5px 12px;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:99px;margin-left:auto;}
+
+/* Table */
+.m-table{border-radius:12px;padding:8px;font-size:10px;}
+.m-table .m-row{display:grid;grid-template-columns:1.4fr .8fr .6fr;padding:6px 8px;border-radius:6px;align-items:center;}
+.m-table .m-row.m-head{font-size:8px;letter-spacing:.12em;text-transform:uppercase;opacity:.55;font-weight:700;}
+.m-table .m-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:8px;font-weight:700;letter-spacing:.06em;}
+
+/* Footer CTA */
+.m-footer{display:flex;gap:8px;}
+.m-footer .m-prim,.m-footer .m-sec{flex:1;padding:9px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-align:center;border:1px solid;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 01 — MIDNIGHT GLASS (base do que existe hoje, refinado)
+═════════════════════════════════════════════════════════════ */
+.t01::before{
+  background:
+    radial-gradient(60% 50% at 20% 10%, rgba(120,255,170,.18), transparent 70%),
+    radial-gradient(50% 50% at 80% 90%, rgba(80,140,255,.15), transparent 70%),
+    linear-gradient(135deg,#0a0e1a,#10121e);
+}
+.t01 .m-topbar,.t01 .m-fbar,.t01 .m-table{
+  background:rgba(18,22,32,.55);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.t01 .m-stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);box-shadow:inset 0 1px 0 rgba(255,255,255,.05);}
+.t01 .m-title{color:#fff;}
+.t01 .m-btn{color:#c8f05a;border-color:rgba(200,240,90,.3);background:rgba(200,240,90,.08);}
+.t01 .m-pill{color:rgba(255,255,255,.75);border-color:rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));box-shadow:inset 0 1px 0 rgba(255,255,255,.08);}
+.t01 .m-cta{background:linear-gradient(180deg,#c8f05a,#9bd131);color:#000;box-shadow:0 4px 14px rgba(200,240,90,.35);}
+.t01 .m-row.m-head{color:#9aa;}
+.t01 .m-badge{background:rgba(200,240,90,.15);color:#c8f05a;}
+.t01 .m-prim{background:linear-gradient(180deg,#c8f05a,#9bd131);color:#000;border-color:transparent;box-shadow:0 4px 14px rgba(200,240,90,.35);}
+.t01 .m-sec{background:rgba(255,255,255,.05);color:#fff;border-color:rgba(255,255,255,.12);}
+.t01 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 02 — AURORA BOREAL (verde-azul gradient + glow púrpura)
+═════════════════════════════════════════════════════════════ */
+.t02::before{
+  background:
+    radial-gradient(70% 60% at 30% 0%, rgba(120,255,200,.25), transparent 70%),
+    radial-gradient(60% 70% at 100% 100%, rgba(180,100,255,.22), transparent 70%),
+    linear-gradient(135deg,#02141a,#0a1a2e 50%,#1a0a2e);
+}
+.t02 .m-topbar,.t02 .m-fbar,.t02 .m-table{
+  background:rgba(10,20,30,.5);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);
+  border:1px solid rgba(120,255,200,.15);
+  box-shadow:0 8px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(180,100,255,.1);
+}
+.t02 .m-stat{background:rgba(10,30,40,.4);border:1px solid rgba(120,255,200,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+.t02 .m-title{color:#aef;text-shadow:0 0 12px rgba(120,255,200,.4);}
+.t02 .m-btn{color:#7fffd4;border-color:rgba(127,255,212,.4);background:rgba(127,255,212,.08);}
+.t02 .m-pill{color:rgba(180,220,255,.85);border-color:rgba(180,255,255,.18);background:linear-gradient(180deg,rgba(180,100,255,.08),rgba(120,255,200,.04));}
+.t02 .m-cta{background:linear-gradient(135deg,#7fffd4,#b47cff);color:#000;box-shadow:0 4px 18px rgba(180,100,255,.4);}
+.t02 .m-row.m-head{color:#9ac;}
+.t02 .m-badge{background:rgba(127,255,212,.18);color:#7fffd4;}
+.t02 .m-prim{background:linear-gradient(135deg,#7fffd4,#b47cff);color:#000;border-color:transparent;box-shadow:0 4px 18px rgba(180,100,255,.4);}
+.t02 .m-sec{background:rgba(10,30,40,.4);color:#aef;border-color:rgba(127,255,212,.25);}
+.t02 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 03 — SUNSET LOUNGE (preto + coral/orange + warm glow)
+═════════════════════════════════════════════════════════════ */
+.t03::before{
+  background:
+    radial-gradient(60% 60% at 10% 100%, rgba(255,140,80,.28), transparent 70%),
+    radial-gradient(50% 50% at 90% 10%, rgba(255,80,120,.22), transparent 70%),
+    linear-gradient(135deg,#1a0d0a,#0e0608);
+}
+.t03 .m-topbar,.t03 .m-fbar,.t03 .m-table{
+  background:rgba(30,15,12,.55);backdrop-filter:blur(26px) saturate(160%);-webkit-backdrop-filter:blur(26px) saturate(160%);
+  border:1px solid rgba(255,140,80,.15);
+  box-shadow:0 8px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,180,120,.1);
+}
+.t03 .m-stat{background:rgba(40,18,15,.45);border:1px solid rgba(255,140,80,.12);}
+.t03 .m-title{color:#ffd4a8;}
+.t03 .m-btn{color:#ff9a6b;border-color:rgba(255,154,107,.4);background:rgba(255,154,107,.1);}
+.t03 .m-pill{color:rgba(255,220,200,.8);border-color:rgba(255,180,140,.15);background:linear-gradient(180deg,rgba(255,140,80,.06),rgba(255,80,120,.03));}
+.t03 .m-cta{background:linear-gradient(135deg,#ff8a5b,#ff5078);color:#fff;box-shadow:0 4px 18px rgba(255,100,80,.4);}
+.t03 .m-row.m-head{color:#c98;}
+.t03 .m-badge{background:rgba(255,140,80,.18);color:#ff9a6b;}
+.t03 .m-prim{background:linear-gradient(135deg,#ff8a5b,#ff5078);color:#fff;border-color:transparent;box-shadow:0 4px 18px rgba(255,100,80,.4);}
+.t03 .m-sec{background:rgba(40,18,15,.5);color:#ffd4a8;border-color:rgba(255,140,80,.25);}
+.t03 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 04 — CYBER TOKYO (magenta + ciano + neon)
+═════════════════════════════════════════════════════════════ */
+.t04::before{
+  background:
+    linear-gradient(180deg,transparent 49%,rgba(255,0,200,.04) 50%,transparent 51%) 0 0/100% 4px,
+    radial-gradient(60% 60% at 0% 0%, rgba(255,0,200,.3), transparent 70%),
+    radial-gradient(60% 60% at 100% 100%, rgba(0,220,255,.3), transparent 70%),
+    #050015;
+}
+.t04 .m-topbar,.t04 .m-fbar,.t04 .m-table{
+  background:rgba(10,5,25,.6);backdrop-filter:blur(20px) saturate(200%);-webkit-backdrop-filter:blur(20px) saturate(200%);
+  border:1px solid rgba(255,0,200,.3);
+  box-shadow:0 0 24px rgba(255,0,200,.2),inset 0 1px 0 rgba(0,220,255,.15);
+}
+.t04 .m-stat{background:rgba(20,5,40,.5);border:1px solid rgba(0,220,255,.25);box-shadow:inset 0 0 12px rgba(255,0,200,.08);}
+.t04 .m-title{color:#0ff;text-shadow:0 0 8px #0ff,0 0 18px rgba(0,220,255,.6);font-family:'DM Mono',monospace;}
+.t04 .m-btn{color:#f0f;border-color:#f0f;background:rgba(255,0,200,.12);box-shadow:0 0 8px rgba(255,0,200,.4);}
+.t04 .m-pill{color:#0ff;border-color:rgba(0,220,255,.4);background:rgba(0,30,40,.4);text-shadow:0 0 6px rgba(0,220,255,.5);}
+.t04 .m-cta{background:linear-gradient(90deg,#ff00c8,#00dcff);color:#000;font-weight:800;box-shadow:0 0 18px rgba(255,0,200,.5);}
+.t04 .m-row.m-head{color:rgba(0,220,255,.7);font-family:'DM Mono',monospace;}
+.t04 .m-badge{background:rgba(0,220,255,.2);color:#0ff;border:1px solid rgba(0,220,255,.4);}
+.t04 .m-prim{background:linear-gradient(90deg,#ff00c8,#00dcff);color:#000;border-color:transparent;font-weight:800;box-shadow:0 0 18px rgba(255,0,200,.5);}
+.t04 .m-sec{background:rgba(20,5,40,.5);color:#0ff;border-color:rgba(0,220,255,.4);}
+.t04 .val{color:#0ff;text-shadow:0 0 8px rgba(0,220,255,.5);font-family:'DM Mono',monospace;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 05 — ICEBERG (branco-azul cristal + reflexos azuis)
+═════════════════════════════════════════════════════════════ */
+.t05::before{
+  background:
+    radial-gradient(70% 70% at 50% 0%, rgba(180,220,255,.7), transparent 70%),
+    radial-gradient(50% 60% at 50% 100%, rgba(100,160,220,.5), transparent 70%),
+    linear-gradient(180deg,#dde8f4,#a8c0db);
+}
+.t05 .m-topbar,.t05 .m-fbar,.t05 .m-table{
+  background:rgba(255,255,255,.45);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);
+  border:1px solid rgba(255,255,255,.6);
+  box-shadow:0 8px 32px rgba(60,100,160,.2),inset 0 1px 0 rgba(255,255,255,.9);
+}
+.t05 .m-stat{background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.9);}
+.t05 .m-title{color:#2a4060;}
+.t05 .m-btn{color:#2a5b8f;border-color:rgba(42,91,143,.3);background:rgba(255,255,255,.5);}
+.t05 .m-pill{color:#2a4060;border-color:rgba(255,255,255,.7);background:rgba(255,255,255,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.8);}
+.t05 .m-cta{background:linear-gradient(180deg,#5896d4,#2a5b8f);color:#fff;box-shadow:0 4px 14px rgba(42,91,143,.4),inset 0 1px 0 rgba(255,255,255,.3);}
+.t05 .m-row.m-head{color:#6a7d96;}
+.t05 .m-badge{background:rgba(88,150,212,.2);color:#2a5b8f;}
+.t05 .m-prim{background:linear-gradient(180deg,#5896d4,#2a5b8f);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(42,91,143,.4);}
+.t05 .m-sec{background:rgba(255,255,255,.55);color:#2a4060;border-color:rgba(255,255,255,.7);}
+.t05 .val{color:#1a2c44;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 06 — BRUTALIST MONO (preto + branco + hard shadows)
+═════════════════════════════════════════════════════════════ */
+.t06::before{background:#111;}
+.t06 .m-topbar,.t06 .m-fbar,.t06 .m-table{
+  background:#1a1a1a;border:2px solid #fff;box-shadow:6px 6px 0 #fff;
+}
+.t06 .m-stat{background:#000;border:2px solid #fff;box-shadow:4px 4px 0 #fff;}
+.t06 .m-title{color:#fff;font-family:'DM Mono',monospace;font-weight:700;}
+.t06 .m-btn{color:#000;border-color:#fff;background:#fff;font-family:'DM Mono',monospace;border-radius:0!important;}
+.t06 .m-pill{color:#fff;border-color:#fff;background:#000;border-radius:0!important;font-family:'DM Mono',monospace;}
+.t06 .m-cta{background:#fff;color:#000;border-radius:0!important;font-family:'DM Mono',monospace;box-shadow:3px 3px 0 #555;}
+.t06 .m-row.m-head{color:#fff;font-family:'DM Mono',monospace;}
+.t06 .m-badge{background:#fff;color:#000;border-radius:0!important;font-family:'DM Mono',monospace;}
+.t06 .m-prim{background:#fff;color:#000;border-color:#fff;border-radius:0!important;font-family:'DM Mono',monospace;box-shadow:4px 4px 0 #555;}
+.t06 .m-sec{background:#000;color:#fff;border-color:#fff;border-radius:0!important;font-family:'DM Mono',monospace;}
+.t06 .val{color:#fff;font-family:'DM Mono',monospace;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 07 — VELVET ROYALE (roxo profundo + dourado + burgundy)
+═════════════════════════════════════════════════════════════ */
+.t07::before{
+  background:
+    radial-gradient(80% 60% at 50% 0%, rgba(180,90,255,.25), transparent 70%),
+    radial-gradient(60% 60% at 100% 100%, rgba(255,180,80,.15), transparent 70%),
+    linear-gradient(180deg,#1a0a2e,#0a0418);
+}
+.t07 .m-topbar,.t07 .m-fbar,.t07 .m-table{
+  background:rgba(30,15,50,.55);backdrop-filter:blur(28px) saturate(170%);-webkit-backdrop-filter:blur(28px) saturate(170%);
+  border:1px solid rgba(212,175,55,.25);
+  box-shadow:0 8px 32px rgba(40,20,60,.6),inset 0 1px 0 rgba(212,175,55,.15);
+}
+.t07 .m-stat{background:rgba(35,18,55,.45);border:1px solid rgba(212,175,55,.15);}
+.t07 .m-title{color:#f0d68a;letter-spacing:.16em;}
+.t07 .m-btn{color:#f0d68a;border-color:rgba(240,214,138,.4);background:rgba(240,214,138,.08);}
+.t07 .m-pill{color:#e0c8ee;border-color:rgba(212,175,55,.2);background:linear-gradient(180deg,rgba(180,90,255,.1),rgba(60,30,90,.2));}
+.t07 .m-cta{background:linear-gradient(180deg,#f0d68a,#c8a44f);color:#1a0a2e;box-shadow:0 4px 16px rgba(212,175,55,.4),inset 0 1px 0 rgba(255,255,255,.3);font-weight:700;}
+.t07 .m-row.m-head{color:#b099bb;}
+.t07 .m-badge{background:rgba(212,175,55,.18);color:#f0d68a;}
+.t07 .m-prim{background:linear-gradient(180deg,#f0d68a,#c8a44f);color:#1a0a2e;border-color:transparent;box-shadow:0 4px 16px rgba(212,175,55,.4);}
+.t07 .m-sec{background:rgba(35,18,55,.5);color:#e0c8ee;border-color:rgba(212,175,55,.3);}
+.t07 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 08 — EMERALD LUX (esmeralda + dourado + jade glass)
+═════════════════════════════════════════════════════════════ */
+.t08::before{
+  background:
+    radial-gradient(70% 70% at 30% 0%, rgba(60,180,130,.35), transparent 70%),
+    radial-gradient(60% 60% at 100% 100%, rgba(212,175,55,.18), transparent 70%),
+    linear-gradient(180deg,#04201a,#02100c);
+}
+.t08 .m-topbar,.t08 .m-fbar,.t08 .m-table{
+  background:rgba(10,40,30,.55);backdrop-filter:blur(26px) saturate(180%);-webkit-backdrop-filter:blur(26px) saturate(180%);
+  border:1px solid rgba(212,175,55,.25);
+  box-shadow:0 8px 32px rgba(0,30,20,.5),inset 0 1px 0 rgba(212,175,55,.15);
+}
+.t08 .m-stat{background:rgba(10,50,35,.45);border:1px solid rgba(60,180,130,.2);}
+.t08 .m-title{color:#d4af37;letter-spacing:.14em;}
+.t08 .m-btn{color:#3cb482;border-color:rgba(60,180,130,.4);background:rgba(60,180,130,.1);}
+.t08 .m-pill{color:#c8e8d8;border-color:rgba(60,180,130,.2);background:linear-gradient(180deg,rgba(60,180,130,.08),rgba(212,175,55,.04));}
+.t08 .m-cta{background:linear-gradient(180deg,#d4af37,#a08020);color:#04201a;box-shadow:0 4px 16px rgba(212,175,55,.4),inset 0 1px 0 rgba(255,255,255,.25);font-weight:700;}
+.t08 .m-row.m-head{color:#8baa9a;}
+.t08 .m-badge{background:rgba(60,180,130,.22);color:#5ec9a0;}
+.t08 .m-prim{background:linear-gradient(180deg,#d4af37,#a08020);color:#04201a;border-color:transparent;box-shadow:0 4px 16px rgba(212,175,55,.4);}
+.t08 .m-sec{background:rgba(10,50,35,.5);color:#c8e8d8;border-color:rgba(60,180,130,.3);}
+.t08 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 09 — STEEL INDUSTRIAL (cinza metálico + azul aço)
+═════════════════════════════════════════════════════════════ */
+.t09::before{
+  background:
+    linear-gradient(135deg,#2a3038,#1a1f26 50%,#0e1218);
+}
+.t09 .m-topbar,.t09 .m-fbar,.t09 .m-table{
+  background:linear-gradient(180deg,rgba(80,90,105,.5),rgba(40,50,65,.6));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 6px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(0,0,0,.4);
+}
+.t09 .m-stat{background:linear-gradient(180deg,rgba(70,80,95,.5),rgba(35,45,60,.6));border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.15);}
+.t09 .m-title{color:#b8c5d4;letter-spacing:.12em;}
+.t09 .m-btn{color:#5ba8e8;border-color:rgba(91,168,232,.4);background:linear-gradient(180deg,rgba(91,168,232,.2),rgba(91,168,232,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.15);}
+.t09 .m-pill{color:#c8d4e0;border-color:rgba(255,255,255,.15);background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.02));box-shadow:inset 0 1px 0 rgba(255,255,255,.2);}
+.t09 .m-cta{background:linear-gradient(180deg,#5ba8e8,#2a78c0);color:#fff;box-shadow:0 4px 12px rgba(42,120,192,.4),inset 0 1px 0 rgba(255,255,255,.25);}
+.t09 .m-row.m-head{color:#8395a8;}
+.t09 .m-badge{background:rgba(91,168,232,.2);color:#5ba8e8;}
+.t09 .m-prim{background:linear-gradient(180deg,#5ba8e8,#2a78c0);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(42,120,192,.4);}
+.t09 .m-sec{background:linear-gradient(180deg,rgba(70,80,95,.5),rgba(35,45,60,.6));color:#c8d4e0;border-color:rgba(255,255,255,.15);}
+.t09 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 10 — SAKURA MIST (rosa pálido + leitoso + suave)
+═════════════════════════════════════════════════════════════ */
+.t10::before{
+  background:
+    radial-gradient(70% 60% at 30% 0%, rgba(255,200,220,.7), transparent 70%),
+    radial-gradient(60% 60% at 100% 100%, rgba(220,180,240,.5), transparent 70%),
+    linear-gradient(180deg,#f8e6ec,#ead4e2);
+}
+.t10 .m-topbar,.t10 .m-fbar,.t10 .m-table{
+  background:rgba(255,255,255,.55);backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%);
+  border:1px solid rgba(255,255,255,.7);
+  box-shadow:0 6px 24px rgba(200,120,160,.2),inset 0 1px 0 rgba(255,255,255,.9);
+}
+.t10 .m-stat{background:rgba(255,255,255,.6);border:1px solid rgba(255,200,220,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.9);}
+.t10 .m-title{color:#8a3060;letter-spacing:.12em;}
+.t10 .m-btn{color:#c04880;border-color:rgba(192,72,128,.3);background:rgba(255,200,220,.4);}
+.t10 .m-pill{color:#8a3060;border-color:rgba(255,180,210,.6);background:rgba(255,255,255,.5);}
+.t10 .m-cta{background:linear-gradient(135deg,#ff7eb3,#c04880);color:#fff;box-shadow:0 4px 16px rgba(192,72,128,.35),inset 0 1px 0 rgba(255,255,255,.3);}
+.t10 .m-row.m-head{color:#a06080;}
+.t10 .m-badge{background:rgba(255,126,179,.2);color:#c04880;}
+.t10 .m-prim{background:linear-gradient(135deg,#ff7eb3,#c04880);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(192,72,128,.35);}
+.t10 .m-sec{background:rgba(255,255,255,.6);color:#8a3060;border-color:rgba(255,180,210,.6);}
+.t10 .val{color:#6a1a40;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 11 — CARBON FIBER (preto + textura + accent vermelho)
+═════════════════════════════════════════════════════════════ */
+.t11::before{
+  background:
+    repeating-linear-gradient(45deg,#1a1a1a 0,#1a1a1a 2px,#0e0e0e 2px,#0e0e0e 4px),
+    radial-gradient(60% 60% at 50% 0%, rgba(255,40,40,.15), transparent 70%);
+}
+.t11 .m-topbar,.t11 .m-fbar,.t11 .m-table{
+  background:rgba(15,15,15,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid #2a2a2a;
+  box-shadow:0 4px 12px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.t11 .m-stat{background:#181818;border:1px solid #2a2a2a;}
+.t11 .m-title{color:#fff;letter-spacing:.18em;font-weight:800;}
+.t11 .m-btn{color:#ff3838;border-color:#ff3838;background:rgba(255,56,56,.1);}
+.t11 .m-pill{color:#ddd;border-color:#333;background:#0e0e0e;}
+.t11 .m-cta{background:linear-gradient(180deg,#ff3838,#a01818);color:#fff;box-shadow:0 4px 12px rgba(255,56,56,.4),inset 0 1px 0 rgba(255,255,255,.2);}
+.t11 .m-row.m-head{color:#888;}
+.t11 .m-badge{background:rgba(255,56,56,.18);color:#ff5050;}
+.t11 .m-prim{background:linear-gradient(180deg,#ff3838,#a01818);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,56,56,.4);}
+.t11 .m-sec{background:#181818;color:#ddd;border-color:#333;}
+.t11 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 12 — OCEAN DEPTHS (azul profundo + águas-marinhas)
+═════════════════════════════════════════════════════════════ */
+.t12::before{
+  background:
+    radial-gradient(80% 60% at 50% 0%, rgba(0,200,255,.2), transparent 70%),
+    radial-gradient(60% 60% at 50% 100%, rgba(0,80,180,.4), transparent 70%),
+    linear-gradient(180deg,#001830,#000812);
+}
+.t12 .m-topbar,.t12 .m-fbar,.t12 .m-table{
+  background:rgba(0,30,60,.55);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);
+  border:1px solid rgba(100,200,255,.18);
+  box-shadow:0 8px 32px rgba(0,20,50,.7),inset 0 1px 0 rgba(100,200,255,.15);
+}
+.t12 .m-stat{background:rgba(0,40,80,.5);border:1px solid rgba(100,200,255,.15);}
+.t12 .m-title{color:#9be0ff;text-shadow:0 0 14px rgba(100,200,255,.4);}
+.t12 .m-btn{color:#5ed0ff;border-color:rgba(94,208,255,.4);background:rgba(94,208,255,.1);}
+.t12 .m-pill{color:#b8d8e8;border-color:rgba(100,200,255,.18);background:rgba(0,30,60,.4);}
+.t12 .m-cta{background:linear-gradient(180deg,#5ed0ff,#0078d4);color:#fff;box-shadow:0 4px 20px rgba(94,208,255,.5),inset 0 1px 0 rgba(255,255,255,.25);}
+.t12 .m-row.m-head{color:#7090aa;}
+.t12 .m-badge{background:rgba(94,208,255,.2);color:#5ed0ff;}
+.t12 .m-prim{background:linear-gradient(180deg,#5ed0ff,#0078d4);color:#fff;border-color:transparent;box-shadow:0 4px 20px rgba(94,208,255,.5);}
+.t12 .m-sec{background:rgba(0,40,80,.5);color:#b8d8e8;border-color:rgba(100,200,255,.3);}
+.t12 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 13 — VOLCANIC EMBER (preto + laranja brasa + glow red)
+═════════════════════════════════════════════════════════════ */
+.t13::before{
+  background:
+    radial-gradient(70% 50% at 50% 100%, rgba(255,80,20,.5), transparent 70%),
+    radial-gradient(40% 40% at 50% 60%, rgba(255,180,40,.25), transparent 70%),
+    linear-gradient(180deg,#0a0402,#000);
+}
+.t13 .m-topbar,.t13 .m-fbar,.t13 .m-table{
+  background:rgba(25,10,5,.6);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+  border:1px solid rgba(255,120,40,.25);
+  box-shadow:0 8px 32px rgba(80,20,0,.6),inset 0 1px 0 rgba(255,180,80,.15);
+}
+.t13 .m-stat{background:rgba(30,12,5,.6);border:1px solid rgba(255,120,40,.18);}
+.t13 .m-title{color:#ffb04a;text-shadow:0 0 16px rgba(255,120,40,.5);}
+.t13 .m-btn{color:#ff8a3a;border-color:rgba(255,138,58,.4);background:rgba(255,138,58,.12);}
+.t13 .m-pill{color:#f8d8b8;border-color:rgba(255,120,40,.18);background:rgba(35,15,8,.5);}
+.t13 .m-cta{background:linear-gradient(180deg,#ffaf50,#d04510);color:#0a0402;box-shadow:0 0 24px rgba(255,80,20,.5),inset 0 1px 0 rgba(255,255,255,.25);font-weight:800;}
+.t13 .m-row.m-head{color:#c89880;}
+.t13 .m-badge{background:rgba(255,138,58,.22);color:#ff8a3a;}
+.t13 .m-prim{background:linear-gradient(180deg,#ffaf50,#d04510);color:#0a0402;border-color:transparent;box-shadow:0 0 24px rgba(255,80,20,.5);font-weight:800;}
+.t13 .m-sec{background:rgba(30,12,5,.6);color:#f8d8b8;border-color:rgba(255,120,40,.3);}
+.t13 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 14 — FROSTED LAVENDER (lilás + lavanda + frost)
+═════════════════════════════════════════════════════════════ */
+.t14::before{
+  background:
+    radial-gradient(70% 60% at 50% 0%, rgba(200,180,255,.5), transparent 70%),
+    radial-gradient(60% 60% at 100% 100%, rgba(160,140,220,.4), transparent 70%),
+    linear-gradient(180deg,#e8e0f4,#c8bce0);
+}
+.t14 .m-topbar,.t14 .m-fbar,.t14 .m-table{
+  background:rgba(255,255,255,.55);backdrop-filter:blur(32px) saturate(140%);-webkit-backdrop-filter:blur(32px) saturate(140%);
+  border:1px solid rgba(255,255,255,.7);
+  box-shadow:0 6px 24px rgba(120,90,180,.2),inset 0 1px 0 rgba(255,255,255,.9);
+}
+.t14 .m-stat{background:rgba(255,255,255,.55);border:1px solid rgba(200,180,255,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.9);}
+.t14 .m-title{color:#5a3a8a;letter-spacing:.12em;}
+.t14 .m-btn{color:#7848d4;border-color:rgba(120,72,212,.3);background:rgba(200,180,255,.4);}
+.t14 .m-pill{color:#5a3a8a;border-color:rgba(180,160,220,.5);background:rgba(255,255,255,.5);}
+.t14 .m-cta{background:linear-gradient(135deg,#a888f0,#7848d4);color:#fff;box-shadow:0 4px 16px rgba(120,72,212,.35),inset 0 1px 0 rgba(255,255,255,.3);}
+.t14 .m-row.m-head{color:#7a6098;}
+.t14 .m-badge{background:rgba(168,136,240,.25);color:#7848d4;}
+.t14 .m-prim{background:linear-gradient(135deg,#a888f0,#7848d4);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(120,72,212,.35);}
+.t14 .m-sec{background:rgba(255,255,255,.55);color:#5a3a8a;border-color:rgba(180,160,220,.5);}
+.t14 .val{color:#3a2070;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 15 — HOLOGRAPHIC PRISM (iridescente + arco-íris)
+═════════════════════════════════════════════════════════════ */
+.t15::before{
+  background:
+    conic-gradient(from 180deg at 50% 50%,
+      rgba(255,100,200,.4) 0deg,
+      rgba(100,200,255,.4) 90deg,
+      rgba(200,255,150,.4) 180deg,
+      rgba(255,200,100,.4) 270deg,
+      rgba(255,100,200,.4) 360deg),
+    #0a0a18;
+}
+.t15 .m-topbar,.t15 .m-fbar,.t15 .m-table{
+  background:rgba(20,20,40,.45);backdrop-filter:blur(28px) saturate(220%);-webkit-backdrop-filter:blur(28px) saturate(220%);
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.2);
+  position:relative;
+}
+.t15 .m-topbar::after,.t15 .m-fbar::after,.t15 .m-table::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 40%);
+}
+.t15 .m-stat{background:rgba(20,20,40,.45);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(20px);box-shadow:inset 0 1px 0 rgba(255,255,255,.18);}
+.t15 .m-title{background:linear-gradient(90deg,#ff64c8,#64c8ff,#c8ff96);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.14em;font-weight:800;}
+.t15 .m-btn{color:#fff;border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.1);backdrop-filter:blur(10px);}
+.t15 .m-pill{color:#fff;border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.06);backdrop-filter:blur(8px);}
+.t15 .m-cta{background:linear-gradient(135deg,#ff64c8,#64c8ff 50%,#c8ff96);color:#0a0a18;box-shadow:0 4px 20px rgba(200,150,255,.5),inset 0 1px 0 rgba(255,255,255,.4);font-weight:800;}
+.t15 .m-row.m-head{color:rgba(255,255,255,.5);}
+.t15 .m-badge{background:linear-gradient(90deg,#ff64c8,#64c8ff);color:#0a0a18;font-weight:800;}
+.t15 .m-prim{background:linear-gradient(135deg,#ff64c8,#64c8ff 50%,#c8ff96);color:#0a0a18;border-color:transparent;box-shadow:0 4px 20px rgba(200,150,255,.5);font-weight:800;}
+.t15 .m-sec{background:rgba(20,20,40,.45);color:#fff;border-color:rgba(255,255,255,.25);backdrop-filter:blur(10px);}
+.t15 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 16 — MATRIX RAIN (preto + verde fosforescente + mono)
+═════════════════════════════════════════════════════════════ */
+.t16::before{
+  background:
+    repeating-linear-gradient(0deg,transparent 0,transparent 3px,rgba(0,255,80,.04) 3px,rgba(0,255,80,.04) 4px),
+    radial-gradient(80% 80% at 50% 0%, rgba(0,255,80,.18), transparent 70%),
+    #000800;
+}
+.t16 .m-topbar,.t16 .m-fbar,.t16 .m-table{
+  background:rgba(0,15,5,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(0,255,80,.3);
+  box-shadow:0 0 20px rgba(0,255,80,.15),inset 0 0 12px rgba(0,255,80,.05);
+}
+.t16 .m-stat{background:rgba(0,20,8,.65);border:1px solid rgba(0,255,80,.2);}
+.t16 .m-title{color:#0f8;font-family:'DM Mono',monospace;text-shadow:0 0 8px #0f8;}
+.t16 .m-btn{color:#0f8;border-color:#0f8;background:rgba(0,255,80,.08);font-family:'DM Mono',monospace;}
+.t16 .m-pill{color:#0f8;border-color:rgba(0,255,80,.35);background:rgba(0,15,5,.5);font-family:'DM Mono',monospace;}
+.t16 .m-cta{background:#0f8;color:#000;font-family:'DM Mono',monospace;font-weight:800;box-shadow:0 0 16px rgba(0,255,80,.5);}
+.t16 .m-row.m-head{color:rgba(0,200,80,.6);font-family:'DM Mono',monospace;}
+.t16 .m-badge{background:#0f8;color:#000;font-family:'DM Mono',monospace;font-weight:800;}
+.t16 .m-prim{background:#0f8;color:#000;border-color:#0f8;font-family:'DM Mono',monospace;font-weight:800;box-shadow:0 0 16px rgba(0,255,80,.5);}
+.t16 .m-sec{background:rgba(0,20,8,.65);color:#0f8;border-color:rgba(0,255,80,.35);font-family:'DM Mono',monospace;}
+.t16 .val{color:#0f8;font-family:'DM Mono',monospace;text-shadow:0 0 6px rgba(0,255,80,.6);}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 17 — VINTAGE PAPER (sépia + bege + warm tons)
+═════════════════════════════════════════════════════════════ */
+.t17::before{
+  background:
+    radial-gradient(60% 60% at 50% 0%, rgba(200,160,100,.4), transparent 70%),
+    radial-gradient(80% 80% at 50% 100%, rgba(180,140,80,.25), transparent 70%),
+    #f0e3c8;
+}
+.t17 .m-topbar,.t17 .m-fbar,.t17 .m-table{
+  background:rgba(248,235,210,.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  border:1px solid rgba(140,100,60,.3);
+  box-shadow:0 4px 14px rgba(120,80,40,.2),inset 0 1px 0 rgba(255,250,235,.8);
+}
+.t17 .m-stat{background:rgba(252,242,220,.85);border:1px solid rgba(140,100,60,.2);}
+.t17 .m-title{color:#5a3a18;font-family:Georgia,'Times New Roman',serif;font-style:italic;}
+.t17 .m-btn{color:#8a4a20;border-color:rgba(138,74,32,.4);background:rgba(180,140,80,.15);}
+.t17 .m-pill{color:#5a3a18;border-color:rgba(140,100,60,.35);background:rgba(248,235,210,.6);}
+.t17 .m-cta{background:linear-gradient(180deg,#a86838,#723f15);color:#fdf4e0;box-shadow:0 4px 14px rgba(120,60,20,.4),inset 0 1px 0 rgba(255,220,180,.3);}
+.t17 .m-row.m-head{color:#8a6840;font-family:Georgia,serif;font-style:italic;}
+.t17 .m-badge{background:rgba(168,104,56,.22);color:#723f15;}
+.t17 .m-prim{background:linear-gradient(180deg,#a86838,#723f15);color:#fdf4e0;border-color:transparent;box-shadow:0 4px 14px rgba(120,60,20,.4);}
+.t17 .m-sec{background:rgba(252,242,220,.85);color:#5a3a18;border-color:rgba(140,100,60,.4);}
+.t17 .val{color:#3a2510;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 18 — NEON DREAMS PINK (vapor 80s + rosa neon)
+═════════════════════════════════════════════════════════════ */
+.t18::before{
+  background:
+    linear-gradient(180deg,#1a0220 50%,#5c0a4a 100%),
+    radial-gradient(60% 50% at 50% 100%, rgba(255,40,180,.5), transparent 70%);
+}
+.t18 .m-topbar,.t18 .m-fbar,.t18 .m-table{
+  background:rgba(40,5,40,.55);backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%);
+  border:1px solid rgba(255,40,180,.35);
+  box-shadow:0 0 24px rgba(255,40,180,.2),inset 0 1px 0 rgba(255,180,220,.15);
+}
+.t18 .m-stat{background:rgba(50,8,50,.5);border:1px solid rgba(255,40,180,.2);}
+.t18 .m-title{color:#ff64c8;text-shadow:0 0 10px #ff64c8,0 0 24px rgba(255,40,180,.6);font-weight:800;}
+.t18 .m-btn{color:#ff8adc;border-color:#ff64c8;background:rgba(255,100,200,.15);box-shadow:0 0 10px rgba(255,100,200,.3);}
+.t18 .m-pill{color:#ffafe0;border-color:rgba(255,100,200,.3);background:rgba(40,5,40,.4);}
+.t18 .m-cta{background:linear-gradient(135deg,#ff28b4,#a01a8a);color:#fff;box-shadow:0 0 20px rgba(255,40,180,.6);font-weight:800;}
+.t18 .m-row.m-head{color:#c890b0;}
+.t18 .m-badge{background:rgba(255,100,200,.22);color:#ff8adc;}
+.t18 .m-prim{background:linear-gradient(135deg,#ff28b4,#a01a8a);color:#fff;border-color:transparent;box-shadow:0 0 20px rgba(255,40,180,.6);}
+.t18 .m-sec{background:rgba(50,8,50,.5);color:#ffafe0;border-color:rgba(255,100,200,.4);}
+.t18 .val{color:#fff;text-shadow:0 0 6px rgba(255,100,200,.5);}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 19 — MINT CREAM (claro, verde menta + creme)
+═════════════════════════════════════════════════════════════ */
+.t19::before{
+  background:
+    radial-gradient(60% 60% at 30% 0%, rgba(180,240,210,.6), transparent 70%),
+    radial-gradient(60% 60% at 100% 100%, rgba(140,220,190,.4), transparent 70%),
+    linear-gradient(180deg,#f0faf5,#dcefe6);
+}
+.t19 .m-topbar,.t19 .m-fbar,.t19 .m-table{
+  background:rgba(255,255,255,.55);backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%);
+  border:1px solid rgba(255,255,255,.7);
+  box-shadow:0 6px 24px rgba(60,160,120,.18),inset 0 1px 0 rgba(255,255,255,.9);
+}
+.t19 .m-stat{background:rgba(255,255,255,.6);border:1px solid rgba(140,220,190,.5);}
+.t19 .m-title{color:#0a5a3a;letter-spacing:.12em;}
+.t19 .m-btn{color:#0a8a5a;border-color:rgba(10,138,90,.35);background:rgba(180,240,210,.4);}
+.t19 .m-pill{color:#0a5a3a;border-color:rgba(140,220,190,.55);background:rgba(255,255,255,.55);}
+.t19 .m-cta{background:linear-gradient(180deg,#3ec690,#0a8a5a);color:#fff;box-shadow:0 4px 14px rgba(10,138,90,.35),inset 0 1px 0 rgba(255,255,255,.3);}
+.t19 .m-row.m-head{color:#5a8070;}
+.t19 .m-badge{background:rgba(62,198,144,.25);color:#0a8a5a;}
+.t19 .m-prim{background:linear-gradient(180deg,#3ec690,#0a8a5a);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(10,138,90,.35);}
+.t19 .m-sec{background:rgba(255,255,255,.6);color:#0a5a3a;border-color:rgba(140,220,190,.55);}
+.t19 .val{color:#053828;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 20 — OBSIDIAN GOLD (preto puro + dourado minimal)
+═════════════════════════════════════════════════════════════ */
+.t20::before{background:#000;}
+.t20 .m-topbar,.t20 .m-fbar,.t20 .m-table{
+  background:#0a0a0a;border:1px solid rgba(212,175,55,.35);
+  box-shadow:0 4px 18px rgba(0,0,0,.8),inset 0 1px 0 rgba(212,175,55,.15);
+}
+.t20 .m-stat{background:#0e0e0e;border:1px solid rgba(212,175,55,.2);}
+.t20 .m-title{color:#d4af37;letter-spacing:.18em;font-weight:800;}
+.t20 .m-btn{color:#d4af37;border-color:rgba(212,175,55,.45);background:rgba(212,175,55,.06);}
+.t20 .m-pill{color:#eee;border-color:rgba(212,175,55,.2);background:#000;}
+.t20 .m-cta{background:linear-gradient(180deg,#f4d75c,#a08020);color:#000;box-shadow:0 0 18px rgba(212,175,55,.4),inset 0 1px 0 rgba(255,255,255,.3);font-weight:800;}
+.t20 .m-row.m-head{color:rgba(212,175,55,.7);}
+.t20 .m-badge{background:#d4af37;color:#000;font-weight:800;}
+.t20 .m-prim{background:linear-gradient(180deg,#f4d75c,#a08020);color:#000;border-color:transparent;box-shadow:0 0 18px rgba(212,175,55,.4);font-weight:800;}
+.t20 .m-sec{background:#0e0e0e;color:#d4af37;border-color:rgba(212,175,55,.4);}
+.t20 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 21 — PLASMA TV (scanlines RGB intenso)
+═════════════════════════════════════════════════════════════ */
+.t21::before{
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(255,0,0,.06) 0,
+      rgba(255,0,0,.06) 1px,
+      rgba(0,255,0,.06) 1px,
+      rgba(0,255,0,.06) 2px,
+      rgba(0,0,255,.06) 2px,
+      rgba(0,0,255,.06) 3px),
+    radial-gradient(60% 60% at 50% 0%, rgba(255,255,255,.06), transparent 70%),
+    #050510;
+}
+.t21 .m-topbar,.t21 .m-fbar,.t21 .m-table{
+  background:rgba(10,10,30,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:0 0 30px rgba(100,150,255,.15),inset 0 0 16px rgba(255,255,255,.03);
+}
+.t21 .m-stat{background:rgba(15,15,40,.55);border:1px solid rgba(255,255,255,.12);}
+.t21 .m-title{color:#fff;text-shadow:2px 0 #f00,-2px 0 #0ff;font-family:'DM Mono',monospace;letter-spacing:.1em;}
+.t21 .m-btn{color:#fff;border-color:#fff;background:rgba(255,255,255,.1);}
+.t21 .m-pill{color:#ddd;border-color:rgba(255,255,255,.2);background:rgba(10,10,30,.5);}
+.t21 .m-cta{background:linear-gradient(90deg,#f00,#0f0,#00f);color:#fff;font-weight:800;text-shadow:0 1px 2px #000;}
+.t21 .m-row.m-head{color:#aaa;font-family:'DM Mono',monospace;}
+.t21 .m-badge{background:rgba(255,255,255,.15);color:#fff;}
+.t21 .m-prim{background:linear-gradient(90deg,#f00,#0f0,#00f);color:#fff;border-color:transparent;font-weight:800;text-shadow:0 1px 2px #000;}
+.t21 .m-sec{background:rgba(15,15,40,.55);color:#fff;border-color:rgba(255,255,255,.25);}
+.t21 .val{color:#fff;font-family:'DM Mono',monospace;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 22 — SANDSTONE DESERT (terracota + areia)
+═════════════════════════════════════════════════════════════ */
+.t22::before{
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(218,138,84,.4), transparent 70%),
+    radial-gradient(60% 60% at 50% 100%, rgba(168,90,50,.35), transparent 70%),
+    linear-gradient(180deg,#3a1f10,#1a0e08);
+}
+.t22 .m-topbar,.t22 .m-fbar,.t22 .m-table{
+  background:rgba(60,35,20,.55);backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);
+  border:1px solid rgba(218,138,84,.25);
+  box-shadow:0 6px 24px rgba(40,20,10,.6),inset 0 1px 0 rgba(255,200,140,.12);
+}
+.t22 .m-stat{background:rgba(70,40,22,.5);border:1px solid rgba(218,138,84,.18);}
+.t22 .m-title{color:#f0c8a0;letter-spacing:.14em;}
+.t22 .m-btn{color:#da8a54;border-color:rgba(218,138,84,.4);background:rgba(218,138,84,.1);}
+.t22 .m-pill{color:#ddc8a8;border-color:rgba(218,138,84,.22);background:rgba(50,30,18,.4);}
+.t22 .m-cta{background:linear-gradient(180deg,#da8a54,#a85a32);color:#fff;box-shadow:0 4px 16px rgba(168,90,50,.4),inset 0 1px 0 rgba(255,200,140,.25);}
+.t22 .m-row.m-head{color:#a89070;}
+.t22 .m-badge{background:rgba(218,138,84,.22);color:#f0c8a0;}
+.t22 .m-prim{background:linear-gradient(180deg,#da8a54,#a85a32);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(168,90,50,.4);}
+.t22 .m-sec{background:rgba(70,40,22,.5);color:#ddc8a8;border-color:rgba(218,138,84,.3);}
+.t22 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 23 — ARCTIC MINT (azul gélido + verde menta cristal)
+═════════════════════════════════════════════════════════════ */
+.t23::before{
+  background:
+    radial-gradient(70% 60% at 30% 0%, rgba(180,255,240,.4), transparent 70%),
+    radial-gradient(60% 60% at 100% 100%, rgba(100,200,220,.35), transparent 70%),
+    linear-gradient(180deg,#082030,#040c14);
+}
+.t23 .m-topbar,.t23 .m-fbar,.t23 .m-table{
+  background:rgba(10,35,50,.5);backdrop-filter:blur(30px) saturate(170%);-webkit-backdrop-filter:blur(30px) saturate(170%);
+  border:1px solid rgba(180,255,240,.2);
+  box-shadow:0 8px 32px rgba(0,20,40,.6),inset 0 1px 0 rgba(180,255,240,.18);
+}
+.t23 .m-stat{background:rgba(12,40,55,.5);border:1px solid rgba(180,255,240,.15);}
+.t23 .m-title{color:#a0f0e0;text-shadow:0 0 12px rgba(180,255,240,.4);letter-spacing:.12em;}
+.t23 .m-btn{color:#7adcc8;border-color:rgba(122,220,200,.4);background:rgba(122,220,200,.1);}
+.t23 .m-pill{color:#c8e8e0;border-color:rgba(180,255,240,.2);background:rgba(10,35,50,.4);}
+.t23 .m-cta{background:linear-gradient(135deg,#a0f0e0,#3a8a98);color:#04141c;box-shadow:0 4px 18px rgba(160,240,224,.4),inset 0 1px 0 rgba(255,255,255,.3);font-weight:700;}
+.t23 .m-row.m-head{color:#7090a0;}
+.t23 .m-badge{background:rgba(122,220,200,.22);color:#a0f0e0;}
+.t23 .m-prim{background:linear-gradient(135deg,#a0f0e0,#3a8a98);color:#04141c;border-color:transparent;box-shadow:0 4px 18px rgba(160,240,224,.4);font-weight:700;}
+.t23 .m-sec{background:rgba(12,40,55,.5);color:#c8e8e0;border-color:rgba(180,255,240,.3);}
+.t23 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 24 — ROYAL INDIGO (índigo profundo + azul elétrico)
+═════════════════════════════════════════════════════════════ */
+.t24::before{
+  background:
+    radial-gradient(70% 60% at 50% 0%, rgba(80,120,255,.3), transparent 70%),
+    radial-gradient(60% 60% at 50% 100%, rgba(120,80,255,.25), transparent 70%),
+    linear-gradient(180deg,#0a0a3a,#02021a);
+}
+.t24 .m-topbar,.t24 .m-fbar,.t24 .m-table{
+  background:rgba(20,20,60,.6);backdrop-filter:blur(26px) saturate(180%);-webkit-backdrop-filter:blur(26px) saturate(180%);
+  border:1px solid rgba(120,140,255,.2);
+  box-shadow:0 8px 32px rgba(20,20,80,.6),inset 0 1px 0 rgba(140,160,255,.12);
+}
+.t24 .m-stat{background:rgba(25,25,70,.55);border:1px solid rgba(120,140,255,.15);}
+.t24 .m-title{color:#b8c8ff;text-shadow:0 0 14px rgba(120,140,255,.5);}
+.t24 .m-btn{color:#7890ff;border-color:rgba(120,144,255,.4);background:rgba(120,144,255,.1);}
+.t24 .m-pill{color:#c8d0f0;border-color:rgba(120,140,255,.2);background:rgba(20,20,60,.4);}
+.t24 .m-cta{background:linear-gradient(180deg,#7890ff,#3050d0);color:#fff;box-shadow:0 0 22px rgba(120,144,255,.5),inset 0 1px 0 rgba(255,255,255,.25);font-weight:700;}
+.t24 .m-row.m-head{color:#7080a8;}
+.t24 .m-badge{background:rgba(120,144,255,.22);color:#7890ff;}
+.t24 .m-prim{background:linear-gradient(180deg,#7890ff,#3050d0);color:#fff;border-color:transparent;box-shadow:0 0 22px rgba(120,144,255,.5);font-weight:700;}
+.t24 .m-sec{background:rgba(25,25,70,.55);color:#c8d0f0;border-color:rgba(120,140,255,.3);}
+.t24 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 25 — CORAL REEF (turquesa + coral + tropical)
+═════════════════════════════════════════════════════════════ */
+.t25::before{
+  background:
+    radial-gradient(60% 50% at 30% 0%, rgba(80,220,200,.45), transparent 70%),
+    radial-gradient(60% 50% at 100% 100%, rgba(255,120,140,.35), transparent 70%),
+    linear-gradient(135deg,#022a30,#0e1822);
+}
+.t25 .m-topbar,.t25 .m-fbar,.t25 .m-table{
+  background:rgba(8,30,40,.5);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid rgba(80,220,200,.2);
+  box-shadow:0 8px 30px rgba(0,30,40,.55),inset 0 1px 0 rgba(255,180,180,.1);
+}
+.t25 .m-stat{background:rgba(10,35,48,.5);border:1px solid rgba(80,220,200,.18);}
+.t25 .m-title{color:#5addbe;text-shadow:0 0 12px rgba(80,220,200,.4);}
+.t25 .m-btn{color:#ff8a98;border-color:rgba(255,138,152,.4);background:rgba(255,138,152,.1);}
+.t25 .m-pill{color:#a8e8d8;border-color:rgba(80,220,200,.2);background:rgba(8,30,40,.4);}
+.t25 .m-cta{background:linear-gradient(135deg,#5addbe,#ff7890);color:#022a30;box-shadow:0 4px 18px rgba(255,120,140,.4),inset 0 1px 0 rgba(255,255,255,.3);font-weight:700;}
+.t25 .m-row.m-head{color:#7a9a98;}
+.t25 .m-badge{background:rgba(90,221,190,.25);color:#5addbe;}
+.t25 .m-prim{background:linear-gradient(135deg,#5addbe,#ff7890);color:#022a30;border-color:transparent;box-shadow:0 4px 18px rgba(255,120,140,.4);font-weight:700;}
+.t25 .m-sec{background:rgba(10,35,48,.5);color:#a8e8d8;border-color:rgba(80,220,200,.3);}
+.t25 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 26 — CHARCOAL SKETCH (grayscale rascunho)
+═════════════════════════════════════════════════════════════ */
+.t26::before{
+  background:
+    repeating-linear-gradient(135deg,transparent 0,transparent 8px,rgba(255,255,255,.015) 8px,rgba(255,255,255,.015) 9px),
+    linear-gradient(180deg,#1a1a1a,#0e0e0e);
+}
+.t26 .m-topbar,.t26 .m-fbar,.t26 .m-table{
+  background:#222;border:1px solid #3a3a3a;
+  box-shadow:2px 2px 0 #000,inset 0 1px 0 rgba(255,255,255,.04);
+}
+.t26 .m-stat{background:#1a1a1a;border:1px solid #2e2e2e;}
+.t26 .m-title{color:#eee;font-family:Georgia,serif;font-weight:700;}
+.t26 .m-btn{color:#fff;border-color:#666;background:#2a2a2a;}
+.t26 .m-pill{color:#ccc;border-color:#3a3a3a;background:#1a1a1a;}
+.t26 .m-cta{background:#fff;color:#000;font-weight:700;box-shadow:2px 2px 0 #555;}
+.t26 .m-row.m-head{color:#888;font-family:Georgia,serif;font-style:italic;}
+.t26 .m-badge{background:#444;color:#fff;}
+.t26 .m-prim{background:#fff;color:#000;border-color:#fff;font-weight:700;box-shadow:2px 2px 0 #555;}
+.t26 .m-sec{background:#1a1a1a;color:#ccc;border-color:#444;}
+.t26 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 27 — SYNTHWAVE SUNSET (roxo/rosa + grid + horizon)
+═════════════════════════════════════════════════════════════ */
+.t27::before{
+  background:
+    linear-gradient(180deg,
+      #1a0540 0%,
+      #4a1060 40%,
+      #d04080 70%,
+      #ff8050 90%,
+      #ffb060 100%),
+    linear-gradient(180deg,transparent 50%,rgba(255,80,180,.15) 60%,transparent 70%);
+}
+.t27 .m-topbar,.t27 .m-fbar,.t27 .m-table{
+  background:rgba(15,5,35,.7);backdrop-filter:blur(14px) saturate(180%);-webkit-backdrop-filter:blur(14px) saturate(180%);
+  border:1px solid rgba(255,80,180,.3);
+  box-shadow:0 0 30px rgba(255,80,180,.2),inset 0 1px 0 rgba(255,180,80,.15);
+}
+.t27 .m-stat{background:rgba(20,8,40,.65);border:1px solid rgba(255,80,180,.2);}
+.t27 .m-title{color:#ffb060;text-shadow:0 0 14px rgba(255,80,180,.6);font-weight:800;}
+.t27 .m-btn{color:#ff80c8;border-color:rgba(255,128,200,.5);background:rgba(255,128,200,.1);}
+.t27 .m-pill{color:#ffd0e0;border-color:rgba(255,80,180,.25);background:rgba(15,5,35,.5);}
+.t27 .m-cta{background:linear-gradient(135deg,#ff50a0,#ff8050);color:#fff;box-shadow:0 0 22px rgba(255,80,160,.5);font-weight:800;}
+.t27 .m-row.m-head{color:#c890b0;}
+.t27 .m-badge{background:rgba(255,80,180,.25);color:#ff80c8;}
+.t27 .m-prim{background:linear-gradient(135deg,#ff50a0,#ff8050);color:#fff;border-color:transparent;box-shadow:0 0 22px rgba(255,80,160,.5);font-weight:800;}
+.t27 .m-sec{background:rgba(20,8,40,.65);color:#ffd0e0;border-color:rgba(255,80,180,.35);}
+.t27 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 28 — FOREST CANOPY (verde floresta + âmbar sol)
+═════════════════════════════════════════════════════════════ */
+.t28::before{
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(255,180,80,.3), transparent 70%),
+    radial-gradient(80% 80% at 50% 100%, rgba(40,80,40,.6), transparent 70%),
+    linear-gradient(180deg,#0a1810,#02080a);
+}
+.t28 .m-topbar,.t28 .m-fbar,.t28 .m-table{
+  background:rgba(15,30,18,.6);backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);
+  border:1px solid rgba(180,140,60,.25);
+  box-shadow:0 6px 24px rgba(0,20,10,.6),inset 0 1px 0 rgba(255,200,100,.12);
+}
+.t28 .m-stat{background:rgba(18,35,20,.55);border:1px solid rgba(120,180,80,.18);}
+.t28 .m-title{color:#e8c870;letter-spacing:.14em;}
+.t28 .m-btn{color:#a8e070;border-color:rgba(168,224,112,.4);background:rgba(168,224,112,.1);}
+.t28 .m-pill{color:#c0d8a8;border-color:rgba(120,180,80,.22);background:rgba(15,30,18,.4);}
+.t28 .m-cta{background:linear-gradient(180deg,#e8c870,#a08020);color:#0a1810;box-shadow:0 4px 16px rgba(180,140,60,.4),inset 0 1px 0 rgba(255,220,140,.3);font-weight:700;}
+.t28 .m-row.m-head{color:#8a9a78;}
+.t28 .m-badge{background:rgba(168,224,112,.22);color:#a8e070;}
+.t28 .m-prim{background:linear-gradient(180deg,#e8c870,#a08020);color:#0a1810;border-color:transparent;box-shadow:0 4px 16px rgba(180,140,60,.4);font-weight:700;}
+.t28 .m-sec{background:rgba(18,35,20,.55);color:#c0d8a8;border-color:rgba(120,180,80,.3);}
+.t28 .val{color:#fff;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 29 — ROSE GOLD GLASS (rosé + champagne + glass)
+═════════════════════════════════════════════════════════════ */
+.t29::before{
+  background:
+    radial-gradient(70% 60% at 50% 0%, rgba(255,220,200,.5), transparent 70%),
+    radial-gradient(60% 60% at 100% 100%, rgba(230,180,170,.4), transparent 70%),
+    linear-gradient(180deg,#f8e8e0,#e0c0b0);
+}
+.t29 .m-topbar,.t29 .m-fbar,.t29 .m-table{
+  background:rgba(255,255,255,.5);backdrop-filter:blur(30px) saturate(140%);-webkit-backdrop-filter:blur(30px) saturate(140%);
+  border:1px solid rgba(255,255,255,.7);
+  box-shadow:0 6px 24px rgba(200,140,120,.25),inset 0 1px 0 rgba(255,255,255,.9);
+}
+.t29 .m-stat{background:rgba(255,255,255,.55);border:1px solid rgba(230,180,170,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.9);}
+.t29 .m-title{color:#8a4030;letter-spacing:.12em;font-weight:700;}
+.t29 .m-btn{color:#c87060;border-color:rgba(200,112,96,.35);background:rgba(255,220,200,.4);}
+.t29 .m-pill{color:#8a4030;border-color:rgba(230,180,170,.55);background:rgba(255,255,255,.5);}
+.t29 .m-cta{background:linear-gradient(135deg,#e8a890,#b85c44);color:#fff;box-shadow:0 4px 16px rgba(184,92,68,.35),inset 0 1px 0 rgba(255,255,255,.3);}
+.t29 .m-row.m-head{color:#a0786a;}
+.t29 .m-badge{background:rgba(232,168,144,.3);color:#b85c44;}
+.t29 .m-prim{background:linear-gradient(135deg,#e8a890,#b85c44);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(184,92,68,.35);}
+.t29 .m-sec{background:rgba(255,255,255,.55);color:#8a4030;border-color:rgba(230,180,170,.55);}
+.t29 .val{color:#5a2820;}
+
+/* ═════════════════════════════════════════════════════════════
+   TEMA 30 — COSMIC NEBULA (espaço profundo + galáxia)
+═════════════════════════════════════════════════════════════ */
+.t30::before{
+  background:
+    radial-gradient(20% 20% at 25% 25%, rgba(255,255,255,.4), transparent 70%),
+    radial-gradient(15% 15% at 75% 70%, rgba(255,255,255,.3), transparent 70%),
+    radial-gradient(10% 10% at 60% 30%, rgba(255,255,255,.35), transparent 70%),
+    radial-gradient(80% 60% at 50% 50%, rgba(180,80,220,.4), transparent 70%),
+    radial-gradient(70% 70% at 50% 100%, rgba(80,180,220,.3), transparent 70%),
+    linear-gradient(180deg,#04021a,#080418);
+}
+.t30 .m-topbar,.t30 .m-fbar,.t30 .m-table{
+  background:rgba(15,8,40,.55);backdrop-filter:blur(28px) saturate(190%);-webkit-backdrop-filter:blur(28px) saturate(190%);
+  border:1px solid rgba(180,120,255,.25);
+  box-shadow:0 8px 36px rgba(40,10,80,.7),inset 0 1px 0 rgba(200,150,255,.15);
+}
+.t30 .m-stat{background:rgba(18,10,45,.5);border:1px solid rgba(120,180,255,.2);}
+.t30 .m-title{background:linear-gradient(90deg,#c890ff,#80b0ff,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;letter-spacing:.14em;}
+.t30 .m-btn{color:#c890ff;border-color:rgba(200,144,255,.4);background:rgba(200,144,255,.1);}
+.t30 .m-pill{color:#d0c0ee;border-color:rgba(180,120,255,.22);background:rgba(15,8,40,.4);}
+.t30 .m-cta{background:linear-gradient(135deg,#c890ff,#5080ff);color:#fff;box-shadow:0 0 26px rgba(180,120,255,.5),inset 0 1px 0 rgba(255,255,255,.25);font-weight:700;}
+.t30 .m-row.m-head{color:#9080b0;}
+.t30 .m-badge{background:rgba(200,144,255,.25);color:#c890ff;}
+.t30 .m-prim{background:linear-gradient(135deg,#c890ff,#5080ff);color:#fff;border-color:transparent;box-shadow:0 0 26px rgba(180,120,255,.5);font-weight:700;}
+.t30 .m-sec{background:rgba(18,10,45,.5);color:#d0c0ee;border-color:rgba(180,120,255,.35);}
+.t30 .val{color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>30 Temas — Previsualização</h1>
+  <p>Cada card abaixo é um mockup do dashboard com a paleta + efeitos do tema aplicados. Compare e escolha 1 (ou 2-3 favoritos).</p>
+</div>
+
+<div class="grid">
+
+<!-- Template repetido 15× com classe .tNN diferente -->
+
+<!-- 01 -->
+<div class="theme-frame t01">
+  <span class="theme-label">Midnight Glass</span><span class="theme-number">01</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 02 -->
+<div class="theme-frame t02">
+  <span class="theme-label">Aurora Boreal</span><span class="theme-number">02</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 03 -->
+<div class="theme-frame t03">
+  <span class="theme-label">Sunset Lounge</span><span class="theme-number">03</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 04 -->
+<div class="theme-frame t04">
+  <span class="theme-label">Cyber Tokyo</span><span class="theme-number">04</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 05 -->
+<div class="theme-frame t05">
+  <span class="theme-label">Iceberg</span><span class="theme-number">05</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 06 -->
+<div class="theme-frame t06">
+  <span class="theme-label">Brutalist Mono</span><span class="theme-number">06</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 07 -->
+<div class="theme-frame t07">
+  <span class="theme-label">Velvet Royale</span><span class="theme-number">07</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 08 -->
+<div class="theme-frame t08">
+  <span class="theme-label">Emerald Lux</span><span class="theme-number">08</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 09 -->
+<div class="theme-frame t09">
+  <span class="theme-label">Steel Industrial</span><span class="theme-number">09</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 10 -->
+<div class="theme-frame t10">
+  <span class="theme-label">Sakura Mist</span><span class="theme-number">10</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 11 -->
+<div class="theme-frame t11">
+  <span class="theme-label">Carbon Fiber</span><span class="theme-number">11</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 12 -->
+<div class="theme-frame t12">
+  <span class="theme-label">Ocean Depths</span><span class="theme-number">12</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 13 -->
+<div class="theme-frame t13">
+  <span class="theme-label">Volcanic Ember</span><span class="theme-number">13</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 14 -->
+<div class="theme-frame t14">
+  <span class="theme-label">Frosted Lavender</span><span class="theme-number">14</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 15 -->
+<div class="theme-frame t15">
+  <span class="theme-label">Holographic Prism</span><span class="theme-number">15</span>
+  <div class="mock">
+    <div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div>
+  </div>
+</div>
+
+<!-- 16 -->
+<div class="theme-frame t16"><span class="theme-label">Matrix Rain</span><span class="theme-number">16</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 17 -->
+<div class="theme-frame t17"><span class="theme-label">Vintage Paper</span><span class="theme-number">17</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 18 -->
+<div class="theme-frame t18"><span class="theme-label">Neon Dreams Pink</span><span class="theme-number">18</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 19 -->
+<div class="theme-frame t19"><span class="theme-label">Mint Cream</span><span class="theme-number">19</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 20 -->
+<div class="theme-frame t20"><span class="theme-label">Obsidian Gold</span><span class="theme-number">20</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 21 -->
+<div class="theme-frame t21"><span class="theme-label">Plasma TV</span><span class="theme-number">21</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 22 -->
+<div class="theme-frame t22"><span class="theme-label">Sandstone Desert</span><span class="theme-number">22</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 23 -->
+<div class="theme-frame t23"><span class="theme-label">Arctic Mint</span><span class="theme-number">23</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 24 -->
+<div class="theme-frame t24"><span class="theme-label">Royal Indigo</span><span class="theme-number">24</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 25 -->
+<div class="theme-frame t25"><span class="theme-label">Coral Reef</span><span class="theme-number">25</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 26 -->
+<div class="theme-frame t26"><span class="theme-label">Charcoal Sketch</span><span class="theme-number">26</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 27 -->
+<div class="theme-frame t27"><span class="theme-label">Synthwave Sunset</span><span class="theme-number">27</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 28 -->
+<div class="theme-frame t28"><span class="theme-label">Forest Canopy</span><span class="theme-number">28</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 29 -->
+<div class="theme-frame t29"><span class="theme-label">Rose Gold Glass</span><span class="theme-number">29</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+<!-- 30 -->
+<div class="theme-frame t30"><span class="theme-label">Cosmic Nebula</span><span class="theme-number">30</span>
+  <div class="mock"><div class="m-topbar"><span class="m-title">Dashboard</span><span class="m-btn">Sync</span><span class="m-btn">PDF</span></div>
+    <div class="m-stats"><div class="m-stat"><div class="lbl">Total</div><div class="val">R$ 1.2M</div></div><div class="m-stat"><div class="lbl">Pagos</div><div class="val">87</div></div><div class="m-stat"><div class="lbl">Aberto</div><div class="val">12</div></div></div>
+    <div class="m-fbar"><span class="m-pill">Todos</span><span class="m-pill">IF</span><span class="m-pill">Treinador</span><span class="m-pill">Presença</span><span class="m-cta">+ Novo</span></div>
+    <div class="m-table"><div class="m-row m-head"><span>Cliente</span><span>Status</span><span>Valor</span></div><div class="m-row"><span>Robson Miguel</span><span class="m-badge">Pago</span><span>R$ 5.996</span></div><div class="m-row"><span>Pamella Carla</span><span class="m-badge">Pago</span><span>R$ 2.997</span></div></div>
+    <div class="m-footer"><span class="m-sec">Exportar</span><span class="m-prim">Confirmar</span></div></div></div>
+
+</div>
+
+<div style="max-width:1400px;margin:30px auto 0;text-align:center;color:#666;font-size:11px;letter-spacing:.04em;">
+  Após escolher, eu aplico o tema global ao dashboard.html + sub-páginas via CSS variables (paleta + classes utilitárias). Reverter é trivial (variável CSS).
+</div>
+
+</body>
+</html>
