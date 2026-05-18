@@ -614,17 +614,21 @@
       var _goals3=window._npGoals||{};
       top3.innerHTML=ranking.slice(0,3).map(function(r,i){
         var cor=COR[i%COR.length];
-        var t=_npGetMetaAtiva(_goals3[r.nome]||{},r.pago);
-        var col=_npGetCol(t.pct);
-        var pctTxt=t.meta?'<span style="font-size:9px;font-weight:700;color:'+col.text+';margin-left:4px;">'+t.pct+'%</span>':'';
-        /* Próximo tier (Mínima → Básica → Master) — substitui o "pot." */
+        /* PROGRESSIVO: % calculada contra o PRÓXIMO tier (Mínima→Básica→Master) */
         var px = (typeof _npProxTier==='function')?_npProxTier(_goals3[r.nome]||{},r.pago):null;
-        var tierInfo;
+        var col, pctTxt, tierInfo;
         if(!px || !px.meta){
+          col = _npGetCol(0);
+          pctTxt = '';
           tierInfo = 'Sem meta configurada';
         } else if(px.batida === 'master'){
+          col = _npGetCol(100);
+          pctTxt = '<span style="font-size:9px;font-weight:700;color:var(--pago);margin-left:4px;">✅</span>';
           tierInfo = '✅ Master batida! (+'+_fmtR(r.pago-px.meta)+')';
         } else {
+          var pctNext = Math.round(r.pago / px.meta * 100);
+          col = _npGetCol(pctNext);
+          pctTxt = '<span style="font-size:9px;font-weight:700;color:'+col.text+';margin-left:4px;">'+pctNext+'%</span>';
           tierInfo = 'Falta '+_fmtR(px.falta)+' para '+px.label;
         }
         var convTxt = r.qtd?Math.round(r.qtdPago/r.qtd*100):0;
@@ -650,23 +654,26 @@
         ?ranking.map(function(r,i){
             var cor=COR[i%COR.length];
             var barPct=Math.round(r.pago/maxV*100);
-            var t=_npGetMetaAtiva(_goalsCh[r.nome]||{},r.pago);
-            var col=_npGetCol(t.pct);
-            var metaInfo=t.meta?'<span style="font-size:9px;color:'+col.text+';margin-left:6px;font-weight:700;">'+t.pct+'% '+t.label+'</span>':'';
-            /* Próximo tier (Mínima → Básica → Master) — substitui o "pot." */
+            /* PROGRESSIVO: % e label refletem o PRÓXIMO tier (Mínima → Básica → Master).
+               Sem mais "76% Básica" quando ainda não passou pela Mínima. */
             var px = (typeof _npProxTier==='function')?_npProxTier(_goalsCh[r.nome]||{},r.pago):null;
-            var nextInfo;
+            var col, info;
             if(!px || !px.meta){
-              nextInfo = '<span style="font-size:9px;color:var(--muted);margin-left:4px;">sem meta</span>';
+              col = _npGetCol(0);
+              info = '<span style="font-size:9px;color:var(--muted);margin-left:4px;">sem meta</span>';
             } else if(px.batida === 'master'){
-              nextInfo = '<span style="font-size:9px;color:var(--pago);margin-left:4px;font-weight:700;">✅ Master</span>';
+              col = _npGetCol(100);
+              info = '<span style="font-size:9px;color:var(--pago);margin-left:6px;font-weight:700;">✅ Master batida</span>';
             } else {
-              nextInfo = '<span style="font-size:9px;color:var(--muted);margin-left:4px;">Falta '+_fmtR(px.falta)+' '+px.label+'</span>';
+              var pctNext = Math.round(r.pago / px.meta * 100);
+              col = _npGetCol(pctNext);
+              info = '<span style="font-size:9px;color:'+col.text+';margin-left:6px;font-weight:700;">'+pctNext+'% '+px.label+'</span>'
+                   + '<span style="font-size:9px;color:var(--muted);margin-left:4px;">Falta '+_fmtR(px.falta)+'</span>';
             }
             return '<div class="np-bar-row">'
               +'<div class="np-bar-nome" title="'+_esc(r.nome)+'">'+_esc(r.nome)+'</div>'
               +'<div class="np-bar-track"><div class="np-bar-fill" style="width:'+barPct+'%;background:'+col.bar+'"></div></div>'
-              +'<div class="np-bar-val" style="color:'+col.text+';">'+_fmtR(r.pago)+metaInfo+nextInfo+'</div>'
+              +'<div class="np-bar-val" style="color:'+col.text+';">'+_fmtR(r.pago)+info+'</div>'
               +'</div>';
           }).join('')
         :'<div class="np-empty">Sem dados.</div>';
