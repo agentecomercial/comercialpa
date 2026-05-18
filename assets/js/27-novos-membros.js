@@ -98,6 +98,9 @@ function _autoCriarAcessoUsuario(nomes, perfil){
 function _abrirProxAutoAcesso(){
   var prox = (window._autoAcessoFila || []).shift();
   if(!prox || !prox.nome) return;
+  /* Marca que este modal foi aberto pelo fluxo auto-acesso — fechar sem salvar
+     vai alertar o adm que o usuário ficará fantasma. */
+  window._autoAcessoEmAndamento = prox;
   if(typeof abrirNovoUsuario === 'function') abrirNovoUsuario();
   setTimeout(function(){
     var nomeEl   = document.getElementById('novoUsuarioNome');
@@ -118,6 +121,36 @@ function _abrirProxAutoAcesso(){
     _showToast(msg, 'var(--amber)');
   }, 200);
 }
+
+/* Intercepta o fechar do modal: se foi aberto pelo auto-acesso e ainda não foi
+   salvo, alerta o adm que o usuário vai ficar fantasma (sem login). */
+window._autoAcessoFechouSemSalvar = function(){
+  var atual = window._autoAcessoEmAndamento;
+  if(!atual) return false;
+  window._autoAcessoEmAndamento = null;
+  var msg = '⚠ Você fechou o cadastro de "'+atual.nome+'" SEM configurar login/senha.\n\n'
+    + 'O nome ainda está na turma, mas SEM acesso ao sistema (usuário "fantasma").\n\n'
+    + 'O que deseja fazer?\n'
+    + '• OK = remover "'+atual.nome+'" da turma (desfaz adição)\n'
+    + '• Cancelar = manter na turma mas sem login (pode configurar depois via 🔍 Varrer fantasmas)';
+  if(confirm(msg)){
+    /* Desfaz adição na turma */
+    if(atual.perfil === 'consultor' && typeof allConsultors !== 'undefined'){
+      allConsultors = allConsultors.filter(function(n){ return n !== atual.nome; });
+      window.allConsultors = allConsultors;
+    } else if(atual.perfil === 'treinador' && typeof allTrainers !== 'undefined'){
+      allTrainers = allTrainers.filter(function(n){ return n !== atual.nome; });
+      window.allTrainers = allTrainers;
+    }
+    if(typeof _atualizarEquipeTurma === 'function') _atualizarEquipeTurma();
+    if(typeof buildSelects === 'function') buildSelects();
+    if(typeof buildFilterBtns === 'function') buildFilterBtns();
+    if(typeof renderAll === 'function') renderAll();
+    if(typeof renderConsultor === 'function') renderConsultor();
+    if(typeof _showToast === 'function') _showToast('🗑 "'+atual.nome+'" removido da turma.','var(--amber)');
+  }
+  return true;
+};
 
 /* Hook chamado por salvarUsuario do 18-usuarios.js — abre o próximo da fila */
 window._autoAcessoProxPendente = function(){

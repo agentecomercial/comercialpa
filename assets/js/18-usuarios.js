@@ -838,6 +838,8 @@ async function salvarUsuario(){
   _saveUsuariosLocal(local);
 
   // ── Fechar modal e atualizar UI ──────────────────────────────
+  /* Marca que SALVOU (impede o alerta "ficou fantasma" do fluxo auto-acesso) */
+  window._autoAcessoEmAndamento = null;
   document.getElementById('novoUsuarioOverlay').classList.remove('open');
   _renderUsuariosGrid();
   _showToast('✅ '+(isNovo?'Acesso criado':'Acesso atualizado')+' para '+nome+'!'+(salvoNoFirebase?' ☁️':''),'var(--accent)');
@@ -850,7 +852,14 @@ async function salvarUsuario(){
 
 function abrirEditarUsuario(uid){_abrirEditarAcesso(uid);}
 function abrirNovoUsuario(){document.getElementById('novoUsuarioOverlay').classList.add('open');}
-function fecharNovoUsuario(){document.getElementById('novoUsuarioOverlay').classList.remove('open');}
+function fecharNovoUsuario(){
+  document.getElementById('novoUsuarioOverlay').classList.remove('open');
+  /* Se foi aberto pelo fluxo auto-acesso e o adm fechou SEM salvar,
+     pergunta o que fazer com o nome adicionado à turma. */
+  if(typeof window._autoAcessoFechouSemSalvar === 'function'){
+    setTimeout(window._autoAcessoFechouSemSalvar, 50);
+  }
+}
 function _excluirUsuario(uid,nome){
   if(!confirm('Excluir o acesso de "'+nome+'"?\nEsta ação não pode ser desfeita.')) return;
   // Remover do localStorage imediatamente
