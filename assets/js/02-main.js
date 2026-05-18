@@ -498,37 +498,57 @@ function entrarTurma(id){
         dadosFinais={data:[]};
       }
 
-      // Set de usuários PAUSADOS (ativo:false) — bloqueia adição nos selects da turma.
-      // Disponível também em window._pausadosNomesSet para outros módulos consultarem.
-      var _pausadosTurmaSet = new Set();
+      // Set de usuários BLOQUEADOS (pausados OU congelados) — não entram nos selects.
+      // Cliente histórico continua exibido com o nome do bloqueado preservado;
+      // só novos vínculos são impedidos.
+      var _bloqueadosTurmaSet = new Set();
+      var _registradosNomesSet = new Set(); // nomes que existem em usuarios/ (cadastrados)
       if(fbUsuarios && typeof fbUsuarios === 'object'){
         Object.values(fbUsuarios).forEach(function(u){
-          if(u && u.nome && u.ativo === false){
-            _pausadosTurmaSet.add(String(u.nome).toUpperCase().trim());
+          if(!u || !u.nome) return;
+          var nomeUp = String(u.nome).toUpperCase().trim();
+          _registradosNomesSet.add(nomeUp);
+          if(u.ativo === false || u.congelado === true){
+            _bloqueadosTurmaSet.add(nomeUp);
           }
         });
       }
-      window._pausadosNomesSet = _pausadosTurmaSet;
-      function _naoPausado(nome){
-        return !_pausadosTurmaSet.has(String(nome||'').toUpperCase().trim());
+      window._pausadosNomesSet = _bloqueadosTurmaSet; // compat: nome legado
+      window._bloqueadosNomesSet = _bloqueadosTurmaSet;
+      window._usuariosRegistradosSet = _registradosNomesSet;
+      function _naoBloqueado(nome){
+        return !_bloqueadosTurmaSet.has(String(nome||'').toUpperCase().trim());
       }
-      if(dadosFinais.data&&dadosFinais.data.length){
-        dadosFinais.data.forEach(function(c){
-          if(c.consultor&&c.consultor.trim()&&!consultoresDB.includes(c.consultor)&&_naoPausado(c.consultor)) consultoresDB.push(c.consultor);
-          if(c.treinador&&c.treinador.trim()&&c.treinador!=='-'&&!treinadoresDB.includes(c.treinador)&&_naoPausado(c.treinador)) treinadoresDB.push(c.treinador);
-        });
+      function _ehRegistrado(nome){
+        return _registradosNomesSet.has(String(nome||'').toUpperCase().trim());
       }
-      // FIX: incluir consultores/treinadores salvos na turma (campo direto do Firebase)
-      // Garante que usuários adicionados sem clientes vinculados persistem,
-      // mas PAUSADOS são bloqueados mesmo se já estavam salvos na turma.
-      if(turmaObj&&Array.isArray(turmaObj.consultores)){
+
+      // FONTE DE VERDADE: consultores/treinadores SALVOS explicitamente na turma
+      var _consExplicitos = (turmaObj && Array.isArray(turmaObj.consultores) && turmaObj.consultores.length>0);
+      var _treinExplicitos = (turmaObj && Array.isArray(turmaObj.treinadores) && turmaObj.treinadores.length>0);
+      if(turmaObj && Array.isArray(turmaObj.consultores)){
         turmaObj.consultores.forEach(function(n){
-          if(n&&n.trim()&&!consultoresDB.includes(n)&&_naoPausado(n)) consultoresDB.push(n);
+          if(n && n.trim() && !consultoresDB.includes(n) && _naoBloqueado(n)) consultoresDB.push(n);
         });
       }
-      if(turmaObj&&Array.isArray(turmaObj.treinadores)){
+      if(turmaObj && Array.isArray(turmaObj.treinadores)){
         turmaObj.treinadores.forEach(function(n){
-          if(n&&n.trim()&&n!=='-'&&!treinadoresDB.includes(n)&&_naoPausado(n)) treinadoresDB.push(n);
+          if(n && n.trim() && n !== '-' && !treinadoresDB.includes(n) && _naoBloqueado(n)) treinadoresDB.push(n);
+        });
+      }
+      // FALLBACK do data[] APENAS para turmas legadas sem config explícita.
+      // Mesmo no fallback, só adiciona se o nome for de um usuário REGISTRADO
+      // (existe em usuarios/) — corta o bug de "nomes fantasma" digitados em planilhas.
+      if(dadosFinais.data && dadosFinais.data.length){
+        dadosFinais.data.forEach(function(c){
+          if(!_consExplicitos && c.consultor && c.consultor.trim()
+             && !consultoresDB.includes(c.consultor)
+             && _naoBloqueado(c.consultor)
+             && _ehRegistrado(c.consultor)) consultoresDB.push(c.consultor);
+          if(!_treinExplicitos && c.treinador && c.treinador.trim() && c.treinador !== '-'
+             && !treinadoresDB.includes(c.treinador)
+             && _naoBloqueado(c.treinador)
+             && _ehRegistrado(c.treinador)) treinadoresDB.push(c.treinador);
         });
       }
       consultoresDB.sort(function(a,b){return a.localeCompare(b,'pt-BR');});

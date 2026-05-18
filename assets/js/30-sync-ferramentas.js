@@ -689,27 +689,40 @@ function _executarPuxar(){
     }
 
     // ── Repopular consultores/treinadores do nó usuarios/ ──
-    // u.ativo !== false → trata undefined/null como ativo (compat legado).
-    // Pausados (ativo:false) viram um Set para BLOQUEAR no complemento abaixo.
+    // BLOQUEIA pausados (ativo:false) E congelados (congelado:true).
+    // Cliente histórico mantém o nome do bloqueado preservado nos cards;
+    // só novos vínculos via selects são impedidos.
     var consultoresDB=[];
     var treinadoresDB=[];
-    var _pausadosNomes = new Set();
+    var _bloqueadosNomes = new Set();
+    var _registradosNomes = new Set();
     if(fbUsuarios&&typeof fbUsuarios==='object'){
       Object.values(fbUsuarios).forEach(function(u){
         if(!u||!u.nome) return;
         var nomeUp = String(u.nome).toUpperCase().trim();
-        if(u.ativo === false){ _pausadosNomes.add(nomeUp); return; }
+        _registradosNomes.add(nomeUp);
+        if(u.ativo === false || u.congelado === true){
+          _bloqueadosNomes.add(nomeUp);
+          return; // bloqueado → não entra no DB
+        }
         var p=u.perfil||'';
         if(p==='consultor'&&!consultoresDB.includes(u.nome)) consultoresDB.push(u.nome);
         if((p==='treinador'||p==='ministrante')&&!treinadoresDB.includes(u.nome)) treinadoresDB.push(u.nome);
       });
     }
-    // Complementar com dados dos clientes — mas NUNCA re-adicionar pausados
+    // Complementar com dados dos clientes — só se o nome for REGISTRADO em usuarios/.
+    // Bloqueados nunca voltam. Nomes fantasma (digitados sem cadastro) não entram.
     data.forEach(function(c){
-      if(c.consultor&&!consultoresDB.includes(c.consultor)
-         && !_pausadosNomes.has(String(c.consultor).toUpperCase().trim())) consultoresDB.push(c.consultor);
-      if(c.treinador&&c.treinador!=='-'&&!treinadoresDB.includes(c.treinador)
-         && !_pausadosNomes.has(String(c.treinador).toUpperCase().trim())) treinadoresDB.push(c.treinador);
+      if(c.consultor){
+        var n=String(c.consultor).toUpperCase().trim();
+        if(!consultoresDB.includes(c.consultor) && !_bloqueadosNomes.has(n) && _registradosNomes.has(n))
+          consultoresDB.push(c.consultor);
+      }
+      if(c.treinador && c.treinador!=='-'){
+        var nt=String(c.treinador).toUpperCase().trim();
+        if(!treinadoresDB.includes(c.treinador) && !_bloqueadosNomes.has(nt) && _registradosNomes.has(nt))
+          treinadoresDB.push(c.treinador);
+      }
     });
     allConsultors=consultoresDB.sort();
     allTrainers=treinadoresDB.sort();
@@ -912,8 +925,14 @@ function importarBackup(ev){
       savedData=JSON.stringify(data);
       applyState(s);
       if(s.titulo){
-        var _pausImp = window._pausadosNomesSet || new Set();
-        var _np = function(n){ return !_pausImp.has(String(n||'').toUpperCase().trim()); };
+        var _blqImp = window._bloqueadosNomesSet || window._pausadosNomesSet || new Set();
+        var _regImp = window._usuariosRegistradosSet || null;
+        var _np = function(n){
+          var k = String(n||'').toUpperCase().trim();
+          if(_blqImp.has(k)) return false;
+          // Se temos lista de registrados, só aceita registrados; senão aceita todos
+          return _regImp ? _regImp.has(k) : true;
+        };
         allTrainers=[...new Set(data.map(d=>d.treinador).filter(t=>t&&t!=='-'&&_np(t)))];
         allConsultors=[...new Set(data.map(d=>d.consultor).filter(c=>c&&_np(c)))];
       }

@@ -696,8 +696,8 @@ function _abrirAlterarSenhaUsuario(uid,nome){
 
 function _toggleCongelado(uid,novoEstado){
   var msg=novoEstado
-    ?'CONGELAR este usuário?\n\nEle NÃO conseguirá fazer login enquanto estiver congelado,\nporém o nome continuará aparecendo nas turmas (clientes vinculados ficam visíveis).'
-    :'Descongelar este usuário? Ele voltará a conseguir logar.';
+    ?'CONGELAR este usuário?\n\nEle NÃO conseguirá fazer login E não aparecerá nos selects de novas turmas.\nClientes JÁ vinculados continuam exibindo o nome dele preservado.'
+    :'Descongelar este usuário? Ele voltará a conseguir logar e a aparecer nos selects.';
   if(!confirm(msg)) return;
   window._fbSave('usuarios/'+uid+'/congelado',novoEstado).then(function(){
     _renderUsuariosGrid();
@@ -708,6 +708,30 @@ function _toggleCongelado(uid,novoEstado){
     if(typeof _addPendLog==='function'){
       _addPendLog(novoEstado?'Usuário congelado':'Usuário descongelado','UID: '+uid,novoEstado?'❄':'☀');
     }
+    // ── PROPAGAÇÃO IMEDIATA ── igual ao _toggleAtivo
+    try {
+      window._fbGet && window._fbGet('usuarios').then(function(us){
+        var blqSet = new Set();
+        Object.values(us||{}).forEach(function(u){
+          if(u && u.nome && (u.ativo === false || u.congelado === true)){
+            blqSet.add(String(u.nome).toUpperCase().trim());
+          }
+        });
+        window._pausadosNomesSet = blqSet;
+        window._bloqueadosNomesSet = blqSet;
+        if(typeof allConsultors !== 'undefined' && Array.isArray(allConsultors)){
+          allConsultors = allConsultors.filter(function(n){ return !blqSet.has(String(n||'').toUpperCase().trim()); });
+          window.allConsultors = allConsultors;
+        }
+        if(typeof allTrainers !== 'undefined' && Array.isArray(allTrainers)){
+          allTrainers = allTrainers.filter(function(n){ return !blqSet.has(String(n||'').toUpperCase().trim()); });
+          window.allTrainers = allTrainers;
+        }
+        if(typeof buildSelects==='function')    buildSelects();
+        if(typeof buildFilterBtns==='function') buildFilterBtns();
+        if(typeof renderAll==='function')       renderAll();
+      });
+    } catch(e){}
   }).catch(function(e){alert('Erro: '+(e&&e.message?e.message:e));});
 }
 
@@ -720,18 +744,21 @@ function _toggleAtivo(uid,novoEstado){
     // Atualiza cache de pausados e remove/recoloca dos selects da turma ativa.
     try {
       window._fbGet && window._fbGet('usuarios').then(function(us){
-        var pausSet = new Set();
+        var blqSet = new Set();
         Object.values(us||{}).forEach(function(u){
-          if(u && u.nome && u.ativo === false) pausSet.add(String(u.nome).toUpperCase().trim());
+          if(u && u.nome && (u.ativo === false || u.congelado === true)){
+            blqSet.add(String(u.nome).toUpperCase().trim());
+          }
         });
-        window._pausadosNomesSet = pausSet;
+        window._pausadosNomesSet = blqSet;
+        window._bloqueadosNomesSet = blqSet;
         // Remove imediatamente dos arrays globais
         if(typeof allConsultors !== 'undefined' && Array.isArray(allConsultors)){
-          allConsultors = allConsultors.filter(function(n){ return !pausSet.has(String(n||'').toUpperCase().trim()); });
+          allConsultors = allConsultors.filter(function(n){ return !blqSet.has(String(n||'').toUpperCase().trim()); });
           window.allConsultors = allConsultors;
         }
         if(typeof allTrainers !== 'undefined' && Array.isArray(allTrainers)){
-          allTrainers = allTrainers.filter(function(n){ return !pausSet.has(String(n||'').toUpperCase().trim()); });
+          allTrainers = allTrainers.filter(function(n){ return !blqSet.has(String(n||'').toUpperCase().trim()); });
           window.allTrainers = allTrainers;
         }
         // Re-render dos selects/filtros
