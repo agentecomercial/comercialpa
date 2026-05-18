@@ -15,7 +15,7 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=2026-MOB-O5-V1">
+<link rel="stylesheet" href="assets/css/main.css?v=2026-MOB-FILT-O3-V1">
 <link rel="stylesheet" href="assets/css/themes.css?v=2026-THEMES-110">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
@@ -1037,9 +1037,10 @@
         <div class="tpanel">
           <div class="tpanel-header" style="flex-direction:column;align-items:stretch;gap:8px;">
             <!-- TUDO EM UMA ÚNICA LINHA: título + busca + 4 filtros + botões de ação -->
-            <div class="cli-bar-unica" style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow:visible;">
+            <div class="cli-bar-unica" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;overflow:visible;">
               <span class="panel-title" id="panelTitleClientes" onclick="window._abrirListaClientesAdm&&window._abrirListaClientesAdm()" style="flex-shrink:0;">Clientes</span>
               <div class="search-bar" style="flex:0 1 200px;min-width:140px;"><span class="search-icon">⌕</span><input type="text" id="searchInput" placeholder="Buscar..." oninput="renderAll()" /></div>
+              <i class="cli-row-break"></i>
 
               <!-- 4 filtros multi-select lado a lado -->
               <div class="ms-status" id="statusFilterMS">
@@ -1093,9 +1094,9 @@
 
               <!-- Limpar filtros como ícone discreto -->
               <button class="cli-clear-icon" onclick="clearAll()" title="Limpar todos os filtros" aria-label="Limpar filtros">×</button>
-
+              <i class="cli-row-break"></i>
               <!-- Espaçador empurra ações para a direita -->
-              <div style="flex:1 1 0;min-width:8px;"></div>
+              <div class="cli-spacer" style="flex:1 1 0;min-width:8px;"></div>
 
               <!-- Botão primário (sempre visível) -->
               <button class="add-btn cli-action-btn" id="btnNovoCliente" onclick="openAddModal()" title="Novo cliente"><span class="btn-icon">+</span><span class="btn-label"> Novo cliente</span></button>
