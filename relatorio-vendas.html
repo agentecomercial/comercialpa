@@ -192,6 +192,20 @@
   .upload-area strong { color:var(--primary); font-weight:700; }
   #fileInput { display:none; }
   #fileName { font-size:0.81rem; color:var(--primary); margin-top:8px; font-weight:600; letter-spacing:-.1px; }
+  .upload-treinamento-bar { display:flex; align-items:center; gap:12px; padding:10px 16px; background:linear-gradient(135deg,#fef3c7,#fef9c3); border:2px solid #fbbf24; border-radius:14px; margin-bottom:10px; flex-wrap:wrap; }
+  .upload-treinamento-bar label { font-weight:800; color:#78350f; font-size:.92rem; white-space:nowrap; }
+  .upload-treinamento-bar select { padding:8px 12px; border:1.5px solid #fbbf24; border-radius:8px; font-size:.92rem; background:#fff; font-family:inherit; font-weight:700; color:#1e293b; cursor:pointer; outline:none; min-width:200px; }
+  .upload-treinamento-bar select:focus { box-shadow:0 0 0 3px rgba(251,191,36,.3); }
+  .upload-treinamento-hint { font-size:.74rem; color:#92400e; flex:1; min-width:220px; font-style:italic; }
+  .upload-gsheets-bar { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#f0f9ff; border:2px dashed #0ea5e9; border-radius:14px; margin-top:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .upload-gsheets-icon { font-size:1.15rem; }
+  .upload-gsheets-bar label { font-weight:800; color:#0c4a6e; font-size:.86rem; white-space:nowrap; }
+  .upload-gsheets-bar input { flex:1; min-width:260px; padding:7px 11px; border:1.5px solid #0ea5e9; border-radius:8px; font-size:.84rem; font-family:inherit; outline:none; background:#fff; }
+  .upload-gsheets-bar input:focus { box-shadow:0 0 0 3px rgba(14,165,233,.2); border-color:#0284c7; }
+  .upload-gsheets-bar button { background:#0ea5e9; color:#fff; border:none; border-radius:8px; padding:7px 14px; font-weight:800; font-size:.86rem; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .upload-gsheets-bar button:hover { background:#0284c7; }
+  .upload-gsheets-bar button:disabled { opacity:.5; cursor:wait; }
+  .upload-gsheets-hint { font-size:.72rem; color:#0c4a6e; flex-basis:100%; font-style:italic; opacity:.85; }
 
   /* ── FILTERS ── */
   .filters { background:var(--surface); border-radius:var(--radius); padding:22px 26px; margin-bottom:20px; border:1px solid var(--border); box-shadow:var(--shadow-sm); }
@@ -223,6 +237,17 @@
   .cons-drop-search input { width:100%; padding:6px 10px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:0.83rem; font-family:inherit; background:var(--surface2); color:var(--text); outline:none; transition:border .15s; }
   .cons-drop-search input:focus { border-color:var(--primary); }
   .cons-drop-list { max-height:230px; overflow-y:auto; padding:4px 0; }
+  .cons-add-manual { display:flex; gap:5px; padding:8px 10px; border-top:1px dashed var(--border); background:rgba(251,191,36,.05); }
+  .cons-add-manual input { flex:1; min-width:0; border:1.5px solid var(--border); border-radius:6px; padding:6px 9px; font-size:0.82rem; font-family:inherit; outline:none; background:var(--surface); color:var(--text); }
+  .cons-add-manual input:focus { border-color:#f59e0b; box-shadow:0 0 0 2px rgba(245,158,11,.15); }
+  .cons-add-btn { background:#f59e0b; color:#fff; border:none; border-radius:6px; padding:6px 11px; font-weight:800; font-size:0.78rem; cursor:pointer; white-space:nowrap; transition:background .15s; font-family:inherit; }
+  .cons-add-btn:hover { background:#d97706; }
+  .rlt-add-spinner { display:flex; gap:4px; margin-top:5px; }
+  .rlt-add-spinner input { flex:1; min-width:0; background:rgba(255,255,255,.06); border:1.5px solid rgba(245,158,11,.4); color:#f1f5f9; border-radius:6px; padding:6px 9px; font-size:.78rem; font-family:inherit; outline:none; }
+  .rlt-add-spinner input:focus { border-color:#fbbf24; box-shadow:0 0 0 2px rgba(245,158,11,.2); }
+  .rlt-add-spinner input::placeholder { color:rgba(241,245,249,.45); }
+  .rlt-add-spinner button { background:#f59e0b; color:#fff; border:none; border-radius:6px; padding:0 12px; font-weight:900; font-size:1rem; cursor:pointer; transition:background .15s; }
+  .rlt-add-spinner button:hover { background:#d97706; }
   .cons-drop-list::-webkit-scrollbar { width:4px; }
   .cons-drop-list::-webkit-scrollbar-track { background:transparent; }
   .cons-drop-list::-webkit-scrollbar-thumb { background:var(--border2); border-radius:999px; }
@@ -1007,6 +1032,8 @@
 
   /* ══ #2 PERIOD PRESETS ══ */
   .period-bar { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .period-chip-clear { background:rgba(220,38,38,.08) !important; border-color:rgba(220,38,38,.35) !important; color:#dc2626 !important; font-weight:700; margin-left:auto; }
+  .period-chip-clear:hover { background:rgba(220,38,38,.18) !important; color:#b91c1c !important; }
   .period-bar-lbl { font-size:.68rem; font-weight:800; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-right:2px; white-space:nowrap; }
   .period-chip { padding:5px 12px; border-radius:999px; border:1.5px solid var(--border2); background:var(--surface); color:var(--text3); font-size:.77rem; font-weight:600; cursor:pointer; transition:all .15s; font-family:inherit; white-space:nowrap; }
   .period-chip:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-soft); }
@@ -1541,6 +1568,10 @@
             <input type="search" id="corrSearch" placeholder="🔎 Buscar consultor..." oninput="filtrarConsDropdown(this.value,'corrConsPills')" onkeydown="if(event.key==='Escape')toggleCorrDropdown()">
           </div>
           <div id="corrConsPills" class="cons-drop-list"></div>
+          <div class="cons-add-manual">
+            <input type="text" id="addCorrManualInput" placeholder="+ Adicionar consultor manual" onkeydown="if(event.key==='Enter'){event.preventDefault();addConsultorManual('corr');}">
+            <button type="button" class="cons-add-btn" onclick="addConsultorManual('corr')" title="Adicionar consultor manual">+ Add</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1614,7 +1645,7 @@
         <table class="corr-rank-table" id="corrRankTable">
           <thead><tr>
             <th>#</th><th>Consultor</th>
-            <th>Ciclos</th><th>Bônus</th><th>Vendas</th><th>Progresso</th>
+            <th class="corr-rank-tce-only">Ciclos</th><th class="corr-rank-tce-only">Bônus</th><th>Vendas</th><th class="corr-rank-tce-only">Progresso</th>
           </tr></thead>
           <tbody id="corrRankBody"></tbody>
         </table>
@@ -1658,6 +1689,10 @@
             <option value="">— Selecione um consultor —</option>
           </select>
           <button class="roleta-import-btn" onclick="rltImportSpinners()">⬇ Importar consultores da Corridinha</button>
+          <div class="rlt-add-spinner">
+            <input type="text" id="rltAddSpinnerInput" placeholder="+ Adicionar consultor manual" onkeydown="if(event.key==='Enter'){event.preventDefault();rltAddSpinnerManual();}">
+            <button type="button" onclick="rltAddSpinnerManual()" title="Adicionar consultor manual">+</button>
+          </div>
         </div>
         <div class="roleta-panel-hdr" style="padding-top:9px">
           <span class="roleta-panel-ttl">🎰 Prêmios da roleta</span>
@@ -1871,11 +1906,28 @@
 
 <div class="container">
 
+  <div class="upload-treinamento-bar">
+    <label for="uploadTreinamento">📂 Treinamento a importar:</label>
+    <select id="uploadTreinamento" onchange="onUploadTreinamentoChange()">
+      <option value="TCE">🏷️ TCE (Guru)</option>
+      <option value="CIS">📚 Método CIS Global</option>
+    </select>
+    <span class="upload-treinamento-hint" id="uploadTreinamentoHint">Lê colunas do Guru: status · data aprovacao · nome oferta · valor venda · nome contato</span>
+  </div>
+
   <div class="upload-area" id="uploadArea" role="button" tabindex="0" aria-label="Clique ou arraste um arquivo XLSX">
     <div class="icon">📂</div>
-    <p>Arraste o arquivo <strong>.xlsx</strong> aqui ou clique para selecionar</p>
+    <p id="uploadAreaText">Arraste o arquivo <strong>.xlsx</strong> aqui ou clique para selecionar</p>
     <div id="fileName">Nenhum arquivo carregado</div>
     <input type="file" id="fileInput" accept=".xlsx,.xls">
+  </div>
+
+  <div class="upload-gsheets-bar">
+    <span class="upload-gsheets-icon">🔗</span>
+    <label for="gsheetsUrl">Ou cole o link do Google Sheets:</label>
+    <input type="url" id="gsheetsUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=0" onkeydown="if(event.key==='Enter'){event.preventDefault();carregarDoGoogleSheets();}">
+    <button type="button" onclick="carregarDoGoogleSheets()">⬇ Importar</button>
+    <span class="upload-gsheets-hint">⚠️ O sheet precisa estar como "Qualquer pessoa com o link pode visualizar"</span>
   </div>
 
   <div class="filters">
@@ -1889,6 +1941,7 @@
       <button class="period-chip" data-preset="month"     onclick="setPeriodPreset('month',event)">Este mês</button>
       <button class="period-chip" data-preset="lastmonth" onclick="setPeriodPreset('lastmonth',event)">Mês passado</button>
       <button class="period-chip" data-preset="custom"    onclick="setPeriodPreset('custom',event)" id="chipCustom">Personalizado</button>
+      <button class="period-chip period-chip-clear" onclick="limparPeriodo()" title="Limpar período">🗑 Limpar</button>
     </div>
     <div class="period-hint">
       <kbd>Ctrl</kbd> + clique para combinar períodos — ex: Hoje + Ontem = últimas 48h
@@ -1920,7 +1973,19 @@
       </div>
     </div>
 
-    <div class="filter-panel" role="group" aria-labelledby="labelSetores">
+    <div class="filter-panel" role="group" aria-labelledby="labelTreinamento">
+      <div class="filter-panel-header">
+        <span class="filter-panel-title" id="labelTreinamento">🎓 Treinamento</span>
+      </div>
+      <div class="filter-group" style="padding:6px 10px 8px">
+        <select id="treinamentoFiltro" onchange="onTreinamentoChange()" style="width:100%">
+          <option value="TCE">🏷️ TCE</option>
+          <option value="CIS">📚 Método CIS Global</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filter-panel" id="panelSetores" role="group" aria-labelledby="labelSetores">
       <div class="filter-panel-header">
         <span class="filter-panel-title" id="labelSetores">🏷️ Setores</span>
         <span>
@@ -1955,6 +2020,10 @@
             <input type="search" id="consSearch" placeholder="🔎 Buscar consultor..." oninput="filtrarConsDropdown(this.value,'consultoresPills')" onkeydown="if(event.key==='Escape')toggleConsDropdown()">
           </div>
           <div id="consultoresPills" class="cons-drop-list"></div>
+          <div class="cons-add-manual">
+            <input type="text" id="addConsManualInput" placeholder="+ Adicionar consultor manual" onkeydown="if(event.key==='Enter'){event.preventDefault();addConsultorManual('main');}">
+            <button type="button" class="cons-add-btn" onclick="addConsultorManual('main')" title="Adicionar consultor manual">+ Add</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1976,9 +2045,10 @@
         <div class="cval" id="cTotal">0</div>
         <div class="csub" id="cClientes">0 clientes únicos</div>
       </div>
-      <div class="card c-bronze"><div class="clabel"><span class="si">🪙</span> Bronze</div><div class="cval" id="cBronze">0</div><div class="csub" id="vBronze">R$ 0,00</div></div>
-      <div class="card c-ouro">  <div class="clabel"><span class="si">💰</span> Ouro</div>  <div class="cval" id="cOuro">0</div>  <div class="csub" id="vOuro">R$ 0,00</div></div>
-      <div class="card c-black"> <div class="clabel"><span class="si">💎</span> Black</div>  <div class="cval" id="cBlack">0</div> <div class="csub" id="vBlack">R$ 0,00</div></div>
+      <div class="card c-bronze" id="cardBronze"><div class="clabel"><span class="si">🪙</span> Bronze</div><div class="cval" id="cBronze">0</div><div class="csub" id="vBronze">R$ 0,00</div></div>
+      <div class="card c-ouro" id="cardOuro">  <div class="clabel"><span class="si">💰</span> Ouro</div>  <div class="cval" id="cOuro">0</div>  <div class="csub" id="vOuro">R$ 0,00</div></div>
+      <div class="card c-black" id="cardBlack"> <div class="clabel"><span class="si">💎</span> Black</div>  <div class="cval" id="cBlack">0</div> <div class="csub" id="vBlack">R$ 0,00</div></div>
+      <div class="card c-cis" id="cardCIS" style="display:none"><div class="clabel"><span class="si">📚</span> Método CIS Global</div><div class="cval" id="cCIS">0</div><div class="csub" id="vCIS">R$ 0,00</div></div>
       <div class="card c-rec">   <div class="clabel">Receita Total</div><div class="cval" id="cReceita">R$ 0</div><div class="csub" id="cPeriodo">—</div></div>
       <div class="card">         <div class="clabel">Ticket Médio</div><div class="cval" id="cTicket" style="color:#7c3aed">R$ 0</div><div class="csub" id="cTicketSub">por cliente</div></div>
     </div>
@@ -2010,7 +2080,7 @@
         <thead><tr>
           <th class="rank-cb-cell"><input type="checkbox" id="rankCbAll" class="rank-cb" title="Selecionar todos" onclick="rankToggleAll(this)"></th>
           <th>#</th><th>Consultor</th>
-          <th><span class="si">🪙</span> Bronze</th><th><span class="si">💰</span> Ouro</th><th><span class="si">💎</span> Black</th>
+          <th class="col-setor"><span class="si">🪙</span> Bronze</th><th class="col-setor"><span class="si">💰</span> Ouro</th><th class="col-setor"><span class="si">💎</span> Black</th>
           <th>Total Produtos</th><th>Receita Total</th>
         </tr></thead>
         <tbody id="bodyRanking">
@@ -2151,6 +2221,7 @@
 <script>
 let dadosRaw = [];
 let consultoresUnicos = [];
+let consultoresManuais = [];
 let clientesRows = [];
 let detalheRows = [];
 let clientesSort = { col: null, dir: 1 };
@@ -2205,6 +2276,18 @@ document.addEventListener('keydown', e => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  _carregarManuais();
+  if (consultoresManuais.length) {
+    _aplicarManuaisNaLista();
+    renderConsultoresPills();
+  }
+  try {
+    const ut = localStorage.getItem('guru-upload-treinamento');
+    if (ut) {
+      const sel = document.getElementById('uploadTreinamento');
+      if (sel) { sel.value = ut; onUploadTreinamentoChange(); }
+    }
+  } catch(e) {}
   carregarFiltrosLS();
   // #12 Restaurar snapshot do localStorage
   try {
@@ -2267,6 +2350,86 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ---- Treinamento (Produto) ----
+function onTreinamentoChange() {
+  applyTreinamentoUI();
+  agendarFiltros();
+}
+function applyTreinamentoUI() {
+  const v = document.getElementById('treinamentoFiltro')?.value || 'TCE';
+  const panel = document.getElementById('panelSetores');
+  if (panel) panel.style.display = v==='TCE' ? '' : 'none';
+  applyTreinamentoCorridinhaUI();
+}
+
+function applyTreinamentoCorridinhaUI() {
+  const isTCE = (document.getElementById('treinamentoFiltro')?.value||'TCE')==='TCE';
+  const setDisplay = (id, show) => { const el = document.getElementById(id); if (el) el.style.display = show ? '' : 'none'; };
+  setDisplay('corrConfig', isTCE);
+  setDisplay('kpiCardBonus', isTCE);
+  setDisplay('kpiCardCiclos', isTCE);
+  setDisplay('kpiCardAlertas', isTCE);
+  document.querySelectorAll('.corr-rank-tce-only').forEach(el => el.style.display = isTCE ? '' : 'none');
+  // Se já tem cards calculados, recalcular pra atualizar o painel
+  if (typeof corrLastCards !== 'undefined' && corrLastCards && corrLastCards.length && _rltActive!==true) {
+    try { if (dadosRaw.length) calcCorridinha(); } catch(e){}
+  }
+}
+
+// ---- Consultores manuais (Opção A e C) ----
+function _normalizeNome(s) {
+  return String(s||'').trim().replace(/\s+/g,' ').split(' ')
+    .map(w => w ? w[0].toUpperCase()+w.slice(1).toLowerCase() : '').join(' ');
+}
+function _persistManuais() {
+  try { localStorage.setItem('guru-consultores-manuais', JSON.stringify(consultoresManuais)); } catch(e) {}
+}
+function _carregarManuais() {
+  try {
+    const arr = JSON.parse(localStorage.getItem('guru-consultores-manuais'));
+    if (Array.isArray(arr)) consultoresManuais = arr;
+  } catch(e) {}
+}
+function _aplicarManuaisNaLista() {
+  consultoresManuais.forEach(n => { if (!consultoresUnicos.includes(n)) consultoresUnicos.push(n); });
+}
+function addConsultorManual(panel) {
+  const inpId = panel==='corr' ? 'addCorrManualInput' : 'addConsManualInput';
+  const inp = document.getElementById(inpId);
+  if (!inp) return;
+  const nome = _normalizeNome(inp.value);
+  if (!nome) { inp.focus(); return; }
+  if (consultoresUnicos.includes(nome)) { mostrarToast('⚠️ "'+nome+'" já está na lista.'); inp.value=''; inp.focus(); return; }
+  consultoresManuais.push(nome);
+  consultoresUnicos.push(nome);
+  _persistManuais();
+  inp.value=''; inp.focus();
+  if (document.getElementById('consultoresPills')) renderConsultoresPills();
+  if (document.getElementById('corrConsPills') && document.getElementById('corrConsPills').children.length) renderCorrPills();
+  mostrarToast('✅ Consultor "'+nome+'" adicionado.');
+}
+function removeConsultorManual(nome) {
+  consultoresManuais = consultoresManuais.filter(n => n !== nome);
+  consultoresUnicos = consultoresUnicos.filter(n => n !== nome);
+  _persistManuais();
+  if (document.getElementById('consultoresPills')) renderConsultoresPills();
+  if (document.getElementById('corrConsPills') && document.getElementById('corrConsPills').children.length) renderCorrPills();
+  mostrarToast('Removido: '+nome);
+}
+function rltAddSpinnerManual() {
+  const inp = document.getElementById('rltAddSpinnerInput');
+  if (!inp) return;
+  const nome = _normalizeNome(inp.value);
+  if (!nome) { inp.focus(); return; }
+  if (_rltSpinners.includes(nome)) { mostrarToast('⚠️ "'+nome+'" já está na roleta.'); inp.value=''; inp.focus(); return; }
+  _rltSpinners.push(nome);
+  _rltRebuildSpinners();
+  const sel = document.getElementById('rltSpinnerSelect');
+  if (sel) sel.value = nome;
+  inp.value=''; inp.focus();
+  mostrarToast('✅ "'+nome+'" adicionado à roleta.');
+}
+
 // ---- Debounce ----
 function agendarFiltros() {
   salvarFiltros();
@@ -2284,6 +2447,7 @@ function salvarFiltros() {
       dataFim:    document.getElementById('dataFim').value,
       horaFim:    document.getElementById('horaFim').value,
       statusFiltro: document.getElementById('statusFiltro').value,
+      treinamento: document.getElementById('treinamentoFiltro')?.value || 'TCE',
       setores:    getSelected('setores'),
       consultores:getSelected('consultores'),
     }));
@@ -2299,6 +2463,10 @@ function carregarFiltrosLS() {
     if (s.dataFim)      document.getElementById('dataFim').value      = s.dataFim;
     if (s.horaFim)      document.getElementById('horaFim').value      = s.horaFim;
     if (s.statusFiltro) document.getElementById('statusFiltro').value = s.statusFiltro;
+    if (s.treinamento) {
+      const t = document.getElementById('treinamentoFiltro');
+      if (t) { t.value = s.treinamento; applyTreinamentoUI(); }
+    }
     if (s.setores) {
       toggleAll('setores', false);
       s.setores.forEach(v => {
@@ -2360,8 +2528,63 @@ function fallbackParse(buf, name) {
   }, 30);
 }
 
+const ALIASES_CIS = {
+  cliente: ['cliente','nome','cliente_nome','nome_do_cliente','nome do cliente','aluno','name','nome_completo'],
+  treinamento: ['treinamento','curso','produto','product','course','nome_curso','nome da venda','nome venda'],
+  consultor: ['utm_gclid','consultor','responsavel','responsável','vendedor','sales','proprietario da venda','proprietário da venda','proprietario','owner'],
+  valor: ['valor','preco','preço','total','value','price','valor_total','investimento','valor da venda','valor venda'],
+  status: ['status','situacao','situação','state','status_pagamento','fase'],
+  entrada: ['entrada','sinal','down_payment','entrada_valor','valor_entrada'],
+  acao: ['acao','ação','observacao','observação','obs','info','notes','observacoes do relacionador','observações do relacionador','observacao do relacionador','observações','observacoes'],
+  onboarding: ['status do onboarding','status_do_onboarding','statusdoonboarding','onboarding','status_onboarding'],
+  data: ['data','data_venda','data_pagamento','data_aprovacao','data aprovacao','data pagamento','criado_em','created_at','data_inscricao','data_compra','data de fechamento','data fechamento'],
+  qtd: ['quantidade','qtd','quantidade produto','quantidade de pagantes','quantidade pagantes','pagantes']
+};
+function _normHeader(s) {
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[_\s]+/g,' ').trim();
+}
+function _findCol(headers, aliases) {
+  // 1) match exato (após normalização)
+  for (const a of aliases) {
+    const norm = _normHeader(a);
+    const i = headers.indexOf(norm);
+    if (i !== -1) return i;
+  }
+  // 2) match parcial — cabeçalho contém alias ou vice-versa
+  for (const a of aliases) {
+    const norm = _normHeader(a);
+    if (!norm) continue;
+    const i = headers.findIndex(h => h && (h.includes(norm) || norm.includes(h)));
+    if (i !== -1) return i;
+  }
+  return -1;
+}
+function _parseDataFlex(s) {
+  if (!s) return null;
+  const str = String(s).trim();
+  let m = str.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[\sT](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+  if (m) return new Date(+m[3], +m[2]-1, +m[1], +m[4]||0, +m[5]||0, +m[6]||0);
+  m = str.match(/(\d{4})-(\d{1,2})-(\d{1,2})(?:[\sT](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3], +m[4]||0, +m[5]||0, +m[6]||0);
+  return null;
+}
+function _parseValorFlex(v) {
+  if (v == null || v === '') return 0;
+  if (typeof v === 'number') return v;
+  const s = String(v).replace(/[^\d,.\-]/g,'').trim();
+  if (!s) return 0;
+  // Se tem vírgula como decimal (formato BR): "1.234,56"
+  if (s.indexOf(',') !== -1 && s.lastIndexOf(',') > s.lastIndexOf('.')) {
+    return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+  }
+  return parseFloat(s) || 0;
+}
+
 function processarDados(data) {
   if (!data||data.length<2) { mostrarToast('⚠️ Arquivo vazio ou sem dados.'); return; }
+  const treinamentoUpload = document.getElementById('uploadTreinamento')?.value || 'TCE';
+  if (treinamentoUpload === 'CIS') return processarDadosCIS(data);
+
   const h = data[0].map(v=>String(v||'').toLowerCase().trim());
   const idx = n => h.indexOf(n);
   const iStatus=idx('status'), iDataAprov=idx('data aprovacao'), iOferta=idx('nome oferta'),
@@ -2374,22 +2597,196 @@ function processarDados(data) {
     const m = oferta.match(/\(([^)]+)\)\s*$/);
     const nomeRaw = m ? m[1] : null;
     const consultor = nomeRaw ? (mapNomes[nomeRaw]||nomeRaw) : 'GERAL';
-    let setor = null;
-    if (oferta.includes('BRONZE')) setor='BRONZE';
-    else if (oferta.includes('OURO')) setor='OURO';
-    else if (oferta.includes('BLACK')) setor='BLACK';
+    let setor = null, produto = null;
+    if (oferta.includes('BRONZE')) { setor='BRONZE'; produto='TCE'; }
+    else if (oferta.includes('OURO')) { setor='OURO'; produto='TCE'; }
+    else if (oferta.includes('BLACK')) { setor='BLACK'; produto='TCE'; }
+    else if (/M[ÉE]TODO\s+CIS\s+GLOBAL/i.test(oferta)) { produto='CIS'; }
     return { status:r[iStatus]||'', dataAprov:parseDataBR(r[iDataAprov]), dataAprovStr:r[iDataAprov]||'',
-      consultor, setor, cliente:r[iContato]||'N/D', valor:parseFloat(r[iValor])||0,
+      consultor, setor, produto, cliente:r[iContato]||'N/D', valor:parseFloat(r[iValor])||0,
       qtd:parseInt(r[iQtd])||1, pagamento:r[iPgto]||'', bonus:/compre\s+u[mn]\s+leve\s+o(utro)?/i.test(oferta) };
-  }).filter(r=>r.setor);
+  }).filter(r=>r.produto);
 
-  if (!dadosRaw.length) { mostrarToast('⚠️ Nenhum registro com setor reconhecido.'); return; }
+  if (!dadosRaw.length) { mostrarToast('⚠️ Nenhum registro de produto reconhecido.'); return; }
   const setC=new Set(); let temGeral=false;
   dadosRaw.forEach(r=>{ if(r.consultor==='GERAL') temGeral=true; else setC.add(r.consultor); });
   consultoresUnicos = [...setC].sort();
   if (temGeral) consultoresUnicos.push('GERAL');
+  _aplicarManuaisNaLista();
   renderConsultoresPills();
+  const trFilter = document.getElementById('treinamentoFiltro');
+  if (trFilter) { trFilter.value = 'TCE'; applyTreinamentoUI(); }
   document.getElementById('status-bar').textContent = `${dadosRaw.length} registros carregados. Configure os filtros e clique em Aplicar.`;
+}
+
+function processarDadosCIS(data) {
+  const headersRaw = data[0] || [];
+  const h = headersRaw.map(v => _normHeader(v));
+  console.log('[CIS] Headers detectados:', headersRaw);
+  console.log('[CIS] Headers normalizados:', h);
+  const iCli = _findCol(h, ALIASES_CIS.cliente);
+  const iTrei = _findCol(h, ALIASES_CIS.treinamento);
+  const iCons = _findCol(h, ALIASES_CIS.consultor);
+  const iVal = _findCol(h, ALIASES_CIS.valor);
+  const iStat = _findCol(h, ALIASES_CIS.status);
+  const iEntr = _findCol(h, ALIASES_CIS.entrada);
+  const iAcao = _findCol(h, ALIASES_CIS.acao);
+  const iOnb = _findCol(h, ALIASES_CIS.onboarding);
+  const iData = _findCol(h, ALIASES_CIS.data);
+  const iQtd = _findCol(h, ALIASES_CIS.qtd);
+  console.log('[CIS] Mapeamento:', {cliente:iCli>-1?headersRaw[iCli]:'❌ NÃO ENCONTRADA', valor:iVal>-1?headersRaw[iVal]:'❌ NÃO ENCONTRADA', onboarding:iOnb>-1?headersRaw[iOnb]:'❌ NÃO ENCONTRADA', consultor:iCons>-1?headersRaw[iCons]:'(opcional ausente)', treinamento:iTrei>-1?headersRaw[iTrei]:'(opcional ausente)', status:iStat>-1?headersRaw[iStat]:'(opcional ausente)', data:iData>-1?headersRaw[iData]:'(opcional ausente)'});
+
+  if (iOnb === -1) {
+    const headersList = headersRaw.map(x=>`"${x}"`).join(', ');
+    mostrarToast('❌ Coluna "Status do Onboarding" é obrigatória. Cabeçalhos do arquivo: '+headersList);
+    document.getElementById('fileName').textContent = '❌ Falta coluna Status do Onboarding · veja Console (F12)';
+    return;
+  }
+  if (iCli === -1) {
+    const headersList = headersRaw.map(x=>`"${x}"`).join(', ');
+    mostrarToast('⚠️ Coluna obrigatória "Cliente" não encontrada. Cabeçalhos: '+headersList);
+    document.getElementById('fileName').textContent = '❌ Coluna Cliente ausente';
+    return;
+  }
+
+  let totalLinhas = 0, descartadasOnb = 0;
+  const valoresOnbUnicos = new Set();
+  const filtradas = data.slice(1).filter(r => {
+    if (!r || r.length === 0) return false;
+    if (!r[iCli] && !r[iVal] && !r[iOnb]) return false;
+    totalLinhas++;
+    const onbRaw = String(r[iOnb]||'');
+    const onb = _normHeader(onbRaw);
+    valoresOnbUnicos.add(onbRaw);
+    if (onb !== 'confirmado') { descartadasOnb++; return false; }
+    return true;
+  });
+  console.log('[CIS] Valores únicos em "Status do Onboarding":', [...valoresOnbUnicos]);
+  console.log('[CIS] Total de linhas:', totalLinhas, '· Descartadas:', descartadasOnb, '· Aceitas:', filtradas.length);
+
+  dadosRaw = filtradas.map(r => {
+    const cliente = String(r[iCli]||'').trim() || 'N/D';
+    let consultor = iCons!==-1 ? String(r[iCons]||'').trim() : '';
+    consultor = consultor ? _normalizeNome(consultor) : 'GERAL';
+    const valor = iVal!==-1 ? _parseValorFlex(r[iVal]) : 0;
+    const status = iStat!==-1 ? String(r[iStat]||'').trim() : '';
+    const dataStr = iData!==-1 ? String(r[iData]||'').trim() : '';
+    const treinamento = iTrei!==-1 ? String(r[iTrei]||'').trim() : 'Método CIS Global';
+    const qtdRaw = iQtd!==-1 ? parseInt(r[iQtd]) : 1;
+    return {
+      status,
+      dataAprov: _parseDataFlex(dataStr),
+      dataAprovStr: dataStr,
+      consultor,
+      setor: null,
+      produto: 'CIS',
+      cliente,
+      valor,
+      qtd: qtdRaw>0 ? qtdRaw : 1,
+      pagamento: iEntr!==-1 ? String(r[iEntr]||'').trim() : '',
+      bonus: false,
+      treinamentoNome: treinamento,
+      acao: iAcao!==-1 ? String(r[iAcao]||'').trim() : ''
+    };
+  });
+
+  if (!dadosRaw.length) {
+    const exemplos = [...valoresOnbUnicos].slice(0,5).map(x=>`"${x}"`).join(', ');
+    mostrarToast(`⚠️ Nenhum cliente com Status do Onboarding = "confirmado". Valores encontrados na planilha: ${exemplos||'(vazio)'}. ${descartadasOnb} linhas descartadas.`);
+    document.getElementById('fileName').textContent = '⚠️ 0 confirmados · veja Console (F12) p/ detalhes';
+    return;
+  }
+
+  const setC=new Set(); let temGeral=false;
+  dadosRaw.forEach(r=>{ if(r.consultor==='GERAL') temGeral=true; else setC.add(r.consultor); });
+  consultoresUnicos = [...setC].sort();
+  if (temGeral) consultoresUnicos.push('GERAL');
+  _aplicarManuaisNaLista();
+  renderConsultoresPills();
+
+  const trFilter = document.getElementById('treinamentoFiltro');
+  if (trFilter) { trFilter.value = 'CIS'; applyTreinamentoUI(); }
+  const statusEl = document.getElementById('statusFiltro');
+  if (statusEl) statusEl.value = 'todos';
+
+  const msg = `${dadosRaw.length} clientes confirmados${descartadasOnb?` (${descartadasOnb} ignorados por onboarding não confirmado)`:''}. Configure os filtros e clique em Aplicar.`;
+  document.getElementById('status-bar').textContent = msg;
+  mostrarToast('✅ '+msg);
+}
+
+function _parseGoogleSheetsUrl(url) {
+  if (!url) return null;
+  const idMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]{20,})/);
+  if (!idMatch) return null;
+  const gidMatch = url.match(/[#&?]gid=(\d+)/);
+  return { sheetId: idMatch[1], gid: gidMatch ? gidMatch[1] : '0' };
+}
+
+async function carregarDoGoogleSheets() {
+  const input = document.getElementById('gsheetsUrl');
+  const btn = document.querySelector('.upload-gsheets-bar button');
+  const url = (input.value || '').trim();
+  if (!url) { mostrarToast('⚠️ Cole o link do Google Sheets.'); input.focus(); return; }
+  const parsed = _parseGoogleSheetsUrl(url);
+  if (!parsed) {
+    mostrarToast('❌ URL inválida. Use o link copiado da barra do navegador (https://docs.google.com/spreadsheets/d/.../).');
+    input.focus(); return;
+  }
+  if (btn) btn.disabled = true;
+  mostrarSpinner('Baixando do Google Sheets...');
+  document.getElementById('fileName').textContent = '⏳ Baixando do Google Sheets...';
+
+  const exportUrl = `https://docs.google.com/spreadsheets/d/${parsed.sheetId}/export?format=xlsx&gid=${parsed.gid}`;
+  try {
+    const resp = await fetch(exportUrl, { redirect: 'follow', credentials: 'omit' });
+    if (!resp.ok) {
+      if (resp.status === 401 || resp.status === 403 || resp.status === 404) {
+        throw new Error('Sheet privado ou não encontrado. Configure como "Qualquer pessoa com o link pode visualizar" no Google Drive.');
+      }
+      throw new Error('Falha HTTP ' + resp.status);
+    }
+    const ct = resp.headers.get('content-type') || '';
+    const buf = await resp.arrayBuffer();
+    if (ct.includes('text/html') || buf.byteLength < 200) {
+      throw new Error('Sheet privado (Google retornou HTML em vez de XLSX). Compartilhe como "Qualquer pessoa com o link pode visualizar".');
+    }
+    const fakeFile = { name: `gsheets-${parsed.sheetId}.xlsx` };
+    document.getElementById('fileName').textContent = '⏳ Processando dados...';
+    try {
+      const wb = XLSX.read(buf, {type:'array', sheetRows:7});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      ocultarSpinner();
+      if (rows.length > 0) { mostrarUpvPreview(fakeFile, buf, rows); return; }
+    } catch(e) {}
+    ocultarSpinner();
+    iniciarProcessamentoArquivo(fakeFile, buf);
+  } catch (err) {
+    ocultarSpinner();
+    const msg = (err && err.message) || 'erro desconhecido';
+    document.getElementById('fileName').textContent = '❌ ' + msg;
+    if (/NetworkError|Failed to fetch|CORS/i.test(msg)) {
+      mostrarToast('❌ Não foi possível baixar (bloqueio do navegador). Tente: 1) confirme que o sheet está público; 2) baixe o XLSX manualmente (Arquivo → Fazer download → .xlsx) e arraste para o upload.');
+    } else {
+      mostrarToast('❌ ' + msg);
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function onUploadTreinamentoChange() {
+  const v = document.getElementById('uploadTreinamento')?.value || 'TCE';
+  const txt = document.getElementById('uploadAreaText');
+  const hint = document.getElementById('uploadTreinamentoHint');
+  if (v === 'CIS') {
+    if (txt) txt.innerHTML = 'Arraste o <strong>.xlsx do Método CIS Global</strong> aqui ou clique para selecionar';
+    if (hint) hint.textContent = 'Lê colunas: cliente · treinamento · consultor · valor · status · entrada · ação · Status do Onboarding (filtra "confirmado")';
+  } else {
+    if (txt) txt.innerHTML = 'Arraste o arquivo <strong>.xlsx do Guru/TCE</strong> aqui ou clique para selecionar';
+    if (hint) hint.textContent = 'Lê colunas do Guru: status · data aprovacao · nome oferta · valor venda · nome contato';
+  }
+  try { localStorage.setItem('guru-upload-treinamento', v); } catch(e) {}
 }
 
 function parseDataBR(s) {
@@ -2429,9 +2826,17 @@ function _buildConsItem(nome, checked, onChangeFn) {
     onChangeFn();
   });
 
+  const isManual = consultoresManuais.includes(nome);
   const nameSpan = document.createElement('span');
   nameSpan.className = 'cons-check-name';
   nameSpan.textContent = nome;
+  if (isManual) {
+    const star = document.createElement('span');
+    star.textContent = ' ★';
+    star.style.cssText = 'color:#f59e0b;font-weight:900;font-size:.78em;margin-left:3px';
+    star.title = 'Consultor manual';
+    nameSpan.appendChild(star);
+  }
 
   label.appendChild(cb);
   label.appendChild(nameSpan);
@@ -2441,6 +2846,13 @@ function _buildConsItem(nome, checked, onChangeFn) {
     meta.className = 'cons-check-meta';
     meta.textContent = `${qtd} vd · ${fmtR$(val)}`;
     label.appendChild(meta);
+  }
+  if (isManual) {
+    const x = document.createElement('button');
+    x.type='button'; x.textContent='✕'; x.title='Remover consultor manual';
+    x.style.cssText='margin-left:auto;background:transparent;border:none;color:#dc2626;font-weight:900;cursor:pointer;padding:0 4px;font-size:.95em';
+    x.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); if (confirm('Remover "'+nome+'"?')) removeConsultorManual(nome); });
+    label.appendChild(x);
   }
   return label;
 }
@@ -2625,17 +3037,24 @@ function aplicarFiltros() {
   const dtIni=buildDt(document.getElementById('dataInicio').value,document.getElementById('horaInicio').value||'00:00');
   const dtFim=buildDt(document.getElementById('dataFim').value,document.getElementById('horaFim').value||'23:59');
   const statusSel=document.getElementById('statusFiltro').value;
+  const treinamento=document.getElementById('treinamentoFiltro')?.value||'TCE';
   const setoresSel=getSelected('setores'), consSel=getSelected('consultores');
-  if (!setoresSel.length||!consSel.length) { mostrarToast('⚠️ Selecione ao menos um setor e um consultor.'); return; }
+  if (!consSel.length) { mostrarToast('⚠️ Selecione ao menos um consultor.'); return; }
+  if (treinamento==='TCE' && !setoresSel.length) { mostrarToast('⚠️ Selecione ao menos um setor.'); return; }
 
   const dados = dadosRaw.filter(r=>{
+    if (r.produto!==treinamento) return false;
     if (statusSel!=='todos'&&r.status!==statusSel) return false;
     if (dtIni&&r.dataAprov&&r.dataAprov<dtIni) return false;
     if (dtFim&&r.dataAprov&&r.dataAprov>dtFim) return false;
-    if (!setoresSel.includes(r.setor)) return false;
+    if (treinamento==='TCE' && !setoresSel.includes(r.setor)) return false;
     if (!consSel.includes(r.consultor)) return false;
     return true;
   }).map(r=>bonusAtivo&&r.bonus?{...r,qtd:r.qtd*2}:r);
+
+  if (treinamento==='CIS' && !dados.length) {
+    mostrarToast('⚠️ Nenhuma venda de Método CIS Global no período.');
+  }
 
   const rankMap=calcRankMap(dados,consSel);
   renderCards(dados,document.getElementById('dataInicio').value,document.getElementById('dataFim').value);
@@ -2667,14 +3086,22 @@ function calcRankMap(dados,consSel) {
 
 // ---- Cards ----
 function renderCards(dados,di,df) {
+  const isTCE = (document.getElementById('treinamentoFiltro')?.value||'TCE')==='TCE';
+  ['cardBronze','cardOuro','cardBlack'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display = isTCE?'':'none'; });
+  const cisEl = document.getElementById('cardCIS'); if (cisEl) cisEl.style.display = isTCE?'none':'';
   document.getElementById('cTotal').textContent    = dados.reduce((s,r)=>s+r.qtd,0);
   document.getElementById('cClientes').textContent = new Set(dados.map(r=>r.cliente)).size+' clientes únicos';
-  document.getElementById('cBronze').textContent   = dados.filter(r=>r.setor==='BRONZE').reduce((s,r)=>s+r.qtd,0);
-  document.getElementById('vBronze').textContent   = fmtR$(dados.filter(r=>r.setor==='BRONZE').reduce((s,r)=>s+r.valor,0));
-  document.getElementById('cOuro').textContent     = dados.filter(r=>r.setor==='OURO').reduce((s,r)=>s+r.qtd,0);
-  document.getElementById('vOuro').textContent     = fmtR$(dados.filter(r=>r.setor==='OURO').reduce((s,r)=>s+r.valor,0));
-  document.getElementById('cBlack').textContent    = dados.filter(r=>r.setor==='BLACK').reduce((s,r)=>s+r.qtd,0);
-  document.getElementById('vBlack').textContent    = fmtR$(dados.filter(r=>r.setor==='BLACK').reduce((s,r)=>s+r.valor,0));
+  if (isTCE) {
+    document.getElementById('cBronze').textContent = dados.filter(r=>r.setor==='BRONZE').reduce((s,r)=>s+r.qtd,0);
+    document.getElementById('vBronze').textContent = fmtR$(dados.filter(r=>r.setor==='BRONZE').reduce((s,r)=>s+r.valor,0));
+    document.getElementById('cOuro').textContent   = dados.filter(r=>r.setor==='OURO').reduce((s,r)=>s+r.qtd,0);
+    document.getElementById('vOuro').textContent   = fmtR$(dados.filter(r=>r.setor==='OURO').reduce((s,r)=>s+r.valor,0));
+    document.getElementById('cBlack').textContent  = dados.filter(r=>r.setor==='BLACK').reduce((s,r)=>s+r.qtd,0);
+    document.getElementById('vBlack').textContent  = fmtR$(dados.filter(r=>r.setor==='BLACK').reduce((s,r)=>s+r.valor,0));
+  } else {
+    document.getElementById('cCIS').textContent = dados.reduce((s,r)=>s+r.qtd,0);
+    document.getElementById('vCIS').textContent = fmtR$(dados.reduce((s,r)=>s+r.valor,0));
+  }
   const totalVal = dados.reduce((s,r)=>s+r.valor,0);
   const clientesU = new Set(dados.map(r=>r.cliente)).size;
   document.getElementById('cReceita').textContent  = fmtR$(totalVal);
@@ -2685,8 +3112,10 @@ function renderCards(dados,di,df) {
 
 // ---- Ranking ----
 function renderRanking(dados,consSel,rankMap) {
+  const isTCE = (document.getElementById('treinamentoFiltro')?.value||'TCE')==='TCE';
+  document.querySelectorAll('#tab-ranking .col-setor').forEach(el => el.style.display = isTCE ? '' : 'none');
   const agg={}; consSel.forEach(c=>agg[c]={BRONZE:0,OURO:0,BLACK:0,total:0,valor:0});
-  dados.forEach(r=>{ if(agg[r.consultor]===undefined)return; agg[r.consultor][r.setor]+=r.qtd; agg[r.consultor].total+=r.qtd; agg[r.consultor].valor+=r.valor; });
+  dados.forEach(r=>{ if(agg[r.consultor]===undefined)return; if(r.setor) agg[r.consultor][r.setor]+=r.qtd; agg[r.consultor].total+=r.qtd; agg[r.consultor].valor+=r.valor; });
   const sorted=Object.entries(agg).sort((a,b)=>rankMap[a[0]]-rankMap[b[0]]);
   const medals=['🥇','🥈','🥉'];
   const valorRanks=Object.fromEntries([...sorted].sort((a,b)=>b[1].valor-a[1].valor).map(([c],i)=>[c,i]));
@@ -2696,33 +3125,35 @@ function renderRanking(dados,consSel,rankMap) {
       <td class="rank-cb-cell"><input type="checkbox" class="rank-cb" data-cons="${escAttr(c)}" onchange="rankCbChange()"></td>
       <td class="rank-medal">${medals[i]||('#'+(i+1))}</td>
       <td><span class="tag-cons tag-cons-click" onclick="filtrarConsultor('${escAttr(c)}')" title="Filtrar apenas ${escAttr(c)}">${escAttr(c)}</span></td>
-      <td data-label="Bronze" style="cursor:pointer" onclick="abrirDrill('${escAttr(c)}','BRONZE')">${d.BRONZE?`<span class="badge badge-bronze">${d.BRONZE}</span>`:'—'}</td>
-      <td data-label="Ouro"   style="cursor:pointer" onclick="abrirDrill('${escAttr(c)}','OURO')">${d.OURO?`<span class="badge badge-ouro">${d.OURO}</span>`:'—'}</td>
-      <td data-label="Black"  style="cursor:pointer" onclick="abrirDrill('${escAttr(c)}','BLACK')">${d.BLACK?`<span class="badge badge-black">${d.BLACK}</span>`:'—'}</td>
+      <td class="col-setor" data-label="Bronze" style="${isTCE?'cursor:pointer':'display:none'}" onclick="abrirDrill('${escAttr(c)}','BRONZE')">${d.BRONZE?`<span class="badge badge-bronze">${d.BRONZE}</span>`:'—'}</td>
+      <td class="col-setor" data-label="Ouro"   style="${isTCE?'cursor:pointer':'display:none'}" onclick="abrirDrill('${escAttr(c)}','OURO')">${d.OURO?`<span class="badge badge-ouro">${d.OURO}</span>`:'—'}</td>
+      <td class="col-setor" data-label="Black"  style="${isTCE?'cursor:pointer':'display:none'}" onclick="abrirDrill('${escAttr(c)}','BLACK')">${d.BLACK?`<span class="badge badge-black">${d.BLACK}</span>`:'—'}</td>
       <td data-label="Total"><strong>${d.total}</strong></td>
       <td data-label="Receita" class="valor">${fmtR$(d.valor)}</td>
     </tr>`).join('')+`
     <tr class="subtotal"><td></td><td colspan="2">TOTAL</td>
-      <td><span class="badge badge-bronze">${tB}</span></td>
-      <td><span class="badge badge-ouro">${tO}</span></td>
-      <td><span class="badge badge-black">${tBk}</span></td>
+      <td class="col-setor" style="${isTCE?'':'display:none'}"><span class="badge badge-bronze">${tB}</span></td>
+      <td class="col-setor" style="${isTCE?'':'display:none'}"><span class="badge badge-ouro">${tO}</span></td>
+      <td class="col-setor" style="${isTCE?'':'display:none'}"><span class="badge badge-black">${tBk}</span></td>
       <td>${tT}</td><td class="valor">${fmtR$(tV)}</td>
     </tr>`;
 }
 
 // ---- Clientes ----
 function renderClientes(dados,consSel,rankMap) {
-  const agg={}; consSel.forEach(c=>agg[c]={BRONZE:{},OURO:{},BLACK:{}});
+  const buckets = ['BRONZE','OURO','BLACK','CIS'];
+  const agg={}; consSel.forEach(c=>{ agg[c]={}; buckets.forEach(b=>agg[c][b]={}); });
   dados.forEach(r=>{
     if(!agg[r.consultor])return;
-    if(!agg[r.consultor][r.setor][r.cliente]) agg[r.consultor][r.setor][r.cliente]={qtd:0,valor:0,ultima:''};
-    agg[r.consultor][r.setor][r.cliente].qtd+=r.qtd; agg[r.consultor][r.setor][r.cliente].valor+=r.valor;
-    if(r.dataAprovStr>agg[r.consultor][r.setor][r.cliente].ultima) agg[r.consultor][r.setor][r.cliente].ultima=r.dataAprovStr;
+    const b = r.setor || 'CIS';
+    if(!agg[r.consultor][b][r.cliente]) agg[r.consultor][b][r.cliente]={qtd:0,valor:0,ultima:''};
+    agg[r.consultor][b][r.cliente].qtd+=r.qtd; agg[r.consultor][b][r.cliente].valor+=r.valor;
+    if(r.dataAprovStr>agg[r.consultor][b][r.cliente].ultima) agg[r.consultor][b][r.cliente].ultima=r.dataAprovStr;
   });
   const sortedCons=[...consSel].sort((a,b)=>rankMap[a]-rankMap[b]);
   const medals=['🥇','🥈','🥉'];
   clientesRows=[];
-  sortedCons.forEach((c,ci)=>{ ['BRONZE','OURO','BLACK'].forEach(s=>{ Object.entries(agg[c][s]).forEach(([nome,d])=>{ clientesRows.push({consultor:c,medal:medals[ci]||'',setor:s,cliente:nome,qtd:d.qtd,valor:d.valor,ultima:d.ultima}); }); }); });
+  sortedCons.forEach((c,ci)=>{ buckets.forEach(s=>{ Object.entries(agg[c][s]).forEach(([nome,d])=>{ clientesRows.push({consultor:c,medal:medals[ci]||'',setor:s,cliente:nome,qtd:d.qtd,valor:d.valor,ultima:d.ultima}); }); }); });
   clientesSort={col:null,dir:1};
   document.querySelectorAll('#tab-clientes th.sortable').forEach(th=>th.classList.remove('sort-asc','sort-desc'));
   pgClientes=1; paintClientes();
@@ -2743,8 +3174,9 @@ function atualizarContadorBusca() {
 }
 
 function updateTabBadges(dados, consSel) {
+  const treinamento = document.getElementById('treinamentoFiltro')?.value || 'TCE';
   const setoresSel = getSelected('setores');
-  const cancelCount = dadosRaw.filter(r => r.status==='Cancelada' && setoresSel.includes(r.setor) && consSel.includes(r.consultor)).length;
+  const cancelCount = dadosRaw.filter(r => r.status==='Cancelada' && r.produto===treinamento && (treinamento!=='TCE'||setoresSel.includes(r.setor)) && consSel.includes(r.consultor)).length;
   const map = { ranking: consSel.length, clientes: clientesRows.length, detalhe: detalheRows.length, cancelamentos: cancelCount };
   Object.entries(map).forEach(([name, count]) => {
     const el = document.getElementById('badge-' + name);
@@ -2778,18 +3210,34 @@ function mostrarUpvPreview(file, buf, rows) {
   upvPendingBuf = buf; upvPendingFile = file;
   const headers = rows[0] || [];
   const data = rows.slice(1, 6);
-  const reqCols = ['status','data aprovacao','nome oferta','valor venda','nome contato'];
+  const treinamento = document.getElementById('uploadTreinamento')?.value || 'TCE';
   const headersL = headers.map(h=>String(h||'').toLowerCase().trim());
-  const missing = reqCols.filter(c=>!headersL.includes(c));
-  const dateCol = headersL.indexOf('data aprovacao');
-  const dates = data.map(r=>String(r[dateCol]||'')).filter(Boolean);
-  const hasDate = dates.length > 0;
+  const headersN = headers.map(h=>_normHeader(h));
+  let missing = [], hasDate = false, dates = [], extraBadges = '';
+  if (treinamento === 'CIS') {
+    if (_findCol(headersN, ALIASES_CIS.cliente) === -1) missing.push('Cliente');
+    const iOnb = _findCol(headersN, ALIASES_CIS.onboarding);
+    if (iOnb === -1) missing.push('Status do Onboarding');
+    const iData = _findCol(headersN, ALIASES_CIS.data);
+    if (iData !== -1) { dates = data.map(r=>String(r[iData]||'')).filter(Boolean); hasDate = dates.length>0; }
+    if (iOnb !== -1) {
+      const conf = data.filter(r => _normHeader(r[iOnb]) === 'confirmado').length;
+      extraBadges = `<span class="upv-badge ${conf?'ok':'warn'}">🎓 Método CIS Global · ${conf}/${data.length} confirmado(s) na amostra</span>`;
+    }
+  } else {
+    const reqCols = ['status','data aprovacao','nome oferta','valor venda','nome contato'];
+    missing = reqCols.filter(c=>!headersL.includes(c));
+    const dateCol = headersL.indexOf('data aprovacao');
+    dates = data.map(r=>String(r[dateCol]||'')).filter(Boolean);
+    hasDate = dates.length > 0;
+  }
   const meta = document.getElementById('upvMeta');
   meta.innerHTML = `
     <span class="upv-badge ok">📄 ${file.name}</span>
     <span class="upv-badge ok">📊 ${rows.length - 1} linhas</span>
     <span class="upv-badge ok">📋 ${headers.length} colunas</span>
     ${hasDate ? `<span class="upv-badge ok">📅 ${dates[0]} → ${dates[dates.length-1]||dates[0]}</span>` : ''}
+    ${extraBadges}
     ${missing.length ? `<span class="upv-badge warn">⚠️ Colunas faltando: ${missing.join(', ')}</span>` : '<span class="upv-badge ok">✅ Colunas OK</span>'}`;
   const tbl = document.getElementById('upvTable');
   tbl.innerHTML = `<thead><tr>${headers.map(h=>`<th>${escAttr(String(h||''))}</th>`).join('')}</tr></thead>
@@ -2819,6 +3267,17 @@ function _unionRange(presets) {
     ini: ranges.reduce((m,r)=>r.ini<m?r.ini:m, ranges[0].ini),
     fim: ranges.reduce((m,r)=>r.fim>m?r.fim:m, ranges[0].fim)
   };
+}
+
+function limparPeriodo() {
+  document.querySelectorAll('.period-chip[data-preset]').forEach(c=>c.classList.remove('active'));
+  document.getElementById('dataInicio').value = '';
+  document.getElementById('dataFim').value    = '';
+  document.getElementById('horaInicio').value = '';
+  document.getElementById('horaFim').value    = '';
+  try { localStorage.removeItem('guru-preset'); } catch(e) {}
+  if (dadosRaw.length) aplicarFiltros();
+  mostrarToast('🗑 Período limpo.');
 }
 
 function setPeriodPreset(preset, event) {
@@ -3151,7 +3610,7 @@ function paintDetalhe() {
         <option value="${escAttr(r.consultor)}" selected>${escAttr(r.consultor)}</option>
         ${consultoresUnicos.filter(c=>c!==r.consultor).map(c=>`<option value="${escAttr(c)}">${escAttr(c)}</option>`).join('')}
       </select></td>
-      <td><span class="badge badge-${r.setor.toLowerCase()}">${r.setor}</span></td>
+      <td>${r.setor?`<span class="badge badge-${r.setor.toLowerCase()}">${r.setor}</span>`:'—'}</td>
       <td>${highlight(r.cliente,filtroTexto)}</td>
       <td>${r.qtd>1?`<span class="qtd-hi">${r.qtd}</span>`:r.qtd}</td>
       <td class="valor">${fmtR$(r.valor)}</td>
@@ -3175,6 +3634,8 @@ function criarOuAtualizar(id, tipo, labels, datasets, opts) {
 }
 
 function renderGraficos(dados, consSel, rankMap) {
+  const isTCE = (document.getElementById('treinamentoFiltro')?.value||'TCE')==='TCE';
+  ['cbox-setor-qtd','cbox-setor-val'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display = isTCE?'':'none'; });
   const sorted = [...consSel].sort((a,b)=>rankMap[a]-rankMap[b]);
 
   const qtdPorCons = sorted.map(c=>dados.filter(r=>r.consultor===c).reduce((s,r)=>s+r.qtd,0));
@@ -3250,8 +3711,9 @@ function renderGraficos(dados, consSel, rankMap) {
 
 // ---- Cancelamentos ----
 function renderCancelamentos(consSel) {
+  const treinamento = document.getElementById('treinamentoFiltro')?.value || 'TCE';
   const setoresSel = getSelected('setores');
-  const cancelados = dadosRaw.filter(r => r.status === 'Cancelada' && setoresSel.includes(r.setor) && consSel.includes(r.consultor));
+  const cancelados = dadosRaw.filter(r => r.status === 'Cancelada' && r.produto===treinamento && (treinamento!=='TCE'||setoresSel.includes(r.setor)) && consSel.includes(r.consultor));
   const tb = document.getElementById('bodyCancelamentos');
   const sum = document.getElementById('cancelSummary');
   if (!cancelados.length) {
@@ -3262,7 +3724,7 @@ function renderCancelamentos(consSel) {
   tb.innerHTML = cancelados.sort((a,b)=>b.dataAprovStr.localeCompare(a.dataAprovStr)).map(r=>`
     <tr>
       <td><span class="tag-cons">${escAttr(r.consultor)}</span></td>
-      <td><span class="badge badge-${r.setor.toLowerCase()}">${r.setor}</span></td>
+      <td>${r.setor?`<span class="badge badge-${r.setor.toLowerCase()}">${r.setor}</span>`:'—'}</td>
       <td>${escAttr(r.cliente)}</td>
       <td>${r.qtd}</td>
       <td class="valor" style="color:#dc2626">${fmtR$(r.valor)}</td>
@@ -3510,18 +3972,21 @@ function corrGetSelected() {
 function calcCorridinha() {
   if (!dadosRaw.length) { mostrarToast('⚠️ Carregue um arquivo primeiro!'); return; }
 
+  const isTCE = (document.getElementById('treinamentoFiltro')?.value||'TCE')==='TCE';
   const dtIni  = buildCorrDt('corrDataIni','corrHoraIni','00:00');
   const dtFim  = buildCorrDt('corrDataFim','corrHoraFim','23:59');
   const status = document.getElementById('corrStatus').value;
-  const ciclos = {
+  const ciclos = isTCE ? {
     BLACK:  Math.max(1, parseInt(document.getElementById('cicloBlack').value)  || 5),
     OURO:   Math.max(1, parseInt(document.getElementById('cicloOuro').value)   || 7),
     BRONZE: Math.max(1, parseInt(document.getElementById('cicloBronze').value) || 10),
-  };
+  } : null;
   const BONUS = 100;
+  const treinamento = isTCE ? 'TCE' : 'CIS';
 
   const consSel = corrGetSelected();
   const dados = dadosRaw.filter(r => {
+    if (r.produto !== treinamento) return false;
     if (status !== 'todos' && r.status !== status) return false;
     if (dtIni && r.dataAprov && r.dataAprov < dtIni) return false;
     if (dtFim && r.dataAprov && r.dataAprov > dtFim) return false;
@@ -3531,29 +3996,40 @@ function calcCorridinha() {
 
   const consultores = consSel.length ? consSel : consultoresUnicos;
   const agg = {};
-  consultores.forEach(c => agg[c] = { BLACK:[], OURO:[], BRONZE:[] });
-  dados.forEach(r => {
-    if (agg[r.consultor] !== undefined && r.setor) agg[r.consultor][r.setor].push(r);
-  });
+  if (isTCE) {
+    consultores.forEach(c => agg[c] = { BLACK:[], OURO:[], BRONZE:[] });
+    dados.forEach(r => { if (agg[r.consultor] !== undefined && r.setor) agg[r.consultor][r.setor].push(r); });
+  } else {
+    consultores.forEach(c => agg[c] = { ALL:[] });
+    dados.forEach(r => { if (agg[r.consultor] !== undefined) agg[r.consultor].ALL.push(r); });
+  }
 
   let bonusEquipe = 0, ciclosEquipe = 0, vendasEquipe = 0, alertasTotal = 0;
   const cards = consultores.map((c, ci) => {
     const d = agg[c];
     let bonusCons = 0, ciclosCons = 0;
-    const setores = ['BLACK','OURO','BRONZE'].map(s => {
-      const rows  = d[s];
-      const qtd   = rows.reduce((sum,r)=>sum+r.qtd,0);
-      const meta  = ciclos[s];
-      const compl = Math.floor(qtd / meta);
-      const rest  = qtd % meta;
-      const falta = rest === 0 && qtd > 0 ? meta : meta - rest;
-      bonusCons  += compl * BONUS;
-      ciclosCons += compl;
+    let setores;
+    if (isTCE) {
+      setores = ['BLACK','OURO','BRONZE'].map(s => {
+        const rows  = d[s];
+        const qtd   = rows.reduce((sum,r)=>sum+r.qtd,0);
+        const meta  = ciclos[s];
+        const compl = Math.floor(qtd / meta);
+        const rest  = qtd % meta;
+        const falta = rest === 0 && qtd > 0 ? meta : meta - rest;
+        bonusCons  += compl * BONUS;
+        ciclosCons += compl;
+        const clientes = [...new Map(rows.map(r=>[r.cliente,r])).values()];
+        return { setor:s, qtd, meta, compl, rest:rest===0&&qtd>0?0:rest, falta, rows, clientes };
+      });
+    } else {
+      const rows = d.ALL;
+      const qtd  = rows.reduce((sum,r)=>sum+r.qtd,0);
       const clientes = [...new Map(rows.map(r=>[r.cliente,r])).values()];
-      return { setor:s, qtd, meta, compl, rest:rest===0&&qtd>0?0:rest, falta, rows, clientes };
-    });
+      setores = [{ setor:'CIS', qtd, meta:0, compl:0, rest:0, falta:0, rows, clientes }];
+    }
     const totalVendas = setores.reduce((s,x)=>s+x.qtd,0);
-    const temAlerta   = setores.some(x=>x.falta<=3 && x.falta>0 && x.qtd>0);
+    const temAlerta   = isTCE && setores.some(x=>x.falta<=3 && x.falta>0 && x.qtd>0);
     bonusEquipe  += bonusCons;
     ciclosEquipe += ciclosCons;
     vendasEquipe += totalVendas;
@@ -3594,17 +4070,19 @@ function calcCorridinha() {
   }
 
   // Ranking
-  const ranked = [...cards].sort((a,b)=>b.ciclosCons-a.ciclosCons||b.bonusCons-a.bonusCons||b.totalVendas-a.totalVendas);
+  const ranked = isTCE
+    ? [...cards].sort((a,b)=>b.ciclosCons-a.ciclosCons||b.bonusCons-a.bonusCons||b.totalVendas-a.totalVendas)
+    : [...cards].sort((a,b)=>b.totalVendas-a.totalVendas);
   const maxCiclos = Math.max(1, ranked[0]?.ciclosCons || 1);
   const medalRank = ['🥇','🥈','🥉'];
   document.getElementById('corrRankBody').innerHTML = ranked.map((c,i)=>`
     <tr>
       <td class="rank-pos">${medalRank[i]||('#'+(i+1))}</td>
       <td><span class="rank-name" style="color:${c.cor}">${escAttr(c.consultor)}</span></td>
-      <td><span class="rank-ciclos">${c.ciclosCons}</span></td>
-      <td class="rank-bonus">${fmtR$(c.bonusCons)}</td>
+      <td class="corr-rank-tce-only" style="${isTCE?'':'display:none'}"><span class="rank-ciclos">${c.ciclosCons}</span></td>
+      <td class="rank-bonus corr-rank-tce-only" style="${isTCE?'':'display:none'}">${fmtR$(c.bonusCons)}</td>
       <td class="rank-vendas">${c.totalVendas}</td>
-      <td><div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${Math.round(c.ciclosCons/maxCiclos*100)}%;background:${c.cor}"></div></div></td>
+      <td class="corr-rank-tce-only" style="${isTCE?'':'display:none'}"><div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${Math.round(c.ciclosCons/maxCiclos*100)}%;background:${c.cor}"></div></div></td>
     </tr>`).join('');
   rankWrap.style.display = 'block';
   cardsTitle.style.display = 'flex';
@@ -3621,11 +4099,19 @@ function calcCorridinha() {
   grid.innerHTML = cards.map(({ consultor, cor, setores, bonusCons, totalVendas, temAlerta }, idx) => {
     const initials = consultor.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const hue = nameToHue(consultor);
-    const dominantSetor = setores.length ? setores.reduce((a,b)=>a.qtd>=b.qtd?a:b).setor : 'BRONZE';
-    const tierRing = TIER_CLR[dominantSetor] || '#818cf8';
+    const dominantSetor = isTCE && setores.length ? setores.reduce((a,b)=>a.qtd>=b.qtd?a:b).setor : 'BRONZE';
+    const tierRing = isTCE ? (TIER_CLR[dominantSetor] || '#818cf8') : '#0ea5e9';
 
     const SEG_COLORS = { BLACK:'#94a3b8', OURO:'#fbbf24', BRONZE:'#fb923c' };
-    const frontSetores = setores.map(({ setor, qtd, meta, compl, rest, falta }) => {
+    const frontSetores = !isTCE
+      ? `<div class="cf-setor cf-setor-cis">
+           <div class="cf-setor-top">
+             <span class="cf-setor-label"><span class="tier-dot" style="background:#0ea5e9;box-shadow:0 0 5px #0ea5e988"></span>📚 Método CIS Global</span>
+           </div>
+           <div style="font-size:1.8rem;font-weight:900;color:#0ea5e9;text-align:center;padding:8px 0">${totalVendas}</div>
+           <div style="text-align:center;font-size:.78rem;color:#64748b;font-weight:600">${totalVendas===1?'venda confirmada':'vendas confirmadas'}</div>
+         </div>`
+      : setores.map(({ setor, qtd, meta, compl, rest, falta }) => {
       const alerta = falta <= 3 && falta > 0 && qtd > 0;
       const isDone = qtd > 0 && rest === 0;
       const maxSegs = Math.min(meta, 20);
@@ -3654,12 +4140,20 @@ function calcCorridinha() {
       clientes.map(r => ({ nome:r.cliente, setor, qtd:r.qtd }))
     );
     const clientesHTML = todosClientes.length
-      ? todosClientes.map(cl=>`
-        <div class="cb-client">
-          <div class="cb-client-dot" style="background:${clientDot[cl.setor]}"></div>
-          <span class="cb-client-name">${escAttr(cl.nome)}</span>
-          <span class="cb-client-badge ${clientBadge[cl.setor]}">${setorIcon[cl.setor]} ${cl.setor}</span>
-        </div>`).join('')
+      ? todosClientes.map(cl=>{
+          if (!isTCE) {
+            return `<div class="cb-client">
+              <div class="cb-client-dot" style="background:#0ea5e9"></div>
+              <span class="cb-client-name">${escAttr(cl.nome)}</span>
+              <span class="cb-client-badge" style="background:rgba(14,165,233,.18);color:#0ea5e9">📚 CIS</span>
+            </div>`;
+          }
+          return `<div class="cb-client">
+            <div class="cb-client-dot" style="background:${clientDot[cl.setor]}"></div>
+            <span class="cb-client-name">${escAttr(cl.nome)}</span>
+            <span class="cb-client-badge ${clientBadge[cl.setor]}">${setorIcon[cl.setor]} ${cl.setor}</span>
+          </div>`;
+        }).join('')
       : '<div style="padding:20px;text-align:center;color:#334155;font-size:.82rem">Nenhum cliente no período</div>';
 
     return `
@@ -3670,10 +4164,10 @@ function calcCorridinha() {
           <div class="cf-header">
             <div class="cf-avatar" style="background:linear-gradient(135deg,hsl(${hue},65%,55%),hsl(${(hue+40)%360},70%,40%));box-shadow:0 0 0 2px ${tierRing},0 2px 8px rgba(0,0,0,.4);color:white">${initials}</div>
             <span class="cf-name">${escAttr(consultor)}</span>
-            <div class="cf-bonus-wrap">
+            ${isTCE ? `<div class="cf-bonus-wrap">
               <span class="cf-bonus-lbl">Bônus</span>
               <span class="cf-bonus ${bonusCons>0?'earned':'zero'}">${fmtR$(bonusCons)}</span>
-            </div>
+            </div>` : `<div class="cf-bonus-wrap"><span class="cf-bonus-lbl">Vendas</span><span class="cf-bonus earned" style="color:#0ea5e9">${totalVendas}</span></div>`}
           </div>
           <div class="cf-body">${frontSetores}</div>
           <div class="cf-flip-hint">👆 ver clientes</div>
@@ -5477,7 +5971,7 @@ function roletaSpin() {
   let delta=Math.PI/2-(wi+0.5)*segA-start;
   delta=((delta%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
   delta+=(8+Math.floor(Math.random()*6))*Math.PI*2;
-  const dur=7000+Math.random()*1500, t0=performance.now();
+  const dur=15000+Math.random()*3000, t0=performance.now();
   _rltLastSeg=-1;
   function frame(ts){
     const t=Math.min(1,(ts-t0)/dur), e=1-Math.pow(1-t,4.5);
