@@ -32,6 +32,24 @@
     return{meta:0,tier:'',label:'—',pct:0};
   }
 
+  /* Próximo tier a perseguir — ordem PROGRESSIVA: Mínima → Básica → Master.
+     Retorna {meta, label, falta, batida} ou {batida:'master'} se já bateu tudo. */
+  function _npProxTier(goal, real){
+    var m=+(goal.metaMinima||0);
+    var b=+(goal.metaBasica||goal.metaValor||0);
+    var M=+(goal.metaMaster||0);
+    real = +(real||0);
+    if(m>0 && real<m) return {meta:m,label:'🥈 Mínima',falta:m-real,batida:null};
+    if(b>0 && real<b) return {meta:b,label:'🥉 Básica',falta:b-real,batida:null};
+    if(M>0 && real<M) return {meta:M,label:'🥇 Master',falta:M-real,batida:null};
+    /* Bateu tudo configurado */
+    if(M>0 && real>=M) return {meta:M,label:'🥇 Master',falta:0,batida:'master'};
+    if(b>0 && real>=b) return {meta:b,label:'🥉 Básica',falta:0,batida:'basica'};
+    if(m>0 && real>=m) return {meta:m,label:'🥈 Mínima',falta:0,batida:'minima'};
+    return {meta:0,label:'',falta:0,batida:null};
+  }
+  window._npProxTier = _npProxTier;
+
   function _npFmtR(v){
     return 'R$\u00a0'+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   }

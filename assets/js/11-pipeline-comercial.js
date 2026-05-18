@@ -617,13 +617,24 @@
         var t=_npGetMetaAtiva(_goals3[r.nome]||{},r.pago);
         var col=_npGetCol(t.pct);
         var pctTxt=t.meta?'<span style="font-size:9px;font-weight:700;color:'+col.text+';margin-left:4px;">'+t.pct+'%</span>':'';
+        /* Próximo tier (Mínima → Básica → Master) — substitui o "pot." */
+        var px = (typeof _npProxTier==='function')?_npProxTier(_goals3[r.nome]||{},r.pago):null;
+        var tierInfo;
+        if(!px || !px.meta){
+          tierInfo = 'Sem meta configurada';
+        } else if(px.batida === 'master'){
+          tierInfo = '✅ Master batida! (+'+_fmtR(r.pago-px.meta)+')';
+        } else {
+          tierInfo = 'Falta '+_fmtR(px.falta)+' para '+px.label;
+        }
+        var convTxt = r.qtd?Math.round(r.qtdPago/r.qtd*100):0;
         var _nomeEsc=String(r.nome||'').replace(/\\/g,'\\\\').replace(/\x27/g,'\\\x27');
         return '<div class="np-rank-card" onclick="window.npAbrirConsultorDetalhe&&window.npAbrirConsultorDetalhe(\''+_nomeEsc+'\')" style="border-color:'+col.border+';background:'+col.bg+';cursor:pointer;" title="Ver detalhe de '+_esc(r.nome)+'">'
           +'<div class="np-rank-pos">'+(i+1)+'</div>'
           +'<div class="np-rank-avatar" style="background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;">'+r.nome.charAt(0).toUpperCase()+'</div>'
           +'<div class="np-rank-info"><div class="np-rank-nome">'+_esc(r.nome)+'</div>'
           +'<div class="np-rank-val" style="color:'+col.text+';">'+_fmtR(r.pago)+pctTxt+'</div>'
-          +'<div style="font-size:9px;color:var(--muted);">pot. '+_fmtR(r.total)+' &middot; '+(r.qtd?Math.round(r.qtdPago/r.qtd*100):0)+'% conv</div>'
+          +'<div style="font-size:9px;color:var(--muted);">'+tierInfo+' &middot; '+convTxt+'% conv</div>'
           +'</div>'
           +'</div>';
       }).join('');
@@ -642,11 +653,20 @@
             var t=_npGetMetaAtiva(_goalsCh[r.nome]||{},r.pago);
             var col=_npGetCol(t.pct);
             var metaInfo=t.meta?'<span style="font-size:9px;color:'+col.text+';margin-left:6px;font-weight:700;">'+t.pct+'% '+t.label+'</span>':'';
-            var potInfo='<span style="font-size:9px;color:var(--muted);margin-left:4px;">pot. '+_fmtR(r.total)+'</span>';
+            /* Próximo tier (Mínima → Básica → Master) — substitui o "pot." */
+            var px = (typeof _npProxTier==='function')?_npProxTier(_goalsCh[r.nome]||{},r.pago):null;
+            var nextInfo;
+            if(!px || !px.meta){
+              nextInfo = '<span style="font-size:9px;color:var(--muted);margin-left:4px;">sem meta</span>';
+            } else if(px.batida === 'master'){
+              nextInfo = '<span style="font-size:9px;color:var(--pago);margin-left:4px;font-weight:700;">✅ Master</span>';
+            } else {
+              nextInfo = '<span style="font-size:9px;color:var(--muted);margin-left:4px;">Falta '+_fmtR(px.falta)+' '+px.label+'</span>';
+            }
             return '<div class="np-bar-row">'
               +'<div class="np-bar-nome" title="'+_esc(r.nome)+'">'+_esc(r.nome)+'</div>'
               +'<div class="np-bar-track"><div class="np-bar-fill" style="width:'+barPct+'%;background:'+col.bar+'"></div></div>'
-              +'<div class="np-bar-val" style="color:'+col.text+';">'+_fmtR(r.pago)+metaInfo+potInfo+'</div>'
+              +'<div class="np-bar-val" style="color:'+col.text+';">'+_fmtR(r.pago)+metaInfo+nextInfo+'</div>'
               +'</div>';
           }).join('')
         :'<div class="np-empty">Sem dados.</div>';
