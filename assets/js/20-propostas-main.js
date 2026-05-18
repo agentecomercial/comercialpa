@@ -38,15 +38,15 @@ function _mostrarPropostaComercial(){
 var _PROPOSTA_TEXTO = "É uma imensa honra tê-lo conosco e poder fazer parte da sua jornada.\nSabemos que você superou diversos desafios para chegar até esse curso e queremos te parabenizar por isso. Acreditar que existe uma vida extraordinária e agir em direção a ela é um ato de ousadia e coragem.\nMas, reforçamos que existe um nível ainda mais alto e queremos muito te conduzir em direção a ele.\nE é justamente por esse motivo, que venho te lembrar dos treinamentos que ainda faltam para concluir a jornada e se tornar um GREEN OU GOLDEN BELT Febracis. Temos a total certeza de que juntos construiremos dia após dia o seu legado dentro e fora da Febracis.";
 
 var _PROPOSTA_PRECOS = {
-  'IF':        {integral:4596.40,  parcelado:299.70,  parcelado_desc:3596.40,  avista_credito:2997.00, avista:2497.00,  reciclagem:1798.20},
-  'MASTER':    {integral:8796.47,  parcelado:649.71,  parcelado_desc:7796.52,  avista_credito:6497.00, avista:6497.00,  reciclagem:3898.24},
-  'FCIS':      {integral:11796.49, parcelado:899.71,  parcelado_desc:10796.52, avista_credito:8997.00, avista:8997.00,  reciclagem:5398.25},
-  'ML5':       {integral:11796.49, parcelado:899.71,  parcelado_desc:5398.26,  avista_credito:8997.00, avista:8997.00,  reciclagem:5398.25},
-  'BHP':       {integral:6996.45,  parcelado:499.70,  parcelado_desc:5996.40,  avista_credito:4997.00, avista:4997.00,  reciclagem:2998.23},
-  'FGPC':      {integral:6996.45,  parcelado:499.70,  parcelado_desc:5996.40,  avista_credito:4997.00, avista:4997.00,  reciclagem:2998.23},
-  'CEOP':      {integral:6996.45,  parcelado:499.70,  parcelado_desc:5996.40,  avista_credito:4997.00, avista:4997.00,  reciclagem:2998.23},
-  'TAV':       {integral:3997.00,  parcelado:249.75,  parcelado_desc:2997.00,  avista_credito:2497.00, avista:1997.00,  reciclagem:1498.50},
-  'MAESTRIA':  {integral:85000.00, parcelado:7083.63, parcelado_desc:80000.00, avista_credito:70000.00,avista:70000.00, reciclagem:null},
+  'IF':        {integral:4596.40,  parcelado:383.03,  parcelado_desc:249.75,   avista_credito:2997.00, avista:2497.00,  reciclagem:1798.20},
+  'MASTER':    {integral:8796.45,  parcelado:733.03,  parcelado_desc:649.75,   avista_credito:5997.00, avista:5997.00,  reciclagem:3898.24},
+  'CEOP':      {integral:6996.45,  parcelado:583.03,  parcelado_desc:499.75,   avista_credito:4997.00, avista:3997.00,  reciclagem:2998.23},
+  'FGPC':      {integral:6996.45,  parcelado:583.03,  parcelado_desc:499.75,   avista_credito:4997.00, avista:3997.00,  reciclagem:2998.23},
+  'BHP':       {integral:6996.45,  parcelado:583.03,  parcelado_desc:499.75,   avista_credito:4997.00, avista:3997.00,  reciclagem:2998.23},
+  'FCIS':      {integral:11796.49, parcelado:983.03,  parcelado_desc:899.75,   avista_credito:8997.00, avista:8997.00,  reciclagem:5398.25},
+  'ML5':       {integral:11796.49, parcelado:983.03,  parcelado_desc:899.75,   avista_credito:5398.25, avista:5398.25,  reciclagem:5398.25},
+  'TAV':       {integral:3997.00,  parcelado:333.08,  parcelado_desc:249.75,   avista_credito:2497.00, avista:1997.00,  reciclagem:1498.50},
+  'MAESTRIA':  {integral:85000.00, parcelado:9925.48, parcelado_desc:9925.48,  avista_credito:85000.00,avista:85000.00, reciclagem:850000.00},
   'CIS_GLOBAL':{integral:1997.00,  parcelado:199.70,  parcelado_desc:199.70,   avista_credito:1997.00, avista:1997.00,  reciclagem:998.50},
 };
 
@@ -126,6 +126,7 @@ function abrirPropostaModal(){
 
 function fecharPropostaModal(){
   document.getElementById('propostaOverlay').classList.remove('open');
+  window._propostaPreviewAtivo = false; // reset para próxima abertura
 }
 
 function _propostaRenderTreinamentos(){
@@ -134,15 +135,13 @@ function _propostaRenderTreinamentos(){
   container.innerHTML = '';
 
   // Treinamentos da tabela de preços
-  var _isMensal = (pagamento === 'parcelado' || pagamento === 'parcelado_desc');
   _PROPOSTA_TREINAMENTOS.forEach(function(nome){
     var precos = _PROPOSTA_PRECOS[nome];
-    var precoBase = precos[pagamento];
-    var preco = (pagamento === 'parcelado_desc' && precoBase != null) ? precoBase / 12 : precoBase;
-    var indisponivel = precoBase === null;
+    var preco = precos[pagamento];
+    var indisponivel = preco === null;
 
     var row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);cursor:pointer;transition:all .15s;';
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);cursor:pointer;transition:all .15s;min-width:0;';
     if(indisponivel) row.style.opacity = '0.4';
 
     var chk = document.createElement('input');
@@ -154,27 +153,44 @@ function _propostaRenderTreinamentos(){
 
     var label = document.createElement('label');
     label.htmlFor = 'prop_' + nome;
-    label.style.cssText = 'flex:1;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;';
+    label.style.cssText = 'flex:1;min-width:0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:6px;';
 
     var nomeSpan = document.createElement('span');
-    nomeSpan.style.cssText = 'font-size:13px;font-weight:600;color:var(--text);';
+    nomeSpan.style.cssText = 'font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
     nomeSpan.textContent = nome;
+
+    // Quantidade — padrão 1, mínimo 1
+    var qtyInput = document.createElement('input');
+    qtyInput.type = 'number';
+    qtyInput.id = 'propqty_' + nome;
+    qtyInput.min = '1';
+    qtyInput.value = '1';
+    qtyInput.disabled = indisponivel;
+    qtyInput.title = 'Quantidade';
+    qtyInput.style.cssText = 'width:44px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 4px;color:var(--text);font-size:12px;font-weight:700;text-align:center;font-family:DM Mono,monospace;';
+    qtyInput.addEventListener('change', function(){
+      if(parseInt(this.value)<1 || isNaN(parseInt(this.value))) this.value='1';
+      _propostaRecalcular();
+    });
+    qtyInput.addEventListener('focus', function(){this.select();});
+    qtyInput.addEventListener('click', function(e){e.stopPropagation();});
 
     var precoInput = document.createElement('input');
     precoInput.type = 'text';
     precoInput.id = 'propval_' + nome;
     precoInput.value = indisponivel ? '—' : formatVal(preco);
     precoInput.disabled = indisponivel;
-    precoInput.style.cssText = 'width:120px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:DM Mono,monospace;';
+    precoInput.style.cssText = 'width:110px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:DM Mono,monospace;';
     precoInput.addEventListener('change', function(){_propostaRecalcular();});
     precoInput.addEventListener('focus', function(){this.select();});
 
     label.appendChild(nomeSpan);
+    label.appendChild(qtyInput);
     label.appendChild(precoInput);
     row.appendChild(chk);
     row.appendChild(label);
     row.addEventListener('click', function(e){
-      if(e.target === chk || e.target === precoInput || indisponivel) return;
+      if(e.target === chk || e.target === precoInput || e.target === qtyInput || indisponivel) return;
       chk.checked = !chk.checked;
       _propostaRecalcular();
     });
@@ -203,20 +219,20 @@ function _propostaAtualizar(){
 
 function _propostaRecalcular(){
   var pagamento = document.getElementById('propostaPagamento').value;
-  // Atualizar preços nos inputs
+  // Atualizar preços nos inputs (sem divisão — valor armazenado é exibido direto)
   _PROPOSTA_TREINAMENTOS.forEach(function(nome){
     var inp = document.getElementById('propval_' + nome);
     var chk = document.getElementById('prop_' + nome);
     if(!inp || !chk) return;
-    var precoBase = _PROPOSTA_PRECOS[nome][pagamento];
-    var preco = (pagamento === 'parcelado_desc' && precoBase != null) ? precoBase / 12 : precoBase;
+    var preco = _PROPOSTA_PRECOS[nome][pagamento];
     if(preco !== null && !chk.dataset.edited){
       inp.value = formatVal(preco);
     }
   });
 
-  // Calcular total
+  // Calcular total = soma(val × qty) dos selecionados
   var total = 0;
+  var totalQty = 0;
   var selecionados = [];
   var container = document.getElementById('propostaTreinamentos');
   if(!container) return;
@@ -224,22 +240,33 @@ function _propostaRecalcular(){
     if(!chk.checked) return;
     var nome = chk.id.replace('prop_', '');
     var inp = document.getElementById('propval_' + nome);
+    var qtyInp = document.getElementById('propqty_' + nome);
     var val = inp ? parseVal(inp.value) : 0;
-    total += val;
-    selecionados.push({nome: nome, val: val});
+    var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
+    total += val * qty;
+    totalQty += qty;
+    selecionados.push({nome: nome, val: val, qty: qty});
   });
 
   document.getElementById('propostaTotal').textContent = formatVal(total);
   var detalhe = document.getElementById('propostaTotalDetalhe');
   if(detalhe){
     detalhe.textContent = selecionados.length
-      ? selecionados.length + ' treinamento' + (selecionados.length > 1 ? 's' : '') + ' · ' + _PROPOSTA_LABELS[pagamento]
+      ? totalQty + ' treinamento' + (totalQty > 1 ? 's' : '') + ' · ' + _PROPOSTA_LABELS[pagamento]
       : 'Nenhum treinamento selecionado';
+  }
+
+  // PREVIEW EM TEMPO REAL — se já está aberto, re-renderiza com debounce
+  if(window._propostaPreviewAtivo && selecionados.length > 0){
+    clearTimeout(window._propostaPreviewTimer);
+    window._propostaPreviewTimer = setTimeout(function(){
+      try { _propostaPreview(); } catch(e){}
+    }, 150);
   }
 }
 
 function _propostaPreview(){
-  console.log('%c[_propostaPreview] versão SEM JORNADA v6', 'background:#0a1f3d;color:#f5b400;padding:3px 8px;font-weight:700;');
+  window._propostaPreviewAtivo = true; // habilita re-render automático no _propostaRecalcular
   var cliente = document.getElementById('propostaCliente').value;
   var pagamento = document.getElementById('propostaPagamento').value;
   var pagLabel = _PROPOSTA_LABELS[pagamento];
@@ -249,9 +276,11 @@ function _propostaPreview(){
     if(!chk.checked) return;
     var nome = chk.id.replace('prop_','');
     var inp = document.getElementById('propval_'+nome);
-    selecionados.push({nome:nome, val:inp?parseVal(inp.value):0});
+    var qtyInp = document.getElementById('propqty_'+nome);
+    var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
+    selecionados.push({nome:nome, val:inp?parseVal(inp.value):0, qty:qty});
   });
-  var total = selecionados.reduce(function(a,s){return a+s.val;},0);
+  var total = selecionados.reduce(function(a,s){return a + s.val * s.qty;},0);
   var consultor = document.getElementById('propostaConsultorDisplay') ? document.getElementById('propostaConsultorDisplay').textContent : '';
   var fonte = parseInt(document.getElementById('propFonte').value)||10;
   var padding = parseInt(document.getElementById('propPadding').value)||4;
@@ -269,11 +298,14 @@ function _propostaPreview(){
   var _dataStr = String(_dt.getDate()).padStart(2,'0')+' · '+String(_dt.getMonth()+1).padStart(2,'0')+' · '+_dt.getFullYear();
 
   var rows = selecionados.map(function(s, i){
+    var subtotal = s.val * s.qty;
+    var nomeFmt = (s.qty > 1 ? s.qty + '× ' : '') + s.nome;
     return '<tr>'
       +'<td style="padding:'+padding+'px 10px;font-size:'+fonte+'pt;color:#666;">L'+String(i+1).padStart(2,'0')+'</td>'
-      +'<td style="padding:'+padding+'px 10px;font-weight:700;font-size:'+fonte+'pt;color:#0a1f3d;">'+s.nome+'</td>'
+      +'<td style="padding:'+padding+'px 10px;font-weight:700;font-size:'+fonte+'pt;color:#0a1f3d;">'+nomeFmt+'</td>'
       +'<td style="padding:'+padding+'px 10px;text-align:center;font-size:'+fonte+'pt;color:#333;">'+pagLabel+'</td>'
-      +'<td style="padding:'+padding+'px 10px;text-align:right;font-family:Georgia,serif;font-weight:700;font-size:'+fonte+'pt;color:#0a1f3d;">'+formatVal(s.val)+'</td>'
+      +'<td style="padding:'+padding+'px 10px;text-align:center;font-family:Georgia,serif;font-size:'+fonte+'pt;color:#333;">'+s.qty+'</td>'
+      +'<td style="padding:'+padding+'px 10px;text-align:right;font-family:Georgia,serif;font-weight:700;font-size:'+fonte+'pt;color:#0a1f3d;">'+formatVal(subtotal)+'</td>'
       +'</tr>';
   }).join('');
 
@@ -353,7 +385,7 @@ function _propostaPreview(){
     +'<h2>I · Introdução & Reconhecimento</h2>'
     +'<div class="motiv">'+motivHtml+'</div>'
     +'<h2>II · Investimento Consolidado</h2>'
-    +'<table class="invest"><thead><tr><th>Linha</th><th>Descrição</th><th>Pagamento</th><th>Valor (R$)</th></tr></thead>'
+    +'<table class="invest"><thead><tr><th>Linha</th><th>Descrição</th><th>Pagamento</th><th style="text-align:center;">Qtd</th><th>Valor total (R$)</th></tr></thead>'
     +'<tbody>'+rows
     +'<tr class="invest-final-row"><td>—</td><td>INVESTIMENTO FINAL</td><td></td><td>'+formatVal(total)+'</td></tr>'
     +'</tbody></table>'
@@ -619,7 +651,7 @@ function gerarPropostaPDF(){
   var notaLines = doc.splitTextToSize(notaTxt, maxW - 12);
   var notaH = notaLines.length * 3.6 + 7;
   _quebraPagina(notaH + 4);
-  doc.setFillColor(COR_OURO_LIGHT[0], COR_OURO_LIGHT[1], COR_OURO_LIGHT[2]);
+  doc.setFillColor(COR_OURO_LT[0], COR_OURO_LT[1], COR_OURO_LT[2]);
   doc.rect(mg, y, maxW, notaH, 'F');
   doc.setFillColor(COR_OURO[0], COR_OURO[1], COR_OURO[2]);
   doc.rect(mg, y, 1.8, notaH, 'F');

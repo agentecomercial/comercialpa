@@ -157,16 +157,42 @@
         if(!Array.isArray(cls)&&typeof cls==='object') cls=Object.values(cls).filter(Boolean);
         cls.forEach(function(cl){
           if(!cl.consultor||!cl.consultor.trim()) return; /* sem consultor = não conta */
-          _npVendasTurma.push({
-            _src:'turma', _turmaId:tid, _turmaNome:td.nome||tid,
-            cliente:cl.cliente||cl.nome||'—',
-            consultor:(cl.consultor||'').trim(),
-            treinamento:cl.treinamento||'—',
-            valor:+(cl.valor||0),
-            entrada:+(cl.entrada||0),
-            status:(cl.status||'aberto').toLowerCase(),
-            data:cl.data||td.periodStart||''
-          });
+          /* BUG-FIX: achatar treinamentos[] em vendas independentes.
+             Cliente com múltiplos treinamentos (ex: 1 IF pago + 1 CEOP em negociação)
+             precisa virar N vendas separadas — cada uma com seu próprio status/valor.
+             Sem isso, todos os subs herdam o status do scalar primário. */
+          var subs = Array.isArray(cl.treinamentos) ? cl.treinamentos.filter(Boolean) : [];
+          var clienteNome = cl.cliente||cl.nome||'—';
+          var consNome = (cl.consultor||'').trim();
+          var dataPad = cl.data||td.periodStart||'';
+          if(subs.length > 0){
+            /* Cliente com array de sub-treinamentos: 1 venda por sub */
+            subs.forEach(function(sub){
+              if(!sub) return;
+              _npVendasTurma.push({
+                _src:'turma', _turmaId:tid, _turmaNome:td.nome||tid,
+                cliente:clienteNome,
+                consultor:consNome,
+                treinamento:sub.cod||cl.treinamento||'—',
+                valor:+(sub.valor||0),
+                entrada:+(sub.entrada||0),
+                status:String(sub.status||cl.status||'aberto').toLowerCase(),
+                data:sub.data||dataPad
+              });
+            });
+          } else {
+            /* Cliente legado sem array: usa scalar (comportamento antigo) */
+            _npVendasTurma.push({
+              _src:'turma', _turmaId:tid, _turmaNome:td.nome||tid,
+              cliente:clienteNome,
+              consultor:consNome,
+              treinamento:cl.treinamento||'—',
+              valor:+(cl.valor||0),
+              entrada:+(cl.entrada||0),
+              status:(cl.status||'aberto').toLowerCase(),
+              data:dataPad
+            });
+          }
         });
       });
       _npRenderTudo();
@@ -591,7 +617,8 @@
         var t=_npGetMetaAtiva(_goals3[r.nome]||{},r.pago);
         var col=_npGetCol(t.pct);
         var pctTxt=t.meta?'<span style="font-size:9px;font-weight:700;color:'+col.text+';margin-left:4px;">'+t.pct+'%</span>':'';
-        return '<div class="np-rank-card" style="border-color:'+col.border+';background:'+col.bg+';">'
+        var _nomeEsc=String(r.nome||'').replace(/\\/g,'\\\\').replace(/\x27/g,'\\\x27');
+        return '<div class="np-rank-card" onclick="window.npAbrirConsultorDetalhe&&window.npAbrirConsultorDetalhe(\''+_nomeEsc+'\')" style="border-color:'+col.border+';background:'+col.bg+';cursor:pointer;" title="Ver detalhe de '+_esc(r.nome)+'">'
           +'<div class="np-rank-pos">'+(i+1)+'</div>'
           +'<div class="np-rank-avatar" style="background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;">'+r.nome.charAt(0).toUpperCase()+'</div>'
           +'<div class="np-rank-info"><div class="np-rank-nome">'+_esc(r.nome)+'</div>'
@@ -927,6 +954,12 @@
 
   /* ── Vendas ──────────────────────────────────────── */
   var _npSortTurma={col:'',dir:1};
+  var _npSortAvulso={col:'',dir:1};
+  window.npSortAvulso=function(col){
+    if(_npSortAvulso.col===col){_npSortAvulso.dir*=-1;}
+    else{_npSortAvulso.col=col;_npSortAvulso.dir=1;}
+    window.npRenderVendas();
+  };
   window.npSortTurma=function(col){
     if(_npSortTurma.col===col){_npSortTurma.dir*=-1;}
     else{_npSortTurma.col=col;_npSortTurma.dir=1;}
@@ -959,10 +992,55 @@
       else{el.textContent=sd===1?'↓':'↑';}
     });
     var avulso=filtradas.filter(function(v){return v._src==='avulso';});
+    /* Ordenação avulso */
+    var scA=_npSortAvulso.col,sdA=_npSortAvulso.dir;
+    if(scA){
+      avulso=avulso.slice().sort(function(a,b){
+        var va,vb;
+        if(scA==='valor'){va=+(a.valor||0);vb=+(b.valor||0);return (va-vb)*sdA;}
+        if(scA==='cliente'){va=(a.clienteNome||a.cliente||'').toLowerCase();vb=(b.clienteNome||b.cliente||'').toLowerCase();}
+        else if(scA==='consultor'){va=(a.consultorNome||a.consultor||'').toLowerCase();vb=(b.consultorNome||b.consultor||'').toLowerCase();}
+        else if(scA==='produto'){va=(a.produto||'').toLowerCase();vb=(b.produto||'').toLowerCase();}
+        else if(scA==='status'){va=(a.status||'').toLowerCase();vb=(b.status||'').toLowerCase();}
+        else if(scA==='data'){va=String(a.data||'');vb=String(b.data||'');}
+        else{return 0;}
+        return va<vb?-sdA:va>vb?sdA:0;
+      });
+    }
+    /* Atualizar setas avulso */
+    ['cliente','consultor','produto','valor','status','data'].forEach(function(c){
+      var el=document.getElementById('npSortArrowA_'+c);
+      if(!el) return;
+      if(c!==scA){el.textContent='⇅';}
+      else{el.textContent=sdA===1?'↓':'↑';}
+    });
 
-    /* Badge */
-    var bT=document.getElementById('npBadgeTurma');if(bT)bT.textContent=turma.length;
-    var bA=document.getElementById('npBadgeAvulso');if(bA)bA.textContent=avulso.length;
+    /* Badge — count + SOMA total (mostra valor agregado do filtro vigente) */
+    var _stAtivo=(document.getElementById('npFiltroStatus')||{}).value||'';
+    var somaTurma=turma.reduce(function(s,v){return s+(+(v.valor||0));},0);
+    var somaAvulso=avulso.reduce(function(s,v){return s+(+(v.valor||0));},0);
+    var somaGeral=somaTurma+somaAvulso;
+    var qtdGeral=turma.length+avulso.length;
+    var sufixo = _stAtivo ? ' · '+_stAtivo.toUpperCase() : '';
+    var bT=document.getElementById('npBadgeTurma');
+    if(bT){
+      bT.innerHTML = turma.length + ' &middot; <span style="color:var(--accent);font-weight:800;">'+_fmtR(somaTurma)+'</span>'+sufixo;
+    }
+    var bA=document.getElementById('npBadgeAvulso');
+    if(bA){
+      bA.innerHTML = avulso.length + ' &middot; <span style="color:var(--accent);font-weight:800;">'+_fmtR(somaAvulso)+'</span>'+sufixo;
+    }
+    /* Tfoot — total por tabela */
+    var tT=document.getElementById('npTotalTurma');     if(tT) tT.textContent = _fmtR(somaTurma);
+    var tA=document.getElementById('npTotalAvulso');    if(tA) tA.textContent = _fmtR(somaAvulso);
+    /* Total geral combinado */
+    var tG=document.getElementById('npTotalGeralValor'); if(tG) tG.textContent = _fmtR(somaGeral);
+    var tGs=document.getElementById('npTotalGeralSub');
+    if(tGs){
+      tGs.textContent = qtdGeral + ' venda' + (qtdGeral!==1?'s':'') + ' · '
+        + turma.length + ' de turma · ' + avulso.length + ' avulsa' + (avulso.length!==1?'s':'')
+        + (_stAtivo ? ' · filtrado por ' + _stAtivo.toUpperCase() : '');
+    }
 
     /* Tabela turma */
     var tbT=document.getElementById('npTbodyTurma');
@@ -1249,9 +1327,10 @@
     /* Header */
     document.getElementById('npConsDetalheTitulo').textContent='👤 '+nome+' — '+(typeof _mesLabel==='function'?_mesLabel():'');
 
-    /* KPIs do consultor */
-    var kpiCard=function(label,val,sub,color){
-      return '<div class="np-cons-kpi">'
+    /* KPIs do consultor — clicáveis para filtrar a lista por status */
+    var kpiCard=function(label,val,sub,color,stFilter){
+      var clickable = stFilter ? ' clickable" onclick="window._npConsKpiFiltrar(\''+stFilter+'\')" data-st="'+stFilter+'"' : '"';
+      return '<div class="np-cons-kpi'+clickable+'>'
         +'<div class="np-cons-kpi-label">'+label+'</div>'
         +'<div class="np-cons-kpi-val"'+(color?' style="color:'+color+';"':'')+'>'+val+'</div>'
         +(sub?'<div class="np-cons-kpi-sub">'+sub+'</div>':'')
@@ -1284,10 +1363,10 @@
       metaCor=tierAtual.pct>=75?'var(--accent)':tierAtual.pct>=50?'var(--amber)':'var(--red)';
     }
     document.getElementById('npConsDetalheKpis').innerHTML=
-       kpiCard('Faturado',_fmtR(faturado),qtdPago+' pago'+(qtdPago!==1?'s':''),'var(--pago)')
-      +kpiCard('Em aberto',_fmtR(emAberto),qtdAberto+' em aberto','var(--amber)')
-      +kpiCard('Entrada',_fmtR(emEntrada),qtdEntrada+' entrada'+(qtdEntrada!==1?'s':''),'var(--accent)')
-      +kpiCard('Em negociação',_fmtR(emNegociacao),qtdNegociacao+' negocia'+(qtdNegociacao!==1?'ções':'ção'),'var(--blue)')
+       kpiCard('Faturado',_fmtR(faturado),qtdPago+' pago'+(qtdPago!==1?'s':''),'var(--pago)','pago')
+      +kpiCard('Em aberto',_fmtR(emAberto),qtdAberto+' em aberto','var(--amber)','aberto')
+      +kpiCard('Entrada',_fmtR(emEntrada),qtdEntrada+' entrada'+(qtdEntrada!==1?'s':''),'var(--accent)','entrada')
+      +kpiCard('Em negociação',_fmtR(emNegociacao),qtdNegociacao+' negocia'+(qtdNegociacao!==1?'ções':'ção'),'var(--blue)','negociacao')
       +kpiCard('Ticket médio',_fmtR(ticket),ativos.length+' venda'+(ativos.length!==1?'s':'')+' ativa'+(ativos.length!==1?'s':''),'')
       +kpiCard(metaLabel,metaVal,metaSub,metaCor);
 
@@ -1327,6 +1406,35 @@
   window.npFecharConsultorDetalhe=function(){
     var el=document.getElementById('npModalConsultorDetalhe');
     if(el) el.classList.remove('open');
+  };
+
+  /* Filtra as linhas da lista do consultor por status (toggle ON/OFF).
+     Chamado quando user clica em qualquer KPI clicável no topo do modal. */
+  window._npConsKpiFiltrar=function(st){
+    var body=document.getElementById('npConsDetalheBody');
+    if(!body) return;
+    var kpis=document.querySelectorAll('#npConsDetalheKpis .np-cons-kpi[data-st]');
+    var jaAtivo=false;
+    kpis.forEach(function(k){
+      if(k.getAttribute('data-st')===st && k.classList.contains('ativo')) jaAtivo=true;
+    });
+    kpis.forEach(function(k){ k.classList.remove('ativo'); });
+    if(jaAtivo){
+      // toggle off: mostrar todas
+      body.querySelectorAll('.np-kpi-detail-row:not(.head)').forEach(function(r){ r.style.display=''; });
+      return;
+    }
+    // ativa só o clicado e filtra linhas
+    kpis.forEach(function(k){
+      if(k.getAttribute('data-st')===st) k.classList.add('ativo');
+    });
+    body.querySelectorAll('.np-kpi-detail-row:not(.head)').forEach(function(r){
+      var stCell=r.querySelector('span[class^="np-st"]');
+      var rowSt=stCell?String(stCell.textContent||'').toLowerCase().trim():'';
+      // 'em aberto' → 'aberto', 'negociação' → 'negociacao'
+      rowSt=rowSt.replace(/ç/g,'c').replace(/ã/g,'a').replace(/\s+/g,'').replace(/^em/,'');
+      r.style.display=(rowSt===st)?'':'none';
+    });
   };
 
   window.npSalvarVenda=function(){

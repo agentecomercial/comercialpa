@@ -15,7 +15,7 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=2026-NOVO-CLI-GERAL-V1">
+<link rel="stylesheet" href="assets/css/main.css?v=2026-PIPELINE-V9-TOTAL">
 <link rel="stylesheet" href="assets/css/themes.css?v=2026-THEMES-110">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
@@ -612,7 +612,7 @@
 
 <!-- MODAL PROPOSTA -->
 <div class="modal-overlay" id="propostaOverlay" style="z-index:1400;align-items:flex-start;padding:20px 0;overflow-y:auto;">
-  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:1020px;max-width:98vw;margin:auto;display:flex;flex-direction:column;overflow:hidden;">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:1120px;max-width:98vw;margin:auto;display:flex;flex-direction:column;overflow:hidden;">
 
     <!-- Header -->
     <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
@@ -627,7 +627,7 @@
     <div style="display:flex;min-height:540px;">
 
       <!-- Coluna esquerda: controles -->
-      <div style="width:300px;flex-shrink:0;padding:18px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:680px;">
+      <div style="width:380px;flex-shrink:0;padding:18px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:12px;overflow-y:auto;overflow-x:hidden;max-height:680px;">
 
         <div class="modal-field" style="margin:0;">
           <label class="modal-label">Consultor</label>
@@ -952,6 +952,7 @@
           <button class="topbar-actions-item" onclick="_closeTopbarActionsMenu();document.getElementById('_importFileInput').click()" style="color:var(--amber);"><span class="ic">⬆</span>Importar</button>
           <button class="topbar-actions-item" onclick="_closeTopbarActionsMenu();atualizarDados()" style="color:var(--accent);"><span class="ic">↻</span>Atualizar</button>
           <button class="topbar-actions-item" onclick="_closeTopbarActionsMenu();abrirHistoricoTurma()"><span class="ic">🕓</span>Histórico</button>
+          <button class="topbar-actions-item" onclick="_closeTopbarActionsMenu();_auditTreinAbrir()"><span class="ic">🧹</span>Auditar treinamentos</button>
         </div>
       </div>
       <button class="notif-bell" id="notifBell2" onclick="_notifToggle(event)" title="Notificações">🔔<span class="notif-badge" id="notifBadge2" hidden>0</span></button>
@@ -1972,15 +1973,16 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=2026-MS-TREIN-V5-REVERT"></script>
+<script defer src="assets/js/02-main.js?v=2026-PAUSADOS-V1"></script>
 <script defer src="assets/js/29-login.js?v=20260514f"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=2026-TOPBAR-KEBAB-V1"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=2026-PAUSADOS-V1"></script>
 <script defer src="assets/js/31-modo-consultor-desktop.js?v=20260514a"></script>
 <script defer src="assets/js/33-relatorio-supremo.js?v=20260516w"></script>
 <script defer src="assets/js/34-ms-status-filter.js?v=2026-MS-STATUS-V1"></script>
 <script defer src="assets/js/35-ms-filters.js?v=2026-MS-FILT-V12-DASH-DRAG"></script>
 <script defer src="assets/js/36-col-filter.js?v=2026-COL-FILTER-V3-DRAG"></script>
 <script defer src="assets/js/37-theme-picker.js?v=2026-THEMES-110"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=2026-AUDIT-V1"></script>
 <script defer src="assets/js/21-turmas.js?v=20260514a"></script>
 <script defer src="assets/js/22-pdf-consultor.js?v=20260515a"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
@@ -1989,9 +1991,9 @@ try{
 <script defer src="assets/js/26-aba-treinador.js?v=20260515b"></script>
 <script defer src="assets/js/27-novos-membros.js"></script>
 <script defer src="assets/js/28-modais-cliente.js?v=2026-CI-FECHADO-V1"></script>
-<script defer src="assets/js/18-usuarios.js"></script>
+<script defer src="assets/js/18-usuarios.js?v=2026-PAUSADOS-V1"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=2026-EXEC-FIN-V6-SEM-JORNADA"></script>
+<script defer src="assets/js/20-propostas-main.js?v=2026-PROP-OURO-LT-FIX"></script>
 <script defer src="assets/js/17-presenca.js?v=20260514e"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
@@ -2008,7 +2010,7 @@ try{
 
 <script defer src="assets/js/04-card-clientes.js?v=20260515b"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260516p"></script>
+<script defer src="assets/js/05-importacao.js?v=2026-IMP-SEM-NOMEVENDA"></script>
 <script defer src="assets/js/05b-lista-clientes.js?v=20260516p"></script>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -2265,6 +2267,13 @@ try{
           <th onclick="npSortTurma('turma')" style="cursor:pointer;user-select:none;">Turma <span id="npSortArrow_turma">&#x21C5;</span></th>
         </tr></thead>
         <tbody id="npTbodyTurma"><tr><td colspan="6" class="np-empty">Selecione um mês para ver as vendas.</td></tr></tbody>
+        <tfoot id="npTfootTurma">
+          <tr class="np-tfoot-total">
+            <td colspan="3" style="text-align:right;font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:11px;color:var(--muted);">Total Vendas de Turma</td>
+            <td class="r" id="npTotalTurma" style="font-weight:800;color:var(--accent);font-family:'DM Mono',monospace;font-size:13px;">R$ 0,00</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
     <!-- Bloco B: Avulsas -->
@@ -2274,13 +2283,32 @@ try{
         <span class="np-bloco-badge" id="npBadgeAvulso">0</span>
       </div>
       <table class="np-table">
-        <thead><tr>
-          <th>Cliente</th><th>Consultor</th><th>Produto</th>
-          <th class="r">Valor</th><th>Status</th><th>Data</th>
+        <thead><tr id="npThAvulso">
+          <th onclick="npSortAvulso('cliente')" style="cursor:pointer;user-select:none;">Cliente <span id="npSortArrowA_cliente">&#x21C5;</span></th>
+          <th onclick="npSortAvulso('consultor')" style="cursor:pointer;user-select:none;">Consultor <span id="npSortArrowA_consultor">&#x21C5;</span></th>
+          <th onclick="npSortAvulso('produto')" style="cursor:pointer;user-select:none;">Produto <span id="npSortArrowA_produto">&#x21C5;</span></th>
+          <th class="r" onclick="npSortAvulso('valor')" style="cursor:pointer;user-select:none;">Valor <span id="npSortArrowA_valor">&#x21C5;</span></th>
+          <th onclick="npSortAvulso('status')" style="cursor:pointer;user-select:none;">Status <span id="npSortArrowA_status">&#x21C5;</span></th>
+          <th onclick="npSortAvulso('data')" style="cursor:pointer;user-select:none;">Data <span id="npSortArrowA_data">&#x21C5;</span></th>
           <th style="width:90px;"></th>
         </tr></thead>
         <tbody id="npTbodyAvulso"><tr><td colspan="7" class="np-empty">Nenhuma venda avulsa este mês.</td></tr></tbody>
+        <tfoot id="npTfootAvulso">
+          <tr class="np-tfoot-total">
+            <td colspan="3" style="text-align:right;font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:11px;color:var(--muted);">Total Vendas Avulsas</td>
+            <td class="r" id="npTotalAvulso" style="font-weight:800;color:var(--accent);font-family:'DM Mono',monospace;font-size:13px;">R$ 0,00</td>
+            <td colspan="3"></td>
+          </tr>
+        </tfoot>
       </table>
+    </div>
+    <!-- Total geral combinado (Turma + Avulso) -->
+    <div id="npTotalGeralBox" style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:14px 22px;margin-top:14px;box-shadow:0 0 0 1px rgba(200,240,90,.12),0 4px 14px rgba(200,240,90,.08);">
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">Total Geral · Turma + Avulso</div>
+        <div id="npTotalGeralSub" style="font-size:11px;color:var(--muted);margin-top:2px;">0 vendas</div>
+      </div>
+      <div id="npTotalGeralValor" style="font-size:22px;font-weight:800;color:var(--accent);font-family:'DM Mono',monospace;letter-spacing:.02em;">R$ 0,00</div>
     </div>
   </div>
 
@@ -2507,12 +2535,12 @@ try{
 
 <!-- Modal: Detalhe de Consultor (vendas + produção do mês) -->
 <div class="np-modal-overlay" id="npModalConsultorDetalhe">
-  <div class="np-modal" style="width:min(1000px,95vw);max-height:88vh;display:flex;flex-direction:column;">
+  <div class="np-modal" style="width:98vw;max-width:98vw;max-height:92vh;display:flex;flex-direction:column;">
     <div class="np-modal-header">
       <span class="np-modal-title" id="npConsDetalheTitulo">Consultor</span>
       <button class="np-modal-close" onclick="npFecharConsultorDetalhe()">×</button>
     </div>
-    <div id="npConsDetalheKpis" class="np-cons-kpis"></div>
+    <div id="npConsDetalheKpis" class="np-cons-kpis" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:14px;"></div>
     <div class="np-modal-body" id="npConsDetalheBody" style="padding:0;overflow:auto;"></div>
     <div class="np-modal-footer">
       <button class="np-btn-sec" onclick="npFecharConsultorDetalhe()">Fechar</button>
@@ -2573,9 +2601,9 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260515a"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=2026-PIPELINE-V10-SUBSTATUS"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260514a"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=2026-PIPELINE-V8"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
 <script defer src="assets/js/14-notificacoes.js?v=20260514a"></script>
@@ -2679,6 +2707,24 @@ try{
   </ul>
   <div class="notif-footer">
     <button class="notif-header-btn" onclick="_notifMarkAllRead()">Limpar todas</button>
+  </div>
+</div>
+
+<!-- ══ MODAL AUDITORIA DE TREINAMENTOS ══ -->
+<div class="modal-overlay" id="auditTreinOverlay" style="z-index:5500;">
+  <div class="modal" style="width:min(720px,95vw);max-height:90vh;display:flex;flex-direction:column;padding:0;">
+    <div style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div class="modal-title" style="margin:0;">🧹 Auditoria de Treinamentos</div>
+        <div class="modal-subtitle" style="margin:4px 0 0;">Identifica valores que NÃO estão na lista oficial e permite purgá-los em massa.</div>
+      </div>
+      <button onclick="_auditTreinFechar()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div id="auditTreinBody" style="padding:18px 22px;overflow-y:auto;flex:1;"></div>
+    <div style="padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;">
+      <button class="modal-cancel" onclick="_auditTreinFechar()">Fechar</button>
+      <button class="modal-save" style="background:var(--red);color:#fff;border:none;" onclick="_auditTreinAplicar()">🧹 Remover marcados</button>
+    </div>
   </div>
 </div>
 

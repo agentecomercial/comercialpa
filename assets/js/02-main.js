@@ -498,22 +498,37 @@ function entrarTurma(id){
         dadosFinais={data:[]};
       }
 
+      // Set de usuários PAUSADOS (ativo:false) — bloqueia adição nos selects da turma.
+      // Disponível também em window._pausadosNomesSet para outros módulos consultarem.
+      var _pausadosTurmaSet = new Set();
+      if(fbUsuarios && typeof fbUsuarios === 'object'){
+        Object.values(fbUsuarios).forEach(function(u){
+          if(u && u.nome && u.ativo === false){
+            _pausadosTurmaSet.add(String(u.nome).toUpperCase().trim());
+          }
+        });
+      }
+      window._pausadosNomesSet = _pausadosTurmaSet;
+      function _naoPausado(nome){
+        return !_pausadosTurmaSet.has(String(nome||'').toUpperCase().trim());
+      }
       if(dadosFinais.data&&dadosFinais.data.length){
         dadosFinais.data.forEach(function(c){
-          if(c.consultor&&c.consultor.trim()&&!consultoresDB.includes(c.consultor)) consultoresDB.push(c.consultor);
-          if(c.treinador&&c.treinador.trim()&&c.treinador!=='-'&&!treinadoresDB.includes(c.treinador)) treinadoresDB.push(c.treinador);
+          if(c.consultor&&c.consultor.trim()&&!consultoresDB.includes(c.consultor)&&_naoPausado(c.consultor)) consultoresDB.push(c.consultor);
+          if(c.treinador&&c.treinador.trim()&&c.treinador!=='-'&&!treinadoresDB.includes(c.treinador)&&_naoPausado(c.treinador)) treinadoresDB.push(c.treinador);
         });
       }
       // FIX: incluir consultores/treinadores salvos na turma (campo direto do Firebase)
-      // Garante que usuários adicionados sem clientes vinculados persistem
+      // Garante que usuários adicionados sem clientes vinculados persistem,
+      // mas PAUSADOS são bloqueados mesmo se já estavam salvos na turma.
       if(turmaObj&&Array.isArray(turmaObj.consultores)){
         turmaObj.consultores.forEach(function(n){
-          if(n&&n.trim()&&!consultoresDB.includes(n)) consultoresDB.push(n);
+          if(n&&n.trim()&&!consultoresDB.includes(n)&&_naoPausado(n)) consultoresDB.push(n);
         });
       }
       if(turmaObj&&Array.isArray(turmaObj.treinadores)){
         turmaObj.treinadores.forEach(function(n){
-          if(n&&n.trim()&&n!=='-'&&!treinadoresDB.includes(n)) treinadoresDB.push(n);
+          if(n&&n.trim()&&n!=='-'&&!treinadoresDB.includes(n)&&_naoPausado(n)) treinadoresDB.push(n);
         });
       }
       consultoresDB.sort(function(a,b){return a.localeCompare(b,'pt-BR');});

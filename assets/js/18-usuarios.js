@@ -695,6 +695,30 @@ function _toggleAtivo(uid,novoEstado){
   if(!confirm(msg)) return;
   window._fbSave('usuarios/'+uid+'/ativo',novoEstado).then(function(){
     _renderUsuariosGrid();
+    // ── PROPAGAÇÃO IMEDIATA ──
+    // Atualiza cache de pausados e remove/recoloca dos selects da turma ativa.
+    try {
+      window._fbGet && window._fbGet('usuarios').then(function(us){
+        var pausSet = new Set();
+        Object.values(us||{}).forEach(function(u){
+          if(u && u.nome && u.ativo === false) pausSet.add(String(u.nome).toUpperCase().trim());
+        });
+        window._pausadosNomesSet = pausSet;
+        // Remove imediatamente dos arrays globais
+        if(typeof allConsultors !== 'undefined' && Array.isArray(allConsultors)){
+          allConsultors = allConsultors.filter(function(n){ return !pausSet.has(String(n||'').toUpperCase().trim()); });
+          window.allConsultors = allConsultors;
+        }
+        if(typeof allTrainers !== 'undefined' && Array.isArray(allTrainers)){
+          allTrainers = allTrainers.filter(function(n){ return !pausSet.has(String(n||'').toUpperCase().trim()); });
+          window.allTrainers = allTrainers;
+        }
+        // Re-render dos selects/filtros
+        if(typeof buildSelects==='function')    buildSelects();
+        if(typeof buildFilterBtns==='function') buildFilterBtns();
+        if(typeof renderAll==='function')       renderAll();
+      });
+    } catch(e){}
   }).catch(function(e){alert('Erro: '+(e&&e.message?e.message:e));});
 }
 

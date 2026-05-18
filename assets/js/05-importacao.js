@@ -10,7 +10,7 @@ var _impProcessando = false; // guard contra duplo processamento do arquivo
 // ── Aliases de colunas ─────────────────────────────────────────
 var IMP_ALIASES = {
   cliente:     ['cliente','nome','cliente_nome','nome_do_cliente','aluno','name','nome completo','nome_completo'],
-  treinamento: ['treinamento','curso','produto','product','course','nome_curso','nome da venda','nome_da_venda'],
+  treinamento: ['treinamento','curso','produto','product','course','nome_curso'],
   consultor:   ['utm_gclid','consultor','responsavel','responsável','vendedor','sales'],
   valor:       ['valor','preco','preço','total','value','price','valor_total','investimento'],
   status:      ['status','situacao','situação','state','status_pagamento'],
