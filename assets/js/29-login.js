@@ -98,7 +98,7 @@ function doLogin(){
   function _loginLegado(migrarAuthEmBackground){
     window._fbGet('usuarios').then(function(usuarios){
       if(!usuarios){_loginErr();return;}
-      var entry=Object.entries(usuarios).find(function(e){return e[1].login===u&&e[1].senha===p&&e[1].ativo!==false;});
+      var entry=Object.entries(usuarios).find(function(e){return e[1].login===u&&e[1].senha===p&&e[1].ativo!==false&&e[1].congelado!==true;});
       if(!entry){_loginErr();return;}
       var uid=entry[0],user=entry[1];
       /* Tentar migrar para Auth em background sem bloquear o fluxo */
@@ -122,7 +122,7 @@ function doLogin(){
     /* Auth ok — localizar dados do usuário no RTDB pelo login */
     return window._fbGet('usuarios').then(function(usuarios){
       var entry=null;
-      if(usuarios) entry=Object.entries(usuarios).find(function(e){return e[1].login===u&&e[1].ativo!==false;});
+      if(usuarios) entry=Object.entries(usuarios).find(function(e){return e[1].login===u&&e[1].ativo!==false&&e[1].congelado!==true;});
       if(!entry){_loginErr();return;}
       var uid=entry[0],user=entry[1];
       /* Vincular authUid se ainda não estiver salvo */

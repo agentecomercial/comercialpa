@@ -351,6 +351,7 @@ function _montarGrid(membros,usuarios){
   function _card(uid,u){
     var temLogin=!!(u.login&&u.senha);
     var ativo=u.ativo!==false;
+    var congelado=u.congelado===true;
     var primAcesso=u.primeiroAcesso===true;
     var _ehMinistranteReal=u.perfil==='treinador'||u.perfil==='ministrante'
       ?(_ministranteAtual&&_ministranteAtual.toUpperCase()===(u.nome||'').toUpperCase())
@@ -361,9 +362,9 @@ function _montarGrid(membros,usuarios){
     var nomeU=(u.nome||'').toUpperCase();
     var loginTxt=u.login?'@'+u.login:'—';
 
-    // bolinha de status
-    var dotCls=!temLogin?'sem-acesso':!ativo?'pausado':primAcesso?'pendente':'ativo';
-    var dotTip=!temLogin?'Sem acesso configurado':!ativo?'Acesso pausado':primAcesso?'Primeiro acesso pendente':'Ativo';
+    // bolinha de status — ordem: sem-acesso → pausado → congelado → pendente → ativo
+    var dotCls=!temLogin?'sem-acesso':!ativo?'pausado':congelado?'congelado':primAcesso?'pendente':'ativo';
+    var dotTip=!temLogin?'Sem acesso configurado':!ativo?'Acesso pausado':congelado?'Congelado (bloqueado de login, ainda na turma)':primAcesso?'Primeiro acesso pendente':'Ativo';
 
     // itens do dropdown
     var ddItems='';
@@ -375,6 +376,7 @@ function _montarGrid(membros,usuarios){
         +'<button class="ur-dd-item btn-reset-senha" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'">🔁 Resetar senha</button>'
         +'<hr class="ur-dd-sep">'
         +'<button class="ur-dd-item btn-perms" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'">🔒 Permissões</button>'
+        +'<button class="ur-dd-item btn-toggle-congelado" data-uid="'+uid+'" data-congelado="'+(congelado?'true':'false')+'">'+(congelado?'☀ Descongelar':'❄ Congelar')+'</button>'
         +'<button class="ur-dd-item btn-toggle-ativo" data-uid="'+uid+'" data-ativo="'+(ativo?'true':'false')+'">'+(ativo?'⏸ Pausar acesso':'▶ Ativar acesso')+'</button>';
     }
     ddItems+='<hr class="ur-dd-sep"><button class="ur-dd-item danger btn-excluir-usuario" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'">🗑 Excluir usuário</button>';
@@ -563,6 +565,8 @@ function _montarGrid(membros,usuarios){
         resetarSenhaUsuario(btn.dataset.uid, btn.dataset.nome);
       } else if(btn.classList.contains('btn-toggle-ativo')){
         _toggleAtivo(btn.dataset.uid, btn.dataset.ativo==='true'?false:true);
+      } else if(btn.classList.contains('btn-toggle-congelado')){
+        _toggleCongelado(btn.dataset.uid, btn.dataset.congelado==='true'?false:true);
       } else if(btn.classList.contains('btn-excluir-usuario')){
         _excluirUsuario(btn.dataset.uid, btn.dataset.nome);
       } else if(btn.classList.contains('btn-perms')){
@@ -688,6 +692,23 @@ function _abrirAlterarSenhaUsuario(uid,nome){
   document.getElementById('alterarSenhaNova').value='';
   document.getElementById('alterarSenhaOverlay').classList.add('open');
   setTimeout(function(){document.getElementById('alterarSenhaNova').focus();},100);
+}
+
+function _toggleCongelado(uid,novoEstado){
+  var msg=novoEstado
+    ?'CONGELAR este usuário?\n\nEle NÃO conseguirá fazer login enquanto estiver congelado,\nporém o nome continuará aparecendo nas turmas (clientes vinculados ficam visíveis).'
+    :'Descongelar este usuário? Ele voltará a conseguir logar.';
+  if(!confirm(msg)) return;
+  window._fbSave('usuarios/'+uid+'/congelado',novoEstado).then(function(){
+    _renderUsuariosGrid();
+    if(typeof _showToast==='function'){
+      _showToast(novoEstado?'❄ Usuário congelado':'☀ Usuário descongelado','var(--blue)');
+    }
+    /* Audit-log */
+    if(typeof _addPendLog==='function'){
+      _addPendLog(novoEstado?'Usuário congelado':'Usuário descongelado','UID: '+uid,novoEstado?'❄':'☀');
+    }
+  }).catch(function(e){alert('Erro: '+(e&&e.message?e.message:e));});
 }
 
 function _toggleAtivo(uid,novoEstado){
