@@ -8,6 +8,98 @@
 (function(){
   'use strict';
 
+  var CINEMATIC = [
+    { n:'c01', name:'Rain on Glass',     bg:'#050810', accent:'#5ed0ff' },
+    { n:'c02', name:'Snow Fall',         bg:'#0a0e1a', accent:'#ffffff' },
+    { n:'c03', name:'Aurora Cinema',     bg:'#020a18', accent:'#7fffd4' },
+    { n:'c04', name:'Ocean Waves',       bg:'#001830', accent:'#5ed0ff' },
+    { n:'c05', name:'Fire Embers',       bg:'#080302', accent:'#ffaf50' },
+    { n:'c06', name:'City Lights',       bg:'#04081a', accent:'#ffd060' },
+    { n:'c07', name:'Galaxy Spin',       bg:'#04021a', accent:'#c890ff' },
+    { n:'c08', name:'Sunset Beach',      bg:'#1a0510', accent:'#ffaa50' },
+    { n:'c09', name:'Forest Mist',       bg:'#02080a', accent:'#8ad070' },
+    { n:'c10', name:'Volcanic Heat',     bg:'#080202', accent:'#ff5030' },
+    { n:'c11', name:'Northern Lights',   bg:'#020812', accent:'#5fffaa' },
+    { n:'c12', name:'Underwater',        bg:'#001020', accent:'#5be8ff' },
+    { n:'c13', name:'Desert Heat',       bg:'#2a1a10', accent:'#ffc880' },
+    { n:'c14', name:'Lightning Storm',   bg:'#020208', accent:'#a8c8ff' },
+    { n:'c15', name:'Cherry Blossom',    bg:'#1a0815', accent:'#ff9ad4' },
+    { n:'c16', name:'Steam Punk',        bg:'#1a0e08', accent:'#b88a4a' },
+    { n:'c17', name:'Neon Rain',         bg:'#080018', accent:'#ff64c8' },
+    { n:'c18', name:'Wheat Field',       bg:'#1a1408', accent:'#e8c870' },
+    { n:'c19', name:'Lava Flow',         bg:'#1a0500', accent:'#ff7020' },
+    { n:'c20', name:'Time Tunnel',       bg:'#020208', accent:'#7090ff' }
+  ];
+
+  var MATERIAL = [
+    { n:'m01', name:'Lifted Paper',      bg:'#f0f0f0', accent:'#2a5b8f' },
+    { n:'m02', name:'Tilted Glass',      bg:'#0a0a1a', accent:'#7fffd4' },
+    { n:'m03', name:'Metallic Plate',    bg:'#1a1d22', accent:'#a8c0d4' },
+    { n:'m04', name:'Floating Cards',    bg:'#0a0e1a', accent:'#c8f05a' },
+    { n:'m05', name:'Wood Polished',     bg:'#2a1810', accent:'#d4a060' },
+    { n:'m06', name:'Marble Luxury',     bg:'#f5f0ea', accent:'#1a1a1a' },
+    { n:'m07', name:'Brushed Steel',     bg:'#0e1218', accent:'#5ba8e8' },
+    { n:'m08', name:'Carbon 3D',         bg:'#0a0a0a', accent:'#ff3838' },
+    { n:'m09', name:'Velvet 3D',         bg:'#1a0a2e', accent:'#f0d68a' },
+    { n:'m10', name:'Acrylic Pane',      bg:'#e8eef4', accent:'#4a90e2' },
+    { n:'m11', name:'Gold Plate',        bg:'#0a0500', accent:'#ffd060' },
+    { n:'m12', name:'Silver Foil',       bg:'#1a1a1f', accent:'#d8d8e0' },
+    { n:'m13', name:'Concrete Brutalist',bg:'#3a3a38', accent:'#ffd060' },
+    { n:'m14', name:'Glass Panes',       bg:'#080a18', accent:'#a8c8ff' },
+    { n:'m15', name:'Origami Paper',     bg:'#f8f5ea', accent:'#b85c20' },
+    { n:'m16', name:'Crystal Cut',       bg:'#0a0a18', accent:'#a8e0ff' },
+    { n:'m17', name:'Liquid Mercury',    bg:'#1a1c20', accent:'#e0e8f0' },
+    { n:'m18', name:'Glow Sticks',       bg:'#080018', accent:'#80ff60' },
+    { n:'m19', name:'Embossed Leather',  bg:'#2a1810', accent:'#d8a868' },
+    { n:'m20', name:'Holographic Foil',  bg:'#0a0a18', accent:'#ffffff' }
+  ];
+
+  var GLASS = [
+    { n:'g01', name:'Light Pure',        bg:'#e8eef4', accent:'#4a90e2' },
+    { n:'g02', name:'Dark Pure',         bg:'#0a0e1a', accent:'#a8c8ff' },
+    { n:'g03', name:'Ocean Glass',       bg:'#001830', accent:'#5ed0ff' },
+    { n:'g04', name:'Forest Glass',      bg:'#0a1810', accent:'#7fe070' },
+    { n:'g05', name:'Sunset Glass',      bg:'#1a0d0a', accent:'#ff8a5b' },
+    { n:'g06', name:'Rose Glass',        bg:'#f8e6ec', accent:'#c04880' },
+    { n:'g07', name:'Violet Glass',      bg:'#150825', accent:'#b890ff' },
+    { n:'g08', name:'Mint Glass',        bg:'#f0faf5', accent:'#0a8a5a' },
+    { n:'g09', name:'Gold Glass',        bg:'#1a0e00', accent:'#ffd060' },
+    { n:'g10', name:'Silver Glass',      bg:'#1a1d22', accent:'#d8e0e8' },
+    { n:'g11', name:'Crimson Glass',     bg:'#180404', accent:'#ff5060' },
+    { n:'g12', name:'Indigo Glass',      bg:'#02021a', accent:'#7890ff' },
+    { n:'g13', name:'Coral Glass',       bg:'#0e1822', accent:'#ff7890' },
+    { n:'g14', name:'Champagne Glass',   bg:'#f5ead0', accent:'#b8862c' },
+    { n:'g15', name:'Lavender Glass',    bg:'#e8e0f4', accent:'#7848d4' },
+    { n:'g16', name:'Smoke Glass',       bg:'#1a1a1f', accent:'#b8b8c8' },
+    { n:'g17', name:'Crystal Refraction',bg:'#0a0a18', accent:'#a8e0ff' },
+    { n:'g18', name:'Frosted Rainbow',   bg:'#f0f4f8', accent:'#a060e0' },
+    { n:'g19', name:'Etched Glass',      bg:'#10181f', accent:'#88c0e0' },
+    { n:'g20', name:'Stained Glass',     bg:'#0a0518', accent:'#ff8060' }
+  ];
+
+  var GLITCH = [
+    { n:'x01', name:'Matrix Cascade',    bg:'#000000', accent:'#00ff88' },
+    { n:'x02', name:'Neon Tokyo',        bg:'#050015', accent:'#00ffff' },
+    { n:'x03', name:'VHS Static',        bg:'#0a0a0a', accent:'#ff60c0' },
+    { n:'x04', name:'Hologram',          bg:'#020812', accent:'#00ffff' },
+    { n:'x05', name:'Glitch Red',        bg:'#100000', accent:'#ff0000' },
+    { n:'x06', name:'Cyberdeck Green',   bg:'#000800', accent:'#00cc88' },
+    { n:'x07', name:'Synthwave Pink',    bg:'#150525', accent:'#ff60c8' },
+    { n:'x08', name:'Plasma Cyber',      bg:'#050510', accent:'#ffffff' },
+    { n:'x09', name:'Hacker Black',      bg:'#000000', accent:'#ffffff' },
+    { n:'x10', name:'Chromatic Split',   bg:'#0a0a18', accent:'#ffffff' },
+    { n:'x11', name:'Glitch Magenta',    bg:'#100018', accent:'#ff00cc' },
+    { n:'x12', name:'Digital Rain',      bg:'#000800', accent:'#00ff88' },
+    { n:'x13', name:'Distorted Cyan',    bg:'#001818', accent:'#00ffff' },
+    { n:'x14', name:'Static Snow',       bg:'#0a0a0a', accent:'#ffffff' },
+    { n:'x15', name:'Cyber Neon',        bg:'#000018', accent:'#00ffff' },
+    { n:'x16', name:'ASCII Art',         bg:'#000000', accent:'#00ff88' },
+    { n:'x17', name:'Pixel Static',      bg:'#0a0a18', accent:'#ff60c0' },
+    { n:'x18', name:'Datamosh',          bg:'#101010', accent:'#ffff00' },
+    { n:'x19', name:'Holographic Glitch',bg:'#0a0a18', accent:'#ffffff' },
+    { n:'x20', name:'System Error',      bg:'#100000', accent:'#ff0000' }
+  ];
+
   var PREMIUM = [
     { n:'p01', name:'★ Obsidian Gold',    bg:'#000000', accent:'#d4af37' },
     { n:'p02', name:'★ Aurora Dynamics',  bg:'#020a18', accent:'#7fffd4' },
@@ -147,19 +239,33 @@
          +    '</div>'
          +  '</div>';
 
-    // ★ PREMIUM (com efeitos)
-    html += '<div class="theme-picker-head" style="margin-top:14px;color:#d4af37;">★ Premium (com efeitos)</div>'
-         +  '<div class="theme-picker-grid">';
-    PREMIUM.forEach(function(t){
-      var ativo = (t.n === atual) ? ' active' : '';
-      html += '<div class="theme-swatch theme-swatch-premium'+ativo+'" onclick="_themeSelect(\''+t.n+'\')" title="'+t.name+'">'
-            +   '<div class="theme-swatch-bg" style="background:radial-gradient(circle at 30% 20%,'+t.accent+'30,transparent 60%),'+t.bg+';"></div>'
-            +   '<div class="theme-swatch-num">'+t.n.toUpperCase()+'</div>'
-            +   '<div class="theme-swatch-name">'+t.name+'</div>'
-            +   '<div class="theme-swatch-accent" style="background:'+t.accent+';box-shadow:0 0 12px '+t.accent+';"></div>'
-            + '</div>';
-    });
-    html += '</div>';
+    // Helper para renderizar uma categoria
+    function _renderCat(label, list, color){
+      var h = '<div class="theme-picker-head" style="margin-top:14px;'+(color?'color:'+color+';':'')+'">'+label+'</div>'
+            + '<div class="theme-picker-grid">';
+      list.forEach(function(t){
+        var ativo = (t.n === atual) ? ' active' : '';
+        h += '<div class="theme-swatch theme-swatch-premium'+ativo+'" onclick="_themeSelect(\''+t.n+'\')" title="'+t.name+'">'
+          +   '<div class="theme-swatch-bg" style="background:radial-gradient(circle at 30% 20%,'+t.accent+'30,transparent 60%),'+t.bg+';"></div>'
+          +   '<div class="theme-swatch-num">'+t.n.toUpperCase()+'</div>'
+          +   '<div class="theme-swatch-name">'+t.name+'</div>'
+          +   '<div class="theme-swatch-accent" style="background:'+t.accent+';box-shadow:0 0 12px '+t.accent+';"></div>'
+          + '</div>';
+      });
+      h += '</div>';
+      return h;
+    }
+
+    // ★★ CINEMATIC
+    html += _renderCat('★★ Cinematic (animados)', CINEMATIC, '#5ed0ff');
+    // ★★ MATERIAL 3D
+    html += _renderCat('★★ Material 3D (depth + tilt)', MATERIAL, '#c8f05a');
+    // ★★ GLASSMORPHISM PRO
+    html += _renderCat('★★ Glassmorphism Pro', GLASS, '#a8c8ff');
+    // ★ GLITCH
+    html += _renderCat('★ Glitch / Cyberpunk', GLITCH, '#ff60c0');
+    // ★ PREMIUM (originais)
+    html += _renderCat('★ Premium (com efeitos)', PREMIUM, '#d4af37');
 
     // LITE (só paleta)
     html += '<div class="theme-picker-head" style="margin-top:14px;">Lite (só cores)</div>'
