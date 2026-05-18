@@ -690,9 +690,10 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
     padding:8px 4px;
     width:100%;
   }
-  /* Esconde título "Clientes" no mobile (a busca ocupa o lugar) */
+  /* Esconde título "Clientes" e legado .filtros-mobile (substituído pela barra) */
   .cli-bar-unica .panel-title{ display:none !important; }
   .cli-bar-unica .cli-spacer{ display:none !important; }
+  .filtros-mobile{ display:none !important; }
 
   /* Row breakers — força quebra de linha no flex-wrap */
   .cli-bar-unica .cli-row-break{
@@ -702,15 +703,16 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   /* ROW 1: busca expansiva + kebab + botão "+" */
   .cli-bar-unica .search-bar{
     order:1; flex:1 1 0; min-width:120px; max-width:none;
+    height:36px; align-self:center;
   }
-  .cli-bar-unica .search-bar input{ width:100%; }
+  .cli-bar-unica .search-bar input{ width:100%; height:auto; }
   .cli-bar-unica .cli-menu{ order:2; flex:0 0 auto; }
   .cli-bar-unica #btnNovoCliente,
   .cli-bar-unica .add-btn.cli-action-btn{ order:3; flex:0 0 auto; }
   /* Esconde o LABEL do botão + (mantém só o ícone +) */
   .cli-bar-unica #btnNovoCliente .btn-label{ display:none !important; }
   .cli-bar-unica #btnNovoCliente{
-    width:34px;height:34px;padding:0;border-radius:8px;
+    width:36px;height:36px;padding:0;border-radius:8px;
     display:inline-flex;align-items:center;justify-content:center;
   }
   .cli-bar-unica #btnNovoCliente .btn-icon{font-size:16px;}
@@ -718,9 +720,17 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   /* BREAK 1 entre row 1 e row 2 */
   .cli-bar-unica .cli-row-break:first-of-type{ order:4; }
 
-  /* ROW 2: TODOS + 4 filtros — wrap permitido, mas em row */
-  .cli-bar-unica .ms-status{ order:5; flex:0 0 auto; }
-  .cli-bar-unica .ms-filt{ order:6; flex:0 0 auto; }
+  /* ROW 2: TODOS + 4 filtros — INLINE, não full-width */
+  .cli-bar-unica .ms-status,
+  .cli-bar-unica .ms-filt{
+    order:5; flex:0 0 auto; min-width:auto; width:auto;
+  }
+  .cli-bar-unica .ms-status-trigger,
+  .cli-bar-unica .ms-filt-trigger{
+    width:auto !important;          /* sobrescreve o 100% global */
+    min-width:auto;
+    height:32px;padding:0 10px;
+  }
 
   /* BREAK 2 entre row 2 e row 3 */
   .cli-bar-unica .cli-row-break:nth-of-type(2){ order:7; }
