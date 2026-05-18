@@ -1581,39 +1581,34 @@ function renderAll(){
         g.totalGeral+=(it.valor||0);
       });
       const _escAttr=function(s){return String(s||'').replace(/'/g,"\\'");};
+      // === Card mobile · Opção 05 — compacto com chips de treinamento ===
       _ccEl.innerHTML=_ordem.map(function(nome){
         const g=_grupos[nome];
         const pago = g.qtdTotal>0 && g.qtdPagos===g.qtdTotal;
-        const resumoSt = g.qtdTotal+' treino'+(g.qtdTotal!==1?'s':'')
-          + ' · '+g.qtdPagos+' pago'+(g.qtdPagos!==1?'s':'')
-          + (g.qtdAbertos>0?' · '+g.qtdAbertos+' aberto'+(g.qtdAbertos!==1?'s':''):'');
-        const consultorList = Array.from(g.consultores).map(function(c){return String(c).toUpperCase();}).join(', ') || '—';
+        const aberto = !pago && g.qtdAbertos>0;
+        const stCls = pago?'pago':(aberto?'aberto':'semst');
+        const stLabel = pago ? 'Pago' : (aberto ? 'Em aberto' : 'Sem status');
+        const cnt = g.qtdTotal + ' treinamento' + (g.qtdTotal!==1?'s':'');
         const pills = g.treinos.map(function(t){
           const cls = t.status==='pago'?'p':(t.status==='aberto'?'a':'n');
           return '<span class="mob-trein-pill '+cls+'">'+String(t.cod||'—').toUpperCase()+'</span>';
         }).join('');
         const presencaHtml = window._presencaBadgeHtml ? window._presencaBadgeHtml(g.anchorRi) : '<span style="color:var(--muted);font-size:10px;">—</span>';
-        return '<div class="mob-card mob-card-agg'+(pago?' pago':'')+'" id="mobcard_'+g.anchorRi+'">'
+        return '<div class="mob-card mob-card-agg '+stCls+'" id="mobcard_'+g.anchorRi+'">'
           + '<div class="mob-header">'
           +   '<div class="mob-info">'
           +     '<div class="mob-name-row">'
-          +       '<span class="mob-name'+(pago?' pago':'')+'">'+g.cliente+'</span>'
+          +       '<span class="mob-name '+stCls+'">'+g.cliente+'</span>'
           +       '<span class="mob-presenca" data-presenca-ri="'+g.anchorRi+'">'+presencaHtml+'</span>'
           +       '<button class="mob-plus-btn" onclick="event.stopPropagation();window._abrirMenuCliente(event,\''+_escAttr(g.cliente)+'\','+g.anchorRi+')" title="Adicionar / Editar / Ver informações">+</button>'
           +     '</div>'
+          +     '<div class="mob-meta-row">'
+          +       '<span class="mob-st '+stCls+'">'+stLabel+' · '+cnt+'</span>'
+          +       '<span class="mob-val '+stCls+'">'+formatVal(g.totalGeral)+'</span>'
+          +     '</div>'
           +   '</div>'
           + '</div>'
-          + '<div class="mob-agg-body">'
-          +   '<div class="mob-agg-row"><span class="mob-agg-k">Treinos</span><span class="mob-agg-v">'+resumoSt+'</span></div>'
-          +   '<div class="mob-agg-row"><span class="mob-agg-k">Consultor</span><span class="mob-agg-v">'+consultorList+'</span></div>'
-          +   '<div class="mob-agg-row"><span class="mob-agg-k">Pago</span><span class="mob-agg-v pago">'+formatVal(g.totalPago)+'</span></div>'
-          +   (g.totalAberto>0?'<div class="mob-agg-row"><span class="mob-agg-k">Em aberto</span><span class="mob-agg-v aberto">'+formatVal(g.totalAberto)+'</span></div>':'')
-          +   '<div class="mob-agg-pills">'+pills+'</div>'
-          +   '<div class="mob-agg-total">'
-          +     '<span>Total na carteira</span>'
-          +     '<span class="mob-agg-total-v">'+formatVal(g.totalGeral)+'</span>'
-          +   '</div>'
-          + '</div>'
+          + (pills ? '<div class="mob-chips-row">'+pills+'</div>' : '')
           + '</div>';
       }).join('');
     }

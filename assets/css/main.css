@@ -1525,24 +1525,70 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .mob-plus-btn:hover{background:rgba(200,240,90,.22);}
 .mob-name.pago{color:var(--pago);}
 
-/* === Mobile card AGREGADO por cliente (Opção 6) === */
-.mob-card-agg{padding:0;}
-.mob-card-agg.pago{border-left:3px solid var(--pago);}
-.mob-card-agg .mob-header{cursor:default;border-bottom:1px solid rgba(255,255,255,.05);padding:11px 12px;}
-.mob-agg-body{padding:8px 12px 12px;}
-.mob-agg-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;font-size:10px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.04);text-transform:uppercase;letter-spacing:.04em;}
-.mob-agg-row:last-of-type{border-bottom:none;}
-.mob-agg-k{font-weight:700;flex-shrink:0;}
-.mob-agg-v{font-weight:700;font-family:'DM Mono','DM Sans',monospace;color:var(--text);letter-spacing:0;text-align:right;font-size:11px;}
-.mob-agg-v.pago{color:var(--pago);}
-.mob-agg-v.aberto{color:var(--amber);}
-.mob-agg-pills{display:flex;gap:4px;flex-wrap:wrap;padding-top:9px;border-top:1px solid rgba(255,255,255,.05);margin-top:8px;}
-.mob-trein-pill{font-size:9px;font-weight:700;padding:3px 8px;border-radius:10px;font-family:'DM Mono','DM Sans',monospace;letter-spacing:.04em;}
+/* === Mobile card AGREGADO por cliente (Opção 05 — compacto com chips) === */
+.mob-card-agg{
+  background:linear-gradient(180deg,var(--surface2),var(--surface));
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:10px;
+}
+.mob-card-agg.pago{
+  border-color:rgba(57,255,20,.25);
+  box-shadow:inset 0 1px 0 rgba(57,255,20,.08);
+}
+.mob-card-agg.aberto{
+  border-color:rgba(255,183,64,.22);
+  box-shadow:inset 0 1px 0 rgba(255,183,64,.06);
+}
+.mob-card-agg.semst{
+  border-color:var(--border);
+}
+.mob-card-agg .mob-header{padding:0;cursor:default;background:transparent;border-bottom:none;}
+.mob-card-agg .mob-header:hover{background:transparent;}
+.mob-card-agg .mob-info{flex:1;min-width:0;}
+.mob-card-agg .mob-name-row{display:flex;align-items:center;gap:8px;}
+.mob-card-agg .mob-name{
+  flex:1;font-size:13px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:var(--text);
+}
+.mob-card-agg .mob-name.pago{color:var(--pago);}
+.mob-card-agg .mob-name.aberto{color:var(--text);}
+.mob-card-agg .mob-name.semst{color:var(--text);}
+.mob-meta-row{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:6px;font-size:10px;
+}
+.mob-st{
+  font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--muted);
+}
+.mob-st.pago{color:var(--pago);}
+.mob-st.aberto{color:var(--amber);}
+.mob-st.semst{color:var(--muted);}
+.mob-val{
+  font-family:'DM Mono','DM Sans',monospace;
+  font-weight:800;font-size:14px;
+  color:var(--text);letter-spacing:0;
+  font-variant-numeric:tabular-nums;
+}
+.mob-val.pago{color:var(--pago);}
+.mob-val.aberto{color:var(--amber);}
+.mob-val.semst{color:var(--muted);}
+.mob-chips-row{
+  display:flex;flex-wrap:wrap;gap:4px;
+  margin-top:8px;padding-top:8px;
+  border-top:1px solid var(--border);
+}
+.mob-trein-pill{
+  font-size:9px;font-weight:700;padding:3px 8px;
+  border-radius:6px;
+  font-family:'DM Mono','DM Sans',monospace;letter-spacing:.04em;
+}
 .mob-trein-pill.p{background:rgba(57,255,20,.12);color:var(--pago);}
-.mob-trein-pill.a{background:rgba(255,183,64,.1);color:var(--amber);}
+.mob-trein-pill.a{background:rgba(255,183,64,.12);color:var(--amber);}
 .mob-trein-pill.n{background:rgba(255,255,255,.05);color:var(--muted);}
-.mob-agg-total{margin-top:10px;padding-top:10px;border-top:1px solid rgba(57,255,20,.18);display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
-.mob-agg-total-v{font-family:'DM Mono','DM Sans',monospace;font-weight:800;font-size:16px;color:var(--pago);letter-spacing:0;}
 
 /* Extrato de treinamentos no modal "Ver informações" — Opção 2 (cards expansivos) */
 .ci-extrato{margin-bottom:14px;}
