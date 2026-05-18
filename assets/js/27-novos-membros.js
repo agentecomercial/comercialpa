@@ -72,8 +72,10 @@ function salvarNovoConsultor(){
   _autoCriarAcessoUsuario(adicionados, 'consultor');
 }
 
-/* Verifica quais nomes ainda não existem em usuarios/. Para o primeiro deles,
-   abre o modal "Novo Usuário" pré-preenchido com nome+perfil. */
+/* Fila uniforme de acessos pendentes — array de {nome, perfil} */
+window._autoAcessoFila = window._autoAcessoFila || [];
+
+/* Adiciona nomes na fila (filtra os que já têm acesso) e abre o próximo modal */
 function _autoCriarAcessoUsuario(nomes, perfil){
   if(!nomes || !nomes.length) return;
   var local = (typeof _getUsuariosLocal==='function') ? _getUsuariosLocal() : {};
@@ -81,12 +83,21 @@ function _autoCriarAcessoUsuario(nomes, perfil){
   Object.values(local||{}).forEach(function(u){
     if(u && u.nome) existentesNomes.add(String(u.nome).toUpperCase().trim());
   });
-  var faltam = nomes.filter(function(n){ return !existentesNomes.has(String(n).toUpperCase().trim()); });
-  if(!faltam.length) return; // todos já têm acesso configurado
+  nomes.forEach(function(n){
+    if(!existentesNomes.has(String(n).toUpperCase().trim())){
+      window._autoAcessoFila.push({ nome:n, perfil:perfil });
+    }
+  });
+  if(window._autoAcessoFila.length === 0) return;
+  /* Se já tem modal aberto, só enfileira e sai */
+  var overlay = document.getElementById('novoUsuarioOverlay');
+  if(overlay && overlay.classList.contains('open')) return;
+  _abrirProxAutoAcesso();
+}
 
-  var nome = faltam[0];
-  var restantes = faltam.slice(1);
-  /* Abre o modal completo de criar usuário do 18-usuarios.js */
+function _abrirProxAutoAcesso(){
+  var prox = (window._autoAcessoFila || []).shift();
+  if(!prox || !prox.nome) return;
   if(typeof abrirNovoUsuario === 'function') abrirNovoUsuario();
   setTimeout(function(){
     var nomeEl   = document.getElementById('novoUsuarioNome');
@@ -94,30 +105,74 @@ function _autoCriarAcessoUsuario(nomes, perfil){
     var loginEl  = document.getElementById('novoUsuarioLogin');
     var uidEl    = document.getElementById('novoUsuarioUid');
     if(uidEl)    uidEl.value = '';
-    if(nomeEl)   nomeEl.value = nome;
-    if(perfilEl) perfilEl.value = perfil;
-    /* Sugerir login = primeira parte do nome em lowercase sem acentos */
+    if(nomeEl)   nomeEl.value = prox.nome;
+    if(perfilEl) perfilEl.value = prox.perfil;
     if(loginEl && !loginEl.value){
-      loginEl.value = String(nome).toLowerCase()
+      loginEl.value = String(prox.nome).toLowerCase()
         .normalize('NFD').replace(/[̀-ͯ]/g,'')
         .replace(/[^a-z0-9]/g,'').slice(0,20);
       loginEl.focus();
     }
-    /* Aviso explícito */
-    _showToast('⚠ Configure o acesso (login + senha) para "'+nome+'"', 'var(--amber)');
-    /* Guardar restantes para abrir em sequência após salvar este */
-    window._autoAcessoPendentes = restantes.length ? { nomes:restantes, perfil:perfil } : null;
+    var restantes = (window._autoAcessoFila || []).length;
+    var msg = '⚠ Configure acesso para "'+prox.nome+'"' + (restantes>0 ? ' ('+restantes+' restantes na fila)' : '');
+    _showToast(msg, 'var(--amber)');
   }, 200);
 }
 
-/* Hook: depois de salvarUsuario do 18-usuarios.js terminar, se houver pendentes,
-   abre o próximo. (chamado de dentro de salvarUsuario via window.) */
+/* Hook chamado por salvarUsuario do 18-usuarios.js — abre o próximo da fila */
 window._autoAcessoProxPendente = function(){
-  var p = window._autoAcessoPendentes;
-  window._autoAcessoPendentes = null;
-  if(p && p.nomes && p.nomes.length){
-    _autoCriarAcessoUsuario(p.nomes, p.perfil);
+  if(window._autoAcessoFila && window._autoAcessoFila.length){
+    _abrirProxAutoAcesso();
   }
+};
+
+/* Helper: encontra UID em usuarios/ pelo nome e EXCLUI PERMANENTEMENTE */
+function _excluirUsuarioPorNome(nome){
+  if(!nome) return null;
+  var local = (typeof _getUsuariosLocal==='function') ? _getUsuariosLocal() : {};
+  var nomeNorm = String(nome).toUpperCase().trim();
+  var uidAchado = null;
+  Object.keys(local||{}).forEach(function(uid){
+    var u = local[uid];
+    if(u && u.nome && String(u.nome).toUpperCase().trim() === nomeNorm){
+      uidAchado = uid;
+    }
+  });
+  if(!uidAchado) return null;
+  /* Apaga local + Firebase */
+  delete local[uidAchado];
+  if(typeof _saveUsuariosLocal==='function') _saveUsuariosLocal(local);
+  if(window._fbSave){
+    try { window._fbSave('usuarios/'+uidAchado, null); } catch(e){}
+  }
+  return uidAchado;
+}
+
+/* VARREDURA: detecta usuários "fantasma" (em allConsultors/allTrainers mas
+   sem entrada em usuarios/) e enfileira modais de configuração */
+window._varrerUsuariosFantasma = function(){
+  var local = (typeof _getUsuariosLocal==='function') ? _getUsuariosLocal() : {};
+  var registrados = new Set();
+  Object.values(local||{}).forEach(function(u){
+    if(u && u.nome) registrados.add(String(u.nome).toUpperCase().trim());
+  });
+  var fantC = (typeof allConsultors!=='undefined' && Array.isArray(allConsultors) ? allConsultors : [])
+    .filter(function(n){ return n && !registrados.has(String(n).toUpperCase().trim()); });
+  var fantT = (typeof allTrainers!=='undefined' && Array.isArray(allTrainers) ? allTrainers : [])
+    .filter(function(n){ return n && n!=='-' && !registrados.has(String(n).toUpperCase().trim()); });
+  if(!fantC.length && !fantT.length){
+    _showToast('✅ Todos os consultores e treinadores já têm acesso configurado.','var(--accent)');
+    return;
+  }
+  var msg = '🔍 Encontrados '+(fantC.length+fantT.length)+' usuário(s) sem acesso configurado:\n\n';
+  if(fantC.length) msg += '👤 Consultores ('+fantC.length+'): '+fantC.slice(0,5).join(', ')+(fantC.length>5?' …':'')+'\n';
+  if(fantT.length) msg += '🎓 Treinadores ('+fantT.length+'): '+fantT.slice(0,5).join(', ')+(fantT.length>5?' …':'')+'\n';
+  msg += '\nAbrir modal para configurar acesso de cada um?';
+  if(!confirm(msg)) return;
+  /* Enfileira todos */
+  fantC.forEach(function(n){ window._autoAcessoFila.push({nome:n, perfil:'consultor'}); });
+  fantT.forEach(function(n){ window._autoAcessoFila.push({nome:n, perfil:'treinador'}); });
+  _abrirProxAutoAcesso();
 };
 function editarNomeTreinador(nomeAtual){
   var novoNome=prompt('Novo nome para "'+nomeAtual+'":', nomeAtual);
@@ -146,7 +201,7 @@ function editarNomeTreinador(nomeAtual){
 }
 
 function removerTreinador(nome){
-  if(!confirm('Remover "'+nome+'" da turma?\nOs clientes vinculados a ele não serão excluídos.')) return;
+  if(!confirm('EXCLUIR PERMANENTEMENTE "'+nome+'"?\n\nRemove o usuário do sistema (Firebase + cache local) E desvincula da turma.\nClientes JÁ vinculados mantêm o nome preservado nos cards (histórico).\n\nEsta ação NÃO pode ser desfeita.')) return;
   allTrainers=allTrainers.filter(function(t){return t!==nome;});
   if(_turmaAtiva){
     var turmas=_getTurmas();
@@ -157,9 +212,11 @@ function removerTreinador(nome){
       _turmaAtiva=turmas[ti];
     }
   }
+  /* EXCLUSÃO PERMANENTE em usuarios/ (Firebase + local) */
+  var uidRemovido = _excluirUsuarioPorNome(nome);
   _buildColors();buildSelects();buildFilterBtns();renderAll();
-  _showToast('✅ Treinador '+nome+' removido da turma.','var(--accent)');
-  if(typeof _addPendLog==='function')_addPendLog('Treinador removido (rápido)','Treinador: '+nome,'🗑️');
+  _showToast('🗑 Treinador '+nome+' excluído'+(uidRemovido?' (Firebase + turma)':' (só turma — não tinha acesso configurado)'),'var(--accent)');
+  if(typeof _addPendLog==='function')_addPendLog('Treinador excluído permanentemente',(nome||'')+(uidRemovido?' — UID: '+uidRemovido:''),'🗑️');
 }
 
 function abrirModalEditarConsultores(){
@@ -220,12 +277,17 @@ function _confirmarExcluirConsultor(nome,idx){
 }
 
 function _executarExcluirConsultor(nome){
+  /* Confirmação dupla — exclusão é permanente em Firebase + local */
+  if(!confirm('EXCLUIR PERMANENTEMENTE "'+nome+'"?\n\nRemove o usuário do sistema (Firebase + cache local) E desvincula da turma.\nClientes JÁ vinculados mantêm o nome preservado nos cards (histórico).\n\nEsta ação NÃO pode ser desfeita.')) return;
   allConsultors=allConsultors.filter(function(c){return c!==nome;});
   _atualizarEquipeTurma();
+  /* EXCLUSÃO PERMANENTE em usuarios/ (Firebase + local) */
+  var uidRemovido = _excluirUsuarioPorNome(nome);
   _buildColors();buildSelects();buildFilterBtns();
   _renderEditarConsultoresLista();
   renderAll();renderConsultor();
-  _showToast('✅ '+nome+' removido.','var(--accent)');
+  _showToast('🗑 '+nome+' excluído'+(uidRemovido?' (Firebase + turma)':' (só turma — não tinha acesso configurado)'),'var(--accent)');
+  if(typeof _addPendLog==='function')_addPendLog('Consultor excluído permanentemente',(nome||'')+(uidRemovido?' — UID: '+uidRemovido:''),'🗑️');
 }
 function adicionarConsultorModal(){
   var inp=document.getElementById('novoConsultorModalInput');
