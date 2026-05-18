@@ -689,9 +689,8 @@ function _executarPuxar(){
     }
 
     // ── Repopular consultores/treinadores do nó usuarios/ ──
-    // BLOQUEIA pausados (ativo:false) E congelados (congelado:true).
-    // Cliente histórico mantém o nome do bloqueado preservado nos cards;
-    // só novos vínculos via selects são impedidos.
+    // BLOQUEIA apenas PAUSADOS (ativo:false). Congelados continuam visíveis
+    // (só bloqueiam login).
     var consultoresDB=[];
     var treinadoresDB=[];
     var _bloqueadosNomes = new Set();
@@ -701,9 +700,9 @@ function _executarPuxar(){
         if(!u||!u.nome) return;
         var nomeUp = String(u.nome).toUpperCase().trim();
         _registradosNomes.add(nomeUp);
-        if(u.ativo === false || u.congelado === true){
+        if(u.ativo === false){
           _bloqueadosNomes.add(nomeUp);
-          return; // bloqueado → não entra no DB
+          return; // pausado → não entra no DB
         }
         var p=u.perfil||'';
         if(p==='consultor'&&!consultoresDB.includes(u.nome)) consultoresDB.push(u.nome);

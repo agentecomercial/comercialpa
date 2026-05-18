@@ -498,9 +498,9 @@ function entrarTurma(id){
         dadosFinais={data:[]};
       }
 
-      // Set de usuários BLOQUEADOS (pausados OU congelados) — não entram nos selects.
-      // Cliente histórico continua exibido com o nome do bloqueado preservado;
-      // só novos vínculos são impedidos.
+      // Set de usuários BLOQUEADOS — apenas PAUSADOS (ativo:false) são removidos
+      // dos selects. Congelados (congelado:true) continuam aparecendo, pois só
+      // bloqueiam LOGIN, permitindo ao adm gerenciar clientes vinculados.
       var _bloqueadosTurmaSet = new Set();
       var _registradosNomesSet = new Set(); // nomes que existem em usuarios/ (cadastrados)
       if(fbUsuarios && typeof fbUsuarios === 'object'){
@@ -508,7 +508,7 @@ function entrarTurma(id){
           if(!u || !u.nome) return;
           var nomeUp = String(u.nome).toUpperCase().trim();
           _registradosNomesSet.add(nomeUp);
-          if(u.ativo === false || u.congelado === true){
+          if(u.ativo === false){
             _bloqueadosTurmaSet.add(nomeUp);
           }
         });

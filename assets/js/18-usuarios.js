@@ -364,7 +364,11 @@ function _montarGrid(membros,usuarios){
 
     // bolinha de status — ordem: sem-acesso → pausado → congelado → pendente → ativo
     var dotCls=!temLogin?'sem-acesso':!ativo?'pausado':congelado?'congelado':primAcesso?'pendente':'ativo';
-    var dotTip=!temLogin?'Sem acesso configurado':!ativo?'Acesso pausado':congelado?'Congelado (bloqueado de login, ainda na turma)':primAcesso?'Primeiro acesso pendente':'Ativo';
+    var dotTip=!temLogin?'Sem acesso configurado'
+      :!ativo?'⏸ Pausado — sem login + sumido dos selects'
+      :congelado?'❄ Congelado — sem login MAS continua nos selects da turma'
+      :primAcesso?'Primeiro acesso pendente'
+      :'Ativo';
 
     // itens do dropdown
     var ddItems='';
@@ -696,42 +700,20 @@ function _abrirAlterarSenhaUsuario(uid,nome){
 
 function _toggleCongelado(uid,novoEstado){
   var msg=novoEstado
-    ?'CONGELAR este usuário?\n\nEle NÃO conseguirá fazer login E não aparecerá nos selects de novas turmas.\nClientes JÁ vinculados continuam exibindo o nome dele preservado.'
-    :'Descongelar este usuário? Ele voltará a conseguir logar e a aparecer nos selects.';
+    ?'CONGELAR este usuário?\n\nEle NÃO conseguirá fazer login, MAS continuará aparecendo\nnos selects da turma para que você possa mover clientes vinculados.\n\nUse PAUSAR se quiser sumir totalmente dos selects.'
+    :'Descongelar este usuário? Ele voltará a conseguir logar.';
   if(!confirm(msg)) return;
   window._fbSave('usuarios/'+uid+'/congelado',novoEstado).then(function(){
     _renderUsuariosGrid();
     if(typeof _showToast==='function'){
-      _showToast(novoEstado?'❄ Usuário congelado':'☀ Usuário descongelado','var(--blue)');
+      _showToast(novoEstado?'❄ Login bloqueado (mantido nos selects)':'☀ Usuário descongelado','var(--blue)');
     }
     /* Audit-log */
     if(typeof _addPendLog==='function'){
-      _addPendLog(novoEstado?'Usuário congelado':'Usuário descongelado','UID: '+uid,novoEstado?'❄':'☀');
+      _addPendLog(novoEstado?'Usuário congelado (só login)':'Usuário descongelado','UID: '+uid,novoEstado?'❄':'☀');
     }
-    // ── PROPAGAÇÃO IMEDIATA ── igual ao _toggleAtivo
-    try {
-      window._fbGet && window._fbGet('usuarios').then(function(us){
-        var blqSet = new Set();
-        Object.values(us||{}).forEach(function(u){
-          if(u && u.nome && (u.ativo === false || u.congelado === true)){
-            blqSet.add(String(u.nome).toUpperCase().trim());
-          }
-        });
-        window._pausadosNomesSet = blqSet;
-        window._bloqueadosNomesSet = blqSet;
-        if(typeof allConsultors !== 'undefined' && Array.isArray(allConsultors)){
-          allConsultors = allConsultors.filter(function(n){ return !blqSet.has(String(n||'').toUpperCase().trim()); });
-          window.allConsultors = allConsultors;
-        }
-        if(typeof allTrainers !== 'undefined' && Array.isArray(allTrainers)){
-          allTrainers = allTrainers.filter(function(n){ return !blqSet.has(String(n||'').toUpperCase().trim()); });
-          window.allTrainers = allTrainers;
-        }
-        if(typeof buildSelects==='function')    buildSelects();
-        if(typeof buildFilterBtns==='function') buildFilterBtns();
-        if(typeof renderAll==='function')       renderAll();
-      });
-    } catch(e){}
+    /* Não toca em allConsultors/allTrainers — congelar NÃO remove dos selects.
+       Apenas o login (29-login.js) é bloqueado via u.congelado === true. */
   }).catch(function(e){alert('Erro: '+(e&&e.message?e.message:e));});
 }
 
@@ -746,7 +728,7 @@ function _toggleAtivo(uid,novoEstado){
       window._fbGet && window._fbGet('usuarios').then(function(us){
         var blqSet = new Set();
         Object.values(us||{}).forEach(function(u){
-          if(u && u.nome && (u.ativo === false || u.congelado === true)){
+          if(u && u.nome && u.ativo === false){
             blqSet.add(String(u.nome).toUpperCase().trim());
           }
         });
