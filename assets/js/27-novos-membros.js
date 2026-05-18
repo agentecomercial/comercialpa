@@ -334,6 +334,9 @@ function adicionarConsultorModal(){
   renderAll();renderConsultor();
   inp.value='';
   _showToast('✅ '+nome+' adicionado.','var(--accent)');
+  if(typeof _addPendLog==='function')_addPendLog('Novo consultor adicionado (via Editar)','Consultor: '+nome,'👤');
+  /* AUTO-CRIAR ACESSO — força configuração de login/senha em usuarios/ */
+  _autoCriarAcessoUsuario([nome], 'consultor');
 }
 function renomearConsultorModal(nomeAtual){
   var novoNome=prompt('Novo nome para "'+nomeAtual+'":', nomeAtual);
@@ -440,6 +443,9 @@ function adicionarTreinadorModal(){
   renderAll();renderTreinador();
   inp.value='';
   _showToast('✅ '+nome+' adicionado.','var(--accent)');
+  if(typeof _addPendLog==='function')_addPendLog('Novo treinador adicionado (via Editar)','Treinador: '+nome,'👤');
+  /* AUTO-CRIAR ACESSO — força configuração de login/senha em usuarios/ */
+  _autoCriarAcessoUsuario([nome], 'treinador');
 }
 function renomearTreinadorModal(nomeAtual){
   var novoNome=prompt('Novo nome para "'+nomeAtual+'":', nomeAtual);
