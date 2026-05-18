@@ -841,6 +841,11 @@ async function salvarUsuario(){
   document.getElementById('novoUsuarioOverlay').classList.remove('open');
   _renderUsuariosGrid();
   _showToast('✅ '+(isNovo?'Acesso criado':'Acesso atualizado')+' para '+nome+'!'+(salvoNoFirebase?' ☁️':''),'var(--accent)');
+  /* Encadeia próximo pendente de auto-criação (caso o adm tenha adicionado vários
+     consultores/treinadores em lote via "🧙 Novos Membros"). */
+  if(typeof window._autoAcessoProxPendente === 'function'){
+    setTimeout(window._autoAcessoProxPendente, 100);
+  }
 }
 
 function abrirEditarUsuario(uid){_abrirEditarAcesso(uid);}

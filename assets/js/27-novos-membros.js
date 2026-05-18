@@ -67,7 +67,58 @@ function salvarNovoConsultor(){
   if(!adicionados.length){_showToast('Todos já existem na turma.','var(--amber)');return;}
   _buildColors();_atualizarEquipeTurma();buildSelects();renderConsultor();fecharNovoConsultor();
   _showToast('✅ '+adicionados.length+' consultor'+(adicionados.length>1?'es':'')+' adicionado'+(adicionados.length>1?'s':'')+'!','var(--accent)');
+  /* AUTO-CRIAR ACESSO: se algum dos adicionados ainda não existe em usuarios/,
+     abre o modal de cadastro pra forçar o adm a configurar login/senha. */
+  _autoCriarAcessoUsuario(adicionados, 'consultor');
 }
+
+/* Verifica quais nomes ainda não existem em usuarios/. Para o primeiro deles,
+   abre o modal "Novo Usuário" pré-preenchido com nome+perfil. */
+function _autoCriarAcessoUsuario(nomes, perfil){
+  if(!nomes || !nomes.length) return;
+  var local = (typeof _getUsuariosLocal==='function') ? _getUsuariosLocal() : {};
+  var existentesNomes = new Set();
+  Object.values(local||{}).forEach(function(u){
+    if(u && u.nome) existentesNomes.add(String(u.nome).toUpperCase().trim());
+  });
+  var faltam = nomes.filter(function(n){ return !existentesNomes.has(String(n).toUpperCase().trim()); });
+  if(!faltam.length) return; // todos já têm acesso configurado
+
+  var nome = faltam[0];
+  var restantes = faltam.slice(1);
+  /* Abre o modal completo de criar usuário do 18-usuarios.js */
+  if(typeof abrirNovoUsuario === 'function') abrirNovoUsuario();
+  setTimeout(function(){
+    var nomeEl   = document.getElementById('novoUsuarioNome');
+    var perfilEl = document.getElementById('novoUsuarioPerfil');
+    var loginEl  = document.getElementById('novoUsuarioLogin');
+    var uidEl    = document.getElementById('novoUsuarioUid');
+    if(uidEl)    uidEl.value = '';
+    if(nomeEl)   nomeEl.value = nome;
+    if(perfilEl) perfilEl.value = perfil;
+    /* Sugerir login = primeira parte do nome em lowercase sem acentos */
+    if(loginEl && !loginEl.value){
+      loginEl.value = String(nome).toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g,'')
+        .replace(/[^a-z0-9]/g,'').slice(0,20);
+      loginEl.focus();
+    }
+    /* Aviso explícito */
+    _showToast('⚠ Configure o acesso (login + senha) para "'+nome+'"', 'var(--amber)');
+    /* Guardar restantes para abrir em sequência após salvar este */
+    window._autoAcessoPendentes = restantes.length ? { nomes:restantes, perfil:perfil } : null;
+  }, 200);
+}
+
+/* Hook: depois de salvarUsuario do 18-usuarios.js terminar, se houver pendentes,
+   abre o próximo. (chamado de dentro de salvarUsuario via window.) */
+window._autoAcessoProxPendente = function(){
+  var p = window._autoAcessoPendentes;
+  window._autoAcessoPendentes = null;
+  if(p && p.nomes && p.nomes.length){
+    _autoCriarAcessoUsuario(p.nomes, p.perfil);
+  }
+};
 function editarNomeTreinador(nomeAtual){
   var novoNome=prompt('Novo nome para "'+nomeAtual+'":', nomeAtual);
   if(!novoNome||!novoNome.trim()||novoNome.trim().toUpperCase()===nomeAtual.toUpperCase()) return;
@@ -389,6 +440,8 @@ function salvarNovoTreinador(){
   if(!adicionados.length){_showToast('Todos já existem na turma.','var(--amber)');return;}
   _buildColors();_atualizarEquipeTurma();buildSelects();buildFilterBtns();renderTreinador();fecharNovoTreinador();
   _showToast('✅ '+adicionados.length+' treinador'+(adicionados.length>1?'es':'')+' adicionado'+(adicionados.length>1?'s':'')+'!','var(--accent)');
+  /* AUTO-CRIAR ACESSO: força configuração de login/senha em usuarios/ */
+  _autoCriarAcessoUsuario(adicionados, 'treinador');
 }
 function _atualizarEquipeTurma(){
   if(!_turmaAtiva)return;
