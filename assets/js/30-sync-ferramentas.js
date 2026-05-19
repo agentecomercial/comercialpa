@@ -40,6 +40,14 @@ function confirmSave(){
 var _mapDados = null;       // cache de dados do Firebase
 var _mapAnoSel = 0;         // ano selecionado (0 = todos)
 var _mapMesesSel = [];      // [] = todos os meses
+var _mapProdSortCol = 'total';   // sort da tabela Consultor × Treinamento
+var _mapProdSortDir = -1;        // -1 desc, 1 asc
+
+function _setMapProdSort(col){
+  if(_mapProdSortCol===col){ _mapProdSortDir *= -1; }
+  else { _mapProdSortCol = col; _mapProdSortDir = -1; }
+  _mapFiltrar();
+}
 
 function abrirTelaTurmas(){
   var _sT=_getSessao?_getSessao():null;
@@ -334,55 +342,110 @@ function _mapRenderConsultores(registros) {
 }
 
 function _mapRenderCorrelacao(registros) {
-  var consultores  = [...new Set(registros.map(function(r) { return r.consultor; }))].sort();
-  var treinamentos = [...new Set(registros.map(function(r) { return r.treinamento; }))].sort();
+  /* Espelha a estrutura do card "Consultor × Produto — Clientes Pagos"
+     da aba Produto (renderProduto em 24-aba-produto.js):
+     - Colunas = lista FIXA dos 15 treinamentos oficiais (allTreinamentos)
+     - Cada célula = QTD (grande) + R$ (pequeno)
+     - Colunas extras: "Total trein." (qtd) + "Total pago" (R$)
+     - Cabeçalhos clicáveis para sort (consultor / qtd / total / produto)
+     - Linha de totais por coluna no rodapé */
   var el = document.getElementById('mapCorrelacaoTable');
   if (!el) return;
   if (!registros.length) { el.innerHTML = ''; return; }
 
-  var html = '<thead><tr><th style="text-align:left;min-width:120px;">Consultor</th>';
-  treinamentos.forEach(function(p) {
-    html += '<th style="text-align:center;white-space:nowrap;">' + p + '</th>';
-  });
-  html += '<th style="text-align:center;white-space:nowrap;">Total</th></tr></thead><tbody>';
+  var produtos = (typeof window.allTreinamentos !== 'undefined' && Array.isArray(window.allTreinamentos))
+    ? window.allTreinamentos.slice()
+    : [];
+  /* Fallback: se allTreinamentos não está disponível, usa o que aparece nos registros */
+  if (!produtos.length) {
+    produtos = Array.from(new Set(registros.map(function(r){ return r.treinamento; }))).sort();
+  }
+  var consultores = Array.from(new Set(registros.map(function(r){ return r.consultor; }))).sort();
 
-  consultores.forEach(function(c) {
-    var linhaTotal = registros.filter(function(r) { return r.consultor === c; }).reduce(function(a, r) { return a + r.valor; }, 0);
-    if (linhaTotal === 0) return;
-    html += '<tr><td style="font-weight:600;text-align:left;text-transform:uppercase;">' + c + '</td>';
-    treinamentos.forEach(function(p) {
-      var rows = registros.filter(function(r) { return r.consultor === c && r.treinamento === p; });
-      if (rows.length > 0) {
-        var v = rows.reduce(function(a, r) { return a + r.valor; }, 0);
+  function _sortArrow(col){
+    if (_mapProdSortCol !== col) return '<span style="color:var(--border2);font-size:10px;margin-left:3px;">↕</span>';
+    return _mapProdSortDir === -1
+      ? '<span style="color:var(--accent);font-size:10px;margin-left:3px;">↓</span>'
+      : '<span style="color:var(--accent);font-size:10px;margin-left:3px;">↑</span>';
+  }
+
+  var html = '<thead><tr>'
+    + '<th style="text-align:left;min-width:120px;cursor:pointer;" onclick="_setMapProdSort(\'consultor\')">Consultor ' + _sortArrow('consultor') + '</th>';
+  produtos.forEach(function(p){
+    var key = 'prod_' + p;
+    html += '<th style="text-align:center;white-space:nowrap;cursor:pointer;" onclick="_setMapProdSort(\'' + key + '\')">' + p + ' ' + _sortArrow(key) + '</th>';
+  });
+  html += '<th style="text-align:center;white-space:nowrap;cursor:pointer;" onclick="_setMapProdSort(\'qtd\')">Total trein. ' + _sortArrow('qtd') + '</th>';
+  html += '<th style="text-align:center;white-space:nowrap;cursor:pointer;" onclick="_setMapProdSort(\'total\')">Total pago ' + _sortArrow('total') + '</th>';
+  html += '</tr></thead><tbody>';
+
+  /* Pré-cálculo das linhas por consultor */
+  var linhas = consultores.map(function(c){
+    var linhaTotal = registros.filter(function(r){ return r.consultor === c; }).reduce(function(a,r){ return a + r.valor; }, 0);
+    var linhaQtd   = registros.filter(function(r){ return r.consultor === c; }).length;
+    var prodVals   = {};
+    produtos.forEach(function(p){
+      var rows = registros.filter(function(r){ return r.consultor === c && r.treinamento === p; });
+      prodVals['prod_' + p]         = rows.reduce(function(a,r){ return a + r.valor; }, 0);
+      prodVals['prod_' + p + '_qtd'] = rows.length;
+    });
+    return { c: c, linhaTotal: linhaTotal, linhaQtd: linhaQtd, prodVals: prodVals };
+  }).filter(function(l){ return l.linhaTotal > 0; });
+
+  /* Ordenação */
+  linhas.sort(function(a,b){
+    var av, bv;
+    if (_mapProdSortCol === 'consultor') { return a.c.localeCompare(b.c, 'pt-BR') * _mapProdSortDir; }
+    if (_mapProdSortCol === 'total')     { av = a.linhaTotal; bv = b.linhaTotal; }
+    else if (_mapProdSortCol === 'qtd')  { av = a.linhaQtd;   bv = b.linhaQtd;   }
+    else                                 { av = a.prodVals[_mapProdSortCol] || 0; bv = b.prodVals[_mapProdSortCol] || 0; }
+    return (av - bv) * _mapProdSortDir;
+  });
+
+  /* Totais por coluna */
+  var totaisProd = {}, totaisQtd = {};
+  produtos.forEach(function(p){ totaisProd[p] = 0; totaisQtd[p] = 0; });
+  var totalGeral = 0, totalQtdGeral = 0;
+
+  linhas.forEach(function(l){
+    html += '<tr><td style="font-weight:600;text-align:left;text-transform:uppercase;white-space:nowrap;">' + l.c + '</td>';
+    produtos.forEach(function(p){
+      var v   = l.prodVals['prod_' + p] || 0;
+      var qtd = l.prodVals['prod_' + p + '_qtd'] || 0;
+      totaisProd[p] += v;
+      totaisQtd[p]  += qtd;
+      if (qtd > 0) {
         html += '<td style="text-align:center;">'
-          + '<span style="font-size:13px;font-weight:700;color:var(--accent);">' + rows.length + '</span>'
+          + '<span style="font-size:13px;font-weight:700;color:var(--accent);">' + qtd + '</span>'
           + '<br><span style="font-size:11px;color:var(--muted);white-space:nowrap;">' + formatVal(v) + '</span>'
           + '</td>';
       } else {
         html += '<td style="text-align:center;color:var(--border2);">—</td>';
       }
     });
-    html += '<td style="text-align:center;font-weight:700;color:var(--accent);white-space:nowrap;">' + formatVal(linhaTotal) + '</td></tr>';
+    totalGeral    += l.linhaTotal;
+    totalQtdGeral += l.linhaQtd;
+    html += '<td style="text-align:center;font-weight:700;white-space:nowrap;color:var(--accent);">' + l.linhaQtd + '</td>';
+    html += '<td style="text-align:center;font-weight:700;white-space:nowrap;color:var(--accent);">' + formatVal(l.linhaTotal) + '</td>';
+    html += '</tr>';
   });
 
-  // Linha totais
+  /* Linha de totais */
   html += '<tr style="border-top:2px solid var(--border2);background:var(--surface2);">'
     + '<td style="font-weight:700;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);">Total</td>';
-  treinamentos.forEach(function(p) {
-    var rows = registros.filter(function(r) { return r.treinamento === p; });
-    if (rows.length > 0) {
-      var v = rows.reduce(function(a, r) { return a + r.valor; }, 0);
+  produtos.forEach(function(p){
+    if (totaisQtd[p] > 0) {
       html += '<td style="text-align:center;font-weight:700;">'
-        + '<span style="font-size:12px;color:var(--accent);">' + rows.length + '</span>'
-        + '<br><span style="font-size:11px;color:var(--muted);">' + formatVal(v) + '</span>'
+        + '<span style="font-size:12px;color:var(--accent);">' + totaisQtd[p] + '</span>'
+        + '<br><span style="font-size:11px;color:var(--muted);">' + formatVal(totaisProd[p]) + '</span>'
         + '</td>';
     } else {
       html += '<td style="text-align:center;color:var(--border2);">—</td>';
     }
   });
-  var totalGeral = registros.reduce(function(a, r) { return a + r.valor; }, 0);
-  html += '<td style="text-align:center;font-weight:700;color:var(--accent);">' + formatVal(totalGeral) + '</td></tr>';
-  html += '</tbody>';
+  html += '<td style="text-align:center;font-weight:700;white-space:nowrap;color:var(--accent);">' + totalQtdGeral + '</td>';
+  html += '<td style="text-align:center;font-weight:700;white-space:nowrap;color:var(--accent);">' + formatVal(totalGeral) + '</td>';
+  html += '</tr></tbody>';
   el.innerHTML = html;
 }
 
