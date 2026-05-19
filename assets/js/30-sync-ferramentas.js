@@ -121,63 +121,22 @@ function _mapCarregar(forcar) {
   if (vazio)   vazio.style.display   = 'none';
   _mapLimparUI();
 
-  /* Busca turmas E usuarios em paralelo — usuarios serve para CANONIZAR nomes
-     (ex: cliente cadastrado como "DARLEY" → usar nome oficial "DARLEY SANTOS") */
-  Promise.all([
-    window._fbGet(TURMAS_NODE),
-    window._fbGet('usuarios').catch(function(){return null;})
-  ]).then(function(results){
-    var fbTurmas   = results[0];
-    var fbUsuarios = results[1] || {};
+  /* ESPELHA EXATAMENTE A LÓGICA DA TELA TURMAS (renderTurmasGrid):
+       _clientesPago = clientes.filter(c => c.status==='pago').reduce((a,c)=>a+(c.valor||0), 0)
+     ─ Sem iterar c.treinamentos[] (sub-a-sub)
+     ─ Sem dedup por (cliente|cod)
+     ─ Sem canonização de nomes via usuarios/
+     ─ Sem sanitização de inválidos
+     Cada cliente pago vira 1 registro: { consultor, treinamento, valor, ano, mes, turmaId } */
+  window._fbGet(TURMAS_NODE).then(function(fbTurmas){
     if (loading) loading.style.display = 'none';
     if (!fbTurmas || !Object.keys(fbTurmas).length) {
       if (vazio) vazio.style.display = 'block';
       return;
     }
 
-    /* Mapa de canonização de nomes:
-       - Para cada usuario cadastrado, indexa o NOME OFICIAL por:
-         · nome completo (uppercase) → próprio nome
-         · primeira palavra (uppercase) → nome completo (SE for único)
-       Ex: "DARLEY SANTOS" gera 2 chaves:
-         "DARLEY SANTOS" → "DARLEY SANTOS"
-         "DARLEY"        → "DARLEY SANTOS"  (se não houver outro Darley) */
-    var _nomesPorPrimNome = {};   // primNome → [nomesCompletos]
-    var _nomesOficiais = new Set();
-    Object.values(fbUsuarios).forEach(function(u){
-      if (!u || !u.nome) return;
-      var perfil = u.perfil || '';
-      if (perfil !== 'consultor' && perfil !== 'treinador' && perfil !== 'ministrante') return;
-      var nomeUp = String(u.nome).toUpperCase().trim();
-      _nomesOficiais.add(nomeUp);
-      var primNome = nomeUp.split(/\s+/)[0];
-      if (!_nomesPorPrimNome[primNome]) _nomesPorPrimNome[primNome] = [];
-      if (_nomesPorPrimNome[primNome].indexOf(nomeUp) === -1) {
-        _nomesPorPrimNome[primNome].push(nomeUp);
-      }
-    });
-    function _canonizarNome(raw){
-      var up = String(raw||'').toUpperCase().trim();
-      if (!up) return up;
-      /* 1. Já é nome oficial → mantém */
-      if (_nomesOficiais.has(up)) return up;
-      /* 2. Match exato pela primeira palavra → se há SÓ 1 oficial, canoniza */
-      var primNome = up.split(/\s+/)[0];
-      var candidatos = _nomesPorPrimNome[primNome] || [];
-      if (candidatos.length === 1) return candidatos[0];
-      /* 3. Match por inclusão: "DARLEY" inclui "DARLEY SANTOS"? Não. Inverso?
-         Se up é prefixo de algum oficial — canoniza para o oficial */
-      if (candidatos.length > 1) {
-        /* Ambíguo (2+ "DARLEY *"): mantém raw e avisa */
-        console.warn('[MAP] Nome "'+up+'" ambíguo entre oficiais:', candidatos);
-      }
-      return up;
-    }
-
-    // Consolidar todos os clientes pagos de todas as turmas
-    var registros = []; // { consultor, treinamento, valor, ano, mes, turmaId }
+    var registros = [];
     var anosSet   = new Set();
-    var _normalizados = 0;
 
     Object.keys(fbTurmas).forEach(function(tid) {
       var t = fbTurmas[tid];
@@ -198,91 +157,24 @@ function _mapCarregar(forcar) {
 
       clientes.forEach(function(c) {
         if (!c || !c.cliente) return;
-        var rawCons = (c.consultor || '—').trim().toUpperCase();
-        var consultor = _canonizarNome(rawCons);
-        if (consultor !== rawCons) _normalizados++;
-        var nomeNorm = String(c.cliente).toUpperCase().trim();
-        var subs = Array.isArray(c.treinamentos) ? c.treinamentos.filter(Boolean) : [];
-
-        if (subs.length > 0) {
-          /* DEFESA EXTRA: dedup interno de subs por COD normalizado.
-             Se a migração híbrida ou import deixou subs duplicados no array
-             (ex: [{IF,5996,pago}, {IF,5996,pago}]), conta SÓ 1.
-             Se duplicados com valores diferentes, mantém o MAIOR
-             (assume última edição do adm). */
-          var subsAgg = {};
-          subs.forEach(function(sub){
-            var stSub = String(sub.status || c.status || '').toLowerCase();
-            if (stSub !== 'pago') return;
-            var codK = String(sub.cod || c.treinamento || '').trim().toUpperCase();
-            if (!codK || codK === '-' || codK === '—') return;
-            var vSub = Number(sub.valor || 0) || 0;
-            if (!subsAgg[codK]) {
-              subsAgg[codK] = { cod: codK, valor: vSub, count: 1 };
-            } else {
-              /* Duplicação detectada → mantém o MAIOR valor + conta ocorrências */
-              subsAgg[codK].count++;
-              if (vSub > subsAgg[codK].valor) subsAgg[codK].valor = vSub;
-            }
-          });
-          Object.keys(subsAgg).forEach(function(codK){
-            var agg = subsAgg[codK];
-            if (agg.count > 1) {
-              console.warn('[MAP] '+c.cliente+' · '+agg.cod+' aparece '+agg.count+'× no array — somando 1× R$ '+agg.valor.toFixed(2));
-            }
-            registros.push({
-              consultor:   consultor,
-              treinamento: agg.cod,
-              valor:       agg.valor,
-              ano:         ano,
-              mes:         mes,
-              turmaId:     tid,
-              clienteKey:  nomeNorm + '|' + agg.cod
-            });
-          });
-        } else {
-          if (c.status !== 'pago') return;
-          var codScalar = (c.treinamento || '').trim().toUpperCase();
-          registros.push({
-            consultor:   consultor,
-            treinamento: codScalar,
-            valor:       Number(c.valor || 0) || 0,
-            ano:         ano,
-            mes:         mes,
-            turmaId:     tid,
-            clienteKey:  nomeNorm + '|' + codScalar
-          });
-        }
+        if (c.status !== 'pago') return;
+        registros.push({
+          consultor:   String(c.consultor || '—').trim().toUpperCase(),
+          treinamento: String(c.treinamento || '—').trim().toUpperCase(),
+          valor:       Number(c.valor || 0) || 0,
+          ano:         ano,
+          mes:         mes,
+          turmaId:     tid
+        });
       });
     });
 
-    /* Defesa anti-duplicação:
-       Cenário A: mesma venda exibida em 2 turmas (importação cruzada / bug).
-         → chave (cliente|cod) + se duplicada, mantém o de maior valor.
-       Cenário B: mesma venda gravada 2× na MESMA turma (registros legados).
-         → mesma chave (cliente|cod) — 1ª já entrou, 2ª substitui. */
-    var _vistos = new Map();
-    var _conflitos = [];
-    registros.forEach(function(r){
-      var prev = _vistos.get(r.clienteKey);
-      if (!prev) { _vistos.set(r.clienteKey, r); return; }
-      /* Conflito: mesmo cliente+cod já existe — não SOMAR. Mantém o de maior valor. */
-      _conflitos.push({key:r.clienteKey, valorA:prev.valor, valorB:r.valor, turmaA:prev.turmaId, turmaB:r.turmaId});
-      if (r.valor > prev.valor) _vistos.set(r.clienteKey, r);
-    });
-    _mapDados = Array.from(_vistos.values());
+    _mapDados = registros;
 
-    /* Diagnóstico no console — útil quando user reporta "soma errada" */
-    console.group('%c[Mapeamento] _mapCarregar — diagnóstico', 'background:#f59e0b;color:#000;padding:2px 8px;font-weight:700;');
-    console.log('Registros brutos:', registros.length, '| Após dedup:', _mapDados.length, '| Removidos por dup:', registros.length - _mapDados.length);
-    var _somaBruta = registros.reduce(function(a,r){return a+r.valor;},0);
-    var _somaFinal = _mapDados.reduce(function(a,r){return a+r.valor;},0);
-    console.log('Soma BRUTA: R$ ' + _somaBruta.toFixed(2) + ' | Soma DEDUP: R$ ' + _somaFinal.toFixed(2));
-    console.log('Nomes de consultor canonizados via usuarios/: '+_normalizados+' registro(s)');
-    if (_conflitos.length) {
-      console.warn('Conflitos detectados (mesmo cliente+cod em múltiplos lugares):');
-      console.table(_conflitos);
-    }
+    /* Diagnóstico no console — para conferência rápida com a tela Turmas */
+    console.group('%c[Mapeamento] _mapCarregar — espelhando tela Turmas', 'background:#c8f05a;color:#000;padding:2px 8px;font-weight:700;');
+    console.log('Clientes pagos consolidados:', registros.length);
+    console.log('Soma total: R$ ' + registros.reduce(function(a,r){return a+r.valor;},0).toFixed(2));
     console.groupEnd();
 
     // Popular select de anos (2026 em diante)
@@ -316,34 +208,12 @@ function _mapFiltrar() {
   var sel = document.getElementById('mapAno');
   _mapAnoSel = sel ? parseInt(sel.value) || 0 : 0;
 
-  /* SANITIZAÇÃO PRÉVIA: remove registros inválidos que poluíam a tabela
-     Consultor × Treinamento (linhas "—", colunas vazias, lixo de migração). */
-  function _ehValido(r){
-    if (!r) return false;
-    var cons = String(r.consultor||'').trim().toUpperCase();
-    var trein= String(r.treinamento||'').trim().toUpperCase();
-    if (!cons || cons === '—' || cons === '-' || cons === 'NULL' || cons === 'UNDEFINED') return false;
-    if (!trein|| trein=== '—' || trein=== '-' || trein=== 'NULL' || trein=== 'UNDEFINED') return false;
-    if (!r.valor || r.valor <= 0) return false;
-    return true;
-  }
-
-  // Filtrar registros pelo período + validade
+  // Filtrar registros apenas pelo período (sem sanitização — espelha a tela Turmas)
   var registros = _mapDados.filter(function(r) {
     if (_mapAnoSel > 0 && r.ano !== _mapAnoSel) return false;
     if (_mapMesesSel.length > 0 && !_mapMesesSel.includes(r.mes)) return false;
-    return _ehValido(r);
-  });
-
-  /* Log diagnóstico: quantos foram descartados por inválidos */
-  var _totalNoPeriodo = _mapDados.filter(function(r){
-    if (_mapAnoSel > 0 && r.ano !== _mapAnoSel) return false;
-    if (_mapMesesSel.length > 0 && !_mapMesesSel.includes(r.mes)) return false;
     return true;
-  }).length;
-  if (_totalNoPeriodo > registros.length) {
-    console.log('%c[Mapeamento] Filtrar: '+(_totalNoPeriodo-registros.length)+' registro(s) inválido(s) ocultado(s) (consultor/treinamento/valor faltando)', 'color:#f59e0b;');
-  }
+  });
 
   _mapRenderKpis(registros);
   _mapRenderConsultores(registros);
