@@ -145,19 +145,52 @@ function _mapCarregar(forcar) {
       clientes = clientes || [];
 
       clientes.forEach(function(c) {
-        if (!c || c.status !== 'pago') return; // apenas PAGO
-        registros.push({
-          consultor:   (c.consultor   || '—').trim().toUpperCase(),
-          treinamento: (c.treinamento || '').trim().toUpperCase(),
-          valor:       c.valor || 0,
-          ano:         ano,
-          mes:         mes,
-          turmaId:     tid
-        });
+        if (!c || !c.cliente) return;
+        var consultor = (c.consultor || '—').trim().toUpperCase();
+        /* Cliente com MÚLTIPLOS sub-treinamentos:
+           - c.valor é AGREGADO (soma de todos os subs, pagos ou não)
+           - c.status é o status do SUB PRIMÁRIO (pode ser "pago" mesmo havendo
+             subs em negociação)
+           Bug observado: ao ler c.valor + c.status="pago", o mapeamento somava
+           o valor TOTAL (incluindo subs não pagos) → faturamento "duplicado".
+           Fix: se existe c.treinamentos[], iterar nos subs e contar APENAS os
+           que tenham status === 'pago'. Caso contrário, fallback p/ c.valor. */
+        var subs = Array.isArray(c.treinamentos) ? c.treinamentos.filter(Boolean) : [];
+        if (subs.length > 0) {
+          subs.forEach(function(sub) {
+            var stSub = String(sub.status || c.status || '').toLowerCase();
+            if (stSub !== 'pago') return;
+            registros.push({
+              consultor:   consultor,
+              treinamento: String(sub.cod || c.treinamento || '').trim().toUpperCase(),
+              valor:       Number(sub.valor || 0) || 0,
+              ano:         ano,
+              mes:         mes,
+              turmaId:     tid,
+              clienteKey:  String(c.cliente).toUpperCase().trim()+'|'+(sub.cod||'')
+            });
+          });
+        } else {
+          if (c.status !== 'pago') return;
+          registros.push({
+            consultor:   consultor,
+            treinamento: (c.treinamento || '').trim().toUpperCase(),
+            valor:       Number(c.valor || 0) || 0,
+            ano:         ano,
+            mes:         mes,
+            turmaId:     tid,
+            clienteKey:  String(c.cliente).toUpperCase().trim()+'|'+(c.treinamento||'')
+          });
+        }
       });
     });
 
-    _mapDados = registros;
+    /* Defesa anti-duplicação: se o MESMO cliente+treinamento aparece em
+       múltiplas turmas (cenário possível por importação cruzada ou
+       migração), mantém só o registro mais recente (último indexOf). */
+    var _vistos = new Map();
+    registros.forEach(function(r){ _vistos.set(r.clienteKey, r); });
+    _mapDados = Array.from(_vistos.values());
 
     // Popular select de anos (2026 em diante)
     var anos = Array.from(anosSet).filter(function(a) { return a >= 2026; }).sort();
