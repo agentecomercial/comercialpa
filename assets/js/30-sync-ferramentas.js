@@ -116,16 +116,63 @@ function _mapCarregar(forcar) {
   if (vazio)   vazio.style.display   = 'none';
   _mapLimparUI();
 
-  window._fbGet(TURMAS_NODE).then(function(fbTurmas) {
+  /* Busca turmas E usuarios em paralelo — usuarios serve para CANONIZAR nomes
+     (ex: cliente cadastrado como "DARLEY" → usar nome oficial "DARLEY SANTOS") */
+  Promise.all([
+    window._fbGet(TURMAS_NODE),
+    window._fbGet('usuarios').catch(function(){return null;})
+  ]).then(function(results){
+    var fbTurmas   = results[0];
+    var fbUsuarios = results[1] || {};
     if (loading) loading.style.display = 'none';
     if (!fbTurmas || !Object.keys(fbTurmas).length) {
       if (vazio) vazio.style.display = 'block';
       return;
     }
 
+    /* Mapa de canonização de nomes:
+       - Para cada usuario cadastrado, indexa o NOME OFICIAL por:
+         · nome completo (uppercase) → próprio nome
+         · primeira palavra (uppercase) → nome completo (SE for único)
+       Ex: "DARLEY SANTOS" gera 2 chaves:
+         "DARLEY SANTOS" → "DARLEY SANTOS"
+         "DARLEY"        → "DARLEY SANTOS"  (se não houver outro Darley) */
+    var _nomesPorPrimNome = {};   // primNome → [nomesCompletos]
+    var _nomesOficiais = new Set();
+    Object.values(fbUsuarios).forEach(function(u){
+      if (!u || !u.nome) return;
+      var perfil = u.perfil || '';
+      if (perfil !== 'consultor' && perfil !== 'treinador' && perfil !== 'ministrante') return;
+      var nomeUp = String(u.nome).toUpperCase().trim();
+      _nomesOficiais.add(nomeUp);
+      var primNome = nomeUp.split(/\s+/)[0];
+      if (!_nomesPorPrimNome[primNome]) _nomesPorPrimNome[primNome] = [];
+      if (_nomesPorPrimNome[primNome].indexOf(nomeUp) === -1) {
+        _nomesPorPrimNome[primNome].push(nomeUp);
+      }
+    });
+    function _canonizarNome(raw){
+      var up = String(raw||'').toUpperCase().trim();
+      if (!up) return up;
+      /* 1. Já é nome oficial → mantém */
+      if (_nomesOficiais.has(up)) return up;
+      /* 2. Match exato pela primeira palavra → se há SÓ 1 oficial, canoniza */
+      var primNome = up.split(/\s+/)[0];
+      var candidatos = _nomesPorPrimNome[primNome] || [];
+      if (candidatos.length === 1) return candidatos[0];
+      /* 3. Match por inclusão: "DARLEY" inclui "DARLEY SANTOS"? Não. Inverso?
+         Se up é prefixo de algum oficial — canoniza para o oficial */
+      if (candidatos.length > 1) {
+        /* Ambíguo (2+ "DARLEY *"): mantém raw e avisa */
+        console.warn('[MAP] Nome "'+up+'" ambíguo entre oficiais:', candidatos);
+      }
+      return up;
+    }
+
     // Consolidar todos os clientes pagos de todas as turmas
     var registros = []; // { consultor, treinamento, valor, ano, mes, turmaId }
     var anosSet   = new Set();
+    var _normalizados = 0;
 
     Object.keys(fbTurmas).forEach(function(tid) {
       var t = fbTurmas[tid];
@@ -146,7 +193,9 @@ function _mapCarregar(forcar) {
 
       clientes.forEach(function(c) {
         if (!c || !c.cliente) return;
-        var consultor = (c.consultor || '—').trim().toUpperCase();
+        var rawCons = (c.consultor || '—').trim().toUpperCase();
+        var consultor = _canonizarNome(rawCons);
+        if (consultor !== rawCons) _normalizados++;
         var nomeNorm = String(c.cliente).toUpperCase().trim();
         var subs = Array.isArray(c.treinamentos) ? c.treinamentos.filter(Boolean) : [];
 
@@ -224,6 +273,7 @@ function _mapCarregar(forcar) {
     var _somaBruta = registros.reduce(function(a,r){return a+r.valor;},0);
     var _somaFinal = _mapDados.reduce(function(a,r){return a+r.valor;},0);
     console.log('Soma BRUTA: R$ ' + _somaBruta.toFixed(2) + ' | Soma DEDUP: R$ ' + _somaFinal.toFixed(2));
+    console.log('Nomes de consultor canonizados via usuarios/: '+_normalizados+' registro(s)');
     if (_conflitos.length) {
       console.warn('Conflitos detectados (mesmo cliente+cod em múltiplos lugares):');
       console.table(_conflitos);
