@@ -255,12 +255,34 @@ function _mapFiltrar() {
   var sel = document.getElementById('mapAno');
   _mapAnoSel = sel ? parseInt(sel.value) || 0 : 0;
 
-  // Filtrar registros pelo período
+  /* SANITIZAÇÃO PRÉVIA: remove registros inválidos que poluíam a tabela
+     Consultor × Treinamento (linhas "—", colunas vazias, lixo de migração). */
+  function _ehValido(r){
+    if (!r) return false;
+    var cons = String(r.consultor||'').trim().toUpperCase();
+    var trein= String(r.treinamento||'').trim().toUpperCase();
+    if (!cons || cons === '—' || cons === '-' || cons === 'NULL' || cons === 'UNDEFINED') return false;
+    if (!trein|| trein=== '—' || trein=== '-' || trein=== 'NULL' || trein=== 'UNDEFINED') return false;
+    if (!r.valor || r.valor <= 0) return false;
+    return true;
+  }
+
+  // Filtrar registros pelo período + validade
   var registros = _mapDados.filter(function(r) {
     if (_mapAnoSel > 0 && r.ano !== _mapAnoSel) return false;
     if (_mapMesesSel.length > 0 && !_mapMesesSel.includes(r.mes)) return false;
-    return true;
+    return _ehValido(r);
   });
+
+  /* Log diagnóstico: quantos foram descartados por inválidos */
+  var _totalNoPeriodo = _mapDados.filter(function(r){
+    if (_mapAnoSel > 0 && r.ano !== _mapAnoSel) return false;
+    if (_mapMesesSel.length > 0 && !_mapMesesSel.includes(r.mes)) return false;
+    return true;
+  }).length;
+  if (_totalNoPeriodo > registros.length) {
+    console.log('%c[Mapeamento] Filtrar: '+(_totalNoPeriodo-registros.length)+' registro(s) inválido(s) ocultado(s) (consultor/treinamento/valor faltando)', 'color:#f59e0b;');
+  }
 
   _mapRenderKpis(registros);
   _mapRenderConsultores(registros);
