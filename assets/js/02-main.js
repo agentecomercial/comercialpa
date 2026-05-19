@@ -882,11 +882,22 @@ window._setTreinamentoScalar = _setTreinamentoScalar;
    original em data[]) e _ai (índice no sub-array) para edição. */
 function _achatarItens(arr){
   arr = (arr && arr.length) ? arr : (typeof data!=='undefined' ? data : []);
+  /* CRÍTICO: _ri DEVE ser o índice no `data` GLOBAL (não no arr filtrado),
+     porque os callbacks dos cards (ex: _abrirMenuCliente, openConfirm, etc.)
+     usam esse índice para `data[ri]`. Se passamos f (filtrado), o forEach
+     ri seria índice em f — apontaria pro cliente errado.
+     Solução: mapa por referência → índice real em data[]. */
+  var _idxRealMap = null;
+  if(arr !== data && typeof data !== 'undefined' && Array.isArray(data)){
+    _idxRealMap = new Map();
+    data.forEach(function(d, i){ _idxRealMap.set(d, i); });
+  }
   var out = [];
   (arr||[]).forEach(function(d, ri){
     if(!d || !d.cliente) return;
+    var realRi = _idxRealMap ? (_idxRealMap.has(d) ? _idxRealMap.get(d) : ri) : ri;
     var base = {
-      _ri:       ri,
+      _ri:       realRi,
       cliente:   d.cliente,
       consultor: d.consultor || '—',
       treinador: d.treinador || '—',
