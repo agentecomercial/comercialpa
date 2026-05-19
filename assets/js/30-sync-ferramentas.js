@@ -147,50 +147,88 @@ function _mapCarregar(forcar) {
       clientes.forEach(function(c) {
         if (!c || !c.cliente) return;
         var consultor = (c.consultor || '—').trim().toUpperCase();
-        /* Cliente com MÚLTIPLOS sub-treinamentos:
-           - c.valor é AGREGADO (soma de todos os subs, pagos ou não)
-           - c.status é o status do SUB PRIMÁRIO (pode ser "pago" mesmo havendo
-             subs em negociação)
-           Bug observado: ao ler c.valor + c.status="pago", o mapeamento somava
-           o valor TOTAL (incluindo subs não pagos) → faturamento "duplicado".
-           Fix: se existe c.treinamentos[], iterar nos subs e contar APENAS os
-           que tenham status === 'pago'. Caso contrário, fallback p/ c.valor. */
+        var nomeNorm = String(c.cliente).toUpperCase().trim();
         var subs = Array.isArray(c.treinamentos) ? c.treinamentos.filter(Boolean) : [];
+
         if (subs.length > 0) {
-          subs.forEach(function(sub) {
+          /* DEFESA EXTRA: dedup interno de subs por COD normalizado.
+             Se a migração híbrida ou import deixou subs duplicados no array
+             (ex: [{IF,5996,pago}, {IF,5996,pago}]), conta SÓ 1.
+             Se duplicados com valores diferentes, mantém o MAIOR
+             (assume última edição do adm). */
+          var subsAgg = {};
+          subs.forEach(function(sub){
             var stSub = String(sub.status || c.status || '').toLowerCase();
             if (stSub !== 'pago') return;
+            var codK = String(sub.cod || c.treinamento || '').trim().toUpperCase();
+            if (!codK || codK === '-' || codK === '—') return;
+            var vSub = Number(sub.valor || 0) || 0;
+            if (!subsAgg[codK]) {
+              subsAgg[codK] = { cod: codK, valor: vSub, count: 1 };
+            } else {
+              /* Duplicação detectada → mantém o MAIOR valor + conta ocorrências */
+              subsAgg[codK].count++;
+              if (vSub > subsAgg[codK].valor) subsAgg[codK].valor = vSub;
+            }
+          });
+          Object.keys(subsAgg).forEach(function(codK){
+            var agg = subsAgg[codK];
+            if (agg.count > 1) {
+              console.warn('[MAP] '+c.cliente+' · '+agg.cod+' aparece '+agg.count+'× no array — somando 1× R$ '+agg.valor.toFixed(2));
+            }
             registros.push({
               consultor:   consultor,
-              treinamento: String(sub.cod || c.treinamento || '').trim().toUpperCase(),
-              valor:       Number(sub.valor || 0) || 0,
+              treinamento: agg.cod,
+              valor:       agg.valor,
               ano:         ano,
               mes:         mes,
               turmaId:     tid,
-              clienteKey:  String(c.cliente).toUpperCase().trim()+'|'+(sub.cod||'')
+              clienteKey:  nomeNorm + '|' + agg.cod
             });
           });
         } else {
           if (c.status !== 'pago') return;
+          var codScalar = (c.treinamento || '').trim().toUpperCase();
           registros.push({
             consultor:   consultor,
-            treinamento: (c.treinamento || '').trim().toUpperCase(),
+            treinamento: codScalar,
             valor:       Number(c.valor || 0) || 0,
             ano:         ano,
             mes:         mes,
             turmaId:     tid,
-            clienteKey:  String(c.cliente).toUpperCase().trim()+'|'+(c.treinamento||'')
+            clienteKey:  nomeNorm + '|' + codScalar
           });
         }
       });
     });
 
-    /* Defesa anti-duplicação: se o MESMO cliente+treinamento aparece em
-       múltiplas turmas (cenário possível por importação cruzada ou
-       migração), mantém só o registro mais recente (último indexOf). */
+    /* Defesa anti-duplicação:
+       Cenário A: mesma venda exibida em 2 turmas (importação cruzada / bug).
+         → chave (cliente|cod) + se duplicada, mantém o de maior valor.
+       Cenário B: mesma venda gravada 2× na MESMA turma (registros legados).
+         → mesma chave (cliente|cod) — 1ª já entrou, 2ª substitui. */
     var _vistos = new Map();
-    registros.forEach(function(r){ _vistos.set(r.clienteKey, r); });
+    var _conflitos = [];
+    registros.forEach(function(r){
+      var prev = _vistos.get(r.clienteKey);
+      if (!prev) { _vistos.set(r.clienteKey, r); return; }
+      /* Conflito: mesmo cliente+cod já existe — não SOMAR. Mantém o de maior valor. */
+      _conflitos.push({key:r.clienteKey, valorA:prev.valor, valorB:r.valor, turmaA:prev.turmaId, turmaB:r.turmaId});
+      if (r.valor > prev.valor) _vistos.set(r.clienteKey, r);
+    });
     _mapDados = Array.from(_vistos.values());
+
+    /* Diagnóstico no console — útil quando user reporta "soma errada" */
+    console.group('%c[Mapeamento] _mapCarregar — diagnóstico', 'background:#f59e0b;color:#000;padding:2px 8px;font-weight:700;');
+    console.log('Registros brutos:', registros.length, '| Após dedup:', _mapDados.length, '| Removidos por dup:', registros.length - _mapDados.length);
+    var _somaBruta = registros.reduce(function(a,r){return a+r.valor;},0);
+    var _somaFinal = _mapDados.reduce(function(a,r){return a+r.valor;},0);
+    console.log('Soma BRUTA: R$ ' + _somaBruta.toFixed(2) + ' | Soma DEDUP: R$ ' + _somaFinal.toFixed(2));
+    if (_conflitos.length) {
+      console.warn('Conflitos detectados (mesmo cliente+cod em múltiplos lugares):');
+      console.table(_conflitos);
+    }
+    console.groupEnd();
 
     // Popular select de anos (2026 em diante)
     var anos = Array.from(anosSet).filter(function(a) { return a >= 2026; }).sort();
