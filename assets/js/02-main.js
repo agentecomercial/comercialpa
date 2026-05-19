@@ -1587,21 +1587,45 @@ function renderAll(){
       </tr>`;
     }).join('');
 
+  // ── Pré-cálculo: filtra os SUB-treinamentos pelo status/treinamento ativo ──
+  // Usado tanto pelo total visível quanto pelo agregado mobile.
+  const _stSetActive    = (window.activeStatusSet      && window.activeStatusSet.size      > 0) ? window.activeStatusSet      : null;
+  const _stSingleActive = (!_stSetActive && activeStatus && activeStatus!=='entrada') ? activeStatus : null;
+  const _trSetActive    = (window.activeTreinamentoSet && window.activeTreinamentoSet.size > 0) ? window.activeTreinamentoSet : null;
+  const _normTr2 = function(s){ return String(s||'').toUpperCase().trim().replace(/\s+/g,' '); };
+  const _trSetNorm = _trSetActive ? new Set(Array.from(_trSetActive).map(_normTr2)) : null;
+  const _haFiltroSubs = !!(_stSetActive || _stSingleActive || _trSetNorm);
+  function _itemBateFiltro(it){
+    var st = it.status || 'aberto';
+    if(_stSetActive && !_stSetActive.has(st)) return false;
+    if(_stSingleActive && st !== _stSingleActive) return false;
+    if(_trSetNorm){
+      if(_trSetNorm.has('—')){
+        var raw = String(it.treinamento||'').trim();
+        if(!raw || raw==='-' || raw==='—') return true;
+      }
+      if(!_trSetNorm.has(_normTr2(it.treinamento))) return false;
+    }
+    return true;
+  }
+  /* Computa subs filtrados — independente de existir mobile card */
+  const _flatRawAll = (typeof _achatarItens==='function') ? _achatarItens(f) : [];
+  const _flatFiltrado = _haFiltroSubs ? _flatRawAll.filter(_itemBateFiltro) : _flatRawAll;
+  const _totalSubsFiltrados = _haFiltroSubs
+    ? _flatFiltrado.reduce(function(a,it){return a+(it.valor||0);}, 0)
+    : f.reduce(function(a,d){return a+(d.valor||0);}, 0);
+
   // ── Renderização de cards mobile (espelha a tabela acima) ──
   const _ccEl=document.getElementById('clientCards');
   if(_ccEl){
     if(f.length===0){
       _ccEl.innerHTML='<div class="mob-empty">Nenhum cliente para os filtros selecionados.</div>';
     } else {
-      // === MOBILE AGREGADO POR CLIENTE (Opção 6) ===
-      // Agrupa registros do mesmo cliente em um único card com totais e pílulas.
-      // Achata d.treinamentos[] em itens flat — 1 pílula por sub-compra real.
+      // === MOBILE AGREGADO POR CLIENTE ===
       const _grupos={};
       const _ordem=[];
-      const _flatGrupo = (typeof _achatarItens==='function') ? _achatarItens(f) : f.map(function(d){
-        return {_ri:data.indexOf(d),_ai:-1,cliente:d.cliente,consultor:d.consultor,treinamento:d.treinamento,status:d.status||'aberto',valor:d.valor||0};
-      });
-      _flatGrupo.forEach(function(it){
+      /* Reusa _flatFiltrado calculado acima — já considera status + treinamento */
+      _flatFiltrado.forEach(function(it){
         if(!it||!it.cliente) return;
         const _nome=String(it.cliente).toUpperCase().trim();
         if(!_grupos[_nome]){
@@ -1659,7 +1683,7 @@ function renderAll(){
 
   const _totalValid=data.filter(d=>d&&d.cliente).length;
   document.getElementById('tableCount').textContent=`${f.length} de ${_totalValid} cliente${_totalValid!==1?'s':''}`;
-  document.getElementById('tableTotal').innerHTML='Total visível: <span>'+formatVal(f.reduce((a,d)=>a+d.valor,0))+'</span>';
+  document.getElementById('tableTotal').innerHTML='Total visível: <span>'+formatVal(_totalSubsFiltrados)+'</span>';
 
   // Barras por treinador — NEON + PERCENTUAL
   const maxV=Math.max(1,...allTrainers.map(t=>data.filter(d=>d&&d.cliente&&d.treinador===t).reduce((a,d)=>a+d.valor,0)));
