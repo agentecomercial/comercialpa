@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=2026-IC-V1">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -110,26 +110,40 @@
         </div>
       </div>
 
-      <!-- Card MAPEAMENTO -->
-      <div id="btnMapHome" class="home-card" style="background:linear-gradient(135deg,rgba(200,240,90,.12) 0%,rgba(200,240,90,.03) 100%);border:1px solid rgba(200,240,90,.18);box-shadow:0 8px 32px rgba(200,240,90,.12),inset 0 1px 0 rgba(255,255,255,.12);--card-shadow-rgb:200,240,90;" onclick="abrirMapeamento()">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
-          <div class="home-card-icon">
-            <svg viewBox="0 0 22 22" fill="none">
-              <polyline points="2,17 7,10 11,13 16,6 20,8" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="7" cy="10" r="1.5" fill="var(--accent)"/>
-              <circle cx="11" cy="13" r="1.5" fill="var(--accent)"/>
-              <circle cx="16" cy="6" r="1.5" fill="var(--accent)"/>
+      <!-- Card INTELIGÊNCIA COMERCIAL (antigo "Mapeamento") -->
+      <div id="btnMapHome"
+           class="home-card home-card-ic"
+           role="button"
+           tabindex="0"
+           aria-label="Abrir Inteligência Comercial: KPIs, rankings e tendências do período"
+           onclick="abrirMapeamento(this)"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirMapeamento(this);}">
+        <div class="ic-top">
+          <div class="home-card-icon ic-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <!-- grid de fundo (sutil) -->
+              <path d="M3 21h18M3 3v18" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity=".25"/>
+              <!-- linha de crescimento -->
+              <path class="ic-line" d="M4 17 L8 12 L12 14 L16 8 L20 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <!-- ponto cabeça -->
+              <circle class="ic-head" cx="20" cy="10" r="2.2" fill="currentColor"/>
+              <!-- seta ascendente -->
+              <path d="M18 7 L20 5 L22 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M20 5 V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
             </svg>
           </div>
-          <span class="home-card-label">Análise</span>
+          <span class="home-card-label ic-label">★ Estratégico</span>
         </div>
-        <div>
-          <div class="home-card-title">Mapeamento</div>
-          <div class="home-card-sub">Faturamento por consultor, rankings e correlações por período.</div>
+        <div class="ic-body">
+          <div class="home-card-title ic-title">Inteligência Comercial</div>
+          <div class="home-card-sub ic-sub">KPIs · Rankings · Tendências · Decisão</div>
         </div>
-        <div class="home-card-footer" style="color:#a78bfa;">
-          Acessar
-          <svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="#a78bfa" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="home-card-footer ic-footer">
+          <span class="ic-cta">Abrir painel</span>
+          <svg class="ic-arrow" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="ic-spinner" aria-hidden="true"></span>
         </div>
       </div>
 
@@ -1979,7 +1993,7 @@ try{
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
 <script defer src="assets/js/02-main.js?v=2026-VAL-SUBS-FILT-V2"></script>
 <script defer src="assets/js/29-login.js?v=2026-CONGELAR-V1"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=2026-CONG-DIST-V3"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=2026-IC-V1"></script>
 <script defer src="assets/js/31-modo-consultor-desktop.js?v=20260514a"></script>
 <script defer src="assets/js/33-relatorio-supremo.js?v=20260516w"></script>
 <script defer src="assets/js/34-ms-status-filter.js?v=2026-MS-STATUS-V1"></script>

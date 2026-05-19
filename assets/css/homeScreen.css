@@ -1,6 +1,127 @@
 .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1060px;}
-.home-card{border-radius:16px;padding:28px 24px;cursor:pointer;transition:transform .18s,box-shadow .18s;display:flex;flex-direction:column;gap:16px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+@media (max-width:1000px){.home-grid{grid-template-columns:repeat(2,1fr);max-width:720px;}}
+@media (max-width:560px){.home-grid{grid-template-columns:1fr;max-width:380px;}}
+
+.home-card{border-radius:16px;padding:28px 24px;cursor:pointer;transition:transform .22s cubic-bezier(.2,.9,.3,1.2),box-shadow .22s,border-color .18s;display:flex;flex-direction:column;gap:16px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);outline:none;position:relative;}
 .home-card:hover{transform:translateY(-4px) scale(1.01);box-shadow:0 16px 40px rgba(var(--card-shadow-rgb),.22),inset 0 1px 0 rgba(255,255,255,.16);border-color:rgba(var(--card-shadow-rgb),.4)!important;}
+.home-card:active{transform:translateY(-2px) scale(.99);transition-duration:.08s;}
+.home-card:focus-visible{outline:2px solid rgba(var(--card-shadow-rgb),.85);outline-offset:3px;box-shadow:0 0 0 4px rgba(var(--card-shadow-rgb),.18),0 16px 40px rgba(var(--card-shadow-rgb),.22);}
+
+/* ──────────────────────────────────────────────────────────────
+   ★ INTELIGÊNCIA COMERCIAL — identidade âmbar premium
+   (substitui o antigo "Mapeamento" verde-limão)
+─────────────────────────────────────────────────────────────── */
+.home-card-ic{
+  --card-shadow-rgb:245,180,0;
+  --ic-bright:#fbbf24;
+  --ic-deep:#f59e0b;
+  background:
+    radial-gradient(110% 60% at 30% 0%, rgba(251,191,36,.18), transparent 70%),
+    linear-gradient(135deg, rgba(245,180,0,.10) 0%, rgba(245,180,0,.02) 100%);
+  border:1px solid rgba(251,191,36,.32);
+  box-shadow:
+    0 10px 36px rgba(245,180,0,.16),
+    inset 0 1px 0 rgba(255,255,255,.14);
+  color:var(--ic-bright);
+  overflow:hidden;
+}
+/* Glow sutil em movimento atrás do conteúdo (não polui) */
+.home-card-ic::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(50% 35% at 80% 100%, rgba(251,191,36,.18), transparent 70%);
+  opacity:.55;transition:opacity .25s;
+}
+.home-card-ic:hover::before{opacity:.95;}
+.home-card-ic:hover{
+  border-color:rgba(251,191,36,.55)!important;
+  box-shadow:0 18px 50px rgba(245,180,0,.32),0 0 0 1px rgba(251,191,36,.14),inset 0 1px 0 rgba(255,255,255,.2);
+}
+
+/* Layout interno */
+.home-card-ic .ic-top{display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:1;}
+.home-card-ic .ic-body{position:relative;z-index:1;}
+.home-card-ic .ic-footer{position:relative;z-index:1;}
+
+/* Ícone — recebe currentColor (âmbar) e ganha pulse no hover */
+.home-card-ic .ic-icon{
+  width:46px;height:46px;border-radius:12px;
+  background:linear-gradient(135deg, rgba(251,191,36,.22), rgba(245,158,11,.10));
+  border:1px solid rgba(251,191,36,.28);
+  color:var(--ic-bright);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .25s cubic-bezier(.2,.9,.3,1.4), box-shadow .25s;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
+}
+.home-card-ic .ic-icon svg{width:24px;height:24px;}
+.home-card-ic:hover .ic-icon{
+  transform:scale(1.06) rotate(-2deg);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 18px rgba(251,191,36,.45);
+}
+/* Cabeça do gráfico pulsa discretamente */
+@keyframes ic-pulse {0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.18);opacity:.8;}}
+.home-card-ic .ic-head{transform-origin:center;transform-box:fill-box;animation:ic-pulse 2.4s ease-in-out infinite;}
+
+/* Label "★ Estratégico" — pill premium */
+.home-card-ic .ic-label{
+  background:linear-gradient(135deg, rgba(251,191,36,.18), rgba(245,158,11,.10));
+  border:1px solid rgba(251,191,36,.32);
+  color:var(--ic-bright);
+  padding:4px 10px;border-radius:99px;
+  font-size:9.5px;font-weight:800;letter-spacing:.1em;
+  text-shadow:0 0 8px rgba(251,191,36,.4);
+}
+
+.home-card-ic .ic-title{
+  font-size:18px;font-weight:800;letter-spacing:-.01em;
+  color:#fff;
+  background:linear-gradient(135deg, #ffffff 0%, #fff3c7 80%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:4px;
+}
+.home-card-ic .ic-sub{
+  font-size:12px;color:var(--muted);letter-spacing:.04em;
+  line-height:1.55;
+}
+
+.home-card-ic .ic-footer{
+  display:flex;align-items:center;gap:6px;
+  color:var(--ic-bright);
+  font-size:12px;font-weight:700;letter-spacing:.02em;
+  margin-top:auto;
+}
+.home-card-ic .ic-arrow{width:14px;height:14px;transition:transform .25s;}
+.home-card-ic:hover .ic-arrow{transform:translateX(4px);}
+.home-card-ic .ic-spinner{
+  display:none;width:14px;height:14px;
+  border:2px solid rgba(251,191,36,.25);
+  border-top-color:var(--ic-bright);border-radius:50%;
+  animation:ic-spin .7s linear infinite;
+}
+.home-card-ic.is-loading .ic-arrow{display:none;}
+.home-card-ic.is-loading .ic-spinner{display:inline-block;}
+.home-card-ic.is-loading{pointer-events:none;opacity:.92;}
+@keyframes ic-spin{to{transform:rotate(360deg);}}
+
+/* Estado restrito (consultor sem permissão de adm) */
+.home-card-ic.is-restricted{
+  opacity:.55;cursor:not-allowed;filter:saturate(.6);
+}
+.home-card-ic.is-restricted:hover{transform:none;box-shadow:0 10px 36px rgba(245,180,0,.16),inset 0 1px 0 rgba(255,255,255,.14);}
+.home-card-ic.is-restricted::after{
+  content:"🔒 Acesso restrito ao ADM";
+  position:absolute;top:14px;right:14px;
+  font-size:10px;font-weight:700;letter-spacing:.04em;
+  color:var(--muted);
+  background:rgba(0,0,0,.4);padding:3px 8px;border-radius:6px;
+}
+
+/* Redução de movimento — respeita prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce){
+  .home-card-ic .ic-head{animation:none;}
+  .home-card-ic:hover{transform:none;}
+  .home-card-ic:hover .ic-icon{transform:none;}
+  .home-card-ic:hover .ic-arrow{transform:none;}
+}
 .home-card-icon{width:44px;height:44px;border-radius:12px;background:var(--card-bg);display:flex;align-items:center;justify-content:center;}
 .home-card-icon svg{width:22px;height:22px;}
 .home-card-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--card-accent);}

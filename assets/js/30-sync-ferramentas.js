@@ -58,13 +58,48 @@ function fecharTelaTurmas(){
   renderTurmasGrid();
 }
 
-function abrirMapeamento(){
+function abrirMapeamento(btn){
   var _sM=_getSessao?_getSessao():null;
   var _pM=_sM?_sM.perfil:'adm';
-  if(_pM!=='adm'){_showToast('❌ Acesso restrito ao ADM.','var(--red)');return;}
-  _mostrarTela('mapeamentoScreen');
-  _mapCarregar(false);
+  if(_pM!=='adm'){
+    /* Marca o card como restrito (visualmente atenuado + ícone 🔒) sem
+       precisar de toast a cada clique. Quem está logado como consultor
+       já vê que não pode entrar antes mesmo de tentar. */
+    var card = btn || document.getElementById('btnMapHome');
+    if(card){
+      card.classList.add('is-restricted');
+      card.setAttribute('aria-disabled','true');
+      card.removeAttribute('role');
+    }
+    _showToast('🔒 Acesso restrito ao ADM.','var(--amber)');
+    return;
+  }
+  /* Feedback visual: troca seta por spinner enquanto a tela carrega */
+  var card = btn || document.getElementById('btnMapHome');
+  if(card) card.classList.add('is-loading');
+  /* Usa rAF + microtimeout para garantir paint do spinner antes do work pesado */
+  requestAnimationFrame(function(){
+    setTimeout(function(){
+      try { _mostrarTela('mapeamentoScreen'); _mapCarregar(false); }
+      finally { if(card) card.classList.remove('is-loading'); }
+    }, 30);
+  });
 }
+/* Ao terminar de carregar a sessão, se o usuário não é ADM, já marca o card
+   como restrito (não precisa esperar o clique para mostrar o estado). */
+window.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    var s = (typeof _getSessao==='function') ? _getSessao() : null;
+    if(!s) return;
+    if(s.perfil !== 'adm'){
+      var card = document.getElementById('btnMapHome');
+      if(card){
+        card.classList.add('is-restricted');
+        card.setAttribute('aria-disabled','true');
+      }
+    }
+  }, 800);
+});
 function fecharMapeamento(){
   _mostrarTela('turmasScreen');
 }
