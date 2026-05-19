@@ -110,6 +110,11 @@ function _mapCarregar(forcar) {
   // Se já tem cache e não está forçando atualização, apenas filtra
   if (_mapDados && !forcar) { _mapFiltrar(); return; }
 
+  /* Preserva a seleção atual de ano/meses do usuário para restaurar
+     após o reload — ao clicar "Atualizar dados" não deve resetar filtros. */
+  var _anoAnt   = _mapAnoSel;
+  var _mesesAnt = Array.isArray(_mapMesesSel) ? _mapMesesSel.slice() : [];
+
   var loading = document.getElementById('mapLoading');
   var vazio   = document.getElementById('mapVazio');
   if (loading) loading.style.display = 'block';
@@ -287,11 +292,17 @@ function _mapCarregar(forcar) {
     if (sel) {
       sel.innerHTML = '<option value="0">Todos</option>' +
         anos.map(function(a) { return '<option value="' + a + '">' + a + '</option>'; }).join('');
-      // Selecionar o ano mais recente por padrão
-      sel.value = anos[anos.length - 1];
-      _mapAnoSel = anos[anos.length - 1];
+      /* Restaura o ano que o usuário tinha selecionado, se ainda existir;
+         senão usa o ano mais recente como fallback. */
+      var _anoRestaurar = (_anoAnt === 0 || anos.indexOf(_anoAnt) !== -1)
+        ? _anoAnt
+        : anos[anos.length - 1];
+      sel.value = String(_anoRestaurar);
+      _mapAnoSel = _anoRestaurar;
     }
-    _mapMesesSel = []; // todos os meses
+    /* Restaura a seleção de meses anterior do usuário */
+    _mapMesesSel = _mesesAnt;
+    _mapAtualizarBotoesMes();
 
     _mapFiltrar();
   }).catch(function(e) {
