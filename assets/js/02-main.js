@@ -1225,14 +1225,37 @@ function filtered(){
   const _presencaSet     = (window.activePresencaSet     && window.activePresencaSet.size     > 0) ? window.activePresencaSet     : null;
   const _treinamentoSet  = (window.activeTreinamentoSet  && window.activeTreinamentoSet.size  > 0) ? window.activeTreinamentoSet  : null;
 
+  /* Status: cliente passa se PELO MENOS UM treinamento dele (scalar ou
+     array de subs) tem o status selecionado. Sem isso, cliente com
+     [IF pago + CEOP aberto] (scalar='aberto') sumia do filtro "pago",
+     mesmo tendo um treinamento pago. */
   const _matchStatus = function(d){
     if(_statusSet){
+      /* "entrada" continua olhando o campo entrada (scalar) — soma agregada */
       if(_statusSet.has('entrada') && d.entrada > 0) return true;
+      /* Scalar primário */
       if(_statusSet.has(d.status)) return true;
+      /* Subs (array) — se algum tem status no Set, passa */
+      if(Array.isArray(d.treinamentos)){
+        for(var i=0; i<d.treinamentos.length; i++){
+          var sub = d.treinamentos[i];
+          if(sub && sub.status && _statusSet.has(sub.status)) return true;
+          if(_statusSet.has('entrada') && sub && +(sub.entrada||0) > 0) return true;
+        }
+      }
       return false;
     }
     if(!activeStatus) return true;
-    return (activeStatus==='entrada' ? d.entrada>0 : d.status===activeStatus);
+    if(activeStatus==='entrada') return d.entrada>0;
+    if(d.status === activeStatus) return true;
+    /* Single legacy: também varre subs */
+    if(Array.isArray(d.treinamentos)){
+      for(var j=0; j<d.treinamentos.length; j++){
+        var s = d.treinamentos[j];
+        if(s && s.status === activeStatus) return true;
+      }
+    }
+    return false;
   };
   const _matchTrainer = function(d){
     if(_trainerSet) return _trainerSet.has(d.treinador);
