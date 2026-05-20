@@ -1046,6 +1046,24 @@ window._faturadoDoCliente   = _faturadoDoCliente;
 window._abertoDoCliente     = _abertoDoCliente;
 window._negociacaoDoCliente = _negociacaoDoCliente;
 
+/* Entrada PENDENTE: soma entradas apenas de subs ainda NÃO pagos.
+   Subs já quitados (status='pago') têm entrada histórica que NÃO deve
+   aparecer no card/KPI/modal de "Entradas" — já foi liquidada pelo
+   pagamento total. */
+function _entradaPendenteDoCliente(d){
+  if(!d) return 0;
+  if(Array.isArray(d.treinamentos) && d.treinamentos.length){
+    return d.treinamentos.reduce(function(a, sub){
+      if(!sub) return a;
+      var st = sub.status || d.status || 'aberto';
+      if(st === 'pago') return a;
+      return a + (Number(sub.entrada)||0);
+    }, 0);
+  }
+  return d.status === 'pago' ? 0 : (Number(d.entrada)||0);
+}
+window._entradaPendenteDoCliente = _entradaPendenteDoCliente;
+
 /* Retorna o índice do PRIMEIRO sub elegível a receber o fallback de d.entrada.
    Heurística: primeiro sub NÃO PAGO (faz sentido — entrada é dinheiro ainda devido).
    Se todos os subs estão pagos, retorna 0 (caso raro com d.entrada > 0). */
@@ -1495,8 +1513,9 @@ function renderAll(){
   const totalAberto     = _base.reduce((a,d)=>a+_abertoDoCliente(d),0);
   const totalNegociacao = _base.reduce((a,d)=>a+_negociacaoDoCliente(d),0);
   const clientesNegociacao = _base.filter(d=>_negociacaoDoCliente(d)>0);
-  const clientesEntrada=_base.filter(d=>d.entrada>0);
-  const totalEntradas=clientesEntrada.reduce((a,d)=>a+d.entrada,0);
+  // Entrada PENDENTE — exclui entradas de subs já pagos (histórico)
+  const clientesEntrada=_base.filter(d=>_entradaPendenteDoCliente(d)>0);
+  const totalEntradas=_base.reduce((a,d)=>a+_entradaPendenteDoCliente(d),0);
   const pctGeral=Math.round((totalPago/META)*100);
   const colGeral=getCol(pctGeral);
   const ultrapassado=Math.max(totalPago-META,0);

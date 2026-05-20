@@ -118,9 +118,10 @@ function abrirClientesModal(tipo){
     : data.filter(function(d){return d&&d.cliente;});
 
   // Regra granular: filtra/soma por sub-status (alinhada com KPIs do painel)
-  var _fat = (typeof window._faturadoDoCliente==='function')   ? window._faturadoDoCliente   : function(d){return d.status==='pago'?(d.valor||0):0;};
-  var _abr = (typeof window._abertoDoCliente==='function')     ? window._abertoDoCliente     : function(d){return d.status==='aberto'?(d.valor||0):0;};
-  var _neg = (typeof window._negociacaoDoCliente==='function') ? window._negociacaoDoCliente : function(d){return d.status==='negociacao'?(d.valor||0):0;};
+  var _fat = (typeof window._faturadoDoCliente==='function')         ? window._faturadoDoCliente         : function(d){return d.status==='pago'?(d.valor||0):0;};
+  var _abr = (typeof window._abertoDoCliente==='function')           ? window._abertoDoCliente           : function(d){return d.status==='aberto'?(d.valor||0):0;};
+  var _neg = (typeof window._negociacaoDoCliente==='function')       ? window._negociacaoDoCliente       : function(d){return d.status==='negociacao'?(d.valor||0):0;};
+  var _entP= (typeof window._entradaPendenteDoCliente==='function')  ? window._entradaPendenteDoCliente  : function(d){return d.status==='pago'?0:(d.entrada||0);};
 
   let lista,titulo,subExtra='';
   if(tipo==='todos'){
@@ -140,9 +141,10 @@ function abrirClientesModal(tipo){
     const col=getCol(Math.round((total/META)*100));
     subExtra=lista.length+' cliente'+(lista.length!==1?'s':'')+' · Total faturado: <span style="color:'+col.text+';font-weight:700;">'+formatVal(total)+'</span>';
   } else if(tipo==='entrada'){
-    lista=_base.filter(d=>d.entrada>0);
+    /* Entrada PENDENTE — exclui subs já pagos (entrada virou histórico) */
+    lista=_base.filter(d=>_entP(d)>0);
     titulo='Total entradas';
-    const total=lista.reduce((a,d)=>a+d.entrada,0);
+    const total=lista.reduce((a,d)=>a+_entP(d),0);
     subExtra=lista.length+' cliente'+(lista.length!==1?'s':'')+' com entrada · Total: <span style="color:var(--accent);font-weight:700;">'+formatVal(total)+'</span>';
   }
   /* statusAlvo: passa o sub-status para o modal exibir só o valor/treinamento

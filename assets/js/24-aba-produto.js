@@ -168,10 +168,14 @@ function _renderProdutoCruzadaEntrada(){
   var _isConsRE=_perfilRE==='consultor';
 
   // Achata d.treinamentos[] → 1 item por sub-compra. Filtra entrada > 0 com case robusto.
+  // EXCLUI subs já com status='pago': a entrada deles é histórico (sinal já liquidado
+  // pelo pagamento total) — não faz sentido aparecer no card "Clientes Entrada", que
+  // mostra negociações com entrada PENDENTE de quitação.
   var _flatRE = (typeof _achatarItens==='function') ? _achatarItens(data) : [];
   var comEntrada=_flatRE.filter(function(d){
     if(!d || !d.cliente) return false;
     if(!d.entrada || d.entrada<=0) return false;
+    if(d.status === 'pago') return false;
     if(_isConsRE && String(d.consultor||'').toUpperCase().trim() !== _vinculoRE) return false;
     return true;
   });
