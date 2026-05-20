@@ -172,7 +172,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 #periodBarInner{display:none;align-items:center;gap:8px;}
 
 /* MAIN */
-.main{padding:24px 28px;max-width:none;margin:0;}
+.main{padding:24px 28px;max-width:1450px;margin:0 auto;}
 
 /* TABS */
 .tabs{display:flex;gap:8px;margin-bottom:20px;}
