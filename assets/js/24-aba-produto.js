@@ -279,7 +279,7 @@ function _renderProdutoCruzadaEntrada(){
 
 // Estado de ordenação do modal de clientes.
 // _cmProduto: produto filtrado quando o modal é aberto (afeta o valor exibido por linha).
-let _cmLista=[], _cmSortCol='valor', _cmSortDir=-1, _cmProduto=null;
+let _cmLista=[], _cmSortCol='valor', _cmSortDir=-1, _cmProduto=null, _cmStatusAlvo=null;
 
 function _cmRenderRows(){
   const sorted=[..._cmLista].sort((a,b)=>{
@@ -306,16 +306,39 @@ function _cmRenderRows(){
       var _consCli = String(d.consultor||'').toUpperCase().trim() || '—';
       // Quando o modal foi aberto com produto específico (ex: clicou em "IF"),
       // mostrar o valor/entrada DO SUB correspondente — não o total do cliente.
-      var _valorMostrado = _cmProduto
-        ? (typeof _valorClienteProduto==='function' ? _valorClienteProduto(d,_cmProduto,'valor') : (d.valor||0))
-        : (d.valor||0);
-      var _entradaMostrada = _cmProduto
-        ? (typeof _valorClienteProduto==='function' ? _valorClienteProduto(d,_cmProduto,'entrada') : (d.entrada||0))
-        : (d.entrada||0);
-      // Coluna Treinamento: quando há filtro de produto, destacar só esse; senão lista todos.
-      var _trCol = _cmProduto
-        ? String(_cmProduto)
-        : (d.treinamentos&&d.treinamentos.length ? d.treinamentos.map(function(t){return t.cod;}).join(' · ') : (d.treinamento||'—'));
+      // Quando aberto com status específico (ex: "Potencial total" = negociacao),
+      // mostrar a soma apenas dos subs naquele status.
+      var _valorMostrado, _entradaMostrada, _trCol;
+      if(_cmProduto){
+        _valorMostrado   = (typeof _valorClienteProduto==='function') ? _valorClienteProduto(d,_cmProduto,'valor')   : (d.valor||0);
+        _entradaMostrada = (typeof _valorClienteProduto==='function') ? _valorClienteProduto(d,_cmProduto,'entrada') : (d.entrada||0);
+        _trCol = String(_cmProduto);
+      } else if(_cmStatusAlvo){
+        _valorMostrado = (typeof window._valorPorStatus==='function')
+          ? window._valorPorStatus(d, _cmStatusAlvo)
+          : (d.status===_cmStatusAlvo ? (d.valor||0) : 0);
+        _entradaMostrada = d.entrada||0;
+        /* Treinamento: lista só os subs com aquele status (ex: para "Potencial total",
+           se ROBSON tem [IF pago, MENT.IA negociação] → mostra só "MENT.IA"). */
+        if(Array.isArray(d.treinamentos) && d.treinamentos.length){
+          var _subsDoStatus = d.treinamentos.filter(function(t){
+            if(!t) return false;
+            var st = t.status || d.status || 'aberto';
+            return st === _cmStatusAlvo;
+          });
+          _trCol = _subsDoStatus.length
+            ? _subsDoStatus.map(function(t){return t.cod;}).join(' · ')
+            : (d.treinamento||'—');
+        } else {
+          _trCol = d.treinamento||'—';
+        }
+      } else {
+        _valorMostrado   = d.valor||0;
+        _entradaMostrada = d.entrada||0;
+        _trCol = (d.treinamentos&&d.treinamentos.length)
+          ? d.treinamentos.map(function(t){return t.cod;}).join(' · ')
+          : (d.treinamento||'—');
+      }
       return `<tr style="border-left:2px solid var(--pago);">
         <td style="font-weight:600;text-transform:uppercase;text-align:left;color:var(--pago);white-space:nowrap;"><span style="display:inline-flex;align-items:center;gap:6px;">${_nomeCli}${iBtn}<span data-presenca-ri="${idx}">${window._presencaBadgeHtml?window._presencaBadgeHtml(idx):''}</span></span></td>
         <td style="text-align:center;font-size:12px;white-space:nowrap;">${_trCol}</td>
@@ -335,6 +358,7 @@ function _cmSort(col){
 function _abrirClientesModalComLista(lista,titulo,sub,opts){
   _cmLista=lista; _cmSortCol='valor'; _cmSortDir=-1;
   _cmProduto = (opts && opts.produto && opts.produto!=='null') ? String(opts.produto) : null;
+  _cmStatusAlvo = (opts && opts.statusAlvo) ? String(opts.statusAlvo) : null;
   document.getElementById('clientesModalTitulo').textContent=titulo;
   document.getElementById('clientesModalSub').innerHTML=sub;
   _cmRenderRows();

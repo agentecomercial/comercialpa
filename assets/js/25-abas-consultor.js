@@ -117,21 +117,26 @@ function abrirClientesModal(tipo){
     ? data.filter(function(d){return d&&d.cliente&&(d.consultor||'').toUpperCase()===_vinculo;})
     : data.filter(function(d){return d&&d.cliente;});
 
+  // Regra granular: filtra/soma por sub-status (alinhada com KPIs do painel)
+  var _fat = (typeof window._faturadoDoCliente==='function')   ? window._faturadoDoCliente   : function(d){return d.status==='pago'?(d.valor||0):0;};
+  var _abr = (typeof window._abertoDoCliente==='function')     ? window._abertoDoCliente     : function(d){return d.status==='aberto'?(d.valor||0):0;};
+  var _neg = (typeof window._negociacaoDoCliente==='function') ? window._negociacaoDoCliente : function(d){return d.status==='negociacao'?(d.valor||0):0;};
+
   let lista,titulo,subExtra='';
   if(tipo==='todos'){
-    lista=_base.filter(d=>d.status==='negociacao');
+    lista=_base.filter(d=>_neg(d)>0);
     titulo='Potencial total';
-    const total=lista.reduce((a,d)=>a+d.valor,0);
+    const total=lista.reduce((a,d)=>a+_neg(d),0);
     subExtra=lista.length+' cliente'+(lista.length!==1?'s':'')+' em negociação · Potencial total: <span style="color:var(--blue);font-weight:700;">'+formatVal(total)+'</span>';
   } else if(tipo==='aberto'){
-    lista=_base.filter(d=>d.status==='aberto');
+    lista=_base.filter(d=>_abr(d)>0);
     titulo='Em aberto';
-    const total=lista.reduce((a,d)=>a+d.valor,0);
+    const total=lista.reduce((a,d)=>a+_abr(d),0);
     subExtra=lista.length+' cliente'+(lista.length!==1?'s':'')+' · Total em aberto: <span style="color:var(--amber);font-weight:700;">'+formatVal(total)+'</span>';
   } else if(tipo==='pago'){
-    lista=_base.filter(d=>d.status==='pago');
+    lista=_base.filter(d=>_fat(d)>0);
     titulo='Faturado';
-    const total=lista.reduce((a,d)=>a+d.valor,0);
+    const total=lista.reduce((a,d)=>a+_fat(d),0);
     const col=getCol(Math.round((total/META)*100));
     subExtra=lista.length+' cliente'+(lista.length!==1?'s':'')+' · Total faturado: <span style="color:'+col.text+';font-weight:700;">'+formatVal(total)+'</span>';
   } else if(tipo==='entrada'){
@@ -140,7 +145,13 @@ function abrirClientesModal(tipo){
     const total=lista.reduce((a,d)=>a+d.entrada,0);
     subExtra=lista.length+' cliente'+(lista.length!==1?'s':'')+' com entrada · Total: <span style="color:var(--accent);font-weight:700;">'+formatVal(total)+'</span>';
   }
-  _abrirClientesModalComLista(lista,titulo,subExtra);
+  /* statusAlvo: passa o sub-status para o modal exibir só o valor/treinamento
+     correspondente em cada linha (em vez do c.valor inteiro). */
+  var _statusAlvo = tipo==='todos' ? 'negociacao'
+                  : tipo==='aberto' ? 'aberto'
+                  : tipo==='pago'   ? 'pago'
+                  : null;
+  _abrirClientesModalComLista(lista,titulo,subExtra,{statusAlvo:_statusAlvo});
 }
 function abrirPagosModal(){
   const pagos=data.filter(d=>d&&d.cliente&&d.status==='pago').sort((a,b)=>b.valor-a.valor);
