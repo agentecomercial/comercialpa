@@ -846,16 +846,16 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 }
 .col-filter-pop{
   position:absolute;top:calc(100% + 6px);right:0;
-  width:360px;max-width:90vw;
+  width:420px;max-width:92vw;
   background:rgba(10,10,16,.97);
   backdrop-filter:blur(24px) saturate(140%);
   -webkit-backdrop-filter:blur(24px) saturate(140%);
   border:1px solid rgba(200,240,90,.3);
   border-radius:12px;padding:8px;
   box-shadow:0 12px 40px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(0,0,0,.4);
-  display:none;z-index:2000;max-height:280px;overflow-y:auto;
+  display:none;z-index:2000;max-height:220px;overflow-y:auto;
 }
-.col-filter.open .col-filter-pop{display:grid !important;grid-template-columns:1fr 1fr;gap:2px;align-content:start;}
+.col-filter.open .col-filter-pop{display:grid !important;grid-template-columns:1fr 1fr 1fr;gap:2px;align-content:start;}
 .col-filter-pop .col-filter-head{grid-column:1 / -1;}
 .col-filter-pop .col-filter-all{grid-column:1 / -1;}
 .col-filter-pop .col-filter-sep{grid-column:1 / -1;}
