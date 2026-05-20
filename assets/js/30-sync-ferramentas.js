@@ -129,13 +129,10 @@ function _mapCarregar(forcar) {
   if (vazio)   vazio.style.display   = 'none';
   _mapLimparUI();
 
-  /* ESPELHA EXATAMENTE A LÓGICA DA TELA TURMAS (renderTurmasGrid):
-       _clientesPago = clientes.filter(c => c.status==='pago').reduce((a,c)=>a+(c.valor||0), 0)
-     ─ Sem iterar c.treinamentos[] (sub-a-sub)
-     ─ Sem dedup por (cliente|cod)
-     ─ Sem canonização de nomes via usuarios/
-     ─ Sem sanitização de inválidos
-     Cada cliente pago vira 1 registro: { consultor, treinamento, valor, ano, mes, turmaId } */
+  /* REGRA GRANULAR — soma APENAS sub-treinamentos com status='pago'.
+     Cliente em negociação com 1 sub pago entra com o valor desse sub.
+     Mesma regra do KPI Faturado, filtro PAGO do card Clientes e tela Turmas.
+     Cada SUB pago vira 1 registro: { consultor, treinamento, valor, ano, mes, turmaId } */
   window._fbGet(TURMAS_NODE).then(function(fbTurmas){
     if (loading) loading.style.display = 'none';
     if (!fbTurmas || !Object.keys(fbTurmas).length) {
@@ -165,23 +162,42 @@ function _mapCarregar(forcar) {
 
       clientes.forEach(function(c) {
         if (!c || !c.cliente) return;
-        if (c.status !== 'pago') return;
-        registros.push({
-          consultor:   String(c.consultor || '—').trim().toUpperCase(),
-          treinamento: String(c.treinamento || '—').trim().toUpperCase(),
-          valor:       Number(c.valor || 0) || 0,
-          ano:         ano,
-          mes:         mes,
-          turmaId:     tid
-        });
+        var consultor = String(c.consultor || '—').trim().toUpperCase();
+        if (Array.isArray(c.treinamentos) && c.treinamentos.length) {
+          /* Cliente com array de subs: itera, conta só os pagos individualmente */
+          c.treinamentos.forEach(function(sub){
+            if (!sub) return;
+            var st = sub.status || c.status || 'aberto';
+            if (st !== 'pago') return;
+            registros.push({
+              consultor:   consultor,
+              treinamento: String(sub.cod || c.treinamento || '—').trim().toUpperCase(),
+              valor:       Number(sub.valor || 0) || 0,
+              ano:         ano,
+              mes:         mes,
+              turmaId:     tid
+            });
+          });
+        } else {
+          /* Cliente legado (sem array): cai no scalar */
+          if (c.status !== 'pago') return;
+          registros.push({
+            consultor:   consultor,
+            treinamento: String(c.treinamento || '—').trim().toUpperCase(),
+            valor:       Number(c.valor || 0) || 0,
+            ano:         ano,
+            mes:         mes,
+            turmaId:     tid
+          });
+        }
       });
     });
 
     _mapDados = registros;
 
     /* Diagnóstico no console — para conferência rápida com a tela Turmas */
-    console.group('%c[Mapeamento] _mapCarregar — espelhando tela Turmas', 'background:#c8f05a;color:#000;padding:2px 8px;font-weight:700;');
-    console.log('Clientes pagos consolidados:', registros.length);
+    console.group('%c[Mapeamento] _mapCarregar — regra granular (subs pagos)', 'background:#c8f05a;color:#000;padding:2px 8px;font-weight:700;');
+    console.log('Sub-treinamentos pagos consolidados:', registros.length);
     console.log('Soma total: R$ ' + registros.reduce(function(a,r){return a+r.valor;},0).toFixed(2));
     console.groupEnd();
 

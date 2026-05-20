@@ -363,7 +363,19 @@ function renderTurmasGrid(){
             consultores:Array.isArray(t.consultores)?t.consultores:(t.consultores?Object.values(t.consultores):[]),
             treinadores:Array.isArray(t.treinadores)?t.treinadores:(t.treinadores?Object.values(t.treinadores):[]),
             _clientesCount:(clientes&&clientes.length)||0,
-            _clientesPago:(clientes||[]).filter(function(c){return c&&c.status==='pago';}).reduce(function(a,c){return a+(c.valor||0);},0),
+            _clientesPago:(clientes||[]).reduce(function(a,c){
+              if(!c) return a;
+              /* Regra granular: soma APENAS sub-treinamentos pagos.
+                 Cliente em negociação com 1 sub pago entra com o valor desse sub. */
+              if(Array.isArray(c.treinamentos)&&c.treinamentos.length){
+                return a + c.treinamentos.reduce(function(s,sub){
+                  if(!sub) return s;
+                  var st=sub.status||c.status||'aberto';
+                  return st==='pago' ? s+(Number(sub.valor)||0) : s;
+                },0);
+              }
+              return a + (c.status==='pago' ? (Number(c.valor)||0) : 0);
+            },0),
             _clientesTotal:(clientes||[]).reduce(function(a,cc){return a+(cc&&cc.valor||0);},0)
           });
         });
@@ -397,7 +409,17 @@ function renderTurmasGrid(){
             periodStart:tObj.periodStart, periodEnd:tObj.periodEnd,
             periodText:tObj.periodText, criadoEm:tObj.criadoEm,
             _clientesCount:(clientes&&clientes.length)||0,
-            _clientesPago:(clientes||[]).filter(function(c){return c&&c.status==='pago';}).reduce(function(a,c){return a+(c.valor||0);},0),
+            _clientesPago:(clientes||[]).reduce(function(a,c){
+              if(!c) return a;
+              if(Array.isArray(c.treinamentos)&&c.treinamentos.length){
+                return a + c.treinamentos.reduce(function(s,sub){
+                  if(!sub) return s;
+                  var st=sub.status||c.status||'aberto';
+                  return st==='pago' ? s+(Number(sub.valor)||0) : s;
+                },0);
+              }
+              return a + (c.status==='pago' ? (Number(c.valor)||0) : 0);
+            },0),
             _clientesTotal:(clientes||[]).reduce(function(a,cc){return a+(cc&&cc.valor||0);},0)
           });
         });
