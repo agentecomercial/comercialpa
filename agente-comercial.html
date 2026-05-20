@@ -4008,6 +4008,8 @@ cAno = desligPorMes × custoUnit × 12</pre>
         <input type="text" id="reset-username" placeholder="Seu usuário (login)"
           style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-2);color:var(--text);font-size:15px;font-family:inherit;"
           oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9.]/g,'')">
+        <div style="text-align:right;margin-top:-6px;"><a href="javascript:void(0)" onclick="mostrarUsuariosCadastrados()" style="font-size:11px;color:var(--muted);text-decoration:underline;">👥 Ver usuários cadastrados neste dispositivo</a></div>
+        <div id="reset-usuarios-lista" style="display:none;background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;"></div>
         <input type="text" id="reset-confirmacao" placeholder="Frase de confirmação: RESET-&lt;USUARIO&gt;"
           style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-2);color:var(--text);font-size:13px;font-family:Consolas,monospace;">
         <input type="password" id="reset-nova-senha" placeholder="Nova senha (mín. 4 caracteres)"
@@ -4408,6 +4410,11 @@ cAno = desligPorMes × custoUnit × 12</pre>
               style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
             <span><strong>⚡ Conversa automática</strong> <span id="modo-api-status" style="color:var(--muted);font-weight:400;font-size:11.5px;"></span></span>
           </label>
+        </div>
+        <div class="multi-step-card" style="margin-bottom:10px;">
+          <label for="treino-gatilho" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">🎯 Contexto inicial da conversa <span style="color:var(--muted);font-weight:400;">(o que disparou esse contato — a IA vai usar pra abrir com gancho real)</span></label>
+          <textarea id="treino-gatilho" rows="3" placeholder="Ex: Lead respondeu anúncio do BHP no Instagram dizendo que tá com time desmotivado.&#10;Ex: Indicação de João Silva, dono de clínica odontológica, querendo entender o Tour.&#10;Ex: Cliente já participou de evento Febracis em 2024, voltou a interagir pedindo info sobre próximos eventos." style="width:100%;font-size:13px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text);font-family:inherit;resize:vertical;"></textarea>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">Sem contexto, a IA inventa um motivo genérico. Com contexto, a 1ª mensagem do cliente fictício amarra na origem real do lead.</div>
         </div>
         <div class="actions">
           <button class="btn-primary" onclick="iniciarConversaTreino()">▶️ INICIAR CONVERSA</button>
@@ -8032,6 +8039,7 @@ Aguarde o user message — siga o cabeçalho.`;
 
       var etapa = getLabel('treino-etapa');
       var canal = getLabel('treino-canal');
+      var gatilho = (val('treino-gatilho') || '').trim();
 
       var modoApi = !!DB.data.modoApiPreferido && temIaConfigurada();
 
@@ -8045,6 +8053,7 @@ Aguarde o user message — siga o cabeçalho.`;
         perfilDisc: perfil.disc,
         etapa: etapa,
         canal: canal,
+        gatilho: gatilho,
         turnos: [],
         status: 'ativo',
         aguardandoAvaliacao: false,
@@ -8058,7 +8067,7 @@ Aguarde o user message — siga o cabeçalho.`;
         return;
       }
 
-      var userMsg = montarPrimeiraMensagemApi(treinamento, perfil, etapa, canal);
+      var userMsg = montarPrimeiraMensagemApi(treinamento, perfil, etapa, canal, gatilho);
       copiarTexto(userMsg).then(function() {
         toast('Prompt copiado. Cole no Claude e cole a fala dele aqui.', 'success');
       });
@@ -8119,9 +8128,14 @@ Aguarde o user message — siga o cabeçalho.`;
       var perfis = PERFIS_TREINO_POR_PRODUTO[conv.treinamentoId] || [];
       var perfil = perfis.find(function(p) { return p.id === conv.perfilId; }) || getPerfilTreinoAtivo();
 
+      var gatilhoBloco = '';
+      if (conv.gatilho && conv.gatilho.trim()) {
+        gatilhoBloco = '# 🎯 CONTEXTO INICIAL\n\n' + conv.gatilho.trim() + '\n\n---\n\n';
+      }
       return montarBlocoProduto(treinamento) + '\n\n---\n\n' +
         montarBlocoPerfilFicticio(perfil) + '\n\n---\n\n' +
-        '# 📍 CENÁRIO\n\n- **Etapa:** ' + conv.etapa + '\n- **Canal:** ' + conv.canal + '\n\n' +
+        '# 📍 CENÁRIO\n\n- **Etapa:** ' + conv.etapa + '\n- **Canal:** ' + conv.canal + '\n\n---\n\n' +
+        gatilhoBloco +
         montarBlocoHistoricoConversa(conv.turnos) + '\n\n' +
         'Continue como o cliente respondendo ao último turno do consultor. Mantenha o tom DISC e a objeção pivot. Não avalie nada agora — só envie a mensagem do cliente.';
     }
@@ -8354,12 +8368,21 @@ Aguarde o user message — siga o cabeçalho.`;
       throw new Error('Nenhuma chave de IA configurada em api-key.js');
     }
 
-    function montarPrimeiraMensagemApi(treinamento, perfil, etapa, canal) {
+    function montarPrimeiraMensagemApi(treinamento, perfil, etapa, canal, gatilho) {
+      var gatilhoBloco = '';
+      if (gatilho && gatilho.trim()) {
+        gatilhoBloco = '# 🎯 CONTEXTO INICIAL DA CONVERSA (o que disparou esse contato — AMARRE a 1ª mensagem do cliente nisso)\n\n' + gatilho.trim() + '\n\n---\n\n';
+      }
       return montarBlocoProduto(treinamento) + '\n\n---\n\n' +
         montarBlocoPerfilFicticio(perfil) + '\n\n---\n\n' +
-        '# 📍 CENÁRIO\n\n- **Etapa:** ' + etapa + '\n- **Canal:** ' + canal + '\n\n' +
+        '# 📍 CENÁRIO\n\n- **Etapa:** ' + etapa + '\n- **Canal:** ' + canal + '\n\n---\n\n' +
+        gatilhoBloco +
         '# ▶️ INICIAR_CONVERSA\n\n' +
-        'Inicie a conversa enviando a 1ª mensagem como cliente fictício. Use o tom DISC, a objeção pivot e o contexto do perfil. Não avalie nada — só envie a mensagem do cliente, como se fosse no canal indicado.';
+        'Inicie a conversa enviando a 1ª mensagem como cliente fictício. Use o tom DISC, a objeção pivot e o contexto do perfil. ' +
+        (gatilho && gatilho.trim()
+          ? 'AMARRE a 1ª mensagem ao **contexto inicial** acima — o cliente está reagindo a esse gancho específico (anúncio, indicação, evento, etc), NÃO chegando do nada. Cite ou referencie o gatilho de forma natural na fala. '
+          : '') +
+        'Não avalie nada — só envie a mensagem do cliente, como se fosse no canal indicado.';
     }
 
     function montarMessagesApi(conv, intent) {
@@ -8372,7 +8395,7 @@ Aguarde o user message — siga o cabeçalho.`;
       // 1ª mensagem sempre traz produto + perfil + cenário + INICIAR_CONVERSA
       messages.push({
         role: 'user',
-        content: montarPrimeiraMensagemApi(treinamento, perfil, conv.etapa, conv.canal)
+        content: montarPrimeiraMensagemApi(treinamento, perfil, conv.etapa, conv.canal, conv.gatilho)
       });
       // turnos alternados: cliente=assistant, consultor=user
       conv.turnos.forEach(function(t) {
@@ -10428,10 +10451,43 @@ Aguarde o user message — siga o cabeçalho.`;
       setTimeout(function () { var el = document.getElementById('reset-username'); if (el) el.focus(); }, 50);
     }
 
+    function mostrarUsuariosCadastrados() {
+      var box = document.getElementById('reset-usuarios-lista');
+      if (!box) return;
+      var lista = PROFILES.load();
+      if (!lista.length) {
+        box.innerHTML = '<em style="color:var(--muted);">Nenhum usuário cadastrado neste dispositivo.</em>';
+      } else {
+        var html = '<div style="font-weight:600;margin-bottom:6px;color:var(--text);">Usuários neste dispositivo:</div>';
+        lista.forEach(function (p) {
+          var role = p.role === 'gestor' ? ' · <span style="color:var(--green);">gestor</span>' : '';
+          html += '<div style="padding:4px 0;border-bottom:1px dashed var(--border);">'
+            + '<a href="javascript:void(0)" onclick="preencherUsernameReset(\'' + escapeHtml(p.username) + '\')" style="color:var(--text);text-decoration:none;font-family:Consolas,monospace;font-weight:600;">'
+            + escapeHtml(p.username) + '</a>'
+            + ' <span style="color:var(--muted);">— ' + escapeHtml(p.nome || '') + role + '</span>'
+            + '</div>';
+        });
+        html += '<div style="margin-top:6px;font-size:11px;color:var(--muted);">Clique no usuário pra preencher o campo.</div>';
+        box.innerHTML = html;
+      }
+      box.style.display = 'block';
+    }
+
+    function preencherUsernameReset(username) {
+      var inp = document.getElementById('reset-username');
+      if (inp) { inp.value = username; }
+      var conf = document.getElementById('reset-confirmacao');
+      if (conf) { conf.value = ''; conf.placeholder = 'Digite: RESET-' + username.toUpperCase(); }
+      var box = document.getElementById('reset-usuarios-lista');
+      if (box) box.style.display = 'none';
+      if (conf) conf.focus();
+    }
+
     function cancelarResetGestor() {
       document.getElementById('login-reset-panel').style.display = 'none';
       document.getElementById('login-form-section').style.display = 'flex';
       document.getElementById('login-reset-link').style.display = 'block';
+      var box = document.getElementById('reset-usuarios-lista'); if (box) box.style.display = 'none';
       var _err = document.getElementById('login-erro'); if (_err) _err.style.display = 'none';
     }
 

@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda Pedagógica — Febracis</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg-2: #141414;
+      --bg-3: #1c1c1c;
+      --border: #2a2a2a;
+      --text: #f5f5f5;
+      --muted: #888;
+      --accent: #00ff66;
+      --accent-dim: #00cc52;
+      --vix: #4f9eff;
+      --bel: #ffb84f;
+      --the: #ff6b9d;
+      --none: #666;
+      --danger: #ff4d4f;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(0,255,102,0.06), transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(0,255,102,0.04), transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      flex: 1;
+      min-width: 200px;
+    }
+    header h1 .sub {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+    }
+    header .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .user-pill {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 6px 10px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+    }
+    .user-pill strong { color: var(--text); font-weight: 600; }
+
+    .btn {
+      background: var(--bg-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+    .btn-primary:hover { background: var(--accent-dim); border-color: var(--accent-dim); color: #000; }
+    .btn-danger {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+    .btn-google {
+      background: #fff;
+      color: #1f1f1f;
+      border-color: #fff;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 18px;
+    }
+    .btn-google:hover { background: #f1f3f4; color: #1f1f1f; }
+    .btn-google svg { flex-shrink: 0; }
+
+    .card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 18px;
+    }
+
+    /* Setup */
+    .setup-card { max-width: 780px; margin: 30px auto; }
+    .setup-card h2 { margin-top: 0; font-size: 19px; }
+    .setup-card ol { padding-left: 22px; line-height: 1.9; }
+    .setup-card code {
+      background: var(--bg-3);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 12.5px;
+      color: var(--accent);
+      word-break: break-all;
+    }
+    .setup-card a { color: var(--accent); }
+    .setup-card input[type="text"] {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: Consolas, monospace;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .setup-card input[type="text"]:focus { border-color: var(--accent); outline: none; }
+    .setup-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .setup-tab {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 10px 14px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .setup-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .login-box {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .login-box .icon { font-size: 48px; margin-bottom: 14px; }
+    .login-box h2 { margin-top: 0; }
+    .login-box p { color: var(--muted); max-width: 480px; margin: 0 auto 22px; }
+
+    .alert {
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin: 12px 0;
+      border: 1px solid;
+    }
+    .alert-info {
+      background: rgba(79,158,255,0.08);
+      border-color: rgba(79,158,255,0.3);
+      color: #b8d4ff;
+    }
+    .alert-warn {
+      background: rgba(255,184,79,0.08);
+      border-color: rgba(255,184,79,0.3);
+      color: #ffd9a3;
+    }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filter-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--muted);
+      min-width: 90px;
+    }
+    .chip {
+      background: var(--bg-3);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .chip:hover { border-color: var(--accent); }
+    .chip.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .chip.vix.active { background: var(--vix); border-color: var(--vix); color: #fff; }
+    .chip.bel.active { background: var(--bel); border-color: var(--bel); color: #000; }
+    .chip.the.active { background: var(--the); border-color: var(--the); color: #fff; }
+    .chip-count {
+      opacity: 0.75;
+      font-size: 11px;
+      margin-left: 4px;
+    }
+
+    .search {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .search:focus { border-color: var(--accent); outline: none; }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .stat {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      transition: all 0.15s ease;
+    }
+    .stat.clickable {
+      cursor: pointer;
+      user-select: none;
+    }
+    .stat.clickable:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .stat.clickable.active {
+      border-color: var(--accent);
+      background: rgba(0,255,102,0.06);
+      box-shadow: 0 0 0 1px var(--accent) inset;
+    }
+    .stat.clickable.active.unit-VIX { border-color: var(--vix); box-shadow: 0 0 0 1px var(--vix) inset; background: rgba(79,158,255,0.08); }
+    .stat.clickable.active.unit-BEL { border-color: var(--bel); box-shadow: 0 0 0 1px var(--bel) inset; background: rgba(255,184,79,0.08); }
+    .stat.clickable.active.unit-THE { border-color: var(--the); box-shadow: 0 0 0 1px var(--the) inset; background: rgba(255,107,157,0.08); }
+    .stat-num {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .stat-num.vix { color: var(--vix); }
+    .stat-num.bel { color: var(--bel); }
+    .stat-num.the { color: var(--the); }
+    .stat-num.accent { color: var(--accent); }
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    /* Event cards */
+    .month-header {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 28px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 12px;
+    }
+    .event {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--none);
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .event:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .event.unit-VIX { border-left-color: var(--vix); }
+    .event.unit-BEL { border-left-color: var(--bel); }
+    .event.unit-THE { border-left-color: var(--the); }
+    .event-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .event-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    .event-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 7px;
+      border-radius: 5px;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+    .event-badge.VIX { background: var(--vix); color: #fff; }
+    .event-badge.BEL { background: var(--bel); color: #000; }
+    .event-badge.THE { background: var(--the); color: #fff; }
+    .event-badge.NONE { background: var(--bg-3); color: var(--muted); border: 1px solid var(--border); }
+    .event-copy {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 4px 6px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: inherit;
+      line-height: 0;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .event-copy:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(0,255,102,0.08);
+    }
+    .event-date {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .event-date strong { color: var(--text); font-weight: 600; }
+    .event-loc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 10px; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-2);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      z-index: 100;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      max-width: 90%;
+    }
+    .toast.show { opacity: 1; }
+    .toast.error { border-color: var(--danger); }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .spinner {
+      width: 30px; height: 30px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Modal */
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-bg.show { display: flex; }
+    .modal {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      max-width: 560px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .modal h2 {
+      margin-top: 0;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal .field {
+      margin: 10px 0;
+      font-size: 13px;
+    }
+    .modal .field-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+    .modal .desc {
+      background: var(--bg-3);
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      font-size: 13px;
+      line-height: 1.55;
+      margin-top: 4px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .origin-warn {
+      background: rgba(255,77,79,0.08);
+      border: 1px solid var(--danger);
+      color: #ffb3b5;
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .origin-warn code {
+      background: rgba(0,0,0,0.4);
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: #fff;
+    }
+
+    /* =====================================================================
+       SIDEBAR LAYOUT
+       ===================================================================== */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 18px;
+      align-items: flex-start;
+    }
+    .sidebar { position: sticky; top: 18px; }
+    .sidebar-card {
+      padding: 16px 18px 16px;
+      margin-bottom: 0;
+    }
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-header strong {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-ativos {
+      background: var(--accent);
+      color: #000;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 7px;
+      border-radius: 999px;
+      min-width: 18px;
+      text-align: center;
+    }
+    .badge-ativos.zero {
+      background: var(--bg-3);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0 6px;
+    }
+    .clear-link {
+      background: transparent;
+      border: none;
+      color: var(--accent);
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 4px 8px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .clear-link:hover {
+      background: rgba(0,255,102,0.1);
+      color: var(--accent-dim);
+    }
+    .sidebar-section {
+      margin-bottom: 16px;
+    }
+    .sidebar-section:last-child { margin-bottom: 0; }
+    .sidebar-section .filter-label {
+      display: block;
+      min-width: 0;
+      margin-bottom: 6px;
+    }
+    .sidebar-section .filter-row {
+      gap: 5px;
+      margin: 0;
+    }
+    .chips-compact .chip {
+      padding: 4px 9px;
+      font-size: 11.5px;
+    }
+    .select-filter {
+      width: 100%;
+      padding: 9px 32px 9px 12px;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%23888" stroke-width="1.5" stroke-linecap="round"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    .select-filter:focus { border-color: var(--accent); outline: none; }
+    .select-filter:hover { border-color: var(--accent); }
+    .select-filter option { background: var(--bg-2); color: var(--text); }
+
+    @media (max-width: 900px) {
+      .app-layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
+
+    /* =====================================================================
+       MOBILE — telas até 768px (tablets) e até 480px (celulares)
+       ===================================================================== */
+    @media (max-width: 768px) {
+      .container { padding: 16px 12px 40px; }
+      header { gap: 10px; }
+      header h1 { font-size: 18px; min-width: 0; flex-basis: 100%; }
+      header h1 .sub { font-size: 11px; word-break: break-all; }
+      header .actions { flex-wrap: wrap; gap: 6px; }
+      header .actions .btn { padding: 8px 10px; font-size: 12px; }
+      .user-pill { font-size: 11px; padding: 5px 8px; }
+
+      .card { padding: 14px 12px; }
+      .filter-row { gap: 6px; }
+      .filter-label { min-width: 100%; margin-bottom: 2px; }
+      .chip { padding: 6px 10px; font-size: 12px; }
+
+      .search { padding: 11px 14px; font-size: 13.5px; }
+
+      .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .stat { padding: 12px 14px; }
+      .stat-num { font-size: 20px; }
+      .stat-label { font-size: 10px; }
+
+      .events-grid { grid-template-columns: 1fr; gap: 10px; }
+      .event { padding: 12px 14px; }
+      .event-title { font-size: 14px; }
+      .month-header { font-size: 12px; margin: 22px 0 8px; }
+
+      .modal { padding: 18px; border-radius: 12px; }
+      .modal h2 { font-size: 16px; }
+
+      .setup-card { margin: 16px auto; }
+      .setup-card h2 { font-size: 17px; }
+      .setup-card ol { padding-left: 18px; line-height: 1.75; font-size: 13px; }
+
+      .toast { font-size: 12.5px; padding: 10px 16px; bottom: 16px; }
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 12px 10px 32px; }
+      header h1 { font-size: 16px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .stats > .stat:nth-child(5) { grid-column: 1 / -1; }  /* "Treinamentos únicos" full-width */
+      .chip { padding: 5px 9px; font-size: 11.5px; }
+      .filter-label { font-size: 10px; }
+      .event-title { font-size: 13.5px; line-height: 1.3; }
+      .event-date, .event-loc { font-size: 11.5px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>
+      📅 Agenda Pedagógica
+      <span class="sub" id="cal-id-display">pedagogicovitoria@febracis.com.br</span>
+    </h1>
+    <div class="actions" id="header-actions"></div>
+  </header>
+
+  <!-- Aviso de origem inválida (file://) -->
+  <div id="origin-warn" class="origin-warn" hidden>
+    <strong>⚠️ Este arquivo precisa rodar via servidor local.</strong><br>
+    Você abriu via <code id="current-origin"></code>, mas o login do Google só funciona em <code>http://localhost</code> ou <code>http://127.0.0.1</code>.<br><br>
+    <strong>Solução rápida no VS Code:</strong> clica com botão direito em <code>agenda.html</code> no Explorer → <strong>Open with Live Server</strong>. Vai abrir em <code>http://127.0.0.1:5500/agenda.html</code>.
+  </div>
+
+  <!-- Setup do Client ID OAuth -->
+  <div id="setup" class="card setup-card" hidden>
+    <h2>🔑 Configuração inicial — OAuth Google</h2>
+    <p style="color:var(--muted); margin-top:0;">Pra ler agendas privadas (compartilhadas com sua conta), o Google exige login OAuth. Setup é uma vez só.</p>
+
+    <ol>
+      <li>Abra <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com</a> e selecione o projeto (ou crie um novo)</li>
+      <li>Habilite a <strong>Google Calendar API</strong>: ☰ → <strong>APIs e serviços</strong> → <strong>Biblioteca</strong> → busca por <code>Google Calendar API</code> → <strong>Ativar</strong> <em>(se já fez antes, pula)</em></li>
+      <li>Configure a <strong>tela de consentimento OAuth</strong>: ☰ → <strong>APIs e serviços</strong> → <strong>Tela de consentimento OAuth</strong>:
+        <ul style="margin-top:6px;">
+          <li>Tipo: <strong>Interno</strong> (só @febracis.com.br — sem aprovação Google necessária)</li>
+          <li>Nome do app: <code>Agenda Febracis</code></li>
+          <li>Email de suporte: seu email</li>
+          <li>Salvar e voltar (pode pular "Escopos" e "Resumo")</li>
+        </ul>
+      </li>
+      <li>Crie o <strong>Client ID OAuth</strong>: ☰ → <strong>APIs e serviços</strong> → <strong>Credenciais</strong> → <strong>+ Criar credenciais</strong> → <strong>ID do cliente OAuth</strong>
+        <ul style="margin-top:6px;">
+          <li>Tipo: <strong>Aplicativo da Web</strong></li>
+          <li>Nome: <code>Agenda Febracis Web</code></li>
+          <li>Em <strong>Origens JavaScript autorizadas</strong>, adicione <strong>2 entradas</strong>:
+            <div style="margin:6px 0;"><code>http://localhost:5500</code></div>
+            <div><code>http://127.0.0.1:5500</code></div>
+          </li>
+          <li>Deixe "URIs de redirecionamento autorizados" <strong>em branco</strong></li>
+          <li>Criar → copie o <strong>ID do cliente</strong> (termina em <code>.apps.googleusercontent.com</code>)</li>
+        </ul>
+      </li>
+      <li>Cole o ID do cliente abaixo:</li>
+    </ol>
+
+    <input type="text" id="client-id-input" placeholder="123456789-abcdef.apps.googleusercontent.com" autocomplete="off">
+
+    <div style="margin-top:8px; font-size:12px; color:var(--muted);">
+      Agenda a consultar (você pode mudar):
+    </div>
+    <input type="text" id="cal-id-input" value="pedagogicovitoria@febracis.com.br" autocomplete="off">
+
+    <div style="margin-top:12px; display:flex; gap:8px;">
+      <button class="btn btn-primary" onclick="salvarConfig()">Salvar configuração</button>
+    </div>
+
+    <div class="alert alert-info" style="margin-top:18px;">
+      💡 Se a porta do Live Server for diferente de <code>5500</code>, adicione a URL real no passo 4. Pra descobrir, abra o arquivo no Live Server e veja a porta na barra de endereços.
+    </div>
+  </div>
+
+  <!-- Tela de login -->
+  <div id="login" class="card login-box" hidden>
+    <div class="icon">🔓</div>
+    <h2>Entre com sua conta Google</h2>
+    <p>Será aberto um popup para você escolher a conta <strong>@febracis.com.br</strong> e autorizar a leitura da agenda. Acesso é <strong>somente leitura</strong>.</p>
+    <button class="btn btn-google" onclick="login()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+      Entrar com Google
+    </button>
+    <div style="margin-top:20px;">
+      <button class="btn" onclick="trocarConfig()" style="font-size:12px;">⚙️ Trocar Client ID / agenda</button>
+    </div>
+  </div>
+
+  <!-- App principal -->
+  <div id="app" hidden>
+
+    <div class="app-layout">
+
+      <aside class="sidebar">
+        <div class="card sidebar-card">
+
+          <div class="sidebar-header">
+            <strong>Filtros <span class="badge-ativos zero" id="badge-ativos">0</span></strong>
+            <button class="clear-link" id="btn-limpar" onclick="limparFiltros()" hidden>
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+              Limpar
+            </button>
+          </div>
+
+          <div class="sidebar-section">
+            <span class="filter-label">Unidade</span>
+            <div class="filter-row chips-compact">
+              <button class="chip active" data-filter="unidade" data-value="">Todas <span class="chip-count" id="cnt-total"></span></button>
+              <button class="chip vix" data-filter="unidade" data-value="VIX">VIX <span class="chip-count" id="cnt-vix"></span></button>
+              <button class="chip bel" data-filter="unidade" data-value="BEL">BEL <span class="chip-count" id="cnt-bel"></span></button>
+              <button class="chip the" data-filter="unidade" data-value="THE">THE <span class="chip-count" id="cnt-the"></span></button>
+              <button class="chip" data-filter="unidade" data-value="NONE">Sem código <span class="chip-count" id="cnt-none"></span></button>
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <label class="filter-label" for="periodo-select">Período</label>
+            <select class="select-filter" id="periodo-select" data-filter="periodo">
+              <option value="all">Tudo (passado + futuro)</option>
+              <optgroup label="⬅ Passado">
+                <option value="-30">Últimos 30 dias</option>
+                <option value="-90">Últimos 90 dias</option>
+                <option value="-180">Últimos 6 meses</option>
+                <option value="-365">Último ano</option>
+                <option value="-730">Últimos 2 anos</option>
+              </optgroup>
+              <optgroup label="Futuro ➡">
+                <option value="30">Próximos 30 dias</option>
+                <option value="90" selected>Próximos 90 dias</option>
+                <option value="180">Próximos 6 meses</option>
+                <option value="365">Próximo ano</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="sidebar-section">
+            <label class="filter-label" for="treinamento-select">Treinamento</label>
+            <select class="select-filter" id="treinamento-select" data-filter="treinamento">
+              <option value="">Todos</option>
+            </select>
+          </div>
+
+          <div class="sidebar-section">
+            <label class="filter-label" for="treinador-select">Treinador</label>
+            <select class="select-filter" id="treinador-select" data-filter="treinador">
+              <option value="">Todos</option>
+              <option value="FILIPE">FILIPE</option>
+              <option value="RAFAEL">RAFAEL</option>
+              <option value="BRUNA">BRUNA</option>
+              <option value="THIAGO">THIAGO</option>
+              <option value="MATHEUS">MATHEUS</option>
+              <option value="ALBERTO">ALBERTO</option>
+              <option value="NONE">Sem treinador</option>
+            </select>
+          </div>
+
+          <div class="sidebar-section">
+            <input type="search" class="search" id="search" placeholder="🔍 Buscar...">
+          </div>
+
+        </div>
+      </aside>
+
+      <main class="main-col">
+        <div class="stats" id="stats"></div>
+        <div id="lista"></div>
+      </main>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)fecharModal()">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
+
+<script>
+  // =========================================================================
+  // CONFIG
+  // =========================================================================
+  const STORAGE = {
+    CLIENT_ID: 'agendaFebracis.clientId',
+    CAL_ID:    'agendaFebracis.calId',
+    TOKEN:     'agendaFebracis.token',
+    TOKEN_EXP: 'agendaFebracis.tokenExp'
+  };
+  const SCOPE = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email';
+  const UNIDADES = {
+    VIX: { nome: 'Vitória',  cor: '#4f9eff' },
+    BEL: { nome: 'Belém',    cor: '#ffb84f' },
+    THE: { nome: 'Teresina', cor: '#ff6b9d' }
+  };
+  const TREINADORES = ['FILIPE', 'RAFAEL', 'BRUNA', 'THIAGO', 'MATHEUS', 'ALBERTO'];
+  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const MESES_LONG = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const ICON_COPY = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px;"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+
+  // =========================================================================
+  // STATE
+  // =========================================================================
+  let clientId = localStorage.getItem(STORAGE.CLIENT_ID) || '';
+  let calId    = localStorage.getItem(STORAGE.CAL_ID) || 'pedagogicovitoria@febracis.com.br';
+  let token    = localStorage.getItem(STORAGE.TOKEN) || '';
+  let tokenExp = parseInt(localStorage.getItem(STORAGE.TOKEN_EXP) || '0', 10);
+  let userEmail = '';
+
+  let gisReady = false;
+  let tokenClient = null;
+
+  let eventos = [];
+  let eventosVisiveis = [];
+  let treinosUnicos = [];
+  const filtros = { unidade: '', periodo: '90', treinamento: '', treinador: '', busca: '' };
+  const FILTRO_DEFAULT = { unidade: '', periodo: '90', treinamento: '', treinador: '', busca: '' };
+
+  // =========================================================================
+  // INIT
+  // =========================================================================
+  document.getElementById('cal-id-display').textContent = calId;
+
+  // Checa se está rodando em origem válida pra OAuth
+  const isLocalhost = ['http:', 'https:'].includes(location.protocol) &&
+    /^(localhost|127\.0\.0\.1)/.test(location.hostname);
+
+  if (location.protocol === 'file:') {
+    document.getElementById('origin-warn').hidden = false;
+    document.getElementById('current-origin').textContent = location.href;
+  } else if (!isLocalhost && location.protocol === 'http:') {
+    document.getElementById('origin-warn').hidden = false;
+    document.getElementById('current-origin').textContent = location.origin;
+  }
+
+  function gisLoaded() {
+    gisReady = true;
+    if (clientId) initTokenClient();
+    decidirTela();
+  }
+
+  function initTokenClient() {
+    if (!gisReady || !clientId) return;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: SCOPE,
+      callback: (resp) => {
+        if (resp.error) {
+          toast('Erro de login: ' + (resp.error_description || resp.error), 'error');
+          return;
+        }
+        // Verifica se o escopo de calendar.readonly foi efetivamente concedido
+        if (resp.scope && !/calendar\.readonly/.test(resp.scope)) {
+          toast('Você precisa autorizar a leitura dos calendários. Tente entrar de novo e marcar TODAS as permissões.', 'error');
+          return;
+        }
+        token = resp.access_token;
+        // expires_in vem em segundos
+        tokenExp = Date.now() + ((resp.expires_in || 3600) - 60) * 1000; // -60s de folga
+        localStorage.setItem(STORAGE.TOKEN, token);
+        localStorage.setItem(STORAGE.TOKEN_EXP, String(tokenExp));
+        carregarUserInfo().then(() => {
+          mostrarApp();
+          carregarEventos();
+        });
+      },
+      error_callback: (err) => {
+        toast('Login cancelado ou bloqueado.', 'error');
+      }
+    });
+  }
+
+  function decidirTela() {
+    if (!clientId) {
+      mostrarSetup();
+    } else if (!token || Date.now() > tokenExp) {
+      mostrarLogin();
+    } else {
+      // tenta usar token salvo
+      carregarUserInfo().then(ok => {
+        if (ok) {
+          mostrarApp();
+          carregarEventos();
+        } else {
+          mostrarLogin();
+        }
+      });
+    }
+  }
+
+  function mostrarSetup() {
+    hideAll();
+    document.getElementById('setup').hidden = false;
+    document.getElementById('client-id-input').value = clientId;
+    document.getElementById('cal-id-input').value = calId;
+    atualizarHeader('setup');
+  }
+  function mostrarLogin() {
+    hideAll();
+    document.getElementById('login').hidden = false;
+    atualizarHeader('login');
+  }
+  function mostrarApp() {
+    hideAll();
+    document.getElementById('app').hidden = false;
+    atualizarHeader('app');
+  }
+  function hideAll() {
+    document.getElementById('setup').hidden = true;
+    document.getElementById('login').hidden = true;
+    document.getElementById('app').hidden = true;
+  }
+
+  function atualizarHeader(modo) {
+    const cont = document.getElementById('header-actions');
+    cont.innerHTML = '';
+    if (modo === 'app') {
+      if (userEmail) {
+        const pill = document.createElement('span');
+        pill.className = 'user-pill';
+        pill.innerHTML = '👤 <strong>' + escapeHtml(userEmail) + '</strong>';
+        cont.appendChild(pill);
+      }
+      cont.appendChild(botao(ICON_COPY + 'Copiar lista', copiarLista, 'btn', 'Copia os eventos filtrados em formato WhatsApp'));
+      cont.appendChild(botao('🔄 Atualizar', atualizar, 'btn'));
+      cont.appendChild(botao('⚙️', trocarConfig, 'btn', 'Configurações'));
+      cont.appendChild(botao('Sair', logout, 'btn btn-danger'));
+    } else if (modo === 'login') {
+      cont.appendChild(botao('⚙️', trocarConfig, 'btn', 'Configurações'));
+    }
+  }
+  function botao(label, onClick, cls, title) {
+    const b = document.createElement('button');
+    b.className = cls || 'btn';
+    b.innerHTML = label;
+    if (title) b.title = title;
+    b.onclick = onClick;
+    return b;
+  }
+
+  // =========================================================================
+  // SETUP / AUTH
+  // =========================================================================
+  function salvarConfig() {
+    const cId = (document.getElementById('client-id-input').value || '').trim();
+    const cal = (document.getElementById('cal-id-input').value || '').trim();
+    if (!cId) { toast('Cole o Client ID antes de salvar.', 'error'); return; }
+    if (!/\.apps\.googleusercontent\.com$/.test(cId)) {
+      if (!confirm('O Client ID não termina com ".apps.googleusercontent.com". Salvar mesmo assim?')) return;
+    }
+    if (!cal) { toast('Informe o ID da agenda.', 'error'); return; }
+
+    clientId = cId;
+    calId = cal;
+    localStorage.setItem(STORAGE.CLIENT_ID, cId);
+    localStorage.setItem(STORAGE.CAL_ID, cal);
+    document.getElementById('cal-id-display').textContent = cal;
+
+    // limpa token antigo (pode ser de outro client)
+    token = ''; tokenExp = 0;
+    localStorage.removeItem(STORAGE.TOKEN);
+    localStorage.removeItem(STORAGE.TOKEN_EXP);
+
+    initTokenClient();
+    mostrarLogin();
+  }
+
+  function trocarConfig() {
+    mostrarSetup();
+  }
+
+  function login() {
+    if (!tokenClient) {
+      toast('Aguardando carregamento da biblioteca Google. Tente em 2s.', 'error');
+      return;
+    }
+    // Sempre força tela de consentimento — evita Google devolver token com escopo antigo/incompleto
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+  }
+
+  function logout() {
+    if (token && window.google) {
+      google.accounts.oauth2.revoke(token, () => {});
+    }
+    token = ''; tokenExp = 0; userEmail = '';
+    localStorage.removeItem(STORAGE.TOKEN);
+    localStorage.removeItem(STORAGE.TOKEN_EXP);
+    mostrarLogin();
+    toast('Você saiu.');
+  }
+
+  async function carregarUserInfo() {
+    try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      if (!res.ok) return false;
+      const d = await res.json();
+      userEmail = d.email || '';
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  // =========================================================================
+  // FETCH EVENTOS
+  // =========================================================================
+  async function carregarEventos() {
+    document.getElementById('lista').innerHTML =
+      '<div class="loading"><div class="spinner"></div>Carregando agenda...</div>';
+    document.getElementById('stats').innerHTML = '';
+
+    const hoje = new Date();
+    const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 800);   // ~2 anos atrás
+    const fim    = new Date(hoje); fim.setDate(hoje.getDate() + 400);      // ~13 meses à frente
+
+    const url =
+      'https://www.googleapis.com/calendar/v3/calendars/' +
+      encodeURIComponent(calId) + '/events' +
+      '?timeMin=' + inicio.toISOString() +
+      '&timeMax=' + fim.toISOString() +
+      '&singleEvents=true&orderBy=startTime&maxResults=2500';
+
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const erro = data.error && data.error.message || ('HTTP ' + res.status);
+        if (res.status === 401) {
+          // token expirou, tenta renovar silenciosamente
+          toast('Sessão expirada. Renovando...', 'error');
+          token = ''; tokenExp = 0;
+          if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
+          return;
+        }
+        if (res.status === 403 && /insufficient|scope/i.test(erro)) {
+          // token sem escopo de calendário — limpa tudo e força nova consent
+          token = ''; tokenExp = 0;
+          localStorage.removeItem(STORAGE.TOKEN);
+          localStorage.removeItem(STORAGE.TOKEN_EXP);
+          mostrarErro('Token sem permissão de leitura de calendário. Clique em "Sair" e entre de novo — na tela do Google, MARQUE todas as permissões (incluindo "Ver eventos em todos os seus calendários") antes de continuar.');
+          return;
+        }
+        if (res.status === 404) {
+          mostrarErro('Agenda "' + calId + '" não foi encontrada ou você não tem acesso. Confirme se ela está compartilhada com ' + (userEmail || 'sua conta') + '.');
+          return;
+        }
+        mostrarErro(erro);
+        return;
+      }
+      eventos = (data.items || []).map(parseEvento);
+      treinosUnicos = derivarTreinos(eventos);
+      renderizarChipsTreinos();
+      popularMesesNoSelect();
+      aplicarFiltros();
+    } catch (err) {
+      mostrarErro('Falha de rede: ' + err.message);
+    }
+  }
+
+  function mostrarErro(msg) {
+    document.getElementById('lista').innerHTML =
+      '<div class="empty"><div class="empty-icon">⚠️</div>' +
+      '<div style="font-size:15px;color:var(--text);margin-bottom:6px;">Erro ao carregar agenda</div>' +
+      '<div style="font-size:12.5px;">' + escapeHtml(msg) + '</div>' +
+      '<button class="btn btn-ghost" style="margin-top:18px;" onclick="atualizar()">🔄 Tentar de novo</button></div>';
+    toast(msg, 'error');
+  }
+
+  function parseEvento(evt) {
+    const titulo = evt.summary || '(Sem título)';
+    const local = evt.location || '';
+    const desc = evt.description || '';
+    const blob = (titulo + ' ' + local + ' ' + desc).toUpperCase();
+
+    let unidade = null;
+    for (const code of Object.keys(UNIDADES)) {
+      if (new RegExp('\\b' + code + '\\b').test(blob)) {
+        unidade = code;
+        break;
+      }
+    }
+
+    let treinador = null;
+    for (const nome of TREINADORES) {
+      if (new RegExp('\\b' + nome + '\\b').test(blob)) {
+        treinador = nome;
+        break;
+      }
+    }
+
+    const reTreinadores = new RegExp('\\b(' + TREINADORES.join('|') + ')\\b', 'gi');
+    let limpo = titulo
+      .replace(/\b(BEL|VIX|THE)\b/gi, '')
+      .replace(/\b(BEL[ÉE]M|VIT[ÓO]RIA|TERESINA)\b/gi, '')
+      .replace(reTreinadores, '')
+      .replace(/\b\d{1,2}\s*[\/\-aàáeé]\s*\d{1,2}(\/\d{1,4})?\b/gi, '')
+      .replace(/\b\d{1,2}[\/\-]\d{1,2}([\/\-]\d{2,4})?\b/g, '')
+      .replace(/[\-\|·•:,]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const tokens = limpo.split(/\s+/).filter(t => t.length >= 2);
+    const treinamento = tokens[0] ? tokens.slice(0, 3).join(' ') : '(Sem nome)';
+
+    const start = evt.start.dateTime || evt.start.date;
+    const end   = evt.end.dateTime   || evt.end.date;
+    const allDay = !evt.start.dateTime;
+
+    return {
+      raw: evt, id: evt.id, titulo, treinamento, unidade,
+      unidadeNome: unidade ? UNIDADES[unidade].nome : 'Sem código',
+      treinador,
+      local, desc,
+      start: new Date(start), end: new Date(end),
+      allDay, link: evt.htmlLink || ''
+    };
+  }
+
+  function derivarTreinos(lista) {
+    const mapa = new Map();
+    lista.forEach(e => {
+      const k = e.treinamento.toUpperCase();
+      mapa.set(k, (mapa.get(k) || 0) + 1);
+    });
+    return Array.from(mapa.entries())
+      .sort((a,b) => b[1] - a[1])
+      .map(([nome, count]) => ({ nome, count }));
+  }
+
+  function renderizarChipsTreinos() {
+    // popula o <select> de treinamento com base nos eventos
+    const sel = document.getElementById('treinamento-select');
+    if (!sel) return;
+    const valorAtual = sel.value || filtros.treinamento || '';
+    // limpa todas opções exceto "Todos"
+    Array.from(sel.querySelectorAll('option:not([value=""])')).forEach(o => o.remove());
+    treinosUnicos.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.nome;
+      opt.textContent = t.nome + ' (' + t.count + ')';
+      sel.appendChild(opt);
+    });
+    if (valorAtual) sel.value = valorAtual;
+    bindSelects();
+  }
+
+  function popularMesesNoSelect() {
+    const sel = document.getElementById('periodo-select');
+    if (!sel) return;
+    // remove optgroup antigo de meses se já existir (re-render após refresh)
+    const oldMeses = sel.querySelector('optgroup[data-meses]');
+    if (oldMeses) oldMeses.remove();
+    if (!eventos.length) return;
+    const ANO_MIN = 2026;
+    const set = new Set();
+    eventos.forEach(e => {
+      if (e.start.getFullYear() < ANO_MIN) return; // ignora meses anteriores a 2026
+      set.add(e.start.getFullYear() + '-' + String(e.start.getMonth()).padStart(2, '0'));
+    });
+    const meses = Array.from(set).sort();
+    if (!meses.length) return;
+    const grupo = document.createElement('optgroup');
+    grupo.label = '📆 Por mês';
+    grupo.dataset.meses = '1';
+    meses.forEach(m => {
+      const [ano, mesIdx] = m.split('-').map(Number);
+      const opt = document.createElement('option');
+      opt.value = 'month:' + m;
+      opt.textContent = MESES_LONG[mesIdx] + ' ' + ano;
+      grupo.appendChild(opt);
+    });
+    sel.appendChild(grupo);
+    // restaura seleção atual se for um mês
+    if (filtros.periodo && filtros.periodo.startsWith && filtros.periodo.startsWith('month:')) {
+      sel.value = filtros.periodo;
+    }
+  }
+
+  function bindSelects() {
+    document.querySelectorAll('.select-filter').forEach(sel => {
+      if (sel.dataset.bound === '1') return;
+      sel.dataset.bound = '1';
+      sel.onchange = () => {
+        const f = sel.dataset.filter;
+        filtros[f] = sel.value;
+        aplicarFiltros();
+      };
+    });
+  }
+  bindSelects();
+
+  // =========================================================================
+  // FILTROS
+  // =========================================================================
+  function bindChips() {
+    document.querySelectorAll('.chip').forEach(c => {
+      c.onclick = () => {
+        const f = c.dataset.filter;
+        const v = c.dataset.value;
+        // toggle: clicar no chip ativo (que não é o padrão) volta pro padrão da categoria
+        if (filtros[f] === v && v !== FILTRO_DEFAULT[f]) {
+          filtros[f] = FILTRO_DEFAULT[f];
+        } else {
+          filtros[f] = v;
+        }
+        document.querySelectorAll('.chip[data-filter="'+f+'"]').forEach(x => {
+          x.classList.toggle('active', x.dataset.value === filtros[f]);
+        });
+        aplicarFiltros();
+      };
+    });
+  }
+  bindChips();
+
+  document.getElementById('search').oninput = (e) => {
+    filtros.busca = e.target.value.toLowerCase().trim();
+    aplicarFiltros();
+  };
+
+  function aplicarFiltros() {
+    const agora = new Date(); agora.setHours(0,0,0,0);
+    let base, limite;
+
+    if (filtros.periodo === 'all') {
+      base = new Date(agora); base.setDate(agora.getDate() - 800);
+      limite = new Date(agora); limite.setDate(agora.getDate() + 400);
+    } else if (typeof filtros.periodo === 'string' && filtros.periodo.indexOf('month:') === 0) {
+      const partes = filtros.periodo.substring(6).split('-').map(Number);
+      const ano = partes[0], mesIdx = partes[1];
+      base = new Date(ano, mesIdx, 1, 0, 0, 0);
+      limite = new Date(ano, mesIdx + 1, 0, 23, 59, 59); // último dia do mês
+    } else {
+      const d = parseInt(filtros.periodo, 10);
+      if (d < 0) {
+        // passado: de hoje+d até hoje
+        base = new Date(agora); base.setDate(agora.getDate() + d);
+        limite = new Date(agora);
+      } else {
+        // futuro: de hoje até hoje+d
+        base = new Date(agora);
+        limite = new Date(agora); limite.setDate(agora.getDate() + d);
+      }
+    }
+
+    function matchSemUnidade(e) {
+      if (e.end < base) return false;
+      if (e.start > limite) return false;
+      if (filtros.treinamento && e.treinamento.toUpperCase() !== filtros.treinamento.toUpperCase()) return false;
+      if (filtros.treinador) {
+        if (filtros.treinador === 'NONE' && e.treinador) return false;
+        if (filtros.treinador !== 'NONE' && e.treinador !== filtros.treinador) return false;
+      }
+      if (filtros.busca) {
+        const blob = (e.titulo + ' ' + e.desc + ' ' + e.local).toLowerCase();
+        if (!blob.includes(filtros.busca)) return false;
+      }
+      return true;
+    }
+    function matchUnidade(e) {
+      if (!filtros.unidade) return true;
+      if (filtros.unidade === 'NONE') return !e.unidade;
+      return e.unidade === filtros.unidade;
+    }
+
+    const semUnidade = eventos.filter(matchSemUnidade);
+    const filtrados  = semUnidade.filter(matchUnidade);
+
+    eventosVisiveis = filtrados;
+    renderizarStats(filtrados, semUnidade);
+    renderizarLista(filtrados);
+    atualizarContagens(filtrados, semUnidade);
+    atualizarBadgeAtivos();
+  }
+
+  function contarFiltrosAtivos() {
+    let n = 0;
+    if (filtros.unidade !== FILTRO_DEFAULT.unidade) n++;
+    if (filtros.periodo !== FILTRO_DEFAULT.periodo) n++;
+    if (filtros.treinamento !== FILTRO_DEFAULT.treinamento) n++;
+    if (filtros.treinador !== FILTRO_DEFAULT.treinador) n++;
+    if (filtros.busca) n++;
+    return n;
+  }
+
+  function atualizarBadgeAtivos() {
+    const n = contarFiltrosAtivos();
+    const badge = document.getElementById('badge-ativos');
+    const btn = document.getElementById('btn-limpar');
+    if (badge) {
+      badge.textContent = n;
+      badge.classList.toggle('zero', n === 0);
+    }
+    if (btn) btn.hidden = n === 0;
+  }
+
+  function limparFiltros() {
+    filtros.unidade = FILTRO_DEFAULT.unidade;
+    filtros.periodo = FILTRO_DEFAULT.periodo;
+    filtros.treinamento = FILTRO_DEFAULT.treinamento;
+    filtros.treinador = FILTRO_DEFAULT.treinador;
+    filtros.busca = '';
+
+    // sincroniza UI
+    document.querySelectorAll('.chip').forEach(c => {
+      if (!c.dataset.filter) return;
+      c.classList.toggle('active', c.dataset.value === filtros[c.dataset.filter]);
+    });
+    document.querySelectorAll('.select-filter').forEach(sel => {
+      sel.value = filtros[sel.dataset.filter];
+    });
+    const search = document.getElementById('search');
+    if (search) search.value = '';
+
+    aplicarFiltros();
+    toast('Filtros limpos.');
+  }
+
+  function atualizarContagens(visiveis, semUnidade) {
+    // "Todas" = total visível (com filtro aplicado);
+    // por unidade = ignora filtro de unidade, pra não zerar as outras
+    const por = { VIX: 0, BEL: 0, THE: 0, NONE: 0 };
+    semUnidade.forEach(e => {
+      if (e.unidade) por[e.unidade]++; else por.NONE++;
+    });
+    document.getElementById('cnt-total').textContent = visiveis.length || '';
+    document.getElementById('cnt-vix').textContent = por.VIX || '';
+    document.getElementById('cnt-bel').textContent = por.BEL || '';
+    document.getElementById('cnt-the').textContent = por.THE || '';
+    document.getElementById('cnt-none').textContent = por.NONE || '';
+  }
+
+  // =========================================================================
+  // RENDER
+  // =========================================================================
+  function renderizarStats(lista, semUnidade) {
+    // contagem por unidade ignora o filtro de unidade
+    const stats = { VIX: 0, BEL: 0, THE: 0, NONE: 0 };
+    semUnidade.forEach(e => { if (e.unidade) stats[e.unidade]++; else stats.NONE++; });
+
+    const u = filtros.unidade;
+    document.getElementById('stats').innerHTML =
+      stat(lista.length, 'Eventos', 'accent', { action: 'unidade', value: '', active: u === '' }) +
+      stat(stats.VIX, 'Vitória',  'vix', { action: 'unidade', value: 'VIX', active: u === 'VIX', unit: 'VIX' }) +
+      stat(stats.BEL, 'Belém',    'bel', { action: 'unidade', value: 'BEL', active: u === 'BEL', unit: 'BEL' }) +
+      stat(stats.THE, 'Teresina', 'the', { action: 'unidade', value: 'THE', active: u === 'THE', unit: 'THE' }) +
+      stat(new Set(lista.map(e => e.treinamento.toUpperCase())).size, 'Treinamentos únicos', 'accent', { action: 'scroll-treinos' });
+
+    document.querySelectorAll('.stat.clickable').forEach(el => {
+      el.onclick = () => statClicado(el.dataset.action, el.dataset.value);
+    });
+  }
+  function stat(num, label, cls, opts) {
+    opts = opts || {};
+    const classes = ['stat'];
+    if (opts.action) classes.push('clickable');
+    if (opts.active) classes.push('active');
+    if (opts.unit)   classes.push('unit-' + opts.unit);
+    const attrs = opts.action
+      ? ' data-action="'+opts.action+'" data-value="'+escapeAttr(opts.value || '')+'"'
+      : '';
+    return '<div class="'+classes.join(' ')+'"'+attrs+'>' +
+      '<div class="stat-num '+cls+'">'+num+'</div>' +
+      '<div class="stat-label">'+label+'</div></div>';
+  }
+
+  function statClicado(action, value) {
+    if (action === 'unidade') {
+      // toggle: clicar em stat ativo (não-padrão) volta pro padrão
+      if (filtros.unidade === value && value !== FILTRO_DEFAULT.unidade) {
+        filtros.unidade = FILTRO_DEFAULT.unidade;
+      } else {
+        filtros.unidade = value;
+      }
+      document.querySelectorAll('.chip[data-filter="unidade"]').forEach(x => {
+        x.classList.toggle('active', x.dataset.value === filtros.unidade);
+      });
+      aplicarFiltros();
+    } else if (action === 'scroll-treinos') {
+      const el = document.getElementById('treinos-row');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.style.transition = 'background 0.4s ease';
+        el.style.background = 'rgba(0,255,102,0.08)';
+        setTimeout(() => { el.style.background = ''; }, 800);
+      }
+    }
+  }
+
+  function renderizarLista(lista) {
+    const cont = document.getElementById('lista');
+    if (!lista.length) {
+      cont.innerHTML = '<div class="empty"><div class="empty-icon">🗓️</div><div>Nenhum evento com os filtros atuais.</div></div>';
+      return;
+    }
+
+    const grupos = new Map();
+    lista.forEach(e => {
+      const k = e.start.getFullYear() + '-' + String(e.start.getMonth()).padStart(2,'0');
+      if (!grupos.has(k)) grupos.set(k, []);
+      grupos.get(k).push(e);
+    });
+    const keys = Array.from(grupos.keys()).sort();
+
+    let html = '';
+    keys.forEach(k => {
+      const [ano, mes] = k.split('-');
+      html += '<div class="month-header">' + MESES_LONG[parseInt(mes,10)] + ' · ' + ano + ' <span style="opacity:0.6;font-weight:500;">· ' + grupos.get(k).length + ' evento(s)</span></div>';
+      html += '<div class="events-grid">';
+      grupos.get(k).forEach((e) => { html += cardEvento(e); });
+      html += '</div>';
+    });
+    cont.innerHTML = html;
+
+    cont.querySelectorAll('.event').forEach((el) => {
+      el.onclick = () => abrirDetalhes(el.dataset.id);
+    });
+    cont.querySelectorAll('.event-copy').forEach((b) => {
+      b.onclick = (ev) => {
+        ev.stopPropagation();
+        copiarEvento(b.dataset.copy);
+      };
+    });
+  }
+
+  function cardEvento(e) {
+    const u = e.unidade || 'NONE';
+    const badge = e.unidade
+      ? '<span class="event-badge ' + e.unidade + '">' + e.unidade + '</span>'
+      : '<span class="event-badge NONE">—</span>';
+    return '' +
+      '<div class="event unit-' + u + '" data-id="' + escapeAttr(e.id) + '">' +
+        '<div class="event-top">' +
+          '<div class="event-title">' + escapeHtml(e.titulo) + '</div>' +
+          '<div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">' +
+            badge +
+            '<button class="event-copy" data-copy="' + escapeAttr(e.id) + '" title="Copiar para WhatsApp"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="event-date">📅 <strong>' + formatarData(e) + '</strong></div>' +
+        (e.local ? '<div class="event-loc">📍 ' + escapeHtml(e.local) + '</div>' : '') +
+      '</div>';
+  }
+
+  function formatarData(e) {
+    const ini = e.start;
+    const fim = new Date(e.end.getTime() - (e.allDay ? 86400000 : 0));
+    const mesmodia = ini.toDateString() === fim.toDateString();
+    if (e.allDay) {
+      if (mesmodia) return diaCurto(ini);
+      return diaCurto(ini) + ' → ' + diaCurto(fim);
+    }
+    if (mesmodia) return diaCurto(ini) + ' · ' + hora(ini) + '–' + hora(e.end);
+    return diaCurto(ini) + ' ' + hora(ini) + ' → ' + diaCurto(fim) + ' ' + hora(e.end);
+  }
+  function diaCurto(d) {
+    const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    return dias[d.getDay()] + ' ' + d.getDate() + '/' + MESES[d.getMonth()];
+  }
+  function hora(d) {
+    return String(d.getHours()).padStart(2,'0') + 'h' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  // =========================================================================
+  // MODAL
+  // =========================================================================
+  function abrirDetalhes(id) {
+    const e = eventos.find(x => x.id === id);
+    if (!e) return;
+    const badge = e.unidade
+      ? '<span class="event-badge ' + e.unidade + '">' + e.unidade + ' · ' + UNIDADES[e.unidade].nome + '</span>'
+      : '<span class="event-badge NONE">Sem código de unidade</span>';
+
+    document.getElementById('modal-content').innerHTML =
+      '<h2>' + escapeHtml(e.titulo) + '</h2>' +
+      '<div style="margin-bottom:14px;">' + badge + '</div>' +
+      field('Quando', formatarData(e)) +
+      (e.local ? field('Local', escapeHtml(e.local)) : '') +
+      field('Treinamento detectado', escapeHtml(e.treinamento)) +
+      (e.desc ? '<div class="field"><div class="field-label">Descrição</div><div class="desc">' + escapeHtml(e.desc) + '</div></div>' : '') +
+      '<div style="margin-top:18px; display:flex; gap:8px; flex-wrap:wrap;">' +
+        (e.link ? '<a class="btn btn-primary" href="' + escapeAttr(e.link) + '" target="_blank" style="text-decoration:none; display:inline-block;">Abrir no Google Agenda ↗</a>' : '') +
+        '<button class="btn" onclick="copiarEvento(\'' + escapeAttr(e.id) + '\')">' + ICON_COPY + 'Copiar p/ WhatsApp</button>' +
+        '<button class="btn" onclick="fecharModal()">Fechar</button>' +
+      '</div>';
+
+    document.getElementById('modal-bg').classList.add('show');
+  }
+  function field(label, val) {
+    return '<div class="field"><div class="field-label">' + label + '</div><div>' + val + '</div></div>';
+  }
+  function fecharModal() {
+    document.getElementById('modal-bg').classList.remove('show');
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharModal(); });
+
+  // =========================================================================
+  // COPIAR (WhatsApp)
+  // =========================================================================
+  function labelPeriodo() {
+    const p = filtros.periodo;
+    if (typeof p === 'string' && p.indexOf('month:') === 0) {
+      const partes = p.substring(6).split('-').map(Number);
+      return MESES_LONG[partes[1]] + ' ' + partes[0];
+    }
+    const mapa = {
+      '-730': 'Últimos 2 anos',
+      '-365': 'Último ano',
+      '-180': 'Últimos 6 meses',
+      '-90':  'Últimos 90 dias',
+      '-30':  'Últimos 30 dias',
+      '30':   'Próximos 30 dias',
+      '90':   'Próximos 90 dias',
+      '180':  'Próximos 6 meses',
+      '365':  'Próximo ano',
+      'all':  'Todo o período'
+    };
+    return mapa[p] || p;
+  }
+
+  function formatarEventoTexto(e) {
+    let txt = 'TREINAMENTO: *' + e.titulo + '*';
+    txt += '\nDATA: 📅 ' + formatarDataApenas(e);
+    txt += '\nHORARIO: ' + horarioTexto(e) + '.';
+    if (e.local) txt += '\nLOCAL: 📍 ' + e.local;
+    return txt;
+  }
+
+  function horarioTexto(e) {
+    // eventos de dia inteiro (sem horário no Google Agenda) → default treinamento Febracis
+    if (e.allDay) return '09:00 as 21:00';
+    return hora24(e.start) + ' as ' + hora24(e.end);
+  }
+
+  function formatarDataApenas(e) {
+    const ini = e.start;
+    const fim = new Date(e.end.getTime() - (e.allDay ? 86400000 : 0));
+    const mesmodia = ini.toDateString() === fim.toDateString();
+    if (mesmodia) return diaCurto(ini) + ' - ' + ini.getFullYear();
+    return diaCurto(ini) + ' → ' + diaCurto(fim) + ' - ' + fim.getFullYear();
+  }
+
+  function hora24(d) {
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function formatarListaTexto(lista) {
+    const partes = [];
+    let titulo = '*📅 Treinamentos*';
+    const sub = [];
+    if (filtros.unidade) sub.push(UNIDADES[filtros.unidade] ? UNIDADES[filtros.unidade].nome : filtros.unidade);
+    sub.push(labelPeriodo());
+    if (filtros.treinamento) sub.push(filtros.treinamento);
+    if (filtros.treinador) sub.push(filtros.treinador === 'NONE' ? 'Sem treinador' : filtros.treinador);
+    if (filtros.busca) sub.push('"' + filtros.busca + '"');
+    titulo += ' — _' + sub.join(' · ') + '_';
+    partes.push(titulo);
+    partes.push('');
+
+    if (!lista.length) {
+      partes.push('_Nenhum evento neste filtro._');
+    } else {
+      // agrupa por mês
+      const grupos = new Map();
+      lista.forEach(e => {
+        const k = e.start.getFullYear() + '-' + String(e.start.getMonth()).padStart(2,'0');
+        if (!grupos.has(k)) grupos.set(k, []);
+        grupos.get(k).push(e);
+      });
+      const keys = Array.from(grupos.keys()).sort();
+      keys.forEach((k, idx) => {
+        const [ano, mes] = k.split('-');
+        partes.push('━━━ *' + MESES_LONG[parseInt(mes,10)].toUpperCase() + ' ' + ano + '* ━━━');
+        grupos.get(k).forEach(e => {
+          partes.push('');
+          partes.push(formatarEventoTexto(e));
+        });
+        if (idx < keys.length - 1) partes.push('');
+      });
+      partes.push('');
+      partes.push('_Total: ' + lista.length + ' evento(s)_');
+    }
+    return partes.join('\n');
+  }
+
+  async function copiarTexto(texto) {
+    try {
+      await navigator.clipboard.writeText(texto);
+      return true;
+    } catch (err) {
+      // fallback antigo
+      const ta = document.createElement('textarea');
+      ta.value = texto;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  async function copiarLista() {
+    if (!eventosVisiveis.length) {
+      toast('Lista vazia — ajuste os filtros antes de copiar.', 'error');
+      return;
+    }
+    const txt = formatarListaTexto(eventosVisiveis);
+    const ok = await copiarTexto(txt);
+    if (ok) toast('✅ ' + eventosVisiveis.length + ' evento(s) copiados — cole no WhatsApp.');
+    else toast('Falha ao copiar.', 'error');
+  }
+
+  async function copiarEvento(id) {
+    const e = eventos.find(x => x.id === id);
+    if (!e) return;
+    const txt = formatarEventoTexto(e);
+    const ok = await copiarTexto(txt);
+    if (ok) toast('✅ Evento copiado.');
+    else toast('Falha ao copiar.', 'error');
+  }
+
+  function atualizar() {
+    if (token) carregarEventos();
+    else login();
+  }
+
+  // =========================================================================
+  // UTILS
+  // =========================================================================
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+
+  let toastTimer;
+  function toast(msg, tipo) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (tipo === 'error' ? ' error' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+  }
+
+  // Tela inicial antes do GIS carregar — mostra setup ou login.
+  // Quando o GIS chega, gisLoaded() chama decidirTela() e ajusta.
+  if (!clientId) {
+    mostrarSetup();
+  } else {
+    mostrarLogin();
+  }
+</script>
+
+</body>
+</html>

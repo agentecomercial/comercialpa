@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Pré-visualização — Tamanho do app inteiro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06060a;
+  --surface:#13131a;
+  --surface2:#1a1a22;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --text:#e8e8ea;
+  --muted:rgba(255,255,255,.55);
+  --accent:#c8f05a;
+  --blue:#60a5fa;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+
+/* === Topo: controles === */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(13,13,20,.96);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border2);
+  padding:14px 22px;
+}
+.topbar h2{
+  margin:0 0 10px;font-size:11.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.14em;color:var(--accent);
+}
+.ctrl-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:12px 22px;align-items:end;
+}
+.ctrl{display:flex;flex-direction:column;gap:5px;}
+.ctrl label{
+  font-size:10px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.07em;
+  display:flex;justify-content:space-between;
+}
+.ctrl-row{display:flex;align-items:center;gap:10px;}
+.ctrl input[type=range]{flex:1;accent-color:var(--accent);}
+.ctrl .val{
+  min-width:72px;text-align:right;font-family:'DM Mono',monospace;
+  font-size:11.5px;color:var(--accent);font-weight:700;
+}
+.ctrl input[type=number]{
+  width:80px;background:var(--surface2);color:var(--accent);
+  border:1px solid var(--border2);border-radius:5px;
+  padding:4px 7px;font-family:'DM Mono',monospace;font-size:11.5px;font-weight:700;
+  text-align:right;
+}
+
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center;}
+.presets-label{font-size:10px;color:var(--muted);margin-right:5px;text-transform:uppercase;letter-spacing:.07em;}
+.preset-btn{
+  background:var(--surface2);color:var(--text);
+  border:1px solid var(--border2);border-radius:99px;
+  padding:5px 12px;font-size:10.5px;font-weight:600;
+  font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;
+}
+.preset-btn:hover{
+  background:rgba(200,240,90,.08);border-color:var(--accent);color:var(--accent);
+}
+.preset-btn.fit{
+  background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.4);color:var(--blue);
+}
+
+/* === Área do iframe === */
+.stage{
+  padding:24px;
+  min-height:calc(100vh - 220px);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  background:
+    radial-gradient(ellipse at top, rgba(200,240,90,.04), transparent 60%),
+    #06060a;
+}
+.stage-info{
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;
+  font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);
+}
+.stage-info .v{color:var(--accent);font-weight:700;}
+.stage-info .x{color:var(--muted);}
+
+.viewport-frame{
+  background:#000;
+  border:1px solid var(--border2);border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.6);
+  position:relative;
+  transition:width .15s,height .15s;
+}
+.frame-bar{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 12px;background:#1a1a22;
+  border-bottom:1px solid var(--border);
+  height:34px;
+}
+.frame-bar .dot{width:10px;height:10px;border-radius:50%;}
+.frame-bar .d1{background:#ff5f57;}
+.frame-bar .d2{background:#febc2e;}
+.frame-bar .d3{background:#28c840;}
+.frame-bar .url{
+  margin-left:12px;flex:1;
+  background:#0a0a10;color:var(--muted);
+  border-radius:5px;padding:4px 10px;
+  font-family:'DM Mono',monospace;font-size:10.5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.frame-bar .reload{
+  background:none;border:1px solid var(--border2);border-radius:5px;
+  color:var(--muted);font-size:11px;padding:3px 9px;cursor:pointer;
+}
+.frame-bar .reload:hover{color:var(--accent);border-color:var(--accent);}
+
+iframe#preview{
+  display:block;border:none;
+  width:100%;height:calc(100% - 34px);
+  background:#0a0a10;
+}
+
+/* régua de pixels nas bordas */
+.ruler-h{
+  position:absolute;top:34px;left:0;right:0;height:14px;
+  background:linear-gradient(to right,rgba(200,240,90,.08) 0,rgba(200,240,90,.08) 1px,transparent 1px) 0 0/100px 100%;
+  pointer-events:none;
+  border-bottom:1px dashed rgba(200,240,90,.15);
+  z-index:5;
+}
+.ruler-tick{
+  position:absolute;bottom:1px;font-size:9px;color:rgba(200,240,90,.65);
+  font-family:'DM Mono',monospace;font-weight:700;
+}
+
+/* hint */
+.hint{
+  margin:14px 22px 0;font-size:11px;color:var(--muted);
+  background:rgba(96,165,250,.06);border-left:3px solid var(--blue);
+  padding:9px 12px;border-radius:4px;line-height:1.5;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h2>Pré-visualização — tamanho do app (largura × altura)</h2>
+
+  <div class="ctrl-grid">
+
+    <div class="ctrl">
+      <label>Largura <span class="val" id="wVal">1920px</span></label>
+      <div class="ctrl-row">
+        <input type="range" id="wRange" min="320" max="2560" value="1920" step="10">
+        <input type="number" id="wNum" min="320" max="2560" value="1920" step="10">
+      </div>
+    </div>
+
+    <div class="ctrl">
+      <label>Altura <span class="val" id="hVal">900px</span></label>
+      <div class="ctrl-row">
+        <input type="range" id="hRange" min="320" max="1600" value="900" step="10">
+        <input type="number" id="hNum" min="320" max="1600" value="900" step="10">
+      </div>
+    </div>
+
+    <div class="ctrl">
+      <label>Zoom (escala) <span class="val" id="zVal">100%</span></label>
+      <div class="ctrl-row">
+        <input type="range" id="zRange" min="25" max="100" value="60" step="5">
+        <input type="number" id="zNum" min="25" max="100" value="60" step="5">
+      </div>
+    </div>
+
+    <div class="ctrl">
+      <label>Página carregada</label>
+      <div class="ctrl-row">
+        <select id="pgSel" style="flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-family:inherit;font-size:11.5px;cursor:pointer;">
+          <option value="dashboard.html">dashboard.html (principal)</option>
+          <option value="caderno-prompts-comercial.html">caderno-prompts-comercial</option>
+          <option value="caderno-prompts-consultor-closer.html">caderno-prompts-consultor-closer</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="presets">
+    <span class="presets-label">Tamanhos comuns:</span>
+    <button class="preset-btn fit" data-w="auto" data-h="auto">↔ Ajustar à janela</button>
+    <button class="preset-btn" data-w="2560" data-h="1440">2560×1440 (2K)</button>
+    <button class="preset-btn" data-w="1920" data-h="1080">1920×1080 (Full HD)</button>
+    <button class="preset-btn" data-w="1600" data-h="900">1600×900</button>
+    <button class="preset-btn" data-w="1440" data-h="900">1440×900 (MacBook)</button>
+    <button class="preset-btn" data-w="1366" data-h="768">1366×768 (Notebook)</button>
+    <button class="preset-btn" data-w="1280" data-h="800">1280×800</button>
+    <button class="preset-btn" data-w="1024" data-h="768">1024×768 (Tablet)</button>
+    <button class="preset-btn" data-w="768"  data-h="1024">768×1024 (iPad vertical)</button>
+    <button class="preset-btn" data-w="414"  data-h="896">414×896 (iPhone Plus)</button>
+    <button class="preset-btn" data-w="375"  data-h="667">375×667 (iPhone)</button>
+  </div>
+
+  <div class="presets" style="margin-top:8px;">
+    <span class="presets-label">🔍 Zoom em elemento:</span>
+    <button class="preset-btn zoom" data-zoom-sel="#panelTitleClientes">Card Clientes</button>
+    <button class="preset-btn zoom" data-zoom-sel=".metrics-row">KPIs (Faturado/Aberto/...)</button>
+    <button class="preset-btn zoom" data-zoom-sel="#trainerMetaRows">Cards de Treinadores</button>
+    <button class="preset-btn zoom" data-zoom-sel=".bottom-grid">Bottom Grid (clientes + ranking)</button>
+    <button class="preset-btn zoom" data-zoom-sel=".tabs">Abas (Geral/Consultor/...)</button>
+    <button class="preset-btn fit" id="btnResetZoom">↺ Voltar à visão geral</button>
+  </div>
+
+  <div class="hint">
+    💡 O iframe abaixo carrega a página real do app no tamanho que você definir. Use o slider de <b>Zoom</b> para "afastar" e ver o app inteiro caber na tela sem rolagem. Os números do tamanho continuam reais (1920×1080), só a exibição é escalada.
+  </div>
+</div>
+
+<div class="stage" id="stage">
+  <div class="stage-info">
+    <span>Tamanho real:</span>
+    <span class="v" id="realSize">1920 <span class="x">×</span> 900 px</span>
+    <span style="margin:0 10px;color:var(--border2);">|</span>
+    <span>Exibido:</span>
+    <span class="v" id="displaySize">1152 × 540 px</span>
+    <span style="margin:0 10px;color:var(--border2);">|</span>
+    <span>Zoom:</span>
+    <span class="v" id="zoomDisplay">60%</span>
+  </div>
+
+  <div id="frameWrap" style="transform-origin:top center;">
+    <div class="viewport-frame" id="frame">
+      <div class="frame-bar">
+        <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
+        <span class="url" id="urlBar">file:///dashboard.html</span>
+        <button class="reload" id="btnReload" title="Recarregar">↻</button>
+      </div>
+      <div class="ruler-h" id="ruler"></div>
+      <iframe id="preview" src="dashboard.html"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+var $ = function(id){ return document.getElementById(id); };
+
+var wRange = $('wRange'), wNum = $('wNum'), wVal = $('wVal');
+var hRange = $('hRange'), hNum = $('hNum'), hVal = $('hVal');
+var zRange = $('zRange'), zNum = $('zNum'), zVal = $('zVal');
+var pgSel  = $('pgSel');
+
+var frame  = $('frame');
+var iframe = $('preview');
+var stage  = $('stage');
+var frameWrap = $('frameWrap');
+
+function aplicar(){
+  var w = +wRange.value;
+  var h = +hRange.value;
+  var z = +zRange.value;
+
+  frame.style.width  = w + 'px';
+  frame.style.height = (h + 34) + 'px'; /* +34 pro frame-bar */
+  frameWrap.style.transform = 'scale(' + (z/100) + ')';
+
+  wVal.textContent = w + 'px';
+  hVal.textContent = h + 'px';
+  zVal.textContent = z + '%';
+  wNum.value = w;
+  hNum.value = h;
+  zNum.value = z;
+
+  $('realSize').innerHTML    = w + ' <span class="x">×</span> ' + h + ' px';
+  $('displaySize').innerHTML = Math.round(w*z/100) + ' × ' + Math.round(h*z/100) + ' px';
+  $('zoomDisplay').textContent = z + '%';
+
+  desenharRegua();
+}
+
+function desenharRegua(){
+  var r = $('ruler');
+  r.innerHTML = '';
+  var w = +wRange.value;
+  for(var x=100; x<w; x+=100){
+    var t = document.createElement('span');
+    t.className = 'ruler-tick';
+    t.style.left = x + 'px';
+    t.textContent = x;
+    r.appendChild(t);
+  }
+}
+
+/* Sync range ↔ number */
+function pair(r, n){
+  r.addEventListener('input', function(){ n.value = r.value; aplicar(); });
+  n.addEventListener('input', function(){
+    var v = +n.value;
+    if(v < +r.min) v = +r.min;
+    if(v > +r.max) v = +r.max;
+    r.value = v; aplicar();
+  });
+}
+pair(wRange, wNum);
+pair(hRange, hNum);
+pair(zRange, zNum);
+
+/* Presets */
+document.querySelectorAll('.preset-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var w = btn.dataset.w, h = btn.dataset.h;
+    if(w === 'auto'){
+      /* Ajustar = largura disponível na stage, altura ~ viewport-220 */
+      var stRect = stage.getBoundingClientRect();
+      var availW = Math.floor(stRect.width  - 48);
+      var availH = Math.floor(window.innerHeight - 260);
+      wRange.value = Math.min(2560, Math.max(320, availW));
+      hRange.value = Math.min(1600, Math.max(320, availH));
+      zRange.value = 100;
+    } else {
+      wRange.value = w;
+      hRange.value = h;
+      /* Auto-ajustar zoom para caber na tela */
+      var availW = window.innerWidth - 80;
+      var maxScale = Math.min(100, Math.floor(availW / (+w) * 100));
+      zRange.value = Math.max(25, maxScale);
+    }
+    aplicar();
+  });
+});
+
+/* Trocar página */
+pgSel.addEventListener('change', function(){
+  iframe.src = pgSel.value;
+  $('urlBar').textContent = 'file:///' + pgSel.value;
+});
+
+/* Reload iframe */
+$('btnReload').addEventListener('click', function(){
+  iframe.src = iframe.src;
+});
+
+/* ═══════════════════════════════════════════
+   ZOOM em elemento específico do iframe
+═══════════════════════════════════════════ */
+function _zoomEm(seletor){
+  var doc = null;
+  try { doc = iframe.contentDocument || iframe.contentWindow.document; } catch(e){}
+  if(!doc){
+    alert('Não consegui acessar o iframe (login pode estar pendente). Faça login primeiro e tente de novo.');
+    return;
+  }
+  var alvo = doc.querySelector(seletor);
+  if(!alvo){
+    alert('Elemento "'+seletor+'" não encontrado na tela atual. Talvez você precise entrar numa turma primeiro.');
+    return;
+  }
+  /* Se for o título, sobe até o .tpanel pai (o card inteiro) */
+  if(alvo.id === 'panelTitleClientes' || alvo.classList.contains('panel-title')){
+    var panel = alvo.closest('.tpanel');
+    if(panel) alvo = panel;
+  }
+  var rect = alvo.getBoundingClientRect();
+  var iframeRect = iframe.getBoundingClientRect();
+
+  /* Calcula zoom para que o elemento caiba na viewport disponível */
+  var stWidth  = stage.getBoundingClientRect().width  - 60;
+  var stHeight = window.innerHeight - 260;
+  var elW = rect.width + 80;   /* margem em volta do elemento */
+  var elH = rect.height + 100;
+
+  var zoomX = (stWidth  / elW) * 100;
+  var zoomY = (stHeight / elH) * 100;
+  var novoZoom = Math.min(zoomX, zoomY, 250);  /* máx 250% pra não esticar demais */
+  novoZoom = Math.max(60, Math.round(novoZoom));
+
+  zRange.value = novoZoom;
+  aplicar();
+
+  /* Scroll do iframe interno até o elemento + highlight */
+  setTimeout(function(){
+    /* Adiciona outline temporário */
+    var prevOutline = alvo.style.outline;
+    var prevOffset  = alvo.style.outlineOffset;
+    var prevBoxSh   = alvo.style.boxShadow;
+    alvo.style.outline = '3px solid #c8f05a';
+    alvo.style.outlineOffset = '4px';
+    alvo.style.boxShadow = '0 0 0 4px rgba(200,240,90,.25),0 0 40px rgba(200,240,90,.5)';
+    alvo.style.transition = 'outline .25s,box-shadow .25s';
+    /* Scroll dentro do iframe */
+    try {
+      alvo.scrollIntoView({behavior:'smooth', block:'center', inline:'center'});
+    } catch(e){}
+    /* Remove highlight depois de 3s */
+    setTimeout(function(){
+      alvo.style.outline = prevOutline;
+      alvo.style.outlineOffset = prevOffset;
+      alvo.style.boxShadow = prevBoxSh;
+    }, 3000);
+  }, 120);
+}
+
+document.querySelectorAll('.preset-btn.zoom').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    _zoomEm(btn.dataset.zoomSel);
+  });
+});
+
+$('btnResetZoom').addEventListener('click', function(){
+  /* Volta para o auto-fit inicial */
+  var availW = window.innerWidth - 80;
+  var scale = Math.min(100, Math.floor(availW / (+wRange.value) * 100));
+  zRange.value = Math.max(40, scale);
+  aplicar();
+  /* Scroll do iframe pro topo */
+  try {
+    var doc = iframe.contentDocument || iframe.contentWindow.document;
+    if(doc && doc.documentElement) doc.documentElement.scrollTop = 0;
+    if(doc && doc.body) doc.body.scrollTop = 0;
+  } catch(e){}
+});
+
+window.addEventListener('resize', desenharRegua);
+
+/* Auto-ajustar zoom inicial */
+window.addEventListener('load', function(){
+  var availW = window.innerWidth - 80;
+  var scale = Math.min(100, Math.floor(availW / 1920 * 100));
+  zRange.value = Math.max(40, scale);
+  aplicar();
+});
+
+aplicar();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v82 — guard null global em todos os data.filter
-const CACHE_NAME = 'agente-febracis-v82';
+// v84 — Treinamento multi-turno: novo campo "🎯 Contexto inicial da conversa" — gatilho que origina o contato (ad, indicação, evento). Quando preenchido, a IA amarra a 1ª mensagem do cliente nesse contexto em vez de abrir do nada
+const CACHE_NAME = 'agente-febracis-v84';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
