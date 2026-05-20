@@ -131,24 +131,32 @@
     }, { scope: 'global' });
   }
 
-  /* Cria ou atualiza badge "🟢 N online" no header */
+  /* Cria ou atualiza badge "🟢 N online" no topbar (fallback floating) */
   function _updateBadge(uids){
     if(!(window.RT_OPTS && window.RT_OPTS.presenceUI)) return;
     var badge = document.getElementById('rtPresenceBadge');
     if(!badge){
-      // tenta plugar próximo ao logo/header do dashboard
-      var host = document.getElementById('headerActions') ||
-                 document.querySelector('.top-bar') ||
-                 document.querySelector('header') ||
-                 document.body;
+      var topbarRight = document.querySelector('.topbar-right');
       badge = document.createElement('div');
       badge.id = 'rtPresenceBadge';
-      badge.style.cssText = 'position:fixed;bottom:14px;right:14px;background:#0a1f3d;color:#f5b400;font-size:11px;font-family:DM Sans,system-ui,sans-serif;padding:6px 12px;border-radius:99px;border:1px solid rgba(245,180,0,.4);cursor:pointer;z-index:9999;box-shadow:0 2px 12px rgba(0,0,0,.3);user-select:none;display:flex;align-items:center;gap:6px;';
       badge.title = 'Usuários online agora — clique para ver';
       badge.onclick = function(){
         alert('Online agora ('+uids.length+'):\n\n' + (uids.join('\n') || '—'));
       };
-      host.appendChild(badge);
+      if(topbarRight){
+        /* Modo INLINE no topbar (acompanha #netStatusBadge) */
+        badge.style.cssText = 'background:#0a1f3d;color:#f5b400;font-size:11px;font-family:DM Sans,system-ui,sans-serif;padding:4px 10px;border-radius:99px;border:1px solid rgba(245,180,0,.4);cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:6px;height:28px;box-sizing:border-box;';
+        var netBadge = document.getElementById('netStatusBadge');
+        if(netBadge && netBadge.parentNode === topbarRight){
+          topbarRight.insertBefore(badge, netBadge);
+        } else {
+          topbarRight.insertBefore(badge, topbarRight.firstChild);
+        }
+      } else {
+        /* Fallback FLUTUANTE para telas sem topbar (ex: login) */
+        badge.style.cssText = 'position:fixed;bottom:14px;right:14px;background:#0a1f3d;color:#f5b400;font-size:11px;font-family:DM Sans,system-ui,sans-serif;padding:6px 12px;border-radius:99px;border:1px solid rgba(245,180,0,.4);cursor:pointer;z-index:9999;box-shadow:0 2px 12px rgba(0,0,0,.3);user-select:none;display:flex;align-items:center;gap:6px;';
+        document.body.appendChild(badge);
+      }
     }
     var dot = '<span style="display:inline-block;width:7px;height:7px;background:#22c55e;border-radius:50%;box-shadow:0 0 6px #22c55e;"></span>';
     badge.innerHTML = dot + ' ' + uids.length + ' online';
