@@ -118,28 +118,73 @@
     else       bd.classList.remove('open');
   }
 
+  /* Move o .col-filter-pop para document.body para garantir que position:fixed
+     funcione corretamente (qualquer ancestral com transform/filter/will-change
+     ancoraria o fixed). Memoriza posição original para devolver no fechamento. */
+  function _moverPopParaBody(el){
+    var pop = el.querySelector('.col-filter-pop');
+    if(!pop || pop.parentElement === document.body) return;
+    pop._cfOrigParent = pop.parentElement;
+    pop._cfOrigNext   = pop.nextSibling;
+    pop._cfOwnerId    = el.id;
+    document.body.appendChild(pop);
+    pop.classList.add('open');
+  }
+  function _devolverPopOriginal(el){
+    var pop = document.querySelector('.col-filter-pop.open[data-was-from], .col-filter-pop.open');
+    // Busca pelo pop que estava aberto e cujo ownerId aponta para este el
+    document.querySelectorAll('body > .col-filter-pop').forEach(function(p){
+      if(p._cfOwnerId === el.id){
+        p.classList.remove('open');
+        if(p._cfOrigParent){
+          p._cfOrigParent.insertBefore(p, p._cfOrigNext);
+          p._cfOrigParent = null;
+          p._cfOrigNext   = null;
+          p._cfOwnerId    = null;
+        }
+      }
+    });
+  }
+  function _fecharTodos(){
+    document.querySelectorAll('.col-filter.open').forEach(function(el){
+      el.classList.remove('open');
+      _devolverPopOriginal(el);
+    });
+    _setBackdrop(false);
+  }
+
   window._colFilterToggle = function(id){
     var el = document.getElementById(id);
     if(!el) return;
     var abrindo = !el.classList.contains('open');
-    // Fecha outros col-filters abertos
+    // Fecha qualquer outro col-filter aberto
     document.querySelectorAll('.col-filter.open').forEach(function(c){
-      if(c !== el) c.classList.remove('open');
+      if(c !== el){
+        c.classList.remove('open');
+        _devolverPopOriginal(c);
+      }
     });
-    el.classList.toggle('open', abrindo);
-    _setBackdrop(abrindo);
-    if(abrindo) _rebuild(id);
+    if(abrindo){
+      el.classList.add('open');
+      _rebuild(id);          // popula checkboxes ANTES de mover para body
+      _moverPopParaBody(el); // garante position:fixed funcionar corretamente
+      _setBackdrop(true);
+    } else {
+      el.classList.remove('open');
+      _devolverPopOriginal(el);
+      _setBackdrop(false);
+    }
   };
 
   /* Esc fecha o modal */
   document.addEventListener('keydown', function(ev){
-    if(ev.key !== 'Escape') return;
-    var algumAberto = false;
-    document.querySelectorAll('.col-filter.open').forEach(function(el){
-      el.classList.remove('open');
-      algumAberto = true;
-    });
-    if(algumAberto) _setBackdrop(false);
+    if(ev.key === 'Escape') _fecharTodos();
+  });
+
+  /* Reconfigura o handler do backdrop para usar _fecharTodos */
+  document.addEventListener('DOMContentLoaded', function(){
+    var bd = _getBackdrop();
+    bd.onclick = _fecharTodos;
   });
 
   /* ──────────────────────────────────────────────

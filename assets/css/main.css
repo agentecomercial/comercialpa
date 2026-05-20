@@ -860,7 +860,9 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   display:none;z-index:9999;
   max-height:75vh;overflow-y:auto;
 }
-.col-filter.open .col-filter-pop{display:grid !important;grid-template-columns:1fr 1fr 1fr;gap:4px;align-content:start;}
+/* Pop ativo — funciona tanto inline quanto movido para body */
+.col-filter.open .col-filter-pop,
+.col-filter-pop.open{display:grid !important;grid-template-columns:1fr 1fr 1fr;gap:4px;align-content:start;}
 /* Backdrop que escurece o fundo quando o popover está aberto */
 .col-filter-backdrop{
   position:fixed;inset:0;
