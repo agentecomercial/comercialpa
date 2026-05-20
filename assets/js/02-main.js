@@ -904,17 +904,13 @@ function _achatarItens(arr){
       info:      d.info || ''
     };
     if(Array.isArray(d.treinamentos) && d.treinamentos.length>0){
-      // Detecta se algum sub do array já tem entrada > 0 (evita dupla contagem)
-      var _algumSubTemEntrada = d.treinamentos.some(function(t){return t && Number(t.entrada||0)>0;});
-      // O sub elegível para herdar d.entrada é o PRIMEIRO sub NÃO PAGO
-      // (entrada é dinheiro ainda devido — não faz sentido depositar num sub já quitado).
-      var _idxElegivelEntrada = _idxSubElegivelEntrada(d);
       d.treinamentos.forEach(function(sub, ai){
         if(!sub) return;
-        var _entFlat = Number(sub.entrada!=null?sub.entrada:0)||0;
-        if(_entFlat===0 && ai===_idxElegivelEntrada && !_algumSubTemEntrada){
-          _entFlat = Number(d.entrada||0)||0;
-        }
+        /* Entrada vem da função canônica _entradaParaSub:
+           - sub pago retorna 0
+           - sub não-pago elegível recebe entradas reatribuídas dos pagos
+           - fallback legado para d.entrada quando nenhum sub tem entrada */
+        var _entFlat = _entradaParaSub(d, ai);
         out.push(Object.assign({}, base, {
           _ai:             ai,
           treinamento:     String(sub.cod || d.treinamento || '—'),
@@ -1046,23 +1042,54 @@ window._faturadoDoCliente   = _faturadoDoCliente;
 window._abertoDoCliente     = _abertoDoCliente;
 window._negociacaoDoCliente = _negociacaoDoCliente;
 
-/* Entrada PENDENTE: soma entradas apenas de subs ainda NÃO pagos.
-   Subs já quitados (status='pago') têm entrada histórica que NÃO deve
-   aparecer no card/KPI/modal de "Entradas" — já foi liquidada pelo
-   pagamento total. */
+/* Entrada PENDENTE: soma entradas reatribuídas dos subs ainda NÃO pagos.
+   Entradas originalmente em subs pagos migram automaticamente para o
+   primeiro sub não-pago via _entradaParaSub. Garante que o total
+   pendente do cliente reflita o dinheiro REAL ainda em negociação. */
 function _entradaPendenteDoCliente(d){
   if(!d) return 0;
   if(Array.isArray(d.treinamentos) && d.treinamentos.length){
-    return d.treinamentos.reduce(function(a, sub){
-      if(!sub) return a;
-      var st = sub.status || d.status || 'aberto';
-      if(st === 'pago') return a;
-      return a + (Number(sub.entrada)||0);
+    return d.treinamentos.reduce(function(a, _sub, ai){
+      return a + _entradaParaSub(d, ai);
     }, 0);
   }
   return d.status === 'pago' ? 0 : (Number(d.entrada)||0);
 }
 window._entradaPendenteDoCliente = _entradaPendenteDoCliente;
+
+/* Entrada efetiva DO SUB (após reatribuição automática):
+   - Subs pagos → 0 (entrada virou histórico, não mostra)
+   - Sub NÃO pago + é o "elegível" (primeiro não-pago) → soma:
+       · sua própria entrada (sub.entrada)
+       · + entradas dos subs PAGOS do mesmo cliente (entrada "migra" do pago para o não-pago)
+       · + d.entrada scalar SE nenhum sub tem entrada (fallback legado)
+   - Outros subs não-pagos → só sua própria entrada
+   Garante coerência: total de entradas pendentes do cliente = soma do que aparece
+   nos cards/KPIs/modais sem dependência de qual sub originalmente recebeu o sinal. */
+function _entradaParaSub(d, ai){
+  if(!d || !Array.isArray(d.treinamentos) || !d.treinamentos[ai]) return 0;
+  var sub = d.treinamentos[ai];
+  var stSub = sub.status || d.status || 'aberto';
+  if(stSub === 'pago') return 0;
+  var minha = Number(sub.entrada||0)||0;
+  var idxElegivel = _idxSubElegivelEntrada(d);
+  if(ai === idxElegivel){
+    /* Acumula entradas de TODOS os subs pagos (reatribuição) */
+    var entradasPagos = d.treinamentos.reduce(function(acc, s){
+      if(!s) return acc;
+      var st = s.status || d.status || 'aberto';
+      return st === 'pago' ? acc + (Number(s.entrada)||0) : acc;
+    }, 0);
+    minha += entradasPagos;
+    /* Fallback: se NENHUM sub tinha entrada, herda d.entrada (scalar legado) */
+    var _algumSubTemEntrada = d.treinamentos.some(function(t){ return t && Number(t.entrada||0) > 0; });
+    if(!_algumSubTemEntrada && minha === 0){
+      minha = Number(d.entrada||0)||0;
+    }
+  }
+  return minha;
+}
+window._entradaParaSub = _entradaParaSub;
 
 /* Retorna o índice do PRIMEIRO sub elegível a receber o fallback de d.entrada.
    Heurística: primeiro sub NÃO PAGO (faz sentido — entrada é dinheiro ainda devido).

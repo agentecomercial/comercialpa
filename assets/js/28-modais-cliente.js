@@ -381,13 +381,17 @@ function openClientInfo(idx){
       var ri=data.indexOf(t);
       if(Array.isArray(t.treinamentos) && t.treinamentos.length>0){
         t.treinamentos.forEach(function(sub,arrIdx){
-          // Cada sub-treinamento tem seu próprio entrada/formaPagamento/parcelas;
-          // valores no nível da linha servem só como fallback de migração legacy.
+          // Entrada usa _entradaParaSub (canônica): reatribui entradas de subs
+          // pagos para o primeiro sub não-pago. Evita exibir entrada em sub
+          // já quitado e duplicação via fallback t.entrada em múltiplos subs.
+          var _entSub = (typeof window._entradaParaSub === 'function')
+            ? window._entradaParaSub(t, arrIdx)
+            : ((sub && sub.entrada!=null) ? sub.entrada : (t.entrada||0));
           _items.push({
             ri:ri, arrIdx:arrIdx, source:'array',
             cod: (sub && sub.cod) || '—',
             valor: (sub && sub.valor!=null) ? sub.valor : 0,
-            entrada: (sub && sub.entrada!=null) ? sub.entrada : (t.entrada||0),
+            entrada: _entSub,
             status: (sub && sub.status) || t.status || 'aberto',
             formaPagamento: (sub && sub.formaPagamento) || t.formaPagamento || '',
             parcelas: (sub && sub.parcelas && sub.parcelas>0) ? sub.parcelas : ((t.parcelas && t.parcelas>0) ? t.parcelas : 1)

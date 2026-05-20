@@ -370,33 +370,37 @@ function _abrirClientesModalComLista(lista,titulo,sub,opts){
 }
 
 /* Soma o valor do cliente d especificamente para o produto pedido.
-   Alinhado com _achatarItens: o primeiro sub herda d[campo] quando nenhum sub
-   tem o campo preenchido (caso típico de entrada no nível-row).
-   Se produto=null → retorna soma total (d[campo] do nível-row). */
+   Para campo='entrada' usa _entradaParaSub (canônica): reatribui entradas
+   de subs pagos para o primeiro sub não-pago. Para campo='valor' mantém
+   a soma direta dos subs do produto. */
 function _valorClienteProduto(d, produto, campo){
   campo = campo || 'valor';
   if(!d) return 0;
   if(produto===null || produto==='null' || produto===''){
+    /* null = total do cliente; entrada usa o pendente reatribuído */
+    if(campo === 'entrada' && typeof window._entradaPendenteDoCliente === 'function'){
+      return window._entradaPendenteDoCliente(d);
+    }
     return Number(d[campo]||0)||0;
   }
   var alvo = String(produto);
   if(Array.isArray(d.treinamentos) && d.treinamentos.length){
-    var _algumSubTemCampo = d.treinamentos.some(function(t){return t && Number(t[campo]||0)>0;});
-    // Para campo='entrada', o sub elegível é o primeiro NÃO pago (entrada é dinheiro ainda devido).
-    // Para campo='valor', mantemos o primeiro sub do array (não há ambiguidade — valor é fixo por sub).
-    var _idxFb = (campo==='entrada' && typeof _idxSubElegivelEntrada==='function')
-      ? _idxSubElegivelEntrada(d)
-      : 0;
+    if(campo === 'entrada' && typeof window._entradaParaSub === 'function'){
+      var somaE = 0;
+      for(var k=0; k<d.treinamentos.length; k++){
+        var sk = d.treinamentos[k];
+        if(!sk || String(sk.cod||'') !== alvo) continue;
+        somaE += window._entradaParaSub(d, k);
+      }
+      return somaE;
+    }
+    /* campo='valor' (ou outro): soma direta dos subs do produto */
     var soma = 0;
     var i;
     for(i=0; i<d.treinamentos.length; i++){
       var t = d.treinamentos[i];
       if(!t || String(t.cod||'') !== alvo) continue;
-      var v = Number(t[campo]||0)||0;
-      if(v===0 && i===_idxFb && !_algumSubTemCampo){
-        v = Number(d[campo]||0)||0;
-      }
-      soma += v;
+      soma += Number(t[campo]||0)||0;
     }
     if(soma>0) return soma;
     if(String(d.treinamento||'—')===alvo) return Number(d[campo]||0)||0;
