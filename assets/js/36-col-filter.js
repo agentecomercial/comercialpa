@@ -94,20 +94,28 @@
   /* ──────────────────────────────────────────────
      Toggle abrir/fechar popover
   ────────────────────────────────────────────── */
-  /* Aplica/remove classe .has-cf-open no .tpanel pai para liberar
-     overflow:visible (popover precisa vazar pra fora do panel). */
-  function _setPanelOpen(el, isOpen){
-    if(!el) return;
-    var panel = el.closest('.tpanel');
-    if(!panel) return;
-    if(isOpen) panel.classList.add('has-cf-open');
-    else       panel.classList.remove('has-cf-open');
+  /* Backdrop singleton — escurece o fundo quando o popover (agora modal) está aberto.
+     Criado lazily na primeira vez que o popover abre. */
+  function _getBackdrop(){
+    var bd = document.getElementById('colFilterBackdrop');
+    if(!bd){
+      bd = document.createElement('div');
+      bd.id = 'colFilterBackdrop';
+      bd.className = 'col-filter-backdrop';
+      bd.addEventListener('click', function(){
+        document.querySelectorAll('.col-filter.open').forEach(function(el){
+          el.classList.remove('open');
+        });
+        bd.classList.remove('open');
+      });
+      document.body.appendChild(bd);
+    }
+    return bd;
   }
-  function _cleanupPanelClass(){
-    // remove a classe de todos os tpanels caso nenhum col-filter esteja aberto
-    document.querySelectorAll('.tpanel.has-cf-open').forEach(function(p){
-      if(!p.querySelector('.col-filter.open')) p.classList.remove('has-cf-open');
-    });
+  function _setBackdrop(isOpen){
+    var bd = _getBackdrop();
+    if(isOpen) bd.classList.add('open');
+    else       bd.classList.remove('open');
   }
 
   window._colFilterToggle = function(id){
@@ -116,32 +124,22 @@
     var abrindo = !el.classList.contains('open');
     // Fecha outros col-filters abertos
     document.querySelectorAll('.col-filter.open').forEach(function(c){
-      if(c !== el){
-        c.classList.remove('open');
-        _setPanelOpen(c, false);
-      }
+      if(c !== el) c.classList.remove('open');
     });
     el.classList.toggle('open', abrindo);
-    _setPanelOpen(el, abrindo);
+    _setBackdrop(abrindo);
     if(abrindo) _rebuild(id);
   };
 
-  /* Fecha clicando fora */
-  document.addEventListener('click', function(ev){
-    document.querySelectorAll('.col-filter.open').forEach(function(el){
-      if(!el.contains(ev.target)){
-        el.classList.remove('open');
-        _setPanelOpen(el, false);
-      }
-    });
-    _cleanupPanelClass();
-  });
+  /* Esc fecha o modal */
   document.addEventListener('keydown', function(ev){
     if(ev.key !== 'Escape') return;
+    var algumAberto = false;
     document.querySelectorAll('.col-filter.open').forEach(function(el){
       el.classList.remove('open');
-      _setPanelOpen(el, false);
+      algumAberto = true;
     });
+    if(algumAberto) _setBackdrop(false);
   });
 
   /* ──────────────────────────────────────────────

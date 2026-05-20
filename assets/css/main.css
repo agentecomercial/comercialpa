@@ -844,18 +844,34 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   font-size:9px;font-weight:800;font-family:'DM Mono',monospace;
   padding:1px 7px;letter-spacing:.04em;
 }
+/* MODAL CENTRALIZADO — substitui popover ancorado.
+   Evita sobreposição com cards/conteúdo abaixo da tabela. */
 .col-filter-pop{
-  position:absolute;top:calc(100% + 6px);right:0;
-  width:420px;max-width:92vw;
-  background:rgba(10,10,16,.97);
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:520px;max-width:92vw;
+  background:rgba(10,10,16,.98);
   backdrop-filter:blur(24px) saturate(140%);
   -webkit-backdrop-filter:blur(24px) saturate(140%);
-  border:1px solid rgba(200,240,90,.3);
-  border-radius:12px;padding:8px;
-  box-shadow:0 12px 40px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(0,0,0,.4);
-  display:none;z-index:2000;max-height:220px;overflow-y:auto;
+  border:1px solid rgba(200,240,90,.4);
+  border-radius:14px;padding:14px;
+  box-shadow:0 20px 60px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(0,0,0,.5);
+  display:none;z-index:9999;
+  max-height:75vh;overflow-y:auto;
 }
-.col-filter.open .col-filter-pop{display:grid !important;grid-template-columns:1fr 1fr 1fr;gap:2px;align-content:start;}
+.col-filter.open .col-filter-pop{display:grid !important;grid-template-columns:1fr 1fr 1fr;gap:4px;align-content:start;}
+/* Backdrop que escurece o fundo quando o popover está aberto */
+.col-filter-backdrop{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.55);
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+  z-index:9998;
+  opacity:0;pointer-events:none;
+  transition:opacity .15s;
+}
+.col-filter-backdrop.open{opacity:1;pointer-events:auto;}
 .col-filter-pop .col-filter-head{grid-column:1 / -1;}
 .col-filter-pop .col-filter-all{grid-column:1 / -1;}
 .col-filter-pop .col-filter-sep{grid-column:1 / -1;}
