@@ -458,29 +458,27 @@ function abrirProdutoClientes(consultor,produto){
   _abrirClientesModalComLista(lista,titulo,sub,{produto:produto});
 }
 
-// Predicate "tem entrada > 0 num sub do produto" — alinhado com _achatarItens:
-// o PRIMEIRO sub NÃO PAGO herda d.entrada quando nenhum sub do array tem entrada própria.
+// Predicate "tem entrada PENDENTE no produto" — usa _entradaParaSub canônica
+// (já considera reatribuição de subs pagos → sub não-pago elegível).
 function _matchEntradaProduto(d, produto){
   if(!d || !d.cliente) return false;
   if(produto===null||produto==='null'||produto===''){
-    if(Number(d.entrada||0)>0) return true;
-    if(Array.isArray(d.treinamentos) && d.treinamentos.some(function(t){return t && Number(t.entrada||0)>0;})) return true;
+    if(typeof window._entradaPendenteDoCliente === 'function'){
+      return window._entradaPendenteDoCliente(d) > 0;
+    }
+    if(Number(d.entrada||0)>0 && d.status !== 'pago') return true;
     return false;
   }
   var alvo = String(produto);
-  if(Array.isArray(d.treinamentos) && d.treinamentos.length){
-    var _algumSubTemEntrada = d.treinamentos.some(function(t){return t && Number(t.entrada||0)>0;});
-    var _idxEl = (typeof _idxSubElegivelEntrada==='function') ? _idxSubElegivelEntrada(d) : 0;
+  if(Array.isArray(d.treinamentos) && d.treinamentos.length && typeof window._entradaParaSub === 'function'){
     return d.treinamentos.some(function(t, i){
       if(!t) return false;
       if(String(t.cod||'') !== alvo) return false;
-      if(Number(t.entrada||0) > 0) return true;
-      // sub elegível (primeiro não pago) herda d.entrada quando nenhum sub tem entrada
-      if(i===_idxEl && !_algumSubTemEntrada && Number(d.entrada||0) > 0) return true;
-      return false;
+      return window._entradaParaSub(d, i) > 0;
     });
   }
-  if(String(d.treinamento||'—')===alvo && Number(d.entrada||0)>0) return true;
+  /* fallback scalar legado */
+  if(String(d.treinamento||'—')===alvo && Number(d.entrada||0)>0 && d.status !== 'pago') return true;
   return false;
 }
 
