@@ -1019,25 +1019,32 @@ function _statusEfetivoCliente(d){
 }
 window._statusEfetivoCliente = _statusEfetivoCliente;
 
-/* Faturamento REAL do cliente: soma APENAS sub-treinamentos com status='pago'.
-   Para clientes sem array de subs (legados), cai no scalar `c.status`+`c.valor`.
-   Esta é a regra granular do "dinheiro que entrou no caixa" — usada por:
-   - KPI Faturado no dashboard
-   - Card "Faturado" na tela Turmas
-   - Faturamento Total no Mapeamento (Inteligência Comercial)
-   Garantia: cliente com 1 sub pago + 1 sub em negociação retorna o valor do pago. */
-function _faturadoDoCliente(d){
+/* Soma do valor dos sub-treinamentos do cliente que estão no `statusAlvo`.
+   Para clientes sem array (legados), cai no scalar `c.status`+`c.valor`.
+   Regra granular do "dinheiro real por status" — usada por KPIs Faturado,
+   Aberto, Negociação no dashboard, tela Turmas e Mapeamento.
+   Garantia: cliente com 1 sub pago + 1 sub em negociação contribui em
+   AMBOS os totais (com o valor de cada sub respectivo). */
+function _valorPorStatus(d, statusAlvo){
   if(!d) return 0;
   if(Array.isArray(d.treinamentos) && d.treinamentos.length){
     return d.treinamentos.reduce(function(a, sub){
       if(!sub) return a;
       var st = sub.status || d.status || 'aberto';
-      return st === 'pago' ? a + (Number(sub.valor)||0) : a;
+      return st === statusAlvo ? a + (Number(sub.valor)||0) : a;
     }, 0);
   }
-  return d.status === 'pago' ? (Number(d.valor)||0) : 0;
+  return d.status === statusAlvo ? (Number(d.valor)||0) : 0;
 }
-window._faturadoDoCliente = _faturadoDoCliente;
+window._valorPorStatus = _valorPorStatus;
+
+/* Atalhos */
+function _faturadoDoCliente(d){    return _valorPorStatus(d, 'pago');       }
+function _abertoDoCliente(d){      return _valorPorStatus(d, 'aberto');     }
+function _negociacaoDoCliente(d){  return _valorPorStatus(d, 'negociacao'); }
+window._faturadoDoCliente   = _faturadoDoCliente;
+window._abertoDoCliente     = _abertoDoCliente;
+window._negociacaoDoCliente = _negociacaoDoCliente;
 
 /* Retorna o índice do PRIMEIRO sub elegível a receber o fallback de d.entrada.
    Heurística: primeiro sub NÃO PAGO (faz sentido — entrada é dinheiro ainda devido).
@@ -1480,13 +1487,14 @@ function renderAll(){
   var _sf=document.getElementById('statusFilter');
   if(_sf)_sf.value=activeStatus||'';
 
-  // FATURAMENTO REAL — soma só os SUBS pagos (não cliente inteiro).
-  // Cliente em negociação com 1 sub pago de R$ 1.850 conta R$ 1.850 (não 0).
-  // Unifica com filtro "pago" do card Clientes, tela Turmas e Mapeamento.
-  const totalPago=_base.reduce((a,d)=>a+_faturadoDoCliente(d),0);
-  const totalAberto=_base.filter(d=>_statusEfetivoCliente(d)==='aberto').reduce((a,d)=>a+d.valor,0);
-  const clientesNegociacao=_base.filter(d=>_statusEfetivoCliente(d)==='negociacao');
-  const totalNegociacao=clientesNegociacao.reduce((a,d)=>a+d.valor,0);
+  // REGRA GRANULAR — soma APENAS os SUBS com cada status (não cliente inteiro).
+  // Cliente com [IF pago R$1.850 + MENT.IA negociação R$8.997] contribui:
+  //   1.850 em Faturado + 8.997 em Negociação (não 10.847 em só um deles).
+  // Unifica com filtros do card Clientes, tela Turmas e Mapeamento.
+  const totalPago       = _base.reduce((a,d)=>a+_faturadoDoCliente(d),0);
+  const totalAberto     = _base.reduce((a,d)=>a+_abertoDoCliente(d),0);
+  const totalNegociacao = _base.reduce((a,d)=>a+_negociacaoDoCliente(d),0);
+  const clientesNegociacao = _base.filter(d=>_negociacaoDoCliente(d)>0);
   const clientesEntrada=_base.filter(d=>d.entrada>0);
   const totalEntradas=clientesEntrada.reduce((a,d)=>a+d.entrada,0);
   const pctGeral=Math.round((totalPago/META)*100);
@@ -1500,9 +1508,9 @@ function renderAll(){
   // Solução D: subtítulos dos KPIs usam DISTINCT (clientes únicos) só em desktop
   var _ehDeskKPI = window.innerWidth>=769;
   // Contagens com status EFETIVO (mesma regra dos totais acima — evita divergência).
-  var _abertos = _base.filter(d=>_statusEfetivoCliente(d)==='aberto');
-  // Clientes "pagos" = têm pelo menos 1 sub pago (faturamento > 0).
-  // Mantém coerência com totalPago (regra granular).
+  // Clientes em cada categoria = têm pelo menos 1 sub naquele status (valor > 0).
+  // Mantém coerência com os totais granulares acima.
+  var _abertos = _base.filter(d=>_abertoDoCliente(d)>0);
   var _pagos   = _base.filter(d=>_faturadoDoCliente(d)>0);
   var _qNeg    = _ehDeskKPI ? _contarClientesUnicos(clientesNegociacao) : clientesNegociacao.length;
   var _qAb     = _ehDeskKPI ? _contarClientesUnicos(_abertos)            : _abertos.length;

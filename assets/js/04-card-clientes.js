@@ -116,10 +116,14 @@ function _cardAtualizarMetricas(){
     var _base = (_perfil==='consultor'&&_vinculo)
       ? data.filter(function(d){ return (d.consultor||'').toUpperCase()===_vinculo; })
       : data;
-    var totalPago   = _base.filter(function(d){return d.status==='pago';}).reduce(function(a,d){return a+d.valor;},0);
-    var totalAberto = _base.filter(function(d){return d.status==='aberto';}).reduce(function(a,d){return a+d.valor;},0);
-    var negociacaoArr=_base.filter(function(d){return d.status==='negociacao';});
-    var totalNeg    = negociacaoArr.reduce(function(a,d){return a+d.valor;},0);
+    // Regra granular: soma subs por status (alinhada com renderAll).
+    var _fat = (typeof window._faturadoDoCliente==='function')   ? window._faturadoDoCliente   : function(d){return d.status==='pago'?(d.valor||0):0;};
+    var _abr = (typeof window._abertoDoCliente==='function')     ? window._abertoDoCliente     : function(d){return d.status==='aberto'?(d.valor||0):0;};
+    var _neg = (typeof window._negociacaoDoCliente==='function') ? window._negociacaoDoCliente : function(d){return d.status==='negociacao'?(d.valor||0):0;};
+    var totalPago   = _base.reduce(function(a,d){return a+_fat(d);},0);
+    var totalAberto = _base.reduce(function(a,d){return a+_abr(d);},0);
+    var negociacaoArr=_base.filter(function(d){return _neg(d)>0;});
+    var totalNeg    = _base.reduce(function(a,d){return a+_neg(d);},0);
     var totalEnt    = _base.filter(function(d){return d.entrada>0;}).reduce(function(a,d){return a+d.entrada;},0);
     var nEnt        = _base.filter(function(d){return d.entrada>0;}).length;
     var _META       = typeof META!=='undefined'?META:0;
@@ -128,8 +132,8 @@ function _cardAtualizarMetricas(){
     var e;
     // Solução D: subtítulos usam DISTINCT só em desktop
     var _ehDeskKPI = window.innerWidth>=769;
-    var _abArr = _base.filter(function(d){return d.status==='aberto';});
-    var _pgArr = _base.filter(function(d){return d.status==='pago';});
+    var _abArr = _base.filter(function(d){return _abr(d)>0;});
+    var _pgArr = _base.filter(function(d){return _fat(d)>0;});
     var _entArr= _base.filter(function(d){return d.entrada>0;});
     var _qNeg = _ehDeskKPI&&typeof _contarClientesUnicos==='function' ? _contarClientesUnicos(negociacaoArr) : negociacaoArr.length;
     var _qAb  = _ehDeskKPI&&typeof _contarClientesUnicos==='function' ? _contarClientesUnicos(_abArr)        : _abArr.length;
