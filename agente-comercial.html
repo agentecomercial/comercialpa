@@ -3886,6 +3886,14 @@ cAno = desligPorMes × custoUnit × 12</pre>
             <input type="text" id="cfg-cidade" placeholder="Ex: Fortaleza/CE" data-autosave="cfg-cidade">
           </div>
 
+          <h2 style="margin-top: 22px;">🆔 Usuário de login</h2>
+          <p class="subtitle" style="margin-bottom:10px;">Esse é o identificador usado pra entrar no sistema. Use letras minúsculas, números e ponto (ex: <code>joao.silva</code>).</p>
+          <div class="form-group">
+            <label for="cfg-username">Nome de usuário</label>
+            <input type="text" id="cfg-username" placeholder="Ex: joao.silva" autocomplete="off">
+          </div>
+          <button class="icon-btn primary" onclick="salvarNovoUsername()" style="margin-bottom:8px;">Salvar novo usuário</button>
+
           <h2 style="margin-top: 22px;">🔑 Senha do perfil</h2>
           <p class="subtitle" style="margin-bottom:10px;">Deixe "Nova senha" em branco para remover a senha.</p>
           <div class="form-group">
@@ -10032,6 +10040,9 @@ Aguarde o user message — siga o cabeçalho.`;
       var previewEl = document.getElementById('cfg-avatar-preview');
       if (previewEl) previewEl.innerHTML = renderAvatar(profile || { nome: c.nome || 'C' }, 72);
 
+      // Username de login do perfil ativo
+      setVal('cfg-username', profile ? (profile.username || '') : '');
+
       const modos = DB.data.iaModes || { claude: 'projeto', chatgpt: 'avulsa', gemini: 'avulsa' };
       setVal('cfg-ia-claude', modos.claude);
       setVal('cfg-ia-chatgpt', modos.chatgpt);
@@ -11420,6 +11431,40 @@ Aguarde o user message — siga o cabeçalho.`;
       setVal('cfg-senha-atual', '');
       setVal('cfg-nova-senha', '');
     }
+
+    function salvarNovoUsername() {
+      var pid = SESSION.profileId();
+      var profile = pid ? PROFILES.get(pid) : null;
+      if (!profile) { toast('Sessão não encontrada', 'error'); return; }
+
+      var bruto = (val('cfg-username') || '').trim();
+      if (!bruto) { toast('Informe um nome de usuário', 'error'); return; }
+
+      var novo = slugifyUsername(bruto);
+      if (!novo || novo.length < 3) { toast('Usuário inválido. Use ao menos 3 letras (a-z, 0-9, ponto)', 'error'); return; }
+
+      if (novo === profile.username) { toast('Esse já é o seu usuário atual', 'info'); return; }
+
+      // Confere unicidade
+      var existente = PROFILES.findByUsername(novo);
+      if (existente && existente.id !== pid) {
+        toast('Esse usuário já está em uso por outro consultor', 'error');
+        return;
+      }
+
+      if (!confirm('Trocar seu usuário de login de "' + profile.username + '" para "' + novo + '"?\n\nNo próximo login, você vai usar o novo nome.')) return;
+
+      var antigo = profile.username;
+      PROFILES.update(pid, { username: novo });
+      try {
+        AUDIT.log('username_alterado', { de: antigo, para: novo });
+      } catch (e) {}
+      setVal('cfg-username', novo);
+      // Atualiza badge no topo se mostrar username
+      if (typeof renderizarConfig === 'function') renderizarConfig();
+      toast('Usuário alterado para "' + novo + '" ✓', 'success');
+    }
+    window.salvarNovoUsername = salvarNovoUsername;
 
     function verHistoricoAcessos() {
       var pid = SESSION.profileId();
