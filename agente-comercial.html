@@ -3887,10 +3887,10 @@ cAno = desligPorMes × custoUnit × 12</pre>
           </div>
 
           <h2 style="margin-top: 22px;">🆔 Usuário de login</h2>
-          <p class="subtitle" style="margin-bottom:10px;">Esse é o identificador usado pra entrar no sistema. Use letras minúsculas, números e ponto (ex: <code>joao.silva</code>).</p>
+          <p class="subtitle" style="margin-bottom:10px;">Identificador usado pra entrar no sistema. Aceita letras (A-Z / a-z), números e ponto — ex: <code>Pablo.Correia</code> ou <code>joao.silva</code>. O login não diferencia maiúsculas e minúsculas.</p>
           <div class="form-group">
             <label for="cfg-username">Nome de usuário</label>
-            <input type="text" id="cfg-username" placeholder="Ex: joao.silva" autocomplete="off">
+            <input type="text" id="cfg-username" placeholder="Ex: Pablo.Correia" autocomplete="off">
           </div>
           <button class="icon-btn primary" onclick="salvarNovoUsername()" style="margin-bottom:8px;">Salvar novo usuário</button>
 
@@ -5599,7 +5599,7 @@ Aguarde o user message — siga o cabeçalho.`;
       get(id) { return this.load().find(function(p) { return p.id === id; }) || null; },
       findByUsername(username) {
         var u = (username || '').toLowerCase().trim();
-        return this.load().find(function(p) { return p.username === u; }) || null;
+        return this.load().find(function(p) { return (p.username || '').toLowerCase() === u; }) || null;
       },
       add(profile) { var l = this.load(); l.push(profile); this.save(l); },
       update(id, patch) {
@@ -5625,7 +5625,7 @@ Aguarde o user message — siga o cabeçalho.`;
           if (!p.username) {
             var base = slugifyUsername(p.nome) || ('user' + (p.id || '').slice(0,6));
             // Se colidir, anexa parte do id
-            if (list.some(function(q) { return q !== p && q.username === base; })) base = base + '.' + (p.id || '').slice(0,4);
+            if (list.some(function(q) { return q !== p && (q.username || '').toLowerCase() === base.toLowerCase(); })) base = base + '.' + (p.id || '').slice(0,4);
             patch.username = base;
             changed = true;
           }
@@ -11440,21 +11440,35 @@ Aguarde o user message — siga o cabeçalho.`;
       var bruto = (val('cfg-username') || '').trim();
       if (!bruto) { toast('Informe um nome de usuário', 'error'); return; }
 
-      var novo = slugifyUsername(bruto);
-      if (!novo || novo.length < 3) { toast('Usuário inválido. Use ao menos 3 letras (a-z, 0-9, ponto)', 'error'); return; }
+      // Sanitiza preservando a caixa (maiúscula/minúscula como digitado)
+      var novo = bruto.normalize('NFD').replace(/[̀-ͯ]/g, '')
+                       .replace(/[^A-Za-z0-9.]/g, '.')
+                       .replace(/\.+/g, '.').replace(/^\.|\.$/g, '');
+      if (!novo || novo.length < 3) { toast('Usuário inválido. Use ao menos 3 caracteres (A-Z, a-z, 0-9, ponto)', 'error'); return; }
 
-      if (novo === profile.username) { toast('Esse já é o seu usuário atual', 'info'); return; }
+      var antigo = profile.username || '';
+      // Mesmo nome só com caixa diferente — atualiza só a caixa
+      if (novo.toLowerCase() === antigo.toLowerCase()) {
+        if (novo === antigo) { toast('Esse já é o seu usuário atual', 'info'); return; }
+        PROFILES.update(pid, { username: novo });
+        try { AUDIT.log('username_alterado', { de: antigo, para: novo, motivo: 'caixa' }); } catch (e) {}
+        setVal('cfg-username', novo);
+        toast('Caixa atualizada para "' + novo + '" ✓', 'success');
+        return;
+      }
 
-      // Confere unicidade
-      var existente = PROFILES.findByUsername(novo);
-      if (existente && existente.id !== pid) {
+      // Confere unicidade (case-insensitive)
+      var todos = PROFILES.load();
+      var conflito = todos.find(function(p) {
+        return p.id !== pid && (p.username || '').toLowerCase() === novo.toLowerCase();
+      });
+      if (conflito) {
         toast('Esse usuário já está em uso por outro consultor', 'error');
         return;
       }
 
-      if (!confirm('Trocar seu usuário de login de "' + profile.username + '" para "' + novo + '"?\n\nNo próximo login, você vai usar o novo nome.')) return;
+      if (!confirm('Trocar seu usuário de login de "' + antigo + '" para "' + novo + '"?\n\nNo próximo login, você vai usar o novo nome.')) return;
 
-      var antigo = profile.username;
       PROFILES.update(pid, { username: novo });
       try {
         AUDIT.log('username_alterado', { de: antigo, para: novo });
