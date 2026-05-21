@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260521-124644">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260521-124644">
+<link rel="stylesheet" href="assets/css/main.css?v=20260521-125335">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260521-125335">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260521-124644">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260521-125335">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1022,21 +1022,6 @@
         <div class="mcard"><div class="mcard-label">Faltam para meta</div><div class="mcard-val" id="mFaltam" style="color:var(--red);">—</div><div class="mcard-sub" id="mPctSub"></div></div>
       </div>
 
-      <!-- ═══════════════════════════════════════════════════════
-           CARD AGENDA — embute agenda.html via iframe
-           ═══════════════════════════════════════════════════════ -->
-      <div class="tpanel" id="agendaPanel" style="margin-bottom:20px;padding:0;overflow:hidden;">
-        <div class="tpanel-header" style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-          <span class="panel-title" style="display:flex;align-items:center;gap:8px;">📅 AGENDA</span>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <button type="button" onclick="document.getElementById('agendaFrame').src='agenda.html?ts='+Date.now()" title="Recarregar agenda" style="background:none;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--muted);font-size:11px;cursor:pointer;">↻</button>
-            <button type="button" onclick="window.open('agenda.html','_blank')" title="Abrir em nova aba" style="background:none;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--muted);font-size:11px;cursor:pointer;">↗ Abrir</button>
-            <button type="button" onclick="(function(p){var f=document.getElementById('agendaFrame');f.style.height=(f.offsetHeight===600?900:600)+'px';})()" title="Expandir/recolher" style="background:none;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--muted);font-size:11px;cursor:pointer;">⤢</button>
-          </div>
-        </div>
-        <iframe id="agendaFrame" src="agenda.html" loading="lazy" title="Agenda" style="display:block;width:100%;height:600px;border:none;background:var(--bg);"></iframe>
-      </div>
-
       <div class="meta-panel">
         <div class="panel-header">
           <span class="panel-title">PERFORMANCE DO TIME</span>
@@ -1196,6 +1181,18 @@
           <div class="spanel"><div class="spanel-title">Ranking — Treinador</div><div id="rankingTreinador"></div></div>
           <div class="spanel"><div class="spanel-title">Ranking — Consultor</div><div id="rankingConsultor"></div></div>
           <div class="spanel"><div class="spanel-title">Total entradas</div><div id="entradaRows"></div></div>
+          <!-- AGENDA — embute agenda.html via iframe, mesmo padrão visual dos spanels -->
+          <div class="spanel" id="agendaPanel" style="padding:0;overflow:hidden;">
+            <div class="spanel-title" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;margin:0;border-bottom:1px solid var(--border);">
+              <span style="display:flex;align-items:center;gap:8px;">📅 Agenda</span>
+              <span style="display:flex;gap:5px;">
+                <button type="button" onclick="document.getElementById('agendaFrame').src='agenda.html?ts='+Date.now()" title="Recarregar" style="background:none;border:1px solid var(--border2);border-radius:5px;padding:3px 8px;color:var(--muted);font-size:10px;cursor:pointer;">↻</button>
+                <button type="button" onclick="window.open('agenda.html','_blank')" title="Abrir em nova aba" style="background:none;border:1px solid var(--border2);border-radius:5px;padding:3px 8px;color:var(--muted);font-size:10px;cursor:pointer;">↗</button>
+                <button type="button" onclick="(function(){var f=document.getElementById('agendaFrame');f.style.height=(f.offsetHeight<=420?720:420)+'px';})()" title="Expandir/recolher" style="background:none;border:1px solid var(--border2);border-radius:5px;padding:3px 8px;color:var(--muted);font-size:10px;cursor:pointer;">⤢</button>
+              </span>
+            </div>
+            <iframe id="agendaFrame" src="agenda.html" loading="lazy" title="Agenda" style="display:block;width:100%;height:420px;border:none;background:var(--bg);"></iframe>
+          </div>
         </div>
       </div>
     </div>
@@ -1911,7 +1908,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260521-124644"></script>
+<script defer src="assets/js/00-utils.js?v=20260521-125335"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2005,29 +2002,29 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260521-124644"></script>
-<script defer src="assets/js/29-login.js?v=20260521-124644"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260521-124644"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260521-124644"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260521-124644"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260521-124644"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260521-124644"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260521-124644"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260521-124644"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260521-124644"></script>
-<script defer src="assets/js/99-diag.js?v=20260521-124644"></script>
-<script defer src="assets/js/21-turmas.js?v=20260521-124644"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260521-124644"></script>
+<script defer src="assets/js/02-main.js?v=20260521-125335"></script>
+<script defer src="assets/js/29-login.js?v=20260521-125335"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260521-125335"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260521-125335"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260521-125335"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260521-125335"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260521-125335"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260521-125335"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260521-125335"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260521-125335"></script>
+<script defer src="assets/js/99-diag.js?v=20260521-125335"></script>
+<script defer src="assets/js/21-turmas.js?v=20260521-125335"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260521-125335"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260521-124644"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260521-124644"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260521-124644"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260521-124644"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260521-124644"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260521-124644"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260521-125335"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260521-125335"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260521-125335"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260521-125335"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260521-125335"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260521-125335"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260521-124644"></script>
-<script defer src="assets/js/17-presenca.js?v=20260521-124644"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260521-125335"></script>
+<script defer src="assets/js/17-presenca.js?v=20260521-125335"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2039,20 +2036,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260521-124644">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260521-125335">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260521-124644"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260521-125335"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260521-124644"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260521-124644"></script>
+<script defer src="assets/js/05-importacao.js?v=20260521-125335"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260521-125335"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260521-124644">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260521-125335">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260521-124644"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260521-125335"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2088,7 +2085,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260521-124644"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260521-125335"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2113,14 +2110,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260521-124644"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260521-124644"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260521-124644"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260521-124644"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260521-124644"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260521-124644"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260521-124644"></script>
-<script defer src="assets/js/08-realtime.js?v=20260521-124644"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260521-125335"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260521-125335"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260521-125335"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260521-125335"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260521-125335"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260521-125335"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260521-125335"></script>
+<script defer src="assets/js/08-realtime.js?v=20260521-125335"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2153,7 +2150,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260521-124644"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260521-125335"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -2634,16 +2631,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260521-124644"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260521-125335"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260521-124644"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260521-125335"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260521-124644"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260521-125335"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260521-124644"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260521-125335"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
