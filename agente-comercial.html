@@ -6074,7 +6074,9 @@ Aguarde o user message — siga o cabeçalho.`;
       if (!logo) return;
       var ativoId = (DB.data && DB.data.treinamentoAtivo) || 'tce';
       var t = (typeof TREINAMENTOS !== 'undefined' ? TREINAMENTOS : []).find(function(x){ return x.id === ativoId; });
-      var sigla = t ? (t.nomeCurto || t.nome || 'F') : 'F';
+      // Overrides explícitos de sigla pra logo (quando nomeCurto não cabe bem)
+      var SIGLAS_LOGO = { master: 'MC' };
+      var sigla = t ? (SIGLAS_LOGO[t.id] || t.nomeCurto || t.nome || 'F') : 'F';
       logo.textContent = sigla;
       // Auto-ajuste do tamanho da fonte conforme o tamanho da sigla
       var len = sigla.length;
