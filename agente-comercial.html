@@ -8017,10 +8017,12 @@ Aguarde o user message — siga o cabeçalho.`;
 
     function trocarModoApi(ativar) {
       if (ativar && !temIaConfigurada()) {
-        toast('Cole sua chave Anthropic ou Gemini em js/data/api-key.js para usar o modo automático.', 'error');
-        var t = document.getElementById('modo-api-toggle');
-        if (t) t.checked = false;
-        return;
+        var ok = pedirChaveApiAoUsuario();
+        if (!ok) {
+          var t = document.getElementById('modo-api-toggle');
+          if (t) t.checked = false;
+          return;
+        }
       }
       DB.data.modoApiPreferido = !!ativar;
       DB.save();
@@ -8349,6 +8351,38 @@ Aguarde o user message — siga o cabeçalho.`;
     var MODELOS_GEMINI_FALLBACK = ['gemini-2.5-flash', 'gemini-2.0-flash']; // tenta nessa ordem se 429
     var MAX_TURNOS_TREINO = 40;
     var _treinoApiBusy = false;
+
+    // Hidrata window.FebracisData com chaves salvas em localStorage (modo online — sem api-key.js)
+    (function hidratarApiKeyDoLocalStorage() {
+      try {
+        window.FebracisData = window.FebracisData || {};
+        var ak = localStorage.getItem('_febracis_api_anthropic');
+        var gk = localStorage.getItem('_febracis_api_gemini');
+        if (ak && !window.FebracisData.API_KEY_ANTHROPIC) window.FebracisData.API_KEY_ANTHROPIC = ak;
+        if (gk && !window.FebracisData.API_KEY_GEMINI) window.FebracisData.API_KEY_GEMINI = gk;
+      } catch (e) {}
+    })();
+
+    function pedirChaveApiAoUsuario() {
+      var k = prompt('Cole sua chave de API (Anthropic começa com "sk-ant-" · Gemini começa com "AIza"):\n\nA chave fica salva apenas no seu navegador (localStorage). Não sai daqui.');
+      if (!k) return false;
+      k = k.trim();
+      window.FebracisData = window.FebracisData || {};
+      if (k.indexOf('sk-ant-') === 0) {
+        window.FebracisData.API_KEY_ANTHROPIC = k;
+        try { localStorage.setItem('_febracis_api_anthropic', k); } catch (e) {}
+        toast('Chave Anthropic salva neste navegador ✓', 'success');
+        return true;
+      }
+      if (k.indexOf('AIza') === 0) {
+        window.FebracisData.API_KEY_GEMINI = k;
+        try { localStorage.setItem('_febracis_api_gemini', k); } catch (e) {}
+        toast('Chave Gemini salva neste navegador ✓', 'success');
+        return true;
+      }
+      toast('Formato inválido. Anthropic começa com sk-ant- · Gemini com AIza', 'error');
+      return false;
+    }
 
     function temAnthropicKey() {
       var k = (window.FebracisData && window.FebracisData.API_KEY_ANTHROPIC) || '';
