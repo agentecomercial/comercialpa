@@ -90,30 +90,24 @@ Inclui tudo do Quick mais:
 
 ---
 
-## 🛡️ Verificações rápidas no console (sempre úteis)
+## 🛡️ Auto-verificação no console — `_diag`
 
-Cole no DevTools (F12 → Console) após carregar uma turma:
+Carregue uma turma e abra DevTools (F12 → Console). Digite:
 
-```js
-// 1. Confere que os helpers canônicos estão disponíveis
-['_faturadoDoCliente','_abertoDoCliente','_negociacaoDoCliente',
- '_entradaPendenteDoCliente','_entradaParaSub','_statusEfetivoCliente',
- '_valorPorStatus','_achatarItens']
-.forEach(fn => console.log(fn, typeof window[fn] === 'function' ? '✓' : '❌'));
+```
+_diag.ajuda()
 ```
 
-Todos devem mostrar `✓`. Se algum `❌`, algo quebrou na ordem de carregamento.
+Funções disponíveis:
 
-```js
-// 2. Confere coerência dos totais granulares
-var fat = data.reduce((a,d) => a + (window._faturadoDoCliente?.(d) || 0), 0);
-var abr = data.reduce((a,d) => a + (window._abertoDoCliente?.(d)   || 0), 0);
-var neg = data.reduce((a,d) => a + (window._negociacaoDoCliente?.(d)|| 0), 0);
-var ent = data.reduce((a,d) => a + (window._entradaPendenteDoCliente?.(d) || 0), 0);
-console.table({Faturado:fat, Aberto:abr, Negociacao:neg, Entrada:ent});
-```
+| Comando | O que faz |
+|---|---|
+| `_diag.helpers()` | Verifica que todos os helpers canônicos (`_faturadoDoCliente`, `_entradaParaSub`, etc.) estão carregados. Se algum faltar → bug de cache ou ordem de scripts. |
+| `_diag.totais()` | Imprime os 4 totais granulares (Faturado / Em aberto / Potencial total / Total entradas). Compare visualmente com os KPIs do topo da tela. |
+| `_diag.divergencias()` | **Auto-check**: lê os KPIs do DOM e compara com os cálculos. Se algum não bate, lista a diferença. Verde = OK em tudo. |
+| `_diag.cliente("ROBSON")` | Inspeção completa de 1 cliente (busca parcial por nome): scalar, status efetivo, valores granulares e tabela dos subs com entrada bruta vs entrada visível. |
 
-Compara visualmente com os KPIs do topo da tela.
+**Use `_diag.divergencias()` após qualquer mudança em cálculos.** Se aparece tudo verde, está coerente.
 
 ---
 
