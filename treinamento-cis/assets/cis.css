@@ -26,6 +26,60 @@
 
 * { box-sizing: border-box; }
 
+/* ---- Scrollbar customizada (identidade Método CIS) ---- */
+/* Firefox */
+html { scrollbar-width: thin; scrollbar-color: var(--cis-yellow) rgba(4,18,46,0.55); }
+
+/* WebKit / Chromium */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(4, 18, 46, 0.55);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--cis-yellow) 0%, var(--cis-yellow-deep) 100%);
+  border-radius: 999px;
+  border: 2px solid rgba(4, 18, 46, 0.85);
+  background-clip: padding-box;
+  transition: background .15s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--cis-yellow-soft) 0%, var(--cis-yellow) 100%);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:active {
+  background: var(--cis-yellow);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Variante fina para barras laterais e listas internas */
+.sidebar,
+.sidenav-sub,
+.bubble,
+.deck,
+.stage {
+  scrollbar-width: thin;
+}
+.sidebar::-webkit-scrollbar,
+.sidenav-sub::-webkit-scrollbar { width: 6px; height: 6px; }
+.sidebar::-webkit-scrollbar-thumb,
+.sidenav-sub::-webkit-scrollbar-thumb {
+  background: rgba(255, 204, 30, 0.55);
+  border: none;
+}
+.sidebar::-webkit-scrollbar-thumb:hover,
+.sidenav-sub::-webkit-scrollbar-thumb:hover {
+  background: var(--cis-yellow);
+}
+.sidebar::-webkit-scrollbar-track,
+.sidenav-sub::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -531,8 +585,31 @@ ul.x-list li::before {
   color: var(--cis-muted);
   letter-spacing: 0.12em;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: background .15s ease;
 }
+.hud .counter:hover { background: rgba(255,204,30,0.10); }
 .hud .counter b { color: var(--cis-yellow); }
+
+.goto-input {
+  background: var(--cis-yellow);
+  color: var(--cis-blue-900);
+  border: 0;
+  font: 800 13px "Inter", "Segoe UI", Arial, sans-serif;
+  width: 52px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  text-align: center;
+  outline: none;
+  letter-spacing: 0.04em;
+}
+.goto-input::-webkit-inner-spin-button,
+.goto-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.goto-input { -moz-appearance: textfield; }
 
 .nav-buttons { display: flex; gap: 8px; }
 .nav-buttons button,
@@ -757,6 +834,46 @@ ul.x-list li::before {
 .script-list .item p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--cis-text); }
 .script-list .item .quote { font-style: italic; color: #fff; }
 .script-list .item .why { color: var(--cis-muted); font-size: 12px; margin-top: 4px; }
+
+/* ---- Revelação por passo (botão "Avançar") ---- */
+.cis-step {
+  transition: opacity .45s cubic-bezier(.22,.61,.36,1), transform .45s cubic-bezier(.22,.61,.36,1), filter .45s ease;
+}
+.slide.is-active .cis-step:not(.is-revealed) {
+  opacity: 0;
+  transform: translateY(14px) scale(.96);
+  filter: blur(3px);
+  pointer-events: none;
+  animation: none !important; /* suprime stagger inicial enquanto oculto */
+}
+.slide.is-active .cis-step.is-revealed {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+  pointer-events: auto;
+}
+
+/* Botão "Menu" no HUD */
+.nav-buttons button.menu-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-buttons button.menu-btn svg { width: 14px; height: 14px; }
+
+/* Botão "Avançar" */
+.nav-buttons button.adv-btn {
+  background: rgba(255,204,30,0.18);
+}
+.nav-buttons button.adv-btn:hover { background: rgba(255,204,30,0.32); }
+.nav-buttons button.adv-btn.is-exhausted {
+  background: rgba(255,204,30,0.08);
+  color: var(--cis-muted);
+}
+.nav-buttons button.adv-btn.is-exhausted:hover {
+  background: rgba(255,204,30,0.16);
+  color: var(--cis-yellow);
+}
 
 /* ---- Modo edição ---- */
 html.edit-mode [contenteditable="true"] {

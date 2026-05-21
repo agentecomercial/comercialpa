@@ -10,6 +10,65 @@
   // slide-id baseado na ordem original no HTML (1-indexed). Edits e hidden usam esses IDs.
   allSlides.forEach((s, i) => { s.dataset.slideId = String(i + 1); });
 
+  // ---- Detecção de "passos" (itens revelados um por vez) ----
+  // Seletores prioritários (cada um isolado).
+  const STEP_SELECTORS = [
+    '.script-list > .item',
+    '.dialog > .turn',
+    '.seq > .step',
+    '.aida > .step',
+    '.funnel > .step',
+    '.matrix > .quad',
+    '.grid > .card',
+    '.cis-table tbody > tr',
+  ];
+  // Seletores combinados (em ordem do DOM): usados quando os prioritários não casam.
+  const STEP_FALLBACK_LIST = [
+    '.split > .col ul > li',
+    '.split > .col > .card',
+    'ul.dot-list > li',
+    'ul.tick-list > li',
+    'ul.x-list > li',
+  ];
+
+  // Estado de revelação por slide: Map<slideEl, currentRevealedIndex>
+  const stepState = new Map();
+
+  function collectInDomOrder(slide, selectors) {
+    const set = new Set();
+    const all = [];
+    selectors.forEach(sel => {
+      slide.querySelectorAll(sel).forEach(el => {
+        if (!set.has(el)) { set.add(el); all.push(el); }
+      });
+    });
+    // Reordena pela posição no DOM
+    all.sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1);
+    return all;
+  }
+
+  allSlides.forEach(slide => {
+    if (slide.classList.contains('module-cover')) return;
+    let items = [];
+    // 1) Tenta seletores prioritários (primeiro que casar com >=3)
+    for (const sel of STEP_SELECTORS) {
+      const found = slide.querySelectorAll(sel);
+      if (found.length >= 3) { items = Array.from(found); break; }
+    }
+    // 2) Fallback: combina listas/cards dentro de .split e listas soltas
+    if (items.length < 3) {
+      const combined = collectInDomOrder(slide, STEP_FALLBACK_LIST);
+      if (combined.length >= 3) items = combined;
+    }
+    if (items.length >= 3) {
+      items.forEach((el, i) => {
+        el.classList.add('cis-step');
+        el.dataset.stepI = String(i);
+      });
+      slide.dataset.steps = String(items.length);
+    }
+  });
+
   // Marca elementos editáveis com um ID estável dentro do slide.
   const EDIT_SELECTOR = 'h1, h2, h3, h4, p, li, cite, .chip, .quote, .bubble, .label, .value, .who, .num, .meta, .axis-x, .axis-y, .pullquote, .module-badge';
   allSlides.forEach(slide => {
@@ -74,6 +133,52 @@
   const progressEl = document.querySelector('.progress > span');
   let idx = 0;
 
+  // Contador clicável: clica → input pra digitar o número do slide
+  if (counterEl) {
+    counterEl.style.cursor = 'pointer';
+    counterEl.title = 'Clique para ir a um slide específico';
+    counterEl.addEventListener('click', (e) => {
+      if (counterEl.querySelector('.goto-input')) return; // já está editando
+      const total = visibleSlides().length;
+      counterEl.innerHTML = '';
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = '1';
+      input.max = String(total);
+      input.value = String(idx + 1);
+      input.className = 'goto-input';
+      const suffix = document.createElement('span');
+      suffix.textContent = ` / ${total}`;
+      suffix.style.color = 'var(--cis-muted)';
+      counterEl.appendChild(input);
+      counterEl.appendChild(suffix);
+      input.focus();
+      input.select();
+
+      let committed = false;
+      const commit = () => {
+        if (committed) return; committed = true;
+        const n = parseInt(input.value, 10);
+        if (!isNaN(n) && n >= 1 && n <= total) {
+          go(n - 1);
+        } else {
+          // re-render mantém o slide atual
+          render();
+        }
+      };
+      const cancel = () => {
+        if (committed) return; committed = true;
+        render();
+      };
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); cancel(); }
+        ev.stopPropagation();
+      });
+      input.addEventListener('blur', commit);
+    });
+  }
+
   function fitDeck() {
     const W = stage.clientWidth;
     const H = stage.clientHeight;
@@ -84,6 +189,27 @@
     deck.style.position = 'absolute';
     deck.style.top = '50%';
     deck.style.left = '50%';
+  }
+
+  // ---- Revelação por passo ----
+  function applyStepReveal(slide, mode) {
+    // mode: 'first' (só o primeiro), 'all' (todos), 'state' (usa stepState)
+    const total = parseInt(slide.dataset.steps || '0', 10);
+    if (!total) return;
+    let cur;
+    if (mode === 'all') cur = total - 1;
+    else if (mode === 'first') cur = 0;
+    else cur = stepState.get(slide) ?? 0;
+    if (mode === 'first' || mode === 'all') stepState.set(slide, cur);
+    slide.querySelectorAll('.cis-step').forEach((el, i) => {
+      el.classList.toggle('is-revealed', i <= cur);
+    });
+  }
+
+  function stepInfo(slide) {
+    const total = parseInt(slide.dataset.steps || '0', 10);
+    const cur = stepState.get(slide) ?? -1;
+    return { total, cur, hasMore: total > 0 && cur < total - 1 };
   }
 
   function render(prevIdx) {
@@ -102,6 +228,18 @@
     const url = new URL(window.location.href);
     url.hash = `slide-${idx + 1}`;
     history.replaceState(null, '', url);
+
+    // Estado de passos: ao entrar pela primeira vez no slide, mostra só o primeiro
+    if (current.dataset.steps) {
+      if (!stepState.has(current)) applyStepReveal(current, 'first');
+      else applyStepReveal(current, 'state');
+    }
+    updateAdvanceButton();
+
+    // Avisa o shell (sidebar) sobre o slide atual — usa o slide-id estável
+    if (window.parent !== window && current.dataset.slideId) {
+      parent.postMessage({ type: 'cis-slide-changed', n: parseInt(current.dataset.slideId, 10) }, '*');
+    }
   }
 
   function go(n) {
@@ -110,8 +248,51 @@
     idx = Math.max(0, Math.min(len - 1, n));
     render(prevIdx === idx ? undefined : prevIdx);
   }
-  const next = () => go(idx + 1);
-  const prev = () => go(idx - 1);
+
+  function next() {
+    // Ao pular pro próximo slide, garante que o atual fique com tudo revelado
+    const slides = visibleSlides();
+    const current = slides[idx];
+    if (current && current.dataset.steps) applyStepReveal(current, 'all');
+    go(idx + 1);
+  }
+
+  function prev() { go(idx - 1); }
+
+  // "Avançar": revela próximo item no slide atual. Se não houver, vai pro próximo slide.
+  function advance() {
+    const slides = visibleSlides();
+    const current = slides[idx];
+    if (!current) return next();
+    const info = stepInfo(current);
+    if (info.hasMore) {
+      stepState.set(current, info.cur + 1);
+      applyStepReveal(current, 'state');
+      updateAdvanceButton();
+    } else {
+      next();
+    }
+  }
+
+  function updateAdvanceButton() {
+    const btn = document.querySelector('[data-nav="advance"]');
+    if (!btn) return;
+    btn.style.display = 'inline-flex';
+    const slides = visibleSlides();
+    const current = slides[idx];
+    const lbl = btn.querySelector('.adv-label');
+    if (!current || !current.dataset.steps) {
+      // Sem passos: o botão age como "Próximo" simples
+      if (lbl) lbl.textContent = 'Avançar';
+      btn.classList.add('is-exhausted');
+      btn.title = 'Avançar para o próximo slide';
+      return;
+    }
+    const info = stepInfo(current);
+    if (lbl) lbl.textContent = info.hasMore ? `Avançar (${info.cur + 2}/${info.total})` : 'Avançar';
+    btn.classList.toggle('is-exhausted', !info.hasMore);
+    btn.title = info.hasMore ? 'Revelar o próximo item' : 'Avançar para o próximo slide';
+  }
 
   // Inicial pelo hash
   const m = location.hash.match(/slide-(\d+)/);
@@ -137,6 +318,70 @@
   // Botões nav
   document.querySelectorAll('[data-nav="prev"]').forEach(b => b.addEventListener('click', prev));
   document.querySelectorAll('[data-nav="next"]').forEach(b => b.addEventListener('click', next));
+
+  // Botão Avançar (criado dinamicamente entre Anterior e Próximo)
+  function ensureAdvanceButton() {
+    const nav = document.querySelector('.hud .nav-buttons');
+    if (!nav) return;
+    if (nav.querySelector('[data-nav="advance"]')) return;
+    const btn = document.createElement('button');
+    btn.dataset.nav = 'advance';
+    btn.className = 'adv-btn';
+    btn.title = 'Avançar item por item';
+    btn.innerHTML = `<span class="adv-label">Avançar</span> ▸`;
+    btn.addEventListener('click', advance);
+    const prevBtn = nav.querySelector('[data-nav="prev"]');
+    const nextBtn = nav.querySelector('[data-nav="next"]');
+    if (prevBtn && nextBtn && prevBtn.parentNode === nav) nav.insertBefore(btn, nextBtn);
+    else nav.appendChild(btn);
+  }
+  ensureAdvanceButton();
+
+  // Botão "Menu" — volta ao menu principal (shell)
+  function ensureMenuButton() {
+    const nav = document.querySelector('.hud .nav-buttons');
+    if (!nav) return;
+    if (nav.querySelector('[data-nav="menu"]')) return;
+    const btn = document.createElement('button');
+    btn.dataset.nav = 'menu';
+    btn.className = 'menu-btn';
+    btn.title = 'Voltar ao menu';
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg> Menu`;
+    btn.addEventListener('click', () => {
+      if (window.parent !== window) {
+        parent.postMessage({ type: 'cis-nav', target: 'menu' }, '*');
+      } else {
+        location.href = 'index.html';
+      }
+    });
+    nav.insertBefore(btn, nav.firstChild);
+  }
+  ensureMenuButton();
+
+  // Reordena pra: [Anterior] [Avançar] [Próximo] [Tela cheia]
+  (function reorderHud() {
+    const nav = document.querySelector('.hud .nav-buttons');
+    if (!nav) return;
+    const order = ['menu', 'edit', 'reset', 'prev', 'advance', 'next', 'fullscreen'];
+    order.forEach(key => {
+      const b = nav.querySelector(`[data-nav="${key}"]`);
+      if (b) nav.appendChild(b);
+    });
+  })();
+
+  // Listener: o shell pode pedir pra ir direto a um slide (vindo da sidebar)
+  window.addEventListener('message', (e) => {
+    const m = e.data || {};
+    if (m.type === 'cis-goto' && typeof m.n === 'number') {
+      // Garante que o slide alvo esteja na lista visível; se está oculto, abre normalmente mesmo assim
+      const target = allSlides[m.n - 1];
+      if (!target) return;
+      // Calcula índice na lista visível (ou usa allSlides se em edit-mode)
+      const slides = visibleSlides();
+      const found = slides.indexOf(target);
+      if (found >= 0) go(found);
+    }
+  });
 
   // ---- Fullscreen ----
   function toggleFullscreen() {
@@ -336,6 +581,17 @@
   }
 
   ensureEditButtons();
+
+  // Reordena a HUD final: [edit] [reset] [prev] [advance] [next] [fullscreen]
+  (function reorderHudFinal() {
+    const nav = document.querySelector('.hud .nav-buttons');
+    if (!nav) return;
+    const order = ['menu', 'edit', 'reset', 'prev', 'advance', 'next', 'fullscreen'];
+    order.forEach(key => {
+      const b = nav.querySelector(`[data-nav="${key}"]`);
+      if (b) nav.appendChild(b);
+    });
+  })();
 
   // Swipe touch
   let tx = 0;

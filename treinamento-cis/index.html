@@ -74,6 +74,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    white-space: nowrap;
     transition: background .15s ease, border-color .15s ease, color .15s ease;
   }
   .sidenav-item:hover { background: rgba(255,204,30,0.08); color: var(--cis-yellow); }
@@ -110,6 +111,31 @@
     letter-spacing: 0.1em;
   }
 
+  /* Chevron para expandir/recolher subtópicos */
+  .sidenav-item .chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    color: var(--cis-muted);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: transform .2s ease, background .15s ease, color .15s ease;
+    flex: 0 0 22px;
+    padding: 0;
+  }
+  .sidenav-item .chevron:hover {
+    background: rgba(255,204,30,0.18);
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .chevron svg { width: 11px; height: 11px; }
+  .sidenav-item .chevron.is-open { transform: rotate(90deg); color: var(--cis-yellow); }
+  .sidenav-item.highlight .chevron { color: var(--cis-yellow); }
+  .sidenav-item.highlight.is-active .chevron { color: var(--cis-blue-900); }
+
   .sidenav-item.highlight {
     background: linear-gradient(135deg, rgba(255,204,30,0.18), rgba(245,165,0,0.10));
     border-color: var(--cis-card-border-strong);
@@ -129,6 +155,84 @@
     color: var(--cis-muted);
     line-height: 1.4;
   }
+
+  /* Container agrupador (Fechamento CIS contém SPIN aninhado + seus subtópicos) */
+  .sidenav-group {
+    display: none;
+    margin-left: 18px;
+    padding-left: 8px;
+    border-left: 2px solid rgba(255,204,30,0.18);
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+  .sidenav-group.is-open { display: block; }
+
+  /* Item aninhado (sub-item da seção) */
+  .sidenav-item.nested {
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--cis-yellow);
+    background: rgba(255,204,30,0.06);
+    border: 1px solid rgba(255,204,30,0.18);
+    margin-top: 4px;
+  }
+  .sidenav-item.nested:hover {
+    background: rgba(255,204,30,0.14);
+    border-color: var(--cis-card-border-strong);
+  }
+  .sidenav-item.nested.is-active {
+    background: rgba(255,204,30,0.22);
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+  }
+
+  /* Sublista de slides (subtópicos) por deck */
+  .sidenav-sub {
+    list-style: none;
+    margin: 4px 0 8px;
+    padding: 4px 4px 8px 12px;
+    border-left: 2px solid rgba(255,204,30,0.18);
+    margin-left: 18px;
+    display: none;
+    max-height: 360px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .sidenav-sub.is-open { display: block; }
+
+  .sidenav-sub li { margin: 0; }
+  .sidenav-sub-item {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--cis-muted);
+    text-align: left;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font: 500 12px/1.35 inherit;
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    transition: background .12s ease, color .12s ease;
+  }
+  .sidenav-sub-item:hover { background: rgba(255,204,30,0.08); color: var(--cis-yellow); }
+  .sidenav-sub-item.is-current {
+    background: rgba(255,204,30,0.18);
+    color: var(--cis-yellow);
+    font-weight: 700;
+  }
+  .sidenav-sub-item .sub-n {
+    flex: 0 0 22px;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 10px;
+    color: var(--cis-yellow);
+    opacity: .7;
+    padding-top: 1px;
+  }
+  .sidenav-sub-item.is-current .sub-n { opacity: 1; }
+  .sidenav-sub-item .sub-title { flex: 1; }
 
   /* ===== Conteúdo principal (Views) ===== */
   .main { position: relative; overflow: hidden; }
@@ -302,23 +406,84 @@
   }
   .player-topbar .module-label strong { color: var(--cis-yellow); margin-right: 6px; }
 
-  /* Barra inferior fixa para botão de tela cheia (visão geral) */
-  .bottom-bar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    z-index: 12;
-    display: flex; justify-content: flex-end;
-    padding: 12px 18px;
-    pointer-events: none;
-    background: linear-gradient(to top, rgba(0,0,0,0.55), transparent);
-  }
-  .bottom-bar > * { pointer-events: auto; }
 
-  /* Em fullscreen, escondemos a sidebar */
-  :fullscreen .sidebar,
-  :-webkit-full-screen .sidebar { display: none; }
-  :fullscreen .app,
-  :-webkit-full-screen .app { grid-template-columns: 1fr; }
+  /* Em fullscreen, a sidebar some do grid (vira overlay sob demanda) */
+  .is-fullscreen .sidebar { display: none; }
+  .is-fullscreen .app { grid-template-columns: 1fr; }
+
+  /* Puxador da sidebar — visível só em fullscreen */
+  .sidebar-pull {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 40;
+    background: linear-gradient(90deg, var(--cis-yellow) 0%, var(--cis-yellow-deep) 100%);
+    color: var(--cis-blue-900);
+    border: 0;
+    border-radius: 0 14px 14px 0;
+    padding: 22px 10px 22px 6px;
+    cursor: pointer;
+    box-shadow: 6px 0 20px -4px rgba(0,0,0,0.6);
+    transition: padding-right .15s ease, transform .15s ease;
+  }
+  .sidebar-pull:hover { padding-right: 14px; transform: translateY(-50%) translateX(2px); }
+  .sidebar-pull svg { width: 18px; height: 18px; display: block; }
+  .is-fullscreen .sidebar-pull { display: inline-flex; align-items: center; justify-content: center; }
+
+  /* Sidebar como overlay quando em fullscreen e ativada via puxador */
+  .is-fullscreen .sidebar.is-overlay {
+    display: flex !important;
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    width: 280px;
+    z-index: 45;
+    animation: sidebarIn .22s ease both;
+    box-shadow: 8px 0 30px -8px rgba(0,0,0,0.6);
+  }
+  .is-fullscreen .sidebar-pull.is-hidden { display: none; }
+
+  /* Backdrop para fechar a sidebar overlay */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 42;
+    animation: fadeIn .2s ease both;
+  }
+  .is-fullscreen .sidebar-backdrop.is-open { display: block; }
+
+  @keyframes sidebarIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Botão "fechar sidebar overlay" — dentro da sidebar quando em overlay */
+  .sidebar-close {
+    display: none;
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    width: 30px; height: 30px;
+    border-radius: 999px;
+    cursor: pointer;
+    position: absolute;
+    top: 14px;
+    right: 12px;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s ease;
+  }
+  .sidebar-close:hover { background: rgba(255,204,30,0.18); }
+  .sidebar-close svg { width: 14px; height: 14px; }
+  .is-fullscreen .sidebar.is-overlay .sidebar-close { display: inline-flex; }
 
   /* Sidebar toggle (mobile/narrow) */
   .sidebar-toggle {
@@ -351,6 +516,9 @@
 
   <!-- =========================== SIDEBAR =========================== -->
   <aside class="sidebar" id="sidebar">
+    <button class="sidebar-close" id="sidebar-close" title="Fechar (Esc)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
     <div class="brand">
       <small>Treinamento</small>
       <h2>Método CIS</h2>
@@ -366,7 +534,18 @@
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
         Fechamento CIS
         <span class="meta">30</span>
+        <span class="chevron" data-toggle-sub="fechamento" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
       </button>
+      <div class="sidenav-group" data-group-for="fechamento">
+        <button class="sidenav-item nested" data-go="spin">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg></span>
+          SPIN Selling — Closer
+          <span class="meta">23</span>
+          <span class="chevron" data-toggle-sub="spin" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+        <ul class="sidenav-sub" data-sub-for="spin"></ul>
+        <ul class="sidenav-sub" data-sub-for="fechamento"></ul>
+      </div>
 
       <div class="sidenav-label">Trilha completa</div>
 
@@ -374,22 +553,33 @@
         <span class="num">1</span>
         Produto
         <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="1" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
       </button>
+      <ul class="sidenav-sub" data-sub-for="1"></ul>
+
       <button class="sidenav-item" data-go="2">
         <span class="num">2</span>
         Prospecção
         <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="2" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
       </button>
+      <ul class="sidenav-sub" data-sub-for="2"></ul>
+
       <button class="sidenav-item" data-go="3">
         <span class="num">3</span>
         Apresentação
         <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="3" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
       </button>
+      <ul class="sidenav-sub" data-sub-for="3"></ul>
+
       <button class="sidenav-item" data-go="4">
         <span class="num">4</span>
         Negociação
         <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="4" title="Expandir/recolher subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
       </button>
+      <ul class="sidenav-sub" data-sub-for="4"></ul>
     </nav>
 
     <div class="foot">
@@ -409,12 +599,12 @@
           <div>
             <span class="badge">Treinamento Comercial</span>
             <h1>Método CIS<small>Programa de formação para consultores e equipe interna</small></h1>
-            <p class="sub">4 módulos completos + sessão dedicada de fechamento. 110 slides com fundamentos do produto, prospecção, apresentação, negociação e scripts prontos de fechamento.</p>
+            <p class="sub">4 módulos completos + sessões dedicadas de Fechamento CIS e SPIN Selling para Closer. 133 slides com fundamentos do produto, prospecção, apresentação, negociação, scripts e narrativas completas.</p>
           </div>
           <div class="stats">
-            <strong>110</strong>
+            <strong>133</strong>
             Slides 16:9
-            <div style="margin-top:14px;"><strong>05</strong>Trilhas</div>
+            <div style="margin-top:14px;"><strong>06</strong>Trilhas</div>
           </div>
         </header>
 
@@ -423,6 +613,15 @@
             <span class="tag">Sessão especial</span>
             <h3>Fechamento Método CIS</h3>
             <p>30 slides com frases prontas, narrativas completas consultor↔cliente, scripts por objeção (preço, tempo, indecisão), 6 combos de fechamento e o mantra do fechador. Material direto baseado no playbook SPIN Febracis.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <button class="closing-card" data-go="spin">
+          <div>
+            <span class="tag">Sessão especial • Closer</span>
+            <h3>SPIN Selling — Closer</h3>
+            <p>23 slides com narrativas completas e exemplos práticos: as 4 perguntas (Situação, Problema, Implicação, Necessidade), 4 diálogos closer↔cliente, transições naturais, combos por perfil, erros fatais e mapa de diagnóstico expandido. Tudo aplicado ao fluxo de fechamento do Método CIS.</p>
           </div>
           <span class="cta">Abrir agora ▶</span>
         </button>
@@ -518,13 +717,13 @@
 
   </main>
 
-  <!-- Barra inferior do menu (visão geral): contém o botão de tela cheia -->
-  <div class="bottom-bar" id="menu-bottom-bar">
-    <button class="pbtn" data-nav="fullscreen" title="Tela cheia (F)" aria-pressed="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg>
-      <span class="fs-label">Tela cheia</span>
-    </button>
-  </div>
+  <!-- Puxador da sidebar em fullscreen -->
+  <button class="sidebar-pull" id="sidebar-pull" title="Abrir menu" aria-label="Abrir menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
+
+  <!-- Backdrop para fechar overlay -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 </div>
 
 <script>
@@ -539,14 +738,277 @@
   const ROUTES = {
     menu:        { file: null,                title: null },
     fechamento:  { file: 'fechamento.html',   title: '<strong>★</strong> Fechamento CIS' },
+    spin:        { file: 'spin-closer.html',  title: '<strong>★</strong> SPIN Selling — Closer' },
     '1':         { file: 'modulo-1.html',     title: '<strong>01</strong> Produto' },
     '2':         { file: 'modulo-2.html',     title: '<strong>02</strong> Prospecção' },
     '3':         { file: 'modulo-3.html',     title: '<strong>03</strong> Apresentação' },
     '4':         { file: 'modulo-4.html',     title: '<strong>04</strong> Negociação' },
   };
 
+  // Mapeia sub-itens aninhados → grupo pai (ex: SPIN está dentro do grupo Fechamento)
+  const NESTED_PARENT = { 'spin': 'fechamento' };
+
   function setActiveNav(key) {
     document.querySelectorAll('.sidenav-item').forEach(b => b.classList.toggle('is-active', b.dataset.go === key));
+
+    // Abre o grupo pai se a key for um sub-item aninhado
+    const groupKey = NESTED_PARENT[key] || key;
+    document.querySelectorAll('.sidenav-group').forEach(g => {
+      g.classList.toggle('is-open', g.dataset.groupFor === groupKey);
+    });
+
+    // Sublista do deck ativo aberta, demais fechadas
+    document.querySelectorAll('.sidenav-sub').forEach(ul => {
+      ul.classList.toggle('is-open', ul.dataset.subFor === key);
+    });
+    syncChevrons();
+  }
+
+  function syncChevrons() {
+    document.querySelectorAll('.chevron[data-toggle-sub]').forEach(c => {
+      const key = c.dataset.toggleSub;
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      const group = document.querySelector(`.sidenav-group[data-group-for="${key}"]`);
+      const isOpen = (group && group.classList.contains('is-open'))
+                  || (sub && sub.classList.contains('is-open'));
+      c.classList.toggle('is-open', isOpen);
+    });
+  }
+
+  function toggleSubFor(key) {
+    // Se o item tem um grupo (Fechamento → grupo com SPIN + subtópicos), alterna o grupo.
+    const group = document.querySelector(`.sidenav-group[data-group-for="${key}"]`);
+    if (group) {
+      group.classList.toggle('is-open');
+      // Quando abre o grupo, também abre a sublista do próprio item (subtópicos de Fechamento).
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      if (sub) sub.classList.toggle('is-open', group.classList.contains('is-open'));
+    } else {
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      if (sub) sub.classList.toggle('is-open');
+    }
+    syncChevrons();
+  }
+
+  // ---- Subtópicos: títulos pré-definidos (funciona em file://) ----
+  // Em file:// o browser bloqueia fetch E contentDocument entre arquivos —
+  // por isso usamos esta lista estática. Mantenha sincronizada com os HTMLs.
+  const SLIDE_TITLES = {
+    '1': [
+      'Produto (Método CIS) — Capa',
+      'O que é o Método CIS',
+      'Transformação vs. Produto',
+      'Dores Profundas do Cliente',
+      'Mapa de Dores Emocionais',
+      'O que o Cliente Realmente Compra',
+      'Construção de Desejo',
+      'Conexão Emocional na Venda',
+      'Storytelling de Transformação',
+      'Estrutura do Pitch CIS',
+      'Gatilhos de Urgência',
+      'Framework de Abordagem',
+      'Erros Comuns na Venda do CIS',
+      'Técnicas Avançadas de Apresentação',
+      'Exemplo Prático: Caso de Sucesso',
+      'Exercício: Pitch CIS',
+      'Roleplay: Vendendo CIS',
+      'Checklist de Excelência',
+      'Prova de Avaliação — Módulo 1',
+      'Próximos Passos'
+    ],
+    '2': [
+      'Prospecção e Qualificação — Capa',
+      'Prospecção Estratégica',
+      'Funil de Vendas Inteligente',
+      'Tipos de Lead',
+      'SPIN Selling: Fundamentos',
+      'Perguntas de Situação',
+      'Perguntas de Problema',
+      'Perguntas de Implicação',
+      'Perguntas de Necessidade',
+      'Diagnóstico Emocional',
+      'Roteiro de Qualificação',
+      'Técnicas de Escuta Ativa',
+      'Identificando Dor Real',
+      'Perfil do Cliente Ideal (ICP)',
+      'Matriz de Priorização',
+      'Exemplo: Qualificação Efetiva',
+      'Exercício: Mapeamento de Dor',
+      'Roleplay: Descoberta de Necessidades',
+      'Erros Fatais em Prospecção',
+      'Prova de Avaliação — Módulo 2'
+    ],
+    '3': [
+      'Apresentação e Proposta — Capa',
+      'Vender Valor, Não Preço',
+      'Estrutura de Apresentação Poderosa',
+      'Storytelling de Alto Impacto',
+      'Neurociência da Decisão',
+      'Gatilhos Mentais em Vendas',
+      'PNL Aplicada à Persuasão',
+      'Construção de Autoridade',
+      'Apresentação Emocional',
+      'Modelo de Proposta Irresistível',
+      'Técnicas de Ancoragem',
+      'Prova Social e Credibilidade',
+      'Comunicação Não-Verbal',
+      'Gestão de Expectativas',
+      'Framework de Conversão',
+      'Exemplo: Apresentação Vencedora',
+      'Exercício: Criando sua Proposta',
+      'Roleplay: Cliente Indeciso',
+      'Erros que Matam a Venda',
+      'Prova de Avaliação — Módulo 3'
+    ],
+    '4': [
+      'Negociação e Objeções — Capa',
+      'Psicologia da Objeção',
+      'Tipos de Objeções',
+      'Objeção de Preço: "Está muito caro"',
+      'Técnicas de Contorno de Preço',
+      'Objeção de Tempo: "Preciso pensar"',
+      'Estratégias de Fechamento Imediato',
+      'Objeção de Confiança',
+      'Construindo Credibilidade Instantânea',
+      'Negociação Avançada',
+      'Scripts Prontos para Objeções',
+      'Método Benjamin Franklin',
+      'Técnica do Silêncio',
+      'Reformulação Positiva (Reframing)',
+      'Erros Fatais em Negociação',
+      'Exemplo: Contornando Resistências',
+      'Exercício: Banco de Respostas',
+      'Roleplay: Objeções Reais',
+      'Matriz de Objeções e Respostas',
+      'Prova de Avaliação — Módulo 4'
+    ],
+    'spin': [
+      'SPIN Selling para Closer — Capa',
+      'O que é SPIN Selling',
+      'Por que o Closer Usa SPIN',
+      'A Regra de Ouro do SPIN',
+      'SPIN no Fluxo do Closer (5 etapas)',
+      'Perguntas de SITUAÇÃO para Closer',
+      'Perguntas de PROBLEMA',
+      'Perguntas de IMPLICAÇÃO (a mais importante)',
+      'Perguntas de NECESSIDADE',
+      'Frases-Ponte Entre as Fases',
+      'Narrativa 1: Empresário Esgotado (SPIN completo)',
+      'Narrativa 2: Mulher 40+ — Recomeço',
+      'Narrativa 3: Profissional Liberal — Burnout',
+      'Narrativa 4: Lead Frio — Sem Dor Consciente',
+      'Combos SPIN + Fechamento CIS',
+      '25 Frases que Matam a Venda',
+      '15 Erros Fatais do Closer com SPIN',
+      'Quando NÃO Usar SPIN Puro',
+      'Mapa de Diagnóstico — Parte 1',
+      'Mapa de Diagnóstico — Parte 2',
+      'Roleplay: SPIN do Closer',
+      'Checklist Final do Closer SPIN',
+      'Mantra: "Pergunte. Espere. Confirme. Avance."'
+    ],
+    'fechamento': [
+      'Fechamento Método CIS — Capa',
+      'A Regra de Ouro',
+      'Os 4 Pilares do Fechamento',
+      'Sinais de Compra: Quando Avançar',
+      'Sequência Clássica de Fechamento',
+      '12 Frases de Fechamento Prontas',
+      'Alternativa Fechada (Choice Close)',
+      'Microfechamentos (Yes Ladder)',
+      'Custo da Inação (Pain of Staying)',
+      'Urgência Ética',
+      'Empathy Close: "Tive um cliente como você"',
+      'O Silêncio Como Ferramenta de Fechamento',
+      'Garantia: Inversão de Risco',
+      'Narrativa 1: Empresário Esgotado',
+      'Narrativa 2: Jovem (18 a 24 anos)',
+      'Narrativa 3: Adulto Jovem (25-35) — Burnout',
+      'Narrativa 4: Adulto Maduro (36-50) — Recomeço',
+      'Narrativa 5: Decisão em Casal',
+      '"Está caro" — 5 contornos com fechamento',
+      '"Vou pensar" — 5 contornos com fechamento',
+      '"Não tenho tempo" — 5 contornos com fechamento',
+      '"Não é o momento" — 4 contornos',
+      '"Preciso falar com sócio/cônjuge" — 4 contornos',
+      '"Já tentei outras coisas" — 4 contornos',
+      'Combos de Fechamento (Sequências)',
+      'Roteiro Completo: Da Abertura ao Cartão',
+      'Checklist Final do Fechamento',
+      '7 Erros Letais no Fechamento',
+      'Mantra: "Eu transfiro certeza"',
+      'Pratique Esta Semana'
+    ]
+  };
+
+  const slideTitlesByKey = {}; // key -> [titles]
+  function decodeText(s) {
+    return (s || '').replace(/\s+/g, ' ').trim();
+  }
+  function extractTitlesFromDoc(doc) {
+    const slides = doc.querySelectorAll('.slide');
+    return Array.from(slides).map((s, i) => {
+      const title = s.querySelector('.slide-title');
+      const badge = s.querySelector('.module-badge');
+      const eyebrow = s.querySelector('.eyebrow');
+      if (title) return decodeText(title.textContent);
+      if (s.classList.contains('module-cover') && badge) return decodeText(badge.textContent) + ' — Capa';
+      if (eyebrow) return decodeText(eyebrow.textContent);
+      return `Slide ${i + 1}`;
+    });
+  }
+
+  function renderSubtopicsPlaceholder(key) {
+    const ul = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+    if (!ul) return;
+    ul.innerHTML = '<li style="padding:6px 10px;font-size:11px;color:var(--cis-muted);font-style:italic;">carregando…</li>';
+  }
+
+  // Renderiza os subtópicos imediatamente a partir da lista estática.
+  function loadSlideTitles() {
+    Object.keys(SLIDE_TITLES).forEach(key => {
+      slideTitlesByKey[key] = SLIDE_TITLES[key];
+      renderSubtopics(key);
+    });
+  }
+
+  function renderSubtopics(key) {
+    const ul = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+    if (!ul) return;
+    const titles = slideTitlesByKey[key] || [];
+    ul.innerHTML = '';
+    titles.forEach((title, i) => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'sidenav-sub-item';
+      btn.dataset.deck = key;
+      btn.dataset.slide = String(i + 1);
+      btn.innerHTML = `<span class="sub-n">${String(i + 1).padStart(2, '0')}</span><span class="sub-title">${title.replace(/</g,'&lt;')}</span>`;
+      btn.addEventListener('click', () => openAtSlide(key, i + 1));
+      li.appendChild(btn);
+      ul.appendChild(li);
+    });
+  }
+
+  function openAtSlide(key, slideN) {
+    if (frame.dataset.currentKey === key && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-goto', n: slideN }, '*');
+      markCurrentSubtopic(key, slideN);
+      return;
+    }
+    openRoute(key);
+    const onLoad = () => {
+      frame.contentWindow.postMessage({ type: 'cis-goto', n: slideN }, '*');
+      markCurrentSubtopic(key, slideN);
+      frame.removeEventListener('load', onLoad);
+    };
+    frame.addEventListener('load', onLoad);
+  }
+
+  function markCurrentSubtopic(key, slideN) {
+    document.querySelectorAll('.sidenav-sub-item').forEach(b => {
+      b.classList.toggle('is-current', b.dataset.deck === key && b.dataset.slide === String(slideN));
+    });
   }
 
   function showMenu() {
@@ -564,28 +1026,47 @@
     if (!route || !route.file) return;
     moduleLbl.innerHTML = route.title || ('Módulo ' + key);
     frame.src = route.file;
+    frame.dataset.currentKey = key;
     menuView.classList.remove('is-active');
     menuView.setAttribute('aria-hidden', 'true');
     playerView.classList.add('is-active');
     playerView.setAttribute('aria-hidden', 'false');
     history.replaceState(null, '', `#${key}`);
     setActiveNav(key);
+    markCurrentSubtopic(key, 1);
     if (sidebar) sidebar.classList.remove('is-open');
   }
 
   // Cliques: sidebar e cards do menu (mesmo data-go)
   document.querySelectorAll('[data-go]').forEach(btn => {
-    btn.addEventListener('click', () => openRoute(btn.dataset.go));
+    btn.addEventListener('click', (e) => {
+      // Se clicou no chevron dentro do item, só alterna subtópicos (sem navegar)
+      const chev = e.target.closest('.chevron[data-toggle-sub]');
+      if (chev && btn.contains(chev)) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSubFor(chev.dataset.toggleSub);
+        return;
+      }
+      openRoute(btn.dataset.go);
+    });
   });
   backBtn.addEventListener('click', showMenu);
 
-  // Mensagens do iframe
+  // Mensagens do iframe — só processa as do iframe principal (#module-frame),
+  // ignorando os iframes preloaders ocultos usados para extrair títulos.
   window.addEventListener('message', (e) => {
+    const fromMain = e.source === (frame && frame.contentWindow);
+    if (!fromMain) return;
     const msg = e.data || {};
-    if (msg.type !== 'cis-nav') return;
-    if (msg.target === 'menu') showMenu();
-    else if (msg.target === 'module' && msg.n) openRoute(String(msg.n));
-    else if (msg.target === 'fullscreen') toggleFullscreen();
+    if (msg.type === 'cis-nav') {
+      if (msg.target === 'menu') showMenu();
+      else if (msg.target === 'module' && msg.n) openRoute(String(msg.n));
+      else if (msg.target === 'fullscreen') toggleFullscreen();
+    } else if (msg.type === 'cis-slide-changed' && msg.n) {
+      const key = frame.dataset.currentKey;
+      if (key) markCurrentSubtopic(key, msg.n);
+    }
   });
 
   // Enviar estado de fullscreen para o iframe ativo (sincroniza o botão dentro do módulo)
@@ -612,19 +1093,59 @@
     });
   }
   document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => b.addEventListener('click', toggleFullscreen));
-  document.addEventListener('fullscreenchange', () => { syncFs(); broadcastFsState(); });
+  document.addEventListener('fullscreenchange', () => {
+    syncFs();
+    broadcastFsState();
+    const on = !!document.fullscreenElement;
+    document.body.classList.toggle('is-fullscreen', on);
+    if (!on) closeSidebarOverlay(); // ao sair do fullscreen, garante que o overlay também feche
+  });
+
+  // ---- Sidebar overlay em fullscreen ----
+  const pull = document.getElementById('sidebar-pull');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const closeBtn = document.getElementById('sidebar-close');
+
+  function openSidebarOverlay() {
+    sidebar.classList.add('is-overlay');
+    backdrop.classList.add('is-open');
+    pull.classList.add('is-hidden');
+  }
+  function closeSidebarOverlay() {
+    sidebar.classList.remove('is-overlay');
+    backdrop.classList.remove('is-open');
+    pull.classList.remove('is-hidden');
+  }
+
+  if (pull) pull.addEventListener('click', openSidebarOverlay);
+  if (backdrop) backdrop.addEventListener('click', closeSidebarOverlay);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebarOverlay);
+
+  // Fechar overlay ao clicar em um item da sidebar (navegação)
+  document.querySelectorAll('[data-go]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // só fecha se NÃO foi clique no chevron
+      const chev = e.target.closest('.chevron[data-toggle-sub]');
+      if (chev && btn.contains(chev)) return;
+      if (sidebar.classList.contains('is-overlay')) closeSidebarOverlay();
+    });
+  });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'f' || e.key === 'F') {
       if (!playerView.classList.contains('is-active')) toggleFullscreen();
     }
-    if (e.key === 'Escape' && playerView.classList.contains('is-active') && !document.fullscreenElement) {
-      showMenu();
+    if (e.key === 'Escape') {
+      if (sidebar.classList.contains('is-overlay')) { closeSidebarOverlay(); return; }
+      if (playerView.classList.contains('is-active') && !document.fullscreenElement) showMenu();
     }
   });
 
   // Hash inicial
   const h = (location.hash || '').replace('#', '');
   if (h && ROUTES[h]) openRoute(h);
+
+  // Carrega títulos dos slides em paralelo (fetch local)
+  loadSlideTitles();
 </script>
 
 </body>
