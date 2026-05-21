@@ -4036,9 +4036,8 @@ cAno = desligPorMes × custoUnit × 12</pre>
   <div id="login-overlay" style="display:flex;">
     <div class="login-box">
       <div class="login-brand">
-        <div class="logo" style="width:52px;height:52px;font-size:26px;margin:0 auto 12px;">F</div>
         <div style="font-size:20px;font-weight:800;letter-spacing:-0.02em;margin-bottom:4px;">AGENTE COMERCIAL</div>
-        <div style="font-size:13px;color:var(--muted);" id="login-subtitle">Febracis · Faça login para continuar</div>
+        <div style="font-size:13px;color:var(--muted);" id="login-subtitle">Faça login para continuar</div>
       </div>
 
       <div id="login-erro" style="display:none;background:rgba(255,80,80,0.12);border:1px solid var(--hot);border-radius:8px;padding:9px 14px;font-size:13px;color:var(--hot);margin-bottom:0;width:100%;"></div>
@@ -10616,9 +10615,9 @@ Aguarde o user message — siga o cabeçalho.`;
       if (erro) erro.style.display = 'none';
       var sub = document.getElementById('login-subtitle');
       if (sub) {
-        sub.textContent = secao === 'login-setup-panel' ? 'Febracis · Configuração inicial'
-          : secao === 'login-trocar-senha-panel' ? 'Febracis · Defina sua senha'
-          : 'Febracis · Faça login para continuar';
+        sub.textContent = secao === 'login-setup-panel' ? 'Configuração inicial'
+          : secao === 'login-trocar-senha-panel' ? 'Defina sua senha'
+          : 'Faça login para continuar';
       }
     }
 
