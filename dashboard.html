@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260521-151854">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260521-151854">
+<link rel="stylesheet" href="assets/css/main.css?v=20260521-154304">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260521-154304">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260521-151854">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260521-154304">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1361,27 +1361,87 @@
          CARD AGENDA — atalho no final da página
          Clicar abre agenda.html em nova aba (login OAuth funciona).
          ═══════════════════════════════════════════════════════ -->
-    <div id="agendaCard" onclick="window.open(location.protocol==='file:'?'http://127.0.0.1:5500/agenda.html':'agenda.html','_blank')"
-         style="margin:24px 0 12px;cursor:pointer;border-radius:16px;
-                padding:24px 28px;
-                background:linear-gradient(135deg,rgba(0,255,102,.10) 0%,rgba(0,255,102,.02) 100%);
-                border:1px solid rgba(0,255,102,.25);
-                box-shadow:0 8px 32px rgba(0,255,102,.10),inset 0 1px 0 rgba(255,255,255,.08);
-                display:flex;align-items:center;gap:20px;
-                transition:transform .2s,box-shadow .2s,border-color .15s;"
-         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 14px 40px rgba(0,255,102,.22)';this.style.borderColor='rgba(0,255,102,.55)';"
-         onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 32px rgba(0,255,102,.10),inset 0 1px 0 rgba(255,255,255,.08)';this.style.borderColor='rgba(0,255,102,.25)';">
-      <div style="width:56px;height:56px;border-radius:14px;background:rgba(0,255,102,.15);border:1px solid rgba(0,255,102,.30);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:28px;">📅</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#00ff66;margin-bottom:4px;">Agenda Pedagógica · Febracis</div>
-        <div style="font-size:18px;font-weight:700;color:var(--text);line-height:1.2;margin-bottom:4px;">Abrir Agenda</div>
-        <div style="font-size:12.5px;color:var(--muted);">Calendário integrado com Google · ministrantes · turmas · disponibilidade</div>
+    <div id="agendaCard" class="agenda-card-v2"
+         onclick="window.open(location.protocol==='file:'?'http://127.0.0.1:5500/agenda.html':'agenda.html','_blank')">
+      <div class="ac-cal">
+        <div class="ac-mes" id="acMes">—</div>
+        <div class="ac-dia" id="acDia">—</div>
+        <div class="ac-wd" id="acWd">—</div>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;color:#00ff66;font-size:13px;font-weight:700;flex-shrink:0;">
-        Abrir em nova aba
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      <div class="ac-body">
+        <div class="ac-head">
+          <div class="ac-head-left">
+            <div class="ac-lbl">Agenda Pedagógica · Febracis</div>
+            <div class="ac-title">Abrir Agenda</div>
+          </div>
+          <div class="ac-head-right">
+            Abrir em nova aba
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </div>
+        </div>
+        <div class="ac-chips" onclick="event.stopPropagation()">
+          <button type="button" class="ac-chip active" data-unit=""    onclick="_agendaFiltrarUnidade('',   this)">Todas</button>
+          <button type="button" class="ac-chip vix"    data-unit="VIX" onclick="_agendaFiltrarUnidade('VIX',this)">VIX <small>Vitória</small></button>
+          <button type="button" class="ac-chip bel"    data-unit="BEL" onclick="_agendaFiltrarUnidade('BEL',this)">BEL <small>Belém</small></button>
+          <button type="button" class="ac-chip the"    data-unit="THE" onclick="_agendaFiltrarUnidade('THE',this)">THE <small>Teresina</small></button>
+        </div>
+        <div class="ac-stats">
+          <span><b id="acStatHoje">—</b> eventos hoje</span>
+          <span><b id="acStatSemana">—</b> esta semana</span>
+          <span><b id="acStatMes">—</b> este mês</span>
+        </div>
+        <div class="ac-evts" id="acEvts"></div>
       </div>
     </div>
+
+    <script>
+      /* Dados mock (substituir por fetch real da agenda futuramente) */
+      window._agendaCardEventos = [
+        { data:'22/05', unit:'VIX', titulo:'MASTER · Vix' },
+        { data:'23/05', unit:'BEL', titulo:'IF · Belém' },
+        { data:'25/05', unit:'THE', titulo:'CIS · Teresina' },
+        { data:'28/05', unit:'VIX', titulo:'CEOP · Vix' },
+        { data:'30/05', unit:'BEL', titulo:'TAV · Belém' },
+        { data:'02/06', unit:'THE', titulo:'IF · Teresina' },
+        { data:'05/06', unit:'VIX', titulo:'MAESTRIA · Vix' },
+        { data:'08/06', unit:'BEL', titulo:'BHP · Belém' }
+      ];
+      window._agendaFiltroUnit = '';
+      function _agendaRenderEventos(){
+        var evts = (window._agendaCardEventos||[]).slice();
+        if(window._agendaFiltroUnit) evts = evts.filter(function(e){return e.unit===window._agendaFiltroUnit;});
+        var quatro = evts.slice(0,4);
+        var html = '';
+        if(!quatro.length){
+          html = '<div style="grid-column:1/-1;font-size:11.5px;color:var(--muted);padding:6px 0;">Nenhum evento para esta unidade.</div>';
+        } else {
+          quatro.forEach(function(e){
+            html += '<div class="ac-evt"><span class="ac-evt-d ac-evt-'+e.unit+'">'+e.data+'</span><span class="ac-evt-t">'+e.titulo+'</span></div>';
+          });
+        }
+        var el = document.getElementById('acEvts'); if(el) el.innerHTML = html;
+        var setT = function(id,v){ var x = document.getElementById(id); if(x) x.textContent = v; };
+        setT('acStatHoje',   Math.min(4, evts.length));
+        setT('acStatSemana', Math.min(12, evts.length));
+        setT('acStatMes',    evts.length);
+      }
+      function _agendaFiltrarUnidade(unit, btn){
+        window._agendaFiltroUnit = unit;
+        document.querySelectorAll('#agendaCard .ac-chip').forEach(function(c){c.classList.remove('active');});
+        if(btn) btn.classList.add('active');
+        _agendaRenderEventos();
+      }
+      (function(){
+        var d = new Date();
+        var meses = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+        var wd = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+        var sM = document.getElementById('acMes'), sD = document.getElementById('acDia'), sW = document.getElementById('acWd');
+        if(sM) sM.textContent = meses[d.getMonth()]+' '+d.getFullYear();
+        if(sD) sD.textContent = String(d.getDate());
+        if(sW) sW.textContent = wd[d.getDay()];
+        _agendaRenderEventos();
+      })();
+    </script>
   </div>
 </div>
 
@@ -1922,7 +1982,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260521-151854"></script>
+<script defer src="assets/js/00-utils.js?v=20260521-154304"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2016,29 +2076,29 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260521-151854"></script>
-<script defer src="assets/js/29-login.js?v=20260521-151854"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260521-151854"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260521-151854"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260521-151854"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260521-151854"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260521-151854"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260521-151854"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260521-151854"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260521-151854"></script>
-<script defer src="assets/js/99-diag.js?v=20260521-151854"></script>
-<script defer src="assets/js/21-turmas.js?v=20260521-151854"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260521-151854"></script>
+<script defer src="assets/js/02-main.js?v=20260521-154304"></script>
+<script defer src="assets/js/29-login.js?v=20260521-154304"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260521-154304"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260521-154304"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260521-154304"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260521-154304"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260521-154304"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260521-154304"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260521-154304"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260521-154304"></script>
+<script defer src="assets/js/99-diag.js?v=20260521-154304"></script>
+<script defer src="assets/js/21-turmas.js?v=20260521-154304"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260521-154304"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260521-151854"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260521-151854"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260521-151854"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260521-151854"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260521-151854"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260521-151854"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260521-154304"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260521-154304"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260521-154304"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260521-154304"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260521-154304"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260521-154304"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260521-151854"></script>
-<script defer src="assets/js/17-presenca.js?v=20260521-151854"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260521-154304"></script>
+<script defer src="assets/js/17-presenca.js?v=20260521-154304"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2050,20 +2110,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260521-151854">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260521-154304">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260521-151854"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260521-154304"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260521-151854"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260521-151854"></script>
+<script defer src="assets/js/05-importacao.js?v=20260521-154304"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260521-154304"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260521-151854">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260521-154304">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260521-151854"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260521-154304"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2099,7 +2159,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260521-151854"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260521-154304"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2124,14 +2184,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260521-151854"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260521-151854"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260521-151854"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260521-151854"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260521-151854"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260521-151854"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260521-151854"></script>
-<script defer src="assets/js/08-realtime.js?v=20260521-151854"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260521-154304"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260521-154304"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260521-154304"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260521-154304"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260521-154304"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260521-154304"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260521-154304"></script>
+<script defer src="assets/js/08-realtime.js?v=20260521-154304"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2164,7 +2224,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260521-151854"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260521-154304"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -2645,16 +2705,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260521-151854"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260521-154304"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260521-151854"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260521-154304"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260521-151854"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260521-154304"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260521-151854"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260521-154304"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
