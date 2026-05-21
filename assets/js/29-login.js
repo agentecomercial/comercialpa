@@ -68,6 +68,8 @@ function _concluirLogin(uid,user,loginStr,manter){
   _entrarDashboardEquipe(user);
   if(typeof window._audit==='function') window._audit('auth.login',null,{perfil:user.perfil||'—'});
   if(typeof window._notifListen==='function') window._notifListen();
+  /* Listener em tempo real: força logout se admin congelar/desativar este user */
+  if(typeof _iniciarListenerCongelamento === 'function') _iniciarListenerCongelamento(uid);
 }
 
 function doLogin(){
@@ -259,23 +261,92 @@ function _mostrarTurmas(){
   if(btnMap) btnMap.style.display=isAdm?'':'none';
   renderTurmasGrid();
 }
-// Auto-login: verificar sessão persistente no localStorage
+/* ═══════════════════════════════════════════════════════
+   Listener em tempo real: se admin congelar/desativar o
+   usuário enquanto ele está logado, força logout imediato.
+   Chamado em todo login (manual ou auto). */
+window._authListenerUnsub = null;
+function _iniciarListenerCongelamento(uid){
+  if(!uid || !window._fbChange) return;
+  /* Cancela listener anterior se houver */
+  if(typeof window._authListenerUnsub === 'function'){
+    try { window._authListenerUnsub(); } catch(_e){}
+    window._authListenerUnsub = null;
+  }
+  try {
+    window._authListenerUnsub = window._fbChange('usuarios/'+uid, function(u){
+      if(!u){
+        /* Usuário deletado do Firebase */
+        alert('Seu cadastro foi removido pela administração.');
+        logout();
+        return;
+      }
+      if(u.congelado === true || u.ativo === false){
+        alert('Seu acesso foi suspenso pela administração.');
+        logout();
+      }
+    });
+  } catch(e){ console.warn('[auth] listener congelamento:', e); }
+}
+window._iniciarListenerCongelamento = _iniciarListenerCongelamento;
+
+// Auto-login: verificar sessão persistente + REVALIDAR no Firebase
 (function(){
   try{
-    var s=localStorage.getItem('ci_sessao_persistente');
-    if(s){
-      var sessao=JSON.parse(s);
-      sessionStorage.setItem('ci_sessao',s);
-      window.addEventListener('DOMContentLoaded',function(){
-        if(sessao.perfil==='adm') _mostrarTurmas();
-        else _entrarDashboardEquipe(sessao);
+    var s = localStorage.getItem('ci_sessao_persistente');
+    if(!s) return;
+    var sessao = JSON.parse(s);
+
+    function _restaurar(){
+      sessionStorage.setItem('ci_sessao', s);
+      if(sessao.perfil === 'adm') _mostrarTurmas();
+      else _entrarDashboardEquipe(sessao);
+      if(sessao.uid) _iniciarListenerCongelamento(sessao.uid);
+    }
+    function _bloquear(motivo){
+      console.warn('[auth] auto-login bloqueado:', motivo);
+      sessionStorage.removeItem('ci_sessao');
+      localStorage.removeItem('ci_sessao_persistente');
+      if(typeof _mostrarTela === 'function') _mostrarTela('loginScreen', true);
+    }
+    function _validarEEntrar(){
+      /* ADM hardcoded (sem uid) — sempre permite */
+      if(sessao.perfil === 'adm' && sessao.login === 'adm' && !sessao.uid){
+        _restaurar();
+        return;
+      }
+      /* Sem uid ou Firebase indisponível → fallback (deixa entrar, valida no próximo F5) */
+      if(!sessao.uid || !window._fbGet){
+        _restaurar();
+        return;
+      }
+      /* Valida no Firebase ANTES de restaurar sessão */
+      window._fbGet('usuarios/'+sessao.uid).then(function(u){
+        if(!u){ _bloquear('usuário não existe mais'); return; }
+        if(u.congelado === true){ _bloquear('usuário congelado'); return; }
+        if(u.ativo === false){    _bloquear('usuário desativado'); return; }
+        _restaurar();
+      }).catch(function(e){
+        /* Erro de rede (offline?) — deixa entrar mas loga */
+        console.warn('[auth] erro validando sessão (offline?):', e);
+        _restaurar();
       });
     }
-  }catch(e){}
+    if(document.readyState === 'loading'){
+      window.addEventListener('DOMContentLoaded', _validarEEntrar);
+    } else {
+      _validarEEntrar();
+    }
+  }catch(e){ console.warn('[auth] auto-login:', e); }
 })();
 function logout(){
   if(typeof window._notifUnlisten==='function') window._notifUnlisten();
   if(typeof window._fbAuthLogout==='function') window._fbAuthLogout().catch(function(){});
+  /* Cancela listener de congelamento se estiver ativo */
+  if(typeof window._authListenerUnsub === 'function'){
+    try { window._authListenerUnsub(); } catch(_e){}
+    window._authListenerUnsub = null;
+  }
   sessionStorage.removeItem('adm_logged');
   sessionStorage.removeItem('ci_sessao');
   localStorage.removeItem('ci_sessao_persistente');
