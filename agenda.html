@@ -627,6 +627,92 @@
     .select-filter:hover { border-color: var(--accent); }
     .select-filter option { background: var(--bg-2); color: var(--text); }
 
+    /* Multi-select com checkboxes */
+    .multi-select { position: relative; }
+    .multi-select-btn {
+      width: 100%;
+      padding: 9px 32px 9px 12px;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      text-align: left;
+    }
+    .multi-select-btn:hover { border-color: var(--accent); }
+    .multi-select-btn svg {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      transition: transform 0.15s ease;
+    }
+    .multi-select.open .multi-select-btn svg {
+      transform: translateY(-50%) rotate(180deg);
+    }
+    .multi-select-btn.has-value { border-color: var(--accent); }
+    .multi-select-btn.has-value .multi-select-label { color: var(--accent); font-weight: 600; }
+    .multi-select-label {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .multi-select-panel {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px;
+      z-index: 20;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      user-select: none;
+    }
+    .check-row:hover { background: var(--bg-3); }
+    .check-row input[type="checkbox"] {
+      width: 14px; height: 14px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      margin: 0;
+    }
+    .check-actions {
+      padding: 6px 4px 2px;
+      border-top: 1px solid var(--border);
+      margin-top: 4px;
+    }
+    .check-clear {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 11.5px;
+      padding: 5px 8px;
+      cursor: pointer;
+      font-family: inherit;
+      border-radius: 4px;
+    }
+    .check-clear:hover { background: var(--bg-3); color: var(--accent); }
+
     @media (max-width: 900px) {
       .app-layout { grid-template-columns: 1fr; }
       .sidebar { position: static; }
@@ -817,17 +903,25 @@
           </div>
 
           <div class="sidebar-section">
-            <label class="filter-label" for="treinador-select">Treinador</label>
-            <select class="select-filter" id="treinador-select" data-filter="treinador">
-              <option value="">Todos</option>
-              <option value="FILIPE">FILIPE</option>
-              <option value="RAFAEL">RAFAEL</option>
-              <option value="BRUNA">BRUNA</option>
-              <option value="THIAGO">THIAGO</option>
-              <option value="MATHEUS">MATHEUS</option>
-              <option value="ALBERTO">ALBERTO</option>
-              <option value="NONE">Sem treinador</option>
-            </select>
+            <label class="filter-label">Treinador</label>
+            <div class="multi-select" id="treinador-multi">
+              <button class="multi-select-btn" type="button" onclick="toggleTreinadorPanel(event)">
+                <span class="multi-select-label" id="treinador-label">Todos</span>
+                <svg viewBox="0 0 10 6" width="10" height="6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </button>
+              <div class="multi-select-panel" id="treinador-panel" hidden>
+                <label class="check-row"><input type="checkbox" value="FILIPE">FILIPE</label>
+                <label class="check-row"><input type="checkbox" value="RAFAEL">RAFAEL</label>
+                <label class="check-row"><input type="checkbox" value="BRUNA">BRUNA</label>
+                <label class="check-row"><input type="checkbox" value="THIAGO">THIAGO</label>
+                <label class="check-row"><input type="checkbox" value="MATHEUS">MATHEUS</label>
+                <label class="check-row"><input type="checkbox" value="ALBERTO">ALBERTO</label>
+                <label class="check-row"><input type="checkbox" value="NONE">Sem treinador</label>
+                <div class="check-actions">
+                  <button type="button" class="check-clear" onclick="limparTreinadores()">Limpar seleção</button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="sidebar-section">
@@ -893,8 +987,8 @@
   let eventos = [];
   let eventosVisiveis = [];
   let treinosUnicos = [];
-  const filtros = { unidade: '', periodo: '90', treinamento: '', treinador: '', busca: '' };
-  const FILTRO_DEFAULT = { unidade: '', periodo: '90', treinamento: '', treinador: '', busca: '' };
+  const filtros = { unidade: '', periodo: '90', treinamento: '', treinador: [], busca: '' };
+  const FILTRO_DEFAULT = { unidade: '', periodo: '90', treinamento: '', treinador: [], busca: '' };
 
   // =========================================================================
   // INIT
@@ -1092,8 +1186,9 @@
     document.getElementById('stats').innerHTML = '';
 
     const hoje = new Date();
-    const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 800);   // ~2 anos atrás
-    const fim    = new Date(hoje); fim.setDate(hoje.getDate() + 400);      // ~13 meses à frente
+    // janela inclui margem de ±1 dia pra capturar eventos all-day nas bordas (UTC vs local)
+    const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 801);   // ~2 anos atrás
+    const fim    = new Date(hoje); fim.setDate(hoje.getDate() + 401);      // ~13 meses à frente
 
     const url =
       'https://www.googleapis.com/calendar/v3/calendars/' +
@@ -1150,6 +1245,35 @@
     toast(msg, 'error');
   }
 
+  /**
+   * Converte uma string de data do Google Calendar em Date "fiel ao calendário".
+   *
+   * Convenções do Google Calendar API v3:
+   *   - dateTime: ISO 8601 com fuso, ex: "2026-06-09T09:00:00-03:00" (evento com hora)
+   *   - date:     "YYYY-MM-DD" sem fuso, representa dia LOCAL da agenda (evento all-day)
+   *   - end.date é EXCLUSIVO: evento de 9-11 retorna end.date = "2026-06-12"
+   *
+   * Problema do new Date(string) nativo:
+   *   - new Date("2026-06-09") → meia-noite UTC → em Brasília vira 21:00 do dia ANTERIOR
+   *   - new Date("2026-06-09T09:00:00-03:00") em outro fuso converte pra fuso do navegador
+   *
+   * Esta função extrai os valores "wall-clock" literais do calendário e os usa
+   * como horário local do browser, garantindo que .getDate() / .getHours() / etc.
+   * retornem o que está escrito no Google Agenda, independentemente da região do usuário.
+   */
+  function parseDataEvento(s) {
+    if (!s) return null;
+    if (s.indexOf('T') >= 0) {
+      // dateTime — pega ano/mês/dia/hora/min literais, ignora offset
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+      if (m) return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+      return new Date(s); // fallback raríssimo
+    }
+    // date-only "YYYY-MM-DD" → meia-noite LOCAL (e não UTC)
+    const p = s.split('-');
+    return new Date(+p[0], +p[1] - 1, +p[2], 0, 0, 0);
+  }
+
   function parseEvento(evt) {
     const titulo = evt.summary || '(Sem título)';
     const local = evt.location || '';
@@ -1195,7 +1319,8 @@
       unidadeNome: unidade ? UNIDADES[unidade].nome : 'Sem código',
       treinador,
       local, desc,
-      start: new Date(start), end: new Date(end),
+      start: parseDataEvento(start),
+      end:   parseDataEvento(end),
       allDay, link: evt.htmlLink || ''
     };
   }
@@ -1330,9 +1455,13 @@
       if (e.end < base) return false;
       if (e.start > limite) return false;
       if (filtros.treinamento && e.treinamento.toUpperCase() !== filtros.treinamento.toUpperCase()) return false;
-      if (filtros.treinador) {
-        if (filtros.treinador === 'NONE' && e.treinador) return false;
-        if (filtros.treinador !== 'NONE' && e.treinador !== filtros.treinador) return false;
+      if (filtros.treinador && filtros.treinador.length) {
+        // multi-select: aceita se o evento bater com QUALQUER treinador marcado
+        const aceita = filtros.treinador.some(t => {
+          if (t === 'NONE') return !e.treinador;
+          return e.treinador === t;
+        });
+        if (!aceita) return false;
       }
       if (filtros.busca) {
         const blob = (e.titulo + ' ' + e.desc + ' ' + e.local).toLowerCase();
@@ -1361,7 +1490,7 @@
     if (filtros.unidade !== FILTRO_DEFAULT.unidade) n++;
     if (filtros.periodo !== FILTRO_DEFAULT.periodo) n++;
     if (filtros.treinamento !== FILTRO_DEFAULT.treinamento) n++;
-    if (filtros.treinador !== FILTRO_DEFAULT.treinador) n++;
+    if (filtros.treinador && filtros.treinador.length > 0) n++;
     if (filtros.busca) n++;
     return n;
   }
@@ -1381,7 +1510,7 @@
     filtros.unidade = FILTRO_DEFAULT.unidade;
     filtros.periodo = FILTRO_DEFAULT.periodo;
     filtros.treinamento = FILTRO_DEFAULT.treinamento;
-    filtros.treinador = FILTRO_DEFAULT.treinador;
+    filtros.treinador = [];
     filtros.busca = '';
 
     // sincroniza UI
@@ -1392,12 +1521,76 @@
     document.querySelectorAll('.select-filter').forEach(sel => {
       sel.value = filtros[sel.dataset.filter];
     });
+    document.querySelectorAll('#treinador-panel input[type="checkbox"]').forEach(cb => cb.checked = false);
+    atualizarLabelTreinador();
     const search = document.getElementById('search');
     if (search) search.value = '';
 
     aplicarFiltros();
     toast('Filtros limpos.');
   }
+
+  // ===== Multi-select Treinador =====
+  function toggleTreinadorPanel(ev) {
+    if (ev) ev.stopPropagation();
+    const wrap = document.getElementById('treinador-multi');
+    const panel = document.getElementById('treinador-panel');
+    const aberto = !panel.hidden;
+    panel.hidden = aberto;
+    wrap.classList.toggle('open', !aberto);
+  }
+  function fecharTreinadorPanel() {
+    const wrap = document.getElementById('treinador-multi');
+    const panel = document.getElementById('treinador-panel');
+    if (panel) panel.hidden = true;
+    if (wrap) wrap.classList.remove('open');
+  }
+  function atualizarLabelTreinador() {
+    const btn = document.querySelector('#treinador-multi .multi-select-btn');
+    const label = document.getElementById('treinador-label');
+    const arr = filtros.treinador || [];
+    if (!arr.length) {
+      label.textContent = 'Todos';
+      btn.classList.remove('has-value');
+    } else if (arr.length === 1) {
+      label.textContent = arr[0] === 'NONE' ? 'Sem treinador' : arr[0];
+      btn.classList.add('has-value');
+    } else if (arr.length <= 3) {
+      label.textContent = arr.map(t => t === 'NONE' ? 'Sem treinador' : t).join(', ');
+      btn.classList.add('has-value');
+    } else {
+      label.textContent = arr.length + ' selecionados';
+      btn.classList.add('has-value');
+    }
+  }
+  function limparTreinadores() {
+    filtros.treinador = [];
+    document.querySelectorAll('#treinador-panel input[type="checkbox"]').forEach(cb => cb.checked = false);
+    atualizarLabelTreinador();
+    aplicarFiltros();
+  }
+  // bind checkboxes
+  document.querySelectorAll('#treinador-panel input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const val = cb.value;
+      const arr = filtros.treinador || [];
+      if (cb.checked) {
+        if (arr.indexOf(val) === -1) arr.push(val);
+      } else {
+        const idx = arr.indexOf(val);
+        if (idx >= 0) arr.splice(idx, 1);
+      }
+      filtros.treinador = arr;
+      atualizarLabelTreinador();
+      aplicarFiltros();
+    });
+  });
+  // fecha o painel ao clicar fora
+  document.addEventListener('click', (ev) => {
+    const wrap = document.getElementById('treinador-multi');
+    if (wrap && !wrap.contains(ev.target)) fecharTreinadorPanel();
+  });
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') fecharTreinadorPanel(); });
 
   function atualizarContagens(visiveis, semUnidade) {
     // "Todas" = total visível (com filtro aplicado);
@@ -1527,7 +1720,14 @@
 
   function formatarData(e) {
     const ini = e.start;
-    const fim = new Date(e.end.getTime() - (e.allDay ? 86400000 : 0));
+    // all-day: end.date é exclusivo → subtrai 1 dia (calendar-safe, ignora DST)
+    let fim;
+    if (e.allDay) {
+      fim = new Date(e.end);
+      fim.setDate(fim.getDate() - 1);
+    } else {
+      fim = e.end;
+    }
     const mesmodia = ini.toDateString() === fim.toDateString();
     if (e.allDay) {
       if (mesmodia) return diaCurto(ini);
@@ -1617,7 +1817,13 @@
 
   function formatarDataApenas(e) {
     const ini = e.start;
-    const fim = new Date(e.end.getTime() - (e.allDay ? 86400000 : 0));
+    let fim;
+    if (e.allDay) {
+      fim = new Date(e.end);
+      fim.setDate(fim.getDate() - 1);
+    } else {
+      fim = e.end;
+    }
     const mesmodia = ini.toDateString() === fim.toDateString();
     if (mesmodia) return diaCurto(ini) + ' - ' + ini.getFullYear();
     return diaCurto(ini) + ' → ' + diaCurto(fim) + ' - ' + fim.getFullYear();
@@ -1629,16 +1835,6 @@
 
   function formatarListaTexto(lista) {
     const partes = [];
-    let titulo = '*📅 Treinamentos*';
-    const sub = [];
-    if (filtros.unidade) sub.push(UNIDADES[filtros.unidade] ? UNIDADES[filtros.unidade].nome : filtros.unidade);
-    sub.push(labelPeriodo());
-    if (filtros.treinamento) sub.push(filtros.treinamento);
-    if (filtros.treinador) sub.push(filtros.treinador === 'NONE' ? 'Sem treinador' : filtros.treinador);
-    if (filtros.busca) sub.push('"' + filtros.busca + '"');
-    titulo += ' — _' + sub.join(' · ') + '_';
-    partes.push(titulo);
-    partes.push('');
 
     if (!lista.length) {
       partes.push('_Nenhum evento neste filtro._');

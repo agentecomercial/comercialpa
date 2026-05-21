@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Treinamento Método CIS — Consultores e Equipe Interna</title>
+<link rel="stylesheet" href="assets/cis.css" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--cis-blue-900); }
+  body {
+    color: var(--cis-text);
+    font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* ===== Views: menu vs player ===== */
+  .view { display: none; }
+  .view.is-active { display: block; }
+
+  /* ===== Menu view ===== */
+  #menu-view {
+    height: 100vh;
+    overflow: auto;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(23,85,183,0.35), transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(255,204,30,0.10), transparent 55%),
+      linear-gradient(160deg, var(--cis-blue-900) 0%, var(--cis-blue-800) 55%, var(--cis-blue-700) 100%);
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 56px 32px 96px; }
+
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(255,204,30,0.18);
+    margin-bottom: 40px;
+  }
+  .hero .badge {
+    display: inline-block; background: var(--cis-yellow); color: var(--cis-blue-900);
+    padding: 6px 18px; border-radius: 999px; font-weight: 900;
+    letter-spacing: 0.18em; text-transform: uppercase; font-size: 12px; margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 64px; line-height: 1; color: var(--cis-yellow); margin: 0 0 12px;
+    letter-spacing: -1.5px; font-weight: 900;
+  }
+  .hero h1 small { display:block; color:#fff; font-size: 28px; font-weight: 500; letter-spacing: -0.5px; margin-top:6px; }
+  .hero p.sub { max-width: 720px; font-size: 18px; color: var(--cis-muted); margin: 0; }
+  .hero .stats { text-align: right; color: var(--cis-muted); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .hero .stats strong { display:block; font-size: 48px; color: var(--cis-yellow); font-weight: 900; line-height:1; letter-spacing: -1px; }
+
+  .grid-modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 48px; }
+  .module-card {
+    background:
+      radial-gradient(circle at 90% 10%, rgba(255,204,30,0.10), transparent 50%),
+      rgba(8, 28, 70, 0.65);
+    border: 1px solid var(--cis-card-border);
+    border-radius: 18px;
+    padding: 28px 32px;
+    cursor: pointer;
+    color: inherit;
+    display: flex; flex-direction: column; gap: 14px;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    box-shadow: 0 24px 60px -32px rgba(0,0,0,0.85);
+    text-align: left;
+    font: inherit;
+    width: 100%;
+  }
+  .module-card:hover { transform: translateY(-3px); border-color: var(--cis-card-border-strong); box-shadow: 0 28px 70px -28px rgba(255,204,30,0.25); }
+  .module-card .tag { font-size: 12px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 700; text-transform: uppercase; }
+  .module-card h3 { margin: 0; font-size: 30px; color: #fff; line-height: 1.1; font-weight: 800; letter-spacing: -0.5px; }
+  .module-card p { margin: 0; color: var(--cis-muted); font-size: 15px; line-height: 1.5; }
+  .module-card .meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10px; padding-top: 14px; border-top: 1px solid rgba(255,204,30,0.18);
+    font-size: 13px; color: var(--cis-muted);
+  }
+  .module-card .meta .go { color: var(--cis-yellow); font-weight: 800; letter-spacing: 0.06em; }
+  .module-card ul { margin: 0; padding: 0; list-style: none; display:flex; flex-direction: column; gap: 6px; }
+  .module-card ul li { display:flex; gap:8px; font-size: 14px; color: var(--cis-text); }
+  .module-card ul li::before { content: "•"; color: var(--cis-yellow); font-weight: 900; }
+
+  .section-title { font-size: 14px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 800; text-transform: uppercase; margin: 0 0 16px; }
+
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 48px; }
+  .info-grid .card {
+    background: rgba(8, 28, 70, 0.55);
+    border: 1px solid var(--cis-card-border);
+    border-radius: 14px;
+    padding: 18px 22px;
+  }
+  .info-grid .card h4 { margin: 0 0 8px; color: var(--cis-yellow); font-size: 16px; }
+  .info-grid .card p { margin: 0; color: var(--cis-text); font-size: 14px; line-height: 1.5; }
+  .info-grid .card kbd {
+    display: inline-block; background: rgba(255,204,30,0.18);
+    border: 1px solid var(--cis-card-border-strong); color: var(--cis-yellow);
+    padding: 2px 8px; border-radius: 6px;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; margin: 0 2px;
+  }
+
+  footer { text-align: center; color: var(--cis-muted); font-size: 13px; padding-top: 24px; border-top: 1px solid rgba(255,204,30,0.12); }
+
+  /* ===== Player view ===== */
+  #player-view { position: fixed; inset: 0; background: #000; z-index: 5; }
+  #player-view iframe {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    border: 0;
+    display: block;
+  }
+  .player-topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.65), rgba(0,0,0,0.0));
+    pointer-events: none;
+    font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  .player-topbar > * { pointer-events: auto; }
+  .player-topbar .spacer { flex: 1; }
+
+  /* Botões da topbar do player (estilo coeso, sem herdar .home-button) */
+  .pbtn {
+    appearance: none;
+    background: rgba(8, 28, 70, 0.6);
+    border: 1px solid var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font: 700 13px/1 "Inter", "Segoe UI", Arial, sans-serif;
+    letter-spacing: 0.06em;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: background .15s ease, transform .15s ease, color .15s ease;
+  }
+  .pbtn:hover { background: rgba(255,204,30,0.2); transform: translateY(-1px); }
+  .pbtn:active { transform: translateY(0); }
+  .pbtn svg { width: 14px; height: 14px; }
+  .pbtn.is-on {
+    background: var(--cis-yellow);
+    color: var(--cis-blue-900);
+    border-color: var(--cis-yellow);
+  }
+
+  .player-topbar .module-label {
+    font: 700 11px/1 "Inter", "Segoe UI", Arial, sans-serif;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cis-muted);
+    background: rgba(8,28,70,0.5);
+    border: 1px solid rgba(255,204,30,0.25);
+    padding: 7px 14px; border-radius: 999px;
+  }
+  .player-topbar .module-label strong { color: var(--cis-yellow); margin-right: 6px; }
+
+  .fs-floating { position: fixed; top: 14px; right: 14px; z-index: 12; }
+
+  @media (max-width: 800px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero .stats { text-align: left; }
+    .hero h1 { font-size: 44px; }
+    .grid-modules { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- =========================== MENU VIEW =========================== -->
+<section id="menu-view" class="view is-active">
+
+  <div class="nav-buttons fs-floating">
+    <button class="fs-btn" data-nav="fullscreen" title="Tela cheia (F)" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg>
+      <span class="fs-label">Tela cheia</span>
+    </button>
+  </div>
+
+  <div class="wrap">
+
+    <header class="hero">
+      <div>
+        <span class="badge">Treinamento Comercial</span>
+        <h1>Método CIS<small>Programa de formação para consultores e equipe interna</small></h1>
+        <p class="sub">4 módulos completos, 80 slides, com fundamentos do produto, prospecção, apresentação e fechamento. Conteúdo baseado nos materiais oficiais Febracis.</p>
+      </div>
+      <div class="stats">
+        <strong>04</strong>
+        Módulos
+        <div style="margin-top:14px;"><strong>80</strong>Slides 16:9</div>
+      </div>
+    </header>
+
+    <h2 class="section-title">▸ Trilha do Treinamento</h2>
+    <div class="grid-modules">
+
+      <button class="module-card" data-open-module="1">
+        <span class="tag">Módulo 1</span>
+        <h3>Produto<br><span style="color: var(--cis-yellow); font-size:22px; font-weight:700;">(Método CIS)</span></h3>
+        <p>O que se vende, quem é o cliente e como transformar características em valor irresistível.</p>
+        <ul>
+          <li>Mapa de dores e diagnóstico emocional</li>
+          <li>AIDA, pitch e storytelling de transformação</li>
+          <li>Gatilhos de urgência e framework de abordagem</li>
+        </ul>
+        <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+      </button>
+
+      <button class="module-card" data-open-module="2">
+        <span class="tag">Módulo 2</span>
+        <h3>Prospecção<br><span style="color: var(--cis-yellow); font-size:22px; font-weight:700;">e Qualificação</span></h3>
+        <p>Funil inteligente, perfil ideal de cliente e SPIN Selling para extrair a dor real antes da oferta.</p>
+        <ul>
+          <li>Funil, ICP e tipos de lead (frio, morno, quente)</li>
+          <li>SPIN: Situação, Problema, Implicação, Necessidade</li>
+          <li>Matriz de priorização e roteiro de qualificação</li>
+        </ul>
+        <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+      </button>
+
+      <button class="module-card" data-open-module="3">
+        <span class="tag">Módulo 3</span>
+        <h3>Apresentação<br><span style="color: var(--cis-yellow); font-size:22px; font-weight:700;">e Proposta</span></h3>
+        <p>Converter interesse em desejo. Construir propostas que vendem valor e tornam o preço irrelevante.</p>
+        <ul>
+          <li>Neurociência da decisão e gatilhos mentais</li>
+          <li>Ancoragem, prova social e proposta irresistível</li>
+          <li>Comunicação não-verbal e framework de conversão</li>
+        </ul>
+        <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+      </button>
+
+      <button class="module-card" data-open-module="4">
+        <span class="tag">Módulo 4</span>
+        <h3>Negociação<br><span style="color: var(--cis-yellow); font-size:22px; font-weight:700;">e Objeções</span></h3>
+        <p>Transformar objeções em fechamento. Scripts prontos, técnica do silêncio e reframing avançado.</p>
+        <ul>
+          <li>Psicologia da objeção (lógica, emocional, política)</li>
+          <li>Contornos: preço, tempo, confiança, autoridade, timing</li>
+          <li>Método Benjamin Franklin e matriz de respostas</li>
+        </ul>
+        <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+      </button>
+
+    </div>
+
+    <h2 class="section-title">▸ Como navegar</h2>
+    <div class="info-grid">
+      <div class="card">
+        <h4>Teclado</h4>
+        <p><kbd>→</kbd> ou <kbd>Espaço</kbd> avançam. <kbd>←</kbd> volta. <kbd>F</kbd> tela cheia. <kbd>Home</kbd>/<kbd>End</kbd> primeiro/último.</p>
+      </div>
+      <div class="card">
+        <h4>Touch / Mouse</h4>
+        <p>Deslize para os lados em telas táteis. Use os botões <em>Anterior / Próximo</em> no rodapé.</p>
+      </div>
+      <div class="card">
+        <h4>Apresentação</h4>
+        <p>Cada módulo é independente. Slides em 16:9 com escala automática. Pressione <kbd>F</kbd> para tela cheia — a tela cheia <strong>não se perde</strong> ao trocar de módulo.</p>
+      </div>
+    </div>
+
+    <footer>
+      Treinamento Método CIS · Conteúdo Febracis · uso interno (consultores + equipe).
+    </footer>
+
+  </div>
+</section>
+
+<!-- =========================== PLAYER VIEW =========================== -->
+<section id="player-view" class="view" aria-hidden="true">
+  <div class="player-topbar">
+    <button class="pbtn" id="back-menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      Menu
+    </button>
+    <span class="module-label" id="module-label"><strong>—</strong> Módulo</span>
+    <div class="spacer"></div>
+    <button class="pbtn" data-nav="fullscreen" title="Tela cheia (F)" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg>
+      <span class="fs-label">Tela cheia</span>
+    </button>
+  </div>
+  <iframe id="module-frame" title="Módulo" allow="fullscreen"></iframe>
+</section>
+
+<script>
+  // ---- Roteamento entre menu e player ----
+  const menuView   = document.getElementById('menu-view');
+  const playerView = document.getElementById('player-view');
+  const frame      = document.getElementById('module-frame');
+  const moduleLbl  = document.getElementById('module-label');
+  const backBtn    = document.getElementById('back-menu');
+
+  const MODULE_TITLES = {
+    1: '<strong>01</strong> Produto',
+    2: '<strong>02</strong> Prospecção',
+    3: '<strong>03</strong> Apresentação',
+    4: '<strong>04</strong> Negociação',
+  };
+
+  function showMenu() {
+    playerView.classList.remove('is-active');
+    playerView.setAttribute('aria-hidden', 'true');
+    menuView.classList.add('is-active');
+    menuView.setAttribute('aria-hidden', 'false');
+    frame.src = 'about:blank';
+    history.replaceState(null, '', '#');
+  }
+  function openModule(n) {
+    moduleLbl.innerHTML = MODULE_TITLES[n] || ('Módulo ' + n);
+    frame.src = `modulo-${n}.html`;
+    menuView.classList.remove('is-active');
+    menuView.setAttribute('aria-hidden', 'true');
+    playerView.classList.add('is-active');
+    playerView.setAttribute('aria-hidden', 'false');
+    history.replaceState(null, '', `#modulo-${n}`);
+  }
+
+  document.querySelectorAll('[data-open-module]').forEach(btn => {
+    btn.addEventListener('click', () => openModule(parseInt(btn.dataset.openModule, 10)));
+  });
+  backBtn.addEventListener('click', showMenu);
+
+  // ---- Mensagens vindas do iframe (módulos) ----
+  window.addEventListener('message', (e) => {
+    const msg = e.data || {};
+    if (msg.type !== 'cis-nav') return;
+    if (msg.target === 'menu') showMenu();
+    else if (msg.target === 'module' && msg.n) openModule(msg.n);
+  });
+
+  // ---- Fullscreen (compartilhado pelas duas views) ----
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+  function syncFs() {
+    const on = !!document.fullscreenElement;
+    document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => {
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      const lbl = b.querySelector('.fs-label');
+      if (lbl) lbl.textContent = on ? 'Sair' : 'Tela cheia';
+    });
+  }
+  document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => b.addEventListener('click', toggleFullscreen));
+  document.addEventListener('fullscreenchange', syncFs);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'f' || e.key === 'F') {
+      // Só captura aqui se o foco não está no iframe (que tem seu próprio listener)
+      if (!playerView.classList.contains('is-active')) toggleFullscreen();
+    }
+    if (e.key === 'Escape' && playerView.classList.contains('is-active') && !document.fullscreenElement) {
+      // Esc volta ao menu se já não estiver em fullscreen
+      showMenu();
+    }
+  });
+
+  // ---- Entrada por hash (link direto a um módulo) ----
+  const m = location.hash.match(/modulo-(\d)/);
+  if (m) openModule(parseInt(m[1], 10));
+</script>
+
+</body>
+</html>

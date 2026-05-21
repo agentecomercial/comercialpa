@@ -5339,6 +5339,21 @@ Aguarde o user message — siga o cabeçalho.`;
         linhas.push('**FAQ recorrente:**');
         treinamento.faq.forEach(function (f) { linhas.push('- ' + f); });
       }
+
+      if (treinamento.bibliografia && treinamento.bibliografia.length) {
+        linhas.push('');
+        linhas.push('**📚 BANCO BIBLIOGRÁFICO (fonte teórica deste treinamento — use pra reforçar autoridade técnica em conversas com leads céticos, intelectuais ou de perfil C/T):**');
+        treinamento.bibliografia.forEach(function (b) {
+          linhas.push('');
+          linhas.push('• **' + b.titulo + '** — ' + b.autor + (b.ano ? ' (' + b.ano + ')' : ''));
+          if (b.ideiasChave && b.ideiasChave.length) {
+            b.ideiasChave.forEach(function (ik) { linhas.push('  - ' + ik); });
+          }
+          if (b.comoUsar) linhas.push('  ↳ **Como usar comercialmente:** ' + b.comoUsar);
+        });
+        linhas.push('');
+        linhas.push('⚠️ Cite o livro/autor com naturalidade, não como palestra. Use 1 referência por conversa quando fizer sentido — não despeje bibliografia.');
+      }
       linhas.push('');
       linhas.push('⚠️ Toda a análise (DISC, SPIN, espelhamento, técnicas de fechamento, frase pronta) deve estar calibrada PARA ESTE TREINAMENTO. Use os dados de evento, pacotes e SPIN acima como verdade absoluta — NÃO invente preço, data, local ou condição. Quando o lead falar dor, conecte com a dor-alvo correspondente e use a pergunta SPIN apropriada para aprofundar. Use a autoridade Febracis (ver bloco abaixo) + a autoridade específica deste treinamento.');
       return linhas.join('\n');

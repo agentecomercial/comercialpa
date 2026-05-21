@@ -288,6 +288,60 @@ window.FebracisData.TREINAMENTOS = [
       'Tem certificado? Sim, Febracis Escola de Negócios',
       'Diferencial vs outros cursos de liderança? Aplica os 5 níveis de Jim Collins + 60 ferramentas + acompanhamento Febracis pós-formação'
     ],
+    bibliografia: [
+      {
+        titulo: 'Empresas Feitas para Vencer (Good to Great)',
+        autor: 'Jim Collins',
+        ano: 2001,
+        ideiasChave: [
+          '5 Níveis de Liderança — o Líder Nível 5 combina humildade pessoal extrema com vontade profissional inflexível. É a base do nome ML5',
+          'Princípio do Ouriço (Hedgehog Concept) — interseção entre o que você é apaixonado, o que pode ser o melhor do mundo e o que move seu motor econômico',
+          'Pessoas Certas no Ônibus — primeiro QUEM, depois O QUÊ. Coloque pessoas certas nos assentos certos antes de definir destino',
+          'Volante (Flywheel) — grandeza vem de empurrões consistentes na mesma direção, não de viradas dramáticas',
+          'Confrontar Fatos Brutais sem perder fé — paradoxo de Stockdale'
+        ],
+        comoUsar: 'Quando o lead tem ego de líder veterano ou diretor sênior, citar "Líder Nível 5" como aspiração superior à autoridade clássica. Quando tem time fraco, citar "Pessoas Certas no Ônibus".'
+      },
+      {
+        titulo: 'Feitas para Durar (Built to Last)',
+        autor: 'Jim Collins & Jerry Porras',
+        ano: 1994,
+        ideiasChave: [
+          'Empresas Visionárias têm Ideologia Central (valores + propósito) que NÃO muda + Progresso Estimulado (metas BHAG, ambiente de experimentação)',
+          'Preservar o Núcleo / Estimular o Progresso — dualidade que separa empresas longevas de empresas medíocres',
+          'BHAG (Big Hairy Audacious Goals) — metas grandes, audaciosas e cabeludas que mobilizam 10-30 anos',
+          'Construa o Relógio, não dê a Hora — o líder constrói SISTEMAS que sobrevivem a ele, não vira indispensável',
+          'Tentar muitas coisas e manter o que funciona — evolução como estratégia consciente'
+        ],
+        comoUsar: 'Para founders/sucessores que querem perpetuar empresa, ou para empresários que viraram gargalo. Usar "Construa o Relógio, não dê a Hora" contra centralização. Usar BHAG para destravar ambição.'
+      },
+      {
+        titulo: 'Vencedoras por Opção (Great by Choice)',
+        autor: 'Jim Collins & Morten Hansen',
+        ano: 2011,
+        ideiasChave: [
+          'Marcha de 20 Milhas — disciplina de fazer um pouco todo dia, em vez de surtos. Bate concorrente que oscila',
+          '10X — empresas que crescem 10x mais que mercado em ambientes caóticos têm 3 traços: disciplina fanática, criatividade empírica e paranoia produtiva',
+          'Disparar Balas, depois Balas de Canhão — testar pequeno (balas), validar, só então fazer aposta grande (balas de canhão)',
+          'Paranoia Produtiva — preparar-se em períodos bons para crises que virão. Reservar caixa, redundância e plano B',
+          'Sorte = ROL (Retorno Sobre Sorte) — todos têm sorte boa e ruim; o que diferencia é o que VOCÊ faz com ela'
+        ],
+        comoUsar: 'Para líderes em mercados turbulentos (tecnologia, comércio, indústria pressionada). Usar "Marcha de 20 Milhas" contra excesso de mudanças/inconsistência do time. "Paranoia Produtiva" pra empresários acomodados.'
+      },
+      {
+        titulo: 'Como as Gigantes Caem (How the Mighty Fall)',
+        autor: 'Jim Collins',
+        ano: 2009,
+        ideiasChave: [
+          '5 Estágios da Queda: 1) Arrogância do Sucesso, 2) Busca Indisciplinada por Mais, 3) Negação do Risco, 4) Busca Desesperada por Salvação, 5) Capitulação à Irrelevância',
+          'A queda começa quando líderes esquecem por que conseguiram em primeiro lugar — sucesso vira receita do declínio',
+          'Negação do Risco — sinais vermelhos são reenquadrados como "ruído de mercado" ou "questão temporária"',
+          'A salvação NÃO vem de "salvador carismático" trazido de fora — vem do retorno aos fundamentos',
+          'Empresa pode estar caindo mesmo com lucro alto — declínio interno precede declínio financeiro em 5-10 anos'
+        ],
+        comoUsar: 'Para líderes confiantes demais ("já sei tudo", "já lidero há 20 anos"). Citar "Arrogância do Sucesso" como sinal #1 de queda. Para empresas com resultado alto mas problemas estruturais (turnover, cultura), citar declínio interno precedendo declínio financeiro.'
+      }
+    ],
     tema: {
       dark: {
         green: '#5a8fff',

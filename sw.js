@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v84 — Treinamento multi-turno: novo campo "🎯 Contexto inicial da conversa" — gatilho que origina o contato (ad, indicação, evento). Quando preenchido, a IA amarra a 1ª mensagem do cliente nesse contexto em vez de abrir do nada
-const CACHE_NAME = 'agente-febracis-v84';
+// v92 — Perfis TAV expandidos pra 50 (6 originais + 44 novos calibrados ao PDF Técnicas Avançadas em Vendas: 2 dias / 16h, estratégias neurocientíficas, gestão experiência cliente, 7 técnicas corpo-a-corpo, gatilhos mentais, estrutura AIDA, perfil comportamental no atendimento, pitch de venda, certificação internacional + ferramentas FCIS, promessa de vender 3x mais ao mesmo cliente). Distribuição DISC: 11D + 11I + 11S + 11C + 6 mistos
+const CACHE_NAME = 'agente-febracis-v92';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',
