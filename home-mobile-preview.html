@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Pré-visualização — Home Mobile</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06060a;
+  --bg-home:#0a0a10;
+  --surface:#13131a;
+  --surface2:#1a1a22;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --text:#e8e8ea;
+  --muted:rgba(255,255,255,.55);
+  --accent:#c8f05a;
+  --blue:#60a5fa;
+  --amber:#f5b400;
+
+  /* === variáveis ajustáveis === */
+  --vp-width:375px;
+  --main-padding-x:12px;
+  --main-padding-y:18px;
+  --grid-gap:16px;
+  --card-radius:16px;
+  --card-padding-x:22px;
+  --card-padding-y:32px;
+  --card-gap-internal:18px;
+  --card-min-height:170px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+
+/* topo de controles */
+.topbar{
+  position:sticky;top:0;z-index:10;
+  background:rgba(13,13,20,.96);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border2);
+  padding:14px 22px;
+}
+.topbar h2{margin:0 0 10px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);}
+.ctrl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px 22px;align-items:end;}
+.ctrl{display:flex;flex-direction:column;gap:4px;}
+.ctrl label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;display:flex;justify-content:space-between;}
+.ctrl-row{display:flex;align-items:center;gap:10px;}
+.ctrl input[type=range]{flex:1;accent-color:var(--accent);}
+.ctrl .val{min-width:54px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);font-weight:700;}
+
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.presets-label{font-size:10px;color:var(--muted);margin-right:5px;text-transform:uppercase;letter-spacing:.07em;align-self:center;}
+.preset-btn{background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:99px;padding:5px 12px;font-size:10.5px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;}
+.preset-btn:hover{background:rgba(200,240,90,.08);border-color:var(--accent);color:var(--accent);}
+.vp-row{display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap;}
+.vp-row button{background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:10.5px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.vp-row button.on{background:rgba(200,240,90,.15);color:var(--accent);border-color:var(--accent);}
+
+/* área do mockup */
+.stage{
+  padding:24px;
+  min-height:60vh;
+  display:flex;justify-content:center;align-items:flex-start;
+  background:
+    radial-gradient(ellipse at top, rgba(200,240,90,.04), transparent 60%),
+    #06060a;
+}
+.phone-frame{
+  width:var(--vp-width);
+  background:var(--bg-home);
+  border:1px solid var(--border2);border-radius:24px;
+  overflow:hidden;
+  box-shadow:0 14px 40px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.6);
+  transition:width .2s;
+}
+.phone-status{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 18px;background:#000;font-size:11px;color:#fff;
+  font-family:'DM Sans',sans-serif;font-weight:600;
+}
+.phone-status .l{}
+.phone-status .r{display:flex;align-items:center;gap:6px;}
+.phone-status .bat{background:rgba(255,95,87,.3);color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;}
+
+.app-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;border-bottom:1px solid var(--border);
+}
+.app-brand{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text);font-weight:600;}
+.app-brand .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);}
+.app-actions{display:flex;gap:5px;}
+.app-actions button{background:var(--surface);color:var(--muted);border:1px solid var(--border2);border-radius:7px;padding:6px 8px;font-size:10px;cursor:pointer;}
+
+.app-main{padding:var(--main-padding-y) var(--main-padding-x);}
+.app-title{font-size:22px;font-weight:700;color:var(--text);margin:8px 0 4px;}
+.app-sub{font-size:12px;color:var(--muted);margin-bottom:18px;}
+
+.app-grid{display:grid;grid-template-columns:1fr;gap:var(--grid-gap);}
+
+/* card real do app */
+.app-card{
+  border-radius:var(--card-radius);
+  padding:var(--card-padding-y) var(--card-padding-x);
+  display:flex;flex-direction:column;gap:var(--card-gap-internal);
+  min-height:var(--card-min-height);
+  position:relative;
+  backdrop-filter:blur(12px);
+}
+.app-card .top{display:flex;align-items:flex-start;justify-content:space-between;}
+.app-card .ic{width:42px;height:42px;border-radius:11px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;}
+.app-card .label{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+.app-card .title{font-size:17px;font-weight:700;line-height:1.2;color:var(--text);margin-bottom:2px;}
+.app-card .sub{font-size:12px;color:var(--muted);line-height:1.5;}
+.app-card .foot{margin-top:auto;font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px;}
+
+.card-turmas{background:linear-gradient(135deg,rgba(96,165,250,.14) 0%,rgba(96,165,250,.04) 100%);border:1px solid rgba(96,165,250,.2);box-shadow:0 8px 32px rgba(96,165,250,.15);}
+.card-turmas .ic{background:rgba(96,165,250,.15);}
+.card-turmas .ic svg{color:var(--blue);}
+.card-turmas .label{color:var(--blue);}
+.card-turmas .foot{color:var(--blue);}
+
+.card-ic{background:radial-gradient(110% 60% at 30% 0%, rgba(251,191,36,.18), transparent 70%),linear-gradient(135deg, rgba(245,180,0,.10) 0%, rgba(245,180,0,.02) 100%);border:1px solid rgba(251,191,36,.32);box-shadow:0 10px 36px rgba(245,180,0,.16);}
+.card-ic .ic{background:linear-gradient(135deg, rgba(251,191,36,.22), rgba(245,158,11,.10));border:1px solid rgba(251,191,36,.28);color:var(--amber);}
+.card-ic .label{background:linear-gradient(135deg, rgba(251,191,36,.18), rgba(245,158,11,.10));border:1px solid rgba(251,191,36,.32);color:var(--amber);padding:4px 10px;border-radius:99px;font-size:9.5px;}
+.card-ic .title{background:linear-gradient(135deg, #ffffff 0%, #fff3c7 80%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.card-ic .foot{color:var(--amber);}
+
+.card-pipe{background:linear-gradient(135deg,rgba(167,139,250,.14) 0%,rgba(167,139,250,.04) 100%);border:1px solid rgba(167,139,250,.2);box-shadow:0 8px 32px rgba(167,139,250,.15);}
+.card-pipe .ic{background:rgba(167,139,250,.15);color:#a78bfa;}
+.card-pipe .label{color:#a78bfa;background:rgba(167,139,250,.1);padding:2px 8px;border-radius:4px;font-size:9px;letter-spacing:.1em;}
+.card-pipe .foot{color:#a78bfa;}
+
+/* saída */
+.output{margin:24px;padding:16px 18px;background:#0d0d14;border:1px solid var(--border2);border-radius:10px;}
+.output h3{margin:0 0 8px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);}
+.output pre{margin:0;padding:13px 15px;background:#06060a;border:1px solid var(--border2);border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;line-height:1.7;color:#e8e8ea;overflow-x:auto;white-space:pre;}
+.copy-row{display:flex;gap:10px;margin-top:10px;align-items:center;}
+.btn-copy{background:linear-gradient(180deg,#d4f565,#c8f05a);color:#0f0f0f;border:none;border-radius:8px;padding:8px 14px;font-size:11.5px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;box-shadow:0 4px 12px rgba(200,240,90,.3);}
+.toast{background:rgba(200,240,90,.15);color:var(--accent);padding:5px 12px;border-radius:99px;font-size:10.5px;font-weight:600;opacity:0;transition:opacity .2s;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h2>Home Mobile — controles em tempo real</h2>
+  <div class="ctrl-grid">
+    <div class="ctrl">
+      <label>Padding lateral da página <span class="val" id="mpxVal">12px</span></label>
+      <input type="range" id="mpx" min="0" max="40" value="12" step="2">
+    </div>
+    <div class="ctrl">
+      <label>Padding vertical da página <span class="val" id="mpyVal">18px</span></label>
+      <input type="range" id="mpy" min="0" max="50" value="18" step="2">
+    </div>
+    <div class="ctrl">
+      <label>Espaço entre cards <span class="val" id="ggVal">16px</span></label>
+      <input type="range" id="gg" min="6" max="40" value="16" step="2">
+    </div>
+    <div class="ctrl">
+      <label>Padding horizontal do card <span class="val" id="cpxVal">22px</span></label>
+      <input type="range" id="cpx" min="10" max="40" value="22" step="2">
+    </div>
+    <div class="ctrl">
+      <label>Padding vertical do card <span class="val" id="cpyVal">32px</span></label>
+      <input type="range" id="cpy" min="14" max="60" value="32" step="2">
+    </div>
+    <div class="ctrl">
+      <label>Gap interno do card <span class="val" id="cgVal">18px</span></label>
+      <input type="range" id="cg" min="6" max="30" value="18" step="2">
+    </div>
+    <div class="ctrl">
+      <label>Altura mínima do card <span class="val" id="cmhVal">170px</span></label>
+      <input type="range" id="cmh" min="100" max="280" value="170" step="5">
+    </div>
+    <div class="ctrl">
+      <label>Border radius do card <span class="val" id="crVal">16px</span></label>
+      <input type="range" id="cr" min="0" max="32" value="16" step="1">
+    </div>
+  </div>
+
+  <div class="presets">
+    <span class="presets-label">Presets:</span>
+    <button class="preset-btn" data-preset="atual">↺ Atual (aplicado)</button>
+    <button class="preset-btn" data-preset="compacto">Compacto</button>
+    <button class="preset-btn" data-preset="generoso">Generoso</button>
+    <button class="preset-btn" data-preset="imersivo">Imersivo (cards bem altos)</button>
+    <button class="preset-btn" data-preset="liso">Liso (sem respiro)</button>
+  </div>
+
+  <div class="vp-row">
+    <span class="presets-label">Viewport:</span>
+    <button data-w="320px">320 (mini)</button>
+    <button data-w="360px">360 (Android comum)</button>
+    <button data-w="375px" class="on">375 (iPhone)</button>
+    <button data-w="390px">390 (iPhone 13/14)</button>
+    <button data-w="414px">414 (Plus)</button>
+    <button data-w="428px">428 (Pro Max)</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="phone-frame" id="phone">
+    <div class="phone-status">
+      <span class="l">22:28 🛌</span>
+      <span class="r">📶 📡 <span class="bat">16</span></span>
+    </div>
+    <div class="app-header">
+      <div class="app-brand"><span class="dot"></span>Febracis · ADM</div>
+      <div class="app-actions">
+        <button>👥 Usuários</button>
+        <button>🎨 Tema</button>
+        <button>🔔</button>
+        <button>Sair</button>
+      </div>
+    </div>
+    <div class="app-main">
+      <div class="app-title">Bem-vindo ao sistema</div>
+      <div class="app-sub">Selecione uma área para continuar</div>
+      <div class="app-grid">
+
+        <div class="app-card card-turmas">
+          <div class="top">
+            <div class="ic">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <rect x="2" y="2" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="12" y="2" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="2" y="12" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="12" y="12" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/>
+              </svg>
+            </div>
+            <span class="label">TURMAS</span>
+          </div>
+          <div>
+            <div class="title">Gerenciar Turmas</div>
+            <div class="sub">Acesse, crie e gerencie os treinamentos ativos da equipe.</div>
+          </div>
+          <div class="foot">Acessar  →</div>
+        </div>
+
+        <div class="app-card card-ic">
+          <div class="top">
+            <div class="ic">📈</div>
+            <span class="label">★ ESTRATÉGICO</span>
+          </div>
+          <div>
+            <div class="title">Inteligência Comercial</div>
+            <div class="sub">KPIs · Rankings · Tendências · Decisão</div>
+          </div>
+          <div class="foot">Abrir painel  →</div>
+        </div>
+
+        <div class="app-card card-pipe">
+          <div class="top">
+            <div class="ic">$</div>
+            <span class="label">PIPELINE</span>
+          </div>
+          <div>
+            <div class="title">Pipeline Comercial</div>
+            <div class="sub">Metas, vendas, ranking e performance dos consultores.</div>
+          </div>
+          <div class="foot">Acessar  →</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="output">
+  <h3>CSS gerado · cole em <code>assets/css/homeScreen.css</code> e <code>assets/css/main.css</code></h3>
+  <pre id="cssOut"></pre>
+  <div class="copy-row">
+    <button class="btn-copy" id="btnCopy">📋 Copiar CSS</button>
+    <span class="toast" id="toast">Copiado!</span>
+  </div>
+</div>
+
+<script>
+var $ = function(id){return document.getElementById(id);};
+var ctrls = {mpx:$('mpx'),mpy:$('mpy'),gg:$('gg'),cpx:$('cpx'),cpy:$('cpy'),cg:$('cg'),cmh:$('cmh'),cr:$('cr')};
+
+function aplicar(){
+  var r = document.documentElement.style;
+  r.setProperty('--main-padding-x',ctrls.mpx.value+'px');
+  r.setProperty('--main-padding-y',ctrls.mpy.value+'px');
+  r.setProperty('--grid-gap',ctrls.gg.value+'px');
+  r.setProperty('--card-padding-x',ctrls.cpx.value+'px');
+  r.setProperty('--card-padding-y',ctrls.cpy.value+'px');
+  r.setProperty('--card-gap-internal',ctrls.cg.value+'px');
+  r.setProperty('--card-min-height',ctrls.cmh.value+'px');
+  r.setProperty('--card-radius',ctrls.cr.value+'px');
+
+  $('mpxVal').textContent = ctrls.mpx.value+'px';
+  $('mpyVal').textContent = ctrls.mpy.value+'px';
+  $('ggVal').textContent  = ctrls.gg.value+'px';
+  $('cpxVal').textContent = ctrls.cpx.value+'px';
+  $('cpyVal').textContent = ctrls.cpy.value+'px';
+  $('cgVal').textContent  = ctrls.cg.value+'px';
+  $('cmhVal').textContent = ctrls.cmh.value+'px';
+  $('crVal').textContent  = ctrls.cr.value+'px';
+
+  $('cssOut').textContent =
+    '/* assets/css/main.css */\n' +
+    '@media(max-width:560px){\n' +
+    '  .turmas-main{padding:'+ctrls.mpy.value+'px '+ctrls.mpx.value+'px;}\n' +
+    '}\n\n' +
+    '/* assets/css/homeScreen.css */\n' +
+    '@media(max-width:560px){\n' +
+    '  .home-grid{grid-template-columns:1fr;max-width:none;gap:'+ctrls.gg.value+'px;}\n' +
+    '  .home-card{\n' +
+    '    padding:'+ctrls.cpy.value+'px '+ctrls.cpx.value+'px;\n' +
+    '    gap:'+ctrls.cg.value+'px;\n' +
+    '    min-height:'+ctrls.cmh.value+'px;\n' +
+    '    border-radius:'+ctrls.cr.value+'px;\n' +
+    '  }\n' +
+    '}';
+}
+
+Object.keys(ctrls).forEach(function(k){ctrls[k].addEventListener('input',aplicar);});
+
+/* Presets */
+var PRESETS = {
+  atual:    {mpx:12,mpy:18,gg:16,cpx:22,cpy:32,cg:18,cmh:170,cr:16},
+  compacto: {mpx:12,mpy:14,gg:10,cpx:16,cpy:18,cg:10,cmh:120,cr:14},
+  generoso: {mpx:14,mpy:22,gg:18,cpx:24,cpy:36,cg:20,cmh:190,cr:18},
+  imersivo: {mpx:10,mpy:14,gg:12,cpx:26,cpy:42,cg:22,cmh:220,cr:20},
+  liso:     {mpx:0,mpy:8, gg:6, cpx:18,cpy:22,cg:14,cmh:140,cr:0}
+};
+document.querySelectorAll('.preset-btn').forEach(function(b){
+  b.addEventListener('click',function(){
+    var p = PRESETS[b.dataset.preset]; if(!p) return;
+    Object.keys(p).forEach(function(k){ ctrls[k].value = p[k]; });
+    aplicar();
+  });
+});
+
+/* Viewport */
+document.querySelectorAll('.vp-row button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.vp-row button').forEach(function(x){x.classList.remove('on');});
+    b.classList.add('on');
+    document.documentElement.style.setProperty('--vp-width', b.dataset.w);
+  });
+});
+
+/* Copiar */
+$('btnCopy').addEventListener('click',function(){
+  var txt = $('cssOut').textContent;
+  navigator.clipboard.writeText(txt).then(function(){
+    var t = $('toast'); t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show');},1500);
+  }).catch(function(){
+    var ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    var t = $('toast'); t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show');},1500);
+  });
+});
+
+aplicar();
+</script>
+</body>
+</html>
