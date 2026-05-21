@@ -180,7 +180,134 @@
     return encontrados;
   };
 
-  /* ── 5. Ajuda ──────────────────────────────────────────────── */
+  /* ── 5. Snapshot de cálculos críticos (regressão entre versões) ──
+     Captura os totais granulares de TODAS as turmas do Firebase num
+     único JSON. Permite, depois de uma mudança, comparar e ver se
+     algum total mudou sem motivo (regressão silenciosa). */
+  _diag.snapshot = {
+    gerar: function(opts){
+      opts = opts || {};
+      if(!window._fbGet){
+        console.warn('[_diag.snapshot] Firebase não disponível.');
+        return Promise.resolve(null);
+      }
+      var TN = (typeof TURMAS_NODE !== 'undefined') ? TURMAS_NODE : 'turmas';
+      return window._fbGet(TN).then(function(fbTurmas){
+        if(!fbTurmas){ console.warn('Nenhuma turma no Firebase.'); return null; }
+        var snap = {
+          schema: 1,
+          timestamp: new Date().toISOString(),
+          turmas: {}
+        };
+        Object.keys(fbTurmas).forEach(function(tid){
+          var t = fbTurmas[tid];
+          if(!t) return;
+          var clientes = t.clientes;
+          if(clientes && !Array.isArray(clientes) && typeof clientes === 'object'){
+            clientes = Object.values(clientes).filter(Boolean);
+          }
+          clientes = clientes || [];
+          var fat=0, abr=0, neg=0, ent=0, qtdPagos=0;
+          clientes.forEach(function(c){
+            if(!c || !c.cliente) return;
+            var f = (_hasFn('_faturadoDoCliente')        ? window._faturadoDoCliente(c)        : 0);
+            fat += f;
+            abr += (_hasFn('_abertoDoCliente')          ? window._abertoDoCliente(c)          : 0);
+            neg += (_hasFn('_negociacaoDoCliente')      ? window._negociacaoDoCliente(c)      : 0);
+            ent += (_hasFn('_entradaPendenteDoCliente') ? window._entradaPendenteDoCliente(c) : 0);
+            if(f > 0) qtdPagos++;
+          });
+          var _r = function(v){ return Math.round(v*100)/100; };
+          snap.turmas[tid] = {
+            nome: t.nome || t.codigo || tid,
+            faturado:    _r(fat),
+            aberto:      _r(abr),
+            negociacao:  _r(neg),
+            entrada:     _r(ent),
+            qtdClientes: clientes.length,
+            qtdPagos:    qtdPagos
+          };
+        });
+        if(!opts.silent){
+          console.group('%c[_diag.snapshot.gerar]',
+            'background:#a78bfa;color:#fff;padding:2px 8px;font-weight:700;');
+          console.log('Turmas processadas:', Object.keys(snap.turmas).length);
+          console.log('Para salvar baseline use: _diag.snapshot.baixar()');
+          console.log('Para comparar: _diag.snapshot.comparar(<obj ou string JSON>)');
+          console.log(snap);
+          console.groupEnd();
+        }
+        return snap;
+      });
+    },
+    baixar: function(){
+      return _diag.snapshot.gerar({silent:true}).then(function(snap){
+        if(!snap) return;
+        var blob = new Blob([JSON.stringify(snap, null, 2)], {type:'application/json'});
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        var ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+        a.download = 'snapshot-' + ts + '.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        console.log('%c[_diag.snapshot.baixar] arquivo baixado: snapshot-'+ts+'.json',
+          'color:#c8f05a;font-weight:700;');
+      });
+    },
+    comparar: function(antigo){
+      if(typeof antigo === 'string'){
+        try { antigo = JSON.parse(antigo); }
+        catch(e){ console.warn('[_diag.snapshot.comparar] JSON inválido.'); return; }
+      }
+      if(!antigo || !antigo.turmas){
+        console.warn('Uso: _diag.snapshot.comparar(<objeto ou string JSON>)');
+        return;
+      }
+      return _diag.snapshot.gerar({silent:true}).then(function(novo){
+        if(!novo) return;
+        console.group('%c[_diag.snapshot.comparar]',
+          'background:#a78bfa;color:#fff;padding:2px 8px;font-weight:700;');
+        console.log('Antigo:', antigo.timestamp, '|  Atual:', novo.timestamp);
+        var divs = [];
+        var campos = ['faturado','aberto','negociacao','entrada','qtdClientes','qtdPagos'];
+        Object.keys(antigo.turmas).forEach(function(tid){
+          var a = antigo.turmas[tid];
+          var n = novo.turmas[tid];
+          if(!n){
+            divs.push({turma: a.nome, campo: '(turma removida)', antes: '-', agora: '-', diff: '-'});
+            return;
+          }
+          campos.forEach(function(campo){
+            if(a[campo] !== n[campo]){
+              divs.push({
+                turma: a.nome,
+                campo: campo,
+                antes: a[campo],
+                agora: n[campo],
+                diff: (typeof n[campo] === 'number' && typeof a[campo] === 'number') ? (n[campo] - a[campo]) : '-'
+              });
+            }
+          });
+        });
+        Object.keys(novo.turmas).forEach(function(tid){
+          if(!antigo.turmas[tid]){
+            divs.push({turma: novo.turmas[tid].nome, campo: '(turma nova)', antes: '-', agora: '-', diff: '-'});
+          }
+        });
+        if(divs.length === 0){
+          console.log('%c✓ NENHUMA MUDANÇA — todos os totais granulares batem',
+            'background:#c8f05a;color:#000;padding:3px 10px;font-weight:700;');
+        } else {
+          console.warn('⚠ '+divs.length+' divergência(s) encontrada(s):');
+          console.table(divs);
+        }
+        console.groupEnd();
+        return divs;
+      });
+    }
+  };
+
+  /* ── 6. Ajuda ──────────────────────────────────────────────── */
   _diag.ajuda = function(){
     console.group('%c[_diag] funções disponíveis',
       'background:#c8f05a;color:#000;padding:3px 10px;font-weight:700;');
@@ -188,6 +315,9 @@
     console.log('%c_diag.totais()        %c→ imprime os 4 totais granulares', 'font-weight:700;color:#60a5fa;','color:#aaa;');
     console.log('%c_diag.divergencias()  %c→ compara cálculos com os KPIs do DOM (auto-check)', 'font-weight:700;color:#60a5fa;','color:#aaa;');
     console.log('%c_diag.cliente("nome") %c→ inspeção completa de um cliente (busca parcial)', 'font-weight:700;color:#60a5fa;','color:#aaa;');
+    console.log('%c_diag.snapshot.gerar()    %c→ totais granulares de TODAS as turmas (objeto)', 'font-weight:700;color:#a78bfa;','color:#aaa;');
+    console.log('%c_diag.snapshot.baixar()   %c→ baixa snapshot atual como JSON (baseline)', 'font-weight:700;color:#a78bfa;','color:#aaa;');
+    console.log('%c_diag.snapshot.comparar(j)%c→ compara baseline com totais atuais e lista divergências', 'font-weight:700;color:#a78bfa;','color:#aaa;');
     console.log('%c_diag.ajuda()         %c→ esta lista', 'font-weight:700;color:#60a5fa;','color:#aaa;');
     console.groupEnd();
   };

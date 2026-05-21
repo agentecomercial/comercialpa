@@ -106,8 +106,17 @@ Funções disponíveis:
 | `_diag.totais()` | Imprime os 4 totais granulares (Faturado / Em aberto / Potencial total / Total entradas). Compare visualmente com os KPIs do topo da tela. |
 | `_diag.divergencias()` | **Auto-check**: lê os KPIs do DOM e compara com os cálculos. Se algum não bate, lista a diferença. Verde = OK em tudo. |
 | `_diag.cliente("ROBSON")` | Inspeção completa de 1 cliente (busca parcial por nome): scalar, status efetivo, valores granulares e tabela dos subs com entrada bruta vs entrada visível. |
+| `_diag.snapshot.baixar()` | Baixa um **baseline JSON** com totais granulares de TODAS as turmas (faturado/aberto/negociação/entrada por turma). Use antes de uma mudança grande. |
+| `_diag.snapshot.comparar(json)` | Após a mudança, cole o JSON baixado e veja **se algum total mudou sem motivo** (regressão silenciosa). Verde = nenhuma mudança; tabela = onde divergiu. |
 
 **Use `_diag.divergencias()` após qualquer mudança em cálculos.** Se aparece tudo verde, está coerente.
+
+### Fluxo recomendado quando mexer em cálculos de larga escala
+
+1. `_diag.snapshot.baixar()` → salva `snapshot-YYYY-MM-DD.json` no disco.
+2. Faz a mudança no código → `bump.cmd` → Ctrl+Shift+R.
+3. No console, cola o conteúdo do JSON salvo dentro de `_diag.snapshot.comparar(...)`.
+4. Se aparecer **"NENHUMA MUDANÇA"** → ok subir. Se listar divergências → investigar antes de comitar.
 
 ---
 
