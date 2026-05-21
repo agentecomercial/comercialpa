@@ -1227,6 +1227,37 @@
         return;
       }
       eventos = (data.items || []).map(parseEvento);
+      // ─── Cache compacto para o card AGENDA do dashboard.html consumir ──
+      try {
+        var _pad = function(n){return n<10?'0'+n:n;};
+        var _wdMap = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+        var _cacheEvts = eventos
+          .filter(function(e){ return e.start && e.start.getTime() >= Date.now() - 86400000; }) // hoje em diante
+          .map(function(e){
+            var d = e.start;
+            var ehOnline = /online|remoto|zoom|meet|teams|webinar|google\s*meet/i.test((e.local||'')+' '+(e.desc||''));
+            return {
+              data: _pad(d.getDate())+'/'+_pad(d.getMonth()+1),
+              wd: _wdMap[d.getDay()],
+              unit: e.unidade || 'NONE',
+              titulo: e.treinamento || e.titulo || '(Sem nome)',
+              hora: e.allDay ? '' : _pad(d.getHours())+':'+_pad(d.getMinutes()),
+              local: e.local || '',
+              ministrante: e.treinador || '',
+              tipo: ehOnline ? 'online' : 'presencial',
+              status: 'confirmado',
+              inscritos: 0,
+              startMs: d.getTime(),
+              link: e.link || ''
+            };
+          })
+          .sort(function(a,b){ return a.startMs - b.startMs; });
+        localStorage.setItem('agendaFebracis.eventosCache', JSON.stringify({
+          ts: Date.now(),
+          total: _cacheEvts.length,
+          eventos: _cacheEvts.slice(0, 50)
+        }));
+      } catch(_e){ /* localStorage pode falhar em modo privativo */ }
       treinosUnicos = derivarTreinos(eventos);
       renderizarChipsTreinos();
       popularMesesNoSelect();
