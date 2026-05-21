@@ -4410,6 +4410,21 @@ cAno = desligPorMes × custoUnit × 12</pre>
               style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">
             <span><strong>⚡ Conversa automática</strong> <span id="modo-api-status" style="color:var(--muted);font-weight:400;font-size:11.5px;"></span></span>
           </label>
+          <!-- Form inline pra colar chave de API (aparece quando habilitar sem chave configurada) -->
+          <div id="api-key-form-inline" style="display:none;margin-top:10px;padding:10px;border:1px dashed var(--border);border-radius:8px;background:var(--bg-2);">
+            <div style="font-size:12px;color:var(--text);margin-bottom:6px;">
+              Cole sua chave de API. Fica salva só neste navegador (localStorage). Nunca sai daqui.
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">
+              Anthropic: começa com <code>sk-ant-</code> · Gemini: começa com <code>AIza</code>
+            </div>
+            <input type="password" id="api-key-input-inline" placeholder="Cole sua chave aqui"
+              style="width:100%;font-size:13px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:monospace;margin-bottom:8px;">
+            <div style="display:flex;gap:8px;">
+              <button class="icon-btn primary" onclick="salvarChaveApiInline()" style="font-size:13px;padding:8px 14px;">Salvar chave</button>
+              <button class="icon-btn" onclick="cancelarChaveApiInline()" style="font-size:13px;padding:8px 14px;">Cancelar</button>
+            </div>
+          </div>
         </div>
         <div class="multi-step-card" style="margin-bottom:10px;">
           <label for="treino-gatilho" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">🎯 Contexto inicial da conversa <span style="color:var(--muted);font-weight:400;">(o que disparou esse contato — a IA vai usar pra abrir com gancho real)</span></label>
@@ -8017,13 +8032,13 @@ Aguarde o user message — siga o cabeçalho.`;
 
     function trocarModoApi(ativar) {
       if (ativar && !temIaConfigurada()) {
-        var ok = pedirChaveApiAoUsuario();
-        if (!ok) {
-          var t = document.getElementById('modo-api-toggle');
-          if (t) t.checked = false;
-          return;
-        }
+        // Abre o form inline pedindo a chave; o checkbox fica destacado até o usuário salvar ou cancelar
+        abrirFormChaveApi();
+        return;
       }
+      // Esconde o form se estiver aberto
+      var form = document.getElementById('api-key-form-inline');
+      if (form) form.style.display = 'none';
       DB.data.modoApiPreferido = !!ativar;
       DB.save();
       atualizarUIMultiTurno();
@@ -8363,25 +8378,44 @@ Aguarde o user message — siga o cabeçalho.`;
       } catch (e) {}
     })();
 
-    function pedirChaveApiAoUsuario() {
-      var k = prompt('Cole sua chave de API (Anthropic começa com "sk-ant-" · Gemini começa com "AIza"):\n\nA chave fica salva apenas no seu navegador (localStorage). Não sai daqui.');
-      if (!k) return false;
-      k = k.trim();
+    function abrirFormChaveApi() {
+      var form = document.getElementById('api-key-form-inline');
+      if (form) {
+        form.style.display = 'block';
+        var input = document.getElementById('api-key-input-inline');
+        if (input) { input.value = ''; setTimeout(function(){ input.focus(); }, 50); }
+      }
+    }
+
+    function cancelarChaveApiInline() {
+      var form = document.getElementById('api-key-form-inline');
+      if (form) form.style.display = 'none';
+      var t = document.getElementById('modo-api-toggle');
+      if (t) t.checked = false;
+    }
+
+    function salvarChaveApiInline() {
+      var input = document.getElementById('api-key-input-inline');
+      var k = (input && input.value || '').trim();
+      if (!k) { toast('Cole sua chave antes de salvar', 'error'); return; }
       window.FebracisData = window.FebracisData || {};
       if (k.indexOf('sk-ant-') === 0) {
         window.FebracisData.API_KEY_ANTHROPIC = k;
         try { localStorage.setItem('_febracis_api_anthropic', k); } catch (e) {}
         toast('Chave Anthropic salva neste navegador ✓', 'success');
-        return true;
-      }
-      if (k.indexOf('AIza') === 0) {
+      } else if (k.indexOf('AIza') === 0) {
         window.FebracisData.API_KEY_GEMINI = k;
         try { localStorage.setItem('_febracis_api_gemini', k); } catch (e) {}
         toast('Chave Gemini salva neste navegador ✓', 'success');
-        return true;
+      } else {
+        toast('Formato inválido. Anthropic começa com sk-ant- · Gemini com AIza', 'error');
+        return;
       }
-      toast('Formato inválido. Anthropic começa com sk-ant- · Gemini com AIza', 'error');
-      return false;
+      var form = document.getElementById('api-key-form-inline');
+      if (form) form.style.display = 'none';
+      DB.data.modoApiPreferido = true;
+      DB.save();
+      atualizarUIMultiTurno();
     }
 
     function temAnthropicKey() {
