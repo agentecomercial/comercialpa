@@ -25,10 +25,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* turmasScreen gerenciado pelo bloco de telas fixas acima */
 .turmas-header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid var(--border);background:var(--surface);}
 .turmas-main{padding:28px;max-width:1200px;margin:0 auto;}
-/* Mobile: reduz padding lateral para o conteúdo respirar */
+/* Mobile: calibrado para iPhone 16 Pro Max (440×956) sem zoom */
 @media(max-width:560px){
-  .turmas-main{padding:18px 12px;}
-  .turmas-header{padding:14px 12px;}
+  .turmas-main{padding:24px 18px;}
+  .turmas-header{padding:14px 16px;}
 }
 .turmas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:20px;}
 /* ── Swimlane de turmas ── */
