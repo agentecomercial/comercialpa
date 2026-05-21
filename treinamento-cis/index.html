@@ -7,31 +7,147 @@
 <link rel="stylesheet" href="assets/cis.css" />
 <style>
   html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--cis-blue-900); }
-  body {
-    color: var(--cis-text);
-    font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  body { color: var(--cis-text); font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+
+  /* ===== Layout com sidebar ===== */
+  .app {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    height: 100vh;
   }
 
-  /* ===== Views: menu vs player ===== */
+  /* ===== Sidebar ===== */
+  .sidebar {
+    position: relative;
+    background: linear-gradient(170deg, #061a45 0%, #04122e 100%);
+    border-right: 1px solid rgba(255,204,30,0.18);
+    display: flex;
+    flex-direction: column;
+    padding: 22px 14px;
+    overflow-y: auto;
+    z-index: 6;
+  }
+  .sidebar .brand {
+    padding: 4px 12px 18px;
+    border-bottom: 1px solid rgba(255,204,30,0.12);
+    margin-bottom: 14px;
+  }
+  .sidebar .brand small {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--cis-muted);
+    font-weight: 700;
+  }
+  .sidebar .brand h2 {
+    margin: 4px 0 0;
+    font-size: 22px;
+    color: var(--cis-yellow);
+    letter-spacing: -0.5px;
+    font-weight: 900;
+  }
+
+  .sidenav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sidenav-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cis-muted);
+    font-weight: 700;
+    margin: 14px 12px 6px;
+  }
+  .sidenav-item {
+    appearance: none;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--cis-text);
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font: 600 14px/1.2 inherit;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .sidenav-item:hover { background: rgba(255,204,30,0.08); color: var(--cis-yellow); }
+  .sidenav-item.is-active {
+    background: rgba(255,204,30,0.15);
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .ico {
+    flex: 0 0 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .ico svg { width: 16px; height: 16px; }
+  .sidenav-item .num {
+    flex: 0 0 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: rgba(255,204,30,0.15);
+    color: var(--cis-yellow);
+    font-weight: 900;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sidenav-item .meta {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--cis-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .sidenav-item.highlight {
+    background: linear-gradient(135deg, rgba(255,204,30,0.18), rgba(245,165,0,0.10));
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+    font-weight: 800;
+    margin-top: 6px;
+  }
+  .sidenav-item.highlight:hover { background: linear-gradient(135deg, rgba(255,204,30,0.28), rgba(245,165,0,0.18)); }
+  .sidenav-item.highlight.is-active { background: var(--cis-yellow); color: var(--cis-blue-900); }
+  .sidenav-item.highlight.is-active .ico { color: var(--cis-blue-900); }
+
+  .sidebar .foot {
+    margin-top: auto;
+    padding: 14px 12px 0;
+    border-top: 1px solid rgba(255,204,30,0.12);
+    font-size: 11px;
+    color: var(--cis-muted);
+    line-height: 1.4;
+  }
+
+  /* ===== Conteúdo principal (Views) ===== */
+  .main { position: relative; overflow: hidden; }
   .view { display: none; }
   .view.is-active { display: block; }
 
   /* ===== Menu view ===== */
   #menu-view {
-    height: 100vh;
-    overflow: auto;
+    height: 100vh; overflow: auto;
     background:
       radial-gradient(circle at 20% 0%, rgba(23,85,183,0.35), transparent 55%),
       radial-gradient(circle at 100% 100%, rgba(255,204,30,0.10), transparent 55%),
       linear-gradient(160deg, var(--cis-blue-900) 0%, var(--cis-blue-800) 55%, var(--cis-blue-700) 100%);
   }
-  .wrap { max-width: 1280px; margin: 0 auto; padding: 56px 32px 96px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 56px 36px 96px; }
 
   .hero {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: end;
-    gap: 32px;
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: end; gap: 32px;
     padding-bottom: 32px;
     border-bottom: 1px solid rgba(255,204,30,0.18);
     margin-bottom: 40px;
@@ -42,56 +158,91 @@
     letter-spacing: 0.18em; text-transform: uppercase; font-size: 12px; margin-bottom: 16px;
   }
   .hero h1 {
-    font-size: 64px; line-height: 1; color: var(--cis-yellow); margin: 0 0 12px;
+    font-size: 60px; line-height: 1; color: var(--cis-yellow); margin: 0 0 12px;
     letter-spacing: -1.5px; font-weight: 900;
   }
-  .hero h1 small { display:block; color:#fff; font-size: 28px; font-weight: 500; letter-spacing: -0.5px; margin-top:6px; }
-  .hero p.sub { max-width: 720px; font-size: 18px; color: var(--cis-muted); margin: 0; }
+  .hero h1 small { display:block; color:#fff; font-size: 26px; font-weight: 500; letter-spacing: -0.5px; margin-top:6px; }
+  .hero p.sub { max-width: 720px; font-size: 17px; color: var(--cis-muted); margin: 0; }
   .hero .stats { text-align: right; color: var(--cis-muted); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; }
-  .hero .stats strong { display:block; font-size: 48px; color: var(--cis-yellow); font-weight: 900; line-height:1; letter-spacing: -1px; }
+  .hero .stats strong { display:block; font-size: 44px; color: var(--cis-yellow); font-weight: 900; line-height:1; letter-spacing: -1px; }
 
-  .grid-modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 48px; }
+  .grid-modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; margin-bottom: 40px; }
   .module-card {
     background:
       radial-gradient(circle at 90% 10%, rgba(255,204,30,0.10), transparent 50%),
       rgba(8, 28, 70, 0.65);
     border: 1px solid var(--cis-card-border);
     border-radius: 18px;
-    padding: 28px 32px;
+    padding: 26px 30px;
     cursor: pointer;
     color: inherit;
-    display: flex; flex-direction: column; gap: 14px;
+    display: flex; flex-direction: column; gap: 12px;
     transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
     box-shadow: 0 24px 60px -32px rgba(0,0,0,0.85);
-    text-align: left;
-    font: inherit;
-    width: 100%;
+    text-align: left; font: inherit; width: 100%;
   }
   .module-card:hover { transform: translateY(-3px); border-color: var(--cis-card-border-strong); box-shadow: 0 28px 70px -28px rgba(255,204,30,0.25); }
   .module-card .tag { font-size: 12px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 700; text-transform: uppercase; }
-  .module-card h3 { margin: 0; font-size: 30px; color: #fff; line-height: 1.1; font-weight: 800; letter-spacing: -0.5px; }
-  .module-card p { margin: 0; color: var(--cis-muted); font-size: 15px; line-height: 1.5; }
+  .module-card h3 { margin: 0; font-size: 28px; color: #fff; line-height: 1.1; font-weight: 800; letter-spacing: -0.5px; }
+  .module-card p { margin: 0; color: var(--cis-muted); font-size: 14px; line-height: 1.5; }
   .module-card .meta {
     display: flex; justify-content: space-between; align-items: center;
-    margin-top: 10px; padding-top: 14px; border-top: 1px solid rgba(255,204,30,0.18);
+    margin-top: 8px; padding-top: 12px; border-top: 1px solid rgba(255,204,30,0.18);
     font-size: 13px; color: var(--cis-muted);
   }
   .module-card .meta .go { color: var(--cis-yellow); font-weight: 800; letter-spacing: 0.06em; }
-  .module-card ul { margin: 0; padding: 0; list-style: none; display:flex; flex-direction: column; gap: 6px; }
-  .module-card ul li { display:flex; gap:8px; font-size: 14px; color: var(--cis-text); }
+  .module-card ul { margin: 0; padding: 0; list-style: none; display:flex; flex-direction: column; gap: 5px; }
+  .module-card ul li { display:flex; gap:8px; font-size: 13px; color: var(--cis-text); }
   .module-card ul li::before { content: "•"; color: var(--cis-yellow); font-weight: 900; }
 
-  .section-title { font-size: 14px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 800; text-transform: uppercase; margin: 0 0 16px; }
+  .section-title { font-size: 13px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 800; text-transform: uppercase; margin: 0 0 14px; }
 
-  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 48px; }
+  /* Card especial Fechamento */
+  .closing-card {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(255,204,30,0.25), transparent 50%),
+      linear-gradient(135deg, rgba(245,165,0,0.18), rgba(8, 28, 70, 0.85));
+    border: 1px solid var(--cis-card-border-strong);
+    border-radius: 18px;
+    padding: 26px 30px;
+    cursor: pointer;
+    color: inherit;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 40px;
+    transition: transform .2s ease, box-shadow .2s ease;
+    box-shadow: 0 28px 60px -28px rgba(255,204,30,0.3);
+    text-align: left; font: inherit; width: 100%;
+  }
+  .closing-card:hover { transform: translateY(-3px); box-shadow: 0 32px 70px -25px rgba(255,204,30,0.45); }
+  .closing-card .tag { font-size: 11px; letter-spacing: 0.2em; color: var(--cis-blue-900); font-weight: 900; text-transform: uppercase; background: var(--cis-yellow); padding: 4px 10px; border-radius: 999px; display: inline-block; }
+  .closing-card h3 { margin: 10px 0 6px; font-size: 32px; color: var(--cis-yellow); line-height: 1.05; font-weight: 900; letter-spacing: -1px; }
+  .closing-card p { margin: 0; color: #fff; font-size: 14px; line-height: 1.5; max-width: 580px; }
+  .closing-card .cta {
+    background: var(--cis-yellow);
+    color: var(--cis-blue-900);
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 24px -8px rgba(255,204,30,0.6);
+  }
+
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 40px; }
   .info-grid .card {
     background: rgba(8, 28, 70, 0.55);
     border: 1px solid var(--cis-card-border);
     border-radius: 14px;
-    padding: 18px 22px;
+    padding: 16px 20px;
   }
-  .info-grid .card h4 { margin: 0 0 8px; color: var(--cis-yellow); font-size: 16px; }
-  .info-grid .card p { margin: 0; color: var(--cis-text); font-size: 14px; line-height: 1.5; }
+  .info-grid .card h4 { margin: 0 0 6px; color: var(--cis-yellow); font-size: 15px; }
+  .info-grid .card p { margin: 0; color: var(--cis-text); font-size: 13px; line-height: 1.5; }
   .info-grid .card kbd {
     display: inline-block; background: rgba(255,204,30,0.18);
     border: 1px solid var(--cis-card-border-strong); color: var(--cis-yellow);
@@ -99,28 +250,26 @@
     font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; margin: 0 2px;
   }
 
-  footer { text-align: center; color: var(--cis-muted); font-size: 13px; padding-top: 24px; border-top: 1px solid rgba(255,204,30,0.12); }
+  footer { text-align: center; color: var(--cis-muted); font-size: 13px; padding-top: 20px; border-top: 1px solid rgba(255,204,30,0.12); }
 
   /* ===== Player view ===== */
-  #player-view { position: fixed; inset: 0; background: #000; z-index: 5; }
+  #player-view { position: absolute; inset: 0; background: #000; }
   #player-view iframe {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
-    border: 0;
-    display: block;
+    border: 0; display: block;
   }
   .player-topbar {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    position: absolute; top: 0; left: 0; right: 0; z-index: 20;
     display: flex; align-items: center; gap: 10px;
     padding: 12px 16px;
     background: linear-gradient(to bottom, rgba(0,0,0,0.65), rgba(0,0,0,0.0));
     pointer-events: none;
-    font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-family: inherit;
   }
   .player-topbar > * { pointer-events: auto; }
   .player-topbar .spacer { flex: 1; }
 
-  /* Botões da topbar do player (estilo coeso, sem herdar .home-button) */
   .pbtn {
     appearance: none;
     background: rgba(8, 28, 70, 0.6);
@@ -153,151 +302,252 @@
   }
   .player-topbar .module-label strong { color: var(--cis-yellow); margin-right: 6px; }
 
-  .fs-floating { position: fixed; top: 14px; right: 14px; z-index: 12; }
+  /* Barra inferior fixa para botão de tela cheia (visão geral) */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 12;
+    display: flex; justify-content: flex-end;
+    padding: 12px 18px;
+    pointer-events: none;
+    background: linear-gradient(to top, rgba(0,0,0,0.55), transparent);
+  }
+  .bottom-bar > * { pointer-events: auto; }
 
-  @media (max-width: 800px) {
+  /* Em fullscreen, escondemos a sidebar */
+  :fullscreen .sidebar,
+  :-webkit-full-screen .sidebar { display: none; }
+  :fullscreen .app,
+  :-webkit-full-screen .app { grid-template-columns: 1fr; }
+
+  /* Sidebar toggle (mobile/narrow) */
+  .sidebar-toggle {
+    display: none;
+    position: fixed; top: 14px; left: 14px; z-index: 30;
+  }
+
+  @media (max-width: 960px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: 260px;
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+    }
+    .sidebar.is-open { transform: translateX(0); }
+    .sidebar-toggle { display: inline-flex; }
     .hero { grid-template-columns: 1fr; }
     .hero .stats { text-align: left; }
-    .hero h1 { font-size: 44px; }
+    .hero h1 { font-size: 42px; }
     .grid-modules { grid-template-columns: 1fr; }
+    .closing-card { grid-template-columns: 1fr; }
     .info-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
-<!-- =========================== MENU VIEW =========================== -->
-<section id="menu-view" class="view is-active">
+<div class="app">
 
-  <div class="nav-buttons fs-floating">
-    <button class="fs-btn" data-nav="fullscreen" title="Tela cheia (F)" aria-pressed="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg>
-      <span class="fs-label">Tela cheia</span>
-    </button>
-  </div>
-
-  <div class="wrap">
-
-    <header class="hero">
-      <div>
-        <span class="badge">Treinamento Comercial</span>
-        <h1>Método CIS<small>Programa de formação para consultores e equipe interna</small></h1>
-        <p class="sub">4 módulos completos, 80 slides, com fundamentos do produto, prospecção, apresentação e fechamento. Conteúdo baseado nos materiais oficiais Febracis.</p>
-      </div>
-      <div class="stats">
-        <strong>04</strong>
-        Módulos
-        <div style="margin-top:14px;"><strong>80</strong>Slides 16:9</div>
-      </div>
-    </header>
-
-    <h2 class="section-title">▸ Trilha do Treinamento</h2>
-    <div class="grid-modules">
-
-      <button class="module-card" data-open-module="1">
-        <span class="tag">Módulo 1</span>
-        <h3>Produto<br><span style="color: var(--cis-yellow); font-size:22px; font-weight:700;">(Método CIS)</span></h3>
-        <p>O que se vende, quem é o cliente e como transformar características em valor irresistível.</p>
-        <ul>
-          <li>Mapa de dores e diagnóstico emocional</li>
-          <li>AIDA, pitch e storytelling de transformação</li>
-          <li>Gatilhos de urgência e framework de abordagem</li>
-        </ul>
-        <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
-      </button>
-
-      <button class="module-card" data-open-module="2">
-        <span class="tag">Módulo 2</span>
-        <h3>Prospecção<br><span style="color: var(--cis-yellow); font-size:22px; font-weight:700;">e Qualificação</span></h3>
-        <p>Funil inteligente, perfil ideal de cliente e SPIN Selling para extrair a dor real antes da oferta.</p>
-        <ul>
-          <li>Funil, ICP e tipos de lead (frio, morno, quente)</li>
-          <li>SPIN: Situação, Problema, Implicação, Necessidade</li>
-          <li>Matriz de priorização e roteiro de qualificação</li>
-        </ul>
-        <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
-      </button>
-
-      <button class="module-card" data-open-module="3">
-        <span class="tag">Módulo 3</span>
-        <h3>Apresentação<br><span style="color: var(--cis-yellow); font-size:22px; font-weight:700;">e Proposta</span></h3>
-        <p>Converter interesse em desejo. Construir propostas que vendem valor e tornam o preço irrelevante.</p>
-        <ul>
-          <li>Neurociência da decisão e gatilhos mentais</li>
-          <li>Ancoragem, prova social e proposta irresistível</li>
-          <li>Comunicação não-verbal e framework de conversão</li>
-        </ul>
-        <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
-      </button>
-
-      <button class="module-card" data-open-module="4">
-        <span class="tag">Módulo 4</span>
-        <h3>Negociação<br><span style="color: var(--cis-yellow); font-size:22px; font-weight:700;">e Objeções</span></h3>
-        <p>Transformar objeções em fechamento. Scripts prontos, técnica do silêncio e reframing avançado.</p>
-        <ul>
-          <li>Psicologia da objeção (lógica, emocional, política)</li>
-          <li>Contornos: preço, tempo, confiança, autoridade, timing</li>
-          <li>Método Benjamin Franklin e matriz de respostas</li>
-        </ul>
-        <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
-      </button>
-
+  <!-- =========================== SIDEBAR =========================== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <small>Treinamento</small>
+      <h2>Método CIS</h2>
     </div>
 
-    <h2 class="section-title">▸ Como navegar</h2>
-    <div class="info-grid">
-      <div class="card">
-        <h4>Teclado</h4>
-        <p><kbd>→</kbd> ou <kbd>Espaço</kbd> avançam. <kbd>←</kbd> volta. <kbd>F</kbd> tela cheia. <kbd>Home</kbd>/<kbd>End</kbd> primeiro/último.</p>
-      </div>
-      <div class="card">
-        <h4>Touch / Mouse</h4>
-        <p>Deslize para os lados em telas táteis. Use os botões <em>Anterior / Próximo</em> no rodapé.</p>
-      </div>
-      <div class="card">
-        <h4>Apresentação</h4>
-        <p>Cada módulo é independente. Slides em 16:9 com escala automática. Pressione <kbd>F</kbd> para tela cheia — a tela cheia <strong>não se perde</strong> ao trocar de módulo.</p>
-      </div>
+    <nav class="sidenav">
+      <button class="sidenav-item is-active" data-go="menu">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg></span>
+        Visão geral
+      </button>
+
+      <button class="sidenav-item highlight" data-go="fechamento">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
+        Fechamento CIS
+        <span class="meta">30</span>
+      </button>
+
+      <div class="sidenav-label">Trilha completa</div>
+
+      <button class="sidenav-item" data-go="1">
+        <span class="num">1</span>
+        Produto
+        <span class="meta">20</span>
+      </button>
+      <button class="sidenav-item" data-go="2">
+        <span class="num">2</span>
+        Prospecção
+        <span class="meta">20</span>
+      </button>
+      <button class="sidenav-item" data-go="3">
+        <span class="num">3</span>
+        Apresentação
+        <span class="meta">20</span>
+      </button>
+      <button class="sidenav-item" data-go="4">
+        <span class="num">4</span>
+        Negociação
+        <span class="meta">20</span>
+      </button>
+    </nav>
+
+    <div class="foot">
+      Conteúdo Febracis · uso interno (consultores + equipe).
     </div>
+  </aside>
 
-    <footer>
-      Treinamento Método CIS · Conteúdo Febracis · uso interno (consultores + equipe).
-    </footer>
+  <!-- =========================== MAIN =========================== -->
+  <main class="main">
 
-  </div>
-</section>
+    <!-- ====== MENU VIEW ====== -->
+    <section id="menu-view" class="view is-active">
 
-<!-- =========================== PLAYER VIEW =========================== -->
-<section id="player-view" class="view" aria-hidden="true">
-  <div class="player-topbar">
-    <button class="pbtn" id="back-menu">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-      Menu
-    </button>
-    <span class="module-label" id="module-label"><strong>—</strong> Módulo</span>
-    <div class="spacer"></div>
+      <div class="wrap">
+
+        <header class="hero">
+          <div>
+            <span class="badge">Treinamento Comercial</span>
+            <h1>Método CIS<small>Programa de formação para consultores e equipe interna</small></h1>
+            <p class="sub">4 módulos completos + sessão dedicada de fechamento. 110 slides com fundamentos do produto, prospecção, apresentação, negociação e scripts prontos de fechamento.</p>
+          </div>
+          <div class="stats">
+            <strong>110</strong>
+            Slides 16:9
+            <div style="margin-top:14px;"><strong>05</strong>Trilhas</div>
+          </div>
+        </header>
+
+        <button class="closing-card" data-go="fechamento">
+          <div>
+            <span class="tag">Sessão especial</span>
+            <h3>Fechamento Método CIS</h3>
+            <p>30 slides com frases prontas, narrativas completas consultor↔cliente, scripts por objeção (preço, tempo, indecisão), 6 combos de fechamento e o mantra do fechador. Material direto baseado no playbook SPIN Febracis.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <h2 class="section-title">▸ Trilha do Treinamento</h2>
+        <div class="grid-modules">
+
+          <button class="module-card" data-go="1">
+            <span class="tag">Módulo 1</span>
+            <h3>Produto<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">(Método CIS)</span></h3>
+            <p>O que se vende, quem é o cliente e como transformar características em valor irresistível.</p>
+            <ul>
+              <li>Mapa de dores e diagnóstico emocional</li>
+              <li>AIDA, pitch e storytelling de transformação</li>
+              <li>Gatilhos de urgência e framework de abordagem</li>
+            </ul>
+            <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="2">
+            <span class="tag">Módulo 2</span>
+            <h3>Prospecção<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">e Qualificação</span></h3>
+            <p>Funil inteligente, perfil ideal de cliente e SPIN Selling para extrair a dor real antes da oferta.</p>
+            <ul>
+              <li>Funil, ICP e tipos de lead (frio, morno, quente)</li>
+              <li>SPIN: Situação, Problema, Implicação, Necessidade</li>
+              <li>Matriz de priorização e roteiro de qualificação</li>
+            </ul>
+            <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="3">
+            <span class="tag">Módulo 3</span>
+            <h3>Apresentação<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">e Proposta</span></h3>
+            <p>Converter interesse em desejo. Construir propostas que vendem valor e tornam o preço irrelevante.</p>
+            <ul>
+              <li>Neurociência da decisão e gatilhos mentais</li>
+              <li>Ancoragem, prova social e proposta irresistível</li>
+              <li>Comunicação não-verbal e framework de conversão</li>
+            </ul>
+            <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="4">
+            <span class="tag">Módulo 4</span>
+            <h3>Negociação<br><span style="color: var(--cis-yellow); font-size:20px; font-weight:700;">e Objeções</span></h3>
+            <p>Transformar objeções em fechamento. Scripts prontos, técnica do silêncio e reframing avançado.</p>
+            <ul>
+              <li>Psicologia da objeção (lógica, emocional, política)</li>
+              <li>Contornos: preço, tempo, confiança, autoridade, timing</li>
+              <li>Método Benjamin Franklin e matriz de respostas</li>
+            </ul>
+            <div class="meta"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+        </div>
+
+        <h2 class="section-title">▸ Como navegar</h2>
+        <div class="info-grid">
+          <div class="card">
+            <h4>Teclado</h4>
+            <p><kbd>→</kbd> ou <kbd>Espaço</kbd> avançam. <kbd>←</kbd> volta. <kbd>F</kbd> tela cheia. <kbd>Home</kbd>/<kbd>End</kbd> primeiro/último.</p>
+          </div>
+          <div class="card">
+            <h4>Touch / Mouse</h4>
+            <p>Deslize para os lados em telas táteis. Use os botões <em>Anterior / Próximo</em> no rodapé.</p>
+          </div>
+          <div class="card">
+            <h4>Apresentação</h4>
+            <p>Use a sidebar à esquerda para alternar rapidamente entre trilhas. A tela cheia <strong>não se perde</strong> ao trocar de módulo.</p>
+          </div>
+        </div>
+
+        <footer>
+          Treinamento Método CIS · Conteúdo Febracis · uso interno (consultores + equipe).
+        </footer>
+
+      </div>
+    </section>
+
+    <!-- ====== PLAYER VIEW ====== -->
+    <section id="player-view" class="view" aria-hidden="true">
+      <div class="player-topbar">
+        <button class="pbtn" id="back-menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+          Menu
+        </button>
+        <span class="module-label" id="module-label"><strong>—</strong> Módulo</span>
+        <div class="spacer"></div>
+      </div>
+      <iframe id="module-frame" title="Módulo" allow="fullscreen"></iframe>
+    </section>
+
+  </main>
+
+  <!-- Barra inferior do menu (visão geral): contém o botão de tela cheia -->
+  <div class="bottom-bar" id="menu-bottom-bar">
     <button class="pbtn" data-nav="fullscreen" title="Tela cheia (F)" aria-pressed="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg>
       <span class="fs-label">Tela cheia</span>
     </button>
   </div>
-  <iframe id="module-frame" title="Módulo" allow="fullscreen"></iframe>
-</section>
+</div>
 
 <script>
-  // ---- Roteamento entre menu e player ----
+  // ---- Estado e rotas ----
   const menuView   = document.getElementById('menu-view');
   const playerView = document.getElementById('player-view');
   const frame      = document.getElementById('module-frame');
   const moduleLbl  = document.getElementById('module-label');
   const backBtn    = document.getElementById('back-menu');
+  const sidebar    = document.getElementById('sidebar');
 
-  const MODULE_TITLES = {
-    1: '<strong>01</strong> Produto',
-    2: '<strong>02</strong> Prospecção',
-    3: '<strong>03</strong> Apresentação',
-    4: '<strong>04</strong> Negociação',
+  const ROUTES = {
+    menu:        { file: null,                title: null },
+    fechamento:  { file: 'fechamento.html',   title: '<strong>★</strong> Fechamento CIS' },
+    '1':         { file: 'modulo-1.html',     title: '<strong>01</strong> Produto' },
+    '2':         { file: 'modulo-2.html',     title: '<strong>02</strong> Prospecção' },
+    '3':         { file: 'modulo-3.html',     title: '<strong>03</strong> Apresentação' },
+    '4':         { file: 'modulo-4.html',     title: '<strong>04</strong> Negociação' },
   };
+
+  function setActiveNav(key) {
+    document.querySelectorAll('.sidenav-item').forEach(b => b.classList.toggle('is-active', b.dataset.go === key));
+  }
 
   function showMenu() {
     playerView.classList.remove('is-active');
@@ -306,31 +556,48 @@
     menuView.setAttribute('aria-hidden', 'false');
     frame.src = 'about:blank';
     history.replaceState(null, '', '#');
+    setActiveNav('menu');
   }
-  function openModule(n) {
-    moduleLbl.innerHTML = MODULE_TITLES[n] || ('Módulo ' + n);
-    frame.src = `modulo-${n}.html`;
+  function openRoute(key) {
+    if (key === 'menu') { showMenu(); return; }
+    const route = ROUTES[key];
+    if (!route || !route.file) return;
+    moduleLbl.innerHTML = route.title || ('Módulo ' + key);
+    frame.src = route.file;
     menuView.classList.remove('is-active');
     menuView.setAttribute('aria-hidden', 'true');
     playerView.classList.add('is-active');
     playerView.setAttribute('aria-hidden', 'false');
-    history.replaceState(null, '', `#modulo-${n}`);
+    history.replaceState(null, '', `#${key}`);
+    setActiveNav(key);
+    if (sidebar) sidebar.classList.remove('is-open');
   }
 
-  document.querySelectorAll('[data-open-module]').forEach(btn => {
-    btn.addEventListener('click', () => openModule(parseInt(btn.dataset.openModule, 10)));
+  // Cliques: sidebar e cards do menu (mesmo data-go)
+  document.querySelectorAll('[data-go]').forEach(btn => {
+    btn.addEventListener('click', () => openRoute(btn.dataset.go));
   });
   backBtn.addEventListener('click', showMenu);
 
-  // ---- Mensagens vindas do iframe (módulos) ----
+  // Mensagens do iframe
   window.addEventListener('message', (e) => {
     const msg = e.data || {};
     if (msg.type !== 'cis-nav') return;
     if (msg.target === 'menu') showMenu();
-    else if (msg.target === 'module' && msg.n) openModule(msg.n);
+    else if (msg.target === 'module' && msg.n) openRoute(String(msg.n));
+    else if (msg.target === 'fullscreen') toggleFullscreen();
   });
 
-  // ---- Fullscreen (compartilhado pelas duas views) ----
+  // Enviar estado de fullscreen para o iframe ativo (sincroniza o botão dentro do módulo)
+  function broadcastFsState() {
+    const on = !!document.fullscreenElement;
+    if (frame && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-fullscreen-state', on }, '*');
+    }
+  }
+  frame.addEventListener('load', broadcastFsState);
+
+  // Fullscreen
   function toggleFullscreen() {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen();
     else document.exitFullscreen();
@@ -345,21 +612,19 @@
     });
   }
   document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => b.addEventListener('click', toggleFullscreen));
-  document.addEventListener('fullscreenchange', syncFs);
+  document.addEventListener('fullscreenchange', () => { syncFs(); broadcastFsState(); });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'f' || e.key === 'F') {
-      // Só captura aqui se o foco não está no iframe (que tem seu próprio listener)
       if (!playerView.classList.contains('is-active')) toggleFullscreen();
     }
     if (e.key === 'Escape' && playerView.classList.contains('is-active') && !document.fullscreenElement) {
-      // Esc volta ao menu se já não estiver em fullscreen
       showMenu();
     }
   });
 
-  // ---- Entrada por hash (link direto a um módulo) ----
-  const m = location.hash.match(/modulo-(\d)/);
-  if (m) openModule(parseInt(m[1], 10));
+  // Hash inicial
+  const h = (location.hash || '').replace('#', '');
+  if (h && ROUTES[h]) openRoute(h);
 </script>
 
 </body>

@@ -685,6 +685,168 @@ ul.x-list li::before {
 .aida .step h4 { margin: 4px 0 0; color: #fff; font-size: 16px; letter-spacing: 0.04em; }
 .aida .step p { margin: 0; font-size: 13px; color: var(--cis-muted); line-height: 1.4; }
 
+/* ---- Diálogos (Consultor x Cliente) ---- */
+.dialog { display: flex; flex-direction: column; gap: 10px; }
+.dialog .turn {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+.dialog .turn .who {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--cis-muted);
+  padding-top: 12px;
+  text-align: right;
+}
+.dialog .turn.you .who { color: var(--cis-yellow); }
+.dialog .turn.lead .who { color: #9bb4ff; }
+.dialog .turn .bubble {
+  background: var(--cis-card-bg);
+  border: 1px solid var(--cis-card-border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cis-text);
+}
+.dialog .turn.you .bubble {
+  border-color: rgba(255,204,30,0.55);
+  background: rgba(255,204,30,0.07);
+}
+.dialog .turn.lead .bubble {
+  border-color: rgba(155,180,255,0.35);
+  background: rgba(155,180,255,0.05);
+}
+.dialog .turn.note .who { color: #ff8b8b; }
+.dialog .turn.note .bubble {
+  background: rgba(0,0,0,0.25);
+  border-color: rgba(255,255,255,0.1);
+  font-style: italic;
+  color: var(--cis-muted);
+  font-size: 13px;
+}
+
+/* Lista de scripts: cabeçalho destacado + fala */
+.script-list { display: flex; flex-direction: column; gap: 12px; }
+.script-list .item {
+  background: var(--cis-card-bg);
+  border: 1px solid var(--cis-card-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+.script-list .item .n {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 999px;
+  background: var(--cis-yellow); color: var(--cis-blue-900);
+  font-weight: 900; font-size: 14px;
+}
+.script-list .item h4 {
+  margin: 0 0 4px;
+  color: var(--cis-yellow);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+.script-list .item p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--cis-text); }
+.script-list .item .quote { font-style: italic; color: #fff; }
+.script-list .item .why { color: var(--cis-muted); font-size: 12px; margin-top: 4px; }
+
+/* ---- Modo edição ---- */
+html.edit-mode [contenteditable="true"] {
+  outline: 1px dashed rgba(255,204,30,0.45);
+  outline-offset: 2px;
+  cursor: text;
+  border-radius: 4px;
+  transition: outline-color .15s ease, background .15s ease;
+}
+html.edit-mode [contenteditable="true"]:hover {
+  outline-color: var(--cis-yellow);
+  background: rgba(255,204,30,0.06);
+}
+html.edit-mode [contenteditable="true"]:focus {
+  outline: 2px solid var(--cis-yellow);
+  background: rgba(255,204,30,0.10);
+  box-shadow: 0 0 0 4px rgba(255,204,30,0.15);
+}
+
+/* Slide oculto: no modo edição aparece esmaecido com badge; fora do modo edit é totalmente removido pelo JS via filter */
+html.edit-mode .slide.is-hidden-slide {
+  opacity: .35;
+  filter: grayscale(.6);
+}
+html.edit-mode .slide.is-hidden-slide .se-badge { display: inline-block; }
+html.edit-mode .slide.is-hidden-slide::after { animation: none; }
+
+/* Overlay com botão Ocultar */
+.slide-edit-overlay {
+  position: absolute;
+  top: 14px; right: 14px;
+  z-index: 5;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+html.edit-mode .slide-edit-overlay { display: flex; }
+
+.slide-edit-overlay .se-btn {
+  appearance: none;
+  background: rgba(8, 28, 70, 0.75);
+  color: var(--cis-yellow);
+  border: 1px solid var(--cis-card-border-strong);
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font: 700 12px/1 "Inter", "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background .15s ease;
+}
+.slide-edit-overlay .se-btn svg { width: 14px; height: 14px; }
+.slide-edit-overlay .se-btn:hover { background: rgba(255,204,30,0.2); }
+
+.slide-edit-overlay .se-badge {
+  display: none;
+  background: #ff6b6b;
+  color: #fff;
+  font: 900 11px/1 "Inter", Arial, sans-serif;
+  letter-spacing: 0.18em;
+  padding: 5px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+/* Banner no topo enquanto edita */
+html.edit-mode body::before {
+  content: "✎ Modo edição ativo — clique em qualquer texto para editar. Mudanças salvam automaticamente no navegador. Pressione E ou clique em \"Sair da edição\" quando terminar.";
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
+  background: linear-gradient(90deg, var(--cis-yellow), var(--cis-yellow-deep));
+  color: var(--cis-blue-900);
+  font: 700 12px/1.4 "Inter", Arial, sans-serif;
+  letter-spacing: 0.04em;
+  text-align: center;
+  padding: 8px 12px;
+  pointer-events: none;
+}
+html.edit-mode .progress { top: 30px; }
+
+/* Botão edit/reset ativos */
+.nav-buttons button[data-nav="edit"].is-on {
+  background: var(--cis-yellow);
+  color: var(--cis-blue-900);
+  border-color: var(--cis-yellow);
+}
+
 /* Print fallback */
 @media print {
   .hud, .home-button, .progress { display: none !important; }

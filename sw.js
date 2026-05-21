@@ -1,6 +1,6 @@
 // Service Worker para PWA - Agente Comercial Febracis
-// v92 — Perfis TAV expandidos pra 50 (6 originais + 44 novos calibrados ao PDF Técnicas Avançadas em Vendas: 2 dias / 16h, estratégias neurocientíficas, gestão experiência cliente, 7 técnicas corpo-a-corpo, gatilhos mentais, estrutura AIDA, perfil comportamental no atendimento, pitch de venda, certificação internacional + ferramentas FCIS, promessa de vender 3x mais ao mesmo cliente). Distribuição DISC: 11D + 11I + 11S + 11C + 6 mistos
-const CACHE_NAME = 'agente-febracis-v92';
+// v95 — Perfis CIS expandidos pra 50 (6 originais + 44 novos calibrados ao PDF Método CIS: 4 dias / 60h imersão, +1M treinadas, +650 turmas, modalidades Presencial e Global, 5 pilares (Finanças/Business/Performance Emocional/Saúde/Relacionamento), reprogramação crenças, EAI (Experiências Adversas Infância), autossabotagem, empoderamento mulher, fundamentação Neurociência/PNL/Psicologia Positiva/Antropologia/Pedagogia/Física Quântica, endossos Cury/Shinyashiki/Suzuki/Zé Roberto). Distribuição DISC: 11D + 11I + 11S + 11C + 6 mistos. FECHA SÉRIE: todos os 10 produtos com 50 perfis cada (500 perfis totais).
+const CACHE_NAME = 'agente-febracis-v96';
 const URLS = [
   './agente-comercial.html',
   './manifest.json',

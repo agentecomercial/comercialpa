@@ -818,6 +818,408 @@ window.FebracisData.PERFIS_TREINO_POR_PRODUTO = {
       descricao: '"Quero virar palestrante! Mas nunca subi num palco. Como começar?"',
       contexto: 'Profissional 30-40, sociável, sonhador. Decide pela emoção. Quer monetizar discurso. Otimista.',
       objecaoPivot: 'Realismo sobre carreira de palestrante'
+    },
+    // ===== 44 perfis novos (calibrados ao PDF CEOP: 3d/30h, AIDA, gatilhos, storytelling, voz, linguagem corporal) =====
+    // --- 10 D ---
+    {
+      id: 'ceop-ceo-perde-negociacao-d',
+      nome: 'CEO que perde negociações',
+      emoji: '💼',
+      disc: 'D',
+      descricao: '"Negocio com força e perco. Sai cliente, sai investidor. Comunicação minha trava no \'sim final\'."',
+      contexto: 'CEO 45+, agressivo na argumentação. Fecha menos do que poderia. Sente que falta refinamento persuasivo, mas não admite fácil. Resultado é a moeda.',
+      objecaoPivot: 'Resultado financeiro × estilo bruto na mesa'
+    },
+    {
+      id: 'ceop-empresario-terceiriza-palco-d',
+      nome: 'Empresário que terceiriza o palco',
+      emoji: '🎙️',
+      disc: 'D',
+      descricao: '"Tenho marketing pra falar por mim. Por que eu vou subir no palco? Tempo é grana."',
+      contexto: 'Dono 40+, faturando bem. Delega comunicação institucional. Equipe pede que ele apareça mais. Vê palestra como vaidade. ROI cético.',
+      objecaoPivot: 'Custo de não ser a voz da própria marca'
+    },
+    {
+      id: 'ceop-diretora-intimida-equipe-d',
+      nome: 'Diretora que intimida equipe',
+      emoji: '🛡️',
+      disc: 'D',
+      descricao: '"Falo, ninguém contesta. Falo, ninguém engaja. Equipe fica muda nas reuniões."',
+      contexto: 'Diretora 38+, voz firme, postura imponente. Decide tudo. Time deixou de propor. RH apontou clima ruim. Não conecta nas one-on-one.',
+      objecaoPivot: 'Autoridade × medo do time → desengajamento'
+    },
+    {
+      id: 'ceop-vendedor-agressivo-trava-d',
+      nome: 'Vendedor agressivo que trava cliente',
+      emoji: '🔪',
+      disc: 'D',
+      descricao: '"Bato meta, mas o cliente some no follow-up. Acho que assusto."',
+      contexto: 'Vendedor 32+, alta performance no abre, baixa retenção. Fala muito, escuta pouco. Cliente fecha e some. Pressão de cota.',
+      objecaoPivot: 'Conversão imediata × LTV destruído'
+    },
+    {
+      id: 'ceop-founder-pitch-investidor-d',
+      nome: 'Founder que não vende ideia',
+      emoji: '🚀',
+      disc: 'D',
+      descricao: '"Tenho a melhor tese do setor. Investidor não morde. O quê tô errando no pitch?"',
+      contexto: 'Founder 35+, sabe o produto. Pitch frio, sem narrativa, foca em métrica e mercado. Investidor desconecta em 90s. Captação travada.',
+      objecaoPivot: 'Dados sem história → cheque que não sai'
+    },
+    {
+      id: 'ceop-medo-perder-controle-d',
+      nome: 'Empresário com medo do palco',
+      emoji: '😶‍🌫️',
+      disc: 'D',
+      descricao: '"Em sala fechada eu mando. Subi no palco uma vez, travei. Não volto."',
+      contexto: 'Empresário 45+ que evita evento por orgulho ferido. Perdeu oportunidade de palestra paga + visibilidade. Não admite o medo, racionaliza.',
+      objecaoPivot: 'Perdas de receita × evitação do medo público'
+    },
+    {
+      id: 'ceop-monopoliza-reuniao-d',
+      nome: 'Líder que monopoliza reunião',
+      emoji: '🗣️',
+      disc: 'D',
+      descricao: '"Falo, fecho ponto, próximo tema. Reunião de 1h vira de 2h, todo mundo cala."',
+      contexto: 'Líder 40+, decide rápido demais. Não dá espaço pra time falar. Reuniões viraram monólogo. Insight de baixo escala não chega.',
+      objecaoPivot: 'Eficiência percebida × insumo do time perdido'
+    },
+    {
+      id: 'ceop-negociadora-perde-grandes-d',
+      nome: 'Negociadora que perde grandes contratos',
+      emoji: '📉',
+      disc: 'D',
+      descricao: '"Fecho contratos médios bem, mas grande conta escapa. Querem \'feeling\', eu trago lógica seca."',
+      contexto: 'Negociadora 38+ B2B. Domina técnica, perde no rapport. Cliente premium quer narrativa, ela entrega planilha. Sente injustiça.',
+      objecaoPivot: 'Lógica blindada × inteligência emocional na mesa'
+    },
+    {
+      id: 'ceop-arrogante-no-pitch-d',
+      nome: 'Empresário arrogante no pitch',
+      emoji: '👑',
+      disc: 'D',
+      descricao: '"\'Eu sou o melhor do mercado\' — falo isso e a sala gela. Devia funcionar."',
+      contexto: 'Dono 42+ alto ego. Confunde autoconfiança com arrogância. Não usa storytelling, ataca direto. Clientes premium fogem.',
+      objecaoPivot: 'Autoconfiança × arrogância na percepção do outro'
+    },
+    {
+      id: 'ceop-impaciente-storytelling-d',
+      nome: 'CEO impaciente com storytelling',
+      emoji: '⏱️',
+      disc: 'D',
+      descricao: '"Storytelling? Não tenho tempo pra contar historinha. Quero o ponto."',
+      contexto: 'CEO 50+ velha guarda. Acha storytelling perda de tempo. Discurso dele não emociona, não converte. Nova geração não engaja.',
+      objecaoPivot: 'Direto-ao-ponto × engajamento da audiência'
+    },
+    // --- 9 I ---
+    {
+      id: 'ceop-influencer-sem-estrutura-i',
+      nome: 'Influencer sem estrutura',
+      emoji: '📱',
+      disc: 'I',
+      descricao: '"100k seguidores, mas quando converto pra live ou palestra paga, embolo tudo. Saio do tema."',
+      contexto: 'Influencer 28-35. Espontâneo no Reels, perdido em palco. Confia no carisma. Convidada pra evento, gravou ruim. Quer profissionalizar.',
+      objecaoPivot: 'Espontaneidade × estrutura para audiência paga'
+    },
+    {
+      id: 'ceop-palestrante-fala-demais-i',
+      nome: 'Palestrante que fala demais',
+      emoji: '🎤',
+      disc: 'I',
+      descricao: '"1h vira 2h, audiência sai antes do final. Eu me empolgo."',
+      contexto: 'Palestrante iniciante 32+. Carisma, mas sem objetivo claro. Sem AIDA, sem fechamento. Repete histórias. Nota baixa nas avaliações.',
+      objecaoPivot: 'Empolgação × foco / objetivo da fala'
+    },
+    {
+      id: 'ceop-vendedora-carisma-baixa-conv-i',
+      nome: 'Vendedora carisma sem conversão',
+      emoji: '☀️',
+      disc: 'I',
+      descricao: '"Cliente AMA conversar comigo. Mas não fecha. Sou \'a amiga\', não \'a vendedora\'."',
+      contexto: 'Vendedora 30+, relacional, brilhante no rapport. Não pede o pedido. Foge do fechamento. Cota não bate.',
+      objecaoPivot: 'Simpatia × call-to-action / fechamento'
+    },
+    {
+      id: 'ceop-coach-improvisa-i',
+      nome: 'Coach que improvisa toda aula',
+      emoji: '🎲',
+      disc: 'I',
+      descricao: '"Subo no palco e flui. Mas o resultado é inconsistente — uns dias arraso, outros morro."',
+      contexto: 'Coach 35+ palestrante ocasional. Confia no improviso. Sem retórica preparada. Sem estrutura. Aluno premium pediu reembolso.',
+      objecaoPivot: 'Improviso brilhante × consistência profissional'
+    },
+    {
+      id: 'ceop-diretora-marketing-dispersa-i',
+      nome: 'Diretora de marketing que dispersa',
+      emoji: '🌪️',
+      disc: 'I',
+      descricao: '"Tenho 10 ideias por reunião. Time sai confuso. CEO disse \'foca uma\'."',
+      contexto: 'Diretora 38+ criativa, agitada. Apresentação vira tempestade. Sem priorização verbal. Stakeholders perdidos. Briga com clareza.',
+      objecaoPivot: 'Criatividade × clareza estrutural na fala'
+    },
+    {
+      id: 'ceop-networker-superficial-i',
+      nome: 'Networker superficial',
+      emoji: '🤝',
+      disc: 'I',
+      descricao: '"Conheço todo mundo, ninguém me lembra. Cartão de visita não gera negócio."',
+      contexto: 'Profissional 33+ frequenta eventos, troca contato em massa. Discurso de elevador genérico. Sem posicionamento claro. ROI zero.',
+      objecaoPivot: 'Quantidade de contato × marketing pessoal posicionado'
+    },
+    {
+      id: 'ceop-empresaria-boa-ideia-confusa-i',
+      nome: 'Empresária com ideia confusa',
+      emoji: '🌈',
+      disc: 'I',
+      descricao: '"Meu produto é incrível, mas quando explico, todo mundo faz cara de \'hã?\'"',
+      contexto: 'Founder 32+ produto inovador. Pitch confuso. Mistura 3 propostas de valor. Cliente desiste. Sócio pede pra simplificar.',
+      objecaoPivot: 'Riqueza de conceito × simplicidade da mensagem'
+    },
+    {
+      id: 'ceop-simpatico-inconvincente-i',
+      nome: 'Simpático mas pouco convincente',
+      emoji: '🌻',
+      disc: 'I',
+      descricao: '"Sou querido por todos. Persuadir é outro nível — \'que fofo o Pedro\', mas não compram."',
+      contexto: 'Profissional 30+ campeão de simpatia, perdedor em persuasão. Sem gatilhos mentais. Sem autoridade percebida. Carreira estagnada.',
+      objecaoPivot: 'Simpatia × autoridade técnica percebida'
+    },
+    {
+      id: 'ceop-apresentadora-distrai-i',
+      nome: 'Apresentadora que distrai com excessos',
+      emoji: '🎪',
+      disc: 'I',
+      descricao: '"Slides cheios, gestos demais, piada toda hora. Saí do evento e ninguém lembra do meu ponto."',
+      contexto: 'Apresentadora 30+ animadíssima. Excessos canibalizam mensagem. Audiência diverte, não converte. Patrocinador questiona ROI.',
+      objecaoPivot: 'Energia × economia / foco no recado'
+    },
+    // --- 9 S (já tem 2: timido-cronico-s, lider-hierarquico-s) ---
+    {
+      id: 'ceop-promovido-com-vergonha-s',
+      nome: 'Promovido com vergonha de liderar',
+      emoji: '😳',
+      disc: 'S',
+      descricao: '"Virei gestor, agora preciso liderar reuniões. Não consigo abrir a boca primeiro."',
+      contexto: 'Analista 30+ promovido. Excelente técnico, sem voz de líder. Equipe não respeita ainda. Time anterior dele agora é par.',
+      objecaoPivot: 'Habilidade técnica reconhecida × autoridade nova'
+    },
+    {
+      id: 'ceop-gerente-conciliador-sem-voz-s',
+      nome: 'Gerente conciliador sem voz',
+      emoji: '🕊️',
+      disc: 'S',
+      descricao: '"Sou o paz-e-amor do board. Concordo com todo mundo. Não defendo minha área."',
+      contexto: 'Gerente 38+ harmonizador. Não confronta. Sua equipe perde budget. Diretor questionou. Cargo em risco.',
+      objecaoPivot: 'Harmonia × defesa estratégica do território'
+    },
+    {
+      id: 'ceop-professora-treme-publico-s',
+      nome: 'Professora que treme em público',
+      emoji: '📚',
+      disc: 'S',
+      descricao: '"Sala de 20 alunos, tranquilo. Auditório de 200? Tremo, esqueço, suo frio."',
+      contexto: 'Professora 35+ dá aula bem em sala fechada. Convidada pra congresso, recusou 2x. Quer aceitar próximo, não sabe como.',
+      objecaoPivot: 'Conforto em ambiente íntimo × medo de grande público'
+    },
+    {
+      id: 'ceop-coach-inseguro-cobrar-s',
+      nome: 'Coach inseguro de cobrar premium',
+      emoji: '💸',
+      disc: 'S',
+      descricao: '"Cobro R$ 200 a sessão. Tô há 5 anos assim. Sei que vale mais. Não consigo posicionar."',
+      contexto: 'Coach 40+ formado, bom em sessão. Marketing pessoal fraco. Não se vende como autoridade. Sem palestra, sem mídia.',
+      objecaoPivot: 'Capacidade técnica × posicionamento de autoridade'
+    },
+    {
+      id: 'ceop-vendedor-perde-atencao-s',
+      nome: 'Vendedor que perde a atenção',
+      emoji: '🔇',
+      disc: 'S',
+      descricao: '"Cliente abre o WhatsApp no meio da minha apresentação. Sei que perdi ali."',
+      contexto: 'Vendedor 33+ B2B. Tom monótono. Sem ganchos, sem hook inicial. Apresentação previsível. Conversão abaixo da meta.',
+      objecaoPivot: 'Conteúdo correto × entrega que prende'
+    },
+    {
+      id: 'ceop-empresaria-delega-palestrar-s',
+      nome: 'Empresária que delega palestrar',
+      emoji: '🪑',
+      disc: 'S',
+      descricao: '"Sou dona, mas quem fala é o sócio. Ele brilha, eu me apago."',
+      contexto: 'Sócia 40+. Co-fundadora. Por timidez, sócio virou rosto da marca. Sente que perdeu protagonismo. Quer voltar mas tem medo.',
+      objecaoPivot: 'Conforto na sombra × resgate de protagonismo'
+    },
+    {
+      id: 'ceop-evita-reunioes-s',
+      nome: 'Tímida que evita reuniões grandes',
+      emoji: '🚪',
+      disc: 'S',
+      descricao: '"Quando vejo reunião com 10+ pessoas, dou jeito de não ir. Mando relatório."',
+      contexto: 'Profissional 32+ sênior. Evita exposição. Cargo trava: chefia exige presença. Perdeu promoção 2x por \'não aparecer\'.',
+      objecaoPivot: 'Evitação como mecanismo × custo de carreira'
+    },
+    {
+      id: 'ceop-pacificadora-foge-conflito-s',
+      nome: 'Pacificadora que foge do conflito',
+      emoji: '☮️',
+      disc: 'S',
+      descricao: '"Discussão acalorada me paralisa. Não sei rebater. Engulo, depois choro."',
+      contexto: 'Profissional 36+. Inteligente, mas paralisa em embate. Negociações difíceis viram derrota. Saúde mental afetada.',
+      objecaoPivot: 'Aversão ao conflito × ferramentas de resposta firme'
+    },
+    {
+      id: 'ceop-treinadora-se-desculpa-s',
+      nome: 'Treinadora que se desculpa demais',
+      emoji: '🙏',
+      disc: 'S',
+      descricao: '"\'Desculpa, talvez eu esteja errada, mas...\' — começo toda fala assim. Sei que enfraqueço."',
+      contexto: 'Treinadora interna 34+. Conhecimento sólido, comunicação humilde demais. Autoridade percebida baixa. Alunos questionam.',
+      objecaoPivot: 'Humildade exagerada × autoridade percebida'
+    },
+    // --- 10 C (já tem 1: introvertido-tecnico-c) ---
+    {
+      id: 'ceop-engenheiro-ninguem-entende-c',
+      nome: 'Engenheiro que ninguém entende',
+      emoji: '⚙️',
+      disc: 'C',
+      descricao: '"Explico o projeto técnico, sala fica em silêncio. Diretor pede pra \'simplificar\'. Acho que tô simplificando!"',
+      contexto: 'Engenheiro 40+. Domina conteúdo. Jargão excessivo. Comunicação só com pares técnicos. Cliente final desliga.',
+      objecaoPivot: 'Densidade técnica × tradução para leigo'
+    },
+    {
+      id: 'ceop-medica-conteudo-denso-c',
+      nome: 'Médica conteúdo denso e seco',
+      emoji: '🩺',
+      disc: 'C',
+      descricao: '"Em congresso, falo certo, dado correto, ninguém aplaude. Outro colega menos qualificado lota auditório."',
+      contexto: 'Médica 45+ pesquisadora. Conteúdo de alto nível, entrega monótona. Sem storytelling. Sem hook. Inveja produtiva.',
+      objecaoPivot: 'Qualidade do conteúdo × entrega que emociona'
+    },
+    {
+      id: 'ceop-analista-hiperprecisa-c',
+      nome: 'Analista hiperprecisa sem emoção',
+      emoji: '📊',
+      disc: 'C',
+      descricao: '"Apresento dados, board fica de cara virada. \'Cadê o impacto?\' — eu mostrei o número, não tá lá?"',
+      contexto: 'Analista 33+ excelente em planilha. Apresentação direta, sem narrativa de impacto. Board pede insights, recebe linhas.',
+      objecaoPivot: 'Precisão fria × narrativa de impacto'
+    },
+    {
+      id: 'ceop-advogada-juridiques-c',
+      nome: 'Advogada com juridiquês excessivo',
+      emoji: '⚖️',
+      disc: 'C',
+      descricao: '"Cliente sai da reunião e me liga dizendo \'eu não entendi nada\'. Sou clara, ele não."',
+      contexto: 'Advogada 38+ tributária. Tecnicismo extremo. Cliente PJ pediu para outro sócio assumir. Perda iminente de carteira.',
+      objecaoPivot: 'Rigor técnico × clareza para o cliente'
+    },
+    {
+      id: 'ceop-cfo-numeros-sem-narrativa-c',
+      nome: 'CFO números sem narrativa',
+      emoji: '🧮',
+      disc: 'C',
+      descricao: '"Levo o balanço ao conselho. Aprovam, mas ninguém se engaja na estratégia que eu defendo."',
+      contexto: 'CFO 50+. Dado intocável, voz seca. Conselho aprova por força do número, não compra a visão. Influência política baixa.',
+      objecaoPivot: 'Autoridade financeira × influência estratégica'
+    },
+    {
+      id: 'ceop-cientista-dados-sem-story-c',
+      nome: 'Cientista de dados sem storytelling',
+      emoji: '🤖',
+      disc: 'C',
+      descricao: '"Modelo top, mas não vendo o insight ao negócio. Marketing usa 10% do que entrego."',
+      contexto: 'Data scientist 32+. Tecnicamente brilhante. Entrega dashboard que ninguém abre. Faltou camada de história.',
+      objecaoPivot: 'Modelo técnico × narrativa de negócio acionável'
+    },
+    {
+      id: 'ceop-programador-pitch-frio-c',
+      nome: 'Programador com pitch frio',
+      emoji: '💻',
+      disc: 'C',
+      descricao: '"Tenho um SaaS, faço demo, cliente diz \'legal\' e some. Não emociono."',
+      contexto: 'Dev-founder 30+ SaaS B2B. Domina código. Demo técnica, sem dor do cliente. Sem AIDA. Sem urgência. CAC alto.',
+      objecaoPivot: 'Demo técnica × pitch centrado em dor'
+    },
+    {
+      id: 'ceop-auditor-desconfia-emocao-c',
+      nome: 'Auditor que desconfia de emoção',
+      emoji: '🕵️',
+      disc: 'C',
+      descricao: '"\'Apelo emocional\'? Pra mim é manipulação. Quero verdade nua, não show."',
+      contexto: 'Auditor 45+. Acha técnicas de oratória manipulação. Resiste a aprender. Mas perdeu promoção a sócio: \'falta presença\'.',
+      objecaoPivot: 'Ética de comunicação × técnica de persuasão legítima'
+    },
+    {
+      id: 'ceop-despreza-emocao-c',
+      nome: 'Especialista que despreza emoção',
+      emoji: '🧊',
+      disc: 'C',
+      descricao: '"Fato + razão deveria bastar. Se a pessoa não entende, problema dela. Não vou virar showman."',
+      contexto: 'Especialista 50+. Acha emoção \'inferior à lógica\'. Carreira parou, jovens menos qualificados ultrapassaram. Ego ferido.',
+      objecaoPivot: 'Lógica pura × emoção como veículo da lógica'
+    },
+    {
+      id: 'ceop-academico-monotono-c',
+      nome: 'Acadêmico monótono',
+      emoji: '🎓',
+      disc: 'C',
+      descricao: '"Aula minha é referência em conteúdo. Aluno dorme. Eu sei. Não sei o que fazer."',
+      contexto: 'Professor universitário 48+. Conteúdo de PhD, entrega de manual. Avaliação ruim em \'didática\'. Quer mudar.',
+      objecaoPivot: 'Excelência acadêmica × didática que prende'
+    },
+    // --- 6 mistos ---
+    {
+      id: 'ceop-misto-di-empresario-carismatico',
+      nome: 'Empresário carismático mas desorganizado (DI)',
+      emoji: '🎭',
+      disc: 'DI',
+      descricao: '"Tenho energia, fecho amizade rápido. Mas meu pitch é uma bagunça. Sócio reclama."',
+      contexto: 'Founder 38+ extrovertido, decisor. Pitch é \'show\' sem estrutura. Investidor curte ele, não compra a tese.',
+      objecaoPivot: 'Carisma × estrutura argumentativa'
+    },
+    {
+      id: 'ceop-misto-cs-perfeccionista-paralisada',
+      nome: 'Perfeccionista paralisada (CS)',
+      emoji: '🪨',
+      disc: 'CS',
+      descricao: '"Preparo 3 semanas pra uma palestra de 30min. Cancelo na véspera. \'Não tô pronta\'."',
+      contexto: 'Profissional 40+ obsessiva com detalhe. Medo + perfeccionismo = paralisia. Já cancelou 4 oportunidades. Carreira travada.',
+      objecaoPivot: 'Excelência exigida × ação imperfeita'
+    },
+    {
+      id: 'ceop-misto-dc-lider-duro-no-palco',
+      nome: 'Líder duro e seco no palco (DC)',
+      emoji: '🗿',
+      disc: 'DC',
+      descricao: '"Sou exigente, técnico, decisor. No palco, viro robô. Audiência respeita, não inspira."',
+      contexto: 'C-level 48+. Mistura D+C. Entrega impecável de conteúdo, zero conexão emocional. Equipe segue por medo, não por causa.',
+      objecaoPivot: 'Respeito imposto × inspiração que mobiliza'
+    },
+    {
+      id: 'ceop-misto-is-simpatica-nao-defende',
+      nome: 'Simpática que não defende ideia (IS)',
+      emoji: '🌸',
+      disc: 'IS',
+      descricao: '"Todos me amam. Mas se questionam minha ideia, eu recuo. Não sustento argumento."',
+      contexto: 'Profissional 33+ relacional. Bom rapport, baixo confronto. Em reunião difícil, capitula. Ideias dela acabam roubadas por colegas mais firmes.',
+      objecaoPivot: 'Aceitação social × sustentação do próprio ponto'
+    },
+    {
+      id: 'ceop-misto-sc-prepara-em-excesso',
+      nome: 'Cauteloso que se prepara demais (SC)',
+      emoji: '📖',
+      disc: 'SC',
+      descricao: '"Decoro slide a slide, palavra por palavra. Se sai da ordem, congelo."',
+      contexto: 'Profissional 37+ metódico, tímido. Prepara excessivo como defesa contra ansiedade. Quebra ao primeiro imprevisto. Frágil.',
+      objecaoPivot: 'Preparação rígida × resiliência improvisada'
+    },
+    {
+      id: 'ceop-misto-id-influencer-quer-monetizar',
+      nome: 'Influencer ambicioso quer monetizar (ID)',
+      emoji: '💰',
+      disc: 'ID',
+      descricao: '"Tenho audiência, energia, sonho. Quero virar palestrante de R$ 50k/cachê. Como chego lá?"',
+      contexto: 'Influencer 30+ extrovertido, ambicioso. Sabe vender no Reels, falha em palco corporativo. Quer faturar alto. Pressa.',
+      objecaoPivot: 'Carisma social × profissionalismo de palco corporativo'
     }
   ],
 
@@ -878,6 +1280,408 @@ window.FebracisData.PERFIS_TREINO_POR_PRODUTO = {
       descricao: '"Já leio, faço workshops, mentorias. Tô me virando bem sozinho."',
       contexto: 'Coach 35-45 confiante. Investe em educação avulsa. Resiste a formação estruturada. Direto.',
       objecaoPivot: 'Autossuficiência (já me viro sozinho)'
+    },
+    // ===== 44 perfis novos (calibrados ao PDF Master Coaching: 204h, 60h presencial em 5d, pré-req FCIS, FCU, crenças primais, ferramentas impacto emocional, contágio social, estratégias comerciais) =====
+    // --- 9 D ---
+    {
+      id: 'master-dobrar-ticket-d',
+      nome: 'Coach que quer dobrar ticket',
+      emoji: '💰',
+      disc: 'D',
+      descricao: '"Cobro R$ 1.500/sessão. Quero cobrar R$ 5k. Master me posiciona pra isso ou não?"',
+      contexto: 'Coach 40+ ambicioso, agressivo na cobrança. Quer salto direto, sem rodeio. Decisão de carteira pesada.',
+      objecaoPivot: 'ROI direto: vai justificar R$ 5k/sessão?'
+    },
+    {
+      id: 'master-escalar-empresa-d',
+      nome: 'Empresária-coach que quer escalar',
+      emoji: '🏗️',
+      disc: 'D',
+      descricao: '"Tenho 12 coaches sob minha marca. Quero virar uma escola. Master vira o pulo do gato?"',
+      contexto: 'Empresária-coach 42+, dona de operação. Decisão pragmática: alinha estratégia de escala? Direta.',
+      objecaoPivot: 'Posicionamento de marca x conteúdo individual'
+    },
+    {
+      id: 'master-competidor-metodos-d',
+      nome: 'Coach competidor de outros métodos',
+      emoji: '⚔️',
+      disc: 'D',
+      descricao: '"Fiz NLP, Quântico, Ontológico. Por que Master Coaching e não outro?"',
+      contexto: 'Coach 40+ multi-formado. Compara com mercado. Vai morder o argumento de Paulo Vieira como diferencial.',
+      objecaoPivot: 'Diferencial vs outros métodos consolidados'
+    },
+    {
+      id: 'master-pacotes-corporativos-d',
+      nome: 'Quer fechar pacotes corporativos',
+      emoji: '🏢',
+      disc: 'D',
+      descricao: '"Atendo 1:1 hoje. Quero fechar contratos B2B de R$ 100k+. Master abre essa porta?"',
+      contexto: 'Coach 38+ visão B2B. Quer monetizar com empresa, não com indivíduo. Argumenta com case prático.',
+      objecaoPivot: 'Credibilidade Master para venda corporativa'
+    },
+    {
+      id: 'master-impaciente-teoria-d',
+      nome: 'Coach impaciente com teoria',
+      emoji: '⚡',
+      disc: 'D',
+      descricao: '"204 horas? Quero ferramenta que eu use semana que vem. Não conteúdo de PhD."',
+      contexto: 'Coach 36+ prático. Resiste a carga horária. Quer ferramenta executável já. Sem floreio.',
+      objecaoPivot: 'Praticidade imediata × profundidade da carga 204h'
+    },
+    {
+      id: 'master-mentoria-pv-d',
+      nome: 'Quer mentoria 1:1 com Paulo Vieira',
+      emoji: '🎯',
+      disc: 'D',
+      descricao: '"Pago dobrado se for direto com o Paulo. Ele aparece, mentoreia ou é staff?"',
+      contexto: 'Coach 42+ ego forte, quer acesso à fonte. Foca em mentoria personalizada. Cético com estrutura padrão.',
+      objecaoPivot: 'Acesso personalizado ao Paulo Vieira'
+    },
+    {
+      id: 'master-quer-franquia-d',
+      nome: 'Coach que quer abrir franquia',
+      emoji: '🏛️',
+      disc: 'D',
+      descricao: '"Pretendo abrir uma franquia Febracis. Master me coloca no radar deles ou não?"',
+      contexto: 'Coach 45+ visão empresarial. Já estuda mercado de franquia. Decisão estratégica, não emocional.',
+      objecaoPivot: 'Master como porta de entrada para franquia Febracis'
+    },
+    {
+      id: 'master-roi-formacao-d',
+      nome: 'Quer rapidez no ROI da formação',
+      emoji: '📈',
+      disc: 'D',
+      descricao: '"Quanto tempo após o Master eu recupero o investimento? Em quantos coachees?"',
+      contexto: 'Coach 39+ calculista. Quer projeção numérica. Decide com base em payback claro.',
+      objecaoPivot: 'Payback financeiro projetado'
+    },
+    {
+      id: 'master-decisor-pragmatico-d',
+      nome: 'Decisor pragmático sem firula',
+      emoji: '🪓',
+      disc: 'D',
+      descricao: '"Sem narrativa. Me dá grade, instrutor, valor e prazo. Decido em 24h."',
+      contexto: 'Coach 47+ executivo. Não tolera pitch emocional. Quer ficha técnica. Direto ao ponto.',
+      objecaoPivot: 'Decisão por dado, não por emoção'
+    },
+    // --- 10 I ---
+    {
+      id: 'master-influencer-low-ticket-i',
+      nome: 'Coach influencer com low ticket',
+      emoji: '📲',
+      disc: 'I',
+      descricao: '"Tenho 50k seguidores, mas cobro R$ 300/sessão. Master me posiciona como autoridade?"',
+      contexto: 'Coach 32+ super sociável, comunica bem. Quer subir de patamar de autoridade. Emocional, decide rápido.',
+      objecaoPivot: 'Posicionamento de autoridade × volume social'
+    },
+    {
+      id: 'master-quer-palco-i',
+      nome: 'Quer brilhar em palco',
+      emoji: '🎤',
+      disc: 'I',
+      descricao: '"Sonho em palestrar pros 5 mil que se formam. Master me coloca no palco?"',
+      contexto: 'Coach 34+ visibilidade. Sonhador, ambicioso de holofote. Decide pela emoção do espetáculo.',
+      objecaoPivot: 'Trajetória de palco a partir do Master'
+    },
+    {
+      id: 'master-social-media-driven-i',
+      nome: 'Coach social-media-driven',
+      emoji: '📸',
+      disc: 'I',
+      descricao: '"Master me dá conteúdo pra postar todo dia? Preciso alimentar o feed!"',
+      contexto: 'Coach 30+ marketeira nata. Vê tudo como conteúdo. Decisão emocional com lógica de exposição.',
+      objecaoPivot: 'Material de conteúdo gerado pela formação'
+    },
+    {
+      id: 'master-atende-celebs-i',
+      nome: 'Quer atender celebridades',
+      emoji: '🌟',
+      disc: 'I',
+      descricao: '"Sonho em atender artista, influencer. Master me abre essa porta de high-end?"',
+      contexto: 'Coach 33+ glamourosa, fascinada por status. Decisão pela imagem premium. Emocional.',
+      objecaoPivot: 'Acesso a mercado high-end (celebridades)'
+    },
+    {
+      id: 'master-lifestyle-coach-i',
+      nome: 'Coach de lifestyle',
+      emoji: '🌴',
+      disc: 'I',
+      descricao: '"Meu nicho é estilo de vida, viagens, abundância. Master combina com isso?"',
+      contexto: 'Coach 30+ super expressiva. Trabalha com imagem leve, aspiracional. Decide se cabe no branding.',
+      objecaoPivot: 'Encaixe do conteúdo Master no nicho lifestyle'
+    },
+    {
+      id: 'master-entusiasmo-sem-metodo-i',
+      nome: 'Pelo entusiasmo, sem método',
+      emoji: '🎉',
+      disc: 'I',
+      descricao: '"Eu AMEI a FCIS! Master é o próximo passo, né? Quero tudo!"',
+      contexto: 'Coach 31+ super animada. Decide pela paixão. Pouco analisa custo, prazo, carga.',
+      objecaoPivot: 'Maturidade da decisão (não comprar só pela emoção)'
+    },
+    {
+      id: 'master-networking-premium-i',
+      nome: 'Quer networking premium',
+      emoji: '🤝',
+      disc: 'I',
+      descricao: '"Que tipo de pessoa faz Master? Quero estar com gente do meu nível ou acima."',
+      contexto: 'Coach 35+ relacional. Pesa muito quem estará na turma. Decisão pela rede que vai entrar.',
+      objecaoPivot: 'Qualidade da rede da turma'
+    },
+    {
+      id: 'master-internacional-sonho-i',
+      nome: 'Sonha com mercado internacional',
+      emoji: '✈️',
+      disc: 'I',
+      descricao: '"FCU me valida pra atender em Lisboa, Boston? Quero atender em inglês."',
+      contexto: 'Coach 34+ romântica do mercado global. Crê na credencial. Decisão emocional + projeção de imagem.',
+      objecaoPivot: 'Aplicabilidade real da FCU em mercados estrangeiros'
+    },
+    {
+      id: 'master-turma-elite-i',
+      nome: 'Quer fazer parte da turma de elite',
+      emoji: '👑',
+      disc: 'I',
+      descricao: '"Master Coach soa premium! Quero o título. Onde assino?"',
+      contexto: 'Coach 32+ status-driven. Pesa muito a percepção social do título. Decide rápido pela imagem.',
+      objecaoPivot: 'Valor real × valor de imagem do título'
+    },
+    {
+      id: 'master-curte-status-i',
+      nome: 'Curte status de "Master"',
+      emoji: '🏆',
+      disc: 'I',
+      descricao: '"Quero entregar cartão escrito \'Master Coach Certificado FCU\'. Soa autoridade."',
+      contexto: 'Coach 36+ marketing-driven. Foco em branding pessoal. Decisão por reforço de autoridade percebida.',
+      objecaoPivot: 'Branding pessoal pós-Master'
+    },
+    // --- 10 S (já tem 1: coach-estagnado-s) ---
+    {
+      id: 'master-inseguro-premium-s',
+      nome: 'Inseguro de cobrar premium',
+      emoji: '🪶',
+      disc: 'S',
+      descricao: '"Sei que vale mais, mas cobrar R$ 3k de uma sessão me deixa desconfortável."',
+      contexto: 'Coach 38+ humilde. Conforto com R$ 500-800. Trava ao subir. Master vê como ferramenta de confiança interna.',
+      objecaoPivot: 'Autoimagem × preço premium'
+    },
+    {
+      id: 'master-ama-sessao-teme-escala-s',
+      nome: 'Ama sessão, teme escala',
+      emoji: '🤲',
+      disc: 'S',
+      descricao: '"Adoro atender 1:1. Não quero virar palestrante de massa. Master me empurra pra isso?"',
+      contexto: 'Coach 40+ vocação relacional. Recusa megaformatos. Quer aprofundar 1:1, não escalar.',
+      objecaoPivot: 'Aprofundamento individual × pressão para escalar'
+    },
+    {
+      id: 'master-evita-confronto-s',
+      nome: 'Pacificadora que evita confronto',
+      emoji: '☮️',
+      disc: 'S',
+      descricao: '"Coachee chora, eu acompanho. Mas confrontar crença primal? Eu travo."',
+      contexto: 'Coach 36+ acolhedora. Forte em escuta, fraca em confrontação. Master ensina "ferramentas de impacto emocional" que ela teme.',
+      objecaoPivot: 'Acolhimento × confrontação técnica das crenças primais'
+    },
+    {
+      id: 'master-recem-fcis-medo-s',
+      nome: 'Recém-formada FCIS com medo',
+      emoji: '🐣',
+      disc: 'S',
+      descricao: '"Acabei a FCIS faz 3 meses. Atendi 5 coachees. Já é hora do Master?"',
+      contexto: 'Coach 32+ pouca rodagem. Insegurança com volume baixo de experiência. Cautelosa.',
+      objecaoPivot: 'Momento certo (recém-formada × Master)'
+    },
+    {
+      id: 'master-mae-coach-familia-s',
+      nome: 'Mãe-coach equilibrando família',
+      emoji: '👶',
+      disc: 'S',
+      descricao: '"Tenho 2 filhos pequenos. 5 dias presencial fora me preocupa. Tem flex?"',
+      contexto: 'Coach 35+ mãe. Decisão envolve logística familiar. Sensível ao tempo fora. Decisão lenta.',
+      objecaoPivot: 'Logística familiar × imersão presencial 5 dias'
+    },
+    {
+      id: 'master-humilde-cobra-pouco-s',
+      nome: 'Humilde demais, cobra pouco',
+      emoji: '🌸',
+      disc: 'S',
+      descricao: '"Cobro R$ 200 a sessão. Sei que tá baixo, mas não quero parecer aproveitadora."',
+      contexto: 'Coach 40+ formada há 4 anos. Sub-precifica. Crença de "não merecer cobrar muito". Inibida.',
+      objecaoPivot: 'Crença limitante de preço × valor real entregue'
+    },
+    {
+      id: 'master-cauteloso-investimento-s',
+      nome: 'Cauteloso com investimento 204h',
+      emoji: '🐢',
+      disc: 'S',
+      descricao: '"204 horas é muita coisa. Preciso pensar com calma se cabe na minha rotina."',
+      contexto: 'Coach 42+ ponderado. Decisão demorada. Quer simular cronograma. Cauteloso com compromisso longo.',
+      objecaoPivot: 'Encaixe da carga horária total na rotina atual'
+    },
+    {
+      id: 'master-conforto-rotina-s',
+      nome: 'Conforto na rotina atual',
+      emoji: '🛋️',
+      disc: 'S',
+      descricao: '"Atendo 8 coachees por mês, vivo bem. Por que mexer no que tá funcionando?"',
+      contexto: 'Coach 45+ estabilizado. Status quo confortável. Resistente a sair da zona de conforto.',
+      objecaoPivot: 'Zona de conforto × potencial não realizado'
+    },
+    {
+      id: 'master-medo-projeto-pratico-s',
+      nome: 'Medo do projeto prático',
+      emoji: '📋',
+      disc: 'S',
+      descricao: '"66 horas de projeto prático? Tenho medo de não conseguir entregar. E se falhar?"',
+      contexto: 'Coach 37+ perfeccionista ansiosa. Medo de exposição do trabalho. Crença de "não ser boa o bastante".',
+      objecaoPivot: 'Crença de incapacidade × estrutura de apoio do projeto'
+    },
+    {
+      id: 'master-medo-emocoes-profundas-s',
+      nome: 'Insegura pra tocar emoções profundas',
+      emoji: '🌊',
+      disc: 'S',
+      descricao: '"Ferramentas de \'forte impacto emocional\' me assustam. E se eu travar o coachee?"',
+      contexto: 'Coach 36+ acolhedora. Receia ativar dores profundas sem saber lidar. Quer mais base antes.',
+      objecaoPivot: 'Segurança técnica para mergulhar em emoções profundas'
+    },
+    // --- 9 C (já tem 2: cetico-volume-c, internacional-c) ---
+    {
+      id: 'master-documenta-sessao-c',
+      nome: 'Coach técnico que documenta tudo',
+      emoji: '📝',
+      disc: 'C',
+      descricao: '"Tenho 200 sessões documentadas em planilha. O Master tem metodologia documentada formal?"',
+      contexto: 'Coach 40+ metódico. Pede protocolo, manual, framework. Quer base científica/processual clara.',
+      objecaoPivot: 'Rigor metodológico documentado da formação'
+    },
+    {
+      id: 'master-entende-antes-comprar-c',
+      nome: 'Quer entender o método antes',
+      emoji: '🔍',
+      disc: 'C',
+      descricao: '"Antes de pagar, quero saber a base teórica. Crenças primais? De onde vem essa nomenclatura?"',
+      contexto: 'Coach 38+ pesquisador. Cético com termos próprios. Pede referências bibliográficas. Lento.',
+      objecaoPivot: 'Validação teórica da nomenclatura "crenças primais"'
+    },
+    {
+      id: 'master-pesquisa-academica-c',
+      nome: 'Pesquisador de validades acadêmicas',
+      emoji: '🎓',
+      disc: 'C',
+      descricao: '"FCU é uma faculdade? Tem acreditação americana? Não quero diploma vazio."',
+      contexto: 'Coach 42+ exigente em credencial. Investiga universidade. Cético com selos sem peer-review.',
+      objecaoPivot: 'Validade acadêmica formal da FCU'
+    },
+    {
+      id: 'master-cetico-ferramentas-c',
+      nome: 'Cético de "ferramentas emocionais"',
+      emoji: '🧪',
+      disc: 'C',
+      descricao: '"\'Forte impacto emocional\' soa subjetivo. Onde tá a evidência empírica de eficácia?"',
+      contexto: 'Coach 45+ background psicólogo/cientista. Resiste a linguagem motivacional. Quer estudo de caso, dado.',
+      objecaoPivot: 'Evidência empírica × marketing emocional'
+    },
+    {
+      id: 'master-custo-beneficio-rigoroso-c',
+      nome: 'Analisa custo-benefício rigoroso',
+      emoji: '🧮',
+      disc: 'C',
+      descricao: '"R$ X por 204h dá R$ Y/hora. Comparado com pós-grad em Psicologia Positiva, custa mais."',
+      contexto: 'Coach 41+ analítico. Compara com alternativas. Quer tabela comparativa. Decide com planilha.',
+      objecaoPivot: 'Custo/hora × concorrência (pós-grad, MBA, etc)'
+    },
+    {
+      id: 'master-curriculo-instrutores-c',
+      nome: 'Quer saber currículo dos instrutores',
+      emoji: '🏛️',
+      disc: 'C',
+      descricao: '"Quem dá aula nas 60h presenciais? CV de cada um? Paulo dá quantas horas mesmo?"',
+      contexto: 'Coach 43+ rigoroso com origem do conteúdo. Pede ficha técnica de cada instrutor. Lento.',
+      objecaoPivot: 'Qualificação técnica do corpo docente'
+    },
+    {
+      id: 'master-engenheiro-coach-c',
+      nome: 'Coach com background técnico',
+      emoji: '🔧',
+      disc: 'C',
+      descricao: '"Sou engenheiro virou coach. Preciso de estrutura, processo, framework. Master tem isso?"',
+      contexto: 'Coach 39+ exata de origem. Resiste a "intuição como ferramenta". Pede sistematização.',
+      objecaoPivot: 'Estrutura sistemática × intuição/feeling'
+    },
+    {
+      id: 'master-auditor-conteudo-c',
+      nome: 'Auditor de cada conteúdo',
+      emoji: '🕵️',
+      disc: 'C',
+      descricao: '"Ementa detalhada por hora? Bibliografia? Avaliações? Quero ver antes."',
+      contexto: 'Coach 44+ exigente em transparência. Compara com programas universitários. Lento, minucioso.',
+      objecaoPivot: 'Granularidade da ementa × marketing genérico'
+    },
+    {
+      id: 'master-prova-metricas-c',
+      nome: 'Quer prova de eficácia em métricas',
+      emoji: '📊',
+      disc: 'C',
+      descricao: '"Master coaches que passaram: faturamento médio antes/depois? NPS? Retenção de coachees?"',
+      contexto: 'Coach 38+ data-driven. Pede dados longitudinais. Resiste a depoimento isolado. Frio.',
+      objecaoPivot: 'Dados quantitativos de impacto pós-formação'
+    },
+    // --- 6 mistos ---
+    {
+      id: 'master-misto-di-ambicioso-carismatico',
+      nome: 'Ambicioso e carismático (DI)',
+      emoji: '🎯',
+      disc: 'DI',
+      descricao: '"Tenho ambição, energia e visibilidade. Master me empurra pro próximo nível agora!"',
+      contexto: 'Coach 35+ híbrido D+I. Decide rápido, vibrante. Quer crescer com palco e dinheiro juntos. Impaciente, vendável.',
+      objecaoPivot: 'Velocidade da decisão × profundidade da escolha'
+    },
+    {
+      id: 'master-misto-cs-perfeccionista-cauteloso',
+      nome: 'Perfeccionista cauteloso (CS)',
+      emoji: '🧊',
+      disc: 'CS',
+      descricao: '"Quero perfeição na entrega ao coachee. Preciso checar cada detalhe do Master antes de pisar lá."',
+      contexto: 'Coach 40+ C+S. Lento, exigente, prudente. Vai pedir muita informação antes. Pondera com calma.',
+      objecaoPivot: 'Decisão segura × tempo de avaliação prolongado'
+    },
+    {
+      id: 'master-misto-dc-tecnico-decisor',
+      nome: 'Decisor técnico (DC)',
+      emoji: '⚙️',
+      disc: 'DC',
+      descricao: '"Mostra o método, mostra o ROI, mostra o currículo. Em 48h decido."',
+      contexto: 'Coach 42+ híbrido D+C. Quer dado E velocidade. Sem rodeio emocional. Decisão por evidência rápida.',
+      objecaoPivot: 'Combinação de rigor técnico × prazo curto de decisão'
+    },
+    {
+      id: 'master-misto-is-simpatica-insegura',
+      nome: 'Simpática mas insegura (IS)',
+      emoji: '🌷',
+      disc: 'IS',
+      descricao: '"Adorei a ideia! Mas será que dou conta? Tô meio insegura, sabe?"',
+      contexto: 'Coach 34+ I+S. Quer comprar pela emoção, freia pela insegurança. Indecisa. Precisa de acolhimento + segurança.',
+      objecaoPivot: 'Empolgação inicial × medo de não conseguir'
+    },
+    {
+      id: 'master-misto-sc-conservador-analitico',
+      nome: 'Conservador analítico (SC)',
+      emoji: '🏰',
+      disc: 'SC',
+      descricao: '"Não quero arriscar. Quero ver a estatística de quem terminou e tá bem antes de decidir."',
+      contexto: 'Coach 45+ S+C. Lento, prudente, dado + segurança. Aversão a risco. Quer certeza antes de mover.',
+      objecaoPivot: 'Tolerância ao risco × evidências de sucesso passado'
+    },
+    {
+      id: 'master-misto-id-influencer-pragmatico',
+      nome: 'Influencer pragmático (ID)',
+      emoji: '🚀',
+      disc: 'ID',
+      descricao: '"Tenho audiência, ambição e quero retorno. Master converte minha visibilidade em receita?"',
+      contexto: 'Coach 32+ I+D. Visibilidade + foco em resultado. Quer monetizar agora. Vibrante e impaciente.',
+      objecaoPivot: 'Conversão de audiência em receita pós-Master'
     }
   ],
 
@@ -938,6 +1742,408 @@ window.FebracisData.PERFIS_TREINO_POR_PRODUTO = {
       descricao: '"Florida Christian — é cristão? Tem prática espiritual? Tô em dúvida."',
       contexto: 'Pessoa 40-55 religiosa (cristã ou outra fé). Cauteloso, valores tradicionais. Quer confirmar que CIS não fere crença.',
       objecaoPivot: 'Aderência aos valores religiosos'
+    },
+    // ===== 44 perfis novos (calibrados ao PDF CIS: 4 dias / 60h imersão, modalidades Presencial e Global, +1M treinadas, 5 pilares — Finanças, Business/Carreira, Performance Emocional, Saúde, Relacionamento — reprogramação crenças, EAI, autossabotagem, empoderamento da mulher, endossos Cury/Shinyashiki/Suzuki/Zé Roberto) =====
+    // --- 9 D ---
+    {
+      id: 'cis-ceo-burnout-d',
+      nome: 'CEO workaholic em burnout',
+      emoji: '🔥',
+      disc: 'D',
+      descricao: '"Faturo R$ 2 mi/mês e tô com TOC, ansiedade e crise de pânico. Não sustento mais."',
+      contexto: 'CEO 45+ alta performance, exausto. Recusa terapia ("perda de tempo"). Procura solução rápida e intensiva. Decisor.',
+      objecaoPivot: 'Performance × custo emocional invisível'
+    },
+    {
+      id: 'cis-faturar-10x-d',
+      nome: 'Empresário que quer faturar 10x',
+      emoji: '🚀',
+      disc: 'D',
+      descricao: '"Vocês falam em 2 a 10x. Quero o 10x. Em quanto tempo após o CIS?"',
+      contexto: 'Empresário 38+ agressivo, foca no payback. Quer projeção de receita. Cético com "transformação" sem número.',
+      objecaoPivot: 'Promessa numérica × prazo realista'
+    },
+    {
+      id: 'cis-perde-familia-d',
+      nome: 'Decisor que perde família',
+      emoji: '⚖️',
+      disc: 'D',
+      descricao: '"Empresa cresceu, casamento desmoronou. Filhos me veem como caixa eletrônico. Cadê o reset?"',
+      contexto: 'Empresário 42+. Sucesso financeiro, falência relacional. Esposa pediu separação. Está abalado mas guarda. Direto.',
+      objecaoPivot: 'Vitória profissional × derrota familiar'
+    },
+    {
+      id: 'cis-mulher-clima-casa-d',
+      nome: 'Empresária com clima ruim em casa',
+      emoji: '🏠',
+      disc: 'D',
+      descricao: '"Sou dona, comando 40 pessoas. Em casa, marido fugiu, filha não fala comigo. Algo tá errado."',
+      contexto: 'Empresária 40+ assertiva. Replica modo gestão na família e quebra relação. Não se vê como problema. Cautelosa em admitir.',
+      objecaoPivot: 'Liderança no trabalho × liderança em casa'
+    },
+    {
+      id: 'cis-duro-autossabotagem-d',
+      nome: 'Líder durão com autossabotagem',
+      emoji: '💣',
+      disc: 'D',
+      descricao: '"Toda vez que chego perto do R$ 1M, eu sabato. Algo trava. Não entendo."',
+      contexto: 'Líder 39+ ambicioso. Padrão repetitivo de autossabotagem invisível. Crença limitante de teto. Cético com "crenças primais".',
+      objecaoPivot: 'Padrão de teto invisível × consciência da crença'
+    },
+    {
+      id: 'cis-competitiva-nao-delega-d',
+      nome: 'Empreendedora que não delega',
+      emoji: '🎯',
+      disc: 'D',
+      descricao: '"Faço tudo. Equipe é incompetente. Trabalho 14h por dia. Não aguento mais, mas não confio em ninguém."',
+      contexto: 'Empresária 36+ controle absoluto. Identifica "incompetência" como externa. EAI: cresceu sem confiança em ninguém. Decisão dura.',
+      objecaoPivot: 'Controle como defesa × custo da exaustão'
+    },
+    {
+      id: 'cis-vicio-alcool-d',
+      nome: 'Diretor com vícios emocionais',
+      emoji: '🥃',
+      disc: 'D',
+      descricao: '"Bebo todo dia. Sei que é demais. Em reunião, performance top. Em casa, desabamento."',
+      contexto: 'Diretor 48+ vício invisível. Performance externa preserva, dentro está doendo. Admite com dificuldade. Cético.',
+      objecaoPivot: 'Performance pública × dor privada via vício'
+    },
+    {
+      id: 'cis-filhos-rebeldes-d',
+      nome: 'Empresário com filhos rebeldes',
+      emoji: '👨‍👧',
+      disc: 'D',
+      descricao: '"Banco da família com R$ 8 mil de mesada. Filhos não me respeitam. \'Falo grosso\' e perco mais ainda."',
+      contexto: 'Empresário 50+. Provedor. Comunicação só por imposição. Filhos 18-25 com problemas. Família em conflito.',
+      objecaoPivot: 'Provedor financeiro × autoridade relacional'
+    },
+    {
+      id: 'cis-empoderamento-d',
+      nome: 'Mulher empresária quer empoderamento',
+      emoji: '👑',
+      disc: 'D',
+      descricao: '"Cresci sendo \'a forte\'. Mas pago caro: sou só, brava, sem rede. Quero recalibrar."',
+      contexto: 'Empresária 42+ "mulher de couraça". Cresceu provando que aguenta. Está cansada do papel. Decisão de mudança.',
+      objecaoPivot: 'Força performática × empoderamento real (sem couraça)'
+    },
+    // --- 10 I ---
+    {
+      id: 'cis-influencer-depressao-i',
+      nome: 'Influencer com depressão velada',
+      emoji: '😶',
+      disc: 'I',
+      descricao: '"Posto stories felizes todo dia. Desligo o celular e choro sozinha. Ninguém sabe."',
+      contexto: 'Influencer 30+ vida pública alegre, vida privada deprimida. Vergonha de pedir ajuda. Decisão emocional, busca anonimato.',
+      objecaoPivot: 'Imagem pública × verdade privada'
+    },
+    {
+      id: 'cis-artista-sem-inspiracao-i',
+      nome: 'Artista sem inspiração',
+      emoji: '🎨',
+      disc: 'I',
+      descricao: '"Fui criativo, comunicativo, brilhante. Hoje, vazio. Não escrevo, não componho, não me reconheço."',
+      contexto: 'Artista 38+ em bloqueio criativo. Crise de identidade. Crença de "perdi o dom". Decide pela emoção do reencontro.',
+      objecaoPivot: 'Bloqueio criativo × reconexão com identidade'
+    },
+    {
+      id: 'cis-vendedora-solitaria-i',
+      nome: 'Vendedora carismática solitária',
+      emoji: '🌙',
+      disc: 'I',
+      descricao: '"Falo com 50 clientes por dia. À noite, ninguém me chama. Carismática só na rua."',
+      contexto: 'Vendedora 33+ extrovertida fora, vazia dentro. Solidão crônica. Decide emocionalmente, busca pertencimento.',
+      objecaoPivot: 'Calor social profissional × solidão pessoal'
+    },
+    {
+      id: 'cis-global-pacote-i',
+      nome: 'Quer modalidade Global (acessibilidade)',
+      emoji: '🌐',
+      disc: 'I',
+      descricao: '"Não tenho como viajar. Esse Global é a mesma coisa do presencial mesmo?"',
+      contexto: 'Pessoa 32+ sociável, custo-consciente. Procura modalidade flexível. Decisão emocional ancorada em equivalência percebida.',
+      objecaoPivot: 'Equivalência real entre Global e Presencial'
+    },
+    {
+      id: 'cis-busca-proposito-i',
+      nome: 'Mulher 30+ buscando propósito',
+      emoji: '🦋',
+      disc: 'I',
+      descricao: '"Tô bem profissionalmente, mas é tipo \'pra quê?\'. Falta um sentido maior."',
+      contexto: 'Profissional 32+ realizada externamente. Crise existencial silenciosa. Decisão emocional. Quer conexão profunda.',
+      objecaoPivot: 'Sucesso material × propósito existencial'
+    },
+    {
+      id: 'cis-ouviu-augusto-cury-i',
+      nome: 'Ouviu Augusto Cury falar do CIS',
+      emoji: '📣',
+      disc: 'I',
+      descricao: '"Vi Cury endossando o Paulo. Se ele aprova, vale. Onde compro?"',
+      contexto: 'Pessoa 40+ influenciada por autoridades. Decisão por endosso, não análise. Sociável e rápida. Confia em referência.',
+      objecaoPivot: 'Decisão por endosso × análise pessoal de fit'
+    },
+    {
+      id: 'cis-extrovertida-exausta-i',
+      nome: 'Empreendedora extrovertida exausta',
+      emoji: '🔋',
+      disc: 'I',
+      descricao: '"Toda hora dou energia. Workshops, eventos, lives. Tô com a bateria a 5%. Preciso reabastecer."',
+      contexto: 'Empreendedora 36+ figura pública. Doa-se demais. Não sabe receber. Decide pela emoção do alívio.',
+      objecaoPivot: 'Dar sem receber × economia emocional'
+    },
+    {
+      id: 'cis-buscadora-eventos-i',
+      nome: 'Buscadora de eventos transformadores',
+      emoji: '🎪',
+      disc: 'I',
+      descricao: '"Fiz Tony Robbins, Bert Hellinger, Anthony de Mello. Quero a próxima imersão. CIS é a vez?"',
+      contexto: 'Pessoa 38+ viciada em workshops. Pula de método em método. Emocional. Pouco aprofunda. Risco de "mais um".',
+      objecaoPivot: 'Coleção de imersões × aprofundamento real'
+    },
+    {
+      id: 'cis-animadora-tristeza-i',
+      nome: 'Animadora com tristeza disfarçada',
+      emoji: '🎭',
+      disc: 'I',
+      descricao: '"Sou a alegria do grupo. Em casa, choro toda noite. Ninguém pode saber."',
+      contexto: 'Profissional 31+ máscara social. Carrega dor invisível. Função social: ser alegre. Decisão emocional, busca cura.',
+      objecaoPivot: 'Performance da alegria × dor real escondida'
+    },
+    {
+      id: 'cis-energia-certa-i',
+      nome: 'Influencer que quer "energia certa"',
+      emoji: '✨',
+      disc: 'I',
+      descricao: '"Tenho audiência mas sinto que tô atraindo gente errada. Preciso reposicionar minha energia."',
+      contexto: 'Influencer 30+ linguagem espiritualizada. Decisão emocional + branding. Quer rebrand interno antes do externo.',
+      objecaoPivot: 'Rebrand interno × estratégia de imagem'
+    },
+    // --- 9 S (já tem 2: em-crise-emocional-s, religioso-cauteloso-s) ---
+    {
+      id: 'cis-dona-casa-depressao-s',
+      nome: 'Dona de casa em depressão',
+      emoji: '🏚️',
+      disc: 'S',
+      descricao: '"Acordei pra cuidar dos meus filhos. Eles cresceram, foram. Não sei mais quem sou."',
+      contexto: 'Mulher 50+ vida dedicada à família. Filhos saíram de casa. Vazio existencial. Cautelosa, baixa autoestima.',
+      objecaoPivot: 'Identidade-mãe × identidade-mulher (recuperação)'
+    },
+    {
+      id: 'cis-30-anos-empresa-s',
+      nome: 'Funcionário 30 anos na mesma empresa',
+      emoji: '🪑',
+      disc: 'S',
+      descricao: '"Vou aposentar em 2 anos. Olho pra trás e me pergunto: foi isso?"',
+      contexto: 'Funcionário 58+ lealdade extrema. Estável, sem brilho. Final de carreira sem realização. Conservador.',
+      objecaoPivot: 'Estabilidade × realização pessoal não cumprida'
+    },
+    {
+      id: 'cis-filho-adolescente-s',
+      nome: 'Pai com filho adolescente difícil',
+      emoji: '🧒',
+      disc: 'S',
+      descricao: '"Filho 16 anos não fala comigo, depressivo, sumiu. Tentei tudo. Não sei o que fazer."',
+      contexto: 'Pai 45+ acolhedor. Filho fechado. Acha que falha como pai. Crença de "sou ruim". Decisão pela emoção do filho.',
+      objecaoPivot: 'Culpa parental × ferramentas práticas de conexão'
+    },
+    {
+      id: 'cis-casamento-infeliz-s',
+      nome: 'Casado infeliz sem decidir',
+      emoji: '💔',
+      disc: 'S',
+      descricao: '"Casamento esfriou há 5 anos. Não brigo, não amo. Não saio porque \'os filhos\'."',
+      contexto: 'Pessoa 42+ casada por inércia. Aversão ao confronto. Sofre em silêncio. Cautelosa. Decisão lenta sobre vida.',
+      objecaoPivot: 'Estabilidade aparente × verdade emocional'
+    },
+    {
+      id: 'cis-mae-culpa-s',
+      nome: 'Mãe culpada por terceirizar filhos',
+      emoji: '👶',
+      disc: 'S',
+      descricao: '"Trabalho 10h, deixo as crianças com babá. Eles me chamam de \'tia\'. Tô falhando."',
+      contexto: 'Profissional 35+ mãe. Culpa crônica. Quer reconciliação. Decisão emocional + prática.',
+      objecaoPivot: 'Culpa materna × estratégia de presença qualitativa'
+    },
+    {
+      id: 'cis-eai-infancia-s',
+      nome: 'Carrega EAI (infância adversa)',
+      emoji: '🕯️',
+      disc: 'S',
+      descricao: '"Tive infância pesada. Pai violento. Hoje, 40 anos depois, ainda repito padrões."',
+      contexto: 'Pessoa 45+ EAI clara. Já fez terapia parcial. Quer reprogramação profunda. Sensível, lenta, prudente.',
+      objecaoPivot: 'EAI persistente × ferramentas de rompimento'
+    },
+    {
+      id: 'cis-cuidador-pais-s',
+      nome: 'Cuidador de pais idosos exausto',
+      emoji: '🛌',
+      disc: 'S',
+      descricao: '"Cuido da minha mãe com Alzheimer há 3 anos. Não tenho vida própria, nem energia."',
+      contexto: 'Pessoa 48+ filha cuidadora. Anula-se pelos pais. Esgotamento físico e emocional. Cautelosa, devotada.',
+      objecaoPivot: 'Devoção total × autocuidado essencial'
+    },
+    {
+      id: 'cis-assedio-cala-s',
+      nome: 'Funcionária assediada que cala',
+      emoji: '🤐',
+      disc: 'S',
+      descricao: '"Chefe me assedia há meses. Não consigo falar. Tenho medo de perder emprego."',
+      contexto: 'Funcionária 32+ em situação de assédio. Trava no confronto. Histórico de submissão. Decisão lenta.',
+      objecaoPivot: 'Medo financeiro × dignidade emocional'
+    },
+    {
+      id: 'cis-boazinha-triste-s',
+      nome: 'Boazinha que vive triste',
+      emoji: '🌧️',
+      disc: 'S',
+      descricao: '"Sou a queridinha de todos. Ajudo, escuto, sirvo. E ninguém me pergunta como eu tô."',
+      contexto: 'Pessoa 40+ doadora compulsiva. Não pede, não recebe. Tristeza crônica. Quer recalibrar dinâmica.',
+      objecaoPivot: 'Servir o outro × cuidar de si'
+    },
+    // --- 10 C (já tem 1: pacote-c) ---
+    {
+      id: 'cis-cetico-coaching-c',
+      nome: 'Cético de tudo que cheira a coaching',
+      emoji: '🙄',
+      disc: 'C',
+      descricao: '"Coaching pra mim é embuste. Mas a esposa insistiu. Convençam-me com dado."',
+      contexto: 'Profissional 45+ exigente. Preconceito instalado. Vai contestar tudo. Decisão por evidência cientifica.',
+      objecaoPivot: 'Preconceito × evidência empírica'
+    },
+    {
+      id: 'cis-engenheiro-esposa-c',
+      nome: 'Engenheiro que vai pela esposa',
+      emoji: '🤵',
+      disc: 'C',
+      descricao: '"Minha esposa fez e amou. Diz que melhorei eu também. Vou só pra acompanhar."',
+      contexto: 'Engenheiro 50+ resistente a "coisa de psicologia". Convive com a evidência (esposa mudou). Lento, cético leve.',
+      objecaoPivot: 'Ceticismo herdado × evidência próxima (esposa)'
+    },
+    {
+      id: 'cis-medica-questiona-c',
+      nome: 'Médica racional que questiona',
+      emoji: '🩺',
+      disc: 'C',
+      descricao: '"Como vocês medem efetividade? RCT? Tem peer-review? Ou só depoimento?"',
+      contexto: 'Médica 38+ ciência-first. Resiste a marketing emocional. Pede estudo, dado, n=. Lenta, rigorosa.',
+      objecaoPivot: 'Evidência científica formal × depoimento subjetivo'
+    },
+    {
+      id: 'cis-estudo-eficacia-c',
+      nome: 'Quer estudo de eficácia mensurável',
+      emoji: '📊',
+      disc: 'C',
+      descricao: '"Vocês acompanham aluno pós-CIS? Métrica de redução de ansiedade? Faturamento médio?"',
+      contexto: 'Profissional 40+ data-driven. Quer follow-up de coorte. Resiste a "transformação genérica". Frio, analítico.',
+      objecaoPivot: 'Dados longitudinais × marketing pontual'
+    },
+    {
+      id: 'cis-pesquisa-autores-c',
+      nome: 'Pesquisa autores da bibliografia',
+      emoji: '📖',
+      disc: 'C',
+      descricao: '"Goleman, Achor, Capra — bibliografia do CIS é robusta. Mas como vocês traduzem isso pra prática?"',
+      contexto: 'Pesquisador 42+ familiar com a bibliografia. Quer ver método aplicado. Lento, exigente, valoriza rigor.',
+      objecaoPivot: 'Rigor teórico × aplicação prática efetiva'
+    },
+    {
+      id: 'cis-ementa-hora-c',
+      nome: 'Quer ementa hora a hora',
+      emoji: '🗓️',
+      disc: 'C',
+      descricao: '"4 dias × 15h = 60h. Quero a grade hora a hora antes de comprar."',
+      contexto: 'Profissional 38+ planejador. Pede grade detalhada. Não decide sem cronograma. Lento, minucioso.',
+      objecaoPivot: 'Detalhamento horário × pitch genérico'
+    },
+    {
+      id: 'cis-cetico-depoimentos-c',
+      nome: 'Cético com depoimentos emocionais',
+      emoji: '🎬',
+      disc: 'C',
+      descricao: '"Vídeo de gente chorando agradecendo? Quero metodologia, não show emocional."',
+      contexto: 'Profissional 45+ desconfia de marketing afetivo. Quer ficha técnica, não testimonial. Frio, analítico.',
+      objecaoPivot: 'Marketing emocional × substância metodológica'
+    },
+    {
+      id: 'cis-fisica-quantica-c',
+      nome: 'Questiona "Física Quântica" como base',
+      emoji: '🌌',
+      disc: 'C',
+      descricao: '"Vocês citam Física Quântica como fundamentação. Qual conceito específico? Capra é divulgador, não físico atual."',
+      contexto: 'Físico/engenheiro 43+ rigoroso com termo. Vê como pseudociência popular. Vai testar a profundidade. Hostil.',
+      objecaoPivot: 'Uso do termo "Física Quântica" × rigor científico'
+    },
+    {
+      id: 'cis-roi-financas-c',
+      nome: 'Quer ROI projetado em finanças',
+      emoji: '💵',
+      disc: 'C',
+      descricao: '"Promessa de 2-10x faturamento. Em que base? Coorte? Mediana? Quero o número, não a faixa."',
+      contexto: 'Empresário 41+ analítico. Quer projeção estatística. Resiste a "promessa" genérica. Decide com planilha.',
+      objecaoPivot: 'Promessa de receita × evidência estatística'
+    },
+    {
+      id: 'cis-testimonial-medido-c',
+      nome: 'Analista que quer testimonial medido',
+      emoji: '🔬',
+      disc: 'C',
+      descricao: '"Quero testimonial verificável: nome real, empresa real, métrica antes/depois com data."',
+      contexto: 'Profissional 40+ exigente. Resiste a "depoimentos anônimos". Pede caso documentado. Lento, frio.',
+      objecaoPivot: 'Caso documentado × depoimento genérico'
+    },
+    // --- 6 mistos ---
+    {
+      id: 'cis-misto-di-empresaria-ambiciosa',
+      nome: 'Empresária ambiciosa carismática (DI)',
+      emoji: '🌟',
+      disc: 'DI',
+      descricao: '"Tenho energia e ambição, quero faturar 5x e melhorar minha vida emocional. CIS faz os dois?"',
+      contexto: 'Empresária 38+ híbrida D+I. Decisão rápida, busca tudo ao mesmo tempo. Vibrante. Pega o pacote completo.',
+      objecaoPivot: 'Dupla promessa (negócio + emocional) × foco da imersão'
+    },
+    {
+      id: 'cis-misto-cs-perfeccionista-paralisada',
+      nome: 'Perfeccionista paralisada (CS)',
+      emoji: '🪨',
+      disc: 'CS',
+      descricao: '"Quero ter certeza absoluta antes de mexer no que tá funcionando. E se piorar?"',
+      contexto: 'Profissional 40+ C+S. Decisão lenta. Aversão a risco emocional. Pesa tudo. Quer testar antes.',
+      objecaoPivot: 'Aversão ao risco × custo da inércia atual'
+    },
+    {
+      id: 'cis-misto-dc-executivo-numeros',
+      nome: 'Executivo de números (DC)',
+      emoji: '📈',
+      disc: 'DC',
+      descricao: '"Mostra: público-alvo, % de retenção pós-curso, ROI, NPS. Decido em 24h."',
+      contexto: 'C-level 44+ híbrido D+C. Velocidade + rigor. Sem floreio. Quer ficha técnica antes de bater martelo.',
+      objecaoPivot: 'Velocidade da decisão × profundidade da análise'
+    },
+    {
+      id: 'cis-misto-is-simpatica-insegura',
+      nome: 'Simpática mas insegura (IS)',
+      emoji: '🌷',
+      disc: 'IS',
+      descricao: '"Amei a proposta! Mas será que vou aguentar 4 dias de imersão emocional intensa?"',
+      contexto: 'Pessoa 34+ I+S. Quer comprar pela emoção, freia pela ansiedade. Indecisa. Precisa acolhimento + segurança.',
+      objecaoPivot: 'Empolgação inicial × medo da intensidade'
+    },
+    {
+      id: 'cis-misto-sc-conservador-analitico',
+      nome: 'Conservador analítico (SC)',
+      emoji: '🏰',
+      disc: 'SC',
+      descricao: '"Quero ver curva de mudança de coortes anteriores antes de me comprometer."',
+      contexto: 'Profissional 47+ S+C. Lento, prudente, dado + segurança. Aversão a risco. Quer certeza antes de mover.',
+      objecaoPivot: 'Necessidade de garantia × dado disponível realista'
+    },
+    {
+      id: 'cis-misto-id-influencer-pragmatica',
+      nome: 'Influencer pragmática (ID)',
+      emoji: '⚡',
+      disc: 'ID',
+      descricao: '"Tenho energia, audiência e quero retorno. CIS me dá conteúdo pra 6 meses de posts?"',
+      contexto: 'Influencer 31+ I+D. Visibilidade + foco em resultado. Quer monetizar e brilhar. Vibrante, impaciente.',
+      objecaoPivot: 'Transformação pessoal × monetização de conteúdo'
     }
   ]
 };
