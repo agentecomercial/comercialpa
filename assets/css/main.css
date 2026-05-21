@@ -27,7 +27,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .turmas-main{padding:28px;max-width:1200px;margin:0 auto;}
 /* Mobile: reduz padding lateral para o conteúdo respirar */
 @media(max-width:560px){
-  .turmas-main{padding:22px 14px;}
+  .turmas-main{padding:18px 12px;}
   .turmas-header{padding:14px 12px;}
 }
 .turmas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:20px;}
