@@ -2706,10 +2706,10 @@
 
     <header>
       <div class="brand">
-        <div class="logo">F</div>
+        <div class="logo" id="brand-logo">F</div>
         <div class="brand-text">
-          <h1>AGENTE COMERCIAL FEBRACIS</h1>
-          <p><span class="badge-paulo">Paulo Vieira</span> · SPIN Selling · CRM · Pipeline · Treino</p>
+          <h1>AGENTE COMERCIAL</h1>
+          <p>SPIN Selling · Pipeline · Treino</p>
         </div>
       </div>
       <div class="header-right">
@@ -6065,6 +6065,27 @@ Aguarde o user message — siga o cabeçalho.`;
           '</button>';
       });
       wrap.innerHTML = html;
+      atualizarLogoComTreinamento();
+    }
+
+    // Atualiza a "bola verde" do header com a sigla do treinamento ativo
+    function atualizarLogoComTreinamento() {
+      var logo = document.getElementById('brand-logo');
+      if (!logo) return;
+      var ativoId = (DB.data && DB.data.treinamentoAtivo) || 'tce';
+      var t = (typeof TREINAMENTOS !== 'undefined' ? TREINAMENTOS : []).find(function(x){ return x.id === ativoId; });
+      var sigla = t ? (t.nomeCurto || t.nome || 'F') : 'F';
+      logo.textContent = sigla;
+      // Auto-ajuste do tamanho da fonte conforme o tamanho da sigla
+      var len = sigla.length;
+      var fs = 23;
+      if (len === 2) fs = 22;
+      else if (len === 3) fs = 18;
+      else if (len === 4) fs = 14;
+      else if (len === 5) fs = 12;
+      else if (len >= 6) fs = 11;
+      logo.style.fontSize = fs + 'px';
+      logo.title = t ? t.nome : '';
     }
 
     function selecionarTreinamento(id) {
