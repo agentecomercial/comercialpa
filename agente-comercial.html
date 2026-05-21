@@ -1141,7 +1141,67 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 8px;
-      margin-bottom: 14px;
+    }
+
+    /* Container com altura limitada e scroll interno — reduz poluição visual com 50 perfis */
+    .profile-grid-wrap {
+      max-height: 360px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      background: var(--bg);
+      margin-bottom: 6px;
+    }
+    .profile-grid-wrap::-webkit-scrollbar { width: 8px; }
+    .profile-grid-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .profile-grid-wrap::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* Filtros DISC + busca */
+    .perfil-filtros {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .perfil-disc-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .disc-tab {
+      flex: 1 1 auto;
+      min-width: 56px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .disc-tab:hover { border-color: var(--green); color: var(--text); }
+    .disc-tab.ativo {
+      background: var(--green-dim);
+      border-color: var(--green);
+      color: var(--text);
+    }
+    #perfil-busca {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 12.5px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--bg-2);
+      color: var(--text);
+    }
+    .perfil-contador {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
+      margin-bottom: 10px;
     }
 
     .profile-card {
@@ -3108,10 +3168,28 @@
             <button data-modo="multi" class="modo-btn" onclick="trocarModoTreino('multi')">💬 Conversa completa</button>
           </div>
 
+          <button class="icon-btn" onclick="cenarioAleatorio()" style="margin-top:4px;margin-bottom:14px;width:100%;">🎲 Sortear cenário aleatório</button>
+
           <div class="form-group">
             <label>🎭 Perfil do cliente fictício <span style="color:var(--muted);font-weight:400;font-size:11px;">(específico do produto ativo)</span></label>
-            <div class="profile-grid" id="profile-grid"></div>
-            <button class="icon-btn" onclick="cenarioAleatorio()" style="margin-top:8px;">🎲 Sortear cenário aleatório</button>
+
+            <!-- Filtros DISC + busca -->
+            <div class="perfil-filtros">
+              <div class="perfil-disc-tabs" id="perfil-disc-tabs">
+                <button class="disc-tab ativo" data-disc="todos" onclick="filtrarPerfilDisc('todos')">Todos</button>
+                <button class="disc-tab disc-d" data-disc="D" onclick="filtrarPerfilDisc('D')">🔴 D</button>
+                <button class="disc-tab disc-i" data-disc="I" onclick="filtrarPerfilDisc('I')">🟠 I</button>
+                <button class="disc-tab disc-s" data-disc="S" onclick="filtrarPerfilDisc('S')">🔵 S</button>
+                <button class="disc-tab disc-c" data-disc="C" onclick="filtrarPerfilDisc('C')">🟣 C</button>
+                <button class="disc-tab disc-mistos" data-disc="mistos" onclick="filtrarPerfilDisc('mistos')">⚪ Mistos</button>
+              </div>
+              <input type="text" id="perfil-busca" placeholder="🔍 buscar perfil por nome ou descrição..." oninput="filtrarPerfilBusca(this.value)">
+            </div>
+
+            <div class="profile-grid-wrap">
+              <div class="profile-grid" id="profile-grid"></div>
+            </div>
+            <div class="perfil-contador" id="perfil-contador"></div>
           </div>
 
           <div class="row">
@@ -7580,17 +7658,65 @@ Aguarde o user message — siga o cabeçalho.`;
       return perfis.find(function(p) { return p.id === id; }) || perfis[0] || null;
     }
 
+    var _filtroDiscTreino = 'todos';
+    var _buscaPerfilTreino = '';
+    var DISC_PUROS = ['D', 'I', 'S', 'C'];
+
+    function filtrarPerfilDisc(disc) {
+      _filtroDiscTreino = disc;
+      document.querySelectorAll('#perfil-disc-tabs .disc-tab').forEach(function(b) {
+        b.classList.toggle('ativo', b.getAttribute('data-disc') === disc);
+      });
+      renderizarPerfisTreino();
+    }
+
+    function filtrarPerfilBusca(texto) {
+      _buscaPerfilTreino = (texto || '').toLowerCase().trim();
+      renderizarPerfisTreino();
+    }
+
+    function aplicarFiltrosPerfis(perfis) {
+      var lista = perfis.slice();
+      if (_filtroDiscTreino === 'mistos') {
+        lista = lista.filter(function(p) { return DISC_PUROS.indexOf(p.disc) === -1; });
+      } else if (_filtroDiscTreino !== 'todos') {
+        lista = lista.filter(function(p) { return p.disc === _filtroDiscTreino; });
+      }
+      if (_buscaPerfilTreino) {
+        lista = lista.filter(function(p) {
+          var hay = (p.nome + ' ' + (p.descricao || '') + ' ' + (p.contexto || '')).toLowerCase();
+          return hay.indexOf(_buscaPerfilTreino) !== -1;
+        });
+      }
+      return lista;
+    }
+
     function renderizarPerfisTreino() {
       const grid = document.getElementById('profile-grid');
+      const contador = document.getElementById('perfil-contador');
       if (!grid) return;
-      const perfis = getPerfisDoTreinamentoAtivo();
+      const perfisTodos = getPerfisDoTreinamentoAtivo();
       const ativoId = DB.data.perfilTreinoSelecionado;
       // Se o perfil salvo não pertence ao produto atual, seleciona o primeiro
-      if (!perfis.find(function(p) { return p.id === ativoId; }) && perfis.length) {
-        DB.data.perfilTreinoSelecionado = perfis[0].id;
+      if (!perfisTodos.find(function(p) { return p.id === ativoId; }) && perfisTodos.length) {
+        DB.data.perfilTreinoSelecionado = perfisTodos[0].id;
         DB.save();
       }
       const ativo = DB.data.perfilTreinoSelecionado;
+      const perfis = aplicarFiltrosPerfis(perfisTodos);
+
+      if (contador) {
+        var resumo = 'Mostrando <strong>' + perfis.length + '</strong> de ' + perfisTodos.length + ' perfis';
+        if (_filtroDiscTreino !== 'todos') resumo += ' · filtro: ' + (_filtroDiscTreino === 'mistos' ? 'mistos' : _filtroDiscTreino);
+        if (_buscaPerfilTreino) resumo += ' · busca: "' + escapeHtml(_buscaPerfilTreino) + '"';
+        contador.innerHTML = resumo;
+      }
+
+      if (!perfis.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padding:18px;">Nenhum perfil corresponde ao filtro. Tente outro DISC ou limpe a busca.</div>';
+        return;
+      }
+
       grid.innerHTML = perfis.map(function(p) {
         const sel = p.id === ativo ? ' selected' : '';
         const discCor = { D: '#ff5252', I: '#ffb84d', S: '#5a8fff', C: '#b388ff', DC: '#ff5252', DI: '#ffb84d' }[p.disc] || '#888';
@@ -7626,9 +7752,23 @@ Aguarde o user message — siga o cabeçalho.`;
       setVal('treino-etapa', e);
       setVal('treino-canal', c);
       DB.save();
+      // Limpa filtros pra garantir que o card sorteado aparece
+      _filtroDiscTreino = 'todos';
+      _buscaPerfilTreino = '';
+      document.querySelectorAll('#perfil-disc-tabs .disc-tab').forEach(function(b) {
+        b.classList.toggle('ativo', b.getAttribute('data-disc') === 'todos');
+      });
+      var busca = document.getElementById('perfil-busca');
+      if (busca) busca.value = '';
       renderizarPerfisTreino();
+      // Scroll até o card selecionado
+      setTimeout(function() {
+        var card = document.querySelector('#profile-grid .profile-card.selected');
+        if (card && card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
       toast('Cenário sorteado: ' + p.emoji + ' ' + p.nome, 'success');
-      document.getElementById('treino-resposta').focus();
+      var resp = document.getElementById('treino-resposta');
+      if (resp) resp.focus();
     }
 
     function montarBlocoPerfilFicticio(perfil) {
