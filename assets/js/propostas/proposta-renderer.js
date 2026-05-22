@@ -110,6 +110,57 @@
       });
   }
 
+  /* Embute imagens locais como data URL (base64) — necessário em
+     file:// pois o Chrome bloqueia 'blob:' carregando 'file://'.
+     Retorna Promise<string>. */
+  function _embutirImagensInline(html){
+    var base = (function(){
+      try { return new URL('.', location.href).href; }
+      catch(_e){ return ''; }
+    })();
+    if(!base) return Promise.resolve(html);
+    var regex = /(<img\b[^>]*?\bsrc=)["']((?!data:|blob:|about:|#)[^"']+)["']/gi;
+    var tasks = [];
+    var matches = [];
+    var m;
+    while((m = regex.exec(html)) !== null){
+      matches.push({ full: m[0], pre: m[1], url: m[2] });
+    }
+    if(!matches.length) return Promise.resolve(html);
+
+    matches.forEach(function(item){
+      var absUrl;
+      try { absUrl = new URL(item.url, base).href; }
+      catch(_e){ return; }
+      var p = fetch(absUrl)
+        .then(function(r){
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          return r.blob();
+        })
+        .then(function(blob){
+          return new Promise(function(res, rej){
+            var fr = new FileReader();
+            fr.onloadend = function(){ res(fr.result); };
+            fr.onerror = function(){ rej(new Error('FileReader')); };
+            fr.readAsDataURL(blob);
+          });
+        })
+        .then(function(dataUrl){ item.dataUrl = dataUrl; })
+        .catch(function(e){ console.warn('[propostas] falha embutir', absUrl, e); item.absUrl = absUrl; });
+      tasks.push(p);
+    });
+
+    return Promise.all(tasks).then(function(){
+      var out = html;
+      matches.forEach(function(item){
+        var novo = item.dataUrl || item.absUrl;
+        if(!novo) return;
+        out = out.replace(item.full, item.pre + '"' + novo + '"');
+      });
+      return out;
+    });
+  }
+
   function _abrirVisualizacao(codigo, definicao, dados){
     var html = _renderTokens(definicao.template, dados, definicao);
     html = _injetarBaseHref(html);
@@ -147,29 +198,33 @@
         return;
       }
       if(act === 'newtab'){
-        try{
-          /* Para blob: precisamos absolutizar URLs (caminhos relativos
-             quebrariam — blob: tem origem diferente do dashboard) */
-          var htmlAbs = _absolutizarUrls(html);
-          var blob = new Blob([htmlAbs], { type: 'text/html;charset=utf-8' });
-          var blobUrl = URL.createObjectURL(blob);
-          var tab = window.open(blobUrl, '_blank');
-          if(!tab){ _toast('Permita pop-ups para este site e tente novamente.', 'error'); }
-          setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 60000);
-        }catch(err){
-          _toast('Erro ao abrir: ' + err.message, 'error');
-        }
+        _toast('Preparando proposta...', 'info');
+        /* Em file:// blob:null nao consegue carregar file://, entao
+           embute as imagens como data URL antes de criar o blob. */
+        _embutirImagensInline(_absolutizarUrls(html)).then(function(htmlFinal){
+          try{
+            var blob = new Blob([htmlFinal], { type: 'text/html;charset=utf-8' });
+            var blobUrl = URL.createObjectURL(blob);
+            var tab = window.open(blobUrl, '_blank');
+            if(!tab){ _toast('Permita pop-ups para este site e tente novamente.', 'error'); }
+            setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 60000);
+          }catch(err){
+            _toast('Erro ao abrir: ' + err.message, 'error');
+          }
+        });
         return;
       }
       if(act === 'download'){
-        var htmlAbs2 = _absolutizarUrls(html);
-        var blob = new Blob([htmlAbs2], { type: 'text/html;charset=utf-8' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url; a.download = nomeArq;
-        document.body.appendChild(a); a.click();
-        setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-        _toast('Proposta baixada: ' + nomeArq);
+        _toast('Gerando arquivo...', 'info');
+        _embutirImagensInline(_absolutizarUrls(html)).then(function(htmlFinal){
+          var blob = new Blob([htmlFinal], { type: 'text/html;charset=utf-8' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url; a.download = nomeArq;
+          document.body.appendChild(a); a.click();
+          setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+          _toast('Proposta baixada: ' + nomeArq);
+        });
         return;
       }
     });
