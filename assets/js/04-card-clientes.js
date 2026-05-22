@@ -304,19 +304,47 @@ window.cardExcluirSelecionados = cardExcluirSelecionados;
     try { localStorage.setItem(LS_KEY, atual ? '0' : '1'); } catch(_e){}
     _aplicarEstado();
   }
-  /* Atualiza contador + total no header (chamado pelo renderAll) */
+  /* Atualiza contador + total no header (chamado pelo renderAll).
+     Respeita os filtros ativos: usa filtered() se disponível.
+     Total considera regra granular por status quando filtrando. */
   function _atualizarHeader(){
     var cnt  = document.getElementById('cliCollapseCount');
     var tot  = document.getElementById('cliCollapseTotal');
     if(!cnt || !tot) return;
-    /* Usa o data global e os helpers se disponíveis */
-    var arr = Array.isArray(window.data) ? window.data : [];
-    var n = arr.filter(function(d){ return d && d.cliente; }).length;
+
+    /* Usa filtered() que respeita TODOS os filtros (busca, status,
+       treinador, consultor, treinamento, presenca). Fallback para
+       data global se filtered nao estiver disponivel. */
+    var arr;
+    try {
+      arr = (typeof filtered === 'function') ? filtered() : (window.data || []);
+    } catch(_e){ arr = window.data || []; }
+    arr = (arr || []).filter(function(d){ return d && d.cliente; });
+    var n = arr.length;
+
+    /* Soma de acordo com o filtro de status ativo:
+       - "pago"        -> soma apenas subs pagos (granular)
+       - "aberto"      -> soma apenas subs em aberto
+       - "negociacao"  -> soma apenas subs em negociacao
+       - sem filtro    -> soma faturado (regra padrao do app) */
+    var status = (typeof activeStatus !== 'undefined') ? activeStatus : '';
+    var helper = null;
+    if(status === 'pago'       && typeof window._faturadoDoCliente   === 'function') helper = window._faturadoDoCliente;
+    else if(status === 'aberto'     && typeof window._abertoDoCliente     === 'function') helper = window._abertoDoCliente;
+    else if(status === 'negociacao' && typeof window._negociacaoDoCliente === 'function') helper = window._negociacaoDoCliente;
+    else if(typeof window._faturadoDoCliente === 'function') helper = window._faturadoDoCliente;
+
     var soma = arr.reduce(function(a,d){
-      if(!d || !d.cliente) return a;
-      return a + (typeof window._faturadoDoCliente==='function' ? window._faturadoDoCliente(d) : (d.valor||0));
+      if(helper) return a + helper(d);
+      return a + (Number(d.valor)||0);
     }, 0);
-    cnt.textContent = n + ' cadastrado' + (n!==1?'s':'');
+
+    var rotulo = (status === 'pago')       ? ' pago'
+               : (status === 'aberto')     ? ' em aberto'
+               : (status === 'negociacao') ? ' em negociação'
+               : (status === 'entrada')    ? ' com entrada'
+               : ' cadastrado';
+    cnt.textContent = n + rotulo + (n!==1?'s':'');
     var fmt = (typeof formatVal==='function') ? formatVal(soma) : ('R$ ' + soma.toFixed(2));
     tot.textContent = fmt;
   }
