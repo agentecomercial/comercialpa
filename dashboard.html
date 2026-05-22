@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260522-155210">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260522-155210">
+<link rel="stylesheet" href="assets/css/main.css?v=20260522-161224">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260522-161224">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-155210">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-161224">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1258,8 +1258,10 @@
           <span><b id="acStatSemana">—</b> esta semana</span>
           <span><b id="acStatMes">—</b> este mês</span>
         </div>
+        <!-- Strip horizontal de meses -->
+        <div class="ac-meses" id="acMeses" onclick="event.stopPropagation()"></div>
         <div class="ac-evts-h" style="display:flex;align-items:center;justify-content:space-between;">
-          <span>Próximos eventos</span>
+          <span id="acEvtsTitulo">Próximos eventos</span>
           <span class="ac-evts-acoes" onclick="event.stopPropagation()">
             <button type="button" class="ac-evts-copy" onclick="_acCopiarLista()" title="Copiar lista para WhatsApp">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copiar lista
@@ -1474,6 +1476,7 @@
         window._agendaCardSemCache = !c;
         if(typeof _agendaPopularDropdowns === 'function')      _agendaPopularDropdowns();
         if(typeof _agendaAtualizarChipsContador === 'function') _agendaAtualizarChipsContador();
+        if(typeof _agendaRenderMeses === 'function')           _agendaRenderMeses();
         _agendaRenderEventos();
       }
       /* === ESTADO dos filtros avançados === */
@@ -1483,6 +1486,73 @@
         treinador: '',
         busca: ''
       };
+      /* Mês selecionado no strip: '' = todos, ou 'YYYY-MM' */
+      window._agendaMesSel = window._agendaMesSel || '';
+      /* Inicializa com mês atual */
+      (function(){
+        if(!window._agendaMesSel){
+          var d = new Date();
+          window._agendaMesSel = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+        }
+      })();
+
+      function _agendaRenderMeses(){
+        var el = document.getElementById('acMeses');
+        if(!el) return;
+        var todos = (window._agendaCardEventos||[]);
+        /* Calcula meses com eventos + os próximos 12 meses a partir de hoje */
+        var agora = new Date();
+        var mesesMap = {}; /* 'YYYY-MM' → qtd */
+        todos.forEach(function(e){
+          if(!e.startMs) return;
+          var d = new Date(e.startMs);
+          var k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+          mesesMap[k] = (mesesMap[k]||0) + 1;
+        });
+        /* Garante que os próximos 12 meses estão no map (mesmo vazios) */
+        for(var i=0; i<12; i++){
+          var d = new Date(agora.getFullYear(), agora.getMonth()+i, 1);
+          var k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+          if(!(k in mesesMap)) mesesMap[k] = 0;
+        }
+        var keys = Object.keys(mesesMap).sort();
+        var mesesAbrev = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+        var html = '';
+        keys.forEach(function(k){
+          var p = k.split('-');
+          var ano = +p[0];
+          var mes = +p[1];
+          var atual = (window._agendaMesSel === k);
+          var qtd = mesesMap[k];
+          html += ''+
+            '<button type="button" class="ac-mes'+(atual?' on':'')+(qtd>0?' has':'')+'" onclick="_agendaSelMes(\''+k+'\',this)">'+
+              '<small class="mw">'+mesesAbrev[mes-1]+'</small>'+
+              '<span class="my">'+ano+'</span>'+
+              (qtd>0 ? '<span class="mn">'+qtd+'</span>' : '<span class="mn-off">—</span>')+
+            '</button>';
+        });
+        el.innerHTML = html;
+        /* Atualiza titulo: "Próximos eventos · Mai 2026" */
+        var tit = document.getElementById('acEvtsTitulo');
+        if(tit){
+          if(window._agendaMesSel){
+            var p2 = window._agendaMesSel.split('-');
+            tit.textContent = 'Eventos · ' + mesesAbrev[+p2[1]-1] + ' ' + p2[0];
+          } else {
+            tit.textContent = 'Próximos eventos';
+          }
+        }
+      }
+
+      function _agendaSelMes(yyyymm, btn){
+        /* Toggle: se clicar no mês já selecionado, desfiltra */
+        if(window._agendaMesSel === yyyymm) window._agendaMesSel = '';
+        else                                 window._agendaMesSel = yyyymm;
+        _agendaRenderMeses();
+        _agendaRenderEventos();
+        /* Scroll horizontal para deixar o mês selecionado visível */
+        if(btn) btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+      }
 
       function _agendaTogglePainel(){
         var pop = document.getElementById('acFiltPop');
@@ -1564,6 +1634,7 @@
         var agora = Date.now();
         var limiteFim = f.periodo > 0 ? agora + f.periodo*86400000 : Infinity;
         var busca = (f.busca||'').toLowerCase();
+        var mesSel = window._agendaMesSel || '';
         return evts.filter(function(e){
           if(window._agendaFiltroUnit && e.unit !== window._agendaFiltroUnit) return false;
           if(f.periodo > 0 && (e.startMs||0) > limiteFim) return false;
@@ -1572,6 +1643,11 @@
           if(busca){
             var blob = ((e.titulo||'')+' '+(e.local||'')+' '+(e.ministrante||'')).toLowerCase();
             if(blob.indexOf(busca) === -1) return false;
+          }
+          if(mesSel && e.startMs){
+            var d = new Date(e.startMs);
+            var mk = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+            if(mk !== mesSel) return false;
           }
           return true;
         });
@@ -1772,6 +1848,7 @@
         _agendaPopularDropdowns();
         _agendaAtualizarChipsContador();
         _agendaAtualizarBadge();
+        _agendaRenderMeses();
         _agendaRenderEventos();
       })();
     </script>
@@ -2315,7 +2392,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260522-155210"></script>
+<script defer src="assets/js/00-utils.js?v=20260522-161224"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2409,29 +2486,29 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260522-155210"></script>
-<script defer src="assets/js/29-login.js?v=20260522-155210"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-155210"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-155210"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-155210"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260522-155210"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260522-155210"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260522-155210"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260522-155210"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-155210"></script>
-<script defer src="assets/js/99-diag.js?v=20260522-155210"></script>
-<script defer src="assets/js/21-turmas.js?v=20260522-155210"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260522-155210"></script>
+<script defer src="assets/js/02-main.js?v=20260522-161224"></script>
+<script defer src="assets/js/29-login.js?v=20260522-161224"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-161224"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-161224"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-161224"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260522-161224"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260522-161224"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260522-161224"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260522-161224"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-161224"></script>
+<script defer src="assets/js/99-diag.js?v=20260522-161224"></script>
+<script defer src="assets/js/21-turmas.js?v=20260522-161224"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260522-161224"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260522-155210"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260522-155210"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260522-155210"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260522-155210"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260522-155210"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260522-155210"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260522-161224"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260522-161224"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260522-161224"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260522-161224"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260522-161224"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260522-161224"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260522-155210"></script>
-<script defer src="assets/js/17-presenca.js?v=20260522-155210"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260522-161224"></script>
+<script defer src="assets/js/17-presenca.js?v=20260522-161224"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2443,20 +2520,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-155210">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-161224">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260522-155210"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260522-161224"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260522-155210"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260522-155210"></script>
+<script defer src="assets/js/05-importacao.js?v=20260522-161224"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260522-161224"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-155210">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-161224">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260522-155210"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260522-161224"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2492,7 +2569,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-155210"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-161224"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2517,14 +2594,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260522-155210"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260522-155210"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-155210"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260522-155210"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260522-155210"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-155210"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260522-155210"></script>
-<script defer src="assets/js/08-realtime.js?v=20260522-155210"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260522-161224"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260522-161224"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-161224"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260522-161224"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260522-161224"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-161224"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260522-161224"></script>
+<script defer src="assets/js/08-realtime.js?v=20260522-161224"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2557,7 +2634,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260522-155210"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260522-161224"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -3038,16 +3115,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-155210"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-161224"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-155210"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-161224"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260522-155210"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260522-161224"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260522-155210"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260522-161224"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">

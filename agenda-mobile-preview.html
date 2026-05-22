@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Card Agenda Mobile — 10 melhorias UX</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06060a;
+  --surface:#13131a;
+  --surface2:#1a1a22;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --text:#e8e8ea;
+  --muted:rgba(255,255,255,.55);
+  --accent:#c8f05a;
+  --blue:#60a5fa;
+  --amber:#f59e0b;
+  --green:#34d399;
+  --vix:#4f9eff;
+  --bel:#ffb84f;
+  --the:#ff6b9d;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;}
+.page{max-width:1400px;margin:0 auto;padding:40px 20px 80px;}
+h1{font-size:26px;font-weight:800;margin:0 0 8px;}
+.intro{font-size:13px;color:var(--muted);margin-bottom:32px;line-height:1.6;}
+.intro b{color:var(--accent);}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:32px;}
+.opt{display:flex;flex-direction:column;}
+.opt-h{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.opt-h .n{background:var(--accent);color:#0f0f0f;border-radius:99px;padding:2px 10px;font-size:11px;font-weight:800;}
+.opt-h .name{color:var(--text);font-size:13px;text-transform:none;letter-spacing:0;font-weight:700;}
+.opt-h .tag{font-size:9.5px;color:var(--accent);background:rgba(200,240,90,.1);border:1px solid rgba(200,240,90,.3);border-radius:99px;padding:1px 7px;letter-spacing:.05em;text-transform:uppercase;}
+.opt-desc{font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:10px;}
+
+/* Phone frame simulado */
+.phone{
+  width:360px;height:640px;
+  background:#000;border:1px solid #222;border-radius:32px;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+  padding:8px;
+  margin:0 auto;
+  position:relative;
+}
+.phone::before{content:'';position:absolute;top:14px;left:50%;transform:translateX(-50%);width:80px;height:5px;background:#222;border-radius:3px;}
+.screen{
+  width:100%;height:100%;
+  background:var(--bg);
+  border-radius:26px;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  padding:26px 12px 12px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   COMUM — header pequeno
+═══════════════════════════════════════════════════════ */
+.h-top{display:flex;justify-content:space-between;align-items:flex-start;padding:0 4px;margin-bottom:10px;}
+.h-top .lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);}
+.h-top .title{font-size:17px;font-weight:700;color:var(--text);line-height:1.1;}
+.h-top .ext{font-size:10px;color:var(--accent);font-weight:700;display:inline-flex;align-items:center;gap:3px;}
+
+/* ═══════════════════════════════════════════════════════
+   01 — SWIPE HORIZONTAL (1 evento por vez, swipe)
+═══════════════════════════════════════════════════════ */
+.s1-track{overflow-x:auto;display:flex;gap:10px;padding:0 4px 12px;scrollbar-width:none;}
+.s1-track::-webkit-scrollbar{display:none;}
+.s1-card{flex:0 0 calc(100% - 8px);background:var(--surface2);border-radius:14px;padding:14px;border-left:3px solid var(--bel);scroll-snap-align:start;}
+.s1-card.vix{border-left-color:var(--vix);} .s1-card.the{border-left-color:var(--the);}
+.s1-card .d{font-family:'DM Mono',monospace;font-size:14px;font-weight:800;color:var(--bel);}
+.s1-card.vix .d{color:var(--vix);} .s1-card.the .d{color:var(--the);}
+.s1-card .t{font-size:15px;font-weight:700;margin:4px 0;}
+.s1-card .m{font-size:11.5px;color:var(--muted);margin-bottom:8px;}
+.s1-card .per{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);}
+.s1-card .foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);}
+.s1-dots{display:flex;justify-content:center;gap:5px;margin-top:8px;}
+.s1-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);}
+.s1-dot.on{background:var(--accent);width:18px;border-radius:99px;}
+
+/* ═══════════════════════════════════════════════════════
+   02 — FULL-BLEED COM HERO
+═══════════════════════════════════════════════════════ */
+.s2-list{display:flex;flex-direction:column;gap:10px;padding:0 4px;overflow-y:auto;}
+.s2-card{position:relative;border-radius:14px;padding:14px 16px;overflow:hidden;}
+.s2-card.bel{background:linear-gradient(135deg,rgba(255,184,79,.18) 0%,rgba(255,184,79,.04) 70%);border:1px solid rgba(255,184,79,.3);}
+.s2-card.vix{background:linear-gradient(135deg,rgba(79,158,255,.18) 0%,rgba(79,158,255,.04) 70%);border:1px solid rgba(79,158,255,.3);}
+.s2-card.the{background:linear-gradient(135deg,rgba(255,107,157,.18) 0%,rgba(255,107,157,.04) 70%);border:1px solid rgba(255,107,157,.3);}
+.s2-card::after{content:'';position:absolute;right:-20px;top:-20px;width:80px;height:80px;border-radius:50%;opacity:.15;background:var(--bel);}
+.s2-card.vix::after{background:var(--vix);} .s2-card.the::after{background:var(--the);}
+.s2-card .d{font-family:'DM Mono',monospace;font-size:11.5px;font-weight:800;color:var(--bel);position:relative;z-index:1;}
+.s2-card.vix .d{color:var(--vix);} .s2-card.the .d{color:var(--the);}
+.s2-card .t{font-size:15px;font-weight:800;margin:3px 0;position:relative;z-index:1;}
+.s2-card .m{font-size:11px;color:var(--text);opacity:.7;position:relative;z-index:1;}
+.s2-card .per{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--accent);margin-top:4px;}
+
+/* ═══════════════════════════════════════════════════════
+   03 — STACK COM PRÓXIMO EM DESTAQUE
+═══════════════════════════════════════════════════════ */
+.s3-hero{
+  background:linear-gradient(135deg,rgba(200,240,90,.15),rgba(200,240,90,.02));
+  border:1px solid rgba(200,240,90,.3);border-radius:16px;
+  padding:16px 18px;margin-bottom:10px;
+  position:relative;
+}
+.s3-hero::before{content:'PRÓXIMO';position:absolute;top:14px;right:16px;background:var(--accent);color:#0f0f0f;font-size:9px;font-weight:800;padding:2px 8px;border-radius:99px;letter-spacing:.05em;}
+.s3-hero .d{font-family:'DM Mono',monospace;font-size:13px;color:var(--bel);font-weight:800;}
+.s3-hero .t{font-size:19px;font-weight:800;margin:6px 0 4px;letter-spacing:-.01em;}
+.s3-hero .m{font-size:12px;color:var(--text);opacity:.75;}
+.s3-hero .per{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);margin-top:8px;}
+.s3-mini{display:flex;flex-direction:column;gap:6px;padding:0 4px;}
+.s3-mini-row{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;padding:8px 10px;background:var(--surface2);border-radius:8px;border-left:2px solid var(--bel);font-size:11.5px;}
+.s3-mini-row.vix{border-left-color:var(--vix);} .s3-mini-row.the{border-left-color:var(--the);}
+.s3-mini-row .d{font-family:'DM Mono',monospace;font-weight:700;font-size:11px;color:var(--text);}
+.s3-mini-row .t{font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.s3-mini-row .t small{display:block;font-size:10px;color:var(--muted);font-weight:500;}
+.s3-mini-row .ic{color:var(--accent);font-size:13px;}
+
+/* ═══════════════════════════════════════════════════════
+   04 — BOTTOM SHEET MINIMIZADO
+═══════════════════════════════════════════════════════ */
+.s4-min{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;
+}
+.s4-min .ic{width:42px;height:42px;border-radius:12px;background:rgba(200,240,90,.15);display:flex;align-items:center;justify-content:center;font-size:20px;}
+.s4-min .body{flex:1;}
+.s4-min .lbl{font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+.s4-min .info{font-size:13px;font-weight:700;}
+.s4-min .info small{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:2px;}
+.s4-min .arrow{color:var(--accent);font-size:18px;}
+.s4-sheet{margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;}
+.s4-sheet .handle{width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:99px;margin:0 auto 12px;}
+.s4-sheet h4{margin:0 0 10px;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;}
+.s4-list{display:flex;flex-direction:column;gap:6px;}
+.s4-row{font-size:11px;display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);}
+.s4-row:last-child{border-bottom:none;}
+.s4-row .d{font-family:'DM Mono',monospace;color:var(--bel);font-weight:700;}
+.s4-row .t{color:var(--text);font-weight:600;}
+
+/* ═══════════════════════════════════════════════════════
+   05 — TABS POR UNIDADE
+═══════════════════════════════════════════════════════ */
+.s5-tabs{display:flex;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:10px;}
+.s5-tab{flex:1;padding:7px;font-size:11px;font-weight:700;text-align:center;border-radius:7px;color:var(--muted);cursor:pointer;}
+.s5-tab.on{background:var(--accent);color:#0f0f0f;}
+.s5-tab .n{display:block;font-size:9px;opacity:.7;font-weight:500;margin-top:1px;}
+.s5-tab.on .n{opacity:.5;}
+.s5-list{display:flex;flex-direction:column;gap:8px;overflow-y:auto;}
+.s5-card{background:var(--surface2);border-radius:10px;padding:11px 13px;}
+.s5-card .d{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--bel);margin-bottom:2px;}
+.s5-card .t{font-size:13px;font-weight:700;line-height:1.2;}
+.s5-card .m{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* ═══════════════════════════════════════════════════════
+   06 — STORIES + LISTA
+═══════════════════════════════════════════════════════ */
+.s6-stories{display:flex;gap:8px;overflow-x:auto;padding:0 4px 8px;scrollbar-width:none;margin-bottom:8px;}
+.s6-stories::-webkit-scrollbar{display:none;}
+.s6-st{flex:0 0 60px;text-align:center;cursor:pointer;}
+.s6-st-av{width:54px;height:54px;border-radius:50%;background:#000;border:2px solid var(--bel);display:flex;align-items:center;justify-content:center;color:var(--bel);font-weight:800;font-size:15px;font-family:'DM Mono',monospace;margin:0 auto 4px;position:relative;}
+.s6-st.vix .s6-st-av{border-color:var(--vix);color:var(--vix);}
+.s6-st.the .s6-st-av{border-color:var(--the);color:var(--the);}
+.s6-st-av small{position:absolute;bottom:-2px;right:-2px;background:#000;font-size:8px;padding:1px 4px;border-radius:99px;border:1px solid currentColor;}
+.s6-st-d{font-size:9.5px;color:var(--muted);font-weight:700;}
+.s6-st-t{font-size:9px;color:var(--text);font-weight:600;line-height:1.1;margin-top:2px;}
+.s6-list{display:flex;flex-direction:column;gap:6px;padding:0 4px;}
+.s6-row{font-size:11px;padding:8px 10px;background:var(--surface2);border-radius:8px;display:flex;justify-content:space-between;border-left:2px solid var(--bel);}
+.s6-row.vix{border-left-color:var(--vix);} .s6-row.the{border-left-color:var(--the);}
+.s6-row .l{}.s6-row .l b{font-weight:700;}.s6-row .l small{display:block;color:var(--muted);font-size:10px;}
+.s6-row .r{font-family:'DM Mono',monospace;color:var(--accent);font-size:11px;font-weight:700;}
+
+/* ═══════════════════════════════════════════════════════
+   07 — LISTA SUPER COMPACTA (1 linha por evento)
+═══════════════════════════════════════════════════════ */
+.s7-list{display:flex;flex-direction:column;gap:1px;padding:0 4px;background:rgba(0,0,0,.4);border-radius:10px;overflow:hidden;}
+.s7-row{padding:9px 11px;background:var(--surface);display:grid;grid-template-columns:46px 1fr 18px;gap:10px;align-items:center;}
+.s7-row:hover{background:var(--surface2);}
+.s7-dot{width:6px;height:6px;border-radius:50%;background:var(--bel);box-shadow:0 0 6px var(--bel);}
+.s7-row.vix .s7-dot{background:var(--vix);box-shadow:0 0 6px var(--vix);}
+.s7-row.the .s7-dot{background:var(--the);box-shadow:0 0 6px var(--the);}
+.s7-d{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;}
+.s7-info{min-width:0;}
+.s7-info .t{font-size:12px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.s7-info .m{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.s7-row .arrow{color:var(--muted);font-size:12px;text-align:center;}
+
+/* ═══════════════════════════════════════════════════════
+   08 — DATA EM CÍRCULO + CONTEÚDO
+═══════════════════════════════════════════════════════ */
+.s8-list{display:flex;flex-direction:column;gap:12px;padding:0 4px;}
+.s8-row{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:center;}
+.s8-circ{aspect-ratio:1;border-radius:50%;background:var(--surface2);border:2px solid var(--bel);display:flex;flex-direction:column;align-items:center;justify-content:center;width:64px;}
+.s8-row.vix .s8-circ{border-color:var(--vix);}
+.s8-row.the .s8-circ{border-color:var(--the);}
+.s8-circ .num{font-family:'DM Mono',monospace;font-size:22px;font-weight:800;color:var(--text);line-height:1;}
+.s8-circ .m{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.06em;margin-top:1px;}
+.s8-info{min-width:0;}
+.s8-info .t{font-size:14px;font-weight:700;line-height:1.2;}
+.s8-info .who{font-size:11px;color:var(--muted);margin-top:3px;}
+.s8-info .pill{display:inline-block;font-size:9.5px;font-weight:700;background:rgba(255,184,79,.2);color:var(--bel);padding:1px 7px;border-radius:99px;margin-top:5px;}
+.s8-row.vix .s8-info .pill{background:rgba(79,158,255,.2);color:var(--vix);}
+.s8-row.the .s8-info .pill{background:rgba(255,107,157,.2);color:var(--the);}
+
+/* ═══════════════════════════════════════════════════════
+   09 — CALENDAR STRIP (dias horizontal)
+═══════════════════════════════════════════════════════ */
+.s9-strip{display:flex;gap:5px;overflow-x:auto;padding:0 4px 8px;scrollbar-width:none;margin-bottom:8px;}
+.s9-strip::-webkit-scrollbar{display:none;}
+.s9-d{flex:0 0 42px;text-align:center;background:var(--surface2);border-radius:8px;padding:8px 0;cursor:pointer;border:1px solid transparent;}
+.s9-d.has{border-color:rgba(200,240,90,.3);}
+.s9-d.on{background:var(--accent);color:#0f0f0f;}
+.s9-d .wd{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;}
+.s9-d.on .wd{color:rgba(0,0,0,.6);}
+.s9-d .day{font-family:'DM Mono',monospace;font-size:14px;font-weight:800;margin-top:2px;}
+.s9-d .dot{width:4px;height:4px;background:var(--accent);border-radius:50%;margin:3px auto 0;}
+.s9-d.on .dot{background:#0f0f0f;}
+.s9-content{display:flex;flex-direction:column;gap:6px;padding:0 4px;}
+.s9-card{background:var(--surface2);border-radius:10px;padding:11px 13px;border-left:3px solid var(--bel);}
+.s9-card.vix{border-left-color:var(--vix);} .s9-card.the{border-left-color:var(--the);}
+.s9-card .t{font-size:13px;font-weight:700;}
+.s9-card .m{font-size:11px;color:var(--muted);margin-top:3px;}
+.s9-card .h{font-family:'DM Mono',monospace;color:var(--accent);font-size:10.5px;margin-top:4px;}
+
+/* ═══════════════════════════════════════════════════════
+   10 — BOTTOM-NAV + CONTENT
+═══════════════════════════════════════════════════════ */
+.s10-list{flex:1;display:flex;flex-direction:column;gap:8px;padding:0 4px;overflow-y:auto;margin-bottom:10px;}
+.s10-card{background:var(--surface2);border-radius:12px;padding:12px 14px;border-top:2px solid var(--bel);}
+.s10-card.vix{border-top-color:var(--vix);} .s10-card.the{border-top-color:var(--the);}
+.s10-card .d{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--bel);}
+.s10-card.vix .d{color:var(--vix);} .s10-card.the .d{color:var(--the);}
+.s10-card .t{font-size:14px;font-weight:700;margin:3px 0;}
+.s10-card .m{font-size:11px;color:var(--muted);}
+.s10-nav{display:flex;gap:0;background:var(--surface);border-radius:14px;padding:5px;border:1px solid var(--border);}
+.s10-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:6px;border-radius:9px;cursor:pointer;color:var(--muted);}
+.s10-nav-btn.on{background:var(--accent);color:#0f0f0f;}
+.s10-nav-btn span{font-size:14px;}
+.s10-nav-btn small{font-size:9px;font-weight:700;margin-top:2px;}
+
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>📱 10 melhorias UX para o Card Agenda (mobile)</h1>
+  <p class="intro">
+    Todas otimizadas para iPhone (375px). Foco em: redução de scroll, hierarquia clara, tap-friendly, info essencial visível sem clicar. Me diz qual escolher (<b>"opção 3"</b>, etc.) que aplico no mobile.
+  </p>
+
+  <div class="grid">
+
+    <!-- 01 — SWIPE -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">01</span><span class="name">Swipe horizontal — 1 por vez</span><span class="tag">Compacto</span></div>
+      <div class="opt-desc">Eventos em carrossel horizontal. Swipe direita/esquerda navega. Indicadores no fim. Ocupa pouca altura.</div>
+      <div class="phone"><div class="screen">
+        <div class="h-top"><div><div class="lbl">Agenda · Febracis</div><div class="title">Abrir Agenda</div></div></div>
+        <div class="s1-track">
+          <div class="s1-card bel"><div class="d">27/05 QUA</div><div class="t">FGPC 19</div><div class="m">Bruna · BEL</div><div class="per">Qua 27/Mai → Sex 29/Mai</div><div class="foot"><span>32 / 40</span><span>✓</span></div></div>
+          <div class="s1-card bel" style="margin-right:8px;"><div class="d">10/06 QUA</div><div class="t">CEOP 13</div><div class="m">Bruna · BEL</div><div class="per">Qua 10/Jun → Sex 12/Jun</div><div class="foot"><span>22 / 40</span><span>✓</span></div></div>
+        </div>
+        <div class="s1-dots"><span class="s1-dot on"></span><span class="s1-dot"></span><span class="s1-dot"></span><span class="s1-dot"></span></div>
+      </div></div>
+    </div>
+
+    <!-- 02 — FULL-BLEED HERO -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">02</span><span class="name">Cards full-bleed com hero colorido</span><span class="tag">Visual</span></div>
+      <div class="opt-desc">Cada card ocupa largura total com gradient sutil da cor da unidade. Hierarquia visual forte por cor.</div>
+      <div class="phone"><div class="screen">
+        <div class="h-top"><div><div class="lbl">Agenda · Febracis</div><div class="title">Próximos</div></div></div>
+        <div class="s2-list">
+          <div class="s2-card bel"><div class="d">27/05 · QUA</div><div class="t">FGPC 19</div><div class="m">Bruna · Belém · 32/40</div><div class="per">📅 Qua 27/Mai → Sex 29/Mai</div></div>
+          <div class="s2-card vix"><div class="d">17/06 · QUA</div><div class="t">IF 16 Scarpatti</div><div class="m">Bruna · Vitória · 17/40</div><div class="per">📅 Qua 17/Jun → Sex 19/Jun</div></div>
+          <div class="s2-card the"><div class="d">30/06 · TER</div><div class="t">ML5 09</div><div class="m">Filipe · Teresina · 28/40</div><div class="per">📅 Ter 30/Jun → Sex 03/Jul</div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 03 — PRÓXIMO EM DESTAQUE -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">03</span><span class="name">Próximo em destaque + mini-list</span><span class="tag">Hierárquico</span></div>
+      <div class="opt-desc">"Próximo" evento grande em destaque (verde) + lista compacta dos subsequentes abaixo. Foco no que importa agora.</div>
+      <div class="phone"><div class="screen">
+        <div class="h-top"><div><div class="lbl">Agenda · Febracis</div><div class="title">Próximos</div></div></div>
+        <div class="s3-hero">
+          <div class="d">27/05 · QUA</div>
+          <div class="t">FGPC 19</div>
+          <div class="m">Bruna · Belém · 32/40 inscritos</div>
+          <div class="per">📅 Qua 27/Mai → Sex 29/Mai · 2026</div>
+        </div>
+        <div class="s3-mini">
+          <div class="s3-mini-row bel"><span class="d">10/06</span><span class="t">CEOP 13<small>Bruna · BEL</small></span><span class="ic">›</span></div>
+          <div class="s3-mini-row vix"><span class="d">17/06</span><span class="t">IF 16 Scarpatti<small>Bruna · VIX</small></span><span class="ic">›</span></div>
+          <div class="s3-mini-row the"><span class="d">30/06</span><span class="t">ML5 09<small>Filipe · THE</small></span><span class="ic">›</span></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 04 — BOTTOM SHEET -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">04</span><span class="name">Bottom sheet minimizado</span><span class="tag">Discreto</span></div>
+      <div class="opt-desc">Só uma linha de resumo visível. Tap expande sheet com a lista completa. Ocupa quase nada na home.</div>
+      <div class="phone"><div class="screen">
+        <div class="h-top"><div><div class="lbl">Agenda · Febracis</div><div class="title">Abrir Agenda</div></div></div>
+        <div class="s4-min"><div class="ic">📅</div><div class="body"><div class="lbl">Próximo evento</div><div class="info">FGPC 19<small>27/05 · Bruna · Belém</small></div></div><div class="arrow">▾</div></div>
+        <div class="s4-sheet">
+          <div class="handle"></div>
+          <h4>Próximos 50 eventos</h4>
+          <div class="s4-list">
+            <div class="s4-row"><span class="d">27/05</span><span class="t">FGPC 19 · BEL</span></div>
+            <div class="s4-row"><span class="d">10/06</span><span class="t">CEOP 13 · BEL</span></div>
+            <div class="s4-row"><span class="d">17/06</span><span class="t">IF 16 · VIX</span></div>
+            <div class="s4-row"><span class="d">30/06</span><span class="t">ML5 09 · THE</span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 05 — TABS POR UNIDADE -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">05</span><span class="name">Tabs por unidade</span><span class="tag">Foco</span></div>
+      <div class="opt-desc">VIX/BEL/THE como tabs. Lista mostra só eventos da unidade ativa. Resolve a sobrecarga de filtros.</div>
+      <div class="phone"><div class="screen">
+        <div class="h-top"><div><div class="lbl">Agenda · Febracis</div><div class="title">Eventos</div></div></div>
+        <div class="s5-tabs">
+          <div class="s5-tab on">Todas <span class="n">50</span></div>
+          <div class="s5-tab">VIX <span class="n">17</span></div>
+          <div class="s5-tab">BEL <span class="n">15</span></div>
+          <div class="s5-tab">THE <span class="n">11</span></div>
+        </div>
+        <div class="s5-list">
+          <div class="s5-card"><div class="d">27/05 QUA</div><div class="t">FGPC 19</div><div class="m">Bruna · BEL · 32/40 ✓</div></div>
+          <div class="s5-card"><div class="d">10/06 QUA</div><div class="t">CEOP 13 Scarpatti</div><div class="m">Bruna · BEL · 22/40 ✓</div></div>
+          <div class="s5-card"><div class="d">17/06 QUA</div><div class="t">IF 16 Scarpatti</div><div class="m">Bruna · VIX · 17/40 ⏳</div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 06 — STORIES -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">06</span><span class="name">Stories + lista</span><span class="tag">Familiar</span></div>
+      <div class="opt-desc">Próximos 7 dias como "stories" circulares no topo. Lista abaixo. Visual familiar (Instagram).</div>
+      <div class="phone"><div class="screen">
+        <div class="h-top"><div><div class="lbl">Agenda · Febracis</div><div class="title">Esta semana</div></div></div>
+        <div class="s6-stories">
+          <div class="s6-st bel"><div class="s6-st-av">27</div><div class="s6-st-d">QUA</div><div class="s6-st-t">FGPC 19</div></div>
+          <div class="s6-st bel"><div class="s6-st-av">28</div><div class="s6-st-d">QUI</div><div class="s6-st-t">cont.</div></div>
+          <div class="s6-st bel"><div class="s6-st-av">29</div><div class="s6-st-d">SEX</div><div class="s6-st-t">final</div></div>
+          <div class="s6-st"><div class="s6-st-av" style="border-color:var(--muted);color:var(--muted);">31</div><div class="s6-st-d">DOM</div><div class="s6-st-t">livre</div></div>
+          <div class="s6-st bel"><div class="s6-st-av">10<small>+2</small></div><div class="s6-st-d">10/06</div><div class="s6-st-t">CEOP</div></div>
+          <div class="s6-st vix"><div class="s6-st-av">17<small>+2</small></div><div class="s6-st-d">17/06</div><div class="s6-st-t">IF 16</div></div>
+        </div>
+        <div class="s6-list">
+          <div class="s6-row bel"><div class="l"><b>FGPC 19</b><small>Bruna · BEL · 32/40</small></div><div class="r">27/05</div></div>
+          <div class="s6-row bel"><div class="l"><b>CEOP 13</b><small>Bruna · BEL · 22/40</small></div><div class="r">10/06</div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 07 — LISTA SUPER COMPACTA -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">07</span><span class="name">Lista ultra compacta (1 linha por evento)</span><span class="tag">Denso</span></div>
+      <div class="opt-desc">10+ eventos visíveis sem scroll. Cada linha = data + título. Tap abre detalhes em modal.</div>
+      <div class="phone"><div class="screen">
+        <div class="h-top"><div><div class="lbl">Agenda · Febracis</div><div class="title">Próximos</div></div></div>
+        <div class="s7-list">
+          <div class="s7-row bel"><span class="s7-d"><span class="s7-dot"></span>27/05</span><div class="s7-info"><div class="t">FGPC 19</div><div class="m">Bruna · BEL</div></div><span class="arrow">›</span></div>
+          <div class="s7-row bel"><span class="s7-d"><span class="s7-dot"></span>10/06</span><div class="s7-info"><div class="t">CEOP 13</div><div class="m">Bruna · BEL</div></div><span class="arrow">›</span></div>
+          <div class="s7-row bel"><span class="s7-d"><span class="s7-dot"></span>13/06</span><div class="s7-info"><div class="t">EVENTO PARTICULAR</div><div class="m">— · BEL</div></div><span class="arrow">›</span></div>
+          <div class="s7-row vix"><span class="s7-d"><span class="s7-dot"></span>17/06</span><div class="s7-info"><div class="t">IF 16 Scarpatti</div><div class="m">Bruna · VIX</div></div><span class="arrow">›</span></div>
+          <div class="s7-row the"><span class="s7-d"><span class="s7-dot"></span>30/06</span><div class="s7-info"><div class="t">ML5 09</div><div class="m">Filipe · THE</div></div><span class="arrow">›</span></div>
+          <div class="s7-row vix"><span class="s7-d"><span class="s7-dot"></span>16/07</span><div class="s7-info"><div class="t">TAV 04</div><div class="m">Thiago · VIX</div></div><span class="arrow">›</span></div>
+          <div class="s7-row bel"><span class="s7-d"><span class="s7-dot"></span>22/07</span><div class="s7-info"><div class="t">FGPC Frazão</div><div class="m">Filipe · BEL</div></div><span class="arrow">›</span></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 08 — DATA EM CÍRCULO -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">08</span><span class="name">Data em círculo + conteúdo</span><span class="tag">Editorial</span></div>
+      <div class="opt-desc">Data destacada em círculo grande (estilo calendário Apple). Visualmente atraente e fácil de ler.</div>
+      <div class="phone"><div class="screen">
+        <div class="h-top"><div><div class="lbl">Agenda · Febracis</div><div class="title">Próximos</div></div></div>
+        <div class="s8-list">
+          <div class="s8-row bel"><div class="s8-circ"><div class="num">27</div><div class="m">MAI</div></div><div class="s8-info"><div class="t">FGPC 19</div><div class="who">Bruna · 32/40</div><span class="pill">BEL</span></div></div>
+          <div class="s8-row bel"><div class="s8-circ"><div class="num">10</div><div class="m">JUN</div></div><div class="s8-info"><div class="t">CEOP 13 Scarpatti</div><div class="who">Bruna · 22/40</div><span class="pill">BEL</span></div></div>
+          <div class="s8-row vix"><div class="s8-circ"><div class="num">17</div><div class="m">JUN</div></div><div class="s8-info"><div class="t">IF 16 Scarpatti</div><div class="who">Bruna · 17/40</div><span class="pill">VIX</span></div></div>
+          <div class="s8-row the"><div class="s8-circ"><div class="num">30</div><div class="m">JUN</div></div><div class="s8-info"><div class="t">ML5 09</div><div class="who">Filipe · 28/40</div><span class="pill">THE</span></div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 09 — CALENDAR STRIP -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">09</span><span class="name">Calendar strip (dias horizontal)</span><span class="tag">Navegação</span></div>
+      <div class="opt-desc">Barra horizontal de dias. Tap em um dia mostra os eventos daquele dia. Visão temporal precisa.</div>
+      <div class="phone"><div class="screen">
+        <div class="h-top"><div><div class="lbl">Agenda · Febracis</div><div class="title">Maio 2026</div></div></div>
+        <div class="s9-strip">
+          <div class="s9-d"><div class="wd">DOM</div><div class="day">25</div></div>
+          <div class="s9-d"><div class="wd">SEG</div><div class="day">26</div></div>
+          <div class="s9-d on has"><div class="wd">QUA</div><div class="day">27</div><div class="dot"></div></div>
+          <div class="s9-d has"><div class="wd">QUI</div><div class="day">28</div><div class="dot"></div></div>
+          <div class="s9-d has"><div class="wd">SEX</div><div class="day">29</div><div class="dot"></div></div>
+          <div class="s9-d"><div class="wd">SÁB</div><div class="day">30</div></div>
+          <div class="s9-d"><div class="wd">DOM</div><div class="day">31</div></div>
+        </div>
+        <div class="s9-content">
+          <div class="s9-card bel"><div class="t">FGPC 19 — Início</div><div class="m">Bruna · BEL · Aud. Belém</div><div class="h">🕓 09:00 — 21:00</div></div>
+          <div class="s9-card bel"><div class="t">FGPC 19 — Dia 2</div><div class="m">Continua dos 32 inscritos</div><div class="h">🕓 09:00 — 21:00</div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 10 — BOTTOM NAV -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">10</span><span class="name">Bottom nav (filtros como menu)</span><span class="tag">App-style</span></div>
+      <div class="opt-desc">Filtros viram menu na base. Mais espaço pro conteúdo. Mais espaço pra navegação tap-friendly.</div>
+      <div class="phone"><div class="screen">
+        <div class="h-top"><div><div class="lbl">Agenda · Febracis</div><div class="title">Eventos</div></div></div>
+        <div class="s10-list">
+          <div class="s10-card bel"><div class="d">27/05 · QUA</div><div class="t">FGPC 19</div><div class="m">Bruna · Belém · 32/40 ✓</div></div>
+          <div class="s10-card bel"><div class="d">10/06 · QUA</div><div class="t">CEOP 13 Scarpatti</div><div class="m">Bruna · Belém · 22/40 ✓</div></div>
+          <div class="s10-card vix"><div class="d">17/06 · QUA</div><div class="t">IF 16 Scarpatti</div><div class="m">Bruna · Vitória · 17/40 ⏳</div></div>
+          <div class="s10-card the"><div class="d">30/06 · TER</div><div class="t">ML5 09</div><div class="m">Filipe · Teresina · 28/40 ✓</div></div>
+        </div>
+        <div class="s10-nav">
+          <div class="s10-nav-btn on"><span>📅</span><small>Todas</small></div>
+          <div class="s10-nav-btn"><span>🔵</span><small>VIX</small></div>
+          <div class="s10-nav-btn"><span>🟡</span><small>BEL</small></div>
+          <div class="s10-nav-btn"><span>🟣</span><small>THE</small></div>
+          <div class="s10-nav-btn"><span>🎛</span><small>+</small></div>
+        </div>
+      </div></div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
