@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260522-172715">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260522-172715">
+<link rel="stylesheet" href="assets/css/main.css?v=20260522-172958">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260522-172958">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-172715">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-172958">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1227,12 +1227,12 @@
             <div class="ac-filt-field">
               <label>Período</label>
               <select id="acFiltPeriodo" onchange="_agendaAtualizarFiltros()">
+                <option value="0" selected>Todos</option>
                 <option value="7">Próximos 7 dias</option>
                 <option value="15">Próximos 15 dias</option>
                 <option value="30">Próximos 30 dias</option>
                 <option value="60">Próximos 60 dias</option>
-                <option value="90" selected>Próximos 90 dias</option>
-                <option value="0">Todos</option>
+                <option value="90">Próximos 90 dias</option>
               </select>
             </div>
             <div class="ac-filt-field">
@@ -1477,22 +1477,15 @@
         if(typeof _agendaRenderMeses === 'function')           _agendaRenderMeses();
         _agendaRenderEventos();
       }
-      /* === ESTADO dos filtros avançados === */
+      /* === ESTADO dos filtros — TODOS começam VAZIOS (Todos) === */
       window._agendaFiltros = window._agendaFiltros || {
-        periodo: 90,         /* dias (0=todos) */
+        periodo: 0,          /* 0 = Todos (default) */
         treinamento: '',
         treinador: '',
         busca: ''
       };
-      /* Mês selecionado no strip: '' = todos, ou 'YYYY-MM' */
-      window._agendaMesSel = window._agendaMesSel || '';
-      /* Inicializa com mês atual */
-      (function(){
-        if(!window._agendaMesSel){
-          var d = new Date();
-          window._agendaMesSel = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-        }
-      })();
+      /* Mês selecionado no strip: '' = todos (default) */
+      if(typeof window._agendaMesSel === 'undefined') window._agendaMesSel = '';
 
       function _agendaRenderMeses(){
         var el = document.getElementById('acMeses');
@@ -1599,16 +1592,24 @@
       }
 
       function _agendaLimparFiltros(){
-        window._agendaFiltros = { periodo:90, treinamento:'', treinador:'', busca:'' };
+        window._agendaFiltros = { periodo:0, treinamento:'', treinador:'', busca:'' };
         window._agendaFiltroUnit = '';
-        var sP = document.getElementById('acFiltPeriodo'); if(sP) sP.value = '90';
+        window._agendaMesSel = '';
+        var sP = document.getElementById('acFiltPeriodo'); if(sP) sP.value = '0';
         var sT = document.getElementById('acFiltTreinamento'); if(sT) sT.value = '';
         var sM = document.getElementById('acFiltTreinador');   if(sM) sM.value = '';
         var iB = document.getElementById('acFiltBusca');       if(iB) iB.value = '';
+        /* Reset chips (legado) + segmented control */
         document.querySelectorAll('#agendaCard .ac-chip').forEach(function(c){
           c.classList.toggle('active', c.dataset.unit === '');
         });
+        document.querySelectorAll('#agendaCard .ac-seg-opt').forEach(function(c){
+          c.classList.toggle('on', c.dataset.unit === '');
+        });
+        var pin = document.getElementById('acSegPin');
+        if(pin){ pin.style.transform = 'translateX(0%)'; pin.className = 'ac-seg-pin'; }
         _agendaAtualizarBadge();
+        if(typeof _agendaRenderMeses === 'function') _agendaRenderMeses();
         _agendaRenderEventos();
       }
 
@@ -1616,7 +1617,7 @@
         var f = window._agendaFiltros;
         var n = 0;
         if(window._agendaFiltroUnit) n++;
-        if(f.periodo !== 90)        n++;
+        if(f.periodo && f.periodo !== 0) n++;  /* 0 = Todos = sem filtro */
         if(f.treinamento)            n++;
         if(f.treinador)              n++;
         if(f.busca)                  n++;
@@ -2406,7 +2407,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260522-172715"></script>
+<script defer src="assets/js/00-utils.js?v=20260522-172958"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2500,29 +2501,29 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260522-172715"></script>
-<script defer src="assets/js/29-login.js?v=20260522-172715"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-172715"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-172715"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-172715"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260522-172715"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260522-172715"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260522-172715"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260522-172715"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-172715"></script>
-<script defer src="assets/js/99-diag.js?v=20260522-172715"></script>
-<script defer src="assets/js/21-turmas.js?v=20260522-172715"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260522-172715"></script>
+<script defer src="assets/js/02-main.js?v=20260522-172958"></script>
+<script defer src="assets/js/29-login.js?v=20260522-172958"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-172958"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-172958"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-172958"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260522-172958"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260522-172958"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260522-172958"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260522-172958"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-172958"></script>
+<script defer src="assets/js/99-diag.js?v=20260522-172958"></script>
+<script defer src="assets/js/21-turmas.js?v=20260522-172958"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260522-172958"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260522-172715"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260522-172715"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260522-172715"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260522-172715"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260522-172715"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260522-172715"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260522-172958"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260522-172958"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260522-172958"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260522-172958"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260522-172958"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260522-172958"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260522-172715"></script>
-<script defer src="assets/js/17-presenca.js?v=20260522-172715"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260522-172958"></script>
+<script defer src="assets/js/17-presenca.js?v=20260522-172958"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2534,20 +2535,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-172715">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-172958">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260522-172715"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260522-172958"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260522-172715"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260522-172715"></script>
+<script defer src="assets/js/05-importacao.js?v=20260522-172958"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260522-172958"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-172715">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-172958">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260522-172715"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260522-172958"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2583,7 +2584,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-172715"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-172958"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2608,14 +2609,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260522-172715"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260522-172715"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-172715"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260522-172715"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260522-172715"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-172715"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260522-172715"></script>
-<script defer src="assets/js/08-realtime.js?v=20260522-172715"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260522-172958"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260522-172958"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-172958"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260522-172958"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260522-172958"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-172958"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260522-172958"></script>
+<script defer src="assets/js/08-realtime.js?v=20260522-172958"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2648,7 +2649,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260522-172715"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260522-172958"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -3129,16 +3130,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-172715"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-172958"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-172715"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-172958"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260522-172715"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260522-172958"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260522-172715"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260522-172958"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
