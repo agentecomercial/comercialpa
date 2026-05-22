@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260522-141048">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260522-141048">
+<link rel="stylesheet" href="assets/css/main.css?v=20260522-144005">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260522-144005">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-141048">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-144005">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1260,7 +1260,12 @@
         </div>
         <div class="ac-evts-h" style="display:flex;align-items:center;justify-content:space-between;">
           <span>Próximos eventos</span>
-          <button type="button" onclick="event.stopPropagation();_agendaRefreshCache();this.classList.add('spin');setTimeout(function(b){b.classList.remove('spin');},700,this);" title="Recarregar do cache da agenda" style="background:none;border:none;color:rgba(255,255,255,.45);font-size:13px;cursor:pointer;padding:2px 4px;line-height:1;">↻</button>
+          <span class="ac-evts-acoes" onclick="event.stopPropagation()">
+            <button type="button" class="ac-evts-copy" onclick="_acCopiarLista()" title="Copiar lista para WhatsApp">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copiar lista
+            </button>
+            <button type="button" onclick="_agendaRefreshCache();this.classList.add('spin');setTimeout(function(b){b.classList.remove('spin');},700,this);" title="Recarregar do cache da agenda" style="background:none;border:none;color:rgba(255,255,255,.45);font-size:13px;cursor:pointer;padding:2px 6px;line-height:1;">↻</button>
+          </span>
         </div>
         <div class="ac-evts" id="acEvts"></div>
       </div>
@@ -1598,7 +1603,7 @@
         } else if(!quatro.length){
           html = '<div class="ac-evt-vazio">Nenhum evento '+(window._agendaFiltroUnit ? 'para esta unidade' : 'futuro encontrado')+'.</div>';
         } else {
-          quatro.forEach(function(e){
+          quatro.forEach(function(e, idx){
             var stCls  = e.status==='pendente' ? 'pend' : 'conf';
             var stIc   = e.status==='pendente' ? '⏳' : '✓';
             /* Barra de inscrições (assume capacidade 40 quando desconhecida) */
@@ -1613,15 +1618,23 @@
             var unitNome = e.unit==='VIX'?'BEL':(e.unit==='BEL'?'BEL':(e.unit==='THE'?'THE':''));
             unitNome = e.unit || '';
             var sub = (e.ministrante || '—') + ' · ' + unitNome;
+            var periodo = (typeof _acFormatarPeriodo === 'function') ? _acFormatarPeriodo(e) : '';
             html += ''+
               '<div class="ac-row ac-row-'+e.unit+'">'+
                 '<div class="ac-row-d"><span class="d">'+e.data+'</span><small>'+(e.wd||'')+'</small></div>'+
-                '<div class="ac-row-t"><span class="t">'+e.titulo+'</span><small>'+sub+'</small></div>'+
+                '<div class="ac-row-t">'+
+                  '<span class="t">'+e.titulo+'</span>'+
+                  '<small>'+sub+'</small>'+
+                  (periodo ? '<small class="ac-row-periodo">📅 '+periodo+'</small>' : '')+
+                '</div>'+
                 '<div class="ac-row-prog">'+
                   '<div class="ac-row-bar"><i class="'+pctBarCls+'" style="width:'+pct+'%;"></i></div>'+
                   '<small>'+pctTxt+'</small>'+
                 '</div>'+
-                '<div class="ac-row-st '+stCls+'" title="'+e.status+'">'+stIc+'</div>'+
+                '<div class="ac-row-acoes">'+
+                  '<button type="button" class="ac-row-copy" title="Copiar para WhatsApp" onclick="event.stopPropagation();_acCopiarEvento('+idx+')">📋</button>'+
+                  '<div class="ac-row-st '+stCls+'" title="'+e.status+'">'+stIc+'</div>'+
+                '</div>'+
               '</div>';
           });
         }
@@ -1644,6 +1657,103 @@
         setT('acStatSemana', nSem);
         setT('acStatMes',    nMes);
       }
+      /* ── Formatadores estilo agenda.html (Ter 30/05 → Sex 03/06 - 2026) ── */
+      function _acDiaCurto(d){
+        var dias  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+        var meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        return dias[d.getDay()] + ' ' + d.getDate() + '/' + meses[d.getMonth()];
+      }
+      function _acFormatarPeriodo(e){
+        if(!e || !e.startMs) return '';
+        var ini = new Date(e.startMs);
+        var fim;
+        if(e.allDay){
+          fim = new Date(e.endMs || e.startMs);
+          fim.setDate(fim.getDate() - 1);
+        } else {
+          fim = e.endMs ? new Date(e.endMs) : ini;
+        }
+        var mesmodia = ini.toDateString() === fim.toDateString();
+        if(mesmodia) return _acDiaCurto(ini) + ' - ' + ini.getFullYear();
+        return _acDiaCurto(ini) + ' → ' + _acDiaCurto(fim) + ' - ' + fim.getFullYear();
+      }
+      function _acHorarioTexto(e){
+        if(e.allDay) return '09:00 as 21:00';
+        var h  = e.hora || '09:00';
+        var hf = e.horaFim || '';
+        return hf ? (h + ' as ' + hf) : h;
+      }
+      function _acFormatarEventoWA(e){
+        var txt = 'TREINAMENTO: *' + (e.titulo||'') + '*';
+        txt += '\nDATA: 📅 ' + _acFormatarPeriodo(e);
+        txt += '\nHORARIO: ' + _acHorarioTexto(e) + '.';
+        if(e.local) txt += '\nLOCAL: 📍 ' + e.local;
+        return txt;
+      }
+      function _acFormatarListaWA(lista){
+        if(!lista.length) return '_Nenhum evento neste filtro._';
+        var MESES_LONG = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        var grupos = {};
+        lista.forEach(function(e){
+          var d = new Date(e.startMs);
+          var k = d.getFullYear() + '-' + String(d.getMonth()).padStart(2,'0');
+          if(!grupos[k]) grupos[k] = [];
+          grupos[k].push(e);
+        });
+        var partes = [];
+        var keys = Object.keys(grupos).sort();
+        keys.forEach(function(k, idx){
+          var p = k.split('-');
+          partes.push('━━━ *' + MESES_LONG[parseInt(p[1],10)].toUpperCase() + ' ' + p[0] + '* ━━━');
+          grupos[k].forEach(function(e){
+            partes.push('');
+            partes.push(_acFormatarEventoWA(e));
+          });
+          if(idx < keys.length - 1) partes.push('');
+        });
+        partes.push('');
+        partes.push('_Total: ' + lista.length + ' evento(s)_');
+        return partes.join('\n');
+      }
+      function _acCopiarFallback(texto){
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = texto; ta.style.position='fixed'; ta.style.opacity='0';
+          document.body.appendChild(ta); ta.select();
+          var ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          return ok;
+        } catch(_e){ return false; }
+      }
+      function _acCopiarTexto(texto){
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          return navigator.clipboard.writeText(texto).then(function(){return true;}).catch(function(){return _acCopiarFallback(texto);});
+        }
+        return Promise.resolve(_acCopiarFallback(texto));
+      }
+      function _acToast(msg, isErr){
+        if(typeof _showToast === 'function'){
+          _showToast(msg, isErr ? 'var(--red)' : 'var(--accent)');
+        } else { console.log(msg); }
+      }
+      window._acCopiarLista = function(){
+        var evts = _agendaAplicarTodosFiltros(window._agendaCardEventos||[]);
+        if(!evts.length){ _acToast('⚠️ Lista vazia — ajuste os filtros antes de copiar.', true); return; }
+        _acCopiarTexto(_acFormatarListaWA(evts)).then(function(ok){
+          if(ok) _acToast('✅ '+evts.length+' evento(s) copiados — cole no WhatsApp.');
+          else   _acToast('❌ Falha ao copiar.', true);
+        });
+      };
+      window._acCopiarEvento = function(idx){
+        var evts = _agendaAplicarTodosFiltros(window._agendaCardEventos||[]);
+        var e = evts[idx];
+        if(!e) return;
+        _acCopiarTexto(_acFormatarEventoWA(e)).then(function(ok){
+          if(ok) _acToast('✅ Evento copiado.');
+          else   _acToast('❌ Falha ao copiar.', true);
+        });
+      };
+
       function _agendaFiltrarUnidade(unit, btn){
         window._agendaFiltroUnit = unit;
         document.querySelectorAll('#agendaCard .ac-chip').forEach(function(c){c.classList.remove('active');});
@@ -2198,7 +2308,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260522-141048"></script>
+<script defer src="assets/js/00-utils.js?v=20260522-144005"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2292,29 +2402,29 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260522-141048"></script>
-<script defer src="assets/js/29-login.js?v=20260522-141048"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-141048"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-141048"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-141048"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260522-141048"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260522-141048"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260522-141048"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260522-141048"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-141048"></script>
-<script defer src="assets/js/99-diag.js?v=20260522-141048"></script>
-<script defer src="assets/js/21-turmas.js?v=20260522-141048"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260522-141048"></script>
+<script defer src="assets/js/02-main.js?v=20260522-144005"></script>
+<script defer src="assets/js/29-login.js?v=20260522-144005"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-144005"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-144005"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-144005"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260522-144005"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260522-144005"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260522-144005"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260522-144005"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-144005"></script>
+<script defer src="assets/js/99-diag.js?v=20260522-144005"></script>
+<script defer src="assets/js/21-turmas.js?v=20260522-144005"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260522-144005"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260522-141048"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260522-141048"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260522-141048"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260522-141048"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260522-141048"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260522-141048"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260522-144005"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260522-144005"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260522-144005"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260522-144005"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260522-144005"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260522-144005"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260522-141048"></script>
-<script defer src="assets/js/17-presenca.js?v=20260522-141048"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260522-144005"></script>
+<script defer src="assets/js/17-presenca.js?v=20260522-144005"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2326,20 +2436,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-141048">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-144005">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260522-141048"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260522-144005"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260522-141048"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260522-141048"></script>
+<script defer src="assets/js/05-importacao.js?v=20260522-144005"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260522-144005"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-141048">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-144005">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260522-141048"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260522-144005"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2375,7 +2485,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-141048"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-144005"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2400,14 +2510,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260522-141048"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260522-141048"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-141048"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260522-141048"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260522-141048"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-141048"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260522-141048"></script>
-<script defer src="assets/js/08-realtime.js?v=20260522-141048"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260522-144005"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260522-144005"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-144005"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260522-144005"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260522-144005"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-144005"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260522-144005"></script>
+<script defer src="assets/js/08-realtime.js?v=20260522-144005"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2440,7 +2550,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260522-141048"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260522-144005"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -2921,16 +3031,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-141048"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-144005"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-141048"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-144005"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260522-141048"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260522-144005"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260522-141048"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260522-144005"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">

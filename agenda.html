@@ -1241,13 +1241,17 @@
               wd: _wdMap[d.getDay()],
               unit: e.unidade || 'NONE',
               titulo: e.treinamento || e.titulo || '(Sem nome)',
+              tituloOriginal: e.titulo || '',
               hora: e.allDay ? '' : _pad(d.getHours())+':'+_pad(d.getMinutes()),
+              horaFim: (e.allDay || !e.end) ? '' : _pad(e.end.getHours())+':'+_pad(e.end.getMinutes()),
               local: e.local || '',
               ministrante: e.treinador || '',
               tipo: ehOnline ? 'online' : 'presencial',
               status: 'confirmado',
               inscritos: 0,
               startMs: d.getTime(),
+              endMs: e.end ? e.end.getTime() : d.getTime(),
+              allDay: !!e.allDay,
               link: e.link || ''
             };
           })

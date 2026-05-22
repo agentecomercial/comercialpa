@@ -2070,7 +2070,7 @@ body{overflow-x:hidden;}
 /* Lista compacta de eventos */
 .agenda-card-v3 .ac-evts{display:flex;flex-direction:column;gap:8px;}
 .agenda-card-v3 .ac-row{
-  display:grid;grid-template-columns:64px 1fr 130px 32px;gap:14px;align-items:center;
+  display:grid;grid-template-columns:64px 1fr 130px auto;gap:14px;align-items:center;
   padding:10px 14px;
   background:rgba(255,255,255,.025);
   border-radius:8px;border-left:3px solid transparent;
@@ -2095,6 +2095,35 @@ body{overflow-x:hidden;}
 .agenda-card-v3 .ac-row-bar i.lotado {background:linear-gradient(90deg,#00ff66,#c8f05a);box-shadow:0 0 8px rgba(0,255,102,.5);}
 .agenda-card-v3 .ac-row-prog small{display:block;font-size:9.5px;color:rgba(255,255,255,.55);margin-top:4px;text-align:right;}
 .agenda-card-v3 .ac-row-st{font-size:14px;text-align:center;width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;}
+/* Período formatado abaixo do título (Ter 30/05 → Sex 03/06 - 2026) */
+.agenda-card-v3 .ac-row-periodo{display:block;font-size:10.5px;color:#00ff66;font-family:'DM Mono',monospace;margin-top:3px;font-weight:600;letter-spacing:.02em;}
+/* Coluna de ações: copiar + status */
+.agenda-card-v3 .ac-row-acoes{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.agenda-card-v3 .ac-row-copy{
+  background:rgba(0,255,102,.08);
+  border:1px solid rgba(0,255,102,.25);
+  color:#00ff66;
+  width:28px;height:28px;border-radius:50%;
+  font-size:13px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:all .15s;line-height:1;
+}
+.agenda-card-v3 .ac-row-copy:hover{background:rgba(0,255,102,.18);border-color:#00ff66;transform:scale(1.05);}
+/* Botão Copiar lista no header dos eventos */
+.agenda-card-v3 .ac-evts-acoes{display:inline-flex;align-items:center;gap:6px;}
+.agenda-card-v3 .ac-evts-copy{
+  background:rgba(0,255,102,.08);
+  border:1px solid rgba(0,255,102,.3);
+  color:#00ff66;
+  border-radius:99px;
+  padding:5px 12px;
+  font-family:'DM Sans',sans-serif;
+  font-size:10.5px;font-weight:700;letter-spacing:.04em;
+  cursor:pointer;
+  display:inline-flex;align-items:center;
+  transition:all .15s;
+}
+.agenda-card-v3 .ac-evts-copy:hover{background:rgba(0,255,102,.18);border-color:#00ff66;transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,255,102,.18);}
 .agenda-card-v3 .ac-row-st.conf{background:rgba(0,255,102,.15);color:#00ff66;}
 .agenda-card-v3 .ac-row-st.pend{background:rgba(255,184,79,.18);color:#ffb84f;}
 .agenda-card-v3 .ac-evt-vazio{font-size:11.5px;color:rgba(255,255,255,.45);padding:18px 0;text-align:center;line-height:1.55;}
