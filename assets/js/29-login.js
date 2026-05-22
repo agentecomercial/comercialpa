@@ -332,17 +332,13 @@ window._iniciarListenerCongelamento = _iniciarListenerCongelamento;
         _restaurar();
       });
     }
-    /* Garante que TODOS os scripts defer (incl. 21-turmas.js que define
-       renderTurmasGrid) já tenham executado antes de chamar _restaurar.
-       defer scripts executam em ordem, ANTES de DOMContentLoaded — então
-       esperar esse evento (ou window.load) é seguro. */
-    if(document.readyState === 'loading'){
-      window.addEventListener('DOMContentLoaded', _validarEEntrar);
-    } else if(document.readyState === 'interactive'){
-      /* Ainda parseando outros defer scripts — adia 1 tick */
-      setTimeout(_validarEEntrar, 0);
-    } else {
+    /* window.load garante que TODOS os defer scripts (incluindo
+       21-turmas.js que define renderTurmasGrid) ja executaram +
+       imagens/estilos carregados. Robusto contra ordem de scripts. */
+    if(document.readyState === 'complete'){
       _validarEEntrar();
+    } else {
+      window.addEventListener('load', _validarEEntrar);
     }
   }catch(e){ console.warn('[auth] auto-login:', e); }
 })();
