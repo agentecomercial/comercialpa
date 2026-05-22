@@ -1837,10 +1837,10 @@
   }
 
   function formatarEventoTexto(e) {
-    let txt = 'TREINAMENTO: *' + e.titulo + '*';
+    let txt = 'TREINAMENTO📚 : *' + e.titulo + '*';
     txt += '\nDATA: 📅 ' + formatarDataApenas(e);
-    txt += '\nHORARIO: ' + horarioTexto(e) + '.';
-    if (e.local) txt += '\nLOCAL: 📍 ' + e.local;
+    txt += '\nHORARIO: 🕓 ' + horarioTexto(e) + '.';
+    if (e.local) txt += '\nLOCAL:📍' + e.local;
     return txt;
   }
 
