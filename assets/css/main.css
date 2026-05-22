@@ -1992,7 +1992,56 @@ body{overflow-x:hidden;}
 .agenda-card-v3 .ac-chip.the.active{background:#ff6b9d;border-color:#ff6b9d;color:#fff;}
 .agenda-card-v3 .ac-stats{display:flex;gap:18px;font-size:11.5px;color:var(--muted);padding:8px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
 .agenda-card-v3 .ac-stats b{color:var(--accent);font-weight:700;}
-/* Toolbar: chips + botão filtros */
+/* === SEGMENTED CONTROL (iOS-style) === */
+.agenda-card-v3 .ac-segmented{
+  display:flex;position:relative;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:3px;
+  overflow:hidden;
+}
+.agenda-card-v3 .ac-seg-pin{
+  position:absolute;top:3px;bottom:3px;left:3px;
+  width:calc((100% - 6px) / 5);
+  background:var(--accent);
+  border-radius:7px;
+  transition:transform .25s cubic-bezier(.4,0,.2,1),background .15s;
+  box-shadow:0 1px 4px rgba(0,0,0,.3);
+  z-index:0;
+}
+.agenda-card-v3 .ac-seg-pin.pin-VIX{background:var(--blue);}
+.agenda-card-v3 .ac-seg-pin.pin-BEL{background:var(--amber);}
+.agenda-card-v3 .ac-seg-pin.pin-THE{background:#ff6b9d;}
+.agenda-card-v3 .ac-seg-pin.pin-NONE{background:var(--muted);}
+.agenda-card-v3 .ac-seg-opt{
+  flex:1;background:transparent;border:none;cursor:pointer;
+  padding:7px 4px;font-family:'DM Sans',sans-serif;
+  font-size:10.5px;font-weight:700;letter-spacing:.04em;
+  color:var(--muted);position:relative;z-index:1;
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+  border-radius:7px;
+  transition:color .2s;
+}
+.agenda-card-v3 .ac-seg-opt small{font-size:9.5px;font-weight:600;opacity:.7;font-family:'DM Mono',monospace;}
+.agenda-card-v3 .ac-seg-opt.on{color:#0f0f0f;}
+.agenda-card-v3 .ac-seg-opt.on small{opacity:.55;color:rgba(0,0,0,.7);}
+.agenda-card-v3 .ac-seg-opt.vix.on,
+.agenda-card-v3 .ac-seg-opt.the.on{color:#fff;}
+.agenda-card-v3 .ac-seg-opt.vix.on small,
+.agenda-card-v3 .ac-seg-opt.the.on small{color:rgba(255,255,255,.7);opacity:.85;}
+.agenda-card-v3 .ac-seg-opt.none.on{color:#fff;}
+
+/* Rodapé do segmented (stats + filtros) */
+.agenda-card-v3 .ac-seg-foot{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  font-size:11px;color:var(--muted);
+  padding:2px 4px;
+}
+.agenda-card-v3 .ac-seg-stats{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.agenda-card-v3 .ac-seg-stats b{color:var(--accent);font-weight:700;font-family:'DM Mono',monospace;}
+
+/* Toolbar antigo (chips) — mantido como fallback */
 .agenda-card-v3 .ac-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
 .agenda-card-v3 .ac-chip-n{font-family:'DM Mono',monospace;font-size:9.5px;font-weight:800;background:rgba(255,255,255,.1);color:var(--text);padding:1px 7px;border-radius:99px;margin-left:5px;}
 .agenda-card-v3 .ac-chip.active .ac-chip-n{background:rgba(0,0,0,.2);color:#0f0f0f;}
