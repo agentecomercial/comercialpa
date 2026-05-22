@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260522-150819">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260522-150819">
+<link rel="stylesheet" href="assets/css/main.css?v=20260522-155210">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260522-155210">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-150819">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-155210">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1617,25 +1617,26 @@
                           : pct >= 40 ? 'medio' : 'baixo';
             var unitNome = e.unit==='VIX'?'BEL':(e.unit==='BEL'?'BEL':(e.unit==='THE'?'THE':''));
             unitNome = e.unit || '';
-            var sub = (e.ministrante || '—') + ' · ' + unitNome;
+            var ministr = e.ministrante || '—';
             var periodo = (typeof _acFormatarPeriodo === 'function') ? _acFormatarPeriodo(e) : '';
+            /* Opção 11: card vertical em grid */
             html += ''+
-              '<div class="ac-row ac-row-'+e.unit+'">'+
-                '<div class="ac-row-d"><span class="d">'+e.data+'</span><small>'+(e.wd||'')+'</small></div>'+
-                '<div class="ac-row-t">'+
-                  '<span class="t">'+e.titulo+'</span>'+
-                  '<small>'+sub+'</small>'+
-                  (periodo ? '<small class="ac-row-periodo">📅 '+periodo+'</small>' : '')+
-                '</div>'+
-                '<div class="ac-row-prog">'+
-                  '<div class="ac-row-bar"><i class="'+pctBarCls+'" style="width:'+pct+'%;"></i></div>'+
-                  '<small>'+pctTxt+'</small>'+
-                '</div>'+
-                '<div class="ac-row-acoes">'+
-                  '<button type="button" class="ac-row-copy" title="Copiar para WhatsApp" onclick="event.stopPropagation();_acCopiarEvento('+idx+')">'+
-                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>'+
-                  '</button>'+
-                  '<div class="ac-row-st '+stCls+'" title="'+e.status+'">'+stIc+'</div>'+
+              '<div class="ac-card ac-card-'+e.unit+'">'+
+                '<div class="ac-card-d">'+e.data+' <small>'+(e.wd||'')+'</small></div>'+
+                '<div class="ac-card-t">'+e.titulo+'</div>'+
+                '<div class="ac-card-m">👤 '+ministr+' · '+unitNome+'</div>'+
+                (periodo ? '<div class="ac-card-periodo">📅 '+periodo+'</div>' : '')+
+                '<div class="ac-card-foot">'+
+                  '<div class="ac-card-prog">'+
+                    '<div class="ac-row-bar"><i class="'+pctBarCls+'" style="width:'+pct+'%;"></i></div>'+
+                    '<small>'+pctTxt+'</small>'+
+                  '</div>'+
+                  '<div class="ac-card-acoes">'+
+                    '<button type="button" class="ac-row-copy" title="Copiar para WhatsApp" onclick="event.stopPropagation();_acCopiarEvento('+idx+')">'+
+                      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>'+
+                    '</button>'+
+                    '<div class="ac-row-st '+stCls+'" title="'+e.status+'">'+stIc+'</div>'+
+                  '</div>'+
                 '</div>'+
               '</div>';
           });
@@ -2314,7 +2315,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260522-150819"></script>
+<script defer src="assets/js/00-utils.js?v=20260522-155210"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2408,29 +2409,29 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260522-150819"></script>
-<script defer src="assets/js/29-login.js?v=20260522-150819"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-150819"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-150819"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-150819"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260522-150819"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260522-150819"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260522-150819"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260522-150819"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-150819"></script>
-<script defer src="assets/js/99-diag.js?v=20260522-150819"></script>
-<script defer src="assets/js/21-turmas.js?v=20260522-150819"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260522-150819"></script>
+<script defer src="assets/js/02-main.js?v=20260522-155210"></script>
+<script defer src="assets/js/29-login.js?v=20260522-155210"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-155210"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-155210"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-155210"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260522-155210"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260522-155210"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260522-155210"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260522-155210"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-155210"></script>
+<script defer src="assets/js/99-diag.js?v=20260522-155210"></script>
+<script defer src="assets/js/21-turmas.js?v=20260522-155210"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260522-155210"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260522-150819"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260522-150819"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260522-150819"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260522-150819"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260522-150819"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260522-150819"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260522-155210"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260522-155210"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260522-155210"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260522-155210"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260522-155210"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260522-155210"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260522-150819"></script>
-<script defer src="assets/js/17-presenca.js?v=20260522-150819"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260522-155210"></script>
+<script defer src="assets/js/17-presenca.js?v=20260522-155210"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2442,20 +2443,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-150819">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-155210">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260522-150819"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260522-155210"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260522-150819"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260522-150819"></script>
+<script defer src="assets/js/05-importacao.js?v=20260522-155210"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260522-155210"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-150819">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-155210">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260522-150819"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260522-155210"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2491,7 +2492,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-150819"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-155210"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2516,14 +2517,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260522-150819"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260522-150819"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-150819"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260522-150819"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260522-150819"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-150819"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260522-150819"></script>
-<script defer src="assets/js/08-realtime.js?v=20260522-150819"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260522-155210"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260522-155210"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-155210"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260522-155210"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260522-155210"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-155210"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260522-155210"></script>
+<script defer src="assets/js/08-realtime.js?v=20260522-155210"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2556,7 +2557,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260522-150819"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260522-155210"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -3037,16 +3038,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-150819"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-155210"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-150819"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-155210"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260522-150819"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260522-155210"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260522-150819"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260522-155210"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
