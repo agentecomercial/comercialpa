@@ -322,6 +322,10 @@
       var iniciais = typeof def.dadosIniciais === 'function' ? def.dadosIniciais() : (def.dadosIniciais || {});
       _abrirForm(codigo, def, iniciais);
     },
-    tem: function(codigo){ return !!_registry[codigo]; }
+    tem: function(codigo){ return !!_registry[codigo]; },
+    /* Expostos para uso pelo gerarPropostaProduto (produtos legados) */
+    _absolutizarUrls:      _absolutizarUrls,
+    _embutirImagensInline: _embutirImagensInline,
+    _injetarBaseHref:      _injetarBaseHref
   };
 })();

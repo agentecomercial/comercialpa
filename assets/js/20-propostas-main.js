@@ -1063,26 +1063,37 @@ function gerarPropostaProduto(){
     +'</div>'
     +'</body></html>';
 
-  // Abrir preview
-  window._ppHtml = html;
+  // Abrir preview — embute imagens como base64 ANTES do blob
+  // (em file:// blob:null nao consegue carregar file:// das images)
   window._ppNomeArquivo = 'proposta-'+_propProdAtual.toLowerCase()+'-'+cliente.toLowerCase().replace(/\s+/g,'-')+'.html';
   window._ppBlobUrl = null;
+  _showToast('🔄 Preparando proposta...','var(--muted)');
 
-  var blob = new Blob([html], {type:'text/html'});
-  var url = URL.createObjectURL(blob);
-  window._ppBlobUrl = url;
+  var _processar = (window.PropostaRenderer && window.PropostaRenderer._embutirImagensInline)
+    ? function(h){
+        var hAbs = window.PropostaRenderer._absolutizarUrls(h);
+        return window.PropostaRenderer._embutirImagensInline(hAbs);
+      }
+    : function(h){ return Promise.resolve(h); };
 
-  var iframe = document.getElementById('ppIframe');
-  iframe.src = url;
-  document.getElementById('ppLinkInput').value = url;
-  document.getElementById('ppPreviewTitulo').textContent = 'Proposta — '+p.nome+' · '+cliente;
+  _processar(html).then(function(htmlFinal){
+    window._ppHtml = htmlFinal;
+    var blob = new Blob([htmlFinal], {type:'text/html'});
+    var url = URL.createObjectURL(blob);
+    window._ppBlobUrl = url;
 
-  var ov = document.getElementById('propProdPreviewOverlay');
-  ov.style.display = 'flex';
+    var iframe = document.getElementById('ppIframe');
+    iframe.src = url;
+    document.getElementById('ppLinkInput').value = url;
+    document.getElementById('ppPreviewTitulo').textContent = 'Proposta — '+p.nome+' · '+cliente;
 
-  fecharPropProd();
-  _showToast('✅ Proposta gerada para '+cliente+'!','var(--accent)');
-  if(typeof _addPendLog==='function') _addPendLog('Proposta HTML gerada',cliente+' · '+p.nome,'📄');
+    var ov = document.getElementById('propProdPreviewOverlay');
+    ov.style.display = 'flex';
+
+    fecharPropProd();
+    _showToast('✅ Proposta gerada para '+cliente+'!','var(--accent)');
+    if(typeof _addPendLog==='function') _addPendLog('Proposta HTML gerada',cliente+' · '+p.nome,'📄');
+  });
 }
 
 function fecharPreviewPropProd(){
