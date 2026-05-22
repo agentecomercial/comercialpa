@@ -305,48 +305,31 @@ window.cardExcluirSelecionados = cardExcluirSelecionados;
     _aplicarEstado();
   }
   /* Atualiza contador + total no header (chamado pelo renderAll).
-     Respeita os filtros ativos: usa filtered() se disponível.
-     Total considera regra granular por status quando filtrando. */
+     LEMOS DIRETAMENTE de #tableCount e #tableTotal — a unica fonte
+     da verdade do que esta sendo exibido. Evita duplicacao de
+     logica de filtros/soma e garante 100% de consistencia. */
   function _atualizarHeader(){
-    var cnt  = document.getElementById('cliCollapseCount');
-    var tot  = document.getElementById('cliCollapseTotal');
+    var cnt = document.getElementById('cliCollapseCount');
+    var tot = document.getElementById('cliCollapseTotal');
     if(!cnt || !tot) return;
 
-    /* Usa filtered() que respeita TODOS os filtros (busca, status,
-       treinador, consultor, treinamento, presenca). Fallback para
-       data global se filtered nao estiver disponivel. */
-    var arr;
-    try {
-      arr = (typeof filtered === 'function') ? filtered() : (window.data || []);
-    } catch(_e){ arr = window.data || []; }
-    arr = (arr || []).filter(function(d){ return d && d.cliente; });
-    var n = arr.length;
+    /* Contador: pega texto do #tableCount (ex: "12 de 50 clientes") */
+    var tableCount = document.getElementById('tableCount');
+    if(tableCount && tableCount.textContent){
+      cnt.textContent = tableCount.textContent;
+    } else {
+      cnt.textContent = '0 clientes';
+    }
 
-    /* Soma de acordo com o filtro de status ativo:
-       - "pago"        -> soma apenas subs pagos (granular)
-       - "aberto"      -> soma apenas subs em aberto
-       - "negociacao"  -> soma apenas subs em negociacao
-       - sem filtro    -> soma faturado (regra padrao do app) */
-    var status = (typeof activeStatus !== 'undefined') ? activeStatus : '';
-    var helper = null;
-    if(status === 'pago'       && typeof window._faturadoDoCliente   === 'function') helper = window._faturadoDoCliente;
-    else if(status === 'aberto'     && typeof window._abertoDoCliente     === 'function') helper = window._abertoDoCliente;
-    else if(status === 'negociacao' && typeof window._negociacaoDoCliente === 'function') helper = window._negociacaoDoCliente;
-    else if(typeof window._faturadoDoCliente === 'function') helper = window._faturadoDoCliente;
-
-    var soma = arr.reduce(function(a,d){
-      if(helper) return a + helper(d);
-      return a + (Number(d.valor)||0);
-    }, 0);
-
-    var rotulo = (status === 'pago')       ? ' pago'
-               : (status === 'aberto')     ? ' em aberto'
-               : (status === 'negociacao') ? ' em negociação'
-               : (status === 'entrada')    ? ' com entrada'
-               : ' cadastrado';
-    cnt.textContent = n + rotulo + (n!==1?'s':'');
-    var fmt = (typeof formatVal==='function') ? formatVal(soma) : ('R$ ' + soma.toFixed(2));
-    tot.textContent = fmt;
+    /* Total: pega texto do #tableTotal (ex: "Total visível: R$ 184.608,25") */
+    var tableTotal = document.getElementById('tableTotal');
+    if(tableTotal){
+      var span = tableTotal.querySelector('span');
+      var txt = span ? span.textContent : tableTotal.textContent.replace(/Total visível:\s*/i, '').trim();
+      tot.textContent = txt || 'R$ 0,00';
+    } else {
+      tot.textContent = 'R$ 0,00';
+    }
   }
   window._cliToggleCollapse = _toggle;
   window._cliAtualizarHeaderCollapse = _atualizarHeader;
