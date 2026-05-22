@@ -333,30 +333,30 @@ window.cardExcluirSelecionados = cardExcluirSelecionados;
   }
   window._cliToggleCollapse = _toggle;
   window._cliAtualizarHeaderCollapse = _atualizarHeader;
-  /* Wrappa renderAll global para sempre atualizar o header após render.
-     renderAll é chamado em todo refresh de dados, então garante que
-     contadores ficam sincronizados sem precisar mexer em 02-main.js. */
-  function _wrapRenderAll(){
-    if(typeof window.renderAll === 'function' && !window.renderAll._cliWrapped){
-      var orig = window.renderAll;
-      window.renderAll = function(){
-        var r = orig.apply(this, arguments);
-        try { _atualizarHeader(); } catch(_e){}
-        return r;
-      };
-      window.renderAll._cliWrapped = true;
-      return true;
+
+  /* Estratégia ROBUSTA: observa mudanças em #tableTotal via
+     MutationObserver. Sempre que a tabela atualizar seu rodapé
+     (por qualquer caminho — renderAll, filtros, edits), o header
+     dispara junto. Funciona mesmo se renderAll for chamado sem
+     prefixo window. (caminho interno do script). */
+  function _instalarObserver(){
+    var alvo = document.getElementById('tableTotal');
+    if(!alvo || !window.MutationObserver){
+      /* tabela ainda não no DOM — tenta de novo em 200ms */
+      setTimeout(_instalarObserver, 200);
+      return;
     }
-    return false;
+    var obs = new MutationObserver(function(){
+      try { _atualizarHeader(); } catch(_e){}
+    });
+    obs.observe(alvo, { childList:true, subtree:true, characterData:true });
+    /* Faz primeira atualização */
+    _atualizarHeader();
   }
-  /* Aplica estado salvo + atualiza header ao carregar */
+
   function _init(){
     _aplicarEstado();
-    _atualizarHeader();
-    if(!_wrapRenderAll()){
-      /* renderAll ainda não definido — tenta de novo em 200ms */
-      setTimeout(_wrapRenderAll, 200);
-    }
+    _instalarObserver();
   }
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', _init);
