@@ -76,8 +76,43 @@
       .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40) || 'cliente';
   }
 
+  /* Injeta <base href> no <head> do HTML para que caminhos relativos
+     (ex: assets/img/propostas/FCIS.jpg) sejam resolvidos contra a URL
+     atual do dashboard — necessário para iframe.srcdoc (que usa
+     about:srcdoc como base e quebraria relativos). */
+  function _injetarBaseHref(html){
+    if(/<base\s/i.test(html)) return html; /* já tem */
+    var baseHref = (function(){
+      try { return new URL('.', location.href).href; }
+      catch(_e){ return location.href.replace(/[^/?#]*([?#].*)?$/, ''); }
+    })();
+    var baseTag = '<base href="' + baseHref + '">';
+    if(html.indexOf('<head>') >= 0)        return html.replace('<head>',  '<head>'  + baseTag);
+    if(html.indexOf('<head ') >= 0)        return html.replace(/<head[^>]*>/, function(m){ return m + baseTag; });
+    /* sem <head> — injeta antes do </html> ou no início */
+    return baseTag + html;
+  }
+
+  /* Para "Baixar HTML" / "Abrir em nova aba" via blob, as imagens
+     PRECISAM ser absolutas porque o blob: tem origem diferente.
+     Substitui o atributo src/href relativos por absolutos. */
+  function _absolutizarUrls(html){
+    var base = (function(){
+      try { return new URL('.', location.href).href; }
+      catch(_e){ return ''; }
+    })();
+    if(!base) return html;
+    /* src="assets/..." e href="assets/..." (sem http/https/data/blob) */
+    return html.replace(/(<(?:img|link|script|source)\b[^>]*?\b(?:src|href)=)["']((?!https?:|data:|blob:|about:|#|\/\/)[^"']+)["']/gi,
+      function(_m, pre, url){
+        try { return pre + '"' + new URL(url, base).href + '"'; }
+        catch(_e){ return _m; }
+      });
+  }
+
   function _abrirVisualizacao(codigo, definicao, dados){
     var html = _renderTokens(definicao.template, dados, definicao);
+    html = _injetarBaseHref(html);
     var nomeArq = 'proposta-' + codigo + '-' + _slug(dados.NOME_CLIENTE) + '.html';
 
     var ov = document.createElement('div');
@@ -113,7 +148,10 @@
       }
       if(act === 'newtab'){
         try{
-          var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+          /* Para blob: precisamos absolutizar URLs (caminhos relativos
+             quebrariam — blob: tem origem diferente do dashboard) */
+          var htmlAbs = _absolutizarUrls(html);
+          var blob = new Blob([htmlAbs], { type: 'text/html;charset=utf-8' });
           var blobUrl = URL.createObjectURL(blob);
           var tab = window.open(blobUrl, '_blank');
           if(!tab){ _toast('Permita pop-ups para este site e tente novamente.', 'error'); }
@@ -124,7 +162,8 @@
         return;
       }
       if(act === 'download'){
-        var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        var htmlAbs2 = _absolutizarUrls(html);
+        var blob = new Blob([htmlAbs2], { type: 'text/html;charset=utf-8' });
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url; a.download = nomeArq;
