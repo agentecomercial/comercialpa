@@ -322,11 +322,34 @@ window.cardExcluirSelecionados = cardExcluirSelecionados;
   }
   window._cliToggleCollapse = _toggle;
   window._cliAtualizarHeaderCollapse = _atualizarHeader;
+  /* Wrappa renderAll global para sempre atualizar o header após render.
+     renderAll é chamado em todo refresh de dados, então garante que
+     contadores ficam sincronizados sem precisar mexer em 02-main.js. */
+  function _wrapRenderAll(){
+    if(typeof window.renderAll === 'function' && !window.renderAll._cliWrapped){
+      var orig = window.renderAll;
+      window.renderAll = function(){
+        var r = orig.apply(this, arguments);
+        try { _atualizarHeader(); } catch(_e){}
+        return r;
+      };
+      window.renderAll._cliWrapped = true;
+      return true;
+    }
+    return false;
+  }
   /* Aplica estado salvo + atualiza header ao carregar */
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ _aplicarEstado(); _atualizarHeader(); });
-  } else {
+  function _init(){
     _aplicarEstado();
     _atualizarHeader();
+    if(!_wrapRenderAll()){
+      /* renderAll ainda não definido — tenta de novo em 200ms */
+      setTimeout(_wrapRenderAll, 200);
+    }
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', _init);
+  } else {
+    _init();
   }
 })();
