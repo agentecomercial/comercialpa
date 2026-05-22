@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260522-130013">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260522-130013">
+<link rel="stylesheet" href="assets/css/main.css?v=20260522-141048">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260522-141048">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-130013">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-141048">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1200,11 +1200,58 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </div>
         </div>
-        <div class="ac-chips" onclick="event.stopPropagation()">
-          <button type="button" class="ac-chip active" data-unit=""    onclick="_agendaFiltrarUnidade('',   this)">Todas</button>
-          <button type="button" class="ac-chip vix"    data-unit="VIX" onclick="_agendaFiltrarUnidade('VIX',this)">VIX <small>Vitória</small></button>
-          <button type="button" class="ac-chip bel"    data-unit="BEL" onclick="_agendaFiltrarUnidade('BEL',this)">BEL <small>Belém</small></button>
-          <button type="button" class="ac-chip the"    data-unit="THE" onclick="_agendaFiltrarUnidade('THE',this)">THE <small>Teresina</small></button>
+        <!-- Chips de unidade + botão de filtros avançados -->
+        <div class="ac-toolbar" onclick="event.stopPropagation()">
+          <div class="ac-chips">
+            <button type="button" class="ac-chip active" data-unit=""     onclick="_agendaFiltrarUnidade('',    this)">Todas <span class="ac-chip-n" id="acChipNTodas">0</span></button>
+            <button type="button" class="ac-chip vix"    data-unit="VIX"  onclick="_agendaFiltrarUnidade('VIX', this)">VIX <span class="ac-chip-n" id="acChipNVIX">0</span></button>
+            <button type="button" class="ac-chip bel"    data-unit="BEL"  onclick="_agendaFiltrarUnidade('BEL', this)">BEL <span class="ac-chip-n" id="acChipNBEL">0</span></button>
+            <button type="button" class="ac-chip the"    data-unit="THE"  onclick="_agendaFiltrarUnidade('THE', this)">THE <span class="ac-chip-n" id="acChipNTHE">0</span></button>
+            <button type="button" class="ac-chip none"   data-unit="NONE" onclick="_agendaFiltrarUnidade('NONE',this)">Sem código <span class="ac-chip-n" id="acChipNNONE">0</span></button>
+          </div>
+          <button type="button" class="ac-filt-toggle" id="acFiltToggle" onclick="_agendaTogglePainel()" aria-expanded="false">
+            <span style="display:inline-flex;align-items:center;gap:5px;">🎛 Filtros <span class="ac-filt-badge" id="acFiltBadge" hidden>0</span></span>
+            <span class="ac-filt-caret">▾</span>
+          </button>
+        </div>
+        <!-- Painel de filtros avançados (toggle) -->
+        <div class="ac-filt-pop" id="acFiltPop" onclick="event.stopPropagation()">
+          <div class="ac-filt-h">
+            <span>Filtros</span>
+            <button type="button" class="ac-filt-clear" onclick="_agendaLimparFiltros()">× Limpar</button>
+          </div>
+          <div class="ac-filt-grid">
+            <div class="ac-filt-field">
+              <label>Período</label>
+              <select id="acFiltPeriodo" onchange="_agendaAtualizarFiltros()">
+                <option value="7">Próximos 7 dias</option>
+                <option value="15">Próximos 15 dias</option>
+                <option value="30">Próximos 30 dias</option>
+                <option value="60">Próximos 60 dias</option>
+                <option value="90" selected>Próximos 90 dias</option>
+                <option value="0">Todos</option>
+              </select>
+            </div>
+            <div class="ac-filt-field">
+              <label>Treinamento</label>
+              <select id="acFiltTreinamento" onchange="_agendaAtualizarFiltros()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="ac-filt-field">
+              <label>Treinador</label>
+              <select id="acFiltTreinador" onchange="_agendaAtualizarFiltros()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="ac-filt-field ac-filt-field-busca">
+              <label>Buscar</label>
+              <div class="ac-filt-search">
+                <span class="ac-filt-search-ic">🔍</span>
+                <input type="search" id="acFiltBusca" placeholder="Treinamento, local, treinador..." oninput="_agendaAtualizarFiltros()">
+              </div>
+            </div>
+          </div>
         </div>
         <div class="ac-stats">
           <span><b id="acStatHoje">—</b> eventos hoje</span>
@@ -1420,12 +1467,131 @@
         window._agendaCardEventos = c ? c.eventos : [];
         window._agendaCardCacheTs = c ? c.ts : 0;
         window._agendaCardSemCache = !c;
+        if(typeof _agendaPopularDropdowns === 'function')      _agendaPopularDropdowns();
+        if(typeof _agendaAtualizarChipsContador === 'function') _agendaAtualizarChipsContador();
         _agendaRenderEventos();
       }
+      /* === ESTADO dos filtros avançados === */
+      window._agendaFiltros = window._agendaFiltros || {
+        periodo: 90,         /* dias (0=todos) */
+        treinamento: '',
+        treinador: '',
+        busca: ''
+      };
+
+      function _agendaTogglePainel(){
+        var pop = document.getElementById('acFiltPop');
+        var tgl = document.getElementById('acFiltToggle');
+        if(!pop) return;
+        var aberto = pop.classList.toggle('open');
+        if(tgl) tgl.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+      }
+
+      function _agendaPopularDropdowns(){
+        var evts = (window._agendaCardEventos||[]);
+        var treinos = {}, treinadores = {};
+        evts.forEach(function(e){
+          if(e.titulo) treinos[e.titulo] = (treinos[e.titulo]||0) + 1;
+          if(e.ministrante) treinadores[e.ministrante] = (treinadores[e.ministrante]||0) + 1;
+        });
+        function _povoar(idSelect, mapa, atual){
+          var sel = document.getElementById(idSelect);
+          if(!sel) return;
+          var keys = Object.keys(mapa).sort(function(a,b){ return mapa[b]-mapa[a] || a.localeCompare(b,'pt-BR'); });
+          /* preserva opção 'Todos' (value='') e remove o resto */
+          Array.from(sel.querySelectorAll('option:not([value=""])')).forEach(function(o){o.remove();});
+          keys.forEach(function(k){
+            var op = document.createElement('option');
+            op.value = k;
+            op.textContent = k + ' (' + mapa[k] + ')';
+            sel.appendChild(op);
+          });
+          if(atual) sel.value = atual;
+        }
+        _povoar('acFiltTreinamento', treinos, window._agendaFiltros.treinamento);
+        _povoar('acFiltTreinador',   treinadores, window._agendaFiltros.treinador);
+      }
+
+      function _agendaAtualizarFiltros(){
+        var sP = document.getElementById('acFiltPeriodo');
+        var sT = document.getElementById('acFiltTreinamento');
+        var sM = document.getElementById('acFiltTreinador');
+        var iB = document.getElementById('acFiltBusca');
+        window._agendaFiltros.periodo     = sP ? +sP.value : 90;
+        window._agendaFiltros.treinamento = sT ? sT.value  : '';
+        window._agendaFiltros.treinador   = sM ? sM.value  : '';
+        window._agendaFiltros.busca       = iB ? (iB.value||'').toLowerCase().trim() : '';
+        _agendaAtualizarBadge();
+        _agendaRenderEventos();
+      }
+
+      function _agendaLimparFiltros(){
+        window._agendaFiltros = { periodo:90, treinamento:'', treinador:'', busca:'' };
+        window._agendaFiltroUnit = '';
+        var sP = document.getElementById('acFiltPeriodo'); if(sP) sP.value = '90';
+        var sT = document.getElementById('acFiltTreinamento'); if(sT) sT.value = '';
+        var sM = document.getElementById('acFiltTreinador');   if(sM) sM.value = '';
+        var iB = document.getElementById('acFiltBusca');       if(iB) iB.value = '';
+        document.querySelectorAll('#agendaCard .ac-chip').forEach(function(c){
+          c.classList.toggle('active', c.dataset.unit === '');
+        });
+        _agendaAtualizarBadge();
+        _agendaRenderEventos();
+      }
+
+      function _agendaAtualizarBadge(){
+        var f = window._agendaFiltros;
+        var n = 0;
+        if(window._agendaFiltroUnit) n++;
+        if(f.periodo !== 90)        n++;
+        if(f.treinamento)            n++;
+        if(f.treinador)              n++;
+        if(f.busca)                  n++;
+        var b = document.getElementById('acFiltBadge');
+        if(b){
+          if(n > 0){ b.textContent = n; b.hidden = false; }
+          else { b.hidden = true; }
+        }
+      }
+
+      function _agendaAplicarTodosFiltros(evts){
+        var f = window._agendaFiltros;
+        var agora = Date.now();
+        var limiteFim = f.periodo > 0 ? agora + f.periodo*86400000 : Infinity;
+        var busca = (f.busca||'').toLowerCase();
+        return evts.filter(function(e){
+          if(window._agendaFiltroUnit && e.unit !== window._agendaFiltroUnit) return false;
+          if(f.periodo > 0 && (e.startMs||0) > limiteFim) return false;
+          if(f.treinamento && e.titulo !== f.treinamento) return false;
+          if(f.treinador && e.ministrante !== f.treinador) return false;
+          if(busca){
+            var blob = ((e.titulo||'')+' '+(e.local||'')+' '+(e.ministrante||'')).toLowerCase();
+            if(blob.indexOf(busca) === -1) return false;
+          }
+          return true;
+        });
+      }
+
+      function _agendaAtualizarChipsContador(){
+        var all = (window._agendaCardEventos||[]);
+        var ct = { '':all.length, VIX:0, BEL:0, THE:0, NONE:0 };
+        all.forEach(function(e){
+          if(e.unit==='VIX') ct.VIX++;
+          else if(e.unit==='BEL') ct.BEL++;
+          else if(e.unit==='THE') ct.THE++;
+          else ct.NONE++;
+        });
+        var setN = function(id,v){ var x = document.getElementById(id); if(x) x.textContent = v; };
+        setN('acChipNTodas', ct['']);
+        setN('acChipNVIX',   ct.VIX);
+        setN('acChipNBEL',   ct.BEL);
+        setN('acChipNTHE',   ct.THE);
+        setN('acChipNNONE',  ct.NONE);
+      }
+
       function _agendaRenderEventos(){
-        var evts = (window._agendaCardEventos||[]).slice();
-        if(window._agendaFiltroUnit) evts = evts.filter(function(e){return e.unit===window._agendaFiltroUnit;});
-        var quatro = evts.slice(0,8);  /* 4 colunas × 2 linhas */
+        var evts = _agendaAplicarTodosFiltros(window._agendaCardEventos||[]);
+        var quatro = evts.slice(0,8);
         var html = '';
         if(window._agendaCardSemCache){
           html = '<div class="ac-evt-vazio" style="line-height:1.55;">Nenhum evento sincronizado ainda.<br><span style="color:#00ff66;font-weight:700;">Abra a Agenda</span> uma vez para puxar os eventos do Google Calendar.</div>';
@@ -1482,16 +1648,13 @@
         window._agendaFiltroUnit = unit;
         document.querySelectorAll('#agendaCard .ac-chip').forEach(function(c){c.classList.remove('active');});
         if(btn) btn.classList.add('active');
+        _agendaAtualizarBadge();
         _agendaRenderEventos();
       }
       (function(){
-        var d = new Date();
-        var meses = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-        var wd = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
-        var sM = document.getElementById('acMes'), sD = document.getElementById('acDia'), sW = document.getElementById('acWd');
-        if(sM) sM.textContent = meses[d.getMonth()]+' '+d.getFullYear();
-        if(sD) sD.textContent = String(d.getDate());
-        if(sW) sW.textContent = wd[d.getDay()];
+        _agendaPopularDropdowns();
+        _agendaAtualizarChipsContador();
+        _agendaAtualizarBadge();
         _agendaRenderEventos();
       })();
     </script>
@@ -2035,7 +2198,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260522-130013"></script>
+<script defer src="assets/js/00-utils.js?v=20260522-141048"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2129,29 +2292,29 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260522-130013"></script>
-<script defer src="assets/js/29-login.js?v=20260522-130013"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-130013"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-130013"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-130013"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260522-130013"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260522-130013"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260522-130013"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260522-130013"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-130013"></script>
-<script defer src="assets/js/99-diag.js?v=20260522-130013"></script>
-<script defer src="assets/js/21-turmas.js?v=20260522-130013"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260522-130013"></script>
+<script defer src="assets/js/02-main.js?v=20260522-141048"></script>
+<script defer src="assets/js/29-login.js?v=20260522-141048"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-141048"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-141048"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-141048"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260522-141048"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260522-141048"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260522-141048"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260522-141048"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-141048"></script>
+<script defer src="assets/js/99-diag.js?v=20260522-141048"></script>
+<script defer src="assets/js/21-turmas.js?v=20260522-141048"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260522-141048"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260522-130013"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260522-130013"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260522-130013"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260522-130013"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260522-130013"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260522-130013"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260522-141048"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260522-141048"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260522-141048"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260522-141048"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260522-141048"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260522-141048"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260522-130013"></script>
-<script defer src="assets/js/17-presenca.js?v=20260522-130013"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260522-141048"></script>
+<script defer src="assets/js/17-presenca.js?v=20260522-141048"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2163,20 +2326,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-130013">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-141048">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260522-130013"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260522-141048"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260522-130013"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260522-130013"></script>
+<script defer src="assets/js/05-importacao.js?v=20260522-141048"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260522-141048"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-130013">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-141048">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260522-130013"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260522-141048"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2212,7 +2375,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-130013"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-141048"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2237,14 +2400,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260522-130013"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260522-130013"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-130013"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260522-130013"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260522-130013"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-130013"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260522-130013"></script>
-<script defer src="assets/js/08-realtime.js?v=20260522-130013"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260522-141048"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260522-141048"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-141048"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260522-141048"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260522-141048"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-141048"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260522-141048"></script>
+<script defer src="assets/js/08-realtime.js?v=20260522-141048"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2277,7 +2440,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260522-130013"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260522-141048"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -2758,16 +2921,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-130013"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-141048"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-130013"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-141048"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260522-130013"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260522-141048"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260522-130013"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260522-141048"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
