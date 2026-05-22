@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260522-174701">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260522-174701">
+<link rel="stylesheet" href="assets/css/main.css?v=20260522-201117">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260522-201117">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-174701">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260522-201117">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1158,22 +1158,32 @@
             </div>
           </div>
           <div id="presencaCountBar" style="padding:6px 14px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--bg2);"></div>
-          <table id="mainClientTable">
-            <thead><tr>
-              <th class="sortable" id="th-cliente" onclick="sortBy('cliente')" style="text-align:left;">Cliente</th>
-              <th class="sortable" id="th-treinador" onclick="sortBy('treinador')" style="text-align:center;white-space:nowrap;">Treinador</th>
-              <th class="sortable" id="th-treinamento" onclick="sortBy('treinamento')" style="text-align:center;">Treinamento</th>
-              <th class="sortable" id="th-consultor" onclick="sortBy('consultor')" style="text-align:center;">Consultor</th>
-              <th class="sortable" id="th-valor" onclick="sortBy('valor')" style="text-align:center;">Valor</th>
-              <th class="sortable" id="th-status" onclick="sortBy('status')" style="text-align:center;">Status</th>
-              <th class="sortable" id="th-entrada" onclick="sortBy('entrada')" style="text-align:center;">Entrada</th>
-            </tr></thead>
-            <tbody id="clientTable"></tbody>
-          </table>
-          <div id="clientCards" class="client-cards-mobile"></div>
-          <div class="table-footer">
-            <span class="table-count" id="tableCount"></span>
-            <span class="table-total" id="tableTotal"></span>
+          <!-- Header colapsável (visível só em mobile) -->
+          <div id="cliCollapseHeader" class="cli-collapse-header" onclick="window._cliToggleCollapse&&window._cliToggleCollapse()">
+            <div class="cli-collapse-title">Clientes <small id="cliCollapseCount">0 cadastrados</small></div>
+            <div class="cli-collapse-acoes">
+              <span class="cli-collapse-total" id="cliCollapseTotal">R$ 0</span>
+              <span class="cli-collapse-caret" id="cliCollapseCaret">▾</span>
+            </div>
+          </div>
+          <div id="cliCollapseBody" class="cli-collapse-body">
+            <table id="mainClientTable">
+              <thead><tr>
+                <th class="sortable" id="th-cliente" onclick="sortBy('cliente')" style="text-align:left;">Cliente</th>
+                <th class="sortable" id="th-treinador" onclick="sortBy('treinador')" style="text-align:center;white-space:nowrap;">Treinador</th>
+                <th class="sortable" id="th-treinamento" onclick="sortBy('treinamento')" style="text-align:center;">Treinamento</th>
+                <th class="sortable" id="th-consultor" onclick="sortBy('consultor')" style="text-align:center;">Consultor</th>
+                <th class="sortable" id="th-valor" onclick="sortBy('valor')" style="text-align:center;">Valor</th>
+                <th class="sortable" id="th-status" onclick="sortBy('status')" style="text-align:center;">Status</th>
+                <th class="sortable" id="th-entrada" onclick="sortBy('entrada')" style="text-align:center;">Entrada</th>
+              </tr></thead>
+              <tbody id="clientTable"></tbody>
+            </table>
+            <div id="clientCards" class="client-cards-mobile"></div>
+            <div class="table-footer">
+              <span class="table-count" id="tableCount"></span>
+              <span class="table-total" id="tableTotal"></span>
+            </div>
           </div>
         </div>
         <div class="side-panels">
@@ -2407,7 +2417,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260522-174701"></script>
+<script defer src="assets/js/00-utils.js?v=20260522-201117"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2501,29 +2511,29 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260522-174701"></script>
-<script defer src="assets/js/29-login.js?v=20260522-174701"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-174701"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-174701"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-174701"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260522-174701"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260522-174701"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260522-174701"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260522-174701"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-174701"></script>
-<script defer src="assets/js/99-diag.js?v=20260522-174701"></script>
-<script defer src="assets/js/21-turmas.js?v=20260522-174701"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260522-174701"></script>
+<script defer src="assets/js/02-main.js?v=20260522-201117"></script>
+<script defer src="assets/js/29-login.js?v=20260522-201117"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260522-201117"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260522-201117"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260522-201117"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260522-201117"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260522-201117"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260522-201117"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260522-201117"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260522-201117"></script>
+<script defer src="assets/js/99-diag.js?v=20260522-201117"></script>
+<script defer src="assets/js/21-turmas.js?v=20260522-201117"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260522-201117"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260522-174701"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260522-174701"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260522-174701"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260522-174701"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260522-174701"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260522-174701"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260522-201117"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260522-201117"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260522-201117"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260522-201117"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260522-201117"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260522-201117"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260522-174701"></script>
-<script defer src="assets/js/17-presenca.js?v=20260522-174701"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260522-201117"></script>
+<script defer src="assets/js/17-presenca.js?v=20260522-201117"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2535,20 +2545,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-174701">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260522-201117">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260522-174701"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260522-201117"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260522-174701"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260522-174701"></script>
+<script defer src="assets/js/05-importacao.js?v=20260522-201117"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260522-201117"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-174701">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260522-201117">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260522-174701"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260522-201117"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2584,7 +2594,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-174701"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260522-201117"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2609,14 +2619,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260522-174701"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260522-174701"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-174701"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260522-174701"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260522-174701"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-174701"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260522-174701"></script>
-<script defer src="assets/js/08-realtime.js?v=20260522-174701"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260522-201117"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260522-201117"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260522-201117"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260522-201117"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260522-201117"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260522-201117"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260522-201117"></script>
+<script defer src="assets/js/08-realtime.js?v=20260522-201117"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2649,7 +2659,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260522-174701"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260522-201117"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -3130,16 +3140,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-174701"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260522-201117"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-174701"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260522-201117"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260522-174701"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260522-201117"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260522-174701"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260522-201117"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">

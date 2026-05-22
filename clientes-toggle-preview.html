@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Card Clientes Mobile — 10 toggles de ocultar/mostrar</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06060a;--surface:#13131a;--surface2:#1a1a22;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --text:#e8e8ea;--muted:rgba(255,255,255,.55);
+  --accent:#c8f05a;--blue:#60a5fa;--amber:#f59e0b;
+  --pago:#34d399;--red:#ff5f57;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;}
+.page{max-width:1400px;margin:0 auto;padding:40px 20px 80px;}
+h1{font-size:26px;font-weight:800;margin:0 0 8px;}
+.intro{font-size:13px;color:var(--muted);margin-bottom:32px;line-height:1.6;}
+.intro b{color:var(--accent);}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:32px;}
+.opt{display:flex;flex-direction:column;}
+.opt-h{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.opt-h .n{background:var(--accent);color:#0f0f0f;border-radius:99px;padding:2px 10px;font-size:11px;font-weight:800;}
+.opt-h .name{color:var(--text);font-size:13px;text-transform:none;letter-spacing:0;font-weight:700;}
+.opt-h .tag{font-size:9.5px;color:var(--accent);background:rgba(200,240,90,.1);border:1px solid rgba(200,240,90,.3);border-radius:99px;padding:1px 7px;letter-spacing:.05em;text-transform:uppercase;}
+.opt-desc{font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:10px;}
+.opt-states{display:flex;gap:8px;margin-bottom:8px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.opt-states span{padding:2px 7px;background:var(--surface2);border-radius:99px;border:1px solid var(--border);}
+
+.phone{width:340px;background:#000;border:1px solid #222;border-radius:28px;box-shadow:0 10px 30px rgba(0,0,0,.5);padding:8px;margin:0 auto;}
+.phone::before{content:'';display:block;height:5px;width:60px;background:#222;border-radius:3px;margin:6px auto 12px;}
+.screen{background:var(--bg);border-radius:22px;padding:16px 14px;min-height:240px;}
+
+/* Mock comum: barra de busca + filtros + + */
+.cli-bar{display:grid;grid-template-columns:1fr auto auto;gap:6px;margin-bottom:8px;}
+.cli-search{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
+.cli-filt{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 11px;font-size:11px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px;}
+.cli-add{background:var(--accent);color:#0f0f0f;border:none;border-radius:8px;padding:8px 11px;font-size:14px;font-weight:800;}
+.cli-presenca{font-size:10px;color:var(--muted);padding:6px 4px;display:flex;justify-content:space-between;border-bottom:1px solid var(--border);}
+.cli-presenca b{color:var(--text);}
+
+/* Mock da lista de clientes */
+.cli-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 4px;border-bottom:1px solid var(--border);font-size:11.5px;}
+.cli-row .nome{font-weight:700;color:var(--text);}
+.cli-row .meta{font-size:10px;color:var(--muted);}
+.cli-row .val{color:var(--pago);font-family:'DM Mono',monospace;font-weight:700;font-size:11.5px;}
+
+/* ═══════════════════════════════════════════════════════
+   01 — BOTÃO COM TEXTO EXPLÍCITO
+═══════════════════════════════════════════════════════ */
+.s1-toggle{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:9px;font-size:12px;font-weight:700;margin:8px 0;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;}
+.s1-toggle.collapsed{background:rgba(200,240,90,.1);border-color:rgba(200,240,90,.3);color:var(--accent);}
+
+/* ═══════════════════════════════════════════════════════
+   02 — MINI / MAXI estilo janela
+═══════════════════════════════════════════════════════ */
+.s2-bar{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--surface2);border-radius:8px;margin:6px 0;}
+.s2-bar .title{font-size:11px;font-weight:700;color:var(--text);}
+.s2-bar .title small{color:var(--muted);font-weight:500;}
+.s2-bar .ctrls{display:flex;gap:5px;}
+.s2-bar .ctrls span{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(255,255,255,.06);font-size:11px;color:var(--muted);}
+
+/* ═══════════════════════════════════════════════════════
+   03 — ACCORDION COM CARET
+═══════════════════════════════════════════════════════ */
+.s3-head{display:flex;align-items:center;justify-content:space-between;padding:8px 4px;cursor:pointer;}
+.s3-head .left{font-size:13px;font-weight:700;}
+.s3-head .left small{color:var(--accent);background:rgba(200,240,90,.12);padding:1px 7px;border-radius:99px;margin-left:5px;font-size:10px;}
+.s3-head .caret{font-size:14px;color:var(--accent);transition:transform .2s;}
+.s3-head.open .caret{transform:rotate(180deg);}
+
+/* ═══════════════════════════════════════════════════════
+   04 — ÍCONE OLHO
+═══════════════════════════════════════════════════════ */
+.s4-bar{display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:6px 0;}
+.s4-bar .info{font-size:11px;color:var(--muted);margin-right:auto;}
+.s4-bar .eye{background:var(--surface2);border:1px solid var(--border2);width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;}
+.s4-bar .eye.off{background:rgba(255,184,79,.12);border-color:rgba(255,184,79,.4);color:var(--amber);}
+
+/* ═══════════════════════════════════════════════════════
+   05 — SEGMENTED TOGGLE PILL
+═══════════════════════════════════════════════════════ */
+.s5-seg{display:flex;background:var(--surface2);border-radius:99px;padding:3px;margin:6px 0;}
+.s5-seg .opt{flex:1;text-align:center;padding:6px 4px;font-size:11px;font-weight:700;color:var(--muted);border-radius:99px;cursor:pointer;}
+.s5-seg .opt.on{background:var(--accent);color:#0f0f0f;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+
+/* ═══════════════════════════════════════════════════════
+   06 — FLOATING ACTION BUTTON (FAB)
+═══════════════════════════════════════════════════════ */
+.s6-stage{position:relative;min-height:220px;}
+.s6-fab{position:absolute;bottom:6px;right:6px;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#0f0f0f;border:none;font-size:20px;font-weight:800;box-shadow:0 6px 18px rgba(200,240,90,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.s6-fab.collapsed{background:var(--amber);}
+
+/* ═══════════════════════════════════════════════════════
+   07 — DRAG HANDLE (barra arrastável)
+═══════════════════════════════════════════════════════ */
+.s7-handle{height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:linear-gradient(180deg,transparent,rgba(255,255,255,.02));margin-top:6px;border-radius:8px 8px 0 0;}
+.s7-handle .grip{width:40px;height:4px;background:var(--border2);border-radius:99px;}
+.s7-handle small{margin-left:8px;font-size:10px;color:var(--muted);}
+
+/* ═══════════════════════════════════════════════════════
+   08 — PILL "N CLIENTES" CLICÁVEL
+═══════════════════════════════════════════════════════ */
+.s8-pill{display:inline-flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:99px;padding:6px 14px;font-size:11px;font-weight:700;color:var(--text);cursor:pointer;margin:6px 0;}
+.s8-pill .ic{font-size:14px;}
+.s8-pill .n{background:var(--accent);color:#0f0f0f;font-family:'DM Mono',monospace;font-size:10px;padding:1px 7px;border-radius:99px;font-weight:800;}
+.s8-pill .caret{color:var(--muted);font-size:10px;}
+
+/* ═══════════════════════════════════════════════════════
+   09 — CARD COLAPSÁVEL (header sticky + body retraí)
+═══════════════════════════════════════════════════════ */
+.s9-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.s9-h{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer;}
+.s9-h .title{font-size:13px;font-weight:700;}
+.s9-h .title small{color:var(--muted);font-weight:500;margin-left:5px;}
+.s9-h .acoes{display:flex;align-items:center;gap:6px;}
+.s9-h .acoes span{font-size:11px;color:var(--accent);padding:2px 8px;background:rgba(200,240,90,.12);border-radius:99px;}
+.s9-h .caret{color:var(--muted);font-size:12px;}
+.s9-body{padding:10px;}
+
+/* ═══════════════════════════════════════════════════════
+   10 — BARRA QUICK TOGGLE (fina)
+═══════════════════════════════════════════════════════ */
+.s10-bar{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(200,240,90,.06);border:1px solid rgba(200,240,90,.18);border-radius:8px;margin:6px 0;cursor:pointer;}
+.s10-bar .l{font-size:11px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:6px;}
+.s10-bar .r{font-size:10.5px;color:var(--muted);font-family:'DM Mono',monospace;}
+.s10-bar .arrow{color:var(--accent);font-size:11px;}
+
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>📱 10 maneiras de ocultar/mostrar a lista de clientes (mobile)</h1>
+  <p class="intro">
+    Cada opção mostra os <b>2 estados</b> (lista visível ↔ lista oculta). Me diz qual escolher (<b>"opção 3"</b>) que aplico no card Clientes.
+  </p>
+
+  <div class="grid">
+
+    <!-- 01 -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">01</span><span class="name">Botão com texto explícito</span><span class="tag">Direto</span></div>
+      <div class="opt-desc">Botão largo "Ocultar lista" / "Mostrar lista". Texto claro, sem ambiguidade.</div>
+      <div class="opt-states"><span>↑ Visível</span><span>↓ Oculto</span></div>
+      <div class="phone"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="cli-presenca">PRESENÇA · <span>✓ 0</span> <span style="color:var(--red);">✗ 0</span> <span>⊘ 16</span></div>
+        <button class="s1-toggle">📋 Ocultar lista de clientes (16) ▴</button>
+        <div class="cli-row"><div><div class="nome">DIANA SEIXAS BATISTA</div><div class="meta">DANIEL · MENT.IA</div></div><div class="val">R$ 2.150</div></div>
+        <div class="cli-row"><div><div class="nome">JODSON CASTRO BARBOSA</div><div class="meta">DANIEL · MENT.IA</div></div><div class="val">R$ 10.764</div></div>
+      </div></div>
+      <div class="phone" style="margin-top:14px;"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="cli-presenca">PRESENÇA · <span>✓ 0</span> <span style="color:var(--red);">✗ 0</span> <span>⊘ 16</span></div>
+        <button class="s1-toggle collapsed">📋 Mostrar lista de clientes (16) ▾</button>
+      </div></div>
+    </div>
+
+    <!-- 02 -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">02</span><span class="name">Mini/Maxi estilo janela</span><span class="tag">Familiar</span></div>
+      <div class="opt-desc">Barra superior com botões "—" e "□" estilo janelas de SO.</div>
+      <div class="phone"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s2-bar"><div class="title">Clientes <small>· 16</small></div><div class="ctrls"><span>—</span></div></div>
+        <div class="cli-row"><div><div class="nome">DIANA SEIXAS</div><div class="meta">DANIEL</div></div><div class="val">R$ 2.150</div></div>
+        <div class="cli-row"><div><div class="nome">JODSON</div><div class="meta">DANIEL</div></div><div class="val">R$ 10.764</div></div>
+      </div></div>
+      <div class="phone" style="margin-top:14px;"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s2-bar"><div class="title">Clientes <small>· 16 ocultos</small></div><div class="ctrls"><span>□</span></div></div>
+      </div></div>
+    </div>
+
+    <!-- 03 -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">03</span><span class="name">Accordion com caret</span><span class="tag">Sutil</span></div>
+      <div class="opt-desc">Caret ▾/▸ ao lado do título "Clientes (16)". Clica no header inteiro pra colapsar.</div>
+      <div class="phone"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s3-head open"><div class="left">Clientes <small>16</small></div><span class="caret">▾</span></div>
+        <div class="cli-row"><div><div class="nome">DIANA SEIXAS</div><div class="meta">DANIEL</div></div><div class="val">R$ 2.150</div></div>
+        <div class="cli-row"><div><div class="nome">JODSON</div><div class="meta">DANIEL</div></div><div class="val">R$ 10.764</div></div>
+      </div></div>
+      <div class="phone" style="margin-top:14px;"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s3-head"><div class="left">Clientes <small>16</small></div><span class="caret">▸</span></div>
+      </div></div>
+    </div>
+
+    <!-- 04 -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">04</span><span class="name">Ícone olho 👁 / 🚫</span><span class="tag">Visual</span></div>
+      <div class="opt-desc">Botão de olho ao lado dos outros. 👁 = mostrar, 🚫 = ocultar.</div>
+      <div class="phone"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="cli-presenca">PRESENÇA · <span>✓ 0</span> <span>⊘ 16</span></div>
+        <div class="s4-bar"><span class="info">16 clientes</span><button class="eye">👁</button></div>
+        <div class="cli-row"><div><div class="nome">DIANA SEIXAS</div><div class="meta">DANIEL</div></div><div class="val">R$ 2.150</div></div>
+        <div class="cli-row"><div><div class="nome">JODSON</div><div class="meta">DANIEL</div></div><div class="val">R$ 10.764</div></div>
+      </div></div>
+      <div class="phone" style="margin-top:14px;"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="cli-presenca">PRESENÇA · <span>✓ 0</span> <span>⊘ 16</span></div>
+        <div class="s4-bar"><span class="info">16 clientes ocultos</span><button class="eye off">🚫</button></div>
+      </div></div>
+    </div>
+
+    <!-- 05 -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">05</span><span class="name">Segmented Pill (Mostrar / Ocultar)</span><span class="tag">iOS</span></div>
+      <div class="opt-desc">Toggle pill com 2 opções. Indicador deslizante (estilo iOS).</div>
+      <div class="phone"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s5-seg"><div class="opt on">👁 Mostrar</div><div class="opt">🙈 Ocultar</div></div>
+        <div class="cli-row"><div><div class="nome">DIANA</div></div><div class="val">R$ 2.150</div></div>
+        <div class="cli-row"><div><div class="nome">JODSON</div></div><div class="val">R$ 10.764</div></div>
+      </div></div>
+      <div class="phone" style="margin-top:14px;"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s5-seg"><div class="opt">👁 Mostrar</div><div class="opt on">🙈 Ocultar</div></div>
+      </div></div>
+    </div>
+
+    <!-- 06 -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">06</span><span class="name">Floating Action Button</span><span class="tag">Material</span></div>
+      <div class="opt-desc">Botão circular flutuante no canto inferior direito. Não ocupa espaço no layout.</div>
+      <div class="phone"><div class="screen s6-stage">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="cli-row"><div><div class="nome">DIANA</div></div><div class="val">R$ 2.150</div></div>
+        <div class="cli-row"><div><div class="nome">JODSON</div></div><div class="val">R$ 10.764</div></div>
+        <button class="s6-fab" title="Ocultar lista">🙈</button>
+      </div></div>
+      <div class="phone" style="margin-top:14px;"><div class="screen s6-stage">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <button class="s6-fab collapsed" title="Mostrar lista">👁</button>
+      </div></div>
+    </div>
+
+    <!-- 07 -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">07</span><span class="name">Drag handle (barra arrastável)</span><span class="tag">Gestual</span></div>
+      <div class="opt-desc">Barra fina arrastável estilo bottom-sheet. Tap também colapsa.</div>
+      <div class="phone"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s7-handle"><div class="grip"></div><small>↓ arrastar pra ocultar</small></div>
+        <div class="cli-row"><div><div class="nome">DIANA</div></div><div class="val">R$ 2.150</div></div>
+        <div class="cli-row"><div><div class="nome">JODSON</div></div><div class="val">R$ 10.764</div></div>
+      </div></div>
+      <div class="phone" style="margin-top:14px;"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s7-handle"><div class="grip"></div><small>↑ arrastar pra mostrar 16</small></div>
+      </div></div>
+    </div>
+
+    <!-- 08 -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">08</span><span class="name">Pill "N clientes" clicável</span><span class="tag">Informativo</span></div>
+      <div class="opt-desc">Mostra contador + ícone. Clica e colapsa/expande. Combina info e ação.</div>
+      <div class="phone"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s8-pill"><span class="ic">📋</span>Clientes<span class="n">16</span><span class="caret">▴</span></div>
+        <div class="cli-row"><div><div class="nome">DIANA</div></div><div class="val">R$ 2.150</div></div>
+        <div class="cli-row"><div><div class="nome">JODSON</div></div><div class="val">R$ 10.764</div></div>
+      </div></div>
+      <div class="phone" style="margin-top:14px;"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s8-pill" style="background:rgba(200,240,90,.1);border-color:rgba(200,240,90,.3);"><span class="ic">📋</span>Clientes<span class="n">16</span><span class="caret">▾</span></div>
+      </div></div>
+    </div>
+
+    <!-- 09 -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">09</span><span class="name">Card colapsável (header sticky)</span><span class="tag">Polido</span></div>
+      <div class="opt-desc">Lista vira card com header sticky destacado. Clica no header inteiro pra colapsar.</div>
+      <div class="phone"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s9-card">
+          <div class="s9-h"><div class="title">Clientes<small>16 cadastrados</small></div><div class="acoes"><span>R$ 184k</span><span class="caret">▾</span></div></div>
+          <div class="s9-body">
+            <div class="cli-row" style="border:none;"><div><div class="nome">DIANA</div></div><div class="val">R$ 2.150</div></div>
+            <div class="cli-row" style="border:none;"><div><div class="nome">JODSON</div></div><div class="val">R$ 10.764</div></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="phone" style="margin-top:14px;"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s9-card">
+          <div class="s9-h"><div class="title">Clientes<small>16 cadastrados</small></div><div class="acoes"><span>R$ 184k</span><span class="caret">▸</span></div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 10 -->
+    <div class="opt">
+      <div class="opt-h"><span class="n">10</span><span class="name">Quick toggle bar (fina, verde)</span><span class="tag">Discreto</span></div>
+      <div class="opt-desc">Barra horizontal fina com cor accent. Mostra info + ação numa única linha pequena.</div>
+      <div class="phone"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s10-bar"><div class="l">📋 16 clientes</div><div class="r">R$ 184.608</div><div class="arrow">▴ ocultar</div></div>
+        <div class="cli-row"><div><div class="nome">DIANA</div></div><div class="val">R$ 2.150</div></div>
+        <div class="cli-row"><div><div class="nome">JODSON</div></div><div class="val">R$ 10.764</div></div>
+      </div></div>
+      <div class="phone" style="margin-top:14px;"><div class="screen">
+        <div class="cli-bar"><div class="cli-search">🔍 Buscar...</div><div class="cli-filt">🎛 FILTROS</div><button class="cli-add">+</button></div>
+        <div class="s10-bar" style="background:rgba(200,240,90,.12);"><div class="l">📋 16 clientes ocultos</div><div class="r">R$ 184.608</div><div class="arrow">▾ mostrar</div></div>
+      </div></div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

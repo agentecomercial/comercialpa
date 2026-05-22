@@ -203,6 +203,8 @@ function _cardAtualizarMetricas(){
       }
     }
   } catch(err){ console.warn('[cardMetricas]',err); }
+  /* Atualiza contador + total no header colapsável (mobile) */
+  if(typeof window._cliAtualizarHeaderCollapse === 'function') window._cliAtualizarHeaderCollapse();
 }
 
 /* ── Checkbox do card Clientes ── */
@@ -275,3 +277,56 @@ window.cardMoneyMask        = cardMoneyMask;
 window.lcMoneyMask = lcMoneyMask; // global dual-mode
 window.cardToggleAll        = cardToggleAll;
 window.cardExcluirSelecionados = cardExcluirSelecionados;
+
+/* ════════════════════════════════════════════════════════════════
+   CARD CLIENTES — Toggle colapsável MOBILE (opção 9 do preview)
+   Header sticky com contador + total; tap colapsa o body inteiro.
+   Estado persistido em localStorage para sobreviver reload.
+════════════════════════════════════════════════════════════════ */
+(function(){
+  var LS_KEY = 'ci_cliCollapsed';
+  function _colapsado(){
+    try { return localStorage.getItem(LS_KEY) === '1'; }
+    catch(_e){ return false; }
+  }
+  function _aplicarEstado(){
+    var body = document.getElementById('cliCollapseBody');
+    var caret = document.getElementById('cliCollapseCaret');
+    var header = document.getElementById('cliCollapseHeader');
+    if(!body || !caret) return;
+    var col = _colapsado();
+    body.style.display = col ? 'none' : '';
+    caret.textContent = col ? '▸' : '▾';
+    if(header) header.classList.toggle('collapsed', col);
+  }
+  function _toggle(){
+    var atual = _colapsado();
+    try { localStorage.setItem(LS_KEY, atual ? '0' : '1'); } catch(_e){}
+    _aplicarEstado();
+  }
+  /* Atualiza contador + total no header (chamado pelo renderAll) */
+  function _atualizarHeader(){
+    var cnt  = document.getElementById('cliCollapseCount');
+    var tot  = document.getElementById('cliCollapseTotal');
+    if(!cnt || !tot) return;
+    /* Usa o data global e os helpers se disponíveis */
+    var arr = Array.isArray(window.data) ? window.data : [];
+    var n = arr.filter(function(d){ return d && d.cliente; }).length;
+    var soma = arr.reduce(function(a,d){
+      if(!d || !d.cliente) return a;
+      return a + (typeof window._faturadoDoCliente==='function' ? window._faturadoDoCliente(d) : (d.valor||0));
+    }, 0);
+    cnt.textContent = n + ' cadastrado' + (n!==1?'s':'');
+    var fmt = (typeof formatVal==='function') ? formatVal(soma) : ('R$ ' + soma.toFixed(2));
+    tot.textContent = fmt;
+  }
+  window._cliToggleCollapse = _toggle;
+  window._cliAtualizarHeaderCollapse = _atualizarHeader;
+  /* Aplica estado salvo + atualiza header ao carregar */
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ _aplicarEstado(); _atualizarHeader(); });
+  } else {
+    _aplicarEstado();
+    _atualizarHeader();
+  }
+})();
