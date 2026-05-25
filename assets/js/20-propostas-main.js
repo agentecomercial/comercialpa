@@ -86,8 +86,7 @@ function abrirPropostaModal(){
   var sess = _getSessao ? _getSessao() : null;
   var isAdm = !sess || sess.perfil === 'adm';
 
-  // Exibir consultor responsável
-  var dispConsultor = document.getElementById('propostaConsultorDisplay');
+  // Consultor responsável (auto)
   var nomeConsultor = '';
   if(isAdm){
     nomeConsultor = 'ADM';
@@ -96,7 +95,32 @@ function abrirPropostaModal(){
   } else if(sess && sess.nome){
     nomeConsultor = sess.nome.toUpperCase();
   }
+  var dispConsultor = document.getElementById('propostaConsultorDisplay');
   if(dispConsultor) dispConsultor.textContent = nomeConsultor || '—';
+
+  // Popular select de consultores (lista única do data) + opção manual
+  var selCon = document.getElementById('propostaConsultor');
+  if(selCon){
+    var consultores = [...new Set((Array.isArray(data)?data:[]).filter(function(d){return d&&d.consultor;}).map(function(d){return String(d.consultor).toUpperCase();}))].sort();
+    /* Garante que o consultor logado apareça mesmo se não tiver registros no data */
+    if(nomeConsultor && consultores.indexOf(nomeConsultor) === -1) consultores.unshift(nomeConsultor);
+    var optsHtml = '';
+    if(nomeConsultor){
+      optsHtml += '<option value="'+nomeConsultor+'">'+nomeConsultor+' (você)</option>';
+    } else {
+      optsHtml += '<option value="">Selecione um consultor...</option>';
+    }
+    consultores.forEach(function(c){
+      if(c === nomeConsultor) return; /* já adicionado acima como "(você)" */
+      optsHtml += '<option value="'+c+'">'+c+'</option>';
+    });
+    optsHtml += '<option value="__manual__" style="color:var(--accent);font-weight:700;">✎ Outro consultor (manual)…</option>';
+    selCon.innerHTML = optsHtml;
+    selCon.value = nomeConsultor || '';
+  }
+  /* Reseta input manual de consultor */
+  var inpConMan = document.getElementById('propostaConsultorManual');
+  if(inpConMan){ inpConMan.value = ''; inpConMan.style.display = 'none'; }
 
   // Popular clientes da turma + opção manual
   var sel = document.getElementById('propostaCliente');
@@ -249,6 +273,45 @@ function _propostaClienteAtual(){
 }
 window._propostaClienteAtual = _propostaClienteAtual;
 
+/* Consultor: alterna input manual + dispara re-render do preview */
+function _propostaConsultorAtualizar(){
+  var sel = document.getElementById('propostaConsultor');
+  var inpMan = document.getElementById('propostaConsultorManual');
+  var v = sel ? sel.value : '';
+  if(inpMan){
+    if(v === '__manual__'){
+      inpMan.style.display = '';
+      setTimeout(function(){ inpMan.focus(); }, 50);
+    } else {
+      inpMan.style.display = 'none';
+    }
+  }
+  /* Mantém o display oculto sincronizado para qualquer leitura legada */
+  var disp = document.getElementById('propostaConsultorDisplay');
+  if(disp) disp.textContent = _propostaConsultorAtual() || '—';
+  /* Re-render do preview se já aberto */
+  if(window._propostaPreviewAtivo){
+    clearTimeout(window._propostaPreviewTimer);
+    window._propostaPreviewTimer = setTimeout(function(){
+      try { _propostaPreview(); } catch(e){}
+    }, 150);
+  }
+}
+window._propostaConsultorAtualizar = _propostaConsultorAtualizar;
+
+/* Helper canônico — usar onde quer que se leia o consultor da proposta */
+function _propostaConsultorAtual(){
+  var sel = document.getElementById('propostaConsultor');
+  var inpMan = document.getElementById('propostaConsultorManual');
+  var v = sel ? sel.value : '';
+  if(v === '__manual__') return inpMan ? inpMan.value.trim().toUpperCase() : '';
+  if(v) return v;
+  /* Fallback: legado (caso o select não exista por algum motivo) */
+  var disp = document.getElementById('propostaConsultorDisplay');
+  return disp ? (disp.textContent||'').trim() : '';
+}
+window._propostaConsultorAtual = _propostaConsultorAtual;
+
 function _propostaRecalcular(){
   var pagamento = document.getElementById('propostaPagamento').value;
   // Atualizar preços nos inputs (sem divisão — valor armazenado é exibido direto)
@@ -313,7 +376,7 @@ function _propostaPreview(){
     selecionados.push({nome:nome, val:inp?parseVal(inp.value):0, qty:qty});
   });
   var total = selecionados.reduce(function(a,s){return a + s.val * s.qty;},0);
-  var consultor = document.getElementById('propostaConsultorDisplay') ? document.getElementById('propostaConsultorDisplay').textContent : '';
+  var consultor = _propostaConsultorAtual();
   var fonte = parseInt(document.getElementById('propFonte').value)||10;
   var padding = parseInt(document.getElementById('propPadding').value)||4;
   var corH = document.getElementById('propCorHeader').value||'#0f0f0f';
@@ -481,7 +544,7 @@ function gerarPropostaPDF(){
   var _corH  = document.getElementById('propCorHeader').value||'#0f0f0f';
   var _corA  = document.getElementById('propCorAccent').value||'#c8f05a';
   var _valid = document.getElementById('propValidade').value||'30';
-  var _consultor = document.getElementById('propostaConsultorDisplay').textContent||'';
+  var _consultor = _propostaConsultorAtual();
 
   function _hexRgb(hex){
     var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
