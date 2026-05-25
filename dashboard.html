@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260525-153744">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260525-153744">
+<link rel="stylesheet" href="assets/css/main.css?v=20260525-162422">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260525-162422">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260525-153744">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260525-162422">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -136,7 +136,15 @@
         </div>
         <div class="ic-body">
           <div class="home-card-title ic-title">Inteligência Comercial</div>
-          <div class="home-card-sub ic-sub">KPIs · Rankings · Tendências · Decisão</div>
+          <div class="home-card-sub ic-sub">
+            <span class="ic-chip" role="button" tabindex="0" onclick="event.stopPropagation();_abrirMapSecao('mapKpis')" onkeydown="if(event.key==='Enter'||event.key===' '){event.stopPropagation();event.preventDefault();_abrirMapSecao('mapKpis');}">KPIs</span>
+            <span class="ic-chip-sep">·</span>
+            <span class="ic-chip" role="button" tabindex="0" onclick="event.stopPropagation();_abrirMapSecao('mapRankingPanel')" onkeydown="if(event.key==='Enter'||event.key===' '){event.stopPropagation();event.preventDefault();_abrirMapSecao('mapRankingPanel');}">Rankings</span>
+            <span class="ic-chip-sep">·</span>
+            <span class="ic-chip" role="button" tabindex="0" onclick="event.stopPropagation();_abrirMapSecao('mapFaturamentoPanel')" onkeydown="if(event.key==='Enter'||event.key===' '){event.stopPropagation();event.preventDefault();_abrirMapSecao('mapFaturamentoPanel');}">Tendências</span>
+            <span class="ic-chip-sep">·</span>
+            <span class="ic-chip" role="button" tabindex="0" onclick="event.stopPropagation();_abrirMapSecao('mapCorrelacaoPanel')" onkeydown="if(event.key==='Enter'||event.key===' '){event.stopPropagation();event.preventDefault();_abrirMapSecao('mapCorrelacaoPanel');}">Decisão</span>
+          </div>
         </div>
         <div class="home-card-footer ic-footer">
           <span class="ic-cta">Abrir painel</span>
@@ -1929,9 +1937,9 @@
       </div>
     </div>
     <!-- KPIs -->
-    <div id="mapKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;"></div>
+    <div id="mapKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;scroll-margin-top:80px;"></div>
     <!-- Faturamento por Consultores -->
-    <div class="tpanel" style="margin-bottom:20px;">
+    <div id="mapFaturamentoPanel" class="tpanel" style="margin-bottom:20px;scroll-margin-top:80px;">
       <div class="tpanel-header">
         <span class="panel-title">Faturamento por Consultor</span>
         <span id="mapFatPeriodo" style="font-size:11px;color:var(--muted);"></span>
@@ -1939,12 +1947,12 @@
       <div id="mapConsultorRows" style="display:flex;flex-direction:column;gap:10px;padding:4px 0;"></div>
     </div>
     <!-- Correlação Consultor × Treinamento -->
-    <div class="tpanel" style="margin-bottom:20px;">
+    <div id="mapCorrelacaoPanel" class="tpanel" style="margin-bottom:20px;scroll-margin-top:80px;">
       <div class="tpanel-header"><span class="panel-title">Consultor × Treinamento — Mais Vendidos</span></div>
       <div style="overflow-x:auto;"><table id="mapCorrelacaoTable" style="min-width:100%;"></table></div>
     </div>
     <!-- Ranking de Treinamentos -->
-    <div class="tpanel">
+    <div id="mapRankingPanel" class="tpanel" style="scroll-margin-top:80px;">
       <div class="tpanel-header"><span class="panel-title">Ranking de Treinamentos</span></div>
       <div id="mapTreinamentoRows" style="display:flex;flex-direction:column;gap:8px;padding:4px 0;"></div>
     </div>
@@ -2427,7 +2435,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260525-153744"></script>
+<script defer src="assets/js/00-utils.js?v=20260525-162422"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2521,29 +2529,29 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260525-153744"></script>
-<script defer src="assets/js/29-login.js?v=20260525-153744"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260525-153744"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260525-153744"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260525-153744"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260525-153744"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260525-153744"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260525-153744"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260525-153744"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260525-153744"></script>
-<script defer src="assets/js/99-diag.js?v=20260525-153744"></script>
-<script defer src="assets/js/21-turmas.js?v=20260525-153744"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260525-153744"></script>
+<script defer src="assets/js/02-main.js?v=20260525-162422"></script>
+<script defer src="assets/js/29-login.js?v=20260525-162422"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260525-162422"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260525-162422"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260525-162422"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260525-162422"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260525-162422"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260525-162422"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260525-162422"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260525-162422"></script>
+<script defer src="assets/js/99-diag.js?v=20260525-162422"></script>
+<script defer src="assets/js/21-turmas.js?v=20260525-162422"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260525-162422"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260525-153744"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260525-153744"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260525-153744"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260525-153744"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260525-153744"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260525-153744"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260525-162422"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260525-162422"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260525-162422"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260525-162422"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260525-162422"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260525-162422"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260525-153744"></script>
-<script defer src="assets/js/17-presenca.js?v=20260525-153744"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260525-162422"></script>
+<script defer src="assets/js/17-presenca.js?v=20260525-162422"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2555,20 +2563,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260525-153744">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260525-162422">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260525-153744"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260525-162422"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260525-153744"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260525-153744"></script>
+<script defer src="assets/js/05-importacao.js?v=20260525-162422"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260525-162422"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260525-153744">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260525-162422">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260525-153744"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260525-162422"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2604,7 +2612,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260525-153744"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260525-162422"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2629,14 +2637,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260525-153744"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260525-153744"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260525-153744"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260525-153744"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260525-153744"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260525-153744"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260525-153744"></script>
-<script defer src="assets/js/08-realtime.js?v=20260525-153744"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260525-162422"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260525-162422"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260525-162422"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260525-162422"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260525-162422"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260525-162422"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260525-162422"></script>
+<script defer src="assets/js/08-realtime.js?v=20260525-162422"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2669,7 +2677,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260525-153744"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260525-162422"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -3150,16 +3158,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260525-153744"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260525-162422"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260525-153744"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260525-162422"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260525-153744"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260525-162422"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260525-153744"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260525-162422"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">

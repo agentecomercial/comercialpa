@@ -96,7 +96,24 @@
 .home-card-ic .ic-sub{
   font-size:12px;color:var(--muted);letter-spacing:.04em;
   line-height:1.55;
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;
 }
+.home-card-ic .ic-chip{
+  cursor:pointer;
+  color:var(--muted);
+  padding:2px 6px;border-radius:6px;
+  transition:background .15s, color .15s, transform .15s;
+}
+.home-card-ic .ic-chip:hover,
+.home-card-ic .ic-chip:focus-visible{
+  background:rgba(251,191,36,.14);
+  color:var(--ic-bright);
+  outline:none;
+  transform:translateY(-1px);
+}
+.home-card-ic .ic-chip-sep{color:var(--muted);opacity:.4;}
+.home-card-ic.is-restricted .ic-chip{cursor:not-allowed;}
+.home-card-ic.is-restricted .ic-chip:hover{background:transparent;color:var(--muted);transform:none;}
 
 .home-card-ic .ic-footer{
   display:flex;align-items:center;gap:6px;

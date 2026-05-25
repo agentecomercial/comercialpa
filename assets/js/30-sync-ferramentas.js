@@ -112,6 +112,29 @@ function fecharMapeamento(){
   _mostrarTela('turmasScreen');
 }
 
+/* Abre o painel Inteligência Comercial e rola até a seção pedida.
+   Usado pelos chips clicáveis (KPIs / Rankings / Tendências / Decisão) do card da home. */
+function _abrirMapSecao(secaoId){
+  abrirMapeamento(document.getElementById('btnMapHome'));
+  /* Espera o tela trocar + dados carregarem. _mapCarregar é assíncrono (Firebase),
+     então deixo um delay generoso e um retry para garantir que a seção exista. */
+  var _tentar = function(tentativasRestantes){
+    var el = document.getElementById(secaoId);
+    if(el){
+      el.scrollIntoView({behavior:'smooth', block:'start'});
+      /* Pulso visual leve para sinalizar a seção alvo */
+      el.style.transition = 'box-shadow .4s';
+      var orig = el.style.boxShadow || '';
+      el.style.boxShadow = '0 0 0 3px rgba(200,240,90,.5)';
+      setTimeout(function(){ el.style.boxShadow = orig; }, 1000);
+    } else if(tentativasRestantes > 0){
+      setTimeout(function(){ _tentar(tentativasRestantes - 1); }, 200);
+    }
+  };
+  setTimeout(function(){ _tentar(8); }, 250);
+}
+window._abrirMapSecao = _abrirMapSecao;
+
 
 function _mapCarregar(forcar) {
   if (!window._fbGet) { _showToast('❌ Firebase não disponível.', 'var(--red)'); return; }
