@@ -485,7 +485,16 @@ function _propostaPreview(){
     +'<h2>II · Investimento Consolidado</h2>'
     +'<table class="invest"><thead><tr><th>Linha</th><th>Descrição</th><th>Pagamento</th><th style="text-align:center;">Qtd</th><th>Valor total (R$)</th></tr></thead>'
     +'<tbody>'+rows
-    +'<tr class="invest-final-row"><td>—</td><td>INVESTIMENTO FINAL</td><td></td><td>'+formatVal(total)+'</td></tr>'
+    +'<tr class="invest-final-row"><td>—</td><td>INVESTIMENTO FINAL</td><td></td><td>'
+    +(function(){
+      var s = formatVal(total);
+      var sp = s.indexOf(' ');
+      var moeda = sp > 0 ? s.slice(0, sp) : 'R$';
+      var num   = sp > 0 ? s.slice(sp+1) : s;
+      return '<span style="display:block;font-size:9pt;font-weight:700;letter-spacing:.08em;line-height:1;color:#0a8043;">'+moeda+'</span>'
+           + '<span style="display:block;font-family:Georgia,serif;font-size:16pt;font-weight:700;line-height:1.1;color:#0a8043;margin-top:2px;">'+num+'</span>';
+    })()
+    +'</td></tr>'
     +'</tbody></table>'
     +'<div class="nota"><b>Nota de Exceção:</b> bônus de "Desconto de Contingência de Diretoria" aplicado em caráter excepcional. Validade fixa de <b>'+validade+' dias</b> a partir da emissão. Após esse prazo, a condição é revogada automaticamente.</div>'
     +'<h2>III · Formas de Pagamento</h2>'
@@ -715,7 +724,7 @@ function gerarPropostaPDF(){
   var bodyRows = selecionados.map(function(s, i){
     return ['L' + String(i+1).padStart(2,'0'), s.nome, pagLabel, formatVal(s.val)];
   });
-  bodyRows.push(['—', 'INVESTIMENTO FINAL', '', formatVal(total)]);
+  bodyRows.push(['—', 'INVESTIMENTO FINAL', '', formatVal(total).replace(' ', '\n')]);
 
   doc.autoTable({
     startY: y,
