@@ -336,7 +336,7 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .srow{display:flex;align-items:center;justify-content:space-between;padding:10px 2px;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .15s;}
 .srow:last-child{border-bottom:none;}.srow:hover{opacity:.75;}
 .srow-name{font-size:13px;font-weight:500;}.srow-sub{font-size:11px;color:var(--muted);}
-.srow-val{font-size:13px;font-weight:600;}
+.srow-val{font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0;}
 .count-pill{font-size:10px;background:var(--surface2);color:var(--muted);padding:2px 7px;border-radius:10px;margin-left:6px;}
 
 /* BARRAS POR TREINADOR — neon + percentual */
