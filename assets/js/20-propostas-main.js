@@ -98,9 +98,10 @@ function abrirPropostaModal(){
   }
   if(dispConsultor) dispConsultor.textContent = nomeConsultor || '—';
 
-  // Popular clientes da turma
+  // Popular clientes da turma + opção manual
   var sel = document.getElementById('propostaCliente');
-  sel.innerHTML = '<option value="">Selecione um cliente...</option>';
+  sel.innerHTML = '<option value="">Selecione um cliente...</option>'
+                + '<option value="__manual__" style="color:var(--accent);font-weight:700;">✎ Outro cliente (manual)…</option>';
   var clientes;
   if(!isAdm && sess && sess.vinculo){
     var meus = data.filter(function(d){return d&&d.cliente&&d.consultor&&d.consultor.toUpperCase()===(sess.vinculo||'').toUpperCase();});
@@ -113,6 +114,9 @@ function abrirPropostaModal(){
     opt.value = c; opt.textContent = c;
     sel.appendChild(opt);
   });
+  /* Reseta input manual */
+  var inpMan = document.getElementById('propostaClienteManual');
+  if(inpMan){ inpMan.value = ''; inpMan.style.display = 'none'; }
 
   // Renderizar treinamentos e resetar preview
   _propostaRenderTreinamentos();
@@ -211,11 +215,39 @@ function _propostaSelecionarTodos(){
 }
 
 function _propostaAtualizar(){
-  var cliente = document.getElementById('propostaCliente').value;
+  var sel = document.getElementById('propostaCliente');
+  var inpMan = document.getElementById('propostaClienteManual');
+  var cliente = sel ? sel.value : '';
+  /* Alterna input manual quando "__manual__" é escolhido */
+  if(inpMan){
+    if(cliente === '__manual__'){
+      inpMan.style.display = '';
+      setTimeout(function(){ inpMan.focus(); }, 50);
+    } else {
+      inpMan.style.display = 'none';
+    }
+  }
+  /* Cliente efetivo: input manual se selecionou "__manual__", senão o select */
+  var clienteFinal = '';
+  if(cliente === '__manual__'){
+    clienteFinal = inpMan ? inpMan.value.trim().toUpperCase() : '';
+  } else if(cliente){
+    clienteFinal = cliente;
+  }
   var sub = document.getElementById('propostaSub');
-  if(cliente && sub) sub.textContent = 'Cliente: ' + cliente;
+  if(clienteFinal && sub) sub.textContent = 'Cliente: ' + clienteFinal;
   else if(sub) sub.textContent = 'Selecione o cliente e os treinamentos';
 }
+
+/* Helper canônico — usar onde quer que se leia o cliente da proposta */
+function _propostaClienteAtual(){
+  var sel = document.getElementById('propostaCliente');
+  var inpMan = document.getElementById('propostaClienteManual');
+  var v = sel ? sel.value : '';
+  if(v === '__manual__') return inpMan ? inpMan.value.trim().toUpperCase() : '';
+  return v || '';
+}
+window._propostaClienteAtual = _propostaClienteAtual;
 
 function _propostaRecalcular(){
   var pagamento = document.getElementById('propostaPagamento').value;
@@ -267,7 +299,7 @@ function _propostaRecalcular(){
 
 function _propostaPreview(){
   window._propostaPreviewAtivo = true; // habilita re-render automático no _propostaRecalcular
-  var cliente = document.getElementById('propostaCliente').value;
+  var cliente = _propostaClienteAtual();
   var pagamento = document.getElementById('propostaPagamento').value;
   var pagLabel = _PROPOSTA_LABELS[pagamento];
   var selecionados = [];
@@ -333,7 +365,10 @@ function _propostaPreview(){
     +'.dado:last-child{border-right:none;}'
     +'.dado .l{font-size:7pt;letter-spacing:.25em;color:#666;text-transform:uppercase;font-weight:700;}'
     +'.dado .v{font-family:Georgia,serif;font-size:11pt;color:#0a1f3d;font-weight:700;margin-top:2px;}'
-    +'h2{font-size:9pt;letter-spacing:.22em;color:#0a1f3d;text-transform:uppercase;font-weight:700;border-bottom:2px solid #f5b400;padding-bottom:4px;margin:18px 0 10px;}'
+    +'.dado.pag-sel{background:#dcfce7;}'
+    +'.dado.pag-sel .l{color:#0a8043;}'
+    +'.dado.pag-sel .v{color:#0a8043;}'
+    +'h2{font-size:9pt;letter-spacing:.22em;color:#0a1f3d;text-transform:uppercase;font-weight:700;border-bottom:2px solid #f5b400;padding-bottom:4px;margin:18px 0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
     +'.motiv{background:#f7f9fb;border-left:4px solid #f5b400;padding:12px 16px;font-style:italic;font-size:'+fonte+'pt;line-height:1.7;color:#3a3a3a;margin-bottom:14px;}'
     +'.motiv b{color:#0a1f3d;font-style:normal;font-weight:700;}'
     +'.belt-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}'
@@ -380,7 +415,7 @@ function _propostaPreview(){
     +'<div class="dados-row">'
     +'<div class="dado"><div class="l">Cliente</div><div class="v">'+(cliente||'—')+'</div></div>'
     +'<div class="dado"><div class="l">Especialista</div><div class="v">'+(consultor||'—')+'</div></div>'
-    +'<div class="dado"><div class="l">Pagamento</div><div class="v">'+(pagLabel||'—')+'</div></div>'
+    +'<div class="dado pag-sel"><div class="l">Pagamento</div><div class="v">'+(pagLabel||'—')+'</div></div>'
     +'</div>'
     +'<h2>I · Introdução & Reconhecimento</h2>'
     +'<div class="motiv">'+motivHtml+'</div>'
@@ -412,7 +447,7 @@ function _propostaPreview(){
 
 function gerarPropostaPDF(){
   console.log('%c[gerarPropostaPDF] versão EXECUTIVE FINANCIAL v3 carregada', 'background:#0a1f3d;color:#f5b400;padding:3px 8px;font-weight:700;');
-  var cliente = document.getElementById('propostaCliente').value;
+  var cliente = _propostaClienteAtual();
   if(!cliente){_showToast('⚠️ Selecione um cliente.','var(--amber)');return;}
 
   var pagamento = document.getElementById('propostaPagamento').value;
@@ -538,14 +573,26 @@ function gerarPropostaPDF(){
   doc.line(mg + colW, y, mg + colW, y + dadosH);
   doc.line(mg + colW*2, y, mg + colW*2, y + dadosH);
 
-  var _drawDado = function(x, label, valor){
+  var _drawDado = function(x, label, valor, destaque){
+    if(destaque){
+      doc.setFillColor(COR_VERDE_BG[0], COR_VERDE_BG[1], COR_VERDE_BG[2]);
+      doc.rect(x, y, colW, dadosH, 'F');
+    }
     doc.setFont('helvetica','bold');
     doc.setFontSize(6.5);
-    doc.setTextColor(COR_CINZA[0], COR_CINZA[1], COR_CINZA[2]);
+    if(destaque){
+      doc.setTextColor(COR_VERDE_DK[0], COR_VERDE_DK[1], COR_VERDE_DK[2]);
+    } else {
+      doc.setTextColor(COR_CINZA[0], COR_CINZA[1], COR_CINZA[2]);
+    }
     doc.text(String(label).toUpperCase(), x + 3, y + 4);
     doc.setFont('times','bold');
     doc.setFontSize(10);
-    doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
+    if(destaque){
+      doc.setTextColor(COR_VERDE_DK[0], COR_VERDE_DK[1], COR_VERDE_DK[2]);
+    } else {
+      doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
+    }
     var maxTextW = colW - 6;
     var texto = String(valor||'—');
     while(texto.length > 4 && doc.getTextWidth(texto+'…') > maxTextW){ texto = texto.slice(0,-1); }
@@ -554,7 +601,7 @@ function gerarPropostaPDF(){
   };
   _drawDado(mg,           'Cliente',      cliente);
   _drawDado(mg + colW,    'Especialista', _consultor);
-  _drawDado(mg + colW*2,  'Pagamento',    pagLabel);
+  _drawDado(mg + colW*2,  'Pagamento',    pagLabel, true);
   y += dadosH + 8;
 
   // ── HELPERS DE SEÇÃO (function expressions — compatíveis com strict mode) ──
