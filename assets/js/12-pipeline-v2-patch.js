@@ -366,7 +366,22 @@
       grid.innerHTML='<div class="np-empty">Nenhum dado para este mês.</div>';return;
     }
     var _consComVenda=new Set((typeof window._npTodasVendas==='function'?window._npTodasVendas():[]).map(function(v){return (v.consultor||'').trim().toUpperCase();}));
-    var _cons=(window._npConsultores||[]).filter(function(n){return _consComVenda.has((n||'').trim().toUpperCase());});
+    /* Inclui consultores que TÊM meta cadastrada (pipelineGoals/{mes}/{nome})
+       mesmo se não tiverem vendas no período — caso real: CARLOS BONFIM com
+       meta cadastrada mas sem vendas no mês ainda; antes sumia da grid. */
+    var _goalsMap=window._npGoals||{};
+    var _consComMeta=new Set(Object.keys(_goalsMap).map(function(n){return String(n||'').trim().toUpperCase();}));
+    var _baseList=(window._npConsultores||[]).slice();
+    Object.keys(_goalsMap).forEach(function(n){
+      var nm=String(n||'').trim();
+      if(!nm) return;
+      var k=nm.toUpperCase();
+      if(!_baseList.some(function(x){return String(x).toUpperCase().trim()===k;})) _baseList.push(nm);
+    });
+    var _cons=_baseList.filter(function(n){
+      var key=(n||'').trim().toUpperCase();
+      return _consComVenda.has(key) || _consComMeta.has(key);
+    });
     /* Para consultor: filtrar para mostrar apenas a meta dele */
     var _sessMv=(typeof _getSessao==='function')?_getSessao():null;
     if(_sessMv && _sessMv.perfil==='consultor'){
