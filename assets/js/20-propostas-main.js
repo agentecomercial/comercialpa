@@ -485,7 +485,7 @@ function _propostaPreview(){
     +'<h2>II · Investimento Consolidado</h2>'
     +'<table class="invest"><thead><tr><th>Linha</th><th>Descrição</th><th>Pagamento</th><th style="text-align:center;">Qtd</th><th>Valor total (R$)</th></tr></thead>'
     +'<tbody>'+rows
-    +'<tr class="invest-final-row"><td>—</td><td>INVESTIMENTO FINAL</td><td></td><td style="white-space:nowrap;">'+formatVal(total)+'</td></tr>'
+    +'<tr class="invest-final-row"><td>—</td><td>INVESTIMENTO FINAL</td><td></td><td></td><td style="white-space:nowrap;text-align:right;">'+formatVal(total)+'</td></tr>'
     +'</tbody></table>'
     +'<div class="nota"><b>Nota de Exceção:</b> bônus de "Desconto de Contingência de Diretoria" aplicado em caráter excepcional. Validade fixa de <b>'+validade+' dias</b> a partir da emissão. Após esse prazo, a condição é revogada automaticamente.</div>'
     +'<h2>III · Formas de Pagamento</h2>'
