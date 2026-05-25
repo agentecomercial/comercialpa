@@ -105,6 +105,16 @@
       var nome=(v.consultor||'').trim();
       if(nome) set[nome.toUpperCase()]=nome;
     });
+    /* De metas cadastradas no mês (pipelineGoals/{mes}/{nome}) — garante que
+       um consultor com meta configurada apareça mesmo sem cadastro Firebase
+       e sem vendas no período. Caso real: CARLOS BONFIM tinha meta mas não
+       aparecia na grid porque não estava em _npUsuarios nem em _npTodasVendas. */
+    if(_npGoals){
+      Object.keys(_npGoals).forEach(function(nome){
+        var n=String(nome||'').trim();
+        if(n && !set[n.toUpperCase()]) set[n.toUpperCase()]=n;
+      });
+    }
     _npConsultores=Object.values(set).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
     return _npConsultores;
   }
