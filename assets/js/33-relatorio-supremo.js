@@ -8,11 +8,11 @@
   // Seções disponíveis (id, label, ícone, default-on)
   var SECOES = [
     {id:'resumo',     ico:'💰', label:'Resumo financeiro',  on:true},
-    {id:'pagos',      ico:'✅', label:'Treinos pagos',      on:true},
+    {id:'pagos',      ico:'✅', label:'Treinamentos pagos', on:true},
     {id:'entradas',   ico:'💵', label:'Entradas',           on:true},
-    {id:'negociacao', ico:'🤝', label:'Em negociação',      on:false},
+    {id:'negociacao', ico:'🤝', label:'Em negociação',      on:true},
     {id:'aberto',     ico:'⏳', label:'Em aberto',          on:false},
-    {id:'consultor',  ico:'🏆', label:'Ranking consultores',on:true},
+    {id:'consultor',  ico:'🏆', label:'Ranking consultores',on:false},
     {id:'treinador',  ico:'🎯', label:'Ranking treinadores',on:false},
     {id:'topTrein',   ico:'📚', label:'Top treinamentos',   on:false},
     {id:'meta',       ico:'🎯', label:'Meta vs realizado',  on:false},
@@ -68,12 +68,16 @@
       if(Array.isArray(d.treinamentos) && d.treinamentos.length>0){
         d.treinamentos.forEach(function(sub, i){
           if(!sub) return;
-          // Entrada: usa sub.entrada; APENAS o primeiro sub herda d.entrada quando nenhum sub tem entrada.
-          var _entFlatS = Number(sub.entrada!=null?sub.entrada:0)||0;
-          if(_entFlatS===0 && i===0){
-            var _algumSubEnt = d.treinamentos.some(function(t){return t && Number(t.entrada||0)>0;});
-            if(!_algumSubEnt) _entFlatS = Number(d.entrada||0)||0;
-          }
+          /* Entrada via helper canônico _entradaParaSub:
+             - subs pagos retornam 0 (entrada já foi consumida)
+             - subs não pagos com sub.entrada própria retornam esse valor
+             - o primeiro sub elegível (não pago) herda d.entrada legado quando
+               nenhum sub tem entrada própria, e acumula entradas dos pagos.
+             Antes a lógica local jogava d.entrada sempre em i===0, gerando
+             atribuição errada (ex.: ROBSON com entrada no MENT. IA aparecendo em IF). */
+          var _entFlatS = (typeof window._entradaParaSub === 'function')
+            ? window._entradaParaSub(d, i)
+            : (Number(sub.entrada!=null?sub.entrada:0)||0);
           itens.push(Object.assign({}, base, {
             treinamento:    String(sub.cod||d.treinamento||'—').toUpperCase(),
             valor:          Number(sub.valor!=null?sub.valor:0)||0,
