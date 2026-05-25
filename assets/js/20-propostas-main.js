@@ -485,7 +485,13 @@ function _propostaPreview(){
     +'<h2>II · Investimento Consolidado</h2>'
     +'<table class="invest"><thead><tr><th>Linha</th><th>Descrição</th><th>Pagamento</th><th style="text-align:center;">Qtd</th><th>Valor total (R$)</th></tr></thead>'
     +'<tbody>'+rows
-    +'<tr class="invest-final-row"><td>—</td><td>INVESTIMENTO FINAL</td><td></td><td></td><td style="white-space:nowrap;text-align:right;">'+formatVal(total)+'</td></tr>'
+    +(function(){
+      var parc = (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? 12 : 0;
+      var celulaParc = parc
+        ? '<td style="text-align:center;font-weight:700;white-space:nowrap;">'+parc+'x</td>'
+        : '<td></td>';
+      return '<tr class="invest-final-row"><td>—</td><td>INVESTIMENTO FINAL</td><td></td>'+celulaParc+'<td style="white-space:nowrap;text-align:right;">'+formatVal(total)+'</td></tr>';
+    })()
     +'</tbody></table>'
     +'<div class="nota"><b>Nota de Exceção:</b> bônus de "Desconto de Contingência de Diretoria" aplicado em caráter excepcional. Validade fixa de <b>'+validade+' dias</b> a partir da emissão. Após esse prazo, a condição é revogada automaticamente.</div>'
     +'<h2>III · Formas de Pagamento</h2>'
@@ -715,7 +721,8 @@ function gerarPropostaPDF(){
   var bodyRows = selecionados.map(function(s, i){
     return ['L' + String(i+1).padStart(2,'0'), s.nome, pagLabel, formatVal(s.val)];
   });
-  bodyRows.push(['—', 'INVESTIMENTO FINAL', '', formatVal(total)]);
+  var _parcFinalPdf = (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? '12x' : '';
+  bodyRows.push(['—', 'INVESTIMENTO FINAL', _parcFinalPdf, formatVal(total)]);
 
   doc.autoTable({
     startY: y,
