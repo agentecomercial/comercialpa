@@ -449,7 +449,7 @@ function _propostaPreview(){
     +'table.invest tbody td{padding:'+padding+'px 10px;border-bottom:1px solid #e5e7eb;}'
     +'table.invest tbody tr:nth-child(even) td{background:#f7f9fc;}'
     +'.invest-final-row td{background:#dcfce7 !important;border-top:2px solid #f5b400 !important;border-bottom:2px solid #0a1f3d !important;font-weight:700 !important;color:#0a8043 !important;}'
-    +'.invest-final-row td:last-child{font-size:14pt !important;font-family:Georgia,serif !important;}'
+    +'.invest-final-row td:last-child{font-size:14pt !important;font-family:Georgia,serif !important;white-space:nowrap !important;}'
     +'.nota{background:#fffbe8;border-left:4px solid #f5b400;padding:11px 14px;font-size:9pt;line-height:1.6;color:#3a3a3a;margin:14px 0;}'
     +'.nota b{color:#0a1f3d;}'
     +'.fp-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}'
@@ -485,16 +485,7 @@ function _propostaPreview(){
     +'<h2>II · Investimento Consolidado</h2>'
     +'<table class="invest"><thead><tr><th>Linha</th><th>Descrição</th><th>Pagamento</th><th style="text-align:center;">Qtd</th><th>Valor total (R$)</th></tr></thead>'
     +'<tbody>'+rows
-    +'<tr class="invest-final-row"><td>—</td><td>INVESTIMENTO FINAL</td><td></td><td>'
-    +(function(){
-      var s = formatVal(total);
-      var sp = s.indexOf(' ');
-      var moeda = sp > 0 ? s.slice(0, sp) : 'R$';
-      var num   = sp > 0 ? s.slice(sp+1) : s;
-      return '<span style="display:block;font-size:9pt;font-weight:700;letter-spacing:.08em;line-height:1;color:#0a8043;">'+moeda+'</span>'
-           + '<span style="display:block;font-family:Georgia,serif;font-size:16pt;font-weight:700;line-height:1.1;color:#0a8043;margin-top:2px;">'+num+'</span>';
-    })()
-    +'</td></tr>'
+    +'<tr class="invest-final-row"><td>—</td><td>INVESTIMENTO FINAL</td><td></td><td style="white-space:nowrap;">'+formatVal(total)+'</td></tr>'
     +'</tbody></table>'
     +'<div class="nota"><b>Nota de Exceção:</b> bônus de "Desconto de Contingência de Diretoria" aplicado em caráter excepcional. Validade fixa de <b>'+validade+' dias</b> a partir da emissão. Após esse prazo, a condição é revogada automaticamente.</div>'
     +'<h2>III · Formas de Pagamento</h2>'
@@ -724,7 +715,7 @@ function gerarPropostaPDF(){
   var bodyRows = selecionados.map(function(s, i){
     return ['L' + String(i+1).padStart(2,'0'), s.nome, pagLabel, formatVal(s.val)];
   });
-  bodyRows.push(['—', 'INVESTIMENTO FINAL', '', formatVal(total).replace(' ', '\n')]);
+  bodyRows.push(['—', 'INVESTIMENTO FINAL', '', formatVal(total)]);
 
   doc.autoTable({
     startY: y,
@@ -759,7 +750,7 @@ function gerarPropostaPDF(){
         d.cell.styles.fillColor = COR_VERDE_BG;
         d.cell.styles.textColor = COR_VERDE_DK;
         d.cell.styles.fontStyle = 'bold';
-        d.cell.styles.fontSize = (d.column.index === 3) ? 14 : 9;
+        d.cell.styles.fontSize = (d.column.index === 3) ? 12 : 9;
       }
     }
   });
