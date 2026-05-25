@@ -100,20 +100,29 @@
 }
 .home-card-ic .ic-chip{
   cursor:pointer;
-  color:var(--muted);
-  padding:2px 6px;border-radius:6px;
-  transition:background .15s, color .15s, transform .15s;
+  color:var(--ic-bright,#fbbf24);
+  padding:3px 8px;border-radius:999px;
+  background:rgba(251,191,36,.08);
+  border:1px solid rgba(251,191,36,.25);
+  font-weight:600;
+  user-select:none;
+  -webkit-user-select:none;
+  transition:background .15s, color .15s, transform .15s, border-color .15s;
+  position:relative;
+  z-index:2;
 }
 .home-card-ic .ic-chip:hover,
 .home-card-ic .ic-chip:focus-visible{
-  background:rgba(251,191,36,.14);
-  color:var(--ic-bright);
+  background:rgba(251,191,36,.22);
+  border-color:rgba(251,191,36,.55);
+  color:#fff;
   outline:none;
   transform:translateY(-1px);
 }
+.home-card-ic .ic-chip:active{transform:translateY(0);}
 .home-card-ic .ic-chip-sep{color:var(--muted);opacity:.4;}
 .home-card-ic.is-restricted .ic-chip{cursor:not-allowed;}
-.home-card-ic.is-restricted .ic-chip:hover{background:transparent;color:var(--muted);transform:none;}
+.home-card-ic.is-restricted .ic-chip:hover{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.25);color:var(--ic-bright,#fbbf24);transform:none;}
 
 .home-card-ic .ic-footer{
   display:flex;align-items:center;gap:6px;
