@@ -853,7 +853,7 @@ function gerarPropostaPDF(){
   }
 
   fecharPropostaModal();
-  doc.save('proposta-'+cliente.toLowerCase().replace(/\s+/g,'-')+'-'+new Date().toISOString().slice(0,10)+'.pdf');
+  doc.save('Proposta Exclusiva '+String(cliente).toUpperCase()+'.pdf');
   _showToast('✅ Proposta gerada para '+cliente+'!','var(--accent)');
   if(typeof _addPendLog==='function') _addPendLog('Proposta gerada','Cliente: '+cliente+' · '+selecionados.length+' treinamentos','📋');
 }
