@@ -365,31 +365,23 @@
     if(_npVendasTurma.length===0&&Object.keys(_npVendasAvulso||{}).length===0){
       grid.innerHTML='<div class="np-empty">Nenhum dado para este mês.</div>';return;
     }
-    var _consComVenda=new Set((typeof window._npTodasVendas==='function'?window._npTodasVendas():[]).map(function(v){return (v.consultor||'').trim().toUpperCase();}));
-    /* Inclui consultores que TÊM meta cadastrada (pipelineGoals/{mes}/{nome})
-       mesmo se não tiverem vendas no período — caso real: CARLOS BONFIM com
-       meta cadastrada mas sem vendas no mês ainda; antes sumia da grid. */
-    var _goalsMap=window._npGoals||{};
-    var _consComMeta=new Set(Object.keys(_goalsMap).map(function(n){return String(n||'').trim().toUpperCase();}));
-    var _baseList=(window._npConsultores||[]).slice();
-    Object.keys(_goalsMap).forEach(function(n){
-      var nm=String(n||'').trim();
-      if(!nm) return;
-      var k=nm.toUpperCase();
-      if(!_baseList.some(function(x){return String(x).toUpperCase().trim()===k;})) _baseList.push(nm);
+    /* Fonte ÚNICA da grid Metas: usuários cadastrados em Gestão de Usuários
+       (window._npUsuarios) com perfil='consultor'. Não considera vendas do mês
+       nem metas avulsas — quem não está em Gestão de Usuários não aparece. */
+    var _usuariosGU=(window._npUsuarios&&typeof window._npUsuarios==='object')?window._npUsuarios:{};
+    var _cons=[];
+    Object.values(_usuariosGU).forEach(function(u){
+      if(u&&u.perfil==='consultor'&&u.nome) _cons.push(u.nome);
     });
-    var _cons=_baseList.filter(function(n){
-      var key=(n||'').trim().toUpperCase();
-      return _consComVenda.has(key) || _consComMeta.has(key);
-    });
-    /* Para consultor: filtrar para mostrar apenas a meta dele */
+    _cons.sort(function(a,b){return String(a).localeCompare(String(b),'pt-BR');});
+    /* Para consultor logado: mostra só o card dele */
     var _sessMv=(typeof _getSessao==='function')?_getSessao():null;
     if(_sessMv && _sessMv.perfil==='consultor'){
       var _meuNomeMv=String(_sessMv.nome||_sessMv.login||'').toUpperCase().trim();
-      _cons = (window._npConsultores||[]).filter(function(n){return String(n).toUpperCase().trim()===_meuNomeMv;});
+      _cons=_cons.filter(function(n){return String(n).toUpperCase().trim()===_meuNomeMv;});
       if(!_cons.length){grid.innerHTML='<div class="np-empty">Nenhuma meta vinculada a você neste mês.</div>';return;}
     } else {
-      if(!_cons.length){grid.innerHTML='<div class="np-empty">Nenhum consultor encontrado neste mês.</div>';return;}
+      if(!_cons.length){grid.innerHTML='<div class="np-empty">Nenhum consultor cadastrado em Gestão de Usuários.</div>';return;}
     }
     var COR=window._npCOR||['#c8f05a','#60a5fa','#34d399','#f59e0b','#a78bfa','#f472b6','#fb923c','#38bdf8'];
     var ranking=typeof window._npPorConsultor==='function'?window._npPorConsultor(todas,'','pago'):[];
