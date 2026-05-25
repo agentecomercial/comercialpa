@@ -118,9 +118,9 @@
       SEP_LIN,
       '💰 RESUMO FINANCEIRO',
       SEP_LIN,
-      'Total faturado (PAGO):  '+_padL(_fmtR(totPago),14)+'  ·  '+qtdPago+' treino'+(qtdPago!==1?'s':'')+'  ·  '+clientesPagos.size+' cliente'+(clientesPagos.size!==1?'s':''),
+      'Total faturado (PAGO):  '+_padL(_fmtR(totPago),14)+'  ·  '+qtdPago+' treinamento'+(qtdPago!==1?'s':'')+'  ·  '+clientesPagos.size+' cliente'+(clientesPagos.size!==1?'s':''),
       'Total em entradas:      '+_padL(_fmtR(totEntrada),14)+'  ·  '+clientesEntrada.size+' cliente'+(clientesEntrada.size!==1?'s':''),
-      'Em negociação:          '+_padL(_fmtR(totNeg),14)+'  ·  '+qtdNeg+' treino'+(qtdNeg!==1?'s':'')+'  ·  '+clientesNeg.size+' cliente'+(clientesNeg.size!==1?'s':''),
+      'Em negociação:          '+_padL(_fmtR(totNeg),14)+'  ·  '+qtdNeg+' treinamento'+(qtdNeg!==1?'s':'')+'  ·  '+clientesNeg.size+' cliente'+(clientesNeg.size!==1?'s':''),
       SEP_DOT,
       'TOTAL GERAL (faturado): '+_padL(_fmtR(tg),14),
       ''
@@ -224,7 +224,7 @@
     var medals=['🥇','🥈','🥉'];
     var linhas = rank.slice(0,3).map(function(r,i){
       var m = medals[i] || (i+1)+'º';
-      return m+' '+_pad(r.nome,22)+' · '+_padL(_fmtR(r.total),14)+'  ·  '+r.treinos+' treino'+(r.treinos!==1?'s':'')+'  ·  '+r.clientes+' cliente'+(r.clientes!==1?'s':'');
+      return m+' '+_pad(r.nome,22)+' · '+_padL(_fmtR(r.total),14)+'  ·  '+r.treinos+' treinamento'+(r.treinos!==1?'s':'')+'  ·  '+r.clientes+' cliente'+(r.clientes!==1?'s':'');
     });
     return [SEP_LIN, ico+' '+titulo+' (por valor pago)', SEP_LIN].concat(linhas).join('\n')+'\n';
   }
