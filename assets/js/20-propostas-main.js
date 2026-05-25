@@ -496,7 +496,7 @@ function _propostaPreview(){
     +'<div class="nota"><b>Nota de Exceção:</b> bônus de "Desconto de Contingência de Diretoria" aplicado em caráter excepcional. Validade fixa de <b>'+validade+' dias</b> a partir da emissão. Após esse prazo, a condição é revogada automaticamente.</div>'
     +'<h2>III · Formas de Pagamento</h2>'
     +'<div class="fp-row">'
-    +'<div class="fp"><b>Cartão de Crédito</b><span>Em até 12x sem juros</span></div>'
+    +'<div class="fp"><b>Cartão de Crédito</b><span>Em até 12x</span></div>'
     +'<div class="fp"><b>PIX à vista</b><span>Com prioridade de acesso</span></div>'
     +'</div>'
     +'<div class="assin-row">'
@@ -800,7 +800,7 @@ function gerarPropostaPDF(){
   doc.setFont('helvetica','normal');
   doc.setFontSize(9);
   doc.setTextColor(40, 40, 40);
-  doc.text('Em até 12x sem juros', mg + 5, y + 10);
+  doc.text('Em até 12x', mg + 5, y + 10);
   // Card 2: PIX
   var xf2 = mg + fpW + fpGap;
   doc.setFillColor(240, 245, 251);
