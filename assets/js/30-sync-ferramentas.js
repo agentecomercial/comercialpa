@@ -109,7 +109,57 @@ window.addEventListener('DOMContentLoaded', function(){
   }, 800);
 });
 function fecharMapeamento(){
+  _mapFiltroCruz=null;
   _mostrarTela('turmasScreen');
+}
+
+/* ─── Filtro cruzado entre os 3 painéis da tela Inteligência Comercial ─────
+   Clicar num consultor (Faturamento), num treinamento (Ranking) ou numa célula
+   da matriz (Cruzamento) filtra os outros dois painéis em torno dessa seleção.
+   Re-clicar o mesmo item limpa o filtro. */
+var _mapFiltroCruz = null; // { tipo:'consultor'|'treinamento'|'cruz', cons?, trein? }
+
+function _mapToggleConsultor(c){
+  if(_mapFiltroCruz && _mapFiltroCruz.tipo==='consultor' && _mapFiltroCruz.cons===c) _mapFiltroCruz=null;
+  else _mapFiltroCruz = { tipo:'consultor', cons:c };
+  _mapFiltrar();
+}
+function _mapToggleTreinamento(t){
+  if(_mapFiltroCruz && _mapFiltroCruz.tipo==='treinamento' && _mapFiltroCruz.trein===t) _mapFiltroCruz=null;
+  else _mapFiltroCruz = { tipo:'treinamento', trein:t };
+  _mapFiltrar();
+}
+function _mapToggleCruz(c, t){
+  var f=_mapFiltroCruz;
+  if(f && f.tipo==='cruz' && f.cons===c && f.trein===t) _mapFiltroCruz=null;
+  else _mapFiltroCruz = { tipo:'cruz', cons:c, trein:t };
+  _mapFiltrar();
+}
+function _mapLimparFiltroCruz(){
+  _mapFiltroCruz=null;
+  _mapFiltrar();
+}
+window._mapToggleConsultor=_mapToggleConsultor;
+window._mapToggleTreinamento=_mapToggleTreinamento;
+window._mapToggleCruz=_mapToggleCruz;
+window._mapLimparFiltroCruz=_mapLimparFiltroCruz;
+
+/* Escapa nome para uso dentro de onclick="...'X'..." */
+function _mapEscAttr(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+function _atualizarBannerCruz(){
+  var el=document.getElementById('mapFiltroCruzBanner');
+  if(!el) return;
+  if(!_mapFiltroCruz){ el.style.display='none'; el.innerHTML=''; return; }
+  var f=_mapFiltroCruz;
+  var label='';
+  if(f.tipo==='consultor')   label='<span style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-right:6px;">Consultor</span><b style="color:var(--accent);">'+f.cons+'</b>';
+  if(f.tipo==='treinamento') label='<span style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-right:6px;">Treinamento</span><b style="color:var(--accent);">'+f.trein+'</b>';
+  if(f.tipo==='cruz')        label='<span style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-right:6px;">Consultor</span><b style="color:var(--accent);">'+f.cons+'</b><span style="color:var(--muted);margin:0 8px;">×</span><span style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-right:6px;">Treinamento</span><b style="color:var(--accent);">'+f.trein+'</b>';
+  el.innerHTML='<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;background:var(--surface2);padding:3px 8px;border-radius:4px;">Filtro cruzado</span>'
+    + '<span style="display:flex;align-items:center;gap:6px;">' + label + '</span>'
+    + '<button onclick="_mapLimparFiltroCruz()" style="margin-left:auto;background:none;border:1px solid var(--border2);color:var(--muted);padding:4px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;">× Limpar</button>';
+  el.style.display='flex';
 }
 
 
@@ -243,6 +293,7 @@ function _mapFiltrar() {
   _mapRenderConsultores(registros);
   _mapRenderCorrelacao(registros);
   _mapRenderTreinamentos(registros);
+  _atualizarBannerCruz();
 
   // Atualizar label de período
   var el = document.getElementById('mapFatPeriodo');
@@ -319,9 +370,15 @@ function _mapRenderKpis(registros) {
 }
 
 function _mapRenderConsultores(registros) {
-  var totalGeral = registros.reduce(function(a, r) { return a + r.valor; }, 0);
+  /* Filtro cruzado: se há treinamento selecionado, restringe os valores a esse treinamento.
+     O painel próprio do consultor permanece mostrando todos (highlight no selecionado). */
+  var f = _mapFiltroCruz;
+  var regs = registros;
+  if(f && f.trein) regs = registros.filter(function(r){ return r.treinamento === f.trein; });
+
+  var totalGeral = regs.reduce(function(a, r) { return a + r.valor; }, 0);
   var map = {};
-  registros.forEach(function(r) {
+  regs.forEach(function(r) {
     if (!map[r.consultor]) map[r.consultor] = { total: 0, qtd: 0 };
     map[r.consultor].total += r.valor;
     map[r.consultor].qtd++;
@@ -340,7 +397,9 @@ function _mapRenderConsultores(registros) {
     var pct = totalGeral > 0 ? ((c.total / totalGeral) * 100).toFixed(1) : '0.0';
     var bw  = Math.round((c.total / maxVal) * 100);
     var cor = i === 0 ? '#c8f05a' : i === 1 ? 'var(--blue)' : i === 2 ? 'var(--amber)' : 'var(--muted)';
-    return '<div style="padding:12px 14px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border2);">'
+    var ativo = f && f.cons === c.nome;
+    var classe = 'map-row-click' + (ativo ? ' ativo' : '');
+    return '<div class="'+classe+'" onclick="_mapToggleConsultor(\''+_mapEscAttr(c.nome)+'\')" title="Filtrar por '+c.nome+'" style="padding:12px 14px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border2);">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
       + '<div style="display:flex;align-items:center;gap:8px;">'
       + '<span style="font-size:16px;">' + (medals[i] || (i + 1) + 'º') + '</span>'
@@ -423,15 +482,23 @@ function _mapRenderCorrelacao(registros) {
   produtos.forEach(function(p){ totaisProd[p] = 0; totaisQtd[p] = 0; });
   var totalGeral = 0, totalQtdGeral = 0;
 
+  var f = _mapFiltroCruz;
   linhas.forEach(function(l){
-    html += '<tr><td style="font-weight:600;text-align:left;text-transform:uppercase;white-space:nowrap;">' + l.c + '</td>';
+    var rowAtivo = f && f.cons === l.c;
+    var corNome = _mapEscAttr(l.c);
+    html += '<tr'+(rowAtivo?' class="map-cruz-row-ativo"':'')+'>'
+      + '<td onclick="_mapToggleConsultor(\''+corNome+'\')" title="Filtrar por '+l.c+'" class="map-cell-click" style="font-weight:600;text-align:left;text-transform:uppercase;white-space:nowrap;cursor:pointer;">' + l.c + '</td>';
     produtos.forEach(function(p){
       var v   = l.prodVals['prod_' + p] || 0;
       var qtd = l.prodVals['prod_' + p + '_qtd'] || 0;
       totaisProd[p] += v;
       totaisQtd[p]  += qtd;
       if (qtd > 0) {
-        html += '<td style="text-align:center;">'
+        var cellAtivo = f && f.tipo==='cruz' && f.cons===l.c && f.trein===p;
+        var colAtivo  = f && f.trein===p && !cellAtivo;
+        var bg = cellAtivo ? 'background:rgba(200,240,90,.25);' : colAtivo ? 'background:rgba(200,240,90,.06);' : '';
+        var prodEsc = _mapEscAttr(p);
+        html += '<td onclick="_mapToggleCruz(\''+corNome+'\',\''+prodEsc+'\')" title="'+l.c+' × '+p+'" class="map-cell-click" style="text-align:center;cursor:pointer;'+bg+'">'
           + '<span style="font-size:13px;font-weight:700;color:var(--accent);">' + qtd + '</span>'
           + '<br><span style="font-size:11px;color:var(--muted);white-space:nowrap;">' + formatVal(v) + '</span>'
           + '</td>';
@@ -466,8 +533,14 @@ function _mapRenderCorrelacao(registros) {
 }
 
 function _mapRenderTreinamentos(registros) {
+  /* Filtro cruzado: se há consultor selecionado, restringe a esse consultor.
+     O painel próprio do treinamento mantém todos (highlight no selecionado). */
+  var f = _mapFiltroCruz;
+  var regs = registros;
+  if(f && f.cons) regs = registros.filter(function(r){ return r.consultor === f.cons; });
+
   var map = {};
-  registros.forEach(function(r) {
+  regs.forEach(function(r) {
     if (!map[r.treinamento]) map[r.treinamento] = { total: 0, qtd: 0 };
     map[r.treinamento].total += r.valor;
     map[r.treinamento].qtd++;
@@ -486,7 +559,9 @@ function _mapRenderTreinamentos(registros) {
     var pct = totalGeral > 0 ? ((t.total / totalGeral) * 100).toFixed(1) : '0.0';
     var bw  = Math.round((t.total / maxVal) * 100);
     var cor = i === 0 ? '#c8f05a' : 'var(--blue)';
-    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border2);">'
+    var ativo = f && f.trein === t.nome;
+    var classe = 'map-row-click' + (ativo ? ' ativo' : '');
+    return '<div class="'+classe+'" onclick="_mapToggleTreinamento(\''+_mapEscAttr(t.nome)+'\')" title="Filtrar por '+t.nome+'" style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border2);">'
       + '<div style="font-size:13px;font-weight:700;color:var(--muted);width:24px;text-align:center;">' + (i + 1) + '</div>'
       + '<div style="flex:1;min-width:0;">'
       + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">'

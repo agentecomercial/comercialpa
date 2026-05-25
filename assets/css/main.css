@@ -337,6 +337,17 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .srow:last-child{border-bottom:none;}.srow:hover{opacity:.75;}
 .srow-name{font-size:13px;font-weight:500;}.srow-sub{font-size:11px;color:var(--muted);}
 .srow-val{font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+/* Filtro cruzado da tela Inteligência Comercial (Mapeamento)
+   .map-row-click  → linhas de Faturamento por Consultor / Ranking de Treinamentos
+   .map-cell-click → células da matriz Consultor × Treinamento
+   .ativo / .map-cruz-row-ativo → estado de seleção */
+.map-row-click{cursor:pointer;transition:background .15s, border-color .15s, transform .15s, box-shadow .15s;}
+.map-row-click:hover{background:rgba(200,240,90,.08) !important;border-color:rgba(200,240,90,.35) !important;transform:translateY(-1px);}
+.map-row-click.ativo{background:rgba(200,240,90,.16) !important;border-color:var(--accent) !important;box-shadow:0 0 0 2px rgba(200,240,90,.22);}
+.map-cell-click{transition:background .12s;}
+.map-cell-click:hover{background:rgba(200,240,90,.12) !important;}
+.map-cruz-row-ativo td{background:rgba(200,240,90,.08);}
+.map-cruz-row-ativo td:first-child{box-shadow:inset 3px 0 0 var(--accent);}
 .count-pill{font-size:10px;background:var(--surface2);color:var(--muted);padding:2px 7px;border-radius:10px;margin-left:6px;}
 
 /* BARRAS POR TREINADOR — neon + percentual */
