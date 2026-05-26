@@ -1231,11 +1231,11 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 @media(max-width:480px){.np-kpis{grid-template-columns:1fr;}}
 
 /* Tiers de meta */
-.np-meta-tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0 0;}
-.np-tier{border-radius:8px;padding:6px 8px;text-align:center;border:1px solid transparent;transition:border-color .2s,background .2s;cursor:default;}
+.np-meta-tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 0;}
+.np-tier{border-radius:6px;padding:6px 8px;text-align:center;border:1px solid transparent;transition:border-color .2s,background .2s;cursor:default;}
 .np-tier-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;opacity:.8;}
 .np-tier-val{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;}
-.np-tier-pct{font-size:9px;color:var(--muted);margin-top:1px;font-weight:400;font-variant-numeric:tabular-nums;}
+.np-tier-pct{font-size:13px;color:var(--muted);margin-top:5px;font-weight:500;font-variant-numeric:tabular-nums;}
 .np-tier--basica{background:rgba(255,23,68,.07);border-color:rgba(255,23,68,.2);}
 .np-tier--basica .np-tier-label{color:#ff5252;}
 .np-tier--minima{background:rgba(255,238,0,.07);border-color:rgba(255,238,0,.2);}
@@ -1393,16 +1393,16 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-st-desistiu,.np-st-estorno{background:rgba(255,95,87,.12);color:var(--red);}
 .np-empty{padding:32px;text-align:center;color:var(--muted);font-size:13px;}
 /* Metas */
-.np-metas-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:20px;}
-.np-meta-card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:19px;}
-.np-meta-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
-.np-meta-avatar{width:45px;height:45px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;}
-.np-meta-nome{font-size:16px;font-weight:700;color:var(--text);}
+.np-metas-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:17px;}
+.np-meta-card{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px;}
+.np-meta-header{display:flex;align-items:center;gap:12px;margin-bottom:15px;}
+.np-meta-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;}
+.np-meta-nome{font-size:15px;font-weight:700;color:var(--text);}
 .np-meta-sub{font-size:10px;color:var(--muted);}
-.np-meta-progress{height:11px;background:var(--surface2);border-radius:3px;overflow:hidden;margin:8px 0;}
+.np-meta-progress{height:10px;background:var(--surface2);border-radius:3px;overflow:hidden;margin:8px 0;}
 .np-meta-bar{height:100%;border-radius:3px;transition:width .4s;}
 .np-meta-row{display:flex;justify-content:space-between;font-size:11px;margin-top:4px;}
-.np-meta-edit{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:5px;padding:4px 12px;font-size:13px;cursor:pointer;margin-top:10px;transition:color .12s,border-color .12s;}
+.np-meta-edit{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:5px;padding:3px 9px;font-size:10px;cursor:pointer;margin-top:10px;transition:color .12s,border-color .12s;}
 .np-meta-edit:hover{color:var(--accent);border-color:var(--accent);}
 /* Modal nova venda + meta */
 .np-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
