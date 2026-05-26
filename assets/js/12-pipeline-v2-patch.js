@@ -427,17 +427,17 @@
           '<div class="np-meta-tiers" style="margin-top:10px;">'
           +(m?'<div class="np-tier np-tier--minima'+(tierInfo.tier==='minima'?' ativa':'')+'">'
             +'<div class="np-tier-label">🥈 Mínima</div>'
-            +'<div class="np-tier-val" style="color:'+(pctM>=100?'#c8f05a':'#ffe000')+';font-size:10px;">'+(pctM>=100?'✅ Batida':'Falta '+_npFmtR(Math.max(0,m-real)))+'</div>'
+            +'<div class="np-tier-val" style="color:'+(pctM>=100?'#c8f05a':'#ffe000')+';">'+(pctM>=100?'✅ Batida':'<span class="np-tier-val-lbl">Falta</span><span class="np-tier-val-amt">'+_npFmtR(Math.max(0,m-real))+'</span>')+'</div>'
             +'<div class="np-tier-pct">'+pctM+'%</div>'
             +'</div>':'<div class="np-tier np-tier--minima" style="opacity:.3;"><div class="np-tier-label">🥈 Mínima</div><div class="np-tier-val">—</div></div>')
           +(b?'<div class="np-tier np-tier--basica'+(tierInfo.tier==='basica'?' ativa':'')+'">'
             +'<div class="np-tier-label">🥉 Básica</div>'
-            +'<div class="np-tier-val" style="color:'+(pctB>=100?'#c8f05a':'#ff5252')+';font-size:10px;">'+(pctB>=100?'✅ Batida':'Falta '+_npFmtR(Math.max(0,b-real)))+'</div>'
+            +'<div class="np-tier-val" style="color:'+(pctB>=100?'#c8f05a':'#ff5252')+';">'+(pctB>=100?'✅ Batida':'<span class="np-tier-val-lbl">Falta</span><span class="np-tier-val-amt">'+_npFmtR(Math.max(0,b-real))+'</span>')+'</div>'
             +'<div class="np-tier-pct">'+pctB+'%</div>'
             +'</div>':'<div class="np-tier np-tier--basica" style="opacity:.3;"><div class="np-tier-label">🥉 Básica</div><div class="np-tier-val">—</div></div>')
           +(M?'<div class="np-tier np-tier--master'+(tierInfo.tier==='master'?' ativa':'')+'">'
             +'<div class="np-tier-label">🥇 Master</div>'
-            +'<div class="np-tier-val" style="color:'+(pctMas>=100?'#c8f05a':'#c8f05a')+';font-size:10px;">'+(pctMas>=100?'✅ Batida':'Falta '+_npFmtR(Math.max(0,M-real)))+'</div>'
+            +'<div class="np-tier-val" style="color:'+(pctMas>=100?'#c8f05a':'#c8f05a')+';">'+(pctMas>=100?'✅ Batida':'<span class="np-tier-val-lbl">Falta</span><span class="np-tier-val-amt">'+_npFmtR(Math.max(0,M-real))+'</span>')+'</div>'
             +'<div class="np-tier-pct">'+pctMas+'%</div>'
             +'</div>':'<div class="np-tier np-tier--master" style="opacity:.3;"><div class="np-tier-label">🥇 Master</div><div class="np-tier-val">—</div></div>')
           +'</div>'

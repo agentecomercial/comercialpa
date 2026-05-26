@@ -156,6 +156,20 @@ body{
   font-size:var(--tier-val-font);
   font-weight:700;
   font-variant-numeric:tabular-nums;
+  line-height:1.25;
+}
+.np-tier-val-lbl{
+  display:block;
+  font-size:var(--tier-val-lbl-font, 10px);
+  font-weight:600;
+  opacity:.85;
+}
+.np-tier-val-amt{
+  display:block;
+  white-space:nowrap;
+  font-size:var(--tier-val-amt-font, 12px);
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
 }
 .np-tier-pct{
   font-size:var(--tier-pct-font);
@@ -331,7 +345,11 @@ body{
       <input type="range" id="cTp" min="3" max="14" step="1" value="6"></div>
     <div class="ctrl"><label>Label tier (fonte) <span class="v" id="vTl">9px</span></label>
       <input type="range" id="cTl" min="7" max="13" step="1" value="9"></div>
-    <div class="ctrl"><label>Valor tier (fonte) <span class="v" id="vTv">11px</span></label>
+    <div class="ctrl"><label>"Falta" (fonte) <span class="v" id="vTvLbl">10px</span></label>
+      <input type="range" id="cTvLbl" min="7" max="14" step="1" value="10"></div>
+    <div class="ctrl"><label>R$ valor (fonte) <span class="v" id="vTvAmt">12px</span></label>
+      <input type="range" id="cTvAmt" min="9" max="18" step="1" value="12"></div>
+    <div class="ctrl"><label>Valor tier (wrapper fonte) <span class="v" id="vTv">11px</span></label>
       <input type="range" id="cTv" min="9" max="16" step="1" value="11"></div>
     <div class="ctrl"><label>% do tier (fonte) <span class="v" id="vTpct">9px</span></label>
       <input type="range" id="cTpct" min="7" max="16" step="1" value="9"></div>
@@ -383,7 +401,7 @@ function tierHtml(d){
     var corVal = dados.pct >= 100 ? '#c8f05a' : (slug==='basica' ? '#ff5252' : slug==='minima' ? '#ffe000' : '#c8f05a');
     return '<div class="np-tier np-tier--'+slug+ativa+'">'
       + '<div class="np-tier-label">'+emoji+' '+label+'</div>'
-      + '<div class="np-tier-val" style="color:'+corVal+';">'+(dados.pct>=100 ? '✅ Batida' : 'Falta '+fmtR(dados.falta))+'</div>'
+      + '<div class="np-tier-val" style="color:'+corVal+';">'+(dados.pct>=100 ? '✅ Batida' : '<span class="np-tier-val-lbl">Falta</span><span class="np-tier-val-amt">'+fmtR(dados.falta)+'</span>')+'</div>'
       + '<div class="np-tier-pct">'+dados.pct+'%</div>'
       + '</div>';
   };
@@ -431,6 +449,8 @@ var CTRLS = [
   ['cTg','--tier-gap','vTg','px',1],
   ['cTl','--tier-label-font','vTl','px',1],
   ['cTv','--tier-val-font','vTv','px',1],
+  ['cTvLbl','--tier-val-lbl-font','vTvLbl','px',1],
+  ['cTvAmt','--tier-val-amt-font','vTvAmt','px',1],
   ['cTpct','--tier-pct-font','vTpct','px',1],
   ['cTpctMt','--tier-pct-mt','vTpctMt','px',1],
   ['cTpctW','--tier-pct-weight','vTpctW','',1],
@@ -508,7 +528,9 @@ function gerarCss(){
   out += '  text-align:center;border:1px solid transparent;\n';
   out += '}\n';
   out += '.np-tier-label{font-size:'+document.getElementById('cTl').value+'px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;opacity:.85;}\n';
-  out += '.np-tier-val{font-size:'+document.getElementById('cTv').value+'px;font-weight:700;font-variant-numeric:tabular-nums;}\n';
+  out += '.np-tier-val{font-size:'+document.getElementById('cTv').value+'px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.25;}\n';
+  out += '.np-tier-val-lbl{display:block;font-size:'+document.getElementById('cTvLbl').value+'px;font-weight:600;opacity:.85;}\n';
+  out += '.np-tier-val-amt{display:block;white-space:nowrap;font-size:'+document.getElementById('cTvAmt').value+'px;font-weight:700;font-variant-numeric:tabular-nums;}\n';
   out += '.np-tier-pct{\n';
   out += '  font-size:'+document.getElementById('cTpct').value+'px;\n';
   out += '  margin-top:'+document.getElementById('cTpctMt').value+'px;\n';
@@ -542,7 +564,7 @@ document.getElementById('btnCss').addEventListener('click', function(){
 
 document.getElementById('btnReset').addEventListener('click', function(){
   /* Valores default vindos do main.css atual */
-  var defaults = {cCols:5,cGap:14,cPad:16,cRad:10,cAva:36,cAvaF:15,cNome:13,cSt:10,cHg:10,cHmb:12,cReal:11,cBar:8,cTg:6,cTp:6,cTl:9,cTv:11,cTpct:9,cTpctMt:1,cTpctW:400,cTr:6,cEd:10};
+  var defaults = {cCols:5,cGap:14,cPad:16,cRad:10,cAva:36,cAvaF:15,cNome:13,cSt:10,cHg:10,cHmb:12,cReal:11,cBar:8,cTg:6,cTp:6,cTl:9,cTv:11,cTvLbl:10,cTvAmt:12,cTpct:9,cTpctMt:1,cTpctW:400,cTr:6,cEd:10};
   Object.keys(defaults).forEach(function(k){
     document.getElementById(k).value = defaults[k];
   });
