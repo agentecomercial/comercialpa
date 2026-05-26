@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Preview · Aba "Ranking"</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;
+  --surface:#1a1a1a;
+  --surface2:#222;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --text:#f0f0f0;
+  --muted:#888;
+  --accent:#c8f05a;
+
+  /* tokens ajustáveis */
+  --row-gap: 8px;
+  --card-pad-y: 14px;
+  --card-pad-x: 18px;
+  --card-radius: 12px;
+  --grid-pos: 40px;
+  --grid-ava: 44px;
+  --grid-gap: 12px;
+
+  --pos-font: 18px;
+  --pos-num-font: 13px;
+
+  --avatar-size: 40px;
+  --avatar-font: 16px;
+
+  --nome-font: 14px;
+  --nome-mb: 4px;
+
+  --bar-h: 5px;
+  --bar-mb: 5px;
+
+  --tags-gap: 6px;
+  --tier-font: 10px;
+  --tier-pad: 2px 7px;
+  --pct-font: 11px;
+  --pct-pad: 2px 8px;
+  --badge-font: 10px;
+  --badge-pad: 2px 6px;
+
+  --vals-gap: 3px;
+  --vals-minw: 110px;
+  --val-font: 16px;
+  --val-sub-font: 10px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:24px;
+  display:grid;
+  grid-template-columns:1fr 320px;
+  gap:24px;
+}
+.main{min-width:0;}
+
+/* ── KPIs strip ── */
+.np-rank-kpis{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:10px;margin-bottom:16px;
+}
+.np-rank-kpi{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:10px;padding:12px 16px;
+}
+.np-rank-kpi-v{
+  font-size:16px;font-weight:800;color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+.np-rank-kpi-l{
+  font-size:10px;color:var(--muted);margin-top:3px;
+  text-transform:uppercase;letter-spacing:.05em;
+}
+
+/* ── Lista de cards ── */
+.np-ranking-list{display:flex;flex-direction:column;gap:var(--row-gap);}
+.np-ranking-item{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:var(--card-radius);
+  padding:var(--card-pad-y) var(--card-pad-x);
+  display:grid;
+  grid-template-columns:var(--grid-pos) var(--grid-ava) 1fr auto;
+  align-items:center;
+  gap:var(--grid-gap);
+  transition:box-shadow .15s;
+}
+.np-ranking-item:hover{box-shadow:0 4px 16px rgba(0,0,0,.18);}
+
+.np-ri-pos{
+  font-size:var(--pos-font);
+  font-weight:900;color:var(--muted);
+  text-align:center;line-height:1;
+}
+.np-ri-pos .num{
+  font-size:var(--pos-num-font);
+  font-weight:700;
+}
+
+.np-ri-avatar{
+  width:var(--avatar-size);
+  height:var(--avatar-size);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:var(--avatar-font);
+  font-weight:800;flex-shrink:0;
+}
+
+.np-ri-info{flex:1;min-width:0;}
+.np-ri-nome{
+  font-size:var(--nome-font);
+  font-weight:700;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-bottom:var(--nome-mb);
+}
+.np-ri-bar{
+  height:var(--bar-h);
+  background:rgba(255,255,255,.08);
+  border-radius:3px;overflow:hidden;
+  margin-bottom:var(--bar-mb);
+}
+.np-ri-bar-fill{height:100%;border-radius:3px;}
+
+.np-ri-tags{display:flex;align-items:center;gap:var(--tags-gap);flex-wrap:wrap;}
+.np-ri-tier{
+  font-size:var(--tier-font);
+  font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  padding:var(--tier-pad);border-radius:20px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+}
+.np-ri-pct-badge{
+  font-size:var(--pct-font);
+  font-weight:700;
+  padding:var(--pct-pad);border-radius:20px;
+  white-space:nowrap;
+}
+.np-ri-badge{
+  font-size:var(--badge-font);
+  color:var(--muted);
+  padding:var(--badge-pad);border-radius:20px;
+  background:rgba(255,255,255,.04);
+  white-space:nowrap;
+}
+
+.np-ri-vals{
+  display:flex;flex-direction:column;align-items:flex-end;
+  gap:var(--vals-gap);flex-shrink:0;
+  min-width:var(--vals-minw);
+}
+.np-ri-val{
+  font-size:var(--val-font);
+  font-weight:800;font-variant-numeric:tabular-nums;
+  line-height:1;
+}
+.np-ri-val-sub{
+  font-size:var(--val-sub-font);
+  color:var(--muted);font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+/* ── Painel de controles ── */
+.controls{
+  position:sticky;top:24px;
+  align-self:start;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:12px;
+  padding:18px 16px;
+  max-height:calc(100vh - 48px);
+  overflow-y:auto;
+}
+.controls h2{
+  font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.08em;
+  color:var(--accent);margin-bottom:14px;
+}
+.ctrl{display:flex;flex-direction:column;margin-bottom:12px;}
+.ctrl label{
+  font-size:10px;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--muted);
+  display:flex;justify-content:space-between;
+  margin-bottom:4px;font-weight:600;
+}
+.ctrl label .v{color:var(--accent);font-variant-numeric:tabular-nums;}
+.ctrl input[type=range]{width:100%;accent-color:var(--accent);height:18px;}
+.group{border-top:1px solid var(--border);padding-top:12px;margin-top:12px;}
+.group-title{
+  font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);margin-bottom:8px;
+}
+.actions{
+  display:flex;flex-direction:column;gap:8px;
+  margin-top:16px;border-top:1px solid var(--border);
+  padding-top:14px;
+}
+.btn{
+  background:var(--accent);color:#0f0f0f;
+  border:none;border-radius:6px;
+  padding:9px 12px;font-weight:700;font-size:12px;
+  cursor:pointer;font-family:inherit;transition:opacity .15s;
+}
+.btn:hover{opacity:.85;}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
+.btn.ghost:hover{color:var(--accent);border-color:var(--accent);}
+.css-out{
+  background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  padding:10px;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:10.5px;color:#bcd87a;white-space:pre-wrap;
+  max-height:280px;overflow:auto;margin-top:10px;
+  display:none;line-height:1.55;
+}
+.css-out.show{display:block;}
+.toast{
+  position:fixed;bottom:24px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--surface);border:1px solid var(--accent);
+  color:var(--accent);padding:10px 18px;border-radius:6px;
+  font-size:12px;font-weight:700;opacity:0;
+  transition:opacity .2s, transform .2s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:1100px){
+  body{grid-template-columns:1fr;}
+  .controls{position:relative;top:0;max-height:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="main">
+  <div class="np-rank-kpis">
+    <div class="np-rank-kpi"><div class="np-rank-kpi-v">R$ 222.244,29</div><div class="np-rank-kpi-l">Faturado</div></div>
+    <div class="np-rank-kpi"><div class="np-rank-kpi-v">R$ 39.522,00</div><div class="np-rank-kpi-l">Potencial</div></div>
+    <div class="np-rank-kpi"><div class="np-rank-kpi-v">51%</div><div class="np-rank-kpi-l">Conversão</div></div>
+    <div class="np-rank-kpi"><div class="np-rank-kpi-v">0 / 5</div><div class="np-rank-kpi-l">Na meta</div></div>
+  </div>
+  <div class="np-ranking-list" id="lista"></div>
+</div>
+
+<aside class="controls">
+  <h2>🎛 Ajustes do card</h2>
+
+  <div class="group-title">Lista</div>
+  <div class="ctrl"><label>Gap entre cards <span class="v" id="vRg">8px</span></label>
+    <input type="range" id="cRg" min="0" max="20" step="1" value="8"></div>
+
+  <div class="group">
+    <div class="group-title">Card</div>
+    <div class="ctrl"><label>Padding vertical <span class="v" id="vPy">14px</span></label>
+      <input type="range" id="cPy" min="6" max="32" step="1" value="14"></div>
+    <div class="ctrl"><label>Padding horizontal <span class="v" id="vPx">18px</span></label>
+      <input type="range" id="cPx" min="8" max="36" step="1" value="18"></div>
+    <div class="ctrl"><label>Border radius <span class="v" id="vRad">12px</span></label>
+      <input type="range" id="cRad" min="0" max="24" step="1" value="12"></div>
+    <div class="ctrl"><label>Gap colunas (pos/avatar/info/val) <span class="v" id="vGg">12px</span></label>
+      <input type="range" id="cGg" min="4" max="24" step="1" value="12"></div>
+    <div class="ctrl"><label>Coluna posição (px) <span class="v" id="vGp">40px</span></label>
+      <input type="range" id="cGp" min="28" max="60" step="1" value="40"></div>
+    <div class="ctrl"><label>Coluna avatar (px) <span class="v" id="vGa">44px</span></label>
+      <input type="range" id="cGa" min="30" max="64" step="1" value="44"></div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Posição (medalha / °)</div>
+    <div class="ctrl"><label>Fonte medalha <span class="v" id="vP">18px</span></label>
+      <input type="range" id="cP" min="12" max="32" step="1" value="18"></div>
+    <div class="ctrl"><label>Fonte 4°/5° <span class="v" id="vPn">13px</span></label>
+      <input type="range" id="cPn" min="10" max="22" step="1" value="13"></div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Avatar</div>
+    <div class="ctrl"><label>Tamanho <span class="v" id="vA">40px</span></label>
+      <input type="range" id="cA" min="28" max="60" step="1" value="40"></div>
+    <div class="ctrl"><label>Fonte <span class="v" id="vAf">16px</span></label>
+      <input type="range" id="cAf" min="10" max="22" step="1" value="16"></div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Nome + barra</div>
+    <div class="ctrl"><label>Nome (fonte) <span class="v" id="vN">14px</span></label>
+      <input type="range" id="cN" min="10" max="22" step="1" value="14"></div>
+    <div class="ctrl"><label>Nome (margin-bottom) <span class="v" id="vNm">4px</span></label>
+      <input type="range" id="cNm" min="0" max="14" step="1" value="4"></div>
+    <div class="ctrl"><label>Altura da barra <span class="v" id="vB">5px</span></label>
+      <input type="range" id="cB" min="2" max="14" step="1" value="5"></div>
+    <div class="ctrl"><label>Barra (margin-bottom) <span class="v" id="vBm">5px</span></label>
+      <input type="range" id="cBm" min="0" max="14" step="1" value="5"></div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Tags (BÁSICA, %, p/meta, pagos...)</div>
+    <div class="ctrl"><label>Gap entre tags <span class="v" id="vTg">6px</span></label>
+      <input type="range" id="cTg" min="2" max="14" step="1" value="6"></div>
+    <div class="ctrl"><label>Tier badge (fonte) <span class="v" id="vT">10px</span></label>
+      <input type="range" id="cT" min="8" max="14" step="1" value="10"></div>
+    <div class="ctrl"><label>% badge (fonte) <span class="v" id="vPct">11px</span></label>
+      <input type="range" id="cPct" min="8" max="16" step="1" value="11"></div>
+    <div class="ctrl"><label>Demais badges (fonte) <span class="v" id="vBg">10px</span></label>
+      <input type="range" id="cBg" min="8" max="14" step="1" value="10"></div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Coluna do R$ (direita)</div>
+    <div class="ctrl"><label>Largura mínima <span class="v" id="vMw">110px</span></label>
+      <input type="range" id="cMw" min="80" max="180" step="2" value="110"></div>
+    <div class="ctrl"><label>Valor R$ (fonte) <span class="v" id="vV">16px</span></label>
+      <input type="range" id="cV" min="11" max="26" step="1" value="16"></div>
+    <div class="ctrl"><label>"pot. R$" (fonte) <span class="v" id="vVs">10px</span></label>
+      <input type="range" id="cVs" min="8" max="14" step="1" value="10"></div>
+    <div class="ctrl"><label>Gap entre R$ e pot. <span class="v" id="vVg">3px</span></label>
+      <input type="range" id="cVg" min="0" max="10" step="1" value="3"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="btnCss">📋 Gerar CSS final</button>
+    <button class="btn ghost" id="btnReset">↺ Resetar padrões</button>
+    <pre class="css-out" id="cssOut"></pre>
+  </div>
+</aside>
+
+<div class="toast" id="toast">CSS copiado ✓</div>
+
+<script>
+/* Mock — replica o screenshot da aba Ranking */
+var DADOS = [
+  { pos:'🥇', nome:'DARLEY SANTOS',    cor:'#34d399',
+    real:124319.40, pot:19761.00, pct:76, tier:'Básica',
+    falta:38415.73, qp:13, qt:28, conv:46, ticket:9563.00,
+    barCor:'#00f0ff', bg:'rgba(0,240,255,.06)', borda:'rgba(0,240,255,.25)', textCor:'#00f0ff' },
+  { pos:'🥈', nome:'DANIEL MOURA',     cor:'#60a5fa',
+    real:61036.59,  pot:19761.00, pct:38, tier:'Básica',
+    falta:101698.54,qp:17, qt:30, conv:57, ticket:3590.00,
+    barCor:'#ff5500', bg:'rgba(255,85,0,.06)', borda:'rgba(255,85,0,.25)', textCor:'#ff5500' },
+  { pos:'🥉', nome:'JULIANA FABRICIA', cor:'#f59e0b',
+    real:27131.85,  pot:0,        pct:58, tier:'Básica',
+    falta:19363.90, qp:7,  qt:18, conv:39, ticket:3876.00,
+    barCor:'#ffe000', bg:'rgba(255,238,0,.06)', borda:'rgba(255,238,0,.25)', textCor:'#ffe000' },
+  { pos:'4°', isNum:true, nome:'EXTRACLASSE',     cor:'#fb923c',
+    real:5435.95,   pot:0, pct:0,  tier:null,
+    falta:0, qp:2, qt:2, conv:100, ticket:2718.00,
+    barCor:'#ff1744', bg:'rgba(255,23,68,.04)', borda:'rgba(255,23,68,.2)', textCor:'#ff5252' },
+  { pos:'5°', isNum:true, nome:'CARLOS BONFIM',   cor:'#a78bfa',
+    real:4320.50,   pot:0, pct:9,  tier:'Básica',
+    falta:42175.25, qp:2, qt:2, conv:100, ticket:2160.00,
+    barCor:'#ff1744', bg:'rgba(255,23,68,.04)', borda:'rgba(255,23,68,.2)', textCor:'#ff1744' }
+];
+
+function fmtR(v){
+  return 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function render(){
+  document.getElementById('lista').innerHTML = DADOS.map(function(d){
+    var posHtml = d.isNum
+      ? '<span class="num">'+d.pos+'</span>'
+      : d.pos;
+    var barW = Math.min(100, d.pct);
+    var barHtml = d.tier
+      ? '<div class="np-ri-bar"><div class="np-ri-bar-fill" style="width:'+barW+'%;background:'+d.barCor+';"></div></div>'
+      : '';
+    var tierHtml = d.tier
+      ? '<span class="np-ri-tier" style="color:'+d.textCor+';border-color:'+d.borda+';">🥉 '+d.tier+'</span>'
+        + '<span class="np-ri-pct-badge" style="background:'+d.bg+';color:'+d.textCor+';border:1px solid '+d.borda+';">'+d.pct+'%</span>'
+        + '<span class="np-ri-badge">⏳ '+fmtR(d.falta)+' p/ meta</span>'
+      : '';
+    var potHtml = d.pot > 0 ? '<span class="np-ri-val-sub">pot. '+fmtR(d.pot)+'</span>' : '';
+    return '<div class="np-ranking-item" style="border-color:'+d.borda+';background:'+d.bg+';">'
+      + '<div class="np-ri-pos">'+posHtml+'</div>'
+      + '<div class="np-ri-avatar" style="background:'+d.cor+'22;color:'+d.cor+';border:1.5px solid '+d.cor+'55;">'+d.nome.charAt(0)+'</div>'
+      + '<div class="np-ri-info">'
+      +   '<div class="np-ri-nome">'+d.nome+'</div>'
+      +   barHtml
+      +   '<div class="np-ri-tags">'
+      +     tierHtml
+      +     '<span class="np-ri-badge">'+d.qp+'/'+d.qt+' pago'+(d.qp!==1?'s':'')+'</span>'
+      +     '<span class="np-ri-badge">'+d.conv+'% conv</span>'
+      +     (d.ticket?'<span class="np-ri-badge">tkt '+fmtR(d.ticket)+'</span>':'')
+      +   '</div>'
+      + '</div>'
+      + '<div class="np-ri-vals">'
+      +   '<div class="np-ri-val" style="color:'+d.textCor+';">'+fmtR(d.real)+'</div>'
+      +   potHtml
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+var CTRLS = [
+  ['cRg','--row-gap','vRg','px'],
+  ['cPy','--card-pad-y','vPy','px'],
+  ['cPx','--card-pad-x','vPx','px'],
+  ['cRad','--card-radius','vRad','px'],
+  ['cGg','--grid-gap','vGg','px'],
+  ['cGp','--grid-pos','vGp','px'],
+  ['cGa','--grid-ava','vGa','px'],
+  ['cP','--pos-font','vP','px'],
+  ['cPn','--pos-num-font','vPn','px'],
+  ['cA','--avatar-size','vA','px'],
+  ['cAf','--avatar-font','vAf','px'],
+  ['cN','--nome-font','vN','px'],
+  ['cNm','--nome-mb','vNm','px'],
+  ['cB','--bar-h','vB','px'],
+  ['cBm','--bar-mb','vBm','px'],
+  ['cTg','--tags-gap','vTg','px'],
+  ['cT','--tier-font','vT','px'],
+  ['cPct','--pct-font','vPct','px'],
+  ['cBg','--badge-font','vBg','px'],
+  ['cMw','--vals-minw','vMw','px'],
+  ['cV','--val-font','vV','px'],
+  ['cVs','--val-sub-font','vVs','px'],
+  ['cVg','--vals-gap','vVg','px']
+];
+
+function aplicar(){
+  CTRLS.forEach(function(c){
+    var el = document.getElementById(c[0]);
+    var v = el.value + c[3];
+    document.documentElement.style.setProperty(c[1], v);
+    document.getElementById(c[2]).textContent = v;
+  });
+}
+CTRLS.forEach(function(c){
+  document.getElementById(c[0]).addEventListener('input', aplicar);
+});
+
+function get(id){return document.getElementById(id).value;}
+
+function gerarCss(){
+  var out = '/* Cole em assets/css/main.css (substitua os blocos correspondentes) */\n\n';
+  out += '.np-ranking-item{\n';
+  out += '  background:var(--surface);\n';
+  out += '  border:1px solid var(--border2);\n';
+  out += '  border-radius:'+get('cRad')+'px;\n';
+  out += '  padding:'+get('cPy')+'px '+get('cPx')+'px;\n';
+  out += '  display:grid;\n';
+  out += '  grid-template-columns:'+get('cGp')+'px '+get('cGa')+'px 1fr auto;\n';
+  out += '  align-items:center;\n';
+  out += '  gap:'+get('cGg')+'px;\n';
+  out += '  transition:box-shadow .15s;\n';
+  out += '}\n';
+  out += '.np-ranking-item:hover{box-shadow:0 4px 16px rgba(0,0,0,.18);}\n';
+  out += '.np-ri-pos{font-size:'+get('cP')+'px;font-weight:900;color:var(--muted);text-align:center;line-height:1;}\n';
+  out += '.np-ri-pos .num{font-size:'+get('cPn')+'px;font-weight:700;}\n';
+  out += '.np-ri-avatar{width:'+get('cA')+'px;height:'+get('cA')+'px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:'+get('cAf')+'px;font-weight:800;flex-shrink:0;}\n';
+  out += '.np-ri-info{flex:1;min-width:0;}\n';
+  out += '.np-ri-nome{font-size:'+get('cN')+'px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:'+get('cNm')+'px;}\n';
+  out += '.np-ri-bar{height:'+get('cB')+'px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-bottom:'+get('cBm')+'px;}\n';
+  out += '.np-ri-bar-fill{height:100%;border-radius:3px;transition:width .4s ease;}\n';
+  out += '.np-ri-tags{display:flex;align-items:center;gap:'+get('cTg')+'px;flex-wrap:wrap;}\n';
+  out += '.np-ri-tier{font-size:'+get('cT')+'px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);}\n';
+  out += '.np-ri-pct-badge{font-size:'+get('cPct')+'px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}\n';
+  out += '.np-ri-badge{font-size:'+get('cBg')+'px;color:var(--muted);padding:2px 6px;border-radius:20px;background:rgba(255,255,255,.04);white-space:nowrap;}\n';
+  out += '.np-ri-vals{display:flex;flex-direction:column;align-items:flex-end;gap:'+get('cVg')+'px;flex-shrink:0;min-width:'+get('cMw')+'px;}\n';
+  out += '.np-ri-val{font-size:'+get('cV')+'px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;}\n';
+  out += '.np-ri-val-sub{font-size:'+get('cVs')+'px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}\n';
+  out += '/* Lista — espaçamento entre cards */\n';
+  out += '#npRankingList{display:flex;flex-direction:column;gap:'+get('cRg')+'px;}\n';
+  return out;
+}
+
+document.getElementById('btnCss').addEventListener('click', function(){
+  var css = gerarCss();
+  var pre = document.getElementById('cssOut');
+  pre.textContent = css;
+  pre.classList.add('show');
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(css).then(function(){
+      var t = document.getElementById('toast');
+      t.classList.add('show');
+      setTimeout(function(){ t.classList.remove('show'); }, 1700);
+    });
+  }
+});
+
+document.getElementById('btnReset').addEventListener('click', function(){
+  var defaults = {cRg:8,cPy:14,cPx:18,cRad:12,cGg:12,cGp:40,cGa:44,cP:18,cPn:13,cA:40,cAf:16,cN:14,cNm:4,cB:5,cBm:5,cTg:6,cT:10,cPct:11,cBg:10,cMw:110,cV:16,cVs:10,cVg:3};
+  Object.keys(defaults).forEach(function(k){
+    document.getElementById(k).value = defaults[k];
+  });
+  aplicar();
+  document.getElementById('cssOut').classList.remove('show');
+});
+
+render();
+aplicar();
+</script>
+</body>
+</html>
