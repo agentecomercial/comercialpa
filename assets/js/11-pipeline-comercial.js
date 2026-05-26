@@ -1723,19 +1723,62 @@
     _npTrocarMes();
   };
 
-  /* Popover open/close */
+  /* Popover open/close + seleção pendente (só comita ao clicar "Aplicar") */
+  var _npPendingSel = null; /* {mode,y,m,d} */
   window._npAbrirCalPop = function(e){
     if(e){ e.stopPropagation(); }
     var pop = document.getElementById('npCalPop');
     if(!pop) return;
     _npCalY = _npAno; _npCalM = _npMes;
+    var H = _npHoje();
+    _npPendingSel = {
+      mode: _npCalMode,
+      y: _npAno,
+      m: _npMes,
+      d: _npDiaSel ? _npDiaSel.d : H.d
+    };
+    _npSincronizarTabs();
     _npRenderCalAtual();
+    _npAtualizarResumoSel();
     pop.classList.add('show');
   };
-  function _npFecharCalPop(){
+  window._npFecharCalPop = function(e){
+    if(e) e.stopPropagation();
     var pop = document.getElementById('npCalPop');
     if(pop) pop.classList.remove('show');
+    _npPendingSel = null;
+  };
+  function _npFecharCalPop(e){ window._npFecharCalPop(e); }
+
+  function _npAtualizarResumoSel(){
+    var el = document.getElementById('npCalResumo');
+    if(!el || !_npPendingSel) return;
+    var p = _npPendingSel;
+    var txt;
+    if(p.mode === 'ano') txt = 'Selecionado: <b>Ano '+p.y+'</b>';
+    else if(p.mode === 'dia') txt = 'Selecionado: <b>'+String(p.d).padStart(2,'0')+' '+_MESES_FULL_[p.m-1]+' / '+p.y+'</b>';
+    else txt = 'Selecionado: <b>'+_MESES_FULL_[p.m-1]+' / '+p.y+'</b>';
+    el.innerHTML = txt;
   }
+
+  /* Aplicar — comita a seleção pendente */
+  window._npAplicarSel = function(e){
+    if(e) e.stopPropagation();
+    if(!_npPendingSel){ window._npFecharCalPop(); return; }
+    var p = _npPendingSel;
+    _npCalMode = p.mode;
+    _npAno = p.y;
+    if(p.mode === 'ano'){
+      _npMes = 1; _npDiaSel = null; window._npDiaSel = null;
+    } else if(p.mode === 'dia'){
+      _npMes = p.m; _npDiaSel = { y:p.y, m:p.m, d:p.d }; window._npDiaSel = _npDiaSel;
+    } else {
+      _npMes = p.m; _npDiaSel = null; window._npDiaSel = null;
+    }
+    _npSincronizarTabs();
+    window._npFecharCalPop();
+    _npTrocarMes();
+  };
   document.addEventListener('click', function(e){
     var pop = document.getElementById('npCalPop');
     if(!pop) return;
@@ -1756,9 +1799,23 @@
   }
   window._npCalTab = function(mode, e){
     if(e) e.stopPropagation();
-    _npCalMode = mode;
-    _npSincronizarTabs();
+    /* Quando o popover está aberto, alterar a aba só atualiza o pending
+       (a aplicação só acontece no botão Aplicar). Quando fechado, é
+       a alternância "global" e atualiza o _npCalMode efetivo. */
+    if(_npPendingSel){
+      _npPendingSel.mode = mode;
+    } else {
+      _npCalMode = mode;
+    }
+    /* Sincroniza visualmente as abas usando o mode "ativo" no popover */
+    document.querySelectorAll('#npCalPop .np-cal-tab').forEach(function(t){
+      t.classList.toggle('active', t.getAttribute('data-mode') === mode);
+    });
+    document.querySelectorAll('#npCalPop .np-cal-pane').forEach(function(p){
+      p.classList.toggle('show', p.getAttribute('data-pane') === mode);
+    });
     _npRenderCalAtual();
+    _npAtualizarResumoSel();
   };
   window._npCalMesNav = function(d, e){
     if(e) e.stopPropagation();
@@ -1774,15 +1831,22 @@
   };
 
   function _npRenderCalAtual(){
-    if(_npCalMode === 'ano') _npRenderCalAno();
-    else if(_npCalMode === 'mes') _npRenderCalMes();
+    var mode = _npPendingSel ? _npPendingSel.mode : _npCalMode;
+    if(mode === 'ano') _npRenderCalAno();
+    else if(mode === 'mes') _npRenderCalMes();
     else _npRenderCalDia();
+  }
+  /* Highlight usa o pending (enquanto popover aberto) ou o atual */
+  function _npHl(){
+    if(_npPendingSel) return _npPendingSel;
+    return { mode:_npCalMode, y:_npAno, m:_npMes, d:_npDiaSel?_npDiaSel.d:null };
   }
   function _npRenderCalAno(){
     var grid = document.getElementById('npCalGridAno');
     if(!grid) return;
     grid.innerHTML = '';
     var H = _npHoje();
+    var hl = _npHl();
     var base = H.y - 4;
     for(var i=0;i<9;i++){
       var ano = base + i;
@@ -1790,15 +1854,16 @@
       btn.className = 'np-cal-cell';
       btn.textContent = ano;
       if(ano === H.y) btn.classList.add('atual');
-      if(ano === _npAno && _npCalMode === 'ano') btn.classList.add('selected');
+      if(ano === hl.y && hl.mode === 'ano') btn.classList.add('selected');
       (function(a){
         btn.addEventListener('click', function(e){
           e.stopPropagation();
-          _npCalMode='ano'; _npDiaSel=null;
-          _npAno=a; _npMes=1;       /* fallback: filtra Jan do ano até termos filtro real por ano */
-          _npSincronizarTabs();
-          _npFecharCalPop();
-          _npTrocarMes();
+          if(_npPendingSel){
+            _npPendingSel.mode='ano';
+            _npPendingSel.y=a;
+          }
+          _npRenderCalAno();
+          _npAtualizarResumoSel();
         });
       })(ano);
       grid.appendChild(btn);
@@ -1811,20 +1876,23 @@
     if(!grid) return;
     grid.innerHTML = '';
     var H = _npHoje();
+    var hl = _npHl();
     for(var i=1;i<=12;i++){
       var btn = document.createElement('button');
       btn.className = 'np-cal-cell';
       btn.textContent = _MESES_BR_[i-1];
       if(_npCalY===H.y && i===H.m) btn.classList.add('atual');
-      if(_npCalY===_npAno && i===_npMes && _npCalMode==='mes') btn.classList.add('selected');
+      if(_npCalY===hl.y && i===hl.m && hl.mode==='mes') btn.classList.add('selected');
       (function(mi){
         btn.addEventListener('click', function(e){
           e.stopPropagation();
-          _npCalMode='mes'; _npDiaSel=null;
-          _npAno=_npCalY; _npMes=mi;
-          _npSincronizarTabs();
-          _npFecharCalPop();
-          _npTrocarMes();
+          if(_npPendingSel){
+            _npPendingSel.mode='mes';
+            _npPendingSel.y=_npCalY;
+            _npPendingSel.m=mi;
+          }
+          _npRenderCalMes();
+          _npAtualizarResumoSel();
         });
       })(i);
       grid.appendChild(btn);
@@ -1849,23 +1917,24 @@
       grid.appendChild(ph);
     }
     var H = _npHoje();
+    var hl = _npHl();
     for(var i=1;i<=total;i++){
       var btn = document.createElement('button');
       btn.className = 'np-cal-cell';
       btn.textContent = i;
       if(_npCalY===H.y && _npCalM===H.m && i===H.d) btn.classList.add('atual');
-      if(_npDiaSel && _npDiaSel.y===_npCalY && _npDiaSel.m===_npCalM && _npDiaSel.d===i) btn.classList.add('selected');
+      if(hl.mode==='dia' && _npCalY===hl.y && _npCalM===hl.m && i===hl.d) btn.classList.add('selected');
       (function(di){
         btn.addEventListener('click', function(e){
           e.stopPropagation();
-          _npCalMode='dia';
-          _npDiaSel = { y:_npCalY, m:_npCalM, d:di };
-          /* Filtragem por mês (compatibilidade) — dia fica registrado pra usos futuros */
-          _npAno=_npCalY; _npMes=_npCalM;
-          window._npDiaSel = _npDiaSel;
-          _npSincronizarTabs();
-          _npFecharCalPop();
-          _npTrocarMes();
+          if(_npPendingSel){
+            _npPendingSel.mode='dia';
+            _npPendingSel.y=_npCalY;
+            _npPendingSel.m=_npCalM;
+            _npPendingSel.d=di;
+          }
+          _npRenderCalDia();
+          _npAtualizarResumoSel();
         });
       })(i);
       grid.appendChild(btn);
