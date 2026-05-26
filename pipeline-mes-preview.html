@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Preview · Seletor de mês + filtros Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;
+  --surface:#1a1a1a;
+  --surface2:#222;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --text:#f0f0f0;
+  --muted:#888;
+  --accent:#c8f05a;
+  --green:#34d399;
+  --amber:#ffb740;
+  --red:#ff5f57;
+  --blue:#60a5fa;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;padding:24px;
+}
+
+/* ── Header da tela (replicando o do dashboard) ── */
+.np-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding-bottom:16px;border-bottom:1px solid var(--border);
+  margin-bottom:18px;flex-wrap:wrap;gap:14px;
+}
+.np-header-left{display:flex;align-items:center;gap:10px;}
+.np-back{
+  display:flex;align-items:center;gap:4px;
+  background:none;border:none;color:var(--muted);
+  font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;
+}
+.np-back svg{width:14px;height:14px;}
+.np-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.np-pill{
+  background:rgba(200,240,90,.12);color:var(--accent);
+  font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;
+  text-transform:uppercase;letter-spacing:.04em;font-variant-numeric:tabular-nums;
+}
+
+/* ── Bloco novo: navegação de mês ── */
+.np-month-nav{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:10px;padding:6px 10px;
+}
+.np-month-btn{
+  background:none;border:none;color:var(--muted);
+  cursor:pointer;padding:4px 6px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .12s,color .12s;font-family:inherit;
+}
+.np-month-btn:hover{background:var(--surface2);color:var(--accent);}
+.np-month-btn svg{width:13px;height:13px;}
+.np-month-label{
+  display:flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:700;color:var(--text);
+  font-variant-numeric:tabular-nums;
+  cursor:pointer;padding:4px 8px;border-radius:6px;
+  transition:background .12s;
+  min-width:130px;justify-content:center;
+}
+.np-month-label:hover{background:var(--surface2);}
+.np-month-label svg{width:13px;height:13px;color:var(--muted);}
+.np-state-badge{
+  font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+  padding:3px 8px;border-radius:10px;
+}
+.np-state-badge.corrente{background:rgba(200,240,90,.14);color:var(--accent);}
+.np-state-badge.fechado{background:rgba(96,165,250,.14);color:var(--blue);}
+.np-state-badge.futuro{background:rgba(167,139,250,.14);color:#a78bfa;}
+
+/* ── Atalhos rápidos ── */
+.np-atalhos{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  margin-top:10px;
+}
+.np-atalho{
+  background:var(--surface);border:1px solid var(--border2);
+  color:var(--muted);font-size:11px;font-weight:600;
+  padding:5px 11px;border-radius:14px;cursor:pointer;
+  transition:all .12s;font-family:inherit;
+}
+.np-atalho:hover{border-color:var(--accent);color:var(--accent);}
+.np-atalho.active{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+.np-atalho-custom{
+  color:var(--accent);border-color:rgba(200,240,90,.35);
+  font-weight:700;
+}
+.np-atalho-custom:hover{background:rgba(200,240,90,.12);}
+
+/* ── Popover personalizado (3 modos: Ano / Mês / Dia) ── */
+.np-cal-pop{
+  position:absolute;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:10px;padding:12px;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+  z-index:100;min-width:280px;
+  display:none;
+}
+.np-cal-pop.show{display:block;}
+
+/* Tabs Ano/Mês/Dia */
+.np-cal-tabs{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:4px;background:var(--surface2);border-radius:8px;padding:3px;
+  margin-bottom:10px;
+}
+.np-cal-tab{
+  background:none;border:none;color:var(--muted);
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  padding:6px 0;border-radius:6px;cursor:pointer;
+  transition:all .12s;font-family:inherit;
+}
+.np-cal-tab:hover{color:var(--accent);}
+.np-cal-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+
+/* Conteúdo do modo (só um visível por vez) */
+.np-cal-pane{display:none;}
+.np-cal-pane.show{display:block;}
+
+/* Header de navegação (compartilhado: mês + dia) */
+.np-cal-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);
+}
+.np-cal-nav-label{
+  font-size:14px;font-weight:700;color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+
+/* Grade compartilhada (anos / meses / dias) */
+.np-cal-grid{display:grid;gap:5px;}
+.np-cal-grid.gAno  {grid-template-columns:repeat(3,1fr);}
+.np-cal-grid.gMes  {grid-template-columns:repeat(3,1fr);}
+.np-cal-grid.gDia  {grid-template-columns:repeat(7,1fr);gap:3px;}
+.np-cal-grid.gDia .dow{
+  font-size:9px;color:var(--muted);text-align:center;
+  text-transform:uppercase;letter-spacing:.04em;font-weight:700;
+  padding:4px 0;
+}
+
+.np-cal-cell{
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);font-size:11px;font-weight:600;
+  padding:8px 4px;border-radius:6px;cursor:pointer;
+  transition:all .12s;font-family:inherit;
+  text-transform:uppercase;letter-spacing:.04em;text-align:center;
+}
+.np-cal-grid.gDia .np-cal-cell{
+  font-size:11px;padding:6px 0;text-transform:none;letter-spacing:0;
+  font-variant-numeric:tabular-nums;
+}
+.np-cal-cell.empty{background:transparent;border-color:transparent;cursor:default;}
+.np-cal-cell.empty:hover{border-color:transparent;color:var(--muted);}
+.np-cal-cell:hover{border-color:var(--accent);color:var(--accent);}
+.np-cal-cell.atual{box-shadow:inset 0 0 0 1px var(--blue);color:var(--blue);}
+.np-cal-cell.selected{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+
+/* ── KPIs (com delta) ── */
+.np-kpis{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  gap:12px;margin-top:14px;
+}
+.np-kpi{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:10px;padding:14px 16px;
+}
+.np-kpi-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.np-kpi-v{font-size:20px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;margin-top:4px;}
+.np-kpi-v.green{color:var(--green);}
+.np-kpi-v.red{color:var(--red);}
+.np-kpi-v.amber{color:var(--amber);}
+.np-kpi-v.blue{color:var(--blue);}
+.np-kpi-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+.np-kpi-delta{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:10px;font-weight:700;
+  padding:2px 7px;border-radius:10px;
+  margin-top:6px;font-variant-numeric:tabular-nums;
+}
+.np-kpi-delta.up{background:rgba(52,211,153,.12);color:var(--green);}
+.np-kpi-delta.down{background:rgba(255,95,87,.12);color:var(--red);}
+.np-kpi-delta.flat{background:var(--surface2);color:var(--muted);}
+
+/* ── Notas/legenda ── */
+.np-note{
+  margin-top:24px;padding:14px 18px;
+  background:rgba(96,165,250,.06);
+  border:1px solid rgba(96,165,250,.2);
+  border-radius:8px;font-size:12px;line-height:1.5;color:var(--text);
+}
+.np-note b{color:var(--blue);}
+.np-note ul{margin:8px 0 0 18px;color:var(--muted);}
+.np-note li{margin-bottom:4px;}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--surface);border:1px solid var(--accent);
+  color:var(--accent);padding:10px 18px;border-radius:6px;
+  font-size:12px;font-weight:700;opacity:0;
+  transition:opacity .2s, transform .2s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- Replica o header da tela Pipeline Comercial -->
+<div class="np-header">
+  <div class="np-header-left">
+    <button class="np-back">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Voltar
+    </button>
+    <div class="np-title">📊 Pipeline Comercial</div>
+    <span class="np-pill" id="pillMes">2026-03</span>
+  </div>
+  <div style="position:relative;">
+    <div class="np-month-nav">
+      <button class="np-month-btn" id="btnPrev" title="Mês anterior">
+        <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="np-month-label" id="lblMes" title="Clique para escolher mês">
+        <svg viewBox="0 0 14 14" fill="none"><rect x="2" y="3" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 6h10M5 1.5v2M9 1.5v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span id="lblMesText">Março / 2026</span>
+        <svg viewBox="0 0 10 10" fill="none"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <button class="np-month-btn" id="btnNext" title="Próximo mês">
+        <svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="np-state-badge corrente" id="badgeState">MÊS CORRENTE</span>
+    </div>
+
+    <!-- Popover personalizado: 3 modos (Ano / Mês / Dia) -->
+    <div class="np-cal-pop" id="calPop">
+      <div class="np-cal-tabs">
+        <button class="np-cal-tab" data-mode="ano">Ano</button>
+        <button class="np-cal-tab active" data-mode="mes">Mês</button>
+        <button class="np-cal-tab" data-mode="dia">Dia</button>
+      </div>
+
+      <!-- Modo: Ano -->
+      <div class="np-cal-pane" data-pane="ano">
+        <div class="np-cal-grid gAno" id="calGridAno"></div>
+      </div>
+
+      <!-- Modo: Mês (com navegação de ano) -->
+      <div class="np-cal-pane show" data-pane="mes">
+        <div class="np-cal-nav">
+          <button class="np-month-btn" id="calMesPrevYear">
+            <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="np-cal-nav-label" id="calMesYearLabel">2026</div>
+          <button class="np-month-btn" id="calMesNextYear">
+            <svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="np-cal-grid gMes" id="calGridMes"></div>
+      </div>
+
+      <!-- Modo: Dia (com navegação de mês/ano) -->
+      <div class="np-cal-pane" data-pane="dia">
+        <div class="np-cal-nav">
+          <button class="np-month-btn" id="calDiaPrev">
+            <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="np-cal-nav-label" id="calDiaLabel">Março / 2026</div>
+          <button class="np-month-btn" id="calDiaNext">
+            <svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="np-cal-grid gDia" id="calGridDia"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Atalhos -->
+<div class="np-atalhos">
+  <button class="np-atalho" data-shortcut="hoje">Mês atual</button>
+  <button class="np-atalho" data-shortcut="-1">Mês passado</button>
+  <button class="np-atalho" data-shortcut="-3">3 meses atrás</button>
+  <button class="np-atalho" data-shortcut="-6">6 meses atrás</button>
+  <button class="np-atalho" data-shortcut="jan">Início do ano</button>
+  <button class="np-atalho np-atalho-custom" data-shortcut="custom" title="Escolher mês/ano específico">📅 Personalizado</button>
+</div>
+
+<!-- KPIs com delta -->
+<div class="np-kpis">
+  <div class="np-kpi">
+    <div class="np-kpi-l">FATURADO</div>
+    <div class="np-kpi-v green" id="kFat">R$ 161.775,79</div>
+    <div class="np-kpi-sub" id="kFatSub">10 pagos</div>
+    <div class="np-kpi-delta up" id="kFatDelta">▲ +24% vs mês anterior</div>
+  </div>
+  <div class="np-kpi">
+    <div class="np-kpi-l">EM ABERTO</div>
+    <div class="np-kpi-v amber" id="kAb">R$ 220.000,00</div>
+    <div class="np-kpi-sub">6 em aberto</div>
+    <div class="np-kpi-delta down">▼ −21% vs mês anterior</div>
+  </div>
+  <div class="np-kpi">
+    <div class="np-kpi-l">POTENCIAL TOTAL</div>
+    <div class="np-kpi-v blue">R$ 0,00</div>
+    <div class="np-kpi-sub">0 em negociação</div>
+    <div class="np-kpi-delta flat">— sem variação</div>
+  </div>
+  <div class="np-kpi">
+    <div class="np-kpi-l">TOTAL ENTRADA</div>
+    <div class="np-kpi-v" style="color:var(--accent);">R$ 0,00</div>
+    <div class="np-kpi-sub">0 entradas</div>
+    <div class="np-kpi-delta down">▼ −100% vs mês anterior</div>
+  </div>
+  <div class="np-kpi">
+    <div class="np-kpi-l">FALTAM PARA META</div>
+    <div class="np-kpi-v red">R$ 458.182,75</div>
+    <div class="np-kpi-sub">26% para · meta geral</div>
+    <div class="np-kpi-delta up">▲ +6 p.p. vs mês anterior</div>
+  </div>
+</div>
+
+<div class="np-note">
+  <b>O que muda nesta versão</b>
+  <ul>
+    <li><b>Busca personalizada em 3 níveis</b> — popover com abas <b>Ano</b> (9 anos, ±4 do atual), <b>Mês</b> (12 meses com nav de ano) e <b>Dia</b> (calendário completo com nav de mês/ano). As setas e a badge se adaptam ao modo escolhido.</li>
+    <li><b>Atalhos</b> rápidos abaixo da navegação (Mês atual, Mês passado, 3/6 meses atrás, Início do ano).</li>
+    <li><b>Badge de estado</b> ao lado da data: MÊS CORRENTE (verde) · FECHADO (azul) · FUTURO (roxo) — fica claro se os números ainda estão se mexendo.</li>
+    <li><b>Delta vs mês anterior</b> em cada KPI: ▲ verde se melhorou, ▼ vermelho se piorou, — cinza quando neutro.</li>
+  </ul>
+</div>
+
+<div class="toast" id="toast">Mês alterado</div>
+
+<script>
+/* ── Estado ── */
+var MESES_BR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var DOW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+/* "Hoje" mockado pra bater com o screenshot (Mar/26) — em produção vem do new Date() */
+var HOJE = { y: 2026, m: 3, d: 26 };
+/* sel.mode pode ser 'ano' | 'mes' | 'dia'  */
+var sel = { mode:'mes', y:2026, m:3, d:26 };
+/* Estado interno do popover (ano/mês visíveis no calendário) */
+var calY = sel.y;
+var calM = sel.m;
+
+function clampMes(){ if(sel.m<1){sel.m=12;sel.y--;} if(sel.m>12){sel.m=1;sel.y++;} }
+function diasNoMes(y,m){ return new Date(y, m, 0).getDate(); }
+function clampDia(){
+  if(sel.d<1){
+    sel.m--; clampMes();
+    sel.d = diasNoMes(sel.y, sel.m);
+  } else {
+    var max = diasNoMes(sel.y, sel.m);
+    if(sel.d>max){
+      sel.d = 1; sel.m++; clampMes();
+    }
+  }
+}
+function diffMeses(a, b){ return (a.y - b.y) * 12 + (a.m - b.m); }
+
+function fmtLabel(){
+  if(sel.mode === 'ano') return 'Ano ' + sel.y;
+  if(sel.mode === 'dia') return String(sel.d).padStart(2,'0') + ' ' + MESES_FULL[sel.m-1] + ' / ' + sel.y;
+  return MESES_FULL[sel.m-1] + ' / ' + sel.y;
+}
+function fmtPill(){
+  if(sel.mode === 'ano') return String(sel.y);
+  if(sel.mode === 'dia') return sel.y + '-' + String(sel.m).padStart(2,'0') + '-' + String(sel.d).padStart(2,'0');
+  return sel.y + '-' + String(sel.m).padStart(2,'0');
+}
+
+function atualizarBadge(){
+  var bg = document.getElementById('badgeState');
+  bg.classList.remove('corrente','fechado','futuro');
+  if(sel.mode === 'ano'){
+    if(sel.y === HOJE.y){ bg.textContent='ANO CORRENTE'; bg.classList.add('corrente'); }
+    else if(sel.y < HOJE.y){ bg.textContent='ANO FECHADO'; bg.classList.add('fechado'); }
+    else { bg.textContent='FUTURO'; bg.classList.add('futuro'); }
+    return;
+  }
+  if(sel.mode === 'dia'){
+    var sToday = new Date(HOJE.y, HOJE.m-1, HOJE.d).getTime();
+    var sSel   = new Date(sel.y,  sel.m-1,  sel.d).getTime();
+    if(sSel === sToday){ bg.textContent='HOJE'; bg.classList.add('corrente'); }
+    else if(sSel < sToday){ bg.textContent='DIA PASSADO'; bg.classList.add('fechado'); }
+    else { bg.textContent='FUTURO'; bg.classList.add('futuro'); }
+    return;
+  }
+  var d = diffMeses(sel, HOJE);
+  if(d === 0){ bg.textContent='MÊS CORRENTE'; bg.classList.add('corrente'); }
+  else if(d < 0){ bg.textContent='FECHADO'; bg.classList.add('fechado'); }
+  else { bg.textContent='FUTURO'; bg.classList.add('futuro'); }
+}
+
+function atualizarAtalhos(){
+  var d = diffMeses(sel, HOJE);
+  document.querySelectorAll('.np-atalho').forEach(function(b){
+    b.classList.remove('active');
+    var sc = b.getAttribute('data-shortcut');
+    if(sel.mode !== 'mes') return;
+    if(sc === 'hoje' && d === 0) b.classList.add('active');
+    else if(sc === '-1' && d === -1) b.classList.add('active');
+    else if(sc === '-3' && d === -3) b.classList.add('active');
+    else if(sc === '-6' && d === -6) b.classList.add('active');
+    else if(sc === 'jan' && sel.y === HOJE.y && sel.m === 1) b.classList.add('active');
+  });
+}
+
+function aplicarSel(){
+  document.getElementById('pillMes').textContent = fmtPill();
+  document.getElementById('lblMesText').textContent = fmtLabel();
+  atualizarBadge();
+  atualizarAtalhos();
+  /* Re-render do pane visível */
+  if(sel.mode === 'ano') renderAno();
+  else if(sel.mode === 'mes') renderMes();
+  else renderDia();
+  var t = document.getElementById('toast');
+  t.textContent = '📅 ' + fmtLabel();
+  t.classList.add('show');
+  clearTimeout(window._tT);
+  window._tT = setTimeout(function(){ t.classList.remove('show'); }, 1400);
+}
+
+/* ── Setas: navegam pela UNIDADE do modo atual ── */
+document.getElementById('btnPrev').addEventListener('click', function(){
+  if(sel.mode==='ano'){ sel.y--; }
+  else if(sel.mode==='dia'){ sel.d--; clampDia(); }
+  else { sel.m--; clampMes(); }
+  aplicarSel();
+});
+document.getElementById('btnNext').addEventListener('click', function(){
+  if(sel.mode==='ano'){ sel.y++; }
+  else if(sel.mode==='dia'){ sel.d++; clampDia(); }
+  else { sel.m++; clampMes(); }
+  aplicarSel();
+});
+
+/* ── Atalhos ── */
+document.querySelectorAll('.np-atalho').forEach(function(b){
+  b.addEventListener('click', function(e){
+    var sc = b.getAttribute('data-shortcut');
+    if(sc === 'custom'){
+      e.stopPropagation();
+      abrirPopover();
+      return;
+    }
+    /* Atalhos só fazem sentido em modo "mes" — força o modo */
+    sel.mode = 'mes';
+    if(sc === 'hoje'){ sel.y = HOJE.y; sel.m = HOJE.m; }
+    else if(sc === '-1'){ sel.y = HOJE.y; sel.m = HOJE.m-1; clampMes(); }
+    else if(sc === '-3'){ sel.y = HOJE.y; sel.m = HOJE.m-3; clampMes(); }
+    else if(sc === '-6'){ sel.y = HOJE.y; sel.m = HOJE.m-6; clampMes(); }
+    else if(sc === 'jan'){ sel.y = HOJE.y; sel.m = 1; }
+    sincronizarTabs();
+    aplicarSel();
+  });
+});
+
+/* ── Popover (abrir/fechar) ── */
+var pop = document.getElementById('calPop');
+function abrirPopover(){
+  calY = sel.y; calM = sel.m;
+  renderAtual();
+  pop.classList.add('show');
+  var rect = document.getElementById('lblMes').getBoundingClientRect();
+  var parentRect = document.querySelector('.np-month-nav').parentElement.getBoundingClientRect();
+  pop.style.top = (rect.bottom - parentRect.top + 8) + 'px';
+  pop.style.right = '0';
+}
+document.getElementById('lblMes').addEventListener('click', function(e){
+  e.stopPropagation();
+  if(pop.classList.contains('show')) pop.classList.remove('show');
+  else abrirPopover();
+});
+document.addEventListener('click', function(e){
+  if(!pop.contains(e.target) && !e.target.closest('.np-atalho-custom')) pop.classList.remove('show');
+});
+
+/* ── Tabs Ano/Mês/Dia ── */
+function sincronizarTabs(){
+  document.querySelectorAll('.np-cal-tab').forEach(function(t){
+    t.classList.toggle('active', t.getAttribute('data-mode') === sel.mode);
+  });
+  document.querySelectorAll('.np-cal-pane').forEach(function(p){
+    p.classList.toggle('show', p.getAttribute('data-pane') === sel.mode);
+  });
+}
+document.querySelectorAll('.np-cal-tab').forEach(function(t){
+  t.addEventListener('click', function(e){
+    e.stopPropagation();
+    sel.mode = t.getAttribute('data-mode');
+    sincronizarTabs();
+    renderAtual();
+    aplicarSel();
+  });
+});
+
+/* ── Setas do popover (ano e dia) ── */
+document.getElementById('calMesPrevYear').addEventListener('click', function(e){ e.stopPropagation(); calY--; renderMes(); });
+document.getElementById('calMesNextYear').addEventListener('click', function(e){ e.stopPropagation(); calY++; renderMes(); });
+document.getElementById('calDiaPrev').addEventListener('click', function(e){
+  e.stopPropagation();
+  calM--; if(calM<1){calM=12;calY--;}
+  renderDia();
+});
+document.getElementById('calDiaNext').addEventListener('click', function(e){
+  e.stopPropagation();
+  calM++; if(calM>12){calM=1;calY++;}
+  renderDia();
+});
+
+/* ── Renderers de cada pane ── */
+function renderAtual(){
+  if(sel.mode==='ano') renderAno();
+  else if(sel.mode==='mes') renderMes();
+  else renderDia();
+}
+function renderAno(){
+  var grid = document.getElementById('calGridAno');
+  grid.innerHTML = '';
+  /* 9 anos: 4 antes + atual + 4 depois (centrado em HOJE.y) */
+  var base = HOJE.y - 4;
+  for(var i=0;i<9;i++){
+    var ano = base + i;
+    var btn = document.createElement('button');
+    btn.className = 'np-cal-cell';
+    btn.textContent = ano;
+    if(ano === HOJE.y) btn.classList.add('atual');
+    if(ano === sel.y && sel.mode==='ano') btn.classList.add('selected');
+    (function(a){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        sel.mode='ano'; sel.y=a;
+        sincronizarTabs();
+        pop.classList.remove('show');
+        aplicarSel();
+      });
+    })(ano);
+    grid.appendChild(btn);
+  }
+}
+function renderMes(){
+  document.getElementById('calMesYearLabel').textContent = calY;
+  var grid = document.getElementById('calGridMes');
+  grid.innerHTML = '';
+  for(var i=1;i<=12;i++){
+    var btn = document.createElement('button');
+    btn.className = 'np-cal-cell';
+    btn.textContent = MESES_BR[i-1];
+    if(calY===HOJE.y && i===HOJE.m) btn.classList.add('atual');
+    if(calY===sel.y && i===sel.m && sel.mode==='mes') btn.classList.add('selected');
+    (function(mi){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        sel.mode='mes'; sel.y=calY; sel.m=mi;
+        sincronizarTabs();
+        pop.classList.remove('show');
+        aplicarSel();
+      });
+    })(i);
+    grid.appendChild(btn);
+  }
+}
+function renderDia(){
+  document.getElementById('calDiaLabel').textContent = MESES_FULL[calM-1] + ' / ' + calY;
+  var grid = document.getElementById('calGridDia');
+  grid.innerHTML = '';
+  /* Header dos dias da semana */
+  DOW.forEach(function(d){
+    var h = document.createElement('div');
+    h.className = 'dow'; h.textContent = d;
+    grid.appendChild(h);
+  });
+  var primDiaSemana = new Date(calY, calM-1, 1).getDay();
+  var totalDias = diasNoMes(calY, calM);
+  /* Vazios antes do dia 1 */
+  for(var v=0; v<primDiaSemana; v++){
+    var ph = document.createElement('div');
+    ph.className = 'np-cal-cell empty';
+    grid.appendChild(ph);
+  }
+  for(var i=1;i<=totalDias;i++){
+    var btn = document.createElement('button');
+    btn.className = 'np-cal-cell';
+    btn.textContent = i;
+    if(calY===HOJE.y && calM===HOJE.m && i===HOJE.d) btn.classList.add('atual');
+    if(calY===sel.y && calM===sel.m && i===sel.d && sel.mode==='dia') btn.classList.add('selected');
+    (function(di){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        sel.mode='dia'; sel.y=calY; sel.m=calM; sel.d=di;
+        sincronizarTabs();
+        pop.classList.remove('show');
+        aplicarSel();
+      });
+    })(i);
+    grid.appendChild(btn);
+  }
+}
+
+aplicarSel();
+</script>
+</body>
+</html>

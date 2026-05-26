@@ -1619,6 +1619,265 @@
     _npMes++; if(_npMes>12){_npMes=1;_npAno++;}
     _npTrocarMes();
   };
+
+  /* ── Atalhos / popover personalizado (Ano · Mês · Dia) ──────────
+     UI extra para escolher o período. Por enquanto a filtragem dos
+     dados segue mês-based (Firebase pipelineVendas/{YYYY-MM}/...).
+     Modo "Ano" cai para Jan/{ano} e modo "Dia" usa o mês do dia
+     escolhido — o dia exato fica registrado em window._npDiaSel
+     para usos futuros (filtragem ao vivo no front, etc). */
+  var _npCalMode = 'mes';     /* 'ano' | 'mes' | 'dia' */
+  var _npDiaSel  = null;       /* {y,m,d} quando modo='dia' */
+  var _npCalY    = _npAno;
+  var _npCalM    = _npMes;
+  var _MESES_BR_   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var _MESES_FULL_ = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var _DOW_        = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  function _npHoje(){
+    var d = new Date();
+    return { y: d.getFullYear(), m: d.getMonth()+1, d: d.getDate() };
+  }
+  function _npDiffMeses(y,m){
+    var H = _npHoje();
+    return (y - H.y) * 12 + (m - H.m);
+  }
+  function _npDiasNoMes(y,m){ return new Date(y, m, 0).getDate(); }
+
+  function _npAtualizarBadgeState(){
+    var bg = document.getElementById('npStateBadge');
+    if(!bg) return;
+    bg.classList.remove('corrente','fechado','futuro');
+    var H = _npHoje();
+    if(_npCalMode === 'dia' && _npDiaSel){
+      var sToday = new Date(H.y, H.m-1, H.d).getTime();
+      var sSel   = new Date(_npDiaSel.y, _npDiaSel.m-1, _npDiaSel.d).getTime();
+      if(sSel === sToday){ bg.textContent='HOJE'; bg.classList.add('corrente'); }
+      else if(sSel < sToday){ bg.textContent='DIA PASSADO'; bg.classList.add('fechado'); }
+      else { bg.textContent='FUTURO'; bg.classList.add('futuro'); }
+      return;
+    }
+    if(_npCalMode === 'ano'){
+      if(_npAno === H.y){ bg.textContent='ANO CORRENTE'; bg.classList.add('corrente'); }
+      else if(_npAno < H.y){ bg.textContent='ANO FECHADO'; bg.classList.add('fechado'); }
+      else { bg.textContent='FUTURO'; bg.classList.add('futuro'); }
+      return;
+    }
+    var df = _npDiffMeses(_npAno, _npMes);
+    if(df === 0){ bg.textContent='MÊS CORRENTE'; bg.classList.add('corrente'); }
+    else if(df < 0){ bg.textContent='FECHADO'; bg.classList.add('fechado'); }
+    else { bg.textContent='FUTURO'; bg.classList.add('futuro'); }
+  }
+
+  function _npAtualizarAtalhos(){
+    var H = _npHoje();
+    var df = _npDiffMeses(_npAno, _npMes);
+    var btns = document.querySelectorAll('#npAtalhos .np-atalho');
+    btns.forEach(function(b){
+      b.classList.remove('active');
+      if(_npCalMode !== 'mes') return;
+      var sc = b.getAttribute('data-shortcut');
+      if(sc === 'hoje' && df === 0) b.classList.add('active');
+      else if(sc === '-1' && df === -1) b.classList.add('active');
+      else if(sc === '-3' && df === -3) b.classList.add('active');
+      else if(sc === '-6' && df === -6) b.classList.add('active');
+      else if(sc === 'jan' && _npAno === H.y && _npMes === 1) b.classList.add('active');
+    });
+  }
+
+  /* Substitui o label do mês conforme o modo escolhido */
+  function _npAtualizarLabelMes(){
+    var lbl = document.getElementById('npMesLabel');
+    var pill = document.getElementById('npBadgeMes');
+    if(_npCalMode === 'ano'){
+      if(lbl) lbl.textContent = 'Ano ' + _npAno;
+      if(pill) pill.textContent = String(_npAno);
+    } else if(_npCalMode === 'dia' && _npDiaSel){
+      if(lbl) lbl.textContent = String(_npDiaSel.d).padStart(2,'0') + ' ' + _MESES_FULL_[_npDiaSel.m-1] + ' / ' + _npDiaSel.y;
+      if(pill) pill.textContent = _npDiaSel.y + '-' + String(_npDiaSel.m).padStart(2,'0') + '-' + String(_npDiaSel.d).padStart(2,'0');
+    } else {
+      if(lbl) lbl.textContent = _mesLabel();
+      if(pill) pill.textContent = _mesKey();
+    }
+    _npAtualizarBadgeState();
+    _npAtualizarAtalhos();
+  }
+
+  /* Hook: sempre que o mês muda, sincroniza badge + atalhos */
+  var _origTrocarMes = _npTrocarMes;
+  _npTrocarMes = function(){
+    _origTrocarMes();
+    setTimeout(_npAtualizarLabelMes, 0);
+  };
+
+  /* Atalhos rápidos */
+  window._npAtalho = function(sc){
+    _npCalMode = 'mes'; _npDiaSel = null;
+    _npSincronizarTabs();
+    var H = _npHoje();
+    if(sc === 'hoje'){ _npAno=H.y; _npMes=H.m; }
+    else if(sc === '-1'){ _npAno=H.y; _npMes=H.m-1; if(_npMes<1){_npMes=12;_npAno--;} }
+    else if(sc === '-3'){ _npAno=H.y; _npMes=H.m-3; while(_npMes<1){_npMes+=12;_npAno--;} }
+    else if(sc === '-6'){ _npAno=H.y; _npMes=H.m-6; while(_npMes<1){_npMes+=12;_npAno--;} }
+    else if(sc === 'jan'){ _npAno=H.y; _npMes=1; }
+    _npTrocarMes();
+  };
+
+  /* Popover open/close */
+  window._npAbrirCalPop = function(e){
+    if(e){ e.stopPropagation(); }
+    var pop = document.getElementById('npCalPop');
+    if(!pop) return;
+    _npCalY = _npAno; _npCalM = _npMes;
+    _npRenderCalAtual();
+    pop.classList.add('show');
+  };
+  function _npFecharCalPop(){
+    var pop = document.getElementById('npCalPop');
+    if(pop) pop.classList.remove('show');
+  }
+  document.addEventListener('click', function(e){
+    var pop = document.getElementById('npCalPop');
+    if(!pop) return;
+    if(pop.contains(e.target)) return;
+    if(e.target.closest('.np-mes-label')) return;
+    if(e.target.closest('.np-atalho-custom')) return;
+    pop.classList.remove('show');
+  });
+
+  /* Tabs Ano/Mês/Dia */
+  function _npSincronizarTabs(){
+    document.querySelectorAll('#npCalPop .np-cal-tab').forEach(function(t){
+      t.classList.toggle('active', t.getAttribute('data-mode') === _npCalMode);
+    });
+    document.querySelectorAll('#npCalPop .np-cal-pane').forEach(function(p){
+      p.classList.toggle('show', p.getAttribute('data-pane') === _npCalMode);
+    });
+  }
+  window._npCalTab = function(mode, e){
+    if(e) e.stopPropagation();
+    _npCalMode = mode;
+    _npSincronizarTabs();
+    _npRenderCalAtual();
+  };
+  window._npCalMesNav = function(d, e){
+    if(e) e.stopPropagation();
+    _npCalY += d;
+    _npRenderCalMes();
+  };
+  window._npCalDiaNav = function(d, e){
+    if(e) e.stopPropagation();
+    _npCalM += d;
+    if(_npCalM<1){_npCalM=12;_npCalY--;}
+    if(_npCalM>12){_npCalM=1;_npCalY++;}
+    _npRenderCalDia();
+  };
+
+  function _npRenderCalAtual(){
+    if(_npCalMode === 'ano') _npRenderCalAno();
+    else if(_npCalMode === 'mes') _npRenderCalMes();
+    else _npRenderCalDia();
+  }
+  function _npRenderCalAno(){
+    var grid = document.getElementById('npCalGridAno');
+    if(!grid) return;
+    grid.innerHTML = '';
+    var H = _npHoje();
+    var base = H.y - 4;
+    for(var i=0;i<9;i++){
+      var ano = base + i;
+      var btn = document.createElement('button');
+      btn.className = 'np-cal-cell';
+      btn.textContent = ano;
+      if(ano === H.y) btn.classList.add('atual');
+      if(ano === _npAno && _npCalMode === 'ano') btn.classList.add('selected');
+      (function(a){
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
+          _npCalMode='ano'; _npDiaSel=null;
+          _npAno=a; _npMes=1;       /* fallback: filtra Jan do ano até termos filtro real por ano */
+          _npSincronizarTabs();
+          _npFecharCalPop();
+          _npTrocarMes();
+        });
+      })(ano);
+      grid.appendChild(btn);
+    }
+  }
+  function _npRenderCalMes(){
+    var lbl = document.getElementById('npCalMesYearLabel');
+    if(lbl) lbl.textContent = _npCalY;
+    var grid = document.getElementById('npCalGridMes');
+    if(!grid) return;
+    grid.innerHTML = '';
+    var H = _npHoje();
+    for(var i=1;i<=12;i++){
+      var btn = document.createElement('button');
+      btn.className = 'np-cal-cell';
+      btn.textContent = _MESES_BR_[i-1];
+      if(_npCalY===H.y && i===H.m) btn.classList.add('atual');
+      if(_npCalY===_npAno && i===_npMes && _npCalMode==='mes') btn.classList.add('selected');
+      (function(mi){
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
+          _npCalMode='mes'; _npDiaSel=null;
+          _npAno=_npCalY; _npMes=mi;
+          _npSincronizarTabs();
+          _npFecharCalPop();
+          _npTrocarMes();
+        });
+      })(i);
+      grid.appendChild(btn);
+    }
+  }
+  function _npRenderCalDia(){
+    var lbl = document.getElementById('npCalDiaLabel');
+    if(lbl) lbl.textContent = _MESES_FULL_[_npCalM-1] + ' / ' + _npCalY;
+    var grid = document.getElementById('npCalGridDia');
+    if(!grid) return;
+    grid.innerHTML = '';
+    _DOW_.forEach(function(d){
+      var h = document.createElement('div');
+      h.className = 'dow'; h.textContent = d;
+      grid.appendChild(h);
+    });
+    var prim = new Date(_npCalY, _npCalM-1, 1).getDay();
+    var total = _npDiasNoMes(_npCalY, _npCalM);
+    for(var v=0; v<prim; v++){
+      var ph = document.createElement('div');
+      ph.className = 'np-cal-cell empty';
+      grid.appendChild(ph);
+    }
+    var H = _npHoje();
+    for(var i=1;i<=total;i++){
+      var btn = document.createElement('button');
+      btn.className = 'np-cal-cell';
+      btn.textContent = i;
+      if(_npCalY===H.y && _npCalM===H.m && i===H.d) btn.classList.add('atual');
+      if(_npDiaSel && _npDiaSel.y===_npCalY && _npDiaSel.m===_npCalM && _npDiaSel.d===i) btn.classList.add('selected');
+      (function(di){
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
+          _npCalMode='dia';
+          _npDiaSel = { y:_npCalY, m:_npCalM, d:di };
+          /* Filtragem por mês (compatibilidade) — dia fica registrado pra usos futuros */
+          _npAno=_npCalY; _npMes=_npCalM;
+          window._npDiaSel = _npDiaSel;
+          _npSincronizarTabs();
+          _npFecharCalPop();
+          _npTrocarMes();
+        });
+      })(i);
+      grid.appendChild(btn);
+    }
+  }
+
+  /* Inicializa label/atalhos quando a Pipeline abre */
+  var _origAbrirNovaPipeline = window.abrirNovaPipeline;
+  window.abrirNovaPipeline = function(){
+    if(typeof _origAbrirNovaPipeline === 'function') _origAbrirNovaPipeline();
+    setTimeout(_npAtualizarLabelMes, 80);
+  };
   function _npTrocarMes(){
     _npVendasTurma=[];_npVendasAvulso={};_npGoals={};
     /* Renderizar imediatamente o estado vazio para evitar mostrar dados do mês anterior */
