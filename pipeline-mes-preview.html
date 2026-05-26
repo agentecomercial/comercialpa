@@ -110,17 +110,18 @@ body{
 }
 .np-cal-pop.show{display:block;}
 
-/* Tabs Ano/Mês/Dia */
+/* Tabs Ano/Mês/Dia/Período (4 colunas em uma única linha) */
 .np-cal-tabs{
-  display:grid;grid-template-columns:repeat(3,1fr);
+  display:grid;grid-template-columns:repeat(4,1fr);
   gap:4px;background:var(--surface2);border-radius:8px;padding:3px;
   margin-bottom:10px;
 }
 .np-cal-tab{
   background:none;border:none;color:var(--muted);
-  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
   padding:6px 0;border-radius:6px;cursor:pointer;
   transition:all .12s;font-family:inherit;
+  white-space:nowrap;
 }
 .np-cal-tab:hover{color:var(--accent);}
 .np-cal-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3);}
@@ -166,6 +167,35 @@ body{
 .np-cal-cell:hover{border-color:var(--accent);color:var(--accent);}
 .np-cal-cell.atual{box-shadow:inset 0 0 0 1px var(--blue);color:var(--blue);}
 .np-cal-cell.selected{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+/* Range entre início e fim no modo Período */
+.np-cal-cell.range-edge{background:var(--accent);color:#0f0f0f;border-color:var(--accent);font-weight:800;}
+.np-cal-cell.range-mid{background:rgba(200,240,90,.10);border-color:transparent;color:var(--text);}
+
+/* Modo Período: popover precisa ser mais largo, com 2 mini calendários */
+.np-cal-pop.modo-periodo{min-width:340px;}
+.np-per-presets{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.np-per-preset{
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--muted);font-size:10px;font-weight:600;
+  padding:4px 9px;border-radius:12px;cursor:pointer;
+  transition:all .12s;font-family:inherit;
+}
+.np-per-preset:hover{border-color:var(--accent);color:var(--accent);}
+.np-per-preset.active{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+.np-per-row{margin-bottom:10px;}
+.np-per-row:last-of-type{margin-bottom:6px;}
+.np-per-label{
+  font-size:10px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.07em;
+  display:block;margin-bottom:4px;
+}
+.np-per-nav{margin-bottom:6px;padding-bottom:6px;}
+.np-per-resumo{
+  font-size:11px;color:var(--muted);text-align:center;
+  padding:8px;background:var(--surface2);border-radius:6px;
+  margin-top:6px;
+}
+.np-per-resumo b{color:var(--accent);}
 
 /* ── KPIs (com delta) ── */
 .np-kpis{
@@ -249,6 +279,7 @@ body{
         <button class="np-cal-tab" data-mode="ano">Ano</button>
         <button class="np-cal-tab active" data-mode="mes">Mês</button>
         <button class="np-cal-tab" data-mode="dia">Dia</button>
+        <button class="np-cal-tab" data-mode="periodo">Período</button>
       </div>
 
       <!-- Modo: Ano -->
@@ -282,6 +313,45 @@ body{
           </button>
         </div>
         <div class="np-cal-grid gDia" id="calGridDia"></div>
+      </div>
+
+      <!-- Modo: Período (de X até Y) -->
+      <div class="np-cal-pane" data-pane="periodo">
+        <div class="np-per-presets">
+          <button class="np-per-preset" data-preset="semana">Esta semana</button>
+          <button class="np-per-preset" data-preset="mes">Este mês</button>
+          <button class="np-per-preset" data-preset="trimestre">Trimestre</button>
+          <button class="np-per-preset" data-preset="ano">Este ano</button>
+          <button class="np-per-preset" data-preset="ult30">Últimos 30 dias</button>
+          <button class="np-per-preset" data-preset="ult90">Últimos 90 dias</button>
+        </div>
+        <div class="np-per-row">
+          <span class="np-per-label">Início</span>
+          <div class="np-cal-nav np-per-nav">
+            <button class="np-month-btn" id="calPerIniPrev">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="np-cal-nav-label" id="calPerIniLabel">Março / 2026</div>
+            <button class="np-month-btn" id="calPerIniNext">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="np-cal-grid gDia" id="calGridPerIni"></div>
+        </div>
+        <div class="np-per-row">
+          <span class="np-per-label">Fim</span>
+          <div class="np-cal-nav np-per-nav">
+            <button class="np-month-btn" id="calPerFimPrev">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="np-cal-nav-label" id="calPerFimLabel">Maio / 2026</div>
+            <button class="np-month-btn" id="calPerFimNext">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="np-cal-grid gDia" id="calGridPerFim"></div>
+        </div>
+        <div class="np-per-resumo" id="calPerResumo">— escolha início e fim —</div>
       </div>
     </div>
   </div>
@@ -334,7 +404,7 @@ body{
 <div class="np-note">
   <b>O que muda nesta versão</b>
   <ul>
-    <li><b>Busca personalizada em 3 níveis</b> — popover com abas <b>Ano</b> (9 anos, ±4 do atual), <b>Mês</b> (12 meses com nav de ano) e <b>Dia</b> (calendário completo com nav de mês/ano). As setas e a badge se adaptam ao modo escolhido.</li>
+    <li><b>Busca personalizada em 4 níveis</b> — popover com abas <b>Ano</b>, <b>Mês</b>, <b>Dia</b> e <b>Período</b> (2 mini-calendários "Início" e "Fim" com 6 presets rápidos: Esta semana, Este mês, Trimestre, Este ano, Últimos 30/90 dias). No modo Período a badge mostra "PERÍODO · X dias".</li>
     <li><b>Atalhos</b> rápidos abaixo da navegação (Mês atual, Mês passado, 3/6 meses atrás, Início do ano).</li>
     <li><b>Badge de estado</b> ao lado da data: MÊS CORRENTE (verde) · FECHADO (azul) · FUTURO (roxo) — fica claro se os números ainda estão se mexendo.</li>
     <li><b>Delta vs mês anterior</b> em cada KPI: ▲ verde se melhorou, ▼ vermelho se piorou, — cinza quando neutro.</li>
@@ -351,11 +421,16 @@ var DOW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 
 /* "Hoje" mockado pra bater com o screenshot (Mar/26) — em produção vem do new Date() */
 var HOJE = { y: 2026, m: 3, d: 26 };
-/* sel.mode pode ser 'ano' | 'mes' | 'dia'  */
+/* sel.mode pode ser 'ano' | 'mes' | 'dia' | 'periodo' */
 var sel = { mode:'mes', y:2026, m:3, d:26 };
+/* Período */
+var per = { start:null, end:null }; /* {y,m,d} cada */
 /* Estado interno do popover (ano/mês visíveis no calendário) */
 var calY = sel.y;
 var calM = sel.m;
+/* Estado interno dos mini-calendários do período */
+var perIniY = HOJE.y, perIniM = HOJE.m;
+var perFimY = HOJE.y, perFimM = HOJE.m;
 
 function clampMes(){ if(sel.m<1){sel.m=12;sel.y--;} if(sel.m>12){sel.m=1;sel.y++;} }
 function diasNoMes(y,m){ return new Date(y, m, 0).getDate(); }
@@ -372,14 +447,24 @@ function clampDia(){
 }
 function diffMeses(a, b){ return (a.y - b.y) * 12 + (a.m - b.m); }
 
+function fmtDataCurta(o){
+  if(!o) return '—';
+  return String(o.d).padStart(2,'0') + '/' + String(o.m).padStart(2,'0') + '/' + o.y;
+}
 function fmtLabel(){
   if(sel.mode === 'ano') return 'Ano ' + sel.y;
   if(sel.mode === 'dia') return String(sel.d).padStart(2,'0') + ' ' + MESES_FULL[sel.m-1] + ' / ' + sel.y;
+  if(sel.mode === 'periodo' && per.start && per.end) return fmtDataCurta(per.start) + ' → ' + fmtDataCurta(per.end);
   return MESES_FULL[sel.m-1] + ' / ' + sel.y;
 }
 function fmtPill(){
   if(sel.mode === 'ano') return String(sel.y);
   if(sel.mode === 'dia') return sel.y + '-' + String(sel.m).padStart(2,'0') + '-' + String(sel.d).padStart(2,'0');
+  if(sel.mode === 'periodo' && per.start && per.end){
+    var s = per.start.y + '-' + String(per.start.m).padStart(2,'0') + '-' + String(per.start.d).padStart(2,'0');
+    var e = per.end.y + '-' + String(per.end.m).padStart(2,'0') + '-' + String(per.end.d).padStart(2,'0');
+    return s + ' → ' + e;
+  }
   return sel.y + '-' + String(sel.m).padStart(2,'0');
 }
 
@@ -398,6 +483,12 @@ function atualizarBadge(){
     if(sSel === sToday){ bg.textContent='HOJE'; bg.classList.add('corrente'); }
     else if(sSel < sToday){ bg.textContent='DIA PASSADO'; bg.classList.add('fechado'); }
     else { bg.textContent='FUTURO'; bg.classList.add('futuro'); }
+    return;
+  }
+  if(sel.mode === 'periodo' && per.start && per.end){
+    var dias = Math.round((new Date(per.end.y, per.end.m-1, per.end.d) - new Date(per.start.y, per.start.m-1, per.start.d)) / 86400000) + 1;
+    bg.textContent='PERÍODO · '+dias+' dia'+(dias!==1?'s':'');
+    bg.classList.add('corrente');
     return;
   }
   var d = diffMeses(sel, HOJE);
@@ -428,7 +519,10 @@ function aplicarSel(){
   /* Re-render do pane visível */
   if(sel.mode === 'ano') renderAno();
   else if(sel.mode === 'mes') renderMes();
-  else renderDia();
+  else if(sel.mode === 'dia') renderDia();
+  else if(sel.mode === 'periodo') renderPeriodo();
+  /* Alarga o popover no modo Período */
+  document.getElementById('calPop').classList.toggle('modo-periodo', sel.mode === 'periodo');
   var t = document.getElementById('toast');
   t.textContent = '📅 ' + fmtLabel();
   t.classList.add('show');
@@ -524,11 +618,50 @@ document.getElementById('calDiaNext').addEventListener('click', function(e){
   renderDia();
 });
 
+/* Navegação dos mini-calendários do período */
+document.getElementById('calPerIniPrev').addEventListener('click', function(e){
+  e.stopPropagation();
+  perIniM--; if(perIniM<1){perIniM=12;perIniY--;}
+  renderPeriodo();
+});
+document.getElementById('calPerIniNext').addEventListener('click', function(e){
+  e.stopPropagation();
+  perIniM++; if(perIniM>12){perIniM=1;perIniY++;}
+  renderPeriodo();
+});
+document.getElementById('calPerFimPrev').addEventListener('click', function(e){
+  e.stopPropagation();
+  perFimM--; if(perFimM<1){perFimM=12;perFimY--;}
+  renderPeriodo();
+});
+document.getElementById('calPerFimNext').addEventListener('click', function(e){
+  e.stopPropagation();
+  perFimM++; if(perFimM>12){perFimM=1;perFimY++;}
+  renderPeriodo();
+});
+/* Presets do período */
+document.querySelectorAll('.np-per-preset').forEach(function(b){
+  b.addEventListener('click', function(e){
+    e.stopPropagation();
+    _aplicarPreset(b.getAttribute('data-preset'));
+    /* Garante que o modo é 'periodo' */
+    sel.mode = 'periodo';
+    document.querySelectorAll('.np-cal-tab').forEach(function(t){
+      t.classList.toggle('active', t.getAttribute('data-mode') === 'periodo');
+    });
+    document.querySelectorAll('.np-cal-pane').forEach(function(p){
+      p.classList.toggle('show', p.getAttribute('data-pane') === 'periodo');
+    });
+    aplicarSel();
+  });
+});
+
 /* ── Renderers de cada pane ── */
 function renderAtual(){
   if(sel.mode==='ano') renderAno();
   else if(sel.mode==='mes') renderMes();
-  else renderDia();
+  else if(sel.mode==='dia') renderDia();
+  else if(sel.mode==='periodo') renderPeriodo();
 }
 function renderAno(){
   var grid = document.getElementById('calGridAno');
@@ -576,6 +709,121 @@ function renderMes(){
     grid.appendChild(btn);
   }
 }
+/* ── Modo PERÍODO ── */
+function _tsDmy(o){ return o ? new Date(o.y, o.m-1, o.d).getTime() : null; }
+function _renderPerCalendario(gridId, calY, calM){
+  var grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+  DOW.forEach(function(d){
+    var h = document.createElement('div');
+    h.className = 'dow'; h.textContent = d;
+    grid.appendChild(h);
+  });
+  var primDiaSemana = new Date(calY, calM-1, 1).getDay();
+  var totalDias = diasNoMes(calY, calM);
+  for(var v=0; v<primDiaSemana; v++){
+    var ph = document.createElement('div');
+    ph.className = 'np-cal-cell empty';
+    grid.appendChild(ph);
+  }
+  var sIni = _tsDmy(per.start);
+  var sFim = _tsDmy(per.end);
+  for(var i=1;i<=totalDias;i++){
+    var btn = document.createElement('button');
+    btn.className = 'np-cal-cell';
+    btn.textContent = i;
+    var sCur = new Date(calY, calM-1, i).getTime();
+    if(calY===HOJE.y && calM===HOJE.m && i===HOJE.d) btn.classList.add('atual');
+    if((sIni && sCur===sIni) || (sFim && sCur===sFim)) btn.classList.add('range-edge');
+    else if(sIni && sFim && sCur>sIni && sCur<sFim) btn.classList.add('range-mid');
+    (function(di, dy, dm){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        _onPeriodoCellClick({y:dy, m:dm, d:di}, gridId);
+      });
+    })(i, calY, calM);
+    grid.appendChild(btn);
+  }
+}
+function renderPeriodo(){
+  document.getElementById('calPerIniLabel').textContent = MESES_FULL[perIniM-1] + ' / ' + perIniY;
+  document.getElementById('calPerFimLabel').textContent = MESES_FULL[perFimM-1] + ' / ' + perFimY;
+  _renderPerCalendario('calGridPerIni', perIniY, perIniM);
+  _renderPerCalendario('calGridPerFim', perFimY, perFimM);
+  var res = document.getElementById('calPerResumo');
+  if(per.start && per.end){
+    var dias = Math.round((_tsDmy(per.end) - _tsDmy(per.start)) / 86400000) + 1;
+    res.innerHTML = '<b>'+fmtDataCurta(per.start)+'</b> → <b>'+fmtDataCurta(per.end)+'</b> · '+dias+' dia'+(dias!==1?'s':'');
+  } else if(per.start){
+    res.innerHTML = '<b>'+fmtDataCurta(per.start)+'</b> → escolha o fim';
+  } else {
+    res.textContent = '— escolha início e fim —';
+  }
+}
+function _onPeriodoCellClick(date, gridId){
+  /* Lógica:
+     - sem início definido → marca início
+     - com início definido e clique posterior → marca fim
+     - com início e fim → reseta e marca novo início
+     - clicar antes do início → reseta e marca novo início */
+  var sCur = _tsDmy(date);
+  var sIni = _tsDmy(per.start);
+  if(!per.start){
+    per.start = date;
+    per.end = null;
+  } else if(per.start && !per.end){
+    if(sCur < sIni){ per.start = date; }
+    else if(sCur === sIni){ /* mesmo dia: deixa como início/fim igual */ per.end = date; }
+    else { per.end = date; }
+  } else {
+    per.start = date;
+    per.end = null;
+  }
+  /* Limpa presets ativos */
+  document.querySelectorAll('.np-per-preset').forEach(function(p){ p.classList.remove('active'); });
+  renderPeriodo();
+}
+
+/* Presets do período */
+function _aplicarPreset(preset){
+  var H = HOJE;
+  var hojeDate = new Date(H.y, H.m-1, H.d);
+  function _toDmy(dt){ return { y: dt.getFullYear(), m: dt.getMonth()+1, d: dt.getDate() }; }
+  if(preset === 'semana'){
+    var dow = hojeDate.getDay(); /* 0=dom */
+    var ini = new Date(H.y, H.m-1, H.d - dow);
+    var fim = new Date(H.y, H.m-1, H.d - dow + 6);
+    per.start = _toDmy(ini); per.end = _toDmy(fim);
+  } else if(preset === 'mes'){
+    per.start = { y:H.y, m:H.m, d:1 };
+    per.end   = { y:H.y, m:H.m, d:diasNoMes(H.y, H.m) };
+  } else if(preset === 'trimestre'){
+    var qIni = Math.floor((H.m-1)/3)*3 + 1;
+    var qFim = qIni + 2;
+    per.start = { y:H.y, m:qIni, d:1 };
+    per.end   = { y:H.y, m:qFim, d:diasNoMes(H.y, qFim) };
+  } else if(preset === 'ano'){
+    per.start = { y:H.y, m:1, d:1 };
+    per.end   = { y:H.y, m:12, d:31 };
+  } else if(preset === 'ult30'){
+    var fim30 = hojeDate;
+    var ini30 = new Date(fim30); ini30.setDate(ini30.getDate() - 29);
+    per.start = _toDmy(ini30); per.end = _toDmy(fim30);
+  } else if(preset === 'ult90'){
+    var fim90 = hojeDate;
+    var ini90 = new Date(fim90); ini90.setDate(ini90.getDate() - 89);
+    per.start = _toDmy(ini90); per.end = _toDmy(fim90);
+  }
+  /* Centraliza os mini-calendários no início e fim */
+  if(per.start){ perIniY = per.start.y; perIniM = per.start.m; }
+  if(per.end){ perFimY = per.end.y; perFimM = per.end.m; }
+  /* Atualiza preset ativo */
+  document.querySelectorAll('.np-per-preset').forEach(function(p){
+    p.classList.toggle('active', p.getAttribute('data-preset') === preset);
+  });
+  renderPeriodo();
+}
+
 function renderDia(){
   document.getElementById('calDiaLabel').textContent = MESES_FULL[calM-1] + ' / ' + calY;
   var grid = document.getElementById('calGridDia');

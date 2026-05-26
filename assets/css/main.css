@@ -1227,8 +1227,8 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 /* Popover Ano/Mês/Dia */
 .np-cal-pop{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:1000;min-width:280px;display:none;}
 .np-cal-pop.show{display:block;}
-.np-cal-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--surface2);border-radius:8px;padding:3px;margin-bottom:10px;}
-.np-cal-tab{background:none;border:none;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:6px 0;border-radius:6px;cursor:pointer;transition:all .12s;font-family:inherit;}
+.np-cal-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--surface2);border-radius:8px;padding:3px;margin-bottom:10px;}
+.np-cal-tab{background:none;border:none;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:6px 0;border-radius:6px;cursor:pointer;transition:all .12s;font-family:inherit;white-space:nowrap;}
 .np-cal-tab:hover{color:var(--accent);}
 .np-cal-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3);}
 .np-cal-pane{display:none;}
@@ -1247,6 +1247,21 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-cal-cell:hover{border-color:var(--accent);color:var(--accent);}
 .np-cal-cell.atual{box-shadow:inset 0 0 0 1px var(--blue);color:var(--blue);}
 .np-cal-cell.selected{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+/* Range no modo Período */
+.np-cal-cell.range-edge{background:var(--accent);color:#0f0f0f;border-color:var(--accent);font-weight:800;}
+.np-cal-cell.range-mid{background:rgba(200,240,90,.10);border-color:transparent;color:var(--text);}
+/* Modo Período: popover mais largo + presets + 2 mini-cals */
+.np-cal-pop.modo-periodo{min-width:340px;}
+.np-per-presets{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.np-per-preset{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:10px;font-weight:600;padding:4px 9px;border-radius:12px;cursor:pointer;transition:all .12s;font-family:inherit;}
+.np-per-preset:hover{border-color:var(--accent);color:var(--accent);}
+.np-per-preset.active{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+.np-per-row{margin-bottom:10px;}
+.np-per-row:last-of-type{margin-bottom:6px;}
+.np-per-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:4px;}
+.np-per-nav{margin-bottom:6px;padding-bottom:6px;}
+.np-per-resumo{font-size:11px;color:var(--muted);text-align:center;padding:8px;background:var(--surface2);border-radius:6px;margin-top:6px;}
+.np-per-resumo b{color:var(--accent);}
 /* Footer do popover: resumo + botões Cancelar/Aplicar */
 .np-cal-footer{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
 .np-cal-resumo{font-size:11px;color:var(--muted);font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}

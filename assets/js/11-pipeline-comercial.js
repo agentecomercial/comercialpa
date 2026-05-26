@@ -1626,10 +1626,14 @@
      Modo "Ano" cai para Jan/{ano} e modo "Dia" usa o mês do dia
      escolhido — o dia exato fica registrado em window._npDiaSel
      para usos futuros (filtragem ao vivo no front, etc). */
-  var _npCalMode = 'mes';     /* 'ano' | 'mes' | 'dia' */
+  var _npCalMode = 'mes';      /* 'ano' | 'mes' | 'dia' | 'periodo' */
   var _npDiaSel  = null;       /* {y,m,d} quando modo='dia' */
+  var _npPerSel  = null;       /* {start:{y,m,d}, end:{y,m,d}} quando modo='periodo' */
   var _npCalY    = _npAno;
   var _npCalM    = _npMes;
+  /* Estado dos 2 mini-cals do período */
+  var _npPerIniY = _npAno, _npPerIniM = _npMes;
+  var _npPerFimY = _npAno, _npPerFimM = _npMes;
   var _MESES_BR_   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   var _MESES_FULL_ = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var _DOW_        = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -1661,6 +1665,12 @@
       if(_npAno === H.y){ bg.textContent='ANO CORRENTE'; bg.classList.add('corrente'); }
       else if(_npAno < H.y){ bg.textContent='ANO FECHADO'; bg.classList.add('fechado'); }
       else { bg.textContent='FUTURO'; bg.classList.add('futuro'); }
+      return;
+    }
+    if(_npCalMode === 'periodo' && _npPerSel && _npPerSel.start && _npPerSel.end){
+      var dias = Math.round((_npTsDmy(_npPerSel.end) - _npTsDmy(_npPerSel.start)) / 86400000) + 1;
+      bg.textContent='PERÍODO · '+dias+' dia'+(dias!==1?'s':'');
+      bg.classList.add('corrente');
       return;
     }
     var df = _npDiffMeses(_npAno, _npMes);
@@ -1707,6 +1717,13 @@
     } else if(_npCalMode === 'dia' && _npDiaSel){
       if(lbl) lbl.textContent = String(_npDiaSel.d).padStart(2,'0') + ' ' + _MESES_FULL_[_npDiaSel.m-1] + ' / ' + _npDiaSel.y;
       if(pill) pill.textContent = _npDiaSel.y + '-' + String(_npDiaSel.m).padStart(2,'0') + '-' + String(_npDiaSel.d).padStart(2,'0');
+    } else if(_npCalMode === 'periodo' && _npPerSel && _npPerSel.start && _npPerSel.end){
+      if(lbl) lbl.textContent = _npFmtDataCurta(_npPerSel.start) + ' → ' + _npFmtDataCurta(_npPerSel.end);
+      if(pill){
+        var s = _npPerSel.start.y+'-'+String(_npPerSel.start.m).padStart(2,'0')+'-'+String(_npPerSel.start.d).padStart(2,'0');
+        var e = _npPerSel.end.y+'-'+String(_npPerSel.end.m).padStart(2,'0')+'-'+String(_npPerSel.end.d).padStart(2,'0');
+        pill.textContent = s+' → '+e;
+      }
     } else {
       if(lbl) lbl.textContent = _mesLabel();
       if(pill) pill.textContent = _mesKey();
@@ -1718,8 +1735,8 @@
   /* Atalhos rápidos — sempre relativos à data de HOJE, não à seleção atual */
   window._npAtalho = function(sc){
     _npCalMode = 'mes';
-    _npDiaSel = null;
-    window._npDiaSel = null;
+    _npDiaSel = null; window._npDiaSel = null;
+    _npPerSel = null; window._npPerSel = null;
     var H = _npHoje();
     if(sc === 'hoje'){ _npAno=H.y; _npMes=H.m; }
     else if(sc === '-1'){ _npAno=H.y; _npMes=H.m-1; if(_npMes<1){_npMes=12;_npAno--;} }
@@ -1737,13 +1754,13 @@
   /* Wrappers de npMesAnterior/npMesProximo para também atualizar o badge */
   var _origAnt = window.npMesAnterior;
   window.npMesAnterior = function(){
-    _npCalMode = 'mes'; _npDiaSel = null; window._npDiaSel = null;
+    _npCalMode = 'mes'; _npDiaSel = null; window._npDiaSel = null; _npPerSel = null; window._npPerSel = null;
     if(typeof _origAnt === 'function') _origAnt();
     setTimeout(_npAtualizarLabelMes, 0);
   };
   var _origProx = window.npMesProximo;
   window.npMesProximo = function(){
-    _npCalMode = 'mes'; _npDiaSel = null; window._npDiaSel = null;
+    _npCalMode = 'mes'; _npDiaSel = null; window._npDiaSel = null; _npPerSel = null; window._npPerSel = null;
     if(typeof _origProx === 'function') _origProx();
     setTimeout(_npAtualizarLabelMes, 0);
   };
@@ -1760,8 +1777,14 @@
       mode: _npCalMode,
       y: _npAno,
       m: _npMes,
-      d: _npDiaSel ? _npDiaSel.d : H.d
+      d: _npDiaSel ? _npDiaSel.d : H.d,
+      per: _npPerSel ? { start: _npPerSel.start ? Object.assign({}, _npPerSel.start) : null,
+                         end:   _npPerSel.end   ? Object.assign({}, _npPerSel.end)   : null }
+                     : { start:null, end:null }
     };
+    /* Sync mini-cals do período no init */
+    if(_npPerSel && _npPerSel.start){ _npPerIniY = _npPerSel.start.y; _npPerIniM = _npPerSel.start.m; }
+    if(_npPerSel && _npPerSel.end){ _npPerFimY = _npPerSel.end.y; _npPerFimM = _npPerSel.end.m; }
     _npSincronizarTabs();
     _npRenderCalAtual();
     _npAtualizarResumoSel();
@@ -1782,6 +1805,16 @@
     var txt;
     if(p.mode === 'ano') txt = 'Selecionado: <b>Ano '+p.y+'</b>';
     else if(p.mode === 'dia') txt = 'Selecionado: <b>'+String(p.d).padStart(2,'0')+' '+_MESES_FULL_[p.m-1]+' / '+p.y+'</b>';
+    else if(p.mode === 'periodo'){
+      if(p.per && p.per.start && p.per.end){
+        var dias = Math.round((_npTsDmy(p.per.end) - _npTsDmy(p.per.start)) / 86400000) + 1;
+        txt = 'Período: <b>'+_npFmtDataCurta(p.per.start)+' → '+_npFmtDataCurta(p.per.end)+'</b> · '+dias+' dia'+(dias!==1?'s':'');
+      } else if(p.per && p.per.start){
+        txt = 'Início: <b>'+_npFmtDataCurta(p.per.start)+'</b> · escolha o fim';
+      } else {
+        txt = 'Escolha início e fim do período';
+      }
+    }
     else txt = 'Selecionado: <b>'+_MESES_FULL_[p.m-1]+' / '+p.y+'</b>';
     el.innerHTML = txt;
   }
@@ -1792,13 +1825,32 @@
     if(!_npPendingSel){ window._npFecharCalPop(); return; }
     var p = _npPendingSel;
     _npCalMode = p.mode;
-    _npAno = p.y;
     if(p.mode === 'ano'){
-      _npMes = 1; _npDiaSel = null; window._npDiaSel = null;
+      _npAno = p.y; _npMes = 1; _npDiaSel = null; window._npDiaSel = null;
+      _npPerSel = null; window._npPerSel = null;
     } else if(p.mode === 'dia'){
-      _npMes = p.m; _npDiaSel = { y:p.y, m:p.m, d:p.d }; window._npDiaSel = _npDiaSel;
+      _npAno = p.y; _npMes = p.m;
+      _npDiaSel = { y:p.y, m:p.m, d:p.d }; window._npDiaSel = _npDiaSel;
+      _npPerSel = null; window._npPerSel = null;
+    } else if(p.mode === 'periodo'){
+      /* Período só é comitado se tiver início + fim */
+      if(p.per && p.per.start && p.per.end){
+        _npPerSel = { start: Object.assign({}, p.per.start), end: Object.assign({}, p.per.end) };
+        window._npPerSel = _npPerSel;
+        /* Como a filtragem de dados ainda é mês-based, usamos o mês do início como base.
+           O label/badge mostram que é período. Aggregar todos os meses do range fica para
+           uma fase 2 que toque a coleta de vendas no Firebase. */
+        _npAno = p.per.start.y; _npMes = p.per.start.m;
+        _npDiaSel = null; window._npDiaSel = null;
+      } else {
+        /* Período incompleto: ignora e fecha sem aplicar */
+        window._npFecharCalPop();
+        return;
+      }
     } else {
-      _npMes = p.m; _npDiaSel = null; window._npDiaSel = null;
+      _npAno = p.y; _npMes = p.m;
+      _npDiaSel = null; window._npDiaSel = null;
+      _npPerSel = null; window._npPerSel = null;
     }
     _npSincronizarTabs();
     window._npFecharCalPop();
@@ -1860,7 +1912,11 @@
     var mode = _npPendingSel ? _npPendingSel.mode : _npCalMode;
     if(mode === 'ano') _npRenderCalAno();
     else if(mode === 'mes') _npRenderCalMes();
-    else _npRenderCalDia();
+    else if(mode === 'dia') _npRenderCalDia();
+    else if(mode === 'periodo') _npRenderCalPeriodo();
+    /* Alarga o popover no modo Período */
+    var pop = document.getElementById('npCalPop');
+    if(pop) pop.classList.toggle('modo-periodo', mode === 'periodo');
   }
   /* Highlight usa o pending (enquanto popover aberto) ou o atual */
   function _npHl(){
@@ -1966,6 +2022,138 @@
       grid.appendChild(btn);
     }
   }
+
+  /* ── Modo Período (de X até Y) ── */
+  function _npTsDmy(o){ return o ? new Date(o.y, o.m-1, o.d).getTime() : null; }
+  function _npFmtDataCurta(o){ return o ? String(o.d).padStart(2,'0')+'/'+String(o.m).padStart(2,'0')+'/'+o.y : '—'; }
+
+  function _npRenderPerMiniCal(gridId, y, m){
+    var grid = document.getElementById(gridId);
+    if(!grid) return;
+    grid.innerHTML = '';
+    _DOW_.forEach(function(d){
+      var h = document.createElement('div');
+      h.className = 'dow'; h.textContent = d;
+      grid.appendChild(h);
+    });
+    var pendingPer = (_npPendingSel && _npPendingSel.per) ? _npPendingSel.per : (_npPerSel || {start:null,end:null});
+    var prim = new Date(y, m-1, 1).getDay();
+    var total = _npDiasNoMes(y, m);
+    for(var v=0; v<prim; v++){
+      var ph = document.createElement('div');
+      ph.className = 'np-cal-cell empty';
+      grid.appendChild(ph);
+    }
+    var H = _npHoje();
+    var sIni = _npTsDmy(pendingPer.start);
+    var sFim = _npTsDmy(pendingPer.end);
+    for(var i=1;i<=total;i++){
+      var btn = document.createElement('button');
+      btn.className = 'np-cal-cell';
+      btn.textContent = i;
+      var sCur = new Date(y, m-1, i).getTime();
+      if(y===H.y && m===H.m && i===H.d) btn.classList.add('atual');
+      if((sIni && sCur===sIni) || (sFim && sCur===sFim)) btn.classList.add('range-edge');
+      else if(sIni && sFim && sCur>sIni && sCur<sFim) btn.classList.add('range-mid');
+      (function(di, dy, dm){
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
+          _npPerCellClick({y:dy, m:dm, d:di});
+        });
+      })(i, y, m);
+      grid.appendChild(btn);
+    }
+  }
+  function _npRenderCalPeriodo(){
+    var lblI = document.getElementById('npCalPerIniLabel');
+    var lblF = document.getElementById('npCalPerFimLabel');
+    if(lblI) lblI.textContent = _MESES_FULL_[_npPerIniM-1]+' / '+_npPerIniY;
+    if(lblF) lblF.textContent = _MESES_FULL_[_npPerFimM-1]+' / '+_npPerFimY;
+    _npRenderPerMiniCal('npCalGridPerIni', _npPerIniY, _npPerIniM);
+    _npRenderPerMiniCal('npCalGridPerFim', _npPerFimY, _npPerFimM);
+    var res = document.getElementById('npCalPerResumo');
+    if(!res) return;
+    var pendingPer = (_npPendingSel && _npPendingSel.per) ? _npPendingSel.per : (_npPerSel || {start:null,end:null});
+    if(pendingPer.start && pendingPer.end){
+      var dias = Math.round((_npTsDmy(pendingPer.end) - _npTsDmy(pendingPer.start)) / 86400000) + 1;
+      res.innerHTML = '<b>'+_npFmtDataCurta(pendingPer.start)+'</b> → <b>'+_npFmtDataCurta(pendingPer.end)+'</b> · '+dias+' dia'+(dias!==1?'s':'');
+    } else if(pendingPer.start){
+      res.innerHTML = '<b>'+_npFmtDataCurta(pendingPer.start)+'</b> → escolha o fim';
+    } else {
+      res.textContent = '— escolha início e fim —';
+    }
+  }
+  function _npPerCellClick(date){
+    if(!_npPendingSel) return;
+    if(!_npPendingSel.per) _npPendingSel.per = { start:null, end:null };
+    var p = _npPendingSel.per;
+    var sCur = _npTsDmy(date);
+    var sIni = _npTsDmy(p.start);
+    if(!p.start){
+      p.start = date; p.end = null;
+    } else if(p.start && !p.end){
+      if(sCur < sIni){ p.start = date; }
+      else { p.end = date; }
+    } else {
+      p.start = date; p.end = null;
+    }
+    /* Limpa preset ativo */
+    document.querySelectorAll('.np-per-preset').forEach(function(b){ b.classList.remove('active'); });
+    _npRenderCalPeriodo();
+    _npAtualizarResumoSel();
+  }
+  window._npPerNav = function(qual, delta, e){
+    if(e) e.stopPropagation();
+    if(qual === 'ini'){
+      _npPerIniM += delta;
+      if(_npPerIniM<1){_npPerIniM=12;_npPerIniY--;}
+      if(_npPerIniM>12){_npPerIniM=1;_npPerIniY++;}
+    } else {
+      _npPerFimM += delta;
+      if(_npPerFimM<1){_npPerFimM=12;_npPerFimY--;}
+      if(_npPerFimM>12){_npPerFimM=1;_npPerFimY++;}
+    }
+    _npRenderCalPeriodo();
+  };
+  window._npPerPreset = function(preset, e){
+    if(e) e.stopPropagation();
+    if(!_npPendingSel) return;
+    var H = _npHoje();
+    var hojeDate = new Date(H.y, H.m-1, H.d);
+    function _toDmy(dt){ return { y: dt.getFullYear(), m: dt.getMonth()+1, d: dt.getDate() }; }
+    var start=null, end=null;
+    if(preset === 'semana'){
+      var dow = hojeDate.getDay();
+      start = _toDmy(new Date(H.y, H.m-1, H.d - dow));
+      end   = _toDmy(new Date(H.y, H.m-1, H.d - dow + 6));
+    } else if(preset === 'mes'){
+      start = { y:H.y, m:H.m, d:1 };
+      end   = { y:H.y, m:H.m, d:_npDiasNoMes(H.y, H.m) };
+    } else if(preset === 'trimestre'){
+      var qIni = Math.floor((H.m-1)/3)*3 + 1;
+      var qFim = qIni + 2;
+      start = { y:H.y, m:qIni, d:1 };
+      end   = { y:H.y, m:qFim, d:_npDiasNoMes(H.y, qFim) };
+    } else if(preset === 'ano'){
+      start = { y:H.y, m:1,  d:1 };
+      end   = { y:H.y, m:12, d:31 };
+    } else if(preset === 'ult30'){
+      var fim30 = hojeDate, ini30 = new Date(fim30); ini30.setDate(ini30.getDate() - 29);
+      start = _toDmy(ini30); end = _toDmy(fim30);
+    } else if(preset === 'ult90'){
+      var fim90 = hojeDate, ini90 = new Date(fim90); ini90.setDate(ini90.getDate() - 89);
+      start = _toDmy(ini90); end = _toDmy(fim90);
+    }
+    _npPendingSel.mode = 'periodo';
+    _npPendingSel.per = { start:start, end:end };
+    if(start){ _npPerIniY = start.y; _npPerIniM = start.m; }
+    if(end){   _npPerFimY = end.y;   _npPerFimM = end.m; }
+    document.querySelectorAll('.np-per-preset').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-preset') === preset);
+    });
+    _npRenderCalPeriodo();
+    _npAtualizarResumoSel();
+  };
 
   /* Inicializa label/atalhos quando a Pipeline abre */
   var _origAbrirNovaPipeline = window.abrirNovaPipeline;
