@@ -623,22 +623,22 @@
           tierInfo = 'Sem meta configurada';
         } else if(px.batida === 'master'){
           col = _npGetCol(100);
-          pctTxt = '<span style="font-size:9px;font-weight:700;color:var(--pago);margin-left:4px;">✅</span>';
+          pctTxt = '<span class="pct" style="color:var(--pago);">✅</span>';
           tierInfo = '✅ Master batida! (+'+_fmtR(r.pago-px.meta)+')';
         } else {
           var pctNext = Math.round(r.pago / px.meta * 100);
           col = _npGetCol(pctNext);
-          pctTxt = '<span style="font-size:9px;font-weight:700;color:'+col.text+';margin-left:4px;">'+pctNext+'%</span>';
+          pctTxt = '<span class="pct" style="color:'+col.text+';">'+pctNext+'%</span>';
           tierInfo = 'Falta '+_fmtR(px.falta)+' para '+px.label;
         }
         var convTxt = r.qtd?Math.round(r.qtdPago/r.qtd*100):0;
         var _nomeEsc=String(r.nome||'').replace(/\\/g,'\\\\').replace(/\x27/g,'\\\x27');
         return '<div class="np-rank-card" onclick="window.npAbrirConsultorDetalhe&&window.npAbrirConsultorDetalhe(\''+_nomeEsc+'\')" style="border-color:'+col.border+';background:'+col.bg+';cursor:pointer;" title="Ver detalhe de '+_esc(r.nome)+'">'
           +'<div class="np-rank-pos">'+(i+1)+'</div>'
-          +'<div class="np-rank-avatar" style="background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;">'+r.nome.charAt(0).toUpperCase()+'</div>'
+          +'<div class="np-rank-avatar" style="background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;">'+r.nome.charAt(0).toUpperCase()+'</div>'
           +'<div class="np-rank-info"><div class="np-rank-nome">'+_esc(r.nome)+'</div>'
           +'<div class="np-rank-val" style="color:'+col.text+';">'+_fmtR(r.pago)+pctTxt+'</div>'
-          +'<div style="font-size:9px;color:var(--muted);">'+tierInfo+' &middot; '+convTxt+'% conv</div>'
+          +'<div class="np-rank-sub">'+tierInfo+' &middot; '+convTxt+'% conv</div>'
           +'</div>'
           +'</div>';
       }).join('');
