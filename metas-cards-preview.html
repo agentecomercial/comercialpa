@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Preview · Cards "Metas individuais por consultor"</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Tokens (cópia fiel de assets/css/main.css :root) ── */
+:root{
+  --bg:#0f0f0f;
+  --surface:#1a1a1a;
+  --surface2:#222;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --text:#f0f0f0;
+  --muted:#888;
+  --accent:#c8f05a;
+  --green:#34d399;
+  --amber:#ffb740;
+  --red:#ff5f57;
+
+  /* tokens ajustáveis (alimentam o preview ao vivo) */
+  --card-pad: 16px;
+  --card-radius: 10px;
+  --grid-gap: 14px;
+  --grid-cols: 5;
+  --avatar-size: 36px;
+  --avatar-font: 15px;
+  --nome-font: 13px;
+  --status-font: 10px;
+  --status-pad: 3px 9px;
+  --real-font: 11px;
+  --pct-font: 11px;
+  --bar-height: 8px;
+  --tier-gap: 6px;
+  --tier-pad: 6px 8px;
+  --tier-label-font: 9px;
+  --tier-val-font: 11px;
+  --tier-pct-font: 9px;
+  --tier-pct-mt: 1px;
+  --tier-pct-weight: 400;
+  --tier-radius: 6px;
+  --edit-font: 10px;
+  --edit-pad: 3px 8px;
+  --header-gap: 10px;
+  --header-mb: 12px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:24px;
+  display:grid;
+  grid-template-columns:1fr 320px;
+  gap:24px;
+}
+
+/* ── Coluna principal (cards) ── */
+.main{min-width:0;}
+.sec-title{
+  font-size:13px;color:var(--muted);
+  margin-bottom:18px;font-weight:500;
+}
+.np-metas-grid{
+  display:grid;
+  grid-template-columns:repeat(var(--grid-cols),minmax(0,1fr));
+  gap:var(--grid-gap);
+}
+
+/* ── Card ── */
+.np-meta-card{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:var(--card-radius);
+  padding:var(--card-pad);
+}
+.np-meta-card.clickable{
+  cursor:pointer;
+  transition:transform .12s ease, filter .15s, border-color .15s, background .15s;
+}
+.np-meta-card.clickable:hover{filter:brightness(1.06);}
+.np-meta-card.clickable:active{transform:scale(.98);}
+
+.np-meta-header{
+  display:flex;align-items:center;
+  gap:var(--header-gap);
+  margin-bottom:var(--header-mb);
+}
+.np-meta-avatar{
+  width:var(--avatar-size);
+  height:var(--avatar-size);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:var(--avatar-font);
+  font-weight:800;
+  flex-shrink:0;
+}
+.np-meta-nome{
+  font-size:var(--nome-font);
+  font-weight:700;color:var(--text);
+}
+.np-status-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:var(--status-font);
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  padding:var(--status-pad);
+  border-radius:20px;
+  margin-top:4px;
+}
+
+.np-real-line{
+  display:flex;justify-content:space-between;
+  font-size:var(--real-font);
+  color:var(--muted);
+  margin:10px 0 4px;
+}
+.np-real-line .pct{font-weight:800;}
+.np-meta-progress{
+  height:var(--bar-height);
+  background:var(--surface2);
+  border-radius:3px;
+  overflow:hidden;
+}
+.np-meta-bar{
+  height:100%;
+  border-radius:3px;
+  transition:width .4s;
+}
+
+.np-meta-tiers{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:var(--tier-gap);
+  margin:10px 0 0;
+}
+.np-tier{
+  border-radius:var(--tier-radius);
+  padding:var(--tier-pad);
+  text-align:center;
+  border:1px solid transparent;
+}
+.np-tier-label{
+  font-size:var(--tier-label-font);
+  font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:2px;opacity:.85;
+}
+.np-tier-val{
+  font-size:var(--tier-val-font);
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+.np-tier-pct{
+  font-size:var(--tier-pct-font);
+  color:var(--muted);
+  margin-top:var(--tier-pct-mt);
+  font-weight:var(--tier-pct-weight);
+  font-variant-numeric:tabular-nums;
+}
+.np-tier--minima{background:rgba(255,238,0,.07);border-color:rgba(255,238,0,.2);}
+.np-tier--minima .np-tier-label{color:#ffe000;}
+.np-tier--basica{background:rgba(255,23,68,.07);border-color:rgba(255,23,68,.2);}
+.np-tier--basica .np-tier-label{color:#ff5252;}
+.np-tier--master{background:rgba(200,240,90,.07);border-color:rgba(200,240,90,.2);}
+.np-tier--master .np-tier-label{color:#c8f05a;}
+.np-tier.ativa{border-width:2px;}
+
+.np-meta-edit{
+  background:none;
+  border:1px solid var(--border2);
+  color:var(--muted);
+  border-radius:5px;
+  padding:var(--edit-pad);
+  font-size:var(--edit-font);
+  cursor:pointer;
+  margin-top:10px;
+  transition:color .12s,border-color .12s;
+  font-family:'DM Sans',sans-serif;
+}
+.np-meta-edit:hover{color:var(--accent);border-color:var(--accent);}
+
+.np-empty-tiers{
+  font-size:11px;color:var(--muted);
+  margin-top:8px;text-align:center;
+}
+
+/* ── Painel de controles ── */
+.controls{
+  position:sticky;top:24px;
+  align-self:start;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:12px;
+  padding:18px 16px;
+  max-height:calc(100vh - 48px);
+  overflow-y:auto;
+}
+.controls h2{
+  font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.08em;
+  color:var(--accent);
+  margin-bottom:14px;
+}
+.ctrl{
+  display:flex;flex-direction:column;
+  margin-bottom:12px;
+}
+.ctrl label{
+  font-size:10px;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--muted);
+  display:flex;justify-content:space-between;
+  margin-bottom:4px;font-weight:600;
+}
+.ctrl label .v{color:var(--accent);font-variant-numeric:tabular-nums;}
+.ctrl input[type=range]{
+  width:100%;accent-color:var(--accent);height:18px;
+}
+.group{
+  border-top:1px solid var(--border);
+  padding-top:12px;margin-top:12px;
+}
+.group-title{
+  font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);margin-bottom:8px;
+}
+.actions{
+  display:flex;flex-direction:column;gap:8px;
+  margin-top:16px;border-top:1px solid var(--border);
+  padding-top:14px;
+}
+.btn{
+  background:var(--accent);color:#0f0f0f;
+  border:none;border-radius:6px;
+  padding:9px 12px;font-weight:700;font-size:12px;
+  cursor:pointer;font-family:inherit;
+  transition:opacity .15s;
+}
+.btn:hover{opacity:.85;}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
+.btn.ghost:hover{color:var(--accent);border-color:var(--accent);}
+.css-out{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:10px;
+  font-family:'JetBrains Mono','DM Mono',ui-monospace,monospace;
+  font-size:10.5px;color:#bcd87a;
+  white-space:pre-wrap;max-height:220px;
+  overflow:auto;margin-top:10px;display:none;
+  line-height:1.55;
+}
+.css-out.show{display:block;}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--surface);border:1px solid var(--accent);
+  color:var(--accent);padding:10px 18px;border-radius:6px;
+  font-size:12px;font-weight:700;opacity:0;
+  transition:opacity .2s, transform .2s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media (max-width: 1100px){
+  body{grid-template-columns:1fr;}
+  .controls{position:relative;top:0;max-height:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="main">
+  <div class="sec-title">Metas individuais por consultor</div>
+  <div class="np-metas-grid" id="grid"></div>
+</div>
+
+<aside class="controls">
+  <h2>🎛 Ajustes do card</h2>
+
+  <div class="group-title">Grid</div>
+  <div class="ctrl"><label>Colunas <span class="v" id="vCols">5</span></label>
+    <input type="range" id="cCols" min="1" max="6" step="1" value="5"></div>
+  <div class="ctrl"><label>Gap entre cards <span class="v" id="vGap">14px</span></label>
+    <input type="range" id="cGap" min="6" max="32" step="1" value="14"></div>
+
+  <div class="group">
+    <div class="group-title">Card</div>
+    <div class="ctrl"><label>Padding interno <span class="v" id="vPad">16px</span></label>
+      <input type="range" id="cPad" min="8" max="28" step="1" value="16"></div>
+    <div class="ctrl"><label>Border radius <span class="v" id="vRad">10px</span></label>
+      <input type="range" id="cRad" min="0" max="24" step="1" value="10"></div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Header (avatar + nome)</div>
+    <div class="ctrl"><label>Avatar (tamanho) <span class="v" id="vAva">36px</span></label>
+      <input type="range" id="cAva" min="24" max="60" step="1" value="36"></div>
+    <div class="ctrl"><label>Avatar (fonte) <span class="v" id="vAvaF">15px</span></label>
+      <input type="range" id="cAvaF" min="10" max="24" step="1" value="15"></div>
+    <div class="ctrl"><label>Nome (fonte) <span class="v" id="vNome">13px</span></label>
+      <input type="range" id="cNome" min="10" max="20" step="1" value="13"></div>
+    <div class="ctrl"><label>Status badge (fonte) <span class="v" id="vSt">10px</span></label>
+      <input type="range" id="cSt" min="8" max="14" step="1" value="10"></div>
+    <div class="ctrl"><label>Gap header <span class="v" id="vHg">10px</span></label>
+      <input type="range" id="cHg" min="4" max="18" step="1" value="10"></div>
+    <div class="ctrl"><label>Margem abaixo header <span class="v" id="vHmb">12px</span></label>
+      <input type="range" id="cHmb" min="4" max="24" step="1" value="12"></div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Linha do real + barra</div>
+    <div class="ctrl"><label>Fonte real / pct <span class="v" id="vReal">11px</span></label>
+      <input type="range" id="cReal" min="9" max="16" step="1" value="11"></div>
+    <div class="ctrl"><label>Altura da barra <span class="v" id="vBar">8px</span></label>
+      <input type="range" id="cBar" min="4" max="16" step="1" value="8"></div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Tiers (Mínima/Básica/Master)</div>
+    <div class="ctrl"><label>Gap entre tiers <span class="v" id="vTg">6px</span></label>
+      <input type="range" id="cTg" min="2" max="14" step="1" value="6"></div>
+    <div class="ctrl"><label>Padding do tier <span class="v" id="vTp">6×8</span></label>
+      <input type="range" id="cTp" min="3" max="14" step="1" value="6"></div>
+    <div class="ctrl"><label>Label tier (fonte) <span class="v" id="vTl">9px</span></label>
+      <input type="range" id="cTl" min="7" max="13" step="1" value="9"></div>
+    <div class="ctrl"><label>Valor tier (fonte) <span class="v" id="vTv">11px</span></label>
+      <input type="range" id="cTv" min="9" max="16" step="1" value="11"></div>
+    <div class="ctrl"><label>% do tier (fonte) <span class="v" id="vTpct">9px</span></label>
+      <input type="range" id="cTpct" min="7" max="16" step="1" value="9"></div>
+    <div class="ctrl"><label>% do tier (margin-top) <span class="v" id="vTpctMt">1px</span></label>
+      <input type="range" id="cTpctMt" min="0" max="12" step="1" value="1"></div>
+    <div class="ctrl"><label>% do tier (peso) <span class="v" id="vTpctW">400</span></label>
+      <input type="range" id="cTpctW" min="300" max="900" step="100" value="400"></div>
+    <div class="ctrl"><label>Tier border radius <span class="v" id="vTr">6px</span></label>
+      <input type="range" id="cTr" min="0" max="14" step="1" value="6"></div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">Botão "Configurar metas"</div>
+    <div class="ctrl"><label>Fonte <span class="v" id="vEd">10px</span></label>
+      <input type="range" id="cEd" min="8" max="14" step="1" value="10"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="btnCss">📋 Gerar CSS final</button>
+    <button class="btn ghost" id="btnReset">↺ Resetar padrões</button>
+    <pre class="css-out" id="cssOut"></pre>
+  </div>
+</aside>
+
+<div class="toast" id="toast">CSS copiado ✓</div>
+
+<script>
+/* ── Dados mock (espelham o screenshot) ── */
+var DADOS = [
+  { nome:'CARLOS BONFIM',    real:4320.50,   minima:{meta:39521.39,  falta:35200.89, pct:11}, basica:{meta:46495.75, falta:42175.25, pct:9},  master:{meta:55794.90, falta:51474.40, pct:8},  pctPrinc:9,  tierLabel:'🥉 Básica',  status:{txt:'CRÍTICO',       cor:'#ff1744', bg:'rgba(255,23,68,.15)',  border:'rgba(255,23,68,.4)'}, bar:'#ff1744', bg:'rgba(255,23,68,.06)',  borda:'rgba(255,23,68,.3)',  ativa:'basica' },
+  { nome:'DANIEL MOURA',     real:61036.59,  minima:{meta:138324.86, falta:77288.27, pct:44}, basica:{meta:162735.13,falta:101698.54,pct:38}, master:{meta:195282.16,falta:134245.57,pct:31}, pctPrinc:38, tierLabel:'🥉 Básica',  status:{txt:'ATENÇÃO',       cor:'#ff5500', bg:'rgba(255,85,0,.15)',   border:'rgba(255,85,0,.4)'},  bar:'#ff5500', bg:'rgba(255,85,0,.06)',   borda:'rgba(255,85,0,.3)',   ativa:'basica' },
+  { nome:'DARLEY SANTOS',    real:124319.40, minima:{meta:138324.86, falta:14005.46, pct:90}, basica:{meta:162735.13,falta:38415.73, pct:76}, master:{meta:195282.16,falta:70962.76, pct:64}, pctPrinc:76, tierLabel:'🥉 Básica',  status:{txt:'QUASE LÁ!',     cor:'#00f0ff', bg:'rgba(0,240,255,.15)',  border:'rgba(0,240,255,.4)'}, bar:'#00f0ff', bg:'rgba(0,240,255,.06)',  borda:'rgba(0,240,255,.3)',  ativa:'basica' },
+  { nome:'EXTRACLASSE',      real:0,         sem:true, pctPrinc:0, tierLabel:'—', status:{txt:'CRÍTICO', cor:'#ff1744', bg:'rgba(255,23,68,.15)', border:'rgba(255,23,68,.4)'}, bar:'#ff1744', bg:'rgba(255,23,68,.06)', borda:'rgba(255,23,68,.3)' },
+  { nome:'JULIANA FABRICIA', real:27131.85,  minima:{meta:39521.39,  falta:12389.54, pct:69}, basica:{meta:46495.75, falta:19363.90, pct:58}, master:{meta:55794.90, falta:28663.05, pct:49}, pctPrinc:58, tierLabel:'🥉 Básica',  status:{txt:'EM PROGRESSO',  cor:'#ffe000', bg:'rgba(255,238,0,.15)',  border:'rgba(255,238,0,.4)'}, bar:'#ffe000', bg:'rgba(255,238,0,.06)',  borda:'rgba(255,238,0,.3)',  ativa:'basica' }
+];
+
+var CORES_AVATAR = ['#c8f05a','#60a5fa','#34d399','#f59e0b','#a78bfa'];
+
+function fmtR(v){
+  return 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function tierHtml(d){
+  if(d.sem){
+    return '<div class="np-empty-tiers">Sem metas configuradas</div>';
+  }
+  var t = function(slug, emoji, label, dados){
+    var ativa = d.ativa === slug ? ' ativa' : '';
+    var corVal = dados.pct >= 100 ? '#c8f05a' : (slug==='basica' ? '#ff5252' : slug==='minima' ? '#ffe000' : '#c8f05a');
+    return '<div class="np-tier np-tier--'+slug+ativa+'">'
+      + '<div class="np-tier-label">'+emoji+' '+label+'</div>'
+      + '<div class="np-tier-val" style="color:'+corVal+';">'+(dados.pct>=100 ? '✅ Batida' : 'Falta '+fmtR(dados.falta))+'</div>'
+      + '<div class="np-tier-pct">'+dados.pct+'%</div>'
+      + '</div>';
+  };
+  return '<div class="np-meta-tiers">'
+    + t('minima','🥈','Mínima', d.minima)
+    + t('basica','🥉','Básica', d.basica)
+    + t('master','🥇','Master', d.master)
+    + '</div>';
+}
+
+function renderGrid(){
+  var grid = document.getElementById('grid');
+  grid.innerHTML = DADOS.map(function(d, i){
+    var cor = CORES_AVATAR[i % CORES_AVATAR.length];
+    return '<div class="np-meta-card clickable" style="border-color:'+d.borda+';background:'+d.bg+';">'
+      + '<div class="np-meta-header">'
+      +   '<div class="np-meta-avatar" style="background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;">'+d.nome.charAt(0)+'</div>'
+      +   '<div style="flex:1;min-width:0;">'
+      +     '<div class="np-meta-nome">'+d.nome+'</div>'
+      +     '<span class="np-status-badge" style="background:'+d.status.bg+';color:'+d.status.cor+';border:1px solid '+d.status.border+';">'+d.status.txt+'</span>'
+      +   '</div>'
+      + '</div>'
+      + '<div class="np-real-line"><span>'+fmtR(d.real)+'</span><span class="pct" style="color:'+d.bar+';">'+d.pctPrinc+'% — '+d.tierLabel+'</span></div>'
+      + '<div class="np-meta-progress"><div class="np-meta-bar" style="width:'+Math.min(100,d.pctPrinc)+'%;background:'+d.bar+';"></div></div>'
+      + tierHtml(d)
+      + '<button class="np-meta-edit">⚙ Configurar metas</button>'
+      + '</div>';
+  }).join('');
+}
+
+/* ── Bind dos controles ↔ CSS vars ── */
+var CTRLS = [
+  ['cCols','--grid-cols','vCols','',1],
+  ['cGap','--grid-gap','vGap','px',1],
+  ['cPad','--card-pad','vPad','px',1],
+  ['cRad','--card-radius','vRad','px',1],
+  ['cAva','--avatar-size','vAva','px',1],
+  ['cAvaF','--avatar-font','vAvaF','px',1],
+  ['cNome','--nome-font','vNome','px',1],
+  ['cSt','--status-font','vSt','px',1],
+  ['cHg','--header-gap','vHg','px',1],
+  ['cHmb','--header-mb','vHmb','px',1],
+  ['cReal','--real-font','vReal','px',1],
+  ['cBar','--bar-height','vBar','px',1],
+  ['cTg','--tier-gap','vTg','px',1],
+  ['cTl','--tier-label-font','vTl','px',1],
+  ['cTv','--tier-val-font','vTv','px',1],
+  ['cTpct','--tier-pct-font','vTpct','px',1],
+  ['cTpctMt','--tier-pct-mt','vTpctMt','px',1],
+  ['cTpctW','--tier-pct-weight','vTpctW','',1],
+  ['cTr','--tier-radius','vTr','px',1],
+  ['cEd','--edit-font','vEd','px',1]
+];
+
+function aplicar(){
+  CTRLS.forEach(function(c){
+    var el = document.getElementById(c[0]);
+    var v  = el.value + c[3];
+    document.documentElement.style.setProperty(c[1], v);
+    document.getElementById(c[2]).textContent = v;
+  });
+  /* Tier padding usa dois eixos derivados do slider único cTp */
+  var tp = document.getElementById('cTp').value;
+  var tpVal = tp + 'px ' + (parseInt(tp)+2) + 'px';
+  document.documentElement.style.setProperty('--tier-pad', tpVal);
+  document.getElementById('vTp').textContent = tp + '×' + (parseInt(tp)+2);
+  /* Edit padding cresce junto com font */
+  var ed = document.getElementById('cEd').value;
+  document.documentElement.style.setProperty('--edit-pad', (parseInt(ed)/3|0)+'px '+(parseInt(ed)-1)+'px');
+  /* Status pad cresce junto com font */
+  var st = document.getElementById('cSt').value;
+  document.documentElement.style.setProperty('--status-pad', ((parseInt(st)/3|0)+1)+'px '+(parseInt(st)-1)+'px');
+}
+
+CTRLS.forEach(function(c){
+  document.getElementById(c[0]).addEventListener('input', aplicar);
+});
+document.getElementById('cTp').addEventListener('input', aplicar);
+
+function gerarCss(){
+  var out = '/* Cole em assets/css/main.css (substitua os blocos correspondentes) */\n\n';
+  out += '.np-metas-grid{\n';
+  out += '  display:grid;\n';
+  out += '  grid-template-columns:repeat('+document.getElementById('cCols').value+',1fr);\n';
+  out += '  gap:'+document.getElementById('cGap').value+'px;\n';
+  out += '}\n\n';
+  out += '.np-meta-card{\n';
+  out += '  background:var(--surface);\n';
+  out += '  border:1px solid var(--border2);\n';
+  out += '  border-radius:'+document.getElementById('cRad').value+'px;\n';
+  out += '  padding:'+document.getElementById('cPad').value+'px;\n';
+  out += '}\n\n';
+  out += '.np-meta-header{\n';
+  out += '  display:flex;align-items:center;\n';
+  out += '  gap:'+document.getElementById('cHg').value+'px;\n';
+  out += '  margin-bottom:'+document.getElementById('cHmb').value+'px;\n';
+  out += '}\n\n';
+  out += '.np-meta-avatar{\n';
+  out += '  width:'+document.getElementById('cAva').value+'px;\n';
+  out += '  height:'+document.getElementById('cAva').value+'px;\n';
+  out += '  border-radius:50%;\n';
+  out += '  display:flex;align-items:center;justify-content:center;\n';
+  out += '  font-size:'+document.getElementById('cAvaF').value+'px;\n';
+  out += '  font-weight:800;flex-shrink:0;\n';
+  out += '}\n\n';
+  out += '.np-meta-nome{font-size:'+document.getElementById('cNome').value+'px;font-weight:700;color:var(--text);}\n\n';
+  var st = document.getElementById('cSt').value;
+  out += '.np-status-badge{\n';
+  out += '  display:inline-flex;align-items:center;gap:4px;\n';
+  out += '  font-size:'+st+'px;font-weight:800;\n';
+  out += '  text-transform:uppercase;letter-spacing:.06em;\n';
+  out += '  padding:'+((parseInt(st)/3|0)+1)+'px '+(parseInt(st)-1)+'px;\n';
+  out += '  border-radius:20px;\n';
+  out += '}\n\n';
+  out += '.np-meta-progress{height:'+document.getElementById('cBar').value+'px;background:var(--surface2);border-radius:3px;overflow:hidden;margin:8px 0;}\n';
+  out += '.np-meta-bar{height:100%;border-radius:3px;transition:width .4s;}\n\n';
+  out += '.np-meta-tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:'+document.getElementById('cTg').value+'px;margin:10px 0 0;}\n';
+  var tp = document.getElementById('cTp').value;
+  out += '.np-tier{\n';
+  out += '  border-radius:'+document.getElementById('cTr').value+'px;\n';
+  out += '  padding:'+tp+'px '+(parseInt(tp)+2)+'px;\n';
+  out += '  text-align:center;border:1px solid transparent;\n';
+  out += '}\n';
+  out += '.np-tier-label{font-size:'+document.getElementById('cTl').value+'px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;opacity:.85;}\n';
+  out += '.np-tier-val{font-size:'+document.getElementById('cTv').value+'px;font-weight:700;font-variant-numeric:tabular-nums;}\n';
+  out += '.np-tier-pct{\n';
+  out += '  font-size:'+document.getElementById('cTpct').value+'px;\n';
+  out += '  margin-top:'+document.getElementById('cTpctMt').value+'px;\n';
+  out += '  font-weight:'+document.getElementById('cTpctW').value+';\n';
+  out += '  color:var(--muted);font-variant-numeric:tabular-nums;\n';
+  out += '}\n\n';
+  var ed = document.getElementById('cEd').value;
+  out += '.np-meta-edit{\n';
+  out += '  background:none;border:1px solid var(--border2);color:var(--muted);\n';
+  out += '  border-radius:5px;\n';
+  out += '  padding:'+(parseInt(ed)/3|0)+'px '+(parseInt(ed)-1)+'px;\n';
+  out += '  font-size:'+ed+'px;\n';
+  out += '  cursor:pointer;margin-top:10px;\n';
+  out += '}\n';
+  return out;
+}
+
+document.getElementById('btnCss').addEventListener('click', function(){
+  var css = gerarCss();
+  var pre = document.getElementById('cssOut');
+  pre.textContent = css;
+  pre.classList.add('show');
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(css).then(function(){
+      var t = document.getElementById('toast');
+      t.classList.add('show');
+      setTimeout(function(){ t.classList.remove('show'); }, 1700);
+    });
+  }
+});
+
+document.getElementById('btnReset').addEventListener('click', function(){
+  /* Valores default vindos do main.css atual */
+  var defaults = {cCols:5,cGap:14,cPad:16,cRad:10,cAva:36,cAvaF:15,cNome:13,cSt:10,cHg:10,cHmb:12,cReal:11,cBar:8,cTg:6,cTp:6,cTl:9,cTv:11,cTpct:9,cTpctMt:1,cTpctW:400,cTr:6,cEd:10};
+  Object.keys(defaults).forEach(function(k){
+    document.getElementById(k).value = defaults[k];
+  });
+  aplicar();
+  document.getElementById('cssOut').classList.remove('show');
+});
+
+renderGrid();
+aplicar();
+</script>
+</body>
+</html>
