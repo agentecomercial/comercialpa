@@ -1672,11 +1672,23 @@
   function _npAtualizarAtalhos(){
     var H = _npHoje();
     var df = _npDiffMeses(_npAno, _npMes);
+    function _meseN(n){
+      var m = H.m + n, y = H.y;
+      while(m < 1){ m += 12; y--; }
+      while(m > 12){ m -= 12; y++; }
+      return _MESES_FULL_[m-1] + ' / ' + y;
+    }
     var btns = document.querySelectorAll('#npAtalhos .np-atalho');
     btns.forEach(function(b){
       b.classList.remove('active');
-      if(_npCalMode !== 'mes') return;
       var sc = b.getAttribute('data-shortcut');
+      /* Tooltip dinâmico mostrando o mês concreto que cada atalho vai abrir */
+      if(sc === 'hoje')      b.title = 'Ir para ' + _meseN(0);
+      else if(sc === '-1')   b.title = 'Ir para ' + _meseN(-1);
+      else if(sc === '-3')   b.title = 'Ir para ' + _meseN(-3);
+      else if(sc === '-6')   b.title = 'Ir para ' + _meseN(-6);
+      else if(sc === 'jan')  b.title = 'Ir para Janeiro / ' + H.y;
+      if(_npCalMode !== 'mes') return;
       if(sc === 'hoje' && df === 0) b.classList.add('active');
       else if(sc === '-1' && df === -1) b.classList.add('active');
       else if(sc === '-3' && df === -3) b.classList.add('active');
@@ -1703,24 +1715,37 @@
     _npAtualizarAtalhos();
   }
 
-  /* Hook: sempre que o mês muda, sincroniza badge + atalhos */
-  var _origTrocarMes = _npTrocarMes;
-  _npTrocarMes = function(){
-    _origTrocarMes();
-    setTimeout(_npAtualizarLabelMes, 0);
-  };
-
-  /* Atalhos rápidos */
+  /* Atalhos rápidos — sempre relativos à data de HOJE, não à seleção atual */
   window._npAtalho = function(sc){
-    _npCalMode = 'mes'; _npDiaSel = null;
-    _npSincronizarTabs();
+    _npCalMode = 'mes';
+    _npDiaSel = null;
+    window._npDiaSel = null;
     var H = _npHoje();
     if(sc === 'hoje'){ _npAno=H.y; _npMes=H.m; }
     else if(sc === '-1'){ _npAno=H.y; _npMes=H.m-1; if(_npMes<1){_npMes=12;_npAno--;} }
     else if(sc === '-3'){ _npAno=H.y; _npMes=H.m-3; while(_npMes<1){_npMes+=12;_npAno--;} }
     else if(sc === '-6'){ _npAno=H.y; _npMes=H.m-6; while(_npMes<1){_npMes+=12;_npAno--;} }
     else if(sc === 'jan'){ _npAno=H.y; _npMes=1; }
-    _npTrocarMes();
+    _npSincronizarTabs();
+    if(typeof _npTrocarMes === 'function'){
+      _npTrocarMes();        /* refresh dos dados + label do dashboard */
+    }
+    /* Atualiza label custom + badge + active state dos atalhos */
+    setTimeout(_npAtualizarLabelMes, 0);
+  };
+
+  /* Wrappers de npMesAnterior/npMesProximo para também atualizar o badge */
+  var _origAnt = window.npMesAnterior;
+  window.npMesAnterior = function(){
+    _npCalMode = 'mes'; _npDiaSel = null; window._npDiaSel = null;
+    if(typeof _origAnt === 'function') _origAnt();
+    setTimeout(_npAtualizarLabelMes, 0);
+  };
+  var _origProx = window.npMesProximo;
+  window.npMesProximo = function(){
+    _npCalMode = 'mes'; _npDiaSel = null; window._npDiaSel = null;
+    if(typeof _origProx === 'function') _origProx();
+    setTimeout(_npAtualizarLabelMes, 0);
   };
 
   /* Popover open/close + seleção pendente (só comita ao clicar "Aplicar") */
@@ -1777,7 +1802,8 @@
     }
     _npSincronizarTabs();
     window._npFecharCalPop();
-    _npTrocarMes();
+    if(typeof _npTrocarMes === 'function') _npTrocarMes();
+    setTimeout(_npAtualizarLabelMes, 0);
   };
   document.addEventListener('click', function(e){
     var pop = document.getElementById('npCalPop');
