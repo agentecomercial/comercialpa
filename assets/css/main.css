@@ -1217,8 +1217,8 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-state-badge.corrente{background:rgba(200,240,90,.14);color:var(--accent);}
 .np-state-badge.fechado{background:rgba(96,165,250,.14);color:var(--blue);}
 .np-state-badge.futuro{background:rgba(167,139,250,.14);color:#a78bfa;}
-/* Atalhos rápidos */
-.np-atalhos{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 18px 0;margin-bottom:-6px;}
+/* Atalhos rápidos — linha intermediária entre nav e tabs */
+.np-atalhos{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
 .np-atalho{background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-size:11px;font-weight:600;padding:5px 11px;border-radius:14px;cursor:pointer;transition:all .12s;font-family:inherit;}
 .np-atalho:hover{border-color:var(--accent);color:var(--accent);}
 .np-atalho.active{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
