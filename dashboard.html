@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260527-145653">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260527-145653">
+<link rel="stylesheet" href="assets/css/main.css?v=20260527-150153">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260527-150153">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260527-145653">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260527-150153">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1947,40 +1947,46 @@
 
     <!-- Filtros de período -->
     <div class="ic-filtros-wrap">
-      <!-- Linha 1: Atalhos rápidos -->
+      <!-- Linha 1: Atalhos rápidos (distribuídos na largura) -->
       <div class="ic-filtros-row">
         <label class="ic-filtros-lbl">⚡ Atalhos</label>
-        <button class="ic-atalho" onclick="_mapAtalho('mes')" title="Mês atual">Este mês</button>
-        <button class="ic-atalho" onclick="_mapAtalho('trim')" title="Trimestre atual (3 meses)">Trimestre</button>
-        <button class="ic-atalho" onclick="_mapAtalho('sem')" title="Semestre atual (6 meses)">Semestre</button>
-        <button class="ic-atalho" onclick="_mapAtalho('ytd')" title="Do começo do ano até agora (YTD)">YTD</button>
-        <button class="ic-atalho" onclick="_mapAtalho('ano')" title="Ano todo">Ano cheio</button>
-        <button class="ic-atalho" onclick="_mapAtalho('tudo')" title="Sem filtro de período">Tudo</button>
+        <div class="ic-filtros-btns">
+          <button class="ic-atalho" onclick="_mapAtalho('mes')" title="Mês atual">Este mês</button>
+          <button class="ic-atalho" onclick="_mapAtalho('trim')" title="Trimestre atual (3 meses)">Trimestre</button>
+          <button class="ic-atalho" onclick="_mapAtalho('sem')" title="Semestre atual (6 meses)">Semestre</button>
+          <button class="ic-atalho" onclick="_mapAtalho('ytd')" title="Do começo do ano até agora (YTD)">YTD</button>
+          <button class="ic-atalho" onclick="_mapAtalho('ano')" title="Ano todo">Ano cheio</button>
+          <button class="ic-atalho" onclick="_mapAtalho('tudo')" title="Sem filtro de período">Tudo</button>
+        </div>
       </div>
 
-      <!-- Linha 2: Ano + Meses granular -->
+      <!-- Linha 2: Ano -->
       <div class="ic-filtros-row">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Ano</label>
-        <select class="modal-select" id="mapAno" style="padding:6px 10px;font-size:12px;width:90px;" onchange="_mapFiltrar()"></select>
+        <label class="ic-filtros-lbl">Ano</label>
+        <div class="ic-filtros-ano-wrap">
+          <select class="modal-select" id="mapAno" onchange="_mapFiltrar()"></select>
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:4px;">Meses</label>
-        <button class="fbtn active" id="mapMTodos" onclick="_mapToggleMesTodos()">Todos</button>
-        <button class="fbtn" id="mapM1"  onclick="_mapToggleMes(1)">Jan</button>
-        <button class="fbtn" id="mapM2"  onclick="_mapToggleMes(2)">Fev</button>
-        <button class="fbtn" id="mapM3"  onclick="_mapToggleMes(3)">Mar</button>
-        <button class="fbtn" id="mapM4"  onclick="_mapToggleMes(4)">Abr</button>
-        <button class="fbtn" id="mapM5"  onclick="_mapToggleMes(5)">Mai</button>
-        <button class="fbtn" id="mapM6"  onclick="_mapToggleMes(6)">Jun</button>
-        <button class="fbtn" id="mapM7"  onclick="_mapToggleMes(7)">Jul</button>
-        <button class="fbtn" id="mapM8"  onclick="_mapToggleMes(8)">Ago</button>
-        <button class="fbtn" id="mapM9"  onclick="_mapToggleMes(9)">Set</button>
-        <button class="fbtn" id="mapM10" onclick="_mapToggleMes(10)">Out</button>
-        <button class="fbtn" id="mapM11" onclick="_mapToggleMes(11)">Nov</button>
-        <button class="fbtn" id="mapM12" onclick="_mapToggleMes(12)">Dez</button>
+
+      <!-- Linha 3: Meses granulares (13 botões distribuídos) -->
+      <div class="ic-filtros-row">
+        <label class="ic-filtros-lbl">Meses</label>
+        <div class="ic-filtros-btns ic-filtros-meses">
+          <button class="fbtn" id="mapMTodos" onclick="_mapToggleMesTodos()">Todos</button>
+          <button class="fbtn" id="mapM1"  onclick="_mapToggleMes(1)">Jan</button>
+          <button class="fbtn" id="mapM2"  onclick="_mapToggleMes(2)">Fev</button>
+          <button class="fbtn" id="mapM3"  onclick="_mapToggleMes(3)">Mar</button>
+          <button class="fbtn" id="mapM4"  onclick="_mapToggleMes(4)">Abr</button>
+          <button class="fbtn" id="mapM5"  onclick="_mapToggleMes(5)">Mai</button>
+          <button class="fbtn" id="mapM6"  onclick="_mapToggleMes(6)">Jun</button>
+          <button class="fbtn" id="mapM7"  onclick="_mapToggleMes(7)">Jul</button>
+          <button class="fbtn" id="mapM8"  onclick="_mapToggleMes(8)">Ago</button>
+          <button class="fbtn" id="mapM9"  onclick="_mapToggleMes(9)">Set</button>
+          <button class="fbtn" id="mapM10" onclick="_mapToggleMes(10)">Out</button>
+          <button class="fbtn" id="mapM11" onclick="_mapToggleMes(11)">Nov</button>
+          <button class="fbtn" id="mapM12" onclick="_mapToggleMes(12)">Dez</button>
+        </div>
       </div>
-      </div><!-- /ic-filtros-row linha 2 -->
     </div><!-- /ic-filtros-wrap -->
     <!-- Alertas estratégicos auto-gerados (Fase 6) -->
     <div id="icAlertasBox" class="ic-alertas-box"></div>
@@ -2839,7 +2845,7 @@
 
             <div class="mn-faq">
               <b>Q: Atualizei o código e não vejo a mudança no navegador.</b><br>
-              <span>R: Rode <code>bump.cmd</code> (ou <code>scripts/bump-cache.ps1</code>) — incrementa o <code>?v=20260527-145653"mn-faq">
+              <span>R: Rode <code>bump.cmd</code> (ou <code>scripts/bump-cache.ps1</code>) — incrementa o <code>?v=20260527-150153"mn-faq">
               <b>Q: Promessa de cobrança ficou "Pendente" mesmo após a data.</b><br>
               <span>R: O estado <b>Vencida</b> é calculado em tempo de render (não persistido). Se a promessa está marcada manualmente como <b>Honrada/Quebrada/Reagendada</b>, esses tem prioridade. Caso contrário, basta abrir a aba que ela aparece como Vencida.</span>
             </div>
@@ -3366,7 +3372,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260527-145653"></script>
+<script defer src="assets/js/00-utils.js?v=20260527-150153"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -3460,37 +3466,37 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260527-145653"></script>
-<script defer src="assets/js/29-login.js?v=20260527-145653"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260527-145653"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260527-145653"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260527-145653"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260527-145653"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260527-145653"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260527-145653"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260527-145653"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260527-145653"></script>
-<script defer src="assets/js/40-ic-feedback.js?v=20260527-145653"></script>
-<script defer src="assets/js/41-ic-pdi.js?v=20260527-145653"></script>
-<script defer src="assets/js/42-ic-ia.js?v=20260527-145653"></script>
-<script defer src="assets/js/43-ic-alertas.js?v=20260527-145653"></script>
-<script defer src="assets/js/44-ic-playbook.js?v=20260527-145653"></script>
-<script defer src="assets/js/45-ic-cobranca.js?v=20260527-145653"></script>
-<script defer src="assets/js/46-ic-manual.js?v=20260527-145653"></script>
-<script defer src="assets/js/47-ic-executivo.js?v=20260527-145653"></script>
-<script defer src="assets/js/99-diag.js?v=20260527-145653"></script>
-<script defer src="assets/js/21-turmas.js?v=20260527-145653"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260527-145653"></script>
+<script defer src="assets/js/02-main.js?v=20260527-150153"></script>
+<script defer src="assets/js/29-login.js?v=20260527-150153"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260527-150153"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260527-150153"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260527-150153"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260527-150153"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260527-150153"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260527-150153"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260527-150153"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260527-150153"></script>
+<script defer src="assets/js/40-ic-feedback.js?v=20260527-150153"></script>
+<script defer src="assets/js/41-ic-pdi.js?v=20260527-150153"></script>
+<script defer src="assets/js/42-ic-ia.js?v=20260527-150153"></script>
+<script defer src="assets/js/43-ic-alertas.js?v=20260527-150153"></script>
+<script defer src="assets/js/44-ic-playbook.js?v=20260527-150153"></script>
+<script defer src="assets/js/45-ic-cobranca.js?v=20260527-150153"></script>
+<script defer src="assets/js/46-ic-manual.js?v=20260527-150153"></script>
+<script defer src="assets/js/47-ic-executivo.js?v=20260527-150153"></script>
+<script defer src="assets/js/99-diag.js?v=20260527-150153"></script>
+<script defer src="assets/js/21-turmas.js?v=20260527-150153"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260527-150153"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260527-145653"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260527-145653"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260527-145653"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260527-145653"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260527-145653"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260527-145653"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260527-150153"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260527-150153"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260527-150153"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260527-150153"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260527-150153"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260527-150153"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260527-145653"></script>
-<script defer src="assets/js/17-presenca.js?v=20260527-145653"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260527-150153"></script>
+<script defer src="assets/js/17-presenca.js?v=20260527-150153"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -3502,20 +3508,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260527-145653">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260527-150153">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260527-145653"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260527-150153"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260527-145653"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260527-145653"></script>
+<script defer src="assets/js/05-importacao.js?v=20260527-150153"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260527-150153"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260527-145653">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260527-150153">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260527-145653"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260527-150153"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -3551,7 +3557,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260527-145653"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260527-150153"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -3576,14 +3582,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260527-145653"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260527-145653"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260527-145653"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260527-145653"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260527-145653"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260527-145653"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260527-145653"></script>
-<script defer src="assets/js/08-realtime.js?v=20260527-145653"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260527-150153"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260527-150153"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260527-150153"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260527-150153"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260527-150153"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260527-150153"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260527-150153"></script>
+<script defer src="assets/js/08-realtime.js?v=20260527-150153"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -3616,7 +3622,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260527-145653"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260527-150153"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -4173,16 +4179,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260527-145653"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260527-150153"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260527-145653"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260527-150153"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260527-145653"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260527-150153"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260527-145653"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260527-150153"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">

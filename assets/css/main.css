@@ -1305,26 +1305,58 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 
 /* ── Alertas estratégicos + Pareto (Fase 6) ── */
 /* ══════════════════════════════════════════════════════════════
-   Filtros + Atalhos rápidos do Dashboard IC
+   Filtros + Atalhos rápidos do Dashboard IC (full width)
    ══════════════════════════════════════════════════════════════ */
 .ic-filtros-wrap{
   display:flex;flex-direction:column;gap:10px;
   padding:16px 0 20px;border-bottom:1px solid var(--border);margin-bottom:24px;
 }
-.ic-filtros-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.ic-filtros-row{display:flex;align-items:center;gap:12px;}
 .ic-filtros-lbl{
   font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;
-  font-weight:700;margin-right:4px;
+  font-weight:700;flex:0 0 auto;min-width:64px;
+}
+/* Container dos botões — distribui em toda a largura */
+.ic-filtros-btns{
+  display:flex;flex:1 1 auto;gap:6px;min-width:0;
+}
+.ic-filtros-btns > button{flex:1 1 0;min-width:0;}
+.ic-filtros-ano-wrap{flex:1 1 auto;display:flex;}
+.ic-filtros-ano-wrap #mapAno{
+  flex:1;max-width:220px;padding:8px 12px;font-size:12px;
 }
 .ic-atalho{
   background:var(--surface2);border:1px solid var(--border2);color:var(--text);
-  border-radius:14px;padding:6px 13px;font-size:11.5px;font-weight:700;
-  font-family:inherit;cursor:pointer;transition:all .14s;white-space:nowrap;
+  border-radius:14px;padding:8px 14px;font-size:11.5px;font-weight:700;
+  font-family:inherit;cursor:pointer;transition:all .14s;
+  white-space:nowrap;text-align:center;
 }
 .ic-atalho:hover{border-color:rgba(200,240,90,.4);background:var(--surface);}
 .ic-atalho.active{
-  background:rgba(200,240,90,.16);border-color:var(--accent);color:var(--accent);
-  box-shadow:0 0 0 1px rgba(200,240,90,.3) inset;
+  background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);
+}
+
+/* Botões de Meses no IC: padroniza com o tema (sem gradient vibrante)
+   — só dentro de .ic-filtros-meses, sem afetar .fbtn em outras telas */
+.ic-filtros-meses{padding:0;}
+.ic-filtros-meses .fbtn{
+  font-size:11px;padding:8px 10px;border-radius:14px;
+  border:1px solid var(--border2);background:var(--surface2);color:var(--text);
+  box-shadow:none;font-weight:700;
+}
+.ic-filtros-meses .fbtn:hover{
+  border-color:rgba(200,240,90,.4);background:var(--surface);color:var(--text);
+}
+.ic-filtros-meses .fbtn.active{
+  background:rgba(200,240,90,.14);
+  color:var(--accent);
+  border-color:var(--accent);
+  box-shadow:none;
+}
+@media(max-width:880px){
+  .ic-filtros-row{flex-wrap:wrap;}
+  .ic-filtros-btns{flex-wrap:wrap;}
+  .ic-filtros-btns > button{flex:1 1 calc(33% - 8px);}
 }
 
 /* ══════════════════════════════════════════════════════════════

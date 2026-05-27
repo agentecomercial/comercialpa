@@ -39,7 +39,7 @@ function confirmSave(){
 // ═══════════════════════════════════════════════════════════
 var _mapDados = null;       // cache de dados do Firebase
 var _mapAnoSel = 0;         // ano selecionado (0 = todos)
-var _mapMesesSel = [];      // [] = todos os meses
+var _mapMesesSel = [new Date().getMonth() + 1];  // default = mês corrente (era [] = todos)
 var _mapProdSortCol = 'total';   // sort da tabela Consultor × Treinamento
 var _mapProdSortDir = -1;        // -1 desc, 1 asc
 
