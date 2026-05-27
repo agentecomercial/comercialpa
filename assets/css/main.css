@@ -1321,10 +1321,12 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   display:flex;flex:1 1 auto;gap:6px;min-width:0;
 }
 .ic-filtros-btns > button{flex:1 1 0;min-width:0;}
-.ic-filtros-ano-wrap{flex:1 1 auto;display:flex;}
-.ic-filtros-ano-wrap #mapAno{
-  flex:1;max-width:220px;padding:8px 12px;font-size:12px;
+.ic-filtros-ano{
+  flex:0 0 auto;width:130px;padding:8px 12px;font-size:11.5px;font-weight:700;
+  border-radius:14px;background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);font-family:inherit;
 }
+.ic-filtros-ano:focus{outline:none;border-color:var(--accent);}
 .ic-atalho{
   background:var(--surface2);border:1px solid var(--border2);color:var(--text);
   border-radius:14px;padding:8px 14px;font-size:11.5px;font-weight:700;
