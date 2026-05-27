@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260527-115403">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260527-115403">
+<link rel="stylesheet" href="assets/css/main.css?v=20260527-120157">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260527-120157">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260527-115403">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260527-120157">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1915,6 +1915,7 @@
       <button class="ic-tab" data-icpane="playbook" onclick="_icShowPane('playbook')">📖 Playbook</button>
       <button class="ic-tab" data-icpane="cobranca" onclick="_icShowPane('cobranca')">💰 Cobrança</button>
       <button class="ic-tab" data-icpane="ia" onclick="_icShowPane('ia')" id="icTabIa" style="display:none;">🤖 IA</button>
+      <button class="ic-tab" data-icpane="manual" onclick="_icShowPane('manual')" id="icTabManual" style="display:none;">📚 Manual</button>
     </div>
 
     <!-- PANE: DASHBOARD (conteúdo original do Mapeamento) -->
@@ -2545,6 +2546,267 @@
     </div>
     <!-- /PANE: IA -->
 
+    <!-- PANE: MANUAL (Fase final) — documentação embutida do IC, restrita a ADM/EXTRACLASSE -->
+    <div class="ic-pane" data-icpane="manual">
+      <div class="mn-layout">
+        <!-- Sidebar com sumário -->
+        <aside class="mn-sidebar">
+          <div class="mn-sb-titulo">📚 Manual do IC</div>
+          <div class="mn-sb-sub">Versão 1.0 · 8 fases entregues</div>
+          <nav class="mn-sb-nav">
+            <a href="#mn-visao" class="mn-sb-link" onclick="_mnNav(event,'mn-visao')">Visão geral</a>
+            <a href="#mn-arquit" class="mn-sb-link" onclick="_mnNav(event,'mn-arquit')">Arquitetura</a>
+            <a href="#mn-permissoes" class="mn-sb-link" onclick="_mnNav(event,'mn-permissoes')">Permissões</a>
+            <div class="mn-sb-grupo">Fases entregues</div>
+            <a href="#mn-f1" class="mn-sb-link" onclick="_mnNav(event,'mn-f1')">Fase 1 · Dashboard</a>
+            <a href="#mn-f2" class="mn-sb-link" onclick="_mnNav(event,'mn-f2')">Fase 2 · Feedback</a>
+            <a href="#mn-f3" class="mn-sb-link" onclick="_mnNav(event,'mn-f3')">Fase 3 · Competências</a>
+            <a href="#mn-f4" class="mn-sb-link" onclick="_mnNav(event,'mn-f4')">Fase 4 · PDI</a>
+            <a href="#mn-f5" class="mn-sb-link" onclick="_mnNav(event,'mn-f5')">Fase 5 · IA</a>
+            <a href="#mn-f6" class="mn-sb-link" onclick="_mnNav(event,'mn-f6')">Fase 6 · Alertas + Pareto</a>
+            <a href="#mn-f7" class="mn-sb-link" onclick="_mnNav(event,'mn-f7')">Fase 7 · Playbook</a>
+            <a href="#mn-f8" class="mn-sb-link" onclick="_mnNav(event,'mn-f8')">Fase 8 · Cobrança</a>
+            <div class="mn-sb-grupo">Referência</div>
+            <a href="#mn-competencias" class="mn-sb-link" onclick="_mnNav(event,'mn-competencias')">9 competências</a>
+            <a href="#mn-firebase" class="mn-sb-link" onclick="_mnNav(event,'mn-firebase')">Paths Firebase</a>
+            <a href="#mn-faq" class="mn-sb-link" onclick="_mnNav(event,'mn-faq')">FAQ / Troubleshooting</a>
+            <a href="#mn-glossario" class="mn-sb-link" onclick="_mnNav(event,'mn-glossario')">Glossário</a>
+          </nav>
+        </aside>
+
+        <!-- Conteúdo -->
+        <div class="mn-conteudo" id="mnConteudo">
+
+          <section id="mn-visao" class="mn-sec">
+            <h2>📚 Manual do Inteligência Comercial</h2>
+            <p class="mn-lead">Este manual documenta o módulo <b>Inteligência Comercial (IC)</b> embutido no dashboard. Cobre o que cada aba entrega, como os scores são calculados, onde os dados moram e como restaurar o sistema em caso de falha. Acesso restrito a <b>ADM</b> e ao usuário <b>EXTRACLASSE</b>.</p>
+            <div class="mn-callout info">
+              <b>Para quem é este manual:</b><br>
+              · Gestores que precisam diagnosticar comportamento do time<br>
+              · Quem vai dar manutenção no código (você ou outro dev)<br>
+              · Suporte tier 2 quando algo "não aparece" ou "não bate"
+            </div>
+          </section>
+
+          <section id="mn-arquit" class="mn-sec">
+            <h2>🏗 Arquitetura</h2>
+            <p>O IC vive integralmente dentro de <code>#mapeamentoScreen</code> no <code>dashboard.html</code>. Cada aba é um <code>.ic-pane[data-icpane]</code> e os módulos JS associados ficam em <code>assets/js/40-*.js</code> a <code>46-*.js</code>.</p>
+            <table class="mn-tbl">
+              <thead><tr><th>Arquivo</th><th>Função</th></tr></thead>
+              <tbody>
+                <tr><td><code>30-sync-ferramentas.js</code></td><td>Carrega <code>_mapDados</code> (turmas → registros consolidados)</td></tr>
+                <tr><td><code>40-ic-feedback.js</code></td><td>Feedback + 9 competências + drill-down</td></tr>
+                <tr><td><code>41-ic-pdi.js</code></td><td>PDI trimestral + chips sugeridos</td></tr>
+                <tr><td><code>42-ic-ia.js</code></td><td>IA híbrida (catálogo + copy-paste)</td></tr>
+                <tr><td><code>43-ic-alertas.js</code></td><td>Alertas estratégicos + Pareto</td></tr>
+                <tr><td><code>44-ic-playbook.js</code></td><td>Biblioteca de scripts (147 seeds)</td></tr>
+                <tr><td><code>45-ic-cobranca.js</code></td><td>Promessas de pagamento</td></tr>
+                <tr><td><code>46-ic-manual.js</code></td><td>Este manual (mostra/esconde aba conforme perfil)</td></tr>
+              </tbody>
+            </table>
+            <p>Hooks principais: <code>_icShowPane(name)</code> troca de aba. Cada módulo escuta esse hook para inicializar sua própria carga.</p>
+          </section>
+
+          <section id="mn-permissoes" class="mn-sec">
+            <h2>🔐 Permissões</h2>
+            <table class="mn-tbl">
+              <thead><tr><th>Aba</th><th>Quem vê</th><th>Quem edita</th></tr></thead>
+              <tbody>
+                <tr><td>📊 Dashboard</td><td>Todos</td><td>—</td></tr>
+                <tr><td>📈 Desenvolvimento</td><td>Todos</td><td>Próprios feedbacks (consultor); todos (ADM/EXTRACLASSE)</td></tr>
+                <tr><td>🌱 PDI</td><td>Todos</td><td>Próprios (consultor); todos (ADM/EXTRACLASSE)</td></tr>
+                <tr><td>📖 Playbook</td><td>Todos</td><td>Só ADM/EXTRACLASSE</td></tr>
+                <tr><td>💰 Cobrança</td><td>Cada consultor vê só as suas; ADM vê todas</td><td>Próprias (consultor); todas (ADM)</td></tr>
+                <tr><td>🤖 IA</td><td>Só ADM/EXTRACLASSE</td><td>Só ADM/EXTRACLASSE</td></tr>
+                <tr><td>📚 Manual</td><td>Só ADM/EXTRACLASSE</td><td>—</td></tr>
+              </tbody>
+            </table>
+            <p>O check de admin é uniforme: <code>sess.perfil === 'adm'</code> OU <code>nome === 'EXTRACLASSE'</code> (toUpperCase + trim).</p>
+          </section>
+
+          <section id="mn-f1" class="mn-sec">
+            <h2>Fase 1 · 📊 Dashboard</h2>
+            <p>Aba principal. Mostra KPIs cross-turmas: faturamento total, clientes pagos, consultores ativos, treinamentos, maior performance. Filtros de Ano e Meses no topo.</p>
+            <p><b>Origem dos dados:</b> <code>_mapCarregar()</code> em <code>30-sync-ferramentas.js</code> lê <code>turmas/*</code> do Firebase, achata em registros (granular por sub-treinamento pago), guarda em <code>_mapDados</code>.</p>
+            <p><b>Regra crítica:</b> só sub-treinamentos com <code>status==='pago'</code> entram. Status global do cliente é ignorado quando há array <code>treinamentos</code>.</p>
+          </section>
+
+          <section id="mn-f2" class="mn-sec">
+            <h2>Fase 2 · 📈 Feedback (Desenvolvimento)</h2>
+            <p>Avaliação por consultor em <b>9 competências</b>. Scores autocalculados a partir dos dados do mês. Drill-down ao clicar em cada competência mostra os clientes que compuseram a nota.</p>
+            <p><b>Janela de análise:</b> default = só mês do ciclo. Pode expandir até 24 meses ou "tudo".</p>
+            <p><b>Schema dos clientes:</b> turmas usam <code>cliente/consultor/treinamento</code>. Vendas avulsas usam <code>clienteNome/consultorNome/produto</code>. <code>_icFbAchatar</code> normaliza os dois.</p>
+            <p><b>Modos auto/manual:</b> se o gestor mexer no gráfico → vira "manual". Sem alteração → "automatico".</p>
+          </section>
+
+          <section id="mn-f3" class="mn-sec">
+            <h2>Fase 3 · Competências (detalhe)</h2>
+            <p>Veja a seção <a href="#mn-competencias" onclick="_mnNav(event,'mn-competencias')">9 competências</a> abaixo para fórmulas.</p>
+          </section>
+
+          <section id="mn-f4" class="mn-sec">
+            <h2>Fase 4 · 🌱 PDI</h2>
+            <p>Plano de Desenvolvimento Individual com <b>períodos flexíveis</b> (mês inicial + mês final + chips de atalho). Cada consultor pode ter 1 PDI ativo por período.</p>
+            <ul>
+              <li><b>Diagnóstico:</b> baseado nos últimos 3 ciclos de feedback do consultor.</li>
+              <li><b>Competências-alvo:</b> até 3 por PDI. Chip ⭐ sugere as 3 mais baixas automaticamente.</li>
+              <li><b>Estado:</b> <code>iniciado / concluido</code>.</li>
+              <li><b>Persistência:</b> <code>icPDIs/{consultor}/{trimestreId}</code>.</li>
+            </ul>
+          </section>
+
+          <section id="mn-f5" class="mn-sec">
+            <h2>Fase 5 · 🤖 IA (híbrida)</h2>
+            <p>Sistema sem API. <b>(A) Catálogo</b> de análises estruturadas geradas localmente a partir dos dados em memória. <b>(B) Pergunta livre</b> que monta prompt completo (system + snapshot + pergunta) e copia para o clipboard — o usuário cola no Claude.ai (conta MAX, browser).</p>
+            <ul>
+              <li><b>Período:</b> mês corrente · 3m · 6m · manual.</li>
+              <li><b>Dados enviados:</b> turmas + pipelineSales + pipelineGoals + últimos 3 ciclos de feedback + PDIs ativos.</li>
+              <li><b>Histórico:</b> <code>icIAHist/{ts}</code>.</li>
+              <li><b>Restrição:</b> aba aparece só pra ADM/EXTRACLASSE.</li>
+            </ul>
+          </section>
+
+          <section id="mn-f6" class="mn-sec">
+            <h2>Fase 6 · 🚨 Alertas estratégicos + Pareto</h2>
+            <p>Banner de alertas no topo do Dashboard + gráfico Pareto de concentração de faturamento.</p>
+            <p><b>6 regras de alerta:</b></p>
+            <ol>
+              <li><b>Dependência crítica:</b> top 1 ≥ 50% do faturamento.</li>
+              <li><b>Dependência alta:</b> top 1 ≥ 35%.</li>
+              <li><b>Inatividade:</b> consultores sem nenhum pago no período.</li>
+              <li><b>Produto parado:</b> 2+ treinamentos sem venda.</li>
+              <li><b>Feedback atrasado:</b> consultor sem ciclo há mais de 14 dias.</li>
+              <li><b>PDI faltando:</b> score &lt; 7 sem PDI ativo.</li>
+              <li><b>Pareto 80/20 desbalanceado:</b> ≤30% dos consultores fazem 80% do faturamento.</li>
+            </ol>
+            <p><b>Hook:</b> <code>MutationObserver</code> em <code>#mapKpis</code> — recalcula automaticamente sempre que o render do mapeamento muda.</p>
+            <p><b>Preview standalone:</b> <code>ic-alertas-pareto-preview.html</code> na raiz tem 4 cenários (concentrado/saudável/crítico/vazio).</p>
+          </section>
+
+          <section id="mn-f7" class="mn-sec">
+            <h2>Fase 7 · 📖 Playbook</h2>
+            <p>Biblioteca de scripts de venda. <b>147 scripts</b> sincronizados a cada bootstrap:</p>
+            <ul>
+              <li><b>19 genéricos</b> (objeções clássicas como "tá caro" / "vou pensar", fechamento, follow-up, cobrança).</li>
+              <li><b>128 específicos por produto</b> (16 produtos × 8 categorias: abertura, qualificação, apresentação, objeções, fechamento, follow-up, recuperação, cobrança).</li>
+            </ul>
+            <p><b>IDs determinísticos</b> (<code>pb_seed_&lt;slug&gt;</code>): bootstrap é idempotente — clicar de novo sobrescreve sem duplicar. Botão <b>🧹 Limpar seeds</b> remove só os seeds, preservando scripts criados manualmente.</p>
+            <p><b>Persistência:</b> <code>icPlaybook/{id}</code>. Cada script tem categoria, título, situação, texto, produtos[], tags[].</p>
+          </section>
+
+          <section id="mn-f8" class="mn-sec">
+            <h2>Fase 8 · 💰 Cobrança Saudável</h2>
+            <p>Acompanhamento de promessas de pagamento. Cada consultor registra à mão; sistema acompanha vencimento e mede % honradas.</p>
+            <table class="mn-tbl">
+              <thead><tr><th>Estado</th><th>Quando</th><th>Conta no KPI?</th></tr></thead>
+              <tbody>
+                <tr><td>🟡 Pendente</td><td>Promessa em aberto, ainda no prazo</td><td>Não</td></tr>
+                <tr><td>🔴 Vencida</td><td>Passou da data, sem ação ainda (auto)</td><td>Não</td></tr>
+                <tr><td>✅ Honrada</td><td>Cliente pagou</td><td>+1 honrada</td></tr>
+                <tr><td>❌ Quebrada</td><td>Cliente não pagou e não vai pagar</td><td>+1 quebrada (puxa % pra baixo)</td></tr>
+                <tr><td>↻ Reagendada</td><td>Nova data prometida — cria nova promessa vinculada</td><td>Neutra</td></tr>
+              </tbody>
+            </table>
+            <p><b>Integração com Playbook:</b> botão "📋 Script" em cada card busca o script de cobrança correspondente ao estado e copia para o clipboard.</p>
+            <p><b>Persistência:</b> <code>icCobrancas/{consultor}/{id}</code>.</p>
+          </section>
+
+          <section id="mn-competencias" class="mn-sec">
+            <h2>🎯 9 Competências (fórmulas)</h2>
+            <p>Cada competência gera um score 0–10 a partir dos clientes do período. O drill-down ao clicar mostra exatamente quais clientes entraram na fórmula.</p>
+            <table class="mn-tbl">
+              <thead><tr><th>Competência</th><th>Fórmula</th><th>Cliente avaliado</th></tr></thead>
+              <tbody>
+                <tr><td>Prospecção</td><td>pagos + neg + ent ÷ total</td><td>Todos clientes do período</td></tr>
+                <tr><td>Qualificação</td><td>(pagos+neg+ent) ÷ (pagos+neg+ent+aberto+desistiu)</td><td>Inclui "—" e "DESISTIU" como aberto</td></tr>
+                <tr><td>Apresentação</td><td>Manual (gestor)</td><td>—</td></tr>
+                <tr><td>Negociação</td><td>pagos ÷ (pagos+neg+ent)</td><td>Filtros Turma/Avulsa toggle</td></tr>
+                <tr><td>Follow-up</td><td>Conversão entre etapas</td><td>—</td></tr>
+                <tr><td>Constância</td><td>Desvio do ritmo mensal</td><td>—</td></tr>
+                <tr><td>Mix</td><td>Diversidade de produtos vendidos</td><td>—</td></tr>
+                <tr><td>Aproveitamento</td><td>pagos ÷ (turma + avulsas)</td><td>2 cards: 🏫 Turma · 🛒 Avulsa</td></tr>
+                <tr><td>Visão (combinada)</td><td>Preservação 40% + Potencial 40% + Recuperação 20%</td><td>Janela móvel de turmas</td></tr>
+              </tbody>
+            </table>
+            <p><b>Conversão final:</b> exibida ao lado da Negociação, complementar à taxa de perda. Não afeta o score.</p>
+          </section>
+
+          <section id="mn-firebase" class="mn-sec">
+            <h2>🔥 Paths do Firebase usados pelo IC</h2>
+            <table class="mn-tbl">
+              <thead><tr><th>Path</th><th>O que guarda</th><th>Escrito por</th></tr></thead>
+              <tbody>
+                <tr><td><code>turmas/{id}</code></td><td>Turmas com clientes/treinamentos</td><td>Gerenciar Turmas (externo ao IC)</td></tr>
+                <tr><td><code>pipelineSales/{ym}</code></td><td>Vendas avulsas mensais</td><td>Pipeline Comercial (externo)</td></tr>
+                <tr><td><code>pipelineGoals/{ym}</code></td><td>Metas mensais</td><td>Pipeline (externo)</td></tr>
+                <tr><td><code>icFeedbacks/{consultor}/{cicloId}</code></td><td>Feedback de competências</td><td>Fase 2</td></tr>
+                <tr><td><code>icPDIs/{consultor}/{trimestreId}</code></td><td>Plano de desenvolvimento</td><td>Fase 4</td></tr>
+                <tr><td><code>icIAHist/{ts}</code></td><td>Histórico de consultas IA</td><td>Fase 5</td></tr>
+                <tr><td><code>icPlaybook/{id}</code></td><td>Scripts do playbook</td><td>Fase 7</td></tr>
+                <tr><td><code>icCobrancas/{consultor}/{id}</code></td><td>Promessas de pagamento</td><td>Fase 8</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section id="mn-faq" class="mn-sec">
+            <h2>❓ FAQ / Troubleshooting</h2>
+
+            <div class="mn-faq">
+              <b>Q: O painel Pareto não aparece.</b><br>
+              <span>R: Verifique se há ao menos 1 cliente pago no período filtrado. Se ainda assim não aparecer, confira no console se <code>window._mapDados</code> está populado. O painel só renderiza com <code>totFat &gt; 0</code>.</span>
+            </div>
+
+            <div class="mn-faq">
+              <b>Q: Bootstrap do Playbook duplicou scripts.</b><br>
+              <span>R: A versão antiga usava IDs aleatórios. Clique em 🧹 <b>Limpar seeds</b> (remove só os <code>pb_seed_*</code>) e depois ⚡ <b>Bootstrap inicial</b> de novo — agora com IDs determinísticos é idempotente.</span>
+            </div>
+
+            <div class="mn-faq">
+              <b>Q: Vendas avulsas não aparecem nas competências.</b><br>
+              <span>R: Garanta que os registros têm <code>clienteNome / consultorNome / produto</code> (schema avulsas). O <code>_icFbAchatar</code> faz fallback para <code>cliente / consultor / treinamento</code>, mas exige que ao menos um par esteja preenchido.</span>
+            </div>
+
+            <div class="mn-faq">
+              <b>Q: Atualizei o código e não vejo a mudança no navegador.</b><br>
+              <span>R: Rode <code>bump.cmd</code> (ou <code>scripts/bump-cache.ps1</code>) — incrementa o <code>?v=20260527-120157"mn-faq">
+              <b>Q: Promessa de cobrança ficou "Pendente" mesmo após a data.</b><br>
+              <span>R: O estado <b>Vencida</b> é calculado em tempo de render (não persistido). Se a promessa está marcada manualmente como <b>Honrada/Quebrada/Reagendada</b>, esses tem prioridade. Caso contrário, basta abrir a aba que ela aparece como Vencida.</span>
+            </div>
+
+            <div class="mn-faq">
+              <b>Q: Como dar acesso de admin para alguém?</b><br>
+              <span>R: Use o usuário <b>EXTRACLASSE</b> (já tem acesso) ou defina <code>perfil: 'adm'</code> no nó <code>usuarios/&lt;login&gt;</code> do Firebase.</span>
+            </div>
+
+            <div class="mn-faq">
+              <b>Q: A IA pediu pra "copiar e colar no Claude" — onde colo?</b><br>
+              <span>R: Abra <a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a> em outra aba (use sua conta MAX), cole o prompt completo. O Claude responde, você volta no dashboard e cola a resposta em "Cole a resposta do Claude aqui" para salvar no histórico.</span>
+            </div>
+          </section>
+
+          <section id="mn-glossario" class="mn-sec">
+            <h2>📖 Glossário</h2>
+            <dl class="mn-dl">
+              <dt>Sub-treinamento</dt><dd>Linha do array <code>treinamentos[]</code> dentro de um cliente. Tem código, valor e status próprios.</dd>
+              <dt>Ciclo de feedback</dt><dd>Avaliação pontual das 9 competências de um consultor em uma data específica. Pode ter modo auto ou manual.</dd>
+              <dt>PDI</dt><dd>Plano de Desenvolvimento Individual: até 3 competências-alvo + ações em um período.</dd>
+              <dt>Janela de análise</dt><dd>Quantos meses para trás o feedback considera ao calcular scores. Default: 0 (só mês do ciclo).</dd>
+              <dt>Pareto / 80-20</dt><dd>Quantos consultores compõem 80% do faturamento — indica concentração de risco.</dd>
+              <dt>Promessa honrada</dt><dd>Cliente pagou conforme combinado. Compõe % honradas.</dd>
+              <dt>Promessa quebrada</dt><dd>Cliente não pagou e não vai mais pagar. Sinal de abordagem que precisa ajuste.</dd>
+              <dt>Seed</dt><dd>Script do Playbook criado pelo bootstrap (ID começa com <code>pb_seed_</code>). Pode ser apagado em massa.</dd>
+            </dl>
+          </section>
+
+          <div class="mn-rodape">
+            Última atualização: 2026-05-27 · Versão 1.0 · IC com 8 fases entregues<br>
+            Para histórico de mudanças, consulte <code>git log</code>.
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /PANE: MANUAL -->
+
     <!-- Modal compartilhado: drill-down de competência -->
     <div class="fb-det-modal" id="fbDetModal" onclick="if(event.target===this)_fbDetFechar()">
       <div class="fb-det-modal-box">
@@ -3033,7 +3295,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260527-115403"></script>
+<script defer src="assets/js/00-utils.js?v=20260527-120157"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -3127,35 +3389,36 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260527-115403"></script>
-<script defer src="assets/js/29-login.js?v=20260527-115403"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260527-115403"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260527-115403"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260527-115403"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260527-115403"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260527-115403"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260527-115403"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260527-115403"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260527-115403"></script>
-<script defer src="assets/js/40-ic-feedback.js?v=20260527-115403"></script>
-<script defer src="assets/js/41-ic-pdi.js?v=20260527-115403"></script>
-<script defer src="assets/js/42-ic-ia.js?v=20260527-115403"></script>
-<script defer src="assets/js/43-ic-alertas.js?v=20260527-115403"></script>
-<script defer src="assets/js/44-ic-playbook.js?v=20260527-115403"></script>
-<script defer src="assets/js/45-ic-cobranca.js?v=20260527-115403"></script>
-<script defer src="assets/js/99-diag.js?v=20260527-115403"></script>
-<script defer src="assets/js/21-turmas.js?v=20260527-115403"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260527-115403"></script>
+<script defer src="assets/js/02-main.js?v=20260527-120157"></script>
+<script defer src="assets/js/29-login.js?v=20260527-120157"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260527-120157"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260527-120157"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260527-120157"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260527-120157"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260527-120157"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260527-120157"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260527-120157"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260527-120157"></script>
+<script defer src="assets/js/40-ic-feedback.js?v=20260527-120157"></script>
+<script defer src="assets/js/41-ic-pdi.js?v=20260527-120157"></script>
+<script defer src="assets/js/42-ic-ia.js?v=20260527-120157"></script>
+<script defer src="assets/js/43-ic-alertas.js?v=20260527-120157"></script>
+<script defer src="assets/js/44-ic-playbook.js?v=20260527-120157"></script>
+<script defer src="assets/js/45-ic-cobranca.js?v=20260527-120157"></script>
+<script defer src="assets/js/46-ic-manual.js?v=20260527-120157"></script>
+<script defer src="assets/js/99-diag.js?v=20260527-120157"></script>
+<script defer src="assets/js/21-turmas.js?v=20260527-120157"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260527-120157"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260527-115403"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260527-115403"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260527-115403"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260527-115403"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260527-115403"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260527-115403"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260527-120157"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260527-120157"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260527-120157"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260527-120157"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260527-120157"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260527-120157"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260527-115403"></script>
-<script defer src="assets/js/17-presenca.js?v=20260527-115403"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260527-120157"></script>
+<script defer src="assets/js/17-presenca.js?v=20260527-120157"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -3167,20 +3430,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260527-115403">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260527-120157">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260527-115403"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260527-120157"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260527-115403"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260527-115403"></script>
+<script defer src="assets/js/05-importacao.js?v=20260527-120157"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260527-120157"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260527-115403">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260527-120157">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260527-115403"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260527-120157"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -3216,7 +3479,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260527-115403"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260527-120157"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -3241,14 +3504,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260527-115403"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260527-115403"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260527-115403"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260527-115403"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260527-115403"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260527-115403"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260527-115403"></script>
-<script defer src="assets/js/08-realtime.js?v=20260527-115403"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260527-120157"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260527-120157"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260527-120157"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260527-120157"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260527-120157"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260527-120157"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260527-120157"></script>
+<script defer src="assets/js/08-realtime.js?v=20260527-120157"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -3281,7 +3544,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260527-115403"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260527-120157"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -3838,16 +4101,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260527-115403"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260527-120157"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260527-115403"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260527-120157"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260527-115403"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260527-120157"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260527-115403"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260527-120157"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
