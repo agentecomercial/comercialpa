@@ -3187,19 +3187,41 @@ body{overflow-x:hidden;}
 /* ══════════════════════════════════════════════════════════════
    Cobrança Saudável (IC · Fase 8)
    ══════════════════════════════════════════════════════════════ */
-.cb-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+/* KPIs da Cobrança padronizados com o Dashboard (.ic-kpi):
+   barra superior 3px colorida + hover lift + mesma tipografia */
+.cb-kpis{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;
+  margin-bottom:18px;
+}
 .cb-kpi{
   background:var(--surface);border:1px solid var(--border2);border-radius:10px;
-  padding:12px 14px;display:flex;flex-direction:column;gap:3px;
+  padding:14px 16px;display:flex;flex-direction:column;gap:4px;
+  position:relative;overflow:hidden;
+  transition:transform .14s, border-color .14s, box-shadow .14s;
 }
-.cb-kpi-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
-.cb-kpi-val{font-size:22px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;line-height:1.1;}
+.cb-kpi::before{
+  content:'';position:absolute;top:0;left:0;height:3px;width:100%;
+  background:var(--accent);opacity:.65;
+}
+.cb-kpi:hover{
+  transform:translateY(-2px);
+  border-color:rgba(255,255,255,.18);
+  box-shadow:0 8px 20px rgba(0,0,0,.25);
+}
+.cb-kpi-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:6px;}
+.cb-kpi-val{font-size:22px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;line-height:1.1;letter-spacing:-.3px;}
+/* Variantes semafóricas — pintam o valor E a barra superior */
+.cb-kpi:has(.cb-kpi-val.pendente)::before,
+.cb-kpi:has(.cb-kpi-val.warn)::before{background:var(--amber);}
+.cb-kpi:has(.cb-kpi-val.vencida)::before,
+.cb-kpi:has(.cb-kpi-val.bad)::before{background:var(--red);}
+.cb-kpi:has(.cb-kpi-val.ok)::before{background:var(--green);}
 .cb-kpi-val.pendente{color:var(--amber);}
 .cb-kpi-val.vencida{color:var(--red);}
 .cb-kpi-val.ok{color:var(--green);}
 .cb-kpi-val.warn{color:var(--amber);}
 .cb-kpi-val.bad{color:var(--red);}
-.cb-kpi-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.cb-kpi-sub{font-size:10.5px;color:var(--muted);font-weight:500;margin-top:2px;}
 
 .cb-est-chip, .cb-per-chip{
   background:var(--surface2);border:1px solid var(--border2);color:var(--text);
@@ -3374,4 +3396,58 @@ body{overflow-x:hidden;}
 }
 .pb-input:focus{border-color:var(--accent);}
 textarea.pb-input{resize:vertical;font-family:inherit;line-height:1.5;}
+
+/* ══════════════════════════════════════════════════════════════
+   IC · Botão unificado (Etapa 3)
+   Padroniza .ic-btn + aliases .pb-btn .cb-btn .ia-btn .fb-btn .pdi-btn
+   Variantes: .primary .ghost .success .warn .danger
+   Está no final do arquivo para vencer na cascata sem mexer nos blocos
+   antigos (deixa retro-compatível).
+   ══════════════════════════════════════════════════════════════ */
+.ic-btn, .pb-btn, .cb-btn, .ia-btn, .fb-btn, .pdi-btn{
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  color:var(--text);
+  border-radius:8px;
+  padding:8px 14px;
+  font-size:12px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+  transition:all .14s;
+  display:inline-flex;align-items:center;gap:6px;
+  white-space:nowrap;
+  text-transform:none;letter-spacing:0;
+  box-shadow:none;
+}
+.ic-btn:hover, .pb-btn:hover, .cb-btn:hover, .ia-btn:hover, .fb-btn:hover, .pdi-btn:hover{
+  background:var(--surface);border-color:var(--accent);color:var(--text);
+}
+/* Primary — ação principal, cor do tema */
+.ic-btn.primary, .pb-btn.primary, .cb-btn.primary, .ia-btn.primary, .fb-btn.primary, .pdi-btn.primary{
+  background:var(--accent-dim);border-color:var(--accent);color:var(--accent);
+}
+.ic-btn.primary:hover, .pb-btn.primary:hover, .cb-btn.primary:hover, .ia-btn.primary:hover, .fb-btn.primary:hover, .pdi-btn.primary:hover{
+  background:var(--accent);color:var(--bg);box-shadow:0 4px 14px var(--accent-dim);
+}
+/* Ghost — fundo transparente */
+.ic-btn.ghost, .pb-btn.ghost, .cb-btn.ghost, .ia-btn.ghost, .fb-btn.ghost, .pdi-btn.ghost{
+  background:transparent;color:var(--muted);
+}
+.ic-btn.ghost:hover, .pb-btn.ghost:hover, .cb-btn.ghost:hover, .ia-btn.ghost:hover, .fb-btn.ghost:hover, .pdi-btn.ghost:hover{
+  color:var(--text);background:var(--surface2);border-color:var(--border2);
+}
+/* Success / OK (verde) */
+.ic-btn.success, .cb-btn.ok{
+  background:rgba(52,211,153,.10);border-color:rgba(52,211,153,.35);color:var(--green);
+}
+.ic-btn.success:hover, .cb-btn.ok:hover{background:rgba(52,211,153,.20);color:var(--green);}
+/* Warn (âmbar) */
+.ic-btn.warn, .cb-btn.warn{
+  background:rgba(255,183,64,.10);border-color:rgba(255,183,64,.35);color:var(--amber);
+}
+.ic-btn.warn:hover, .cb-btn.warn:hover{background:rgba(255,183,64,.20);color:var(--amber);}
+/* Danger (vermelho) */
+.ic-btn.danger, .pb-btn.danger, .cb-btn.danger{
+  background:rgba(255,95,87,.10);border-color:rgba(255,95,87,.35);color:var(--red);
+}
+.ic-btn.danger:hover, .pb-btn.danger:hover, .cb-btn.danger:hover{background:rgba(255,95,87,.20);color:var(--red);}
 
