@@ -1407,14 +1407,10 @@
 
     /* ── Aproveitamento ── */
     if(key === 'apr'){
-      /* Mostra TODOS os itens do mês (cada treinamento por cliente vira linha) */
       var pagosL  = itens.filter(function(it){return it.status==='pago';});
       var negocL  = itens.filter(function(it){return it.status==='negociacao';});
       var entradaL = itens.filter(function(it){return it.status==='entrada';});
       var abertoL = itens.filter(function(it){return it.status==='aberto';});
-      /* Quebra de pagos por origem (turma vs avulso da Pipeline Comercial) */
-      var pagosTurma  = pagosL.filter(function(it){return it.src==='turma';});
-      var pagosAvulso = pagosL.filter(function(it){return it.src==='avulso';});
       function tbl(arr, vazio){
         if(!arr.length) return '<div class="fb-det-vazio">'+vazio+'</div>';
         return '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem detalhada</th><th>Status</th><th class="val">Valor</th></tr></thead><tbody>'
@@ -1429,22 +1425,52 @@
             }).join('')
           + '</tbody></table>';
       }
-      var notaOrigem = '<div style="font-size:11px;color:var(--muted);padding:8px 12px;background:var(--surface2);border-radius:6px;margin:8px 0 14px;line-height:1.55;">'
-        + '<b style="color:var(--text);">Origem dos pagos:</b> '
-        + '<span style="color:var(--blue);">'+pagosTurma.length+' de turma</span>'
-        + ' + <span style="color:#a78bfa;">'+pagosAvulso.length+' avulsa</span>'
-        + ' = <b style="color:var(--green);">'+pagosL.length+' total</b>'
-        + ' &nbsp;·&nbsp; vendas avulsas vêm de <code style="font-size:10px;">pipelineSales/'+(_metricasCache.mes||'')+'</code> (mesma fonte da aba Pipeline Comercial)'
+      /* ── 2 cards por origem: Turma e Avulsa ── */
+      function bgPorPct(pct){
+        if(pct >= 0.75) return {border:'rgba(52,211,153,.35)', bg:'rgba(52,211,153,.06)', cor:'var(--green)'};
+        if(pct >= 0.5)  return {border:'rgba(96,165,250,.35)', bg:'rgba(96,165,250,.06)', cor:'var(--blue)'};
+        if(pct >= 0.25) return {border:'rgba(255,183,64,.35)', bg:'rgba(255,183,64,.06)', cor:'var(--amber)'};
+        return            {border:'rgba(255,95,87,.35)',   bg:'rgba(255,95,87,.06)', cor:'var(--red)'};
+      }
+      function origemCard(titulo, ico, tag, src, itensOrig){
+        var totalO = itensOrig.length;
+        var pagoO  = itensOrig.filter(function(it){return it.status==='pago';}).length;
+        var negocO = itensOrig.filter(function(it){return it.status==='negociacao';}).length;
+        var entO   = itensOrig.filter(function(it){return it.status==='entrada';}).length;
+        var abertoO= itensOrig.filter(function(it){return it.status==='aberto';}).length;
+        var pctO   = totalO > 0 ? pagoO/totalO : 0;
+        var st     = bgPorPct(pctO);
+        var rPag   = itensOrig.filter(function(it){return it.status==='pago';}).reduce(function(s,it){return s+(+it.valor||0);},0);
+        return '<div style="background:'+st.bg+';border:1px solid '+st.border+';border-radius:10px;padding:14px;">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+          +   '<div style="font-size:13px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px;">'+ico+' '+titulo+' '+tag+'</div>'
+          +   '<div style="font-size:20px;font-weight:800;color:'+st.cor+';font-variant-numeric:tabular-nums;">'+(totalO>0?Math.round(pctO*100)+'%':'—')+'</div>'
+          + '</div>'
+          + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11px;text-align:center;">'
+          +   '<div><div style="color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">Total</div><div style="font-size:15px;font-weight:800;color:var(--text);">'+totalO+'</div></div>'
+          +   '<div><div style="color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">Pagos</div><div style="font-size:15px;font-weight:800;color:var(--green);">'+pagoO+'</div></div>'
+          +   '<div><div style="color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">Negoc.</div><div style="font-size:15px;font-weight:800;color:#ffe000;">'+negocO+'</div></div>'
+          +   '<div><div style="color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">Outros</div><div style="font-size:15px;font-weight:800;color:var(--muted);">'+(entO+abertoO)+'</div></div>'
+          + '</div>'
+          + (rPag>0?'<div style="margin-top:8px;font-size:11px;color:var(--muted);text-align:right;">R$ pago: <b style="color:'+st.cor+';">'+_fmtR(rPag)+'</b></div>':'')
+          + '</div>';
+      }
+      var itensTurma  = itens.filter(function(it){return it.src==='turma';});
+      var itensAvulso = itens.filter(function(it){return it.src==='avulso';});
+      var origemCards = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;">'
+        + origemCard('Turma',  '🏫', '<span class="fb-det-src-tag turma">TURMA</span>',   'turma',  itensTurma)
+        + origemCard('Avulsa', '📦', '<span class="fb-det-src-tag avulso">AVULSO</span>', 'avulso', itensAvulso)
         + '</div>';
-      /* Seções: ordem dinâmica — não-vazias primeiro, vazias por último.
-         Dentro de cada grupo, mantém a ordem natural (Pagos · Entrada · Negociação · Aberto). */
+      var notaFonte = '<div style="font-size:10px;color:var(--muted);padding:6px 10px;text-align:center;margin-bottom:14px;">'
+        + 'Vendas avulsas vêm de <code style="font-size:9px;">pipelineSales/'+(_metricasCache.mes||'')+'</code> (mesma fonte da aba Pipeline · Vendas)'
+        + '</div>';
+      /* Seções: ordem dinâmica — não-vazias primeiro, vazias por último. */
       var secoes = [
         { titulo:'✅ Pagos',         arr:pagosL,   vazio:'Nenhum cliente pago no mês.' },
         { titulo:'💵 Com entrada',   arr:entradaL, vazio:'Nenhum cliente com entrada parcial.' },
         { titulo:'🤝 Em negociação', arr:negocL,   vazio:'Nenhum cliente em negociação.' },
         { titulo:'📋 Em aberto',     arr:abertoL,  vazio:'🎉 Carteira inteira engajada.' }
       ];
-      /* sort estável: 0 vai pro fim */
       secoes.sort(function(a,b){
         var az = a.arr.length === 0 ? 1 : 0;
         var bz = b.arr.length === 0 ? 1 : 0;
@@ -1459,7 +1485,8 @@
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos</div><div class="fb-det-stat-val green">'+(m.pagos||0)+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Aproveitamento</div><div class="fb-det-stat-val blue">'+(m.pct!=null?Math.round(m.pct*100)+'%':'—')+'</div></div>'
         + '</div>'
-        + notaOrigem
+        + origemCards
+        + notaFonte
         + secoesHtml;
     }
 
