@@ -333,11 +333,19 @@
     var prospMedia = prospTime / nConsultores;
 
     var statusCount = function(arr, st){ return arr.filter(function(it){return (it.status||'')===st;}).length; };
+    /* "Não avançou" = aberto + desistiu + status vazio/'-'. Esses clientes
+       não saíram do início — pra Qualificação, contam como negativo. */
+    var naoAvancouSt = function(s){
+      var v = String(s||'').trim().toLowerCase();
+      return v === '' || v === '-' || v === 'aberto' || v === 'desistiu';
+    };
     var totalMeus = meus.length;
     var pagosMeus = statusCount(meus, 'pago');
     var negocMeus = statusCount(meus, 'negociacao');
-    var abertosMeus = statusCount(meus, 'aberto');
+    var abertosMeus = meus.filter(function(it){return naoAvancouSt(it.status);}).length;
     var entradaMeus = statusCount(meus, 'entrada');
+    var desistiuMeus = statusCount(meus, 'desistiu');
+    var semStatusMeus = meus.filter(function(it){var v=String(it.status||'').trim();return v==='' || v==='-';}).length;
 
     var pagosTime = statusCount(time, 'pago');
     var negocTime = statusCount(time, 'negociacao');
@@ -435,7 +443,7 @@
       mes: dados.mesAlvo,
       metricas: {
         prosp: { auto: prospScore, meu: prospMeus, media: +(prospMedia.toFixed(1)) },
-        qual:  { auto: qualScore,  pago: pagosMeus, negoc: negocMeus, aberto: abertosMeus, total: totalMeus, pct: qualPct },
+        qual:  { auto: qualScore,  pago: pagosMeus, negoc: negocMeus, aberto: abertosMeus, total: totalMeus, pct: qualPct, desistiu: desistiuMeus, semStatus: semStatusMeus },
         apres: { auto: null }, /* manual */
         neg:   { auto: negScore,   convMeu: convMeu, convTime: convTime, ticketMeu: ticketMeu, ticketTime: ticketTime, pagos: pagosMeus, negoc: negocMeus, entrada: entradaMeus },
         fup:   { auto: fupScore,   parados: negParados, totalNeg: negocMeus },
@@ -525,10 +533,14 @@
     }
     if(key==='qual'){
       var pct = d.pct!=null ? (d.pct*100).toFixed(0)+'%' : '—';
+      var det = '';
+      if(d.desistiu) det += '   — destes, '+d.desistiu+' "desistiu"\n';
+      if(d.semStatus) det += '   — destes, '+d.semStatus+' sem status definido ("-")\n';
       return cab
         + '• Total clientes do consultor: '+d.total+'\n'
-        + '• Em aberto (não avançaram): '+d.aberto+'\n'
-        + '• Avançaram (negoc/pago/entrada): '+(d.total-d.aberto)+' ('+pct+')\n'
+        + '• Não avançaram (aberto + desistiu + "-"): '+d.aberto+'\n'
+        + det
+        + '• Avançaram (negoc/entrada/pago): '+(d.total-d.aberto)+' ('+pct+')\n'
         + '• Score = round(% avançado × 10)\n\n'
         + 'Sinal: '+(d.auto>=8?'qualifica bem, carteira viva':d.auto>=6?'qualifica médio':'carteira está parada — risco de leads esquecidos');
     }
@@ -1125,28 +1137,43 @@
 
     /* ── Qualificação ── */
     if(key === 'qual'){
-      var unq2 = {};
-      itens.forEach(function(it){
-        if(!unq2[it.cliente]) unq2[it.cliente] = it;
-        /* prioriza status mais avançado */
-        var ordem = {aberto:0, negociacao:1, entrada:2, pago:3};
-        if((ordem[it.status]||0) > (ordem[unq2[it.cliente].status]||0)) unq2[it.cliente] = it;
-      });
-      var lista = Object.values(unq2);
+      /* "Não avançou" engloba aberto + desistiu + sem status */
+      function isNaoAvancou(st){
+        var v = String(st||'').trim().toLowerCase();
+        return v==='' || v==='-' || v==='aberto' || v==='desistiu';
+      }
+      var avancados = itens.filter(function(it){return !isNaoAvancou(it.status);});
+      var naoAvancou = itens.filter(function(it){return isNaoAvancou(it.status);});
+      function tblQual(arr, vazio){
+        if(!arr.length) return '<div class="fb-det-vazio">'+vazio+'</div>';
+        return '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Status</th><th>Origem</th><th class="val">Valor</th></tr></thead><tbody>'
+          + arr.map(function(it){
+              var stTxt = String(it.status||'').trim();
+              if(!stTxt || stTxt==='-') stTxt = '— sem status';
+              return '<tr>'
+                + '<td class="nome">'+it.cliente+'</td>'
+                + '<td>'+(it.treinamento||'—')+'</td>'
+                + '<td>'+_stTag(it.status||'aberto')+(stTxt==='— sem status'?' <span style="font-size:10px;color:var(--muted);">'+stTxt+'</span>':'')+'</td>'
+                + '<td>'+_srcTag(it.src, it.srcNome)+' <span style="font-size:11px;color:var(--muted);margin-left:4px;">'+_srcDescr(it)+'</span></td>'
+                + '<td class="val">'+_fmtR(it.valor)+'</td>'
+              + '</tr>';
+            }).join('')
+          + '</tbody></table>';
+      }
       return formulaHtml
         + '<div class="fb-det-stats">'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Total clientes</div><div class="fb-det-stat-val">'+m.total+'</div></div>'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Em aberto</div><div class="fb-det-stat-val red">'+m.aberto+'</div></div>'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Avançados</div><div class="fb-det-stat-val green">'+(m.total-m.aberto)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Não avançou</div><div class="fb-det-stat-val red">'+m.aberto+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">— em aberto</div><div class="fb-det-stat-val">'+(m.aberto - (m.desistiu||0) - (m.semStatus||0))+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">— desistiu</div><div class="fb-det-stat-val">'+(m.desistiu||0)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">— sem status (-)</div><div class="fb-det-stat-val">'+(m.semStatus||0)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Avançaram</div><div class="fb-det-stat-val green">'+(m.total-m.aberto)+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">% avançado</div><div class="fb-det-stat-val blue">'+(m.pct!=null?Math.round(m.pct*100)+'%':'—')+'</div></div>'
         + '</div>'
-        + '<div class="fb-det-secao-h">📋 Todos os clientes do consultor no mês</div>'
-        + (lista.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Status</th><th>Origem</th><th class="val">Valor</th></tr></thead><tbody>'
-            + lista.sort(function(a,b){return (a.status==='aberto'?1:0)-(b.status==='aberto'?1:0);}).map(function(it){
-                return '<tr><td class="nome">'+it.cliente+'</td><td>'+_stTag(it.status)+'</td><td>'+_srcTag(it.src, it.srcNome)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
-              }).join('')
-            + '</tbody></table>'
-          : '<div class="fb-det-vazio">Sem clientes neste mês.</div>');
+        + '<div class="fb-det-secao-h">✅ Avançaram ('+avancados.length+')</div>'
+        + tblQual(avancados, 'Nenhum cliente avançou.')
+        + '<div class="fb-det-secao-h">⏳ Não avançaram — aberto · desistiu · sem status ('+naoAvancou.length+')</div>'
+        + tblQual(naoAvancou, '🎉 Carteira inteira engajada.');
     }
 
     /* ── Negociação ── */
