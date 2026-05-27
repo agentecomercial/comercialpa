@@ -1273,9 +1273,12 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .fb-ciclo-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3);}
 
 /* ── Alertas estratégicos + Pareto (Fase 6) ── */
-.ic-alertas-box{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px;margin:0 0 18px;}
+.ic-alertas-box{display:flex;flex-wrap:nowrap;gap:10px;margin:0 0 18px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+.ic-alertas-box::-webkit-scrollbar{height:6px;}
+.ic-alertas-box::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.ic-alertas-box::-webkit-scrollbar-track{background:transparent;}
 .ic-alertas-box:empty{margin:0;}
-.ic-alerta{background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--muted);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;transition:transform .12s, box-shadow .12s;}
+.ic-alerta{flex:0 0 320px;background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--muted);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;transition:transform .12s, box-shadow .12s;}
 .ic-alerta:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2);}
 .ic-alerta.critico{border-left-color:var(--red);background:rgba(255,95,87,.05);}
 .ic-alerta.atencao{border-left-color:var(--amber);background:rgba(255,183,64,.05);}
