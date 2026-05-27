@@ -1176,6 +1176,22 @@
     var m = document.getElementById('fbDetModal');
     if(m) m.classList.remove('show');
   };
+  /* Aproveitamento: alterna a inclusão de uma origem (turma/avulso) */
+  window._fbAprToggleSrc = function(src){
+    if(!window._fbAprSrcs || !window._fbAprSrcs.size){
+      window._fbAprSrcs = new Set(['turma','avulso']);
+    }
+    var s = window._fbAprSrcs;
+    if(s.has(src)){
+      s.delete(src);
+      /* Nunca permite ficar sem nenhum — reseta pra ambos */
+      if(s.size === 0){ s.add('turma'); s.add('avulso'); }
+    } else {
+      s.add(src);
+    }
+    if(typeof window._fbDetAbrir === 'function') window._fbDetAbrir('apr');
+  };
+
   /* Troca o filtro retroativo de Recuperação (Visão) e re-renderiza o modal */
   window._fbVisSetRetro = function(meses){
     window._icFbVisRetroMeses = +meses || 0;
@@ -1407,10 +1423,28 @@
 
     /* ── Aproveitamento ── */
     if(key === 'apr'){
-      var pagosL  = itens.filter(function(it){return it.status==='pago';});
-      var negocL  = itens.filter(function(it){return it.status==='negociacao';});
-      var entradaL = itens.filter(function(it){return it.status==='entrada';});
-      var abertoL = itens.filter(function(it){return it.status==='aberto';});
+      /* Estado do filtro de origem (Turma/Avulsa) — toggle independente.
+         Default: ambos ativos. Nunca permite ficar com nenhum (reseta). */
+      if(!window._fbAprSrcs || !window._fbAprSrcs.size){
+        window._fbAprSrcs = new Set(['turma','avulso']);
+      }
+      var srcs = window._fbAprSrcs;
+      var ativoT = srcs.has('turma');
+      var ativoA = srcs.has('avulso');
+      function _fItens(arr){ return arr.filter(function(it){return srcs.has(it.src);}); }
+      /* Listas FILTRADAS conforme cards clicados */
+      var itensF   = _fItens(itens);
+      var pagosL   = itens.filter(function(it){return it.status==='pago';});
+      var pagosLF  = _fItens(pagosL);
+      var pagosTurma  = pagosL.filter(function(it){return it.src==='turma';});
+      var pagosAvulso = pagosL.filter(function(it){return it.src==='avulso';});
+      var negocLF   = _fItens(itens.filter(function(it){return it.status==='negociacao';}));
+      var entradaLF = _fItens(itens.filter(function(it){return it.status==='entrada';}));
+      var abertoLF  = _fItens(itens.filter(function(it){return it.status==='aberto';}));
+      /* KPIs do topo recalculados conforme filtro ativo */
+      var totalF = itensF.length;
+      var pagosFCount = pagosLF.length;
+      var pctF = totalF > 0 ? pagosFCount/totalF : null;
       function tbl(arr, vazio){
         if(!arr.length) return '<div class="fb-det-vazio">'+vazio+'</div>';
         return '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem detalhada</th><th>Status</th><th class="val">Valor</th></tr></thead><tbody>'
@@ -1425,14 +1459,14 @@
             }).join('')
           + '</tbody></table>';
       }
-      /* ── 2 cards por origem: Turma e Avulsa ── */
+      /* Cards clicáveis: cada um isola/inclui sua origem */
       function bgPorPct(pct){
         if(pct >= 0.75) return {border:'rgba(52,211,153,.35)', bg:'rgba(52,211,153,.06)', cor:'var(--green)'};
         if(pct >= 0.5)  return {border:'rgba(96,165,250,.35)', bg:'rgba(96,165,250,.06)', cor:'var(--blue)'};
         if(pct >= 0.25) return {border:'rgba(255,183,64,.35)', bg:'rgba(255,183,64,.06)', cor:'var(--amber)'};
         return            {border:'rgba(255,95,87,.35)',   bg:'rgba(255,95,87,.06)', cor:'var(--red)'};
       }
-      function origemCard(titulo, ico, tag, src, itensOrig){
+      function origemCard(titulo, ico, tag, src, itensOrig, ativo){
         var totalO = itensOrig.length;
         var pagoO  = itensOrig.filter(function(it){return it.status==='pago';}).length;
         var negocO = itensOrig.filter(function(it){return it.status==='negociacao';}).length;
@@ -1441,9 +1475,14 @@
         var pctO   = totalO > 0 ? pagoO/totalO : 0;
         var st     = bgPorPct(pctO);
         var rPag   = itensOrig.filter(function(it){return it.status==='pago';}).reduce(function(s,it){return s+(+it.valor||0);},0);
-        return '<div style="background:'+st.bg+';border:1px solid '+st.border+';border-radius:10px;padding:14px;">'
+        var dim    = ativo ? '' : 'opacity:.45;filter:grayscale(.6);';
+        var checkSel = ativo ? '<span style="font-size:11px;color:'+st.cor+';margin-left:6px;font-weight:800;">✓</span>' : '';
+        return '<div onclick="_fbAprToggleSrc(\''+src+'\')" title="Clique para isolar/incluir esta origem" '
+          + 'style="background:'+st.bg+';border:1px solid '+st.border+';border-radius:10px;padding:14px;cursor:pointer;transition:all .15s;'+dim+'" '
+          + 'onmouseover="this.style.transform=\'translateY(-1px)\';this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.2)\';" '
+          + 'onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\';">'
           + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
-          +   '<div style="font-size:13px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px;">'+ico+' '+titulo+' '+tag+'</div>'
+          +   '<div style="font-size:13px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px;">'+ico+' '+titulo+' '+tag+checkSel+'</div>'
           +   '<div style="font-size:20px;font-weight:800;color:'+st.cor+';font-variant-numeric:tabular-nums;">'+(totalO>0?Math.round(pctO*100)+'%':'—')+'</div>'
           + '</div>'
           + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11px;text-align:center;">'
@@ -1458,36 +1497,51 @@
       var itensTurma  = itens.filter(function(it){return it.src==='turma';});
       var itensAvulso = itens.filter(function(it){return it.src==='avulso';});
       var origemCards = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;">'
-        + origemCard('Turma',  '🏫', '<span class="fb-det-src-tag turma">TURMA</span>',   'turma',  itensTurma)
-        + origemCard('Avulsa', '📦', '<span class="fb-det-src-tag avulso">AVULSO</span>', 'avulso', itensAvulso)
+        + origemCard('Turma',  '🏫', '<span class="fb-det-src-tag turma">TURMA</span>',   'turma',  itensTurma,  ativoT)
+        + origemCard('Avulsa', '📦', '<span class="fb-det-src-tag avulso">AVULSO</span>', 'avulso', itensAvulso, ativoA)
         + '</div>';
+      var dicaFiltro = (ativoT && ativoA)
+        ? 'Cards mostram totais por origem. Clique pra isolar (ex: só Turma).'
+        : ('Filtrado: <b style="color:var(--accent);">só '+(ativoT?'TURMA':'AVULSA')+'</b>. Clique no card desligado pra incluir os dois novamente.');
       var notaFonte = '<div style="font-size:10px;color:var(--muted);padding:6px 10px;text-align:center;margin-bottom:14px;">'
-        + 'Vendas avulsas vêm de <code style="font-size:9px;">pipelineSales/'+(_metricasCache.mes||'')+'</code> (mesma fonte da aba Pipeline · Vendas)'
+        + dicaFiltro
+        + ' &nbsp;·&nbsp; Vendas avulsas vêm de <code style="font-size:9px;">pipelineSales/'+(_metricasCache.mes||'')+'</code>'
         + '</div>';
-      /* Seções: ordem dinâmica — não-vazias primeiro, vazias por último. */
-      var secoes = [
-        { titulo:'✅ Pagos',         arr:pagosL,   vazio:'Nenhum cliente pago no mês.' },
-        { titulo:'💵 Com entrada',   arr:entradaL, vazio:'Nenhum cliente com entrada parcial.' },
-        { titulo:'🤝 Em negociação', arr:negocL,   vazio:'Nenhum cliente em negociação.' },
-        { titulo:'📋 Em aberto',     arr:abertoL,  vazio:'🎉 Carteira inteira engajada.' }
+      /* Seção PAGOS com 3 partes — quando ambos ativos. Quando filtrado, mostra só a relevante. */
+      var pagosHtml = '';
+      if(ativoT && ativoA){
+        pagosHtml = '<div class="fb-det-secao-h">✅ Pagos ('+pagosL.length+')</div>' + tbl(pagosL, 'Nenhum cliente pago no mês.')
+          + '<div class="fb-det-secao-h">🏫 Pagos Turma ('+pagosTurma.length+')</div>' + tbl(pagosTurma, 'Nenhum pago de turma no mês.')
+          + '<div class="fb-det-secao-h">📦 Pagos Avulso ('+pagosAvulso.length+')</div>' + tbl(pagosAvulso, 'Nenhum pago avulso no mês.');
+      } else if(ativoT){
+        pagosHtml = '<div class="fb-det-secao-h">🏫 Pagos Turma ('+pagosTurma.length+')</div>' + tbl(pagosTurma, 'Nenhum pago de turma no mês.');
+      } else {
+        pagosHtml = '<div class="fb-det-secao-h">📦 Pagos Avulso ('+pagosAvulso.length+')</div>' + tbl(pagosAvulso, 'Nenhum pago avulso no mês.');
+      }
+      /* Outras seções de status: filtradas, ordem dinâmica (vazias por último) */
+      var outrasSecoes = [
+        { titulo:'💵 Com entrada',   arr:entradaLF, vazio:'Nenhum cliente com entrada parcial.' },
+        { titulo:'🤝 Em negociação', arr:negocLF,   vazio:'Nenhum cliente em negociação.' },
+        { titulo:'📋 Em aberto',     arr:abertoLF,  vazio:'🎉 Carteira inteira engajada.' }
       ];
-      secoes.sort(function(a,b){
+      outrasSecoes.sort(function(a,b){
         var az = a.arr.length === 0 ? 1 : 0;
         var bz = b.arr.length === 0 ? 1 : 0;
         return az - bz;
       });
-      var secoesHtml = secoes.map(function(s){
+      var outrasHtml = outrasSecoes.map(function(s){
         return '<div class="fb-det-secao-h">'+s.titulo+' ('+s.arr.length+')</div>' + tbl(s.arr, s.vazio);
       }).join('');
       return formulaHtml
         + '<div class="fb-det-stats">'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Total carteira</div><div class="fb-det-stat-val">'+(m.total||0)+'</div></div>'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos</div><div class="fb-det-stat-val green">'+(m.pagos||0)+'</div></div>'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Aproveitamento</div><div class="fb-det-stat-val blue">'+(m.pct!=null?Math.round(m.pct*100)+'%':'—')+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Total carteira</div><div class="fb-det-stat-val">'+totalF+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos</div><div class="fb-det-stat-val green">'+pagosFCount+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Aproveitamento</div><div class="fb-det-stat-val blue">'+(pctF!=null?Math.round(pctF*100)+'%':'—')+'</div></div>'
         + '</div>'
         + origemCards
         + notaFonte
-        + secoesHtml;
+        + pagosHtml
+        + outrasHtml;
     }
 
     /* ── Visão (Oportunidades) ── */
