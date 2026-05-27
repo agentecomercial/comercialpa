@@ -42,12 +42,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .section-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:24px 0 10px;}
 
 /* ── ALERTAS (copia exata do main.css) ───────────────── */
-.ic-alertas-box{display:flex;flex-wrap:nowrap;gap:10px;margin-bottom:18px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
-.ic-alertas-box::-webkit-scrollbar{height:6px;}
-.ic-alertas-box::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
-.ic-alertas-box::-webkit-scrollbar-track{background:transparent;}
+.ic-alertas-box{display:flex;flex-wrap:nowrap;gap:10px;margin-bottom:18px;align-items:stretch;}
 .ic-alerta{
-  flex:0 0 320px;
+  flex:1 1 0;min-width:0;
   background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--muted);
   border-radius:var(--radius-sm);padding:12px 14px;display:flex;flex-direction:column;gap:6px;transition:transform .12s;
 }
