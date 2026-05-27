@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260526-224507">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260526-224507">
+<link rel="stylesheet" href="assets/css/main.css?v=20260526-231600">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260526-231600">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260526-224507">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260526-231600">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1911,6 +1911,7 @@
     <div class="ic-tabs" id="icTabs">
       <button class="ic-tab active" data-icpane="dashboard" onclick="_icShowPane('dashboard')">📊 Dashboard</button>
       <button class="ic-tab" data-icpane="desenvolvimento" onclick="_icShowPane('desenvolvimento')">📈 Desenvolvimento</button>
+      <button class="ic-tab" data-icpane="pdi" onclick="_icShowPane('pdi')">🌱 PDI</button>
     </div>
 
     <!-- PANE: DASHBOARD (conteúdo original do Mapeamento) -->
@@ -2061,6 +2062,84 @@
       </div>
     </div>
     <!-- /PANE: DESENVOLVIMENTO -->
+
+    <!-- PANE: PDI (Plano de Desenvolvimento Individual · Fase 4) -->
+    <div class="ic-pane" data-icpane="pdi">
+      <div class="pdi-header" style="padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px;">
+        <div>
+          <div class="pdi-title">🌱 PDI · Plano de Desenvolvimento Individual <small>· trimestral</small></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px;">3 competências-alvo escolhidas com base nos últimos ciclos de Feedback. Cada uma com nível atual, nível alvo, ações e treinamentos vinculados.</div>
+        </div>
+        <div class="pdi-controls">
+          <div class="pdi-control">
+            <label>Consultor</label>
+            <select id="pdiConsultor" class="modal-select" style="padding:7px 11px;font-size:12px;min-width:200px;"></select>
+          </div>
+          <div class="pdi-control">
+            <label>Trimestre</label>
+            <select id="pdiTrimestre" class="modal-select" style="padding:7px 11px;font-size:12px;"></select>
+          </div>
+          <div class="pdi-statusbar iniciado" id="pdiStatusBar">⚙ Não iniciado</div>
+        </div>
+      </div>
+
+      <div class="pdi-layout">
+        <div class="pdi-main">
+          <!-- DIAGNÓSTICO -->
+          <div class="pdi-card">
+            <div class="pdi-card-h">
+              <h3>🔍 Diagnóstico — competências sugeridas para o trimestre</h3>
+              <span class="badge">média dos últimos 3 ciclos de feedback</span>
+            </div>
+            <div class="pdi-diag" id="pdiDiagList">
+              <div style="font-size:11px;color:var(--muted);text-align:center;padding:14px;grid-column:1/-1;">Selecione um consultor para ver as sugestões.</div>
+            </div>
+          </div>
+
+          <!-- COMPETÊNCIAS-ALVO -->
+          <div class="pdi-card">
+            <div class="pdi-card-h">
+              <h3>🎯 Competências-alvo (até 3)</h3>
+              <span class="badge"><span id="pdiAlvoCount">0</span>/3 selecionadas</span>
+            </div>
+            <div id="pdiAlvosList"></div>
+          </div>
+
+          <!-- FOOTER -->
+          <div class="pdi-footer">
+            <div class="pdi-stats">
+              <span id="pdiFootStats">0/3 competências definidas · 0 ações</span>
+            </div>
+            <div class="pdi-actions">
+              <button class="pdi-btn ghost" onclick="_pdiSalvarRascunho()">Salvar rascunho</button>
+              <button class="pdi-btn primary" onclick="_pdiIniciar()">Iniciar PDI · enviar ao consultor</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="pdi-side">
+          <div class="pdi-side-card">
+            <div class="pdi-side-h">📚 Escala de níveis (1–5)</div>
+            <div style="font-size:11px;line-height:1.7;color:var(--text);">
+              <div><b style="color:var(--red);">1 · Iniciante</b> — precisa supervisão constante</div>
+              <div><b style="color:var(--amber);">2 · Básico</b> — executa com ajuda esporádica</div>
+              <div><b style="color:#ffe000;">3 · Intermediário</b> — executa sozinho com qualidade</div>
+              <div><b style="color:var(--blue);">4 · Proficiente</b> — referência do time</div>
+              <div><b style="color:var(--accent);">5 · Mestre</b> — ensina/mentora outros</div>
+            </div>
+          </div>
+          <div class="pdi-side-card">
+            <div class="pdi-side-h">🕒 Histórico de PDIs</div>
+            <div class="pdi-hist" id="pdiHist"><div style="font-size:11px;color:var(--muted);text-align:center;padding:14px;">Sem PDIs anteriores.</div></div>
+          </div>
+          <div class="pdi-side-card">
+            <div class="pdi-side-h">👥 Comparativo com o time</div>
+            <div id="pdiComparativo" style="font-size:11px;line-height:1.7;color:var(--text);">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /PANE: PDI -->
 
   </div>
 </div>
@@ -2539,7 +2618,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260526-224507"></script>
+<script defer src="assets/js/00-utils.js?v=20260526-231600"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2633,30 +2712,31 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260526-224507"></script>
-<script defer src="assets/js/29-login.js?v=20260526-224507"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260526-224507"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260526-224507"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260526-224507"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260526-224507"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260526-224507"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260526-224507"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260526-224507"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260526-224507"></script>
-<script defer src="assets/js/40-ic-feedback.js?v=20260526-224507"></script>
-<script defer src="assets/js/99-diag.js?v=20260526-224507"></script>
-<script defer src="assets/js/21-turmas.js?v=20260526-224507"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260526-224507"></script>
+<script defer src="assets/js/02-main.js?v=20260526-231600"></script>
+<script defer src="assets/js/29-login.js?v=20260526-231600"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260526-231600"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260526-231600"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260526-231600"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260526-231600"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260526-231600"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260526-231600"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260526-231600"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260526-231600"></script>
+<script defer src="assets/js/40-ic-feedback.js?v=20260526-231600"></script>
+<script defer src="assets/js/41-ic-pdi.js?v=20260526-231600"></script>
+<script defer src="assets/js/99-diag.js?v=20260526-231600"></script>
+<script defer src="assets/js/21-turmas.js?v=20260526-231600"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260526-231600"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260526-224507"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260526-224507"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260526-224507"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260526-224507"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260526-224507"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260526-224507"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260526-231600"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260526-231600"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260526-231600"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260526-231600"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260526-231600"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260526-231600"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260526-224507"></script>
-<script defer src="assets/js/17-presenca.js?v=20260526-224507"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260526-231600"></script>
+<script defer src="assets/js/17-presenca.js?v=20260526-231600"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2668,20 +2748,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260526-224507">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260526-231600">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260526-224507"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260526-231600"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260526-224507"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260526-224507"></script>
+<script defer src="assets/js/05-importacao.js?v=20260526-231600"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260526-231600"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260526-224507">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260526-231600">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260526-224507"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260526-231600"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2717,7 +2797,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260526-224507"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260526-231600"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2742,14 +2822,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260526-224507"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260526-224507"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260526-224507"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260526-224507"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260526-224507"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260526-224507"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260526-224507"></script>
-<script defer src="assets/js/08-realtime.js?v=20260526-224507"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260526-231600"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260526-231600"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260526-231600"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260526-231600"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260526-231600"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260526-231600"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260526-231600"></script>
+<script defer src="assets/js/08-realtime.js?v=20260526-231600"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2782,7 +2862,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260526-224507"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260526-231600"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -3339,16 +3419,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260526-224507"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260526-231600"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260526-224507"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260526-231600"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260526-224507"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260526-231600"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260526-224507"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260526-231600"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">

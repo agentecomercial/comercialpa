@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Preview · Inteligência Comercial — PDI (Fase 4)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;
+  --surface:#1a1a1a;
+  --surface2:#222;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --text:#f0f0f0;
+  --muted:#888;
+  --accent:#c8f05a;
+  --green:#34d399;
+  --amber:#ffb740;
+  --red:#ff5f57;
+  --blue:#60a5fa;
+  --purple:#a78bfa;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px;}
+
+/* ── Header ── */
+.pdi-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.pdi-title{font-size:18px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;}
+.pdi-title small{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-left:4px;}
+.pdi-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.pdi-control{display:flex;flex-direction:column;gap:4px;}
+.pdi-control label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.pdi-control select,.pdi-control input{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  border-radius:6px;padding:7px 11px;font-size:12px;font-weight:600;font-family:inherit;outline:none;
+}
+.pdi-statusbar{
+  display:flex;align-items:center;gap:10px;margin-left:auto;
+  padding:6px 14px;background:rgba(96,165,250,.10);border:1px solid rgba(96,165,250,.3);border-radius:8px;
+  font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;
+}
+.pdi-statusbar.iniciado{background:rgba(255,238,0,.08);border-color:rgba(255,238,0,.3);color:#ffe000;}
+.pdi-statusbar.concluido{background:rgba(52,211,153,.10);border-color:rgba(52,211,153,.3);color:var(--green);}
+
+/* ── Layout ── */
+.pdi-layout{display:grid;grid-template-columns:1fr 320px;gap:20px;}
+@media(max-width:1100px){.pdi-layout{grid-template-columns:1fr;}}
+
+.pdi-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:18px;margin-bottom:14px;}
+.pdi-card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.pdi-card-h h3{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.pdi-card-h .badge{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+
+/* ── Diagnóstico ── */
+.pdi-diag{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;}
+.pdi-diag-card{
+  background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;display:flex;flex-direction:column;gap:6px;
+}
+.pdi-diag-top{display:flex;align-items:center;justify-content:space-between;}
+.pdi-diag-lbl{font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;}
+.pdi-diag-score{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+.pdi-diag-score.bad{color:var(--red);}
+.pdi-diag-score.warn{color:var(--amber);}
+.pdi-diag-score.ok{color:var(--accent);}
+.pdi-diag-info{font-size:10px;color:var(--muted);line-height:1.4;}
+.pdi-diag-btn{
+  background:rgba(200,240,90,.10);border:1px dashed rgba(200,240,90,.40);
+  color:var(--accent);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;transition:all .12s;margin-top:4px;
+}
+.pdi-diag-btn:hover{background:rgba(200,240,90,.20);border-style:solid;}
+.pdi-diag-btn.added{background:var(--surface);border-color:var(--border);color:var(--muted);cursor:not-allowed;border-style:solid;}
+
+/* ── Competência alvo ── */
+.pdi-alvo{
+  background:var(--surface);border:1px solid var(--border2);border-radius:12px;
+  padding:18px;margin-bottom:12px;position:relative;
+}
+.pdi-alvo.in-andamento{border-left:3px solid #ffe000;}
+.pdi-alvo.atingido{border-left:3px solid var(--green);}
+.pdi-alvo.parcial{border-left:3px solid var(--amber);}
+.pdi-alvo.nao-atingido{border-left:3px solid var(--red);}
+.pdi-alvo-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.pdi-alvo-titulo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--text);}
+.pdi-alvo-acoes{display:flex;align-items:center;gap:8px;}
+.pdi-alvo-status{
+  font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+  padding:3px 8px;border-radius:10px;
+}
+.pdi-alvo-status.iniciar{background:var(--surface2);color:var(--muted);}
+.pdi-alvo-status.andamento{background:rgba(255,238,0,.14);color:#ffe000;}
+.pdi-alvo-status.atingido{background:rgba(52,211,153,.14);color:var(--green);}
+.pdi-alvo-status.parcial{background:rgba(255,183,64,.14);color:var(--amber);}
+.pdi-alvo-status.naoatingido{background:rgba(255,95,87,.14);color:var(--red);}
+.pdi-alvo-rm{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;}
+.pdi-alvo-rm:hover{color:var(--red);}
+
+.pdi-nivel-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.pdi-nivel-card{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;
+}
+.pdi-nivel-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;justify-content:space-between;}
+.pdi-nivel-lbl small{font-weight:500;color:var(--muted);}
+.pdi-niveis{display:flex;gap:5px;}
+.pdi-nivel-dot{
+  width:28px;height:28px;border-radius:50%;
+  border:1.5px solid var(--border2);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;color:var(--muted);cursor:pointer;transition:all .12s;
+  font-family:inherit;
+}
+.pdi-nivel-dot:hover{border-color:var(--accent);color:var(--accent);}
+.pdi-nivel-dot.fill{background:var(--blue);border-color:var(--blue);color:#fff;}
+.pdi-nivel-dot.target{background:var(--accent);border-color:var(--accent);color:#0f0f0f;}
+.pdi-nivel-desc{font-size:11px;color:var(--text);margin-top:6px;line-height:1.45;min-height:32px;}
+
+/* Treinamentos vinculados */
+.pdi-trein-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.pdi-trein-chip{
+  background:var(--surface2);border:1px solid var(--border);color:var(--muted);
+  font-size:10px;font-weight:700;padding:4px 9px;border-radius:12px;cursor:pointer;
+  font-family:inherit;letter-spacing:.04em;transition:all .12s;
+}
+.pdi-trein-chip:hover{border-color:var(--accent);color:var(--accent);}
+.pdi-trein-chip.selected{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+.pdi-trein-chip.sugerido::before{content:'⭐ ';font-size:9px;}
+
+/* Ações da competência */
+.pdi-acoes{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.pdi-acao{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;
+}
+.pdi-acao input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;}
+.pdi-acao input[type=text]{flex:1;background:none;border:none;color:var(--text);font-size:12px;outline:none;font-family:inherit;}
+.pdi-acao .rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;}
+.pdi-acao .rm:hover{color:var(--red);}
+.pdi-acao-add{
+  background:none;border:1px dashed var(--border2);color:var(--muted);
+  border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:inherit;text-align:left;
+}
+.pdi-acao-add:hover{border-color:var(--accent);color:var(--accent);}
+
+/* Footer de competência */
+.pdi-alvo-foot{
+  display:grid;grid-template-columns:160px 1fr;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);
+  align-items:end;
+}
+.pdi-foot-col{display:flex;flex-direction:column;gap:4px;}
+.pdi-foot-col label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+.pdi-foot-col input,.pdi-foot-col textarea{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;outline:none;
+}
+.pdi-foot-col textarea{resize:vertical;min-height:48px;line-height:1.45;}
+
+/* Slot vazio (sugere adicionar mais) */
+.pdi-alvo-vazio{
+  background:transparent;border:2px dashed var(--border2);border-radius:12px;
+  padding:24px;margin-bottom:12px;text-align:center;color:var(--muted);font-size:12px;
+}
+.pdi-alvo-vazio b{color:var(--text);}
+
+/* ── Lateral ── */
+.pdi-side{display:flex;flex-direction:column;gap:14px;}
+.pdi-side-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:16px;}
+.pdi-side-h{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
+
+.pdi-hist{display:flex;flex-direction:column;gap:8px;}
+.pdi-hist-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .12s;}
+.pdi-hist-item:hover{border-color:var(--accent);}
+.pdi-hist-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.pdi-hist-trim{font-size:11px;color:var(--text);font-weight:700;}
+.pdi-hist-pct{font-size:11px;font-weight:800;font-variant-numeric:tabular-nums;}
+.pdi-hist-pct.good{color:var(--green);}
+.pdi-hist-pct.mid{color:var(--amber);}
+.pdi-hist-pct.bad{color:var(--red);}
+.pdi-hist-bar{height:5px;background:var(--surface);border-radius:3px;overflow:hidden;}
+.pdi-hist-bar-fill{height:100%;}
+.pdi-hist-comps{font-size:9px;color:var(--muted);margin-top:5px;}
+
+/* Footer de ações */
+.pdi-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:18px;padding-top:14px;border-top:1px solid var(--border);
+  flex-wrap:wrap;gap:10px;
+}
+.pdi-stats{font-size:11px;color:var(--muted);font-weight:600;}
+.pdi-stats b{color:var(--text);}
+.pdi-actions{display:flex;gap:8px;}
+.pdi-btn{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  font-size:12px;font-weight:700;padding:9px 16px;border-radius:6px;cursor:pointer;
+  font-family:inherit;transition:all .12s;text-transform:uppercase;letter-spacing:.04em;
+}
+.pdi-btn.ghost{color:var(--muted);}
+.pdi-btn.ghost:hover{color:var(--text);}
+.pdi-btn.primary{background:var(--accent);color:#0f0f0f;border-color:var(--accent);}
+.pdi-btn.primary:hover{filter:brightness(1.06);}
+
+/* Nota explicativa */
+.pdi-note{background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.2);border-radius:8px;padding:12px 14px;font-size:11px;line-height:1.55;color:var(--text);margin-top:20px;}
+.pdi-note b{color:var(--blue);}
+.pdi-note ul{margin:6px 0 0 16px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="pdi-header">
+  <div>
+    <div class="pdi-title">🌱 PDI · Plano de Desenvolvimento Individual <small>· trimestral</small></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:6px;">3 competências-alvo escolhidas com base nos últimos ciclos de Feedback. Cada uma com nível atual, nível alvo, ações e treinamentos.</div>
+  </div>
+  <div class="pdi-controls">
+    <div class="pdi-control">
+      <label>Consultor</label>
+      <select id="selCons">
+        <option>DARLEY SANTOS</option>
+        <option>DANIEL MOURA</option>
+        <option>JULIANA FABRICIA</option>
+        <option>CARLOS BONFIM</option>
+      </select>
+    </div>
+    <div class="pdi-control">
+      <label>Trimestre</label>
+      <select id="selTrim">
+        <option>Q1 / 2026 (Jan–Mar)</option>
+        <option selected>Q2 / 2026 (Abr–Jun)</option>
+        <option>Q3 / 2026 (Jul–Set)</option>
+        <option>Q4 / 2026 (Out–Dez)</option>
+      </select>
+    </div>
+    <div class="pdi-statusbar iniciado">⚙ Em andamento</div>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="pdi-layout">
+  <div class="pdi-main">
+
+    <!-- DIAGNÓSTICO -->
+    <div class="pdi-card">
+      <div class="pdi-card-h">
+        <h3>🔍 Diagnóstico — competências sugeridas para o trimestre</h3>
+        <span class="badge">média dos últimos 3 ciclos de feedback</span>
+      </div>
+      <div class="pdi-diag" id="diagList"></div>
+    </div>
+
+    <!-- COMPETÊNCIAS-ALVO -->
+    <div class="pdi-card">
+      <div class="pdi-card-h">
+        <h3>🎯 Competências-alvo (até 3)</h3>
+        <span class="badge"><span id="alvoCount">0</span>/3 selecionadas</span>
+      </div>
+      <div id="alvosList"></div>
+    </div>
+  </div>
+
+  <!-- LATERAL -->
+  <div class="pdi-side">
+    <div class="pdi-side-card">
+      <div class="pdi-side-h">📚 Escala de níveis (1–5)</div>
+      <div style="font-size:11px;line-height:1.7;color:var(--text);">
+        <div><b style="color:var(--red);">1 · Iniciante</b> — precisa supervisão constante</div>
+        <div><b style="color:var(--amber);">2 · Básico</b> — executa com ajuda esporádica</div>
+        <div><b style="color:#ffe000;">3 · Intermediário</b> — executa sozinho com qualidade</div>
+        <div><b style="color:var(--blue);">4 · Proficiente</b> — referência do time</div>
+        <div><b style="color:var(--accent);">5 · Mestre</b> — ensina/mentora outros</div>
+      </div>
+    </div>
+
+    <div class="pdi-side-card">
+      <div class="pdi-side-h">🕒 Histórico de PDIs (DARLEY)</div>
+      <div class="pdi-hist">
+        <div class="pdi-hist-item">
+          <div class="pdi-hist-row"><span class="pdi-hist-trim">Q1 / 2026</span><span class="pdi-hist-pct good">100%</span></div>
+          <div class="pdi-hist-bar"><div class="pdi-hist-bar-fill" style="width:100%;background:var(--green);"></div></div>
+          <div class="pdi-hist-comps">3/3 atingidas · Negociação · Apresentação · Constância</div>
+        </div>
+        <div class="pdi-hist-item">
+          <div class="pdi-hist-row"><span class="pdi-hist-trim">Q4 / 2025</span><span class="pdi-hist-pct mid">67%</span></div>
+          <div class="pdi-hist-bar"><div class="pdi-hist-bar-fill" style="width:67%;background:var(--amber);"></div></div>
+          <div class="pdi-hist-comps">2/3 atingidas · 1 parcial</div>
+        </div>
+        <div class="pdi-hist-item">
+          <div class="pdi-hist-row"><span class="pdi-hist-trim">Q3 / 2025</span><span class="pdi-hist-pct good">100%</span></div>
+          <div class="pdi-hist-bar"><div class="pdi-hist-bar-fill" style="width:100%;background:var(--green);"></div></div>
+          <div class="pdi-hist-comps">3/3 atingidas</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pdi-side-card">
+      <div class="pdi-side-h">📈 Tendência de atingimento</div>
+      <div style="display:flex;align-items:end;gap:6px;height:60px;justify-content:space-around;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:24px;height:48px;background:var(--green);border-radius:3px;"></div>
+          <span style="font-size:9px;color:var(--muted);">Q3</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:24px;height:32px;background:var(--amber);border-radius:3px;"></div>
+          <span style="font-size:9px;color:var(--muted);">Q4</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:24px;height:48px;background:var(--green);border-radius:3px;"></div>
+          <span style="font-size:9px;color:var(--muted);">Q1</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:24px;height:24px;background:var(--blue);border-radius:3px;opacity:.5;"></div>
+          <span style="font-size:9px;color:var(--blue);">Q2 atual</span>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px;">Constância de atingimento 89% (3 dos 4 PDIs completados)</div>
+    </div>
+
+    <div class="pdi-side-card">
+      <div class="pdi-side-h">👥 Comparativo com o time</div>
+      <div style="font-size:11px;line-height:1.7;color:var(--text);">
+        <div style="display:flex;justify-content:space-between;"><span>PDIs concluídos</span><b style="color:var(--accent);">4 · top 1</b></div>
+        <div style="display:flex;justify-content:space-between;"><span>% atingimento médio</span><b style="color:var(--accent);">89%</b></div>
+        <div style="display:flex;justify-content:space-between;"><span>Posição no ranking</span><b style="color:var(--blue);">2º de 4</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER GLOBAL -->
+<div class="pdi-footer">
+  <div class="pdi-stats">
+    PDI atual: <b id="footStats">0/3 competências definidas · 0 ações</b>
+    <span style="margin-left:8px;color:var(--muted);">· prazo: 30/06/2026</span>
+  </div>
+  <div class="pdi-actions">
+    <button class="pdi-btn ghost">Salvar rascunho</button>
+    <button class="pdi-btn">Visualizar</button>
+    <button class="pdi-btn primary">Iniciar PDI · enviar ao consultor</button>
+  </div>
+</div>
+
+<!-- NOTA -->
+<div class="pdi-note">
+  <b>Como o PDI se conecta ao Feedback</b>
+  <ul>
+    <li><b>Diagnóstico automático:</b> as 3 competências sugeridas vêm das médias dos últimos 3 ciclos de Feedback — sistema prioriza as <b>mais baixas</b> que ainda têm espaço pra evoluir.</li>
+    <li><b>Nível atual sugerido</b> = round(média dos feedbacks ÷ 2) — converte a escala 1-10 do Feedback pra escala 1-5 do PDI.</li>
+    <li><b>Treinamentos vinculados:</b> sugestões automáticas (⭐) com base na competência alvo. Gestor pode marcar mais ou desmarcar.</li>
+    <li><b>Status atingido:</b> sistema calcula ao fim do trimestre comparando feedbacks pré-PDI vs pós-PDI da mesma competência.</li>
+    <li><b>Persistência:</b> grava em <code>icPDIs/{consultorId}/{trimestreId}</code> — isolado, não toca outros módulos.</li>
+  </ul>
+</div>
+
+<script>
+/* Competências disponíveis (mesmas 8 do Feedback) */
+var COMPS_DEF = [
+  { key:'prosp', label:'Prospecção',     ico:'🎯', media:7.3, treins:['DP','MAESTRIA'] },
+  { key:'qual',  label:'Qualificação',   ico:'🔍', media:8.0, treins:['DP','CIS'] },
+  { key:'apres', label:'Apresentação',   ico:'🎤', media:6.5, treins:['CIS','MAESTRIA','TEAM'] },
+  { key:'neg',   label:'Negociação',     ico:'🤝', media:8.8, treins:['CIS','PDA','ML5'] },
+  { key:'fup',   label:'Follow-up',      ico:'📨', media:5.7, treins:['MAESTRIA','PDA','TEAM'] },
+  { key:'const', label:'Constância',     ico:'📅', media:7.2, treins:['MAESTRIA','PDA'] },
+  { key:'mix',   label:'Mix de produto', ico:'🎒', media:5.3, treins:['Todos os produtos','MAESTRIA'] },
+  { key:'apr',   label:'Aproveitamento', ico:'⚡', media:6.8, treins:['MAESTRIA','DP'] }
+];
+
+/* Treinamentos Febracis disponíveis */
+var TREINOS = ['IF','MASTER','CEOP','BHP','CIS','ML5','TAV','JE','GE','MAESTRIA','PDA','DP','FCIS','TEAM','FGPC','CIS_GLOBAL'];
+
+/* Descrições dos níveis por competência (exemplo p/ Follow-up) */
+var NIVEIS_DESC = {
+  prosp: ['Quase nunca prospecta','Reage a lead','Tem cadência básica','Acima da média do time','Referência: gera carteira ativa'],
+  qual:  ['Não qualifica','Qualifica raso','Aplica framework','Descarta com critério','Mestre da qualificação'],
+  apres: ['Lê script','Pitch padrão','Adapta ao cliente','Storytelling consistente','Conexão emocional sempre'],
+  neg:   ['Perde por preço','Fecha o fácil','Lida com objeção','Mantém ticket alto','Vira não em sim sem desconto'],
+  fup:   ['Esquece clientes','1-2 perdas/mês','Cadência básica','Cadência estruturada','Ressuscita frio'],
+  const: ['Bate raramente','Oscila muito','Bate maioria dos meses','Quase sempre na meta','100% de constância'],
+  mix:   ['1 produto só','2 produtos','3 produtos','4 produtos','Portfólio completo'],
+  apr:   ['Carteira inflada','Conversão fraca','Aproveita médio','Carteira enxuta e eficiente','80%+ de conversão']
+};
+
+var alvos = []; /* {key, atual, alvo, treinos:[], acoes:[{feito,texto}], prazo, evidencia, status} */
+
+function scoreClass(v){
+  if(v<6) return 'bad';
+  if(v<7.5) return 'warn';
+  return 'ok';
+}
+
+/* ── Renderizar diagnóstico (sugere as 3 mais baixas) ── */
+function renderDiag(){
+  var ord = COMPS_DEF.slice().sort(function(a,b){return a.media-b.media;});
+  var html = ord.slice(0,4).map(function(c){
+    var jaAdded = alvos.some(function(a){return a.key === c.key;});
+    return '<div class="pdi-diag-card">'
+      + '<div class="pdi-diag-top">'
+      +   '<div class="pdi-diag-lbl"><span>'+c.ico+'</span>'+c.label+'</div>'
+      +   '<div class="pdi-diag-score '+scoreClass(c.media)+'">'+c.media.toFixed(1)+'</div>'
+      + '</div>'
+      + '<div class="pdi-diag-info">Média dos últimos 3 ciclos · '+(c.media<6?'⚠ candidata prioritária':'oportunidade de evolução')+'</div>'
+      + '<button class="pdi-diag-btn '+(jaAdded?'added':'')+'" '+(jaAdded?'disabled':'onclick="addAlvo(\''+c.key+'\')"')+'>'
+      +   (jaAdded?'✓ Adicionada':'+ Adicionar ao PDI')
+      + '</button>'
+      + '</div>';
+  }).join('');
+  document.getElementById('diagList').innerHTML = html;
+}
+
+/* ── Adicionar competência alvo ── */
+function addAlvo(key){
+  if(alvos.length >= 3){ alert('Máximo 3 competências por PDI'); return; }
+  if(alvos.some(function(a){return a.key===key;})) return;
+  var c = COMPS_DEF.find(function(x){return x.key===key;});
+  var atual = Math.max(1, Math.min(5, Math.round(c.media/2)));
+  alvos.push({
+    key: key,
+    atual: atual,
+    alvo: Math.min(5, atual+1),
+    treinos: c.treins.slice(0,2),
+    acoes: [],
+    prazo: '30/06/2026',
+    evidencia: '',
+    status: 'iniciar'
+  });
+  renderAlvos();
+  renderDiag();
+  updateFooter();
+}
+window.addAlvo = addAlvo;
+
+function rmAlvo(idx){
+  alvos.splice(idx,1);
+  renderAlvos();
+  renderDiag();
+  updateFooter();
+}
+window.rmAlvo = rmAlvo;
+
+/* ── Renderizar lista de competências-alvo ── */
+function renderAlvos(){
+  var box = document.getElementById('alvosList');
+  if(alvos.length === 0){
+    box.innerHTML = '<div class="pdi-alvo-vazio"><b>Nenhuma competência selecionada ainda.</b><br>Adicione até 3 do diagnóstico acima — ou clique no botão para inserir manualmente.</div>'
+      + '<button class="pdi-btn" style="width:100%;padding:12px;" onclick="modalAddManual()">+ Adicionar competência manualmente</button>';
+  } else {
+    box.innerHTML = alvos.map(function(a,i){
+      var c = COMPS_DEF.find(function(x){return x.key===a.key;});
+      var statusKey = a.status==='iniciar'?'iniciar':a.status==='andamento'?'andamento':a.status==='atingido'?'atingido':a.status==='parcial'?'parcial':'naoatingido';
+      var statusTxt = {iniciar:'Não iniciado',andamento:'Em andamento',atingido:'Atingido',parcial:'Parcial',naoatingido:'Não atingido'}[statusKey];
+      var statusClass = {iniciar:'',andamento:'in-andamento',atingido:'atingido',parcial:'parcial',naoatingido:'nao-atingido'}[statusKey];
+      var ndesc = NIVEIS_DESC[a.key] || [];
+      return '<div class="pdi-alvo '+statusClass+'">'
+        + '<div class="pdi-alvo-h">'
+        +   '<div class="pdi-alvo-titulo">'+c.ico+' '+c.label+'</div>'
+        +   '<div class="pdi-alvo-acoes">'
+        +     '<select onchange="setStatus('+i+',this.value)" class="pdi-alvo-status '+statusKey+'" style="cursor:pointer;border:none;font-weight:800;">'
+        +       '<option value="iniciar"'+(a.status==='iniciar'?' selected':'')+'>Não iniciado</option>'
+        +       '<option value="andamento"'+(a.status==='andamento'?' selected':'')+'>Em andamento</option>'
+        +       '<option value="atingido"'+(a.status==='atingido'?' selected':'')+'>Atingido</option>'
+        +       '<option value="parcial"'+(a.status==='parcial'?' selected':'')+'>Parcial</option>'
+        +       '<option value="naoatingido"'+(a.status==='naoatingido'?' selected':'')+'>Não atingido</option>'
+        +     '</select>'
+        +     '<button class="pdi-alvo-rm" onclick="rmAlvo('+i+')" title="Remover">×</button>'
+        +   '</div>'
+        + '</div>'
+        /* Níveis */
+        + '<div class="pdi-nivel-row">'
+        +   '<div class="pdi-nivel-card">'
+        +     '<div class="pdi-nivel-lbl">Nível atual <small>(sistema sugeriu '+a.atual+')</small></div>'
+        +     '<div class="pdi-niveis">'+[1,2,3,4,5].map(function(n){
+                return '<button class="pdi-nivel-dot '+(n<=a.atual?'fill':'')+'" onclick="setAtual('+i+','+n+')">'+n+'</button>';
+              }).join('')+'</div>'
+        +     '<div class="pdi-nivel-desc">'+(ndesc[a.atual-1]||'')+'</div>'
+        +   '</div>'
+        +   '<div class="pdi-nivel-card">'
+        +     '<div class="pdi-nivel-lbl">Nível alvo <small>(meta do trimestre)</small></div>'
+        +     '<div class="pdi-niveis">'+[1,2,3,4,5].map(function(n){
+                return '<button class="pdi-nivel-dot '+(n<=a.alvo?'target':'')+'" onclick="setAlvo('+i+','+n+')">'+n+'</button>';
+              }).join('')+'</div>'
+        +     '<div class="pdi-nivel-desc">'+(ndesc[a.alvo-1]||'')+'</div>'
+        +   '</div>'
+        + '</div>'
+        /* Treinamentos */
+        + '<div style="margin-bottom:12px;">'
+        +   '<div class="pdi-nivel-lbl" style="margin-bottom:6px;">Treinamentos vinculados <small>(⭐ sugeridos pela competência)</small></div>'
+        +   '<div class="pdi-trein-list">'
+        +     TREINOS.map(function(t){
+                var sel = a.treinos.indexOf(t) >= 0;
+                var sug = c.treins.indexOf(t) >= 0;
+                return '<button class="pdi-trein-chip '+(sel?'selected ':'')+(sug?'sugerido':'')+'" onclick="toggleTrein('+i+',\''+t+'\')">'+t+'</button>';
+              }).join('')
+        +   '</div>'
+        + '</div>'
+        /* Ações */
+        + '<div style="margin-bottom:12px;">'
+        +   '<div class="pdi-nivel-lbl" style="margin-bottom:6px;">Ações concretas para o trimestre</div>'
+        +   '<div class="pdi-acoes">'
+        +     a.acoes.map(function(ac,ai){
+                return '<div class="pdi-acao">'
+                +   '<input type="checkbox" '+(ac.feito?'checked':'')+' onchange="toggleAcao('+i+','+ai+')">'
+                +   '<input type="text" value="'+escAttr(ac.texto)+'" oninput="setAcaoTxt('+i+','+ai+',this.value)" placeholder="Descrição da ação...">'
+                +   '<button class="rm" onclick="rmAcao('+i+','+ai+')">×</button>'
+                + '</div>';
+              }).join('')
+        +     '<button class="pdi-acao-add" onclick="addAcao('+i+')">+ Adicionar ação</button>'
+        +   '</div>'
+        + '</div>'
+        /* Footer: prazo + evidências */
+        + '<div class="pdi-alvo-foot">'
+        +   '<div class="pdi-foot-col">'
+        +     '<label>Prazo</label>'
+        +     '<input type="text" value="'+escAttr(a.prazo)+'" oninput="setPrazo('+i+',this.value)">'
+        +   '</div>'
+        +   '<div class="pdi-foot-col">'
+        +     '<label>Evidências / observações do progresso</label>'
+        +     '<textarea oninput="setEvid('+i+',this.value)" placeholder="O que demonstra que está progredindo...">'+escAttr(a.evidencia)+'</textarea>'
+        +   '</div>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  document.getElementById('alvoCount').textContent = alvos.length;
+}
+
+function escAttr(s){return String(s||'').replace(/"/g,'&quot;');}
+
+function setAtual(i,n){alvos[i].atual=n; renderAlvos(); updateFooter();}
+function setAlvo(i,n){alvos[i].alvo=n; renderAlvos(); updateFooter();}
+function setStatus(i,s){alvos[i].status=s; renderAlvos(); updateFooter();}
+function setPrazo(i,v){alvos[i].prazo=v;}
+function setEvid(i,v){alvos[i].evidencia=v;}
+function toggleTrein(i,t){
+  var arr = alvos[i].treinos;
+  var idx = arr.indexOf(t);
+  if(idx>=0) arr.splice(idx,1); else arr.push(t);
+  renderAlvos();
+}
+function addAcao(i){
+  alvos[i].acoes.push({feito:false,texto:''});
+  renderAlvos();
+  setTimeout(function(){
+    var inputs = document.querySelectorAll('.pdi-alvo:nth-child('+(i+1)+') input[type=text]');
+    if(inputs.length) inputs[inputs.length-2] && inputs[inputs.length-2].focus();
+  }, 50);
+  updateFooter();
+}
+function rmAcao(i,ai){alvos[i].acoes.splice(ai,1); renderAlvos(); updateFooter();}
+function toggleAcao(i,ai){alvos[i].acoes[ai].feito = !alvos[i].acoes[ai].feito; updateFooter();}
+function setAcaoTxt(i,ai,v){alvos[i].acoes[ai].texto = v;}
+window.setAtual=setAtual; window.setAlvo=setAlvo; window.setStatus=setStatus;
+window.setPrazo=setPrazo; window.setEvid=setEvid; window.toggleTrein=toggleTrein;
+window.addAcao=addAcao; window.rmAcao=rmAcao; window.toggleAcao=toggleAcao; window.setAcaoTxt=setAcaoTxt;
+
+function modalAddManual(){
+  var opts = COMPS_DEF.filter(function(c){return !alvos.some(function(a){return a.key===c.key;});});
+  if(!opts.length){alert('Todas as competências já foram adicionadas'); return;}
+  var lista = opts.map(function(c,i){return (i+1)+'. '+c.ico+' '+c.label;}).join('\n');
+  var n = prompt('Escolha o número da competência:\n\n'+lista);
+  var idx = parseInt(n)-1;
+  if(opts[idx]) addAlvo(opts[idx].key);
+}
+window.modalAddManual = modalAddManual;
+
+function updateFooter(){
+  var totAcoes = alvos.reduce(function(s,a){return s+a.acoes.length;},0);
+  var feitas = alvos.reduce(function(s,a){return s+a.acoes.filter(function(x){return x.feito;}).length;},0);
+  document.getElementById('footStats').textContent = alvos.length+'/3 competências definidas · '+totAcoes+' ações ('+feitas+' concluídas)';
+}
+
+renderDiag();
+renderAlvos();
+updateFooter();
+</script>
+</body>
+</html>

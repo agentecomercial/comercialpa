@@ -1367,6 +1367,115 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .fb-hist-media .arrow.up{color:var(--green);}
 .fb-hist-media .arrow.down{color:var(--red);}
 .fb-hist-status{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
+
+/* ── PDI · Plano de Desenvolvimento Individual (Fase 4) ── */
+.pdi-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.pdi-title{font-size:18px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;}
+.pdi-title small{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-left:4px;}
+.pdi-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.pdi-control{display:flex;flex-direction:column;gap:4px;}
+.pdi-control label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.pdi-statusbar{display:flex;align-items:center;gap:10px;padding:6px 14px;background:rgba(96,165,250,.10);border:1px solid rgba(96,165,250,.3);border-radius:8px;font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;}
+.pdi-statusbar.iniciado{background:rgba(255,238,0,.08);border-color:rgba(255,238,0,.3);color:#ffe000;}
+.pdi-statusbar.concluido{background:rgba(52,211,153,.10);border-color:rgba(52,211,153,.3);color:var(--green);}
+
+.pdi-layout{display:grid;grid-template-columns:1fr 320px;gap:20px;}
+@media(max-width:1100px){.pdi-layout{grid-template-columns:1fr;}}
+.pdi-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:18px;margin-bottom:14px;}
+.pdi-card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.pdi-card-h h3{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.pdi-card-h .badge{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+
+.pdi-diag{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;}
+.pdi-diag-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;}
+.pdi-diag-top{display:flex;align-items:center;justify-content:space-between;}
+.pdi-diag-lbl{font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;}
+.pdi-diag-score{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+.pdi-diag-score.bad{color:var(--red);}
+.pdi-diag-score.warn{color:var(--amber);}
+.pdi-diag-score.ok{color:var(--accent);}
+.pdi-diag-info{font-size:10px;color:var(--muted);line-height:1.4;}
+.pdi-diag-btn{background:rgba(200,240,90,.10);border:1px dashed rgba(200,240,90,.40);color:var(--accent);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;transition:all .12s;margin-top:4px;}
+.pdi-diag-btn:hover{background:rgba(200,240,90,.20);border-style:solid;}
+.pdi-diag-btn.added{background:var(--surface);border-color:var(--border);color:var(--muted);cursor:not-allowed;border-style:solid;}
+
+.pdi-alvo{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:18px;margin-bottom:12px;position:relative;}
+.pdi-alvo.in-andamento{border-left:3px solid #ffe000;}
+.pdi-alvo.atingido{border-left:3px solid var(--green);}
+.pdi-alvo.parcial{border-left:3px solid var(--amber);}
+.pdi-alvo.nao-atingido{border-left:3px solid var(--red);}
+.pdi-alvo-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.pdi-alvo-titulo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--text);}
+.pdi-alvo-acoes{display:flex;align-items:center;gap:8px;}
+.pdi-alvo-status{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:10px;font-family:inherit;border:none;}
+.pdi-alvo-status.iniciar{background:var(--surface2);color:var(--muted);}
+.pdi-alvo-status.andamento{background:rgba(255,238,0,.14);color:#ffe000;}
+.pdi-alvo-status.atingido{background:rgba(52,211,153,.14);color:var(--green);}
+.pdi-alvo-status.parcial{background:rgba(255,183,64,.14);color:var(--amber);}
+.pdi-alvo-status.naoatingido{background:rgba(255,95,87,.14);color:var(--red);}
+.pdi-alvo-rm{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;}
+.pdi-alvo-rm:hover{color:var(--red);}
+
+.pdi-nivel-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.pdi-nivel-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.pdi-nivel-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;justify-content:space-between;}
+.pdi-nivel-lbl small{font-weight:500;color:var(--muted);}
+.pdi-niveis{display:flex;gap:5px;}
+.pdi-nivel-dot{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border2);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--muted);cursor:pointer;transition:all .12s;font-family:inherit;}
+.pdi-nivel-dot:hover{border-color:var(--accent);color:var(--accent);}
+.pdi-nivel-dot.fill{background:var(--blue);border-color:var(--blue);color:#fff;}
+.pdi-nivel-dot.target{background:var(--accent);border-color:var(--accent);color:#0f0f0f;}
+.pdi-nivel-desc{font-size:11px;color:var(--text);margin-top:6px;line-height:1.45;min-height:32px;}
+
+.pdi-trein-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.pdi-trein-chip{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:10px;font-weight:700;padding:4px 9px;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:.04em;transition:all .12s;}
+.pdi-trein-chip:hover{border-color:var(--accent);color:var(--accent);}
+.pdi-trein-chip.selected{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+.pdi-trein-chip.sugerido::before{content:'⭐ ';font-size:9px;}
+
+.pdi-acoes{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.pdi-acao{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;}
+.pdi-acao input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;}
+.pdi-acao input[type=text]{flex:1;background:none;border:none;color:var(--text);font-size:12px;outline:none;font-family:inherit;}
+.pdi-acao .rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;}
+.pdi-acao .rm:hover{color:var(--red);}
+.pdi-acao-add{background:none;border:1px dashed var(--border2);color:var(--muted);border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:inherit;text-align:left;}
+.pdi-acao-add:hover{border-color:var(--accent);color:var(--accent);}
+
+.pdi-alvo-foot{display:grid;grid-template-columns:160px 1fr;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);align-items:end;}
+.pdi-foot-col{display:flex;flex-direction:column;gap:4px;}
+.pdi-foot-col label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+.pdi-foot-col input,.pdi-foot-col textarea{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;outline:none;}
+.pdi-foot-col textarea{resize:vertical;min-height:48px;line-height:1.45;}
+
+.pdi-alvo-vazio{background:transparent;border:2px dashed var(--border2);border-radius:12px;padding:24px;margin-bottom:12px;text-align:center;color:var(--muted);font-size:12px;}
+.pdi-alvo-vazio b{color:var(--text);}
+
+.pdi-side{display:flex;flex-direction:column;gap:14px;}
+.pdi-side-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:16px;}
+.pdi-side-h{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
+.pdi-hist{display:flex;flex-direction:column;gap:8px;}
+.pdi-hist-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .12s;}
+.pdi-hist-item:hover{border-color:var(--accent);}
+.pdi-hist-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.pdi-hist-trim{font-size:11px;color:var(--text);font-weight:700;}
+.pdi-hist-pct{font-size:11px;font-weight:800;font-variant-numeric:tabular-nums;}
+.pdi-hist-pct.good{color:var(--green);}
+.pdi-hist-pct.mid{color:var(--amber);}
+.pdi-hist-pct.bad{color:var(--red);}
+.pdi-hist-bar{height:5px;background:var(--surface);border-radius:3px;overflow:hidden;}
+.pdi-hist-bar-fill{height:100%;}
+.pdi-hist-comps{font-size:9px;color:var(--muted);margin-top:5px;}
+
+.pdi-footer{display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);flex-wrap:wrap;gap:10px;}
+.pdi-stats{font-size:11px;color:var(--muted);font-weight:600;}
+.pdi-stats b{color:var(--text);}
+.pdi-actions{display:flex;gap:8px;}
+.pdi-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:12px;font-weight:700;padding:9px 16px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .12s;text-transform:uppercase;letter-spacing:.04em;}
+.pdi-btn.ghost{color:var(--muted);}
+.pdi-btn.ghost:hover{color:var(--text);}
+.pdi-btn.primary{background:var(--accent);color:#0f0f0f;border-color:var(--accent);}
+.pdi-btn.primary:hover{filter:brightness(1.06);}
 /* Range no modo Período */
 .np-cal-cell.range-edge{background:var(--accent);color:#0f0f0f;border-color:var(--accent);font-weight:800;}
 .np-cal-cell.range-mid{background:rgba(200,240,90,.10);border-color:transparent;color:var(--text);}
