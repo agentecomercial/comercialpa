@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Preview · 5 estilos de tabs IC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;
+  --surface:#1a1a1a;
+  --surface2:#222;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --text:#f0f0f0;
+  --muted:#888;
+  --accent:#c8f05a;
+  --green:#34d399;
+  --amber:#ffb740;
+  --red:#ff5f57;
+  --blue:#60a5fa;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);padding:30px 24px 80px;line-height:1.5;}
+
+h1{font-size:22px;font-weight:900;margin-bottom:4px;letter-spacing:-.5px;}
+.lead{font-size:13px;color:var(--muted);margin-bottom:28px;max-width:680px;line-height:1.5;}
+
+.variant{
+  background:var(--surface);border:1px solid var(--border2);border-radius:14px;
+  padding:24px 26px;margin-bottom:22px;
+}
+.variant-h{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px;}
+.variant-t{font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.2px;display:flex;align-items:center;gap:10px;}
+.variant-num{
+  width:26px;height:26px;border-radius:50%;background:var(--accent);color:#0f0f0f;
+  font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;
+}
+.variant-sub{font-size:11px;color:var(--muted);max-width:560px;line-height:1.55;flex:1;text-align:right;}
+.variant-pros{
+  display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;font-size:10.5px;
+}
+.tag{
+  padding:3px 8px;border-radius:8px;background:var(--surface2);color:#bbb;
+  font-weight:600;letter-spacing:.04em;
+}
+.tag.ok{background:rgba(52,211,153,.12);color:var(--green);}
+.tag.warn{background:rgba(255,183,64,.12);color:var(--amber);}
+
+.demo-wrap{padding:18px 0 6px;}
+.escolher{
+  margin-top:14px;padding:8px 14px;border-radius:6px;
+  background:rgba(200,240,90,.10);border:1px dashed rgba(200,240,90,.35);
+  color:var(--accent);font-size:11px;font-weight:700;text-align:center;cursor:pointer;
+  transition:all .14s;letter-spacing:.04em;text-transform:uppercase;
+}
+.escolher:hover{background:rgba(200,240,90,.20);border-style:solid;}
+.escolher.usar{background:var(--accent);color:#0f0f0f;border-color:var(--accent);}
+
+/* ════════════════════════════════════════════════════════
+   VARIANTE 1 · Underline Accent (minimalista moderno)
+   ════════════════════════════════════════════════════════ */
+.v1-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);width:fit-content;}
+.v1-tab{
+  background:none;border:none;color:var(--muted);
+  font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  padding:12px 18px;cursor:pointer;font-family:inherit;
+  border-bottom:2px solid transparent;
+  display:inline-flex;align-items:center;gap:8px;
+  transition:color .14s, border-color .14s;
+  margin-bottom:-1px;
+}
+.v1-tab:hover{color:#ddd;}
+.v1-tab.active{
+  color:var(--accent);
+  border-bottom:2px solid;
+  border-image:linear-gradient(90deg, var(--accent), var(--green)) 1;
+}
+
+/* ════════════════════════════════════════════════════════
+   VARIANTE 2 · Pill Segmented (evolução do atual)
+   ════════════════════════════════════════════════════════ */
+.v2-tabs{
+  display:flex;gap:4px;background:var(--surface2);
+  padding:5px;border-radius:12px;width:fit-content;
+  border:1px solid var(--border);
+}
+.v2-tab{
+  background:none;border:none;color:var(--muted);
+  font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  padding:9px 16px;border-radius:8px;cursor:pointer;font-family:inherit;
+  display:inline-flex;align-items:center;gap:8px;
+  transition:all .14s;
+}
+.v2-tab:hover{color:#ddd;background:rgba(255,255,255,.04);}
+.v2-tab.active{
+  background:linear-gradient(135deg, var(--accent), #b8e040);
+  color:#0f0f0f;
+  box-shadow:0 2px 10px rgba(200,240,90,.25), inset 0 1px 0 rgba(255,255,255,.2);
+}
+
+/* ════════════════════════════════════════════════════════
+   VARIANTE 3 · Card-Tabs com ícone destaque
+   ════════════════════════════════════════════════════════ */
+.v3-tabs{display:flex;gap:8px;flex-wrap:wrap;}
+.v3-tab{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:10px;padding:10px 14px;cursor:pointer;font-family:inherit;
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  min-width:90px;transition:all .14s;
+  color:var(--muted);
+}
+.v3-tab:hover{border-color:rgba(255,255,255,.25);background:var(--surface);}
+.v3-icon{font-size:18px;line-height:1;margin-bottom:3px;}
+.v3-label{
+  font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+  white-space:nowrap;
+}
+.v3-tab.active{
+  background:linear-gradient(135deg, rgba(200,240,90,.14), rgba(52,211,153,.06));
+  border-color:rgba(200,240,90,.45);
+  color:var(--accent);
+  box-shadow:0 4px 12px rgba(0,0,0,.2);
+}
+.v3-tab.active::before{
+  content:'';position:absolute;
+}
+
+/* ════════════════════════════════════════════════════════
+   VARIANTE 4 · Indicador lateral (vertical bar)
+   ════════════════════════════════════════════════════════ */
+.v4-tabs{
+  display:flex;gap:0;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;
+  overflow:hidden;width:fit-content;
+}
+.v4-tab{
+  background:none;border:none;color:var(--muted);
+  font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  padding:12px 18px;cursor:pointer;font-family:inherit;
+  display:inline-flex;align-items:center;gap:8px;
+  border-right:1px solid var(--border);
+  transition:all .14s;position:relative;
+}
+.v4-tab:last-child{border-right:none;}
+.v4-tab:hover{color:#ddd;background:rgba(255,255,255,.03);}
+.v4-tab.active{
+  color:var(--accent);background:rgba(200,240,90,.06);
+}
+.v4-tab.active::before{
+  content:'';position:absolute;left:0;top:8px;bottom:8px;
+  width:3px;background:linear-gradient(180deg, var(--accent), var(--green));
+  border-radius:0 2px 2px 0;
+}
+
+/* ════════════════════════════════════════════════════════
+   VARIANTE 5 · Glassmorphism (premium / blur)
+   ════════════════════════════════════════════════════════ */
+.v5-tabs-wrap{
+  background:linear-gradient(135deg, rgba(200,240,90,.06), rgba(52,211,153,.02) 60%, transparent);
+  padding:6px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.06);
+  display:inline-block;
+  backdrop-filter:blur(10px);
+  box-shadow:0 8px 32px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.v5-tabs{display:flex;gap:4px;}
+.v5-tab{
+  background:none;border:none;color:#aaa;
+  font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  padding:9px 16px;border-radius:10px;cursor:pointer;font-family:inherit;
+  display:inline-flex;align-items:center;gap:8px;
+  transition:all .16s;
+}
+.v5-tab:hover{color:#fff;background:rgba(255,255,255,.04);}
+.v5-tab.active{
+  color:#0f0f0f;
+  background:linear-gradient(135deg, #c8f05a 0%, #a8e040 100%);
+  box-shadow:
+    0 4px 14px rgba(200,240,90,.35),
+    inset 0 1px 0 rgba(255,255,255,.3),
+    inset 0 -1px 0 rgba(0,0,0,.1);
+}
+
+</style>
+</head>
+<body>
+
+<h1>🎨 Preview · 5 estilos de tabs IC</h1>
+<p class="lead">Cinco direções diferentes para as abas do Inteligência Comercial. Passe o mouse pra ver os hovers. A aba <b>📊 Dashboard</b> está marcada como ativa em todos. Diga o número que você prefere.</p>
+
+<!-- ═══════════════════════════════════════════════════════
+     VARIANTE 1
+     ═══════════════════════════════════════════════════════ -->
+<div class="variant">
+  <div class="variant-h">
+    <div class="variant-t"><span class="variant-num">1</span> Underline accent · minimalista moderno</div>
+    <div class="variant-sub">Sem fundo. Barra gradient dourado→verde de 2px embaixo da aba ativa. Estilo "tabs modernas" tipo Linear/Vercel/Stripe.</div>
+  </div>
+  <div class="demo-wrap">
+    <div class="v1-tabs">
+      <button class="v1-tab active">📊 Dashboard</button>
+      <button class="v1-tab">📈 Desenvolvimento</button>
+      <button class="v1-tab">🌱 PDI</button>
+      <button class="v1-tab">📖 Playbook</button>
+      <button class="v1-tab">💰 Cobrança</button>
+      <button class="v1-tab">🤖 IA</button>
+      <button class="v1-tab">📚 Manual</button>
+    </div>
+  </div>
+  <div class="variant-pros">
+    <span class="tag ok">Limpo</span>
+    <span class="tag ok">Combina com o hero/KPIs</span>
+    <span class="tag">Pouco visual</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     VARIANTE 2
+     ═══════════════════════════════════════════════════════ -->
+<div class="variant">
+  <div class="variant-h">
+    <div class="variant-t"><span class="variant-num">2</span> Pill Segmented com accent dourado · familiar</div>
+    <div class="variant-sub">Mantém o pill atual mas a aba ativa ganha gradient dourado com texto preto. Mais "premium" que o cinza atual, sem mudar a estrutura.</div>
+  </div>
+  <div class="demo-wrap">
+    <div class="v2-tabs">
+      <button class="v2-tab active">📊 Dashboard</button>
+      <button class="v2-tab">📈 Desenvolvimento</button>
+      <button class="v2-tab">🌱 PDI</button>
+      <button class="v2-tab">📖 Playbook</button>
+      <button class="v2-tab">💰 Cobrança</button>
+      <button class="v2-tab">🤖 IA</button>
+      <button class="v2-tab">📚 Manual</button>
+    </div>
+  </div>
+  <div class="variant-pros">
+    <span class="tag ok">Familiar (evolução do atual)</span>
+    <span class="tag ok">Aba ativa muito clara</span>
+    <span class="tag">Pode ficar pesado</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     VARIANTE 3
+     ═══════════════════════════════════════════════════════ -->
+<div class="variant">
+  <div class="variant-h">
+    <div class="variant-t"><span class="variant-num">3</span> Card-Tabs · ícone em destaque</div>
+    <div class="variant-sub">Cada aba vira um mini-card com ícone grande em cima e label embaixo. Estilo dashboard de produto. Mais espaço mas muito visual.</div>
+  </div>
+  <div class="demo-wrap">
+    <div class="v3-tabs">
+      <button class="v3-tab active">
+        <span class="v3-icon">📊</span>
+        <span class="v3-label">Dashboard</span>
+      </button>
+      <button class="v3-tab">
+        <span class="v3-icon">📈</span>
+        <span class="v3-label">Desenvolv.</span>
+      </button>
+      <button class="v3-tab">
+        <span class="v3-icon">🌱</span>
+        <span class="v3-label">PDI</span>
+      </button>
+      <button class="v3-tab">
+        <span class="v3-icon">📖</span>
+        <span class="v3-label">Playbook</span>
+      </button>
+      <button class="v3-tab">
+        <span class="v3-icon">💰</span>
+        <span class="v3-label">Cobrança</span>
+      </button>
+      <button class="v3-tab">
+        <span class="v3-icon">🤖</span>
+        <span class="v3-label">IA</span>
+      </button>
+      <button class="v3-tab">
+        <span class="v3-icon">📚</span>
+        <span class="v3-label">Manual</span>
+      </button>
+    </div>
+  </div>
+  <div class="variant-pros">
+    <span class="tag ok">Hierarquia clara</span>
+    <span class="tag ok">Ícones em destaque</span>
+    <span class="tag warn">Ocupa mais espaço</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     VARIANTE 4
+     ═══════════════════════════════════════════════════════ -->
+<div class="variant">
+  <div class="variant-h">
+    <div class="variant-t"><span class="variant-num">4</span> Indicador lateral · barra vertical</div>
+    <div class="variant-sub">Container com borda completa. Aba ativa tem barra vertical accent dentro (à esquerda do texto) + fundo levemente esverdeado. Estilo segmento.</div>
+  </div>
+  <div class="demo-wrap">
+    <div class="v4-tabs">
+      <button class="v4-tab active">📊 Dashboard</button>
+      <button class="v4-tab">📈 Desenvolvimento</button>
+      <button class="v4-tab">🌱 PDI</button>
+      <button class="v4-tab">📖 Playbook</button>
+      <button class="v4-tab">💰 Cobrança</button>
+      <button class="v4-tab">🤖 IA</button>
+      <button class="v4-tab">📚 Manual</button>
+    </div>
+  </div>
+  <div class="variant-pros">
+    <span class="tag ok">Indicador discreto</span>
+    <span class="tag ok">Container coeso</span>
+    <span class="tag">Menos contraste na ativa</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     VARIANTE 5
+     ═══════════════════════════════════════════════════════ -->
+<div class="variant">
+  <div class="variant-h">
+    <div class="variant-t"><span class="variant-num">5</span> Glassmorphism · premium / sofisticado</div>
+    <div class="variant-sub">Container com gradient sutil + blur. Aba ativa em gradient dourado com sombra colorida elevada. Estilo iOS/macOS Sequoia, Apple Vision.</div>
+  </div>
+  <div class="demo-wrap">
+    <div class="v5-tabs-wrap">
+      <div class="v5-tabs">
+        <button class="v5-tab active">📊 Dashboard</button>
+        <button class="v5-tab">📈 Desenvolvimento</button>
+        <button class="v5-tab">🌱 PDI</button>
+        <button class="v5-tab">📖 Playbook</button>
+        <button class="v5-tab">💰 Cobrança</button>
+        <button class="v5-tab">🤖 IA</button>
+        <button class="v5-tab">📚 Manual</button>
+      </div>
+    </div>
+  </div>
+  <div class="variant-pros">
+    <span class="tag ok">Visual mais premium</span>
+    <span class="tag ok">Sombra acentuada</span>
+    <span class="tag warn">Pode ficar over-the-top</span>
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:30px;font-size:13px;color:var(--muted);">
+  Diga o número (1 a 5) que você prefere e eu aplico no dashboard.
+</div>
+
+</body>
+</html>
