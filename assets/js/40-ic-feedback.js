@@ -1285,9 +1285,9 @@
       var negocL  = itens.filter(function(it){return it.status==='negociacao';});
       var entradaL = itens.filter(function(it){return it.status==='entrada';});
       var abertoL = itens.filter(function(it){return it.status==='aberto';});
-      /* Soma de turmas vs avulsas */
-      var qTurma = itens.filter(function(it){return it.src==='turma';}).length;
-      var qAvulso = itens.filter(function(it){return it.src==='avulso';}).length;
+      /* Quebra de pagos por origem (turma vs avulso da Pipeline Comercial) */
+      var pagosTurma  = pagosL.filter(function(it){return it.src==='turma';});
+      var pagosAvulso = pagosL.filter(function(it){return it.src==='avulso';});
       function tbl(arr, vazio){
         if(!arr.length) return '<div class="fb-det-vazio">'+vazio+'</div>';
         return '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem detalhada</th><th>Status</th><th class="val">Valor</th></tr></thead><tbody>'
@@ -1302,14 +1302,20 @@
             }).join('')
           + '</tbody></table>';
       }
+      var notaOrigem = '<div style="font-size:11px;color:var(--muted);padding:8px 12px;background:var(--surface2);border-radius:6px;margin:8px 0 14px;line-height:1.55;">'
+        + '<b style="color:var(--text);">Origem dos pagos:</b> '
+        + '<span style="color:var(--blue);">'+pagosTurma.length+' de turma</span>'
+        + ' + <span style="color:#a78bfa;">'+pagosAvulso.length+' avulsa</span>'
+        + ' = <b style="color:var(--green);">'+pagosL.length+' total</b>'
+        + ' &nbsp;·&nbsp; vendas avulsas vêm de <code style="font-size:10px;">pipelineSales/'+(_metricasCache.mes||'')+'</code> (mesma fonte da aba Pipeline Comercial)'
+        + '</div>';
       return formulaHtml
         + '<div class="fb-det-stats">'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Total carteira</div><div class="fb-det-stat-val">'+(m.total||0)+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos</div><div class="fb-det-stat-val green">'+(m.pagos||0)+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Aproveitamento</div><div class="fb-det-stat-val blue">'+(m.pct!=null?Math.round(m.pct*100)+'%':'—')+'</div></div>'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Vindas de turma</div><div class="fb-det-stat-val">'+qTurma+'</div></div>'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Vindas avulsas</div><div class="fb-det-stat-val">'+qAvulso+'</div></div>'
         + '</div>'
+        + notaOrigem
         + '<div class="fb-det-secao-h">✅ Pagos ('+pagosL.length+')</div>'  + tbl(pagosL,  'Nenhum cliente pago no mês.')
         + '<div class="fb-det-secao-h">💵 Com entrada ('+entradaL.length+')</div>' + tbl(entradaL, 'Nenhum cliente com entrada parcial.')
         + '<div class="fb-det-secao-h">🤝 Em negociação ('+negocL.length+')</div>' + tbl(negocL, 'Nenhum cliente em negociação.')
