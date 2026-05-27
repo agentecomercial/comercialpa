@@ -381,20 +381,158 @@
      produtos:[], tags:['storytelling','caso-de-aluno']}
   ];
 
+  /* ── Catálogo dos 16 produtos · pitch curto + frase de fechamento ── */
+  var PRODUTOS = [
+    {cod:'IF',         nome:'Inteligência Financeira',
+     publico:'quem quer dominar a relação com o dinheiro e parar de viver no aperto',
+     pilar:'organização, mentalidade de prosperidade e crescimento financeiro real',
+     transformacao:'sair do ciclo de escassez e construir patrimônio com clareza',
+     gatilho:'a maior parte das pessoas trabalha pra dinheiro a vida inteira sem nunca aprender a fazer o dinheiro trabalhar pra elas'},
+    {cod:'MASTER',     nome:'Master Coaching',
+     publico:'profissionais que querem virar referência em coaching e desenvolvimento humano',
+     pilar:'método CIS aplicado em alto nível, ferramentas avançadas de transformação',
+     transformacao:'se posicionar como coach de elite e atender clientes de alto valor',
+     gatilho:'o mercado tá lotado de coach básico — quem se diferencia é quem domina o método mais completo'},
+    {cod:'CEOP',       nome:'Comunicação e Oratória Persuasiva',
+     publico:'quem precisa influenciar, vender e liderar com a palavra',
+     pilar:'persuasão, presença de palco, estrutura de fala que convence',
+     transformacao:'ser ouvido com autoridade em qualquer contexto — reunião, palco, câmera',
+     gatilho:'a diferença entre quem é promovido e quem fica é, na maioria das vezes, como ela fala'},
+    {cod:'FGPC',       nome:'Formação em Gestão de Pessoas',
+     publico:'líderes, gestores e empreendedores com time abaixo',
+     pilar:'gestão por valores, feedback estruturado, performance e cultura',
+     transformacao:'parar de apagar incêndio e ter um time que entrega resultado sozinho',
+     gatilho:'90% dos gestores foram promovidos pelo resultado técnico — nunca aprenderam a liderar gente'},
+    {cod:'BHP',        nome:'Gestão de Negócios (BHP)',
+     publico:'empresários e sócios que querem escalar com previsibilidade',
+     pilar:'estratégia, finanças, time e operação integrados em um único método',
+     transformacao:'sair de empresário-bombeiro e virar empresário-estrategista',
+     gatilho:'sua empresa cresce se o dono trabalha — isso não é empresa, é autoemprego caro'},
+    {cod:'FCIS',       nome:'Formação em Coaching Integral Sistêmico',
+     publico:'quem quer se tornar coach profissional certificado pela maior escola do Brasil',
+     pilar:'formação técnica completa em coaching sistêmico, com supervisão e aplicação prática',
+     transformacao:'mudar de profissão (ou somar uma nova fonte de renda) com método validado',
+     gatilho:'o mercado de coaching cresce 16% ao ano — mas só sobrevive quem se forma de verdade'},
+    {cod:'ML5',        nome:'Formação de Líderes (ML5)',
+     publico:'gestores que querem desenvolver líderes dentro do próprio time',
+     pilar:'5 níveis de liderança, com aplicação prática e ferramentas de desenvolvimento',
+     transformacao:'criar uma máquina de gerar líderes em qualquer área da empresa',
+     gatilho:'empresas que escalam não dependem de um gênio — dependem de um sistema de gente'},
+    {cod:'TAV',        nome:'Técnicas Avançadas de Vendas',
+     publico:'vendedores, consultores e founders que precisam fechar mais',
+     pilar:'PNL aplicada à venda, gatilhos mentais, fechamento ético, gestão de objeção',
+     transformacao:'parar de depender da "boa vontade" do cliente e fechar com método',
+     gatilho:'a diferença entre o top performer e o vendedor médio raramente é talento — é técnica'},
+    {cod:'JE',         nome:'Jornada do Enriquecimento',
+     publico:'quem está começando a jornada da prosperidade financeira',
+     pilar:'mentalidade de abundância + hábitos práticos de dinheiro do zero',
+     transformacao:'sair do ciclo "ganhei → gastei → faltou" e construir reserva real',
+     gatilho:'enriquecer não é sobre quanto você ganha, é sobre o que você FAZ com o que ganha'},
+    {cod:'GE',         nome:'Gestão Eficaz',
+     publico:'gestores que querem entregar mais com menos esforço',
+     pilar:'priorização, delegação inteligente, indicadores que importam',
+     transformacao:'ganhar de volta horas da semana e enxergar a empresa de cima',
+     gatilho:'ocupado não é o mesmo que produtivo — e a maior parte dos gestores confunde os dois'},
+    {cod:'MAESTRIA',   nome:'Maestria em Negócios',
+     publico:'empresários estabelecidos que querem dar o próximo salto de maturidade',
+     pilar:'estratégia avançada, expansão, M&A, governança',
+     transformacao:'estruturar a empresa pra crescer sem você ser o gargalo',
+     gatilho:'depois de certo ponto, o que trava o crescimento não é o mercado — é o dono'},
+    {cod:'PDA',        nome:'O Poder da Ação',
+     publico:'quem sabe o que precisa fazer mas não consegue executar',
+     pilar:'gatilho de ação imediata, gestão de procrastinação, disciplina',
+     transformacao:'transformar conhecimento parado em resultado em movimento',
+     gatilho:'90% da diferença entre quem chega lá e quem fica falando é uma coisa só: execução'},
+    {cod:'DP',         nome:'Decifre e Influencie Pessoas',
+     publico:'líderes, vendedores e profissionais de relacionamento',
+     pilar:'leitura de perfil (DISC), comunicação adaptativa, influência ética',
+     transformacao:'parar de ler pessoas no escuro — e influenciar com precisão',
+     gatilho:'você não vende, lidera ou negocia com "o cliente" — você faz isso com um perfil específico, e cada um precisa ser tratado de um jeito'},
+    {cod:'CIS_GLOBAL', nome:'Método CIS Global',
+     publico:'quem quer levar o método CIS pra outros países ou contextos internacionais',
+     pilar:'expansão global, certificação internacional, comunidade mundial',
+     transformacao:'atuar globalmente como referência em coaching integral sistêmico',
+     gatilho:'o mundo precisa do método — e os primeiros a se posicionarem globalmente vão liderar a categoria'},
+    {cod:'CIS',        nome:'Método CIS Presencial',
+     publico:'qualquer pessoa que queira transformar TODAS as 11 áreas da vida',
+     pilar:'3 dias de imersão com Paulo Vieira — emocional, performance, financeiro, profissional, relacionamentos',
+     transformacao:'sair com mapa claro do que mudar e por onde começar nas 11 áreas',
+     gatilho:'248 edições, 1,8 milhão de pessoas, 83 países — não é um curso, é uma decisão de virada de vida'},
+    {cod:'TEAM',       nome:'Team Coaching Febracis',
+     publico:'empresas que querem aplicar o método CIS no time todo',
+     pilar:'transformação coletiva, alinhamento de valores, cultura de alta performance',
+     transformacao:'um time que joga junto, com clareza de propósito e processo',
+     gatilho:'individualmente seu time pode ser bom — coletivamente, quase nunca está alinhado'}
+  ];
+
+  /* ── Gera 2 scripts por produto (apresentação + fechamento) ── */
+  function _pbScriptsPorProduto(){
+    var out = [];
+    PRODUTOS.forEach(function(p){
+      out.push({
+        categoria:'apresentacao',
+        titulo:'Apresentação · '+p.nome,
+        situacao:'Cliente pediu pra entender o que é o '+p.cod+' antes de qualquer coisa',
+        script:
+'O '+p.nome+' é pra '+p.publico+'.\n\n'+
+'O foco do programa é: '+p.pilar+'.\n\n'+
+'A transformação que ele entrega: '+p.transformacao+'.\n\n'+
+'Pensa o seguinte: '+p.gatilho+'. É exatamente isso que o '+p.cod+' resolve.\n\n'+
+'Faz sentido a gente continuar conversando sobre como ele se aplica especificamente ao seu momento?',
+        produtos:[p.cod],
+        tags:['pitch','apresentacao-produto']
+      });
+
+      out.push({
+        categoria:'fechamento',
+        titulo:'Fechamento · '+p.nome,
+        situacao:'Cliente já entendeu o valor do '+p.cod+' — falta dar o passo final',
+        script:
+'[Nome], a essa altura você já entendeu o que o '+p.nome+' entrega.\n\n'+
+'A pergunta agora não é mais "vale a pena" — você já sabe que sim.\n\n'+
+'A pergunta é: você quer começar a viver isso ('+p.transformacao+') agora, ou daqui a 6 meses?\n\n'+
+'Posso te confirmar a vaga? Você prefere começar na turma de [Data 1] ou [Data 2]?',
+        produtos:[p.cod],
+        tags:['fechamento','produto-especifico']
+      });
+    });
+    return out;
+  }
+
+  /* ── Slug determinístico pra ID de seed (evita duplicatas) ── */
+  function _pbSlug(s){
+    return String(s||'').toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g,'')
+      .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60);
+  }
+
   window._pbBootstrap = function(){
     if(!_pbAdmin()){ _toast('Somente ADM/EXTRACLASSE', 'var(--amber)'); return; }
-    if(Object.keys(_pbDados).length > 0){
-      if(!confirm('A biblioteca já tem '+Object.keys(_pbDados).length+' scripts. Adicionar os '+BOOTSTRAP.length+' iniciais mesmo assim?')) return;
-    }
     if(typeof window._fbSave !== 'function'){ _toast('Firebase indisponível', 'var(--red)'); return; }
+
+    var todosScripts = BOOTSTRAP.concat(_pbScriptsPorProduto());
+    var existentes = Object.keys(_pbDados).length;
+    if(existentes > 0){
+      var msg = 'A biblioteca tem '+existentes+' scripts.\n\n'
+              + 'O bootstrap vai criar/atualizar '+todosScripts.length+' scripts seed (com IDs determinísticos).\n'
+              + 'Scripts seed que já existem serão sobrescritos com o conteúdo atualizado.\n'
+              + 'Scripts NÃO-seed (criados manualmente) ficam intactos.\n\n'
+              + 'Continuar?';
+      if(!confirm(msg)) return;
+    }
+
     var sess = (typeof window._getSessao === 'function') ? window._getSessao() : null;
     var quem = sess ? (sess.nome||sess.login||'—') : 'BOOTSTRAP';
     var now = Date.now();
-    var ops = BOOTSTRAP.map(function(s, i){
-      var id = 'pb_seed_'+(now+i)+'_'+Math.random().toString(36).slice(2,5);
+    var ops = todosScripts.map(function(s){
+      var slug = _pbSlug(s.categoria + '_' + (s.produtos&&s.produtos[0] ? s.produtos[0] + '_' : '') + s.titulo);
+      var id = 'pb_seed_' + slug;
+      var ant = _pbDados[id] || {};
       var payload = Object.assign({}, s, {
-        criadoEm: now, criadoPor: quem,
-        atualizadoEm: now, atualizadoPor: quem
+        criadoEm:   ant.criadoEm || now,
+        criadoPor:  ant.criadoPor || quem,
+        atualizadoEm: now,
+        atualizadoPor: quem
       });
       _pbDados[id] = payload;
       return window._fbSave('icPlaybook/'+id, payload);
@@ -402,9 +540,30 @@
     Promise.all(ops).then(function(){
       _pbAtualizarSelectProds();
       _pbRender();
-      _toast('⚡ '+BOOTSTRAP.length+' scripts iniciais carregados', 'success');
+      _toast('⚡ '+todosScripts.length+' scripts seed sincronizados ('+BOOTSTRAP.length+' genéricos + '+(PRODUTOS.length*2)+' por produto)', 'success');
     }).catch(function(e){
       _toast('Erro no bootstrap: ' + (e&&e.message?e.message:e), 'var(--red)');
+    });
+  };
+
+  /* ── Limpar TODOS os seeds (scripts com prefixo pb_seed_) ─── */
+  window._pbLimparSeeds = function(){
+    if(!_pbAdmin()){ _toast('Somente ADM/EXTRACLASSE', 'var(--amber)'); return; }
+    if(typeof window._fbSave !== 'function'){ _toast('Firebase indisponível', 'var(--red)'); return; }
+    var seeds = Object.keys(_pbDados).filter(function(id){ return id.indexOf('pb_seed_') === 0; });
+    if(!seeds.length){ _toast('Nenhum seed pra limpar', 'var(--blue)'); return; }
+    if(!confirm('Remover '+seeds.length+' scripts seed da biblioteca?\n\n(Scripts criados manualmente NÃO são afetados.)')) return;
+    var ops = seeds.map(function(id){
+      return window._fbSave('icPlaybook/'+id, null).then(function(){
+        delete _pbDados[id];
+      });
+    });
+    Promise.all(ops).then(function(){
+      _pbAtualizarSelectProds();
+      _pbRender();
+      _toast('🧹 '+seeds.length+' seeds removidos', 'success');
+    }).catch(function(e){
+      _toast('Erro ao limpar: ' + (e&&e.message?e.message:e), 'var(--red)');
     });
   };
 
