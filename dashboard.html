@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260526-180339">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260526-180339">
+<link rel="stylesheet" href="assets/css/main.css?v=20260526-214922">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260526-214922">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260526-180339">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260526-214922">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1905,6 +1905,16 @@
     </div>
   </div>
   <div class="turmas-main" style="max-width:1300px;">
+
+    <!-- Tabs internas da Inteligência Comercial (espelham o padrão visual do Pipeline)
+         Tudo abaixo fica isolado em #mapeamentoScreen — nada toca Turmas ou Pipeline. -->
+    <div class="ic-tabs" id="icTabs">
+      <button class="ic-tab active" data-icpane="dashboard" onclick="_icShowPane('dashboard')">📊 Dashboard</button>
+      <button class="ic-tab" data-icpane="desenvolvimento" onclick="_icShowPane('desenvolvimento')">📈 Desenvolvimento</button>
+    </div>
+
+    <!-- PANE: DASHBOARD (conteúdo original do Mapeamento) -->
+    <div class="ic-pane show" data-icpane="dashboard">
     <!-- Filtros de período -->
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 0 20px;border-bottom:1px solid var(--border);margin-bottom:24px;">
       <div style="display:flex;align-items:center;gap:8px;">
@@ -1952,6 +1962,95 @@
     </div>
     <div id="mapLoading" style="display:none;text-align:center;padding:40px;color:var(--muted);font-size:13px;">🔄 Carregando dados do Firebase...</div>
     <div id="mapVazio" style="display:none;text-align:center;padding:40px;color:var(--muted);font-size:13px;">Nenhum dado encontrado para o período selecionado.</div>
+    </div>
+    <!-- /PANE: DASHBOARD -->
+
+    <!-- PANE: DESENVOLVIMENTO (Feedback · Fase 0+3) -->
+    <div class="ic-pane" data-icpane="desenvolvimento">
+      <!-- Header da seção -->
+      <div class="fb-header" style="padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px;">
+        <div>
+          <div class="fb-title">📈 Feedback &amp; Desenvolvimento <small>· ciclo do consultor</small></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px;">Registro estruturado para desenvolver o consultor — não substitui a conversa, instrumenta ela.</div>
+        </div>
+        <div class="fb-controls">
+          <div class="fb-control">
+            <label>Consultor</label>
+            <select id="fbConsultor" class="modal-select" style="padding:7px 11px;font-size:12px;min-width:200px;"></select>
+          </div>
+          <div class="fb-control">
+            <label>Data do ciclo</label>
+            <input type="date" id="fbData" class="modal-select" style="padding:6px 10px;font-size:12px;">
+          </div>
+        </div>
+      </div>
+      <!-- Tabs de ciclo + info -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+        <div class="fb-ciclo-tabs">
+          <button class="fb-ciclo-tab" data-ciclo="semanal"  onclick="_fbCiclo('semanal')">Semanal</button>
+          <button class="fb-ciclo-tab active" data-ciclo="quinzenal" onclick="_fbCiclo('quinzenal')">Quinzenal</button>
+          <button class="fb-ciclo-tab" data-ciclo="mensal" onclick="_fbCiclo('mensal')">Mensal</button>
+        </div>
+        <div id="fbCicloInfo" style="font-size:11px;color:var(--muted);">—</div>
+      </div>
+
+      <!-- Layout 2 colunas -->
+      <div class="fb-layout">
+        <div class="fb-main">
+          <div class="fb-card">
+            <div class="fb-card-h"><h3>🎯 Avaliação por competência</h3><span class="badge">escala 1–10</span></div>
+            <div class="fb-comp-list" id="fbCompList"></div>
+          </div>
+          <div class="fb-card">
+            <div class="fb-card-h"><h3>📝 Observações do gestor</h3><span class="badge">consultor verá ao receber</span></div>
+            <div class="fb-text"><textarea id="fbNotaGestor" placeholder="O que se destacou no ciclo · O que pode melhorar · Comportamentos observados..."></textarea></div>
+          </div>
+          <div class="fb-card">
+            <div class="fb-card-h"><h3>🪞 Auto-avaliação do consultor</h3><span class="badge">consultor preenche após ler</span></div>
+            <div class="fb-text"><textarea id="fbNotaAuto" placeholder="O que eu vejo em mim neste ciclo · Em que preciso evoluir · O que peço de suporte..."></textarea></div>
+          </div>
+          <div class="fb-card">
+            <div class="fb-card-h"><h3>🚀 Plano de ação para o próximo ciclo</h3><span class="badge">3–5 ações no máximo</span></div>
+            <div class="fb-acoes" id="fbAcoesList">
+              <button class="fb-acao-add" onclick="_fbAddAcao()">+ Adicionar ação</button>
+            </div>
+          </div>
+          <div class="fb-footer">
+            <div class="fb-status">
+              <span class="fb-status-dot" id="fbStatusDot"></span>
+              Status: <b id="fbStatusTxt" style="color:var(--text);">Rascunho</b>
+              <span id="fbStatusMeta" style="margin-left:6px;color:var(--muted);"></span>
+            </div>
+            <div class="fb-actions">
+              <button class="fb-btn ghost" onclick="_fbSalvarRascunho()">Salvar rascunho</button>
+              <button class="fb-btn primary" onclick="_fbEnviarConsultor()">Enviar ao consultor</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="fb-side">
+          <div class="fb-side-card">
+            <div class="fb-side-h">📊 Evolução nas 5 competências</div>
+            <svg class="fb-radar" id="fbRadar" viewBox="-130 -120 260 240"></svg>
+            <div class="fb-radar-legend">
+              <span><i style="background:var(--accent);"></i> Este ciclo</span>
+              <span><i style="background:var(--blue);"></i> Anterior</span>
+              <span><i style="background:var(--muted);opacity:.6;"></i> Time</span>
+            </div>
+          </div>
+          <div class="fb-side-card">
+            <div class="fb-side-h">🕒 Histórico de ciclos</div>
+            <div class="fb-hist" id="fbHist"><div style="font-size:11px;color:var(--muted);text-align:center;padding:14px;">Sem ciclos anteriores.</div></div>
+          </div>
+          <div class="fb-side-card">
+            <div class="fb-side-h">👥 Comparativo com o time</div>
+            <div id="fbComparativo" style="font-size:12px;color:var(--text);line-height:1.7;">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /PANE: DESENVOLVIMENTO -->
+
   </div>
 </div>
 
@@ -2429,7 +2528,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260526-180339"></script>
+<script defer src="assets/js/00-utils.js?v=20260526-214922"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2523,29 +2622,30 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260526-180339"></script>
-<script defer src="assets/js/29-login.js?v=20260526-180339"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260526-180339"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260526-180339"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260526-180339"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260526-180339"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260526-180339"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260526-180339"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260526-180339"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260526-180339"></script>
-<script defer src="assets/js/99-diag.js?v=20260526-180339"></script>
-<script defer src="assets/js/21-turmas.js?v=20260526-180339"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260526-180339"></script>
+<script defer src="assets/js/02-main.js?v=20260526-214922"></script>
+<script defer src="assets/js/29-login.js?v=20260526-214922"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260526-214922"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260526-214922"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260526-214922"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260526-214922"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260526-214922"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260526-214922"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260526-214922"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260526-214922"></script>
+<script defer src="assets/js/40-ic-feedback.js?v=20260526-214922"></script>
+<script defer src="assets/js/99-diag.js?v=20260526-214922"></script>
+<script defer src="assets/js/21-turmas.js?v=20260526-214922"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260526-214922"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260526-180339"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260526-180339"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260526-180339"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260526-180339"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260526-180339"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260526-180339"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260526-214922"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260526-214922"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260526-214922"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260526-214922"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260526-214922"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260526-214922"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260526-180339"></script>
-<script defer src="assets/js/17-presenca.js?v=20260526-180339"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260526-214922"></script>
+<script defer src="assets/js/17-presenca.js?v=20260526-214922"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2557,20 +2657,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260526-180339">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260526-214922">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260526-180339"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260526-214922"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260526-180339"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260526-180339"></script>
+<script defer src="assets/js/05-importacao.js?v=20260526-214922"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260526-214922"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260526-180339">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260526-214922">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260526-180339"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260526-214922"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2606,7 +2706,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260526-180339"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260526-214922"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2631,14 +2731,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260526-180339"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260526-180339"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260526-180339"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260526-180339"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260526-180339"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260526-180339"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260526-180339"></script>
-<script defer src="assets/js/08-realtime.js?v=20260526-180339"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260526-214922"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260526-214922"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260526-214922"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260526-214922"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260526-214922"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260526-214922"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260526-214922"></script>
+<script defer src="assets/js/08-realtime.js?v=20260526-214922"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2671,7 +2771,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260526-180339"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260526-214922"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -3228,16 +3328,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260526-180339"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260526-214922"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260526-180339"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260526-214922"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260526-180339"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260526-214922"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260526-180339"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260526-214922"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">

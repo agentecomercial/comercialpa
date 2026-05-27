@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Preview · Inteligência Comercial — Feedback (Fase 0+3)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;
+  --surface:#1a1a1a;
+  --surface2:#222;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --text:#f0f0f0;
+  --muted:#888;
+  --accent:#c8f05a;
+  --green:#34d399;
+  --amber:#ffb740;
+  --red:#ff5f57;
+  --blue:#60a5fa;
+  --purple:#a78bfa;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:24px;
+}
+
+/* ── Header da seção (dentro do IC) ── */
+.fb-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;
+  padding-bottom:16px;border-bottom:1px solid var(--border);
+  margin-bottom:20px;
+}
+.fb-title{
+  font-size:18px;font-weight:800;color:var(--text);
+  display:flex;align-items:center;gap:10px;
+}
+.fb-title small{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-left:4px;}
+.fb-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.fb-control{display:flex;flex-direction:column;gap:4px;}
+.fb-control label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.fb-control select,.fb-control input{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  border-radius:6px;padding:7px 11px;font-size:12px;font-weight:600;font-family:inherit;
+  outline:none;transition:border-color .12s;
+}
+.fb-control select:focus,.fb-control input:focus{border-color:var(--accent);}
+
+/* ── Tabs de ciclo ── */
+.fb-ciclo-tabs{
+  display:inline-flex;background:var(--surface2);border-radius:8px;padding:3px;gap:3px;
+}
+.fb-ciclo-tab{
+  background:none;border:none;color:var(--muted);
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  padding:7px 14px;border-radius:6px;cursor:pointer;
+  transition:all .12s;font-family:inherit;
+}
+.fb-ciclo-tab:hover{color:var(--accent);}
+.fb-ciclo-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+
+/* ── Layout 2 colunas (form + side) ── */
+.fb-layout{display:grid;grid-template-columns:1fr 380px;gap:20px;}
+@media (max-width:1100px){.fb-layout{grid-template-columns:1fr;}}
+
+/* ── Card de competência ── */
+.fb-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:18px;margin-bottom:14px;}
+.fb-card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.fb-card-h h3{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.fb-card-h .badge{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+
+.fb-comp-list{display:flex;flex-direction:column;gap:14px;}
+.fb-comp{display:grid;grid-template-columns:180px 1fr 60px;gap:14px;align-items:center;}
+.fb-comp-label{font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;}
+.fb-comp-label .ico{font-size:14px;}
+.fb-comp-slider{position:relative;}
+.fb-comp-slider input{
+  width:100%;accent-color:var(--accent);height:24px;
+  background:linear-gradient(to right,#ff1744 0%,#ff5500 25%,#ffe000 50%,#00f0ff 75%,#c8f05a 100%);
+  border-radius:12px;-webkit-appearance:none;appearance:none;
+}
+.fb-comp-slider input::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--accent);
+  cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.4);
+}
+.fb-comp-slider input::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--accent);
+  cursor:pointer;
+}
+.fb-comp-scale{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:3px;padding:0 2px;}
+.fb-comp-val{
+  font-size:20px;font-weight:800;text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.fb-comp-val.lv-1{color:#ff1744;}.fb-comp-val.lv-2{color:#ff5500;}.fb-comp-val.lv-3{color:#ffe000;}.fb-comp-val.lv-4{color:#00f0ff;}.fb-comp-val.lv-5{color:#c8f05a;}
+
+/* ── Áreas de texto ── */
+.fb-text{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.fb-text label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.fb-text textarea{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  border-radius:8px;padding:11px 13px;font-size:13px;line-height:1.55;
+  font-family:inherit;resize:vertical;min-height:80px;outline:none;
+  transition:border-color .12s;
+}
+.fb-text textarea:focus{border-color:var(--accent);}
+
+/* ── Plano de ação (checkboxes) ── */
+.fb-acoes{display:flex;flex-direction:column;gap:8px;}
+.fb-acao{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;
+}
+.fb-acao input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;}
+.fb-acao input[type=text]{
+  flex:1;background:none;border:none;color:var(--text);font-size:13px;outline:none;font-family:inherit;
+}
+.fb-acao-add{
+  background:none;border:1px dashed var(--border2);color:var(--muted);
+  border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;
+  font-family:inherit;text-align:left;transition:all .12s;
+}
+.fb-acao-add:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── Footer de ações ── */
+.fb-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:18px;padding-top:14px;border-top:1px solid var(--border);
+  flex-wrap:wrap;gap:10px;
+}
+.fb-status{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-weight:600;}
+.fb-status-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 6px currentColor;color:var(--amber);}
+.fb-actions{display:flex;gap:8px;}
+.fb-btn{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  font-size:12px;font-weight:700;padding:9px 16px;border-radius:6px;cursor:pointer;
+  font-family:inherit;transition:all .12s;text-transform:uppercase;letter-spacing:.04em;
+}
+.fb-btn.ghost{color:var(--muted);}
+.fb-btn.ghost:hover{color:var(--text);}
+.fb-btn.primary{background:var(--accent);color:#0f0f0f;border-color:var(--accent);}
+.fb-btn.primary:hover{filter:brightness(1.06);}
+
+/* ── Side: histórico + radar ── */
+.fb-side{display:flex;flex-direction:column;gap:14px;}
+.fb-side-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:16px;}
+.fb-side-h{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
+
+/* Radar SVG */
+.fb-radar{width:100%;height:auto;}
+.fb-radar-legend{display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:10px;color:var(--muted);flex-wrap:wrap;}
+.fb-radar-legend span{display:flex;align-items:center;gap:5px;}
+.fb-radar-legend i{display:inline-block;width:10px;height:3px;border-radius:1px;}
+
+/* Histórico */
+.fb-hist{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;}
+.fb-hist-item{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;cursor:pointer;transition:border-color .12s;
+}
+.fb-hist-item:hover{border-color:var(--accent);}
+.fb-hist-row{display:flex;justify-content:space-between;align-items:center;}
+.fb-hist-data{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;}
+.fb-hist-ciclo{font-size:9px;font-weight:800;padding:2px 6px;border-radius:8px;text-transform:uppercase;letter-spacing:.06em;}
+.fb-hist-ciclo.semanal{background:rgba(96,165,250,.14);color:var(--blue);}
+.fb-hist-ciclo.quinzenal{background:rgba(167,139,250,.14);color:var(--purple);}
+.fb-hist-ciclo.mensal{background:rgba(200,240,90,.14);color:var(--accent);}
+.fb-hist-media{
+  display:flex;align-items:center;gap:6px;margin-top:6px;
+  font-size:13px;font-weight:700;color:var(--text);
+}
+.fb-hist-media .arrow{font-size:11px;}
+.fb-hist-media .arrow.up{color:var(--green);}
+.fb-hist-media .arrow.down{color:var(--red);}
+.fb-hist-status{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
+
+/* Nota legenda */
+.fb-note{
+  background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.2);
+  border-radius:8px;padding:12px 14px;font-size:11px;line-height:1.55;color:var(--text);
+  margin-top:20px;
+}
+.fb-note b{color:var(--blue);}
+.fb-note ul{margin:6px 0 0 16px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="fb-header">
+  <div>
+    <div class="fb-title">📈 Feedback & Desenvolvimento <small>· dentro de Inteligência Comercial</small></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:6px;">Registro estruturado para desenvolver o consultor — não substitui a conversa, instrumenta ela.</div>
+  </div>
+  <div class="fb-controls">
+    <div class="fb-control">
+      <label>Consultor</label>
+      <select id="selCons">
+        <option>DARLEY SANTOS</option>
+        <option>DANIEL MOURA</option>
+        <option>JULIANA FABRICIA</option>
+        <option>CARLOS BONFIM</option>
+      </select>
+    </div>
+    <div class="fb-control">
+      <label>Período</label>
+      <input type="text" value="26/05/2026" style="width:120px;font-variant-numeric:tabular-nums;">
+    </div>
+  </div>
+</div>
+
+<!-- TABS DE CICLO -->
+<div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+  <div class="fb-ciclo-tabs">
+    <button class="fb-ciclo-tab" data-ciclo="semanal">Semanal</button>
+    <button class="fb-ciclo-tab active" data-ciclo="quinzenal">Quinzenal</button>
+    <button class="fb-ciclo-tab" data-ciclo="mensal">Mensal</button>
+  </div>
+  <div style="font-size:11px;color:var(--muted);">
+    Ciclo atual: <b style="color:var(--accent);">12 — 26/05/2026</b> · próximo: 09/06/2026
+  </div>
+</div>
+
+<!-- LAYOUT 2 COLUNAS -->
+<div class="fb-layout">
+
+  <!-- COLUNA PRINCIPAL: FORMULÁRIO -->
+  <div class="fb-main">
+
+    <!-- COMPETÊNCIAS -->
+    <div class="fb-card">
+      <div class="fb-card-h">
+        <h3>🎯 Avaliação por competência</h3>
+        <span class="badge">escala 1–10</span>
+      </div>
+      <div class="fb-comp-list" id="compList"></div>
+    </div>
+
+    <!-- NOTA DO GESTOR -->
+    <div class="fb-card">
+      <div class="fb-card-h">
+        <h3>📝 Observações do gestor</h3>
+        <span class="badge">consultor verá ao receber</span>
+      </div>
+      <div class="fb-text">
+        <textarea placeholder="O que se destacou no ciclo · O que pode melhorar · Comportamentos observados...">DARLEY mantém alta consistência no fechamento. Cresceu em qualificação após role-play. Próximo desafio: ampliar mix de produtos vendidos (atualmente concentra 70% em IF) e trabalhar Master.</textarea>
+      </div>
+    </div>
+
+    <!-- AUTO-AVALIAÇÃO -->
+    <div class="fb-card">
+      <div class="fb-card-h">
+        <h3>🪞 Auto-avaliação do consultor</h3>
+        <span class="badge">consultor preenche após ler</span>
+      </div>
+      <div class="fb-text">
+        <textarea placeholder="O que eu vejo em mim neste ciclo · Em que preciso evoluir · O que peço de suporte..." style="opacity:.6;">— pendente preenchimento pelo consultor —</textarea>
+      </div>
+    </div>
+
+    <!-- PLANO DE AÇÃO -->
+    <div class="fb-card">
+      <div class="fb-card-h">
+        <h3>🚀 Plano de ação para o próximo ciclo</h3>
+        <span class="badge">3–5 ações no máximo</span>
+      </div>
+      <div class="fb-acoes" id="acoesList">
+        <div class="fb-acao"><input type="checkbox"><input type="text" value="Fazer 2 fechamentos de Master nas próximas 2 semanas"></div>
+        <div class="fb-acao"><input type="checkbox" checked><input type="text" value="Assistir gravação de 1 role-play sênior" style="text-decoration:line-through;opacity:.6;"></div>
+        <div class="fb-acao"><input type="checkbox"><input type="text" value="Reescrever script de abertura testando 2 variações"></div>
+        <button class="fb-acao-add">+ Adicionar ação</button>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="fb-footer">
+      <div class="fb-status">
+        <span class="fb-status-dot"></span>
+        Status: <b style="color:var(--text);">Rascunho</b> · última edição há 2 min
+      </div>
+      <div class="fb-actions">
+        <button class="fb-btn ghost">Salvar rascunho</button>
+        <button class="fb-btn">Visualizar</button>
+        <button class="fb-btn primary">Enviar ao consultor</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLUNA LATERAL: RADAR + HISTÓRICO -->
+  <div class="fb-side">
+    <div class="fb-side-card">
+      <div class="fb-side-h">📊 Evolução nas 5 competências</div>
+      <svg class="fb-radar" id="radar" viewBox="-130 -120 260 240"></svg>
+      <div class="fb-radar-legend">
+        <span><i style="background:var(--accent);"></i> Este ciclo</span>
+        <span><i style="background:var(--blue);"></i> Ciclo anterior</span>
+        <span><i style="background:var(--muted);opacity:.6;"></i> Média do time</span>
+      </div>
+    </div>
+
+    <div class="fb-side-card">
+      <div class="fb-side-h">🕒 Histórico de ciclos (DARLEY)</div>
+      <div class="fb-hist">
+        <div class="fb-hist-item">
+          <div class="fb-hist-row">
+            <span class="fb-hist-data">26/05/2026</span>
+            <span class="fb-hist-ciclo quinzenal">Quinzenal · #12</span>
+          </div>
+          <div class="fb-hist-media">Média 8.2 <span class="arrow up">▲ +0.3</span></div>
+          <div class="fb-hist-status">Rascunho</div>
+        </div>
+        <div class="fb-hist-item">
+          <div class="fb-hist-row">
+            <span class="fb-hist-data">12/05/2026</span>
+            <span class="fb-hist-ciclo quinzenal">Quinzenal · #11</span>
+          </div>
+          <div class="fb-hist-media">Média 7.9 <span class="arrow up">▲ +0.5</span></div>
+          <div class="fb-hist-status">✓ Respondido pelo consultor</div>
+        </div>
+        <div class="fb-hist-item">
+          <div class="fb-hist-row">
+            <span class="fb-hist-data">30/04/2026</span>
+            <span class="fb-hist-ciclo mensal">Mensal · Abr</span>
+          </div>
+          <div class="fb-hist-media">Média 7.4 <span class="arrow up">▲ +0.6</span></div>
+          <div class="fb-hist-status">✓ Lido</div>
+        </div>
+        <div class="fb-hist-item">
+          <div class="fb-hist-row">
+            <span class="fb-hist-data">28/04/2026</span>
+            <span class="fb-hist-ciclo quinzenal">Quinzenal · #10</span>
+          </div>
+          <div class="fb-hist-media">Média 7.2 <span class="arrow down">▼ −0.3</span></div>
+          <div class="fb-hist-status">✓ Respondido</div>
+        </div>
+        <div class="fb-hist-item">
+          <div class="fb-hist-row">
+            <span class="fb-hist-data">14/04/2026</span>
+            <span class="fb-hist-ciclo quinzenal">Quinzenal · #9</span>
+          </div>
+          <div class="fb-hist-media">Média 7.5</div>
+          <div class="fb-hist-status">✓ Respondido</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fb-side-card">
+      <div class="fb-side-h">👥 Comparativo com o time (este ciclo)</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.7;">
+        <div style="display:flex;justify-content:space-between;"><span>Prospecção</span><b style="color:var(--accent);">8 · top 1/4</b></div>
+        <div style="display:flex;justify-content:space-between;"><span>Qualificação</span><b style="color:var(--blue);">7 · 2º</b></div>
+        <div style="display:flex;justify-content:space-between;"><span>Apresentação</span><b style="color:var(--accent);">9 · top 1/4</b></div>
+        <div style="display:flex;justify-content:space-between;"><span>Negociação</span><b style="color:var(--accent);">9 · top 1/4</b></div>
+        <div style="display:flex;justify-content:space-between;"><span>Follow-up</span><b style="color:var(--amber);">8 · 2º (gap)</b></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- NOTA explicativa -->
+<div class="fb-note">
+  <b>Como esse módulo se integra na Inteligência Comercial</b>
+  <ul>
+    <li><b>Onde mora:</b> dentro de <code>#mapeamentoScreen</code> como aba/seção "Desenvolvimento" — não toca Pipeline nem Turmas.</li>
+    <li><b>Dados:</b> grava em <code>icFeedbacks/{consultorId}/{cicloId}</code> no Firebase (estrutura nova, isolada). Lê de <code>users</code>/<code>pipelineSales</code> apenas para popular nome/foto/contexto — somente leitura.</li>
+    <li><b>Ciclos:</b> Semanal (auto-numerados) · Quinzenal (#1, #2…) · Mensal (Jan, Fev…). Cada um tem sua cadência de notificação.</li>
+    <li><b>Fluxo:</b> Gestor preenche → Envia → Consultor recebe (modal/notificação) → Consultor lê e faz auto-avaliação → Vão pro 1:1 alinhados.</li>
+    <li><b>Comparativo:</b> calculado em tempo real com base nas médias do time no mesmo ciclo.</li>
+    <li><b>Próxima fase (PDI):</b> usa essas competências como base — quando uma fica ≤ 6 por 2 ciclos seguidos, vira candidata a entrar no PDI trimestral.</li>
+  </ul>
+</div>
+
+<script>
+/* Competências core (5) — coloridas por nível atual */
+var COMPS = [
+  { key:'prosp', label:'Prospecção',   ico:'🎯', val:8 },
+  { key:'qual',  label:'Qualificação', ico:'🔍', val:7 },
+  { key:'apres', label:'Apresentação', ico:'🎤', val:9 },
+  { key:'neg',   label:'Negociação',   ico:'🤝', val:9 },
+  { key:'fup',   label:'Follow-up',    ico:'📨', val:8 }
+];
+var CICLO_ANT = [7,6,9,8,8];
+var TIME_MED  = [6.8, 6.5, 7.2, 7.5, 6.4];
+
+function lvClass(v){
+  if(v<=2) return 'lv-1';
+  if(v<=4) return 'lv-2';
+  if(v<=6) return 'lv-3';
+  if(v<=8) return 'lv-4';
+  return 'lv-5';
+}
+function renderComps(){
+  var html = COMPS.map(function(c,i){
+    return '<div class="fb-comp">'
+      + '<div class="fb-comp-label"><span class="ico">'+c.ico+'</span>'+c.label+'</div>'
+      + '<div class="fb-comp-slider">'
+      +   '<input type="range" min="1" max="10" step="1" value="'+c.val+'" data-idx="'+i+'">'
+      +   '<div class="fb-comp-scale"><span>1</span><span>3</span><span>5</span><span>7</span><span>10</span></div>'
+      + '</div>'
+      + '<div class="fb-comp-val '+lvClass(c.val)+'" id="cv'+i+'">'+c.val+'</div>'
+      + '</div>';
+  }).join('');
+  document.getElementById('compList').innerHTML = html;
+  document.querySelectorAll('input[type=range]').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var i = +inp.getAttribute('data-idx');
+      COMPS[i].val = +inp.value;
+      var el = document.getElementById('cv'+i);
+      el.textContent = inp.value;
+      el.className = 'fb-comp-val '+lvClass(+inp.value);
+      renderRadar();
+    });
+  });
+}
+
+/* Radar SVG — 5 eixos, escala 0..10 */
+function renderRadar(){
+  var R = 90; /* raio máximo */
+  var labels = COMPS.map(function(c){return c.label;});
+  var pts1 = COMPS.map(function(c){return c.val;});
+  var svg = document.getElementById('radar');
+  svg.innerHTML = '';
+  /* Grid */
+  for(var g=2; g<=10; g+=2){
+    var pts = '';
+    for(var i=0;i<5;i++){
+      var ang = -Math.PI/2 + i*(2*Math.PI/5);
+      var r = (g/10)*R;
+      pts += (r*Math.cos(ang))+','+(r*Math.sin(ang))+' ';
+    }
+    svg.innerHTML += '<polygon points="'+pts.trim()+'" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>';
+  }
+  /* Eixos + labels */
+  for(var i=0;i<5;i++){
+    var ang = -Math.PI/2 + i*(2*Math.PI/5);
+    var x = R*Math.cos(ang), y = R*Math.sin(ang);
+    svg.innerHTML += '<line x1="0" y1="0" x2="'+x+'" y2="'+y+'" stroke="rgba(255,255,255,.06)" stroke-width="1"/>';
+    var lx = (R+18)*Math.cos(ang), ly = (R+18)*Math.sin(ang) + 4;
+    var anchor = Math.abs(Math.cos(ang)) < 0.2 ? 'middle' : (Math.cos(ang) > 0 ? 'start' : 'end');
+    svg.innerHTML += '<text x="'+lx+'" y="'+ly+'" fill="#bbb" font-size="10" font-weight="700" text-anchor="'+anchor+'">'+labels[i]+'</text>';
+  }
+  /* Função pra desenhar polígono */
+  function poly(values, color, opacity){
+    var pts = '';
+    for(var i=0;i<5;i++){
+      var ang = -Math.PI/2 + i*(2*Math.PI/5);
+      var r = (values[i]/10)*R;
+      pts += (r*Math.cos(ang))+','+(r*Math.sin(ang))+' ';
+    }
+    svg.innerHTML += '<polygon points="'+pts.trim()+'" fill="'+color+'" fill-opacity="'+opacity+'" stroke="'+color+'" stroke-width="2"/>';
+    /* dots nos vértices */
+    for(var i=0;i<5;i++){
+      var ang = -Math.PI/2 + i*(2*Math.PI/5);
+      var r = (values[i]/10)*R;
+      svg.innerHTML += '<circle cx="'+(r*Math.cos(ang))+'" cy="'+(r*Math.sin(ang))+'" r="3" fill="'+color+'"/>';
+    }
+  }
+  /* Time (sombra cinza) */
+  poly(TIME_MED, '#888', 0.10);
+  /* Ciclo anterior (azul) */
+  poly(CICLO_ANT, '#60a5fa', 0.12);
+  /* Este ciclo (verde) */
+  poly(pts1, '#c8f05a', 0.22);
+}
+
+/* Tabs ciclo */
+document.querySelectorAll('.fb-ciclo-tab').forEach(function(t){
+  t.addEventListener('click', function(){
+    document.querySelectorAll('.fb-ciclo-tab').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+  });
+});
+
+/* Adicionar ação */
+document.querySelector('.fb-acao-add').addEventListener('click', function(){
+  var row = document.createElement('div');
+  row.className = 'fb-acao';
+  row.innerHTML = '<input type="checkbox"><input type="text" placeholder="Nova ação...">';
+  this.parentNode.insertBefore(row, this);
+  row.querySelector('input[type=text]').focus();
+});
+
+renderComps();
+renderRadar();
+</script>
+</body>
+</html>

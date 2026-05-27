@@ -1247,6 +1247,98 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-cal-cell:hover{border-color:var(--accent);color:var(--accent);}
 .np-cal-cell.atual{box-shadow:inset 0 0 0 1px var(--blue);color:var(--blue);}
 .np-cal-cell.selected{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+
+/* ═══════════════════════════════════════════════════════
+   Inteligência Comercial — Tabs internas (Dashboard / Desenvolvimento)
+   Isolado em #mapeamentoScreen. Não afeta Pipeline nem Turmas.
+═══════════════════════════════════════════════════════ */
+.ic-tabs{display:flex;gap:4px;background:var(--surface2);padding:3px;border-radius:8px;margin:0 0 18px;width:fit-content;}
+.ic-tab{background:none;border:none;color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:8px 16px;border-radius:6px;cursor:pointer;transition:all .12s;font-family:inherit;}
+.ic-tab:hover{color:var(--accent);}
+.ic-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.ic-pane{display:none;}
+.ic-pane.show{display:block;}
+
+/* ── Feedback & Desenvolvimento (Fase 0+3) ── */
+.fb-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.fb-title{font-size:18px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;}
+.fb-title small{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-left:4px;}
+.fb-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.fb-control{display:flex;flex-direction:column;gap:4px;}
+.fb-control label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+
+.fb-ciclo-tabs{display:inline-flex;background:var(--surface2);border-radius:8px;padding:3px;gap:3px;}
+.fb-ciclo-tab{background:none;border:none;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:7px 14px;border-radius:6px;cursor:pointer;transition:all .12s;font-family:inherit;}
+.fb-ciclo-tab:hover{color:var(--accent);}
+.fb-ciclo-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+
+.fb-layout{display:grid;grid-template-columns:1fr 380px;gap:20px;}
+@media(max-width:1100px){.fb-layout{grid-template-columns:1fr;}}
+
+.fb-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:18px;margin-bottom:14px;}
+.fb-card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.fb-card-h h3{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.fb-card-h .badge{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+
+.fb-comp-list{display:flex;flex-direction:column;gap:14px;}
+.fb-comp{display:grid;grid-template-columns:180px 1fr 60px;gap:14px;align-items:center;}
+.fb-comp-label{font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;}
+.fb-comp-label .ico{font-size:14px;}
+.fb-comp-slider{position:relative;}
+.fb-comp-slider input{width:100%;accent-color:var(--accent);height:24px;background:linear-gradient(to right,#ff1744 0%,#ff5500 25%,#ffe000 50%,#00f0ff 75%,#c8f05a 100%);border-radius:12px;-webkit-appearance:none;appearance:none;}
+.fb-comp-slider input::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--accent);cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.4);}
+.fb-comp-slider input::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--accent);cursor:pointer;}
+.fb-comp-scale{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:3px;padding:0 2px;}
+.fb-comp-val{font-size:20px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;}
+.fb-comp-val.lv-1{color:#ff1744;}.fb-comp-val.lv-2{color:#ff5500;}.fb-comp-val.lv-3{color:#ffe000;}.fb-comp-val.lv-4{color:#00f0ff;}.fb-comp-val.lv-5{color:#c8f05a;}
+
+.fb-text{display:flex;flex-direction:column;gap:6px;}
+.fb-text textarea{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:11px 13px;font-size:13px;line-height:1.55;font-family:inherit;resize:vertical;min-height:80px;outline:none;transition:border-color .12s;}
+.fb-text textarea:focus{border-color:var(--accent);}
+
+.fb-acoes{display:flex;flex-direction:column;gap:8px;}
+.fb-acao{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;}
+.fb-acao input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;}
+.fb-acao input[type=text]{flex:1;background:none;border:none;color:var(--text);font-size:13px;outline:none;font-family:inherit;}
+.fb-acao button.rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;}
+.fb-acao button.rm:hover{color:var(--red);}
+.fb-acao-add{background:none;border:1px dashed var(--border2);color:var(--muted);border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;font-family:inherit;text-align:left;transition:all .12s;}
+.fb-acao-add:hover{border-color:var(--accent);color:var(--accent);}
+
+.fb-footer{display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);flex-wrap:wrap;gap:10px;}
+.fb-status{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-weight:600;}
+.fb-status-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 6px currentColor;color:var(--amber);}
+.fb-status-dot.enviado{background:var(--blue);color:var(--blue);}
+.fb-status-dot.respondido{background:var(--green);color:var(--green);}
+.fb-actions{display:flex;gap:8px;}
+.fb-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:12px;font-weight:700;padding:9px 16px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .12s;text-transform:uppercase;letter-spacing:.04em;}
+.fb-btn.ghost{color:var(--muted);}
+.fb-btn.ghost:hover{color:var(--text);}
+.fb-btn.primary{background:var(--accent);color:#0f0f0f;border-color:var(--accent);}
+.fb-btn.primary:hover{filter:brightness(1.06);}
+
+.fb-side{display:flex;flex-direction:column;gap:14px;}
+.fb-side-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:16px;}
+.fb-side-h{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
+.fb-radar{width:100%;height:auto;}
+.fb-radar-legend{display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:10px;color:var(--muted);flex-wrap:wrap;}
+.fb-radar-legend span{display:flex;align-items:center;gap:5px;}
+.fb-radar-legend i{display:inline-block;width:10px;height:3px;border-radius:1px;}
+
+.fb-hist{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;}
+.fb-hist-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .12s;}
+.fb-hist-item:hover{border-color:var(--accent);}
+.fb-hist-row{display:flex;justify-content:space-between;align-items:center;}
+.fb-hist-data{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;}
+.fb-hist-ciclo{font-size:9px;font-weight:800;padding:2px 6px;border-radius:8px;text-transform:uppercase;letter-spacing:.06em;}
+.fb-hist-ciclo.semanal{background:rgba(96,165,250,.14);color:var(--blue);}
+.fb-hist-ciclo.quinzenal{background:rgba(167,139,250,.14);color:#a78bfa;}
+.fb-hist-ciclo.mensal{background:rgba(200,240,90,.14);color:var(--accent);}
+.fb-hist-media{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;font-weight:700;color:var(--text);}
+.fb-hist-media .arrow{font-size:11px;}
+.fb-hist-media .arrow.up{color:var(--green);}
+.fb-hist-media .arrow.down{color:var(--red);}
+.fb-hist-status{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
 /* Range no modo Período */
 .np-cal-cell.range-edge{background:var(--accent);color:#0f0f0f;border-color:var(--accent);font-weight:800;}
 .np-cal-cell.range-mid{background:rgba(200,240,90,.10);border-color:transparent;color:var(--text);}
