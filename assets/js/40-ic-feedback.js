@@ -1184,12 +1184,25 @@
     var s = window._fbAprSrcs;
     if(s.has(src)){
       s.delete(src);
-      /* Nunca permite ficar sem nenhum — reseta pra ambos */
       if(s.size === 0){ s.add('turma'); s.add('avulso'); }
     } else {
       s.add(src);
     }
     if(typeof window._fbDetAbrir === 'function') window._fbDetAbrir('apr');
+  };
+  /* Negociação: mesma lógica de toggle, estado próprio */
+  window._fbNegToggleSrc = function(src){
+    if(!window._fbNegSrcs || !window._fbNegSrcs.size){
+      window._fbNegSrcs = new Set(['turma','avulso']);
+    }
+    var s = window._fbNegSrcs;
+    if(s.has(src)){
+      s.delete(src);
+      if(s.size === 0){ s.add('turma'); s.add('avulso'); }
+    } else {
+      s.add(src);
+    }
+    if(typeof window._fbDetAbrir === 'function') window._fbDetAbrir('neg');
   };
 
   /* Troca o filtro retroativo de Recuperação (Visão) e re-renderiza o modal */
@@ -1321,16 +1334,35 @@
 
     /* ── Negociação ── */
     if(key === 'neg'){
+      /* Filtro de origem próprio do Negociação (independente do Aproveitamento) */
+      if(!window._fbNegSrcs || !window._fbNegSrcs.size){
+        window._fbNegSrcs = new Set(['turma','avulso']);
+      }
+      var nSrcs = window._fbNegSrcs;
+      var nAtT = nSrcs.has('turma');
+      var nAtA = nSrcs.has('avulso');
+      function _fNegItens(arr){ return arr.filter(function(it){return nSrcs.has(it.src);}); }
+
       var pagos = itens.filter(function(it){return it.status==='pago';});
       var negs  = itens.filter(function(it){return it.status==='negociacao';});
       var ents  = itens.filter(function(it){return it.status==='entrada';});
-      /* Soma de entradas (R$) — vem do campo it.entrada quando o sub tem entrada parcial */
-      var totalEntradas = ents.reduce(function(s,it){return s+(+it.entrada||0)+((+it.valor||0)*0);},0);
-      /* Se entrada não tiver valor próprio, usa it.valor como referência */
-      var totalEntradasVal = ents.reduce(function(s,it){
+      /* Versões filtradas conforme cards clicados */
+      var pagosFN = _fNegItens(pagos);
+      var negsFN  = _fNegItens(negs);
+      var entsFN  = _fNegItens(ents);
+      /* Quebra de Pagos por origem (3 partes) */
+      var pagosTurma  = pagos.filter(function(it){return it.src==='turma';});
+      var pagosAvulso = pagos.filter(function(it){return it.src==='avulso';});
+
+      /* Recalcula KPIs com base no filtro */
+      var convDenomF = pagosFN.length + negsFN.length + entsFN.length;
+      var convF = convDenomF > 0 ? pagosFN.length/convDenomF : null;
+      var ticketF = pagosFN.length > 0 ? pagosFN.reduce(function(s,it){return s+(+it.valor||0);},0) / pagosFN.length : 0;
+      var totalEntradasVal = entsFN.reduce(function(s,it){
         var v = +it.entrada || 0;
         return s + (v > 0 ? v : (+it.valor || 0));
       }, 0);
+
       function tblNeg(arr, colVal){
         return '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th class="val">'+colVal+'</th></tr></thead><tbody>'
           + arr.map(function(it){
@@ -1339,20 +1371,83 @@
             }).join('')
           + '</tbody></table>';
       }
+
+      /* Cards Turma/Avulsa clicáveis (mesmo padrão do Aproveitamento) */
+      function bgPorPct(pct){
+        if(pct >= 0.75) return {border:'rgba(52,211,153,.35)', bg:'rgba(52,211,153,.06)', cor:'var(--green)'};
+        if(pct >= 0.5)  return {border:'rgba(96,165,250,.35)', bg:'rgba(96,165,250,.06)', cor:'var(--blue)'};
+        if(pct >= 0.25) return {border:'rgba(255,183,64,.35)', bg:'rgba(255,183,64,.06)', cor:'var(--amber)'};
+        return            {border:'rgba(255,95,87,.35)',   bg:'rgba(255,95,87,.06)', cor:'var(--red)'};
+      }
+      function negOrigemCard(titulo, ico, tag, src, itensOrig, ativo){
+        var pagoO  = itensOrig.filter(function(it){return it.status==='pago';}).length;
+        var negocO = itensOrig.filter(function(it){return it.status==='negociacao';}).length;
+        var entO   = itensOrig.filter(function(it){return it.status==='entrada';}).length;
+        var convDen = pagoO + negocO + entO;
+        var convO   = convDen > 0 ? pagoO/convDen : 0;
+        var st     = bgPorPct(convO);
+        var rPag   = itensOrig.filter(function(it){return it.status==='pago';}).reduce(function(s,it){return s+(+it.valor||0);},0);
+        var dim    = ativo ? '' : 'opacity:.45;filter:grayscale(.6);';
+        var checkSel = ativo ? '<span style="font-size:11px;color:'+st.cor+';margin-left:6px;font-weight:800;">✓</span>' : '';
+        return '<div onclick="_fbNegToggleSrc(\''+src+'\')" title="Clique para isolar/incluir esta origem" '
+          + 'style="background:'+st.bg+';border:1px solid '+st.border+';border-radius:10px;padding:14px;cursor:pointer;transition:all .15s;'+dim+'" '
+          + 'onmouseover="this.style.transform=\'translateY(-1px)\';this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.2)\';" '
+          + 'onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\';">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+          +   '<div style="font-size:13px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px;">'+ico+' '+titulo+' '+tag+checkSel+'</div>'
+          +   '<div style="font-size:20px;font-weight:800;color:'+st.cor+';font-variant-numeric:tabular-nums;">'+(convDen>0?Math.round(convO*100)+'%':'—')+'</div>'
+          + '</div>'
+          + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11px;text-align:center;">'
+          +   '<div><div style="color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">Pagos</div><div style="font-size:15px;font-weight:800;color:var(--green);">'+pagoO+'</div></div>'
+          +   '<div><div style="color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">Negoc.</div><div style="font-size:15px;font-weight:800;color:#ffe000;">'+negocO+'</div></div>'
+          +   '<div><div style="color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">Entrada</div><div style="font-size:15px;font-weight:800;color:#ffb740;">'+entO+'</div></div>'
+          +   '<div><div style="color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">R$ pago</div><div style="font-size:13px;font-weight:800;color:'+st.cor+';">'+_fmtR(rPag)+'</div></div>'
+          + '</div>'
+          + '</div>';
+      }
+      var itensTurmaN  = itens.filter(function(it){return it.src==='turma';});
+      var itensAvulsoN = itens.filter(function(it){return it.src==='avulso';});
+      var negOrigemCards = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;">'
+        + negOrigemCard('Turma',  '🏫', '<span class="fb-det-src-tag turma">TURMA</span>',   'turma',  itensTurmaN,  nAtT)
+        + negOrigemCard('Avulsa', '📦', '<span class="fb-det-src-tag avulso">AVULSO</span>', 'avulso', itensAvulsoN, nAtA)
+        + '</div>';
+      var negDica = (nAtT && nAtA)
+        ? 'Cards mostram conversão por origem. Clique pra isolar (ex: só Turma).'
+        : ('Filtrado: <b style="color:var(--accent);">só '+(nAtT?'TURMA':'AVULSA')+'</b>. Clique no card desligado pra incluir os dois.');
+      var negNotaFonte = '<div style="font-size:10px;color:var(--muted);padding:6px 10px;text-align:center;margin-bottom:14px;">'+negDica+'</div>';
+
+      /* Seção Pagos em 3 partes (quando ambos ativos) — mesma lógica do Aproveitamento */
+      var pagosNegHtml = '';
+      if(nAtT && nAtA){
+        pagosNegHtml = '<div class="fb-det-secao-h">✅ Pagos no mês ('+pagos.length+')</div>'
+          + (pagos.length ? tblNeg(pagos, 'Valor pago') : '<div class="fb-det-vazio">Nenhuma venda paga neste mês.</div>')
+          + '<div class="fb-det-secao-h">🏫 Pagos Turma ('+pagosTurma.length+')</div>'
+          + (pagosTurma.length ? tblNeg(pagosTurma, 'Valor pago') : '<div class="fb-det-vazio">Nenhum pago de turma.</div>')
+          + '<div class="fb-det-secao-h">📦 Pagos Avulso ('+pagosAvulso.length+')</div>'
+          + (pagosAvulso.length ? tblNeg(pagosAvulso, 'Valor pago') : '<div class="fb-det-vazio">Nenhum pago avulso.</div>');
+      } else if(nAtT){
+        pagosNegHtml = '<div class="fb-det-secao-h">🏫 Pagos Turma ('+pagosTurma.length+')</div>'
+          + (pagosTurma.length ? tblNeg(pagosTurma, 'Valor pago') : '<div class="fb-det-vazio">Nenhum pago de turma.</div>');
+      } else {
+        pagosNegHtml = '<div class="fb-det-secao-h">📦 Pagos Avulso ('+pagosAvulso.length+')</div>'
+          + (pagosAvulso.length ? tblNeg(pagosAvulso, 'Valor pago') : '<div class="fb-det-vazio">Nenhum pago avulso.</div>');
+      }
+
       return formulaHtml
         + '<div class="fb-det-stats">'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos</div><div class="fb-det-stat-val green">'+(m.pagos||0)+'</div></div>'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Em negociação</div><div class="fb-det-stat-val amber">'+(m.negoc||0)+'</div></div>'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Com entrada</div><div class="fb-det-stat-val" style="color:#ffb740;">'+(m.entrada||ents.length||0)+'</div></div>'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Conversão</div><div class="fb-det-stat-val blue">'+(m.convMeu!=null?Math.round(m.convMeu*100)+'%':'—')+'</div></div>'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Ticket médio</div><div class="fb-det-stat-val">'+(m.ticketMeu?_fmtR(m.ticketMeu):'—')+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos</div><div class="fb-det-stat-val green">'+pagosFN.length+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Em negociação</div><div class="fb-det-stat-val amber">'+negsFN.length+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Com entrada</div><div class="fb-det-stat-val" style="color:#ffb740;">'+entsFN.length+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Conversão</div><div class="fb-det-stat-val blue">'+(convF!=null?Math.round(convF*100)+'%':'—')+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Ticket médio</div><div class="fb-det-stat-val">'+(ticketF?_fmtR(ticketF):'—')+'</div></div>'
         + '</div>'
-        + '<div class="fb-det-secao-h">✅ Pagos no mês ('+pagos.length+')</div>'
-        + (pagos.length ? tblNeg(pagos, 'Valor pago') : '<div class="fb-det-vazio">Nenhuma venda paga neste mês.</div>')
-        + '<div class="fb-det-secao-h">🤝 Em negociação ('+negs.length+')</div>'
-        + (negs.length ? tblNeg(negs, 'Valor estimado') : '<div class="fb-det-vazio">Nenhuma negociação em curso.</div>')
-        + '<div class="fb-det-secao-h">💵 Com entrada parcial ('+ents.length+(totalEntradasVal>0?' · '+_fmtR(totalEntradasVal):'')+')</div>'
-        + (ents.length ? tblNeg(ents, 'Entrada paga') : '<div class="fb-det-vazio">Nenhum cliente com entrada parcial.</div>');
+        + negOrigemCards
+        + negNotaFonte
+        + pagosNegHtml
+        + '<div class="fb-det-secao-h">🤝 Em negociação ('+negsFN.length+')</div>'
+        + (negsFN.length ? tblNeg(negsFN, 'Valor estimado') : '<div class="fb-det-vazio">Nenhuma negociação em curso.</div>')
+        + '<div class="fb-det-secao-h">💵 Com entrada parcial ('+entsFN.length+(totalEntradasVal>0?' · '+_fmtR(totalEntradasVal):'')+')</div>'
+        + (entsFN.length ? tblNeg(entsFN, 'Entrada paga') : '<div class="fb-det-vazio">Nenhum cliente com entrada parcial.</div>');
     }
 
     /* ── Follow-up ── */
