@@ -1272,6 +1272,39 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .fb-ciclo-tab:hover{color:var(--accent);}
 .fb-ciclo-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3);}
 
+/* ── Alertas estratégicos + Pareto (Fase 6) ── */
+.ic-alertas-box{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin:0 0 18px;}
+.ic-alertas-box:empty{margin:0;}
+.ic-alerta{background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--muted);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;transition:transform .12s, box-shadow .12s;}
+.ic-alerta:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2);}
+.ic-alerta.critico{border-left-color:var(--red);background:rgba(255,95,87,.05);}
+.ic-alerta.atencao{border-left-color:var(--amber);background:rgba(255,183,64,.04);}
+.ic-alerta.info{border-left-color:var(--blue);background:rgba(96,165,250,.04);}
+.ic-alerta.ok{border-left-color:var(--green);background:rgba(52,211,153,.04);}
+.ic-alerta-h{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.ic-alerta-titulo{font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.04em;}
+.ic-alerta-tag{font-size:9px;font-weight:800;padding:2px 7px;border-radius:8px;text-transform:uppercase;letter-spacing:.05em;}
+.ic-alerta.critico .ic-alerta-tag{background:rgba(255,95,87,.14);color:var(--red);}
+.ic-alerta.atencao .ic-alerta-tag{background:rgba(255,183,64,.14);color:var(--amber);}
+.ic-alerta.info .ic-alerta-tag{background:rgba(96,165,250,.14);color:var(--blue);}
+.ic-alerta.ok .ic-alerta-tag{background:rgba(52,211,153,.14);color:var(--green);}
+.ic-alerta-msg{font-size:12px;color:var(--text);line-height:1.55;}
+.ic-alerta-msg b{color:var(--text);}
+.ic-alerta-acao{font-size:10px;color:var(--muted);margin-top:2px;font-style:italic;}
+/* Pareto bars */
+.ic-pareto-row{display:grid;grid-template-columns:140px 1fr 70px 70px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.ic-pareto-row:last-child{border-bottom:none;}
+.ic-pareto-row.no-pareto{background:rgba(255,255,255,.02);}
+.ic-pareto-nome{font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ic-pareto-bar{height:14px;background:var(--surface2);border-radius:3px;overflow:hidden;position:relative;}
+.ic-pareto-bar-fill{height:100%;transition:width .4s;}
+.ic-pareto-bar-fill.dentro{background:linear-gradient(90deg,var(--green),#34d399);}
+.ic-pareto-bar-fill.fora{background:linear-gradient(90deg,var(--blue),#60a5fa);}
+.ic-pareto-val{text-align:right;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;}
+.ic-pareto-acum{text-align:right;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;font-size:11px;}
+.ic-pareto-resumo{padding:10px 12px;background:var(--surface2);border-radius:6px;font-size:12px;color:var(--text);margin-bottom:10px;line-height:1.55;}
+.ic-pareto-resumo b{color:var(--accent);}
+
 /* ── IA · Inteligência conversacional (Fase 5) ── */
 @media(max-width:1100px){.ia-layout{grid-template-columns:1fr !important;}}
 .ia-per-chip{background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-size:11px;font-weight:600;padding:5px 11px;border-radius:14px;cursor:pointer;font-family:inherit;transition:all .12s;}
