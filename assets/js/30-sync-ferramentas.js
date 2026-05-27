@@ -191,10 +191,14 @@ function _mapCarregar(forcar) {
        e dashboard executivo reflitam o total real do funil (Pipeline). */
   Promise.all([
     window._fbGet(TURMAS_NODE).catch(function(){return {};}),
-    window._fbGet('pipelineSales').catch(function(){return {};})
+    window._fbGet('pipelineSales').catch(function(){return {};}),
+    window._fbGet('pipelineGoals').catch(function(){return {};})
   ]).then(function(res){
     var fbTurmas       = res[0] || {};
     var fbPipelineSales = res[1] || {};
+    var fbPipelineGoals = res[2] || {};
+    /* Expõe global para o _mapRenderConsultores ler metas */
+    window._mapGoalsPorMes = fbPipelineGoals;
     if (loading) loading.style.display = 'none';
     if ((!fbTurmas || !Object.keys(fbTurmas).length) &&
         (!fbPipelineSales || !Object.keys(fbPipelineSales).length)) {
@@ -562,8 +566,35 @@ function _mapRenderConsultores(registros) {
   var maxVal = lista[0].total || 1;
   var medals = ['🥇', '🥈', '🥉'];
   var coresBarra = ['#22d3ee','#fb923c','#facc15','#ff5f57','#a78bfa','#34d399','#60a5fa','#c8f05a'];
-  /* Tenta puxar metas do Pipeline (window._npGoals) se disponível */
-  var goals = (typeof window._npGoals === 'object' && window._npGoals) ? window._npGoals : {};
+
+  /* Puxa metas do Pipeline. Estrutura: pipelineGoals/{YYYY-MM}/{consultor}{metaMinima,...}
+     - Se houver 1 mês selecionado no filtro IC, usa esse mês.
+     - Se "Todos" ou mais de 1 mês: SOMA as metas dos meses selecionados.
+     - Fallback: mês corrente. */
+  function _goalsParaPeriodo(){
+    var porMes = window._mapGoalsPorMes || window._npGoals || {};
+    /* Se window._npGoals for "achatado" (sem ym), considera mês corrente */
+    if(porMes && porMes.metaMinima){ return porMes; }
+    var hoje = new Date();
+    var meses = (Array.isArray(_mapMesesSel) && _mapMesesSel.length) ? _mapMesesSel : [hoje.getMonth()+1];
+    var ano = _mapAnoSel > 0 ? _mapAnoSel : hoje.getFullYear();
+    var soma = {};
+    meses.forEach(function(m){
+      var ym = ano + '-' + String(m).padStart(2,'0');
+      var bucket = porMes[ym];
+      if(!bucket) return;
+      Object.keys(bucket).forEach(function(nome){
+        var g = bucket[nome] || {};
+        if(!soma[nome]) soma[nome] = {metaMinima:0, metaBasica:0, metaMaster:0, metaValor:0};
+        soma[nome].metaMinima += +(g.metaMinima||0);
+        soma[nome].metaBasica += +(g.metaBasica||0);
+        soma[nome].metaMaster += +(g.metaMaster||0);
+        soma[nome].metaValor  += +(g.metaValor||0);
+      });
+    });
+    return soma;
+  }
+  var goals = _goalsParaPeriodo();
 
   var html = '<table class="fpc-tbl">'
     + '<thead><tr>'
