@@ -455,6 +455,9 @@
       negScore = clamp(Math.round(blend*10));
     }
     var taxaPerdaNeg = (convDenom + desistiuMeus) > 0 ? desistiuMeus / (convDenom + desistiuMeus) : null;
+    /* Conversão FINAL combinada com taxa de perda — pagos ÷ (pagos+negoc+entrada+desistiu)
+       Identidade: convCombinada = convMeu × (1 − taxaPerda). Sinal de visualização. */
+    var convCombinadaNeg = (convDenom + desistiuMeus) > 0 ? pagosMeus / (convDenom + desistiuMeus) : null;
     /* Follow-up: 10 se 0 parados; -2 por parado; mínimo 1 */
     var fupScore = clamp(10 - negParados*2);
     /* Constância: pct meses na meta */
@@ -582,7 +585,7 @@
         prosp: { auto: prospScore, meu: prospMeus, media: +(prospMedia.toFixed(1)) },
         qual:  { auto: qualScore,  pago: pagosMeus, negoc: negocMeus, aberto: abertosMeus, total: totalMeus, pct: qualPct, desistiu: desistiuMeus, semStatus: semStatusMeus },
         apres: { auto: null }, /* manual */
-        neg:   { auto: negScore,   convMeu: convMeu, convTime: convTime, ticketMeu: ticketMeu, ticketTime: ticketTime, pagos: pagosMeus, negoc: negocMeus, entrada: entradaMeus, desistiu: desistiuMeus, taxaPerda: taxaPerdaNeg },
+        neg:   { auto: negScore,   convMeu: convMeu, convTime: convTime, ticketMeu: ticketMeu, ticketTime: ticketTime, pagos: pagosMeus, negoc: negocMeus, entrada: entradaMeus, desistiu: desistiuMeus, taxaPerda: taxaPerdaNeg, convCombinada: convCombinadaNeg },
         fup:   { auto: fupScore,   parados: negParados, totalNeg: negocMeus },
         const: { auto: constScore, batidos: mesesNaMeta, totalComMeta: mesesComMeta },
         mix:   { auto: mixScore,   distintos: nTrDistintos, pagos: pagosMeus, treinList: Object.keys(trDistintos) },
@@ -695,8 +698,9 @@
       var tkT = d.ticketTime ? 'R$ '+Math.round(d.ticketTime).toLocaleString('pt-BR') : '—';
       var ratio = d.ticketTime > 0 ? (d.ticketMeu/d.ticketTime).toFixed(2) : '—';
       var tp = d.taxaPerda != null ? (d.taxaPerda*100).toFixed(0)+'%' : '—';
+      var cc = d.convCombinada != null ? (d.convCombinada*100).toFixed(0)+'%' : '—';
       return cab
-        + '• Conversão final: '+conv+' (time: '+convT+')\n'
+        + '• Conversão (oficial): '+conv+' (time: '+convT+')\n'
         + '  fórmula: pagos ÷ (pagos+negoc+entrada)\n'
         + '• Ticket médio: '+tk+' (time: '+tkT+')\n'
         + '• Ticket relativo: '+ratio+'×\n'
@@ -704,6 +708,9 @@
         + '⚠ Sinal complementar — Taxa de perda na negociação: '+tp+'\n'
         + '  fórmula: desistiu ('+(d.desistiu||0)+') ÷ (pagos+negoc+entrada+desistiu)\n'
         + '  → NÃO entra no score, mas alerta para clientes que escaparam\n\n'
+        + '🧮 Conversão FINAL combinada com taxa de perda: '+cc+'\n'
+        + '  fórmula: pagos ÷ (pagos+negoc+entrada+desistiu)\n'
+        + '  = conversão × (1 − taxa de perda) → '+conv+' × (1 − '+tp+') = '+cc+'\n\n'
         + 'Sinal: '+(d.auto>=8?'fecha bem e mantém ticket':d.auto>=6?'fecha médio':'gargalo no fechamento ou descontos demais');
     }
     if(key==='fup'){
@@ -1244,6 +1251,51 @@
     _icFbAtualizarSugestoes();
   };
 
+  /* Recalcula métricas de Aproveitamento com filtro de origem aplicado.
+     Atualiza _metricasCache.metricas.apr e o badge da competência. */
+  function _icFbRecalcApr(){
+    if(!_metricasCache) return;
+    var srcs = window._fbAprSrcs || new Set(['turma','avulso']);
+    var itens = (_metricasCache.itens || []).filter(function(it){return srcs.has(it.src);});
+    var pagos = itens.filter(function(it){return it.status==='pago';}).length;
+    var total = itens.length;
+    var pct = total > 0 ? pagos/total : null;
+    var score = pct != null ? Math.max(1, Math.min(10, Math.round(pct*10))) : null;
+    _metricasCache.metricas.apr.auto = score;
+    _metricasCache.metricas.apr.pagos = pagos;
+    _metricasCache.metricas.apr.total = total;
+    _metricasCache.metricas.apr.pct = pct;
+    _icFbRenderSugestoes();
+  }
+  /* Recalcula métricas de Negociação com filtro de origem aplicado. */
+  function _icFbRecalcNeg(){
+    if(!_metricasCache) return;
+    var srcs = window._fbNegSrcs || new Set(['turma','avulso']);
+    var itens = (_metricasCache.itens || []).filter(function(it){return srcs.has(it.src);});
+    var pagosArr = itens.filter(function(it){return it.status==='pago';});
+    var negoc = itens.filter(function(it){return it.status==='negociacao';}).length;
+    var entrada = itens.filter(function(it){return it.status==='entrada';}).length;
+    var desistiu = itens.filter(function(it){return it.status==='desistiu';}).length;
+    var pagos = pagosArr.length;
+    var convDen = pagos + negoc + entrada;
+    var convMeu = convDen > 0 ? pagos/convDen : null;
+    var ticketMeu = pagos > 0 ? pagosArr.reduce(function(s,it){return s+(+it.valor||0);},0)/pagos : 0;
+    var ticketTime = _metricasCache.metricas.neg.ticketTime || 0;
+    var negScore = null;
+    if(convMeu != null){
+      var ticketRel = ticketTime > 0 ? ticketMeu/ticketTime : 1;
+      var blend = 0.7*convMeu + 0.3*Math.min(1.5, ticketRel)/1.5;
+      negScore = Math.max(1, Math.min(10, Math.round(blend*10)));
+    }
+    var taxaPerda = (convDen + desistiu) > 0 ? desistiu/(convDen+desistiu) : null;
+    var convCombinada = (convDen + desistiu) > 0 ? pagos/(convDen+desistiu) : null;
+    Object.assign(_metricasCache.metricas.neg, {
+      auto: negScore, pagos: pagos, negoc: negoc, entrada: entrada, desistiu: desistiu,
+      convMeu: convMeu, ticketMeu: ticketMeu, taxaPerda: taxaPerda, convCombinada: convCombinada
+    });
+    _icFbRenderSugestoes();
+  }
+
   /* Aproveitamento: alterna a inclusão de uma origem (turma/avulso) */
   window._fbAprToggleSrc = function(src){
     if(!window._fbAprSrcs || !window._fbAprSrcs.size){
@@ -1256,6 +1308,7 @@
     } else {
       s.add(src);
     }
+    _icFbRecalcApr();
     if(typeof window._fbDetAbrir === 'function') window._fbDetAbrir('apr');
   };
   /* Negociação: mesma lógica de toggle, estado próprio */
@@ -1270,6 +1323,7 @@
     } else {
       s.add(src);
     }
+    _icFbRecalcNeg();
     if(typeof window._fbDetAbrir === 'function') window._fbDetAbrir('neg');
   };
 
@@ -1283,6 +1337,27 @@
       if(typeof window._fbDetAbrir === 'function') window._fbDetAbrir('vis');
     }, 400);
   };
+
+  /* Helper genérico: ordena seções colocando as vazias por último.
+     Cada seção: {titulo, arr, render()|vazio} → vira string HTML pronta. */
+  function _icFbOrdenarSecoes(secoes){
+    return secoes.slice().sort(function(a,b){
+      var az = (a.arr && a.arr.length) ? 0 : 1;
+      var bz = (b.arr && b.arr.length) ? 0 : 1;
+      return az - bz;
+    });
+  }
+  function _icFbRenderSecoes(secoes){
+    return _icFbOrdenarSecoes(secoes).map(function(s){
+      var cnt = (s.arr && s.arr.length) || 0;
+      var head = '<div class="fb-det-secao-h">'+s.titulo+' ('+cnt+(s.suf||'')+')</div>';
+      if(s.render) return head + s.render();
+      var conteudo = cnt
+        ? (typeof s.tbl === 'function' ? s.tbl(s.arr) : '')
+        : '<div class="fb-det-vazio">'+(s.vazio||'Sem dados.')+'</div>';
+      return head + conteudo;
+    }).join('');
+  }
 
   function _srcTag(src, srcNome){
     var t = (src==='turma'?'TURMA':'AVULSO');
@@ -1394,10 +1469,10 @@
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Avançaram</div><div class="fb-det-stat-val green">'+(m.total-m.aberto)+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">% avançado</div><div class="fb-det-stat-val blue">'+(m.pct!=null?Math.round(m.pct*100)+'%':'—')+'</div></div>'
         + '</div>'
-        + '<div class="fb-det-secao-h">✅ Avançaram ('+avancados.length+')</div>'
-        + tblQual(avancados, 'Nenhum cliente avançou.')
-        + '<div class="fb-det-secao-h">⏳ Não avançaram — aberto · desistiu · sem status ('+naoAvancou.length+')</div>'
-        + tblQual(naoAvancou, '🎉 Carteira inteira engajada.');
+        + _icFbRenderSecoes([
+            { titulo:'✅ Avançaram', arr:avancados, render:function(){return tblQual(avancados, 'Nenhum cliente avançou.');}, vazio:'Nenhum cliente avançou.' },
+            { titulo:'⏳ Não avançaram — aberto · desistiu · sem status', arr:naoAvancou, render:function(){return tblQual(naoAvancou, '🎉 Carteira inteira engajada.');}, vazio:'🎉 Carteira inteira engajada.' }
+          ]);
     }
 
     /* ── Negociação ── */
@@ -1511,28 +1586,38 @@
                    : taxaPerdaF < 0.1  ? 'var(--green)'
                    : taxaPerdaF < 0.25 ? 'var(--amber)'
                                        : 'var(--red)';
+      /* Conversão FINAL combinada com taxa de perda */
+      var convFinalDenom = pagosFN.length + negsFN.length + entsFN.length + desistiusFN.length;
+      var convFinalF = convFinalDenom > 0 ? pagosFN.length / convFinalDenom : null;
       return formulaHtml
         + '<div class="fb-det-stats">'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos</div><div class="fb-det-stat-val green">'+pagosFN.length+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Em negociação</div><div class="fb-det-stat-val amber">'+negsFN.length+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Com entrada</div><div class="fb-det-stat-val" style="color:#ffb740;">'+entsFN.length+'</div></div>'
-        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Conversão</div><div class="fb-det-stat-val blue">'+(convF!=null?Math.round(convF*100)+'%':'—')+'</div></div>'
+        +   '<div class="fb-det-stat" title="Pagos ÷ (pagos+negoc+entrada). Entra no score como peso 70%."><div class="fb-det-stat-lbl">Conversão (oficial)</div><div class="fb-det-stat-val blue">'+(convF!=null?Math.round(convF*100)+'%':'—')+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Ticket médio</div><div class="fb-det-stat-val">'+(ticketF?_fmtR(ticketF):'—')+'</div></div>'
         +   '<div class="fb-det-stat" title="Sinal complementar — desistiu ÷ (pagos+negoc+entrada+desistiu). Não entra no score.">'
         +     '<div class="fb-det-stat-lbl">⚠ Taxa de perda <small style="text-transform:none;font-weight:500;">(complementar)</small></div>'
         +     '<div class="fb-det-stat-val" style="color:'+corPerda+';">'+(taxaPerdaF!=null?Math.round(taxaPerdaF*100)+'%':'—')+'</div>'
         +     '<div style="font-size:9px;color:var(--muted);margin-top:3px;">'+(desistiusFN.length||0)+' desistiu(am) no escopo</div>'
         +   '</div>'
+        +   '<div class="fb-det-stat" title="Pagos ÷ (pagos+negoc+entrada+desistiu) = conv × (1 − taxa de perda). Mostra o quadro real incluindo as perdas.">'
+        +     '<div class="fb-det-stat-lbl">🧮 Conv. FINAL <small style="text-transform:none;font-weight:500;">(com perda)</small></div>'
+        +     '<div class="fb-det-stat-val" style="color:'+(convFinalF!=null && convFinalF>=0.7?'var(--green)':convFinalF!=null && convFinalF>=0.4?'var(--blue)':'var(--amber)')+';">'+(convFinalF!=null?Math.round(convFinalF*100)+'%':'—')+'</div>'
+        +     '<div style="font-size:9px;color:var(--muted);margin-top:3px;">'+(convF!=null && taxaPerdaF!=null?Math.round(convF*100)+'% × (1−'+Math.round(taxaPerdaF*100)+'%)':'—')+'</div>'
+        +   '</div>'
         + '</div>'
         + negOrigemCards
         + negNotaFonte
         + pagosNegHtml
-        + '<div class="fb-det-secao-h">🤝 Em negociação ('+negsFN.length+')</div>'
-        + (negsFN.length ? tblNeg(negsFN, 'Valor estimado') : '<div class="fb-det-vazio">Nenhuma negociação em curso.</div>')
-        + '<div class="fb-det-secao-h">💵 Com entrada parcial ('+entsFN.length+(totalEntradasVal>0?' · '+_fmtR(totalEntradasVal):'')+')</div>'
-        + (entsFN.length ? tblNeg(entsFN, 'Entrada paga') : '<div class="fb-det-vazio">Nenhum cliente com entrada parcial.</div>')
-        + '<div class="fb-det-secao-h">⚠ Desistiram durante o ciclo ('+desistiusFN.length+') <small style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);">— sinal complementar, não afeta o score</small></div>'
-        + (desistiusFN.length ? tblNeg(desistiusFN, 'Valor potencial perdido') : '<div class="fb-det-vazio">✅ Ninguém desistiu — todas as oportunidades preservadas.</div>');
+        + _icFbRenderSecoes([
+            { titulo:'🤝 Em negociação', arr:negsFN,    render:function(){return tblNeg(negsFN, 'Valor estimado');},  vazio:'Nenhuma negociação em curso.' },
+            { titulo:'💵 Com entrada parcial', arr:entsFN, suf:(totalEntradasVal>0?' · '+_fmtR(totalEntradasVal):''),
+              render:function(){return tblNeg(entsFN, 'Entrada paga');}, vazio:'Nenhum cliente com entrada parcial.' },
+            { titulo:'⚠ Desistiram durante o ciclo', arr:desistiusFN,
+              render:function(){return tblNeg(desistiusFN, 'Valor potencial perdido');},
+              vazio:'✅ Ninguém desistiu — todas as oportunidades preservadas.' }
+          ]);
     }
 
     /* ── Follow-up ── */
