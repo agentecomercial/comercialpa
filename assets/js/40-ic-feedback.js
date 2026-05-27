@@ -1397,6 +1397,23 @@
         + ' = <b style="color:var(--green);">'+pagosL.length+' total</b>'
         + ' &nbsp;·&nbsp; vendas avulsas vêm de <code style="font-size:10px;">pipelineSales/'+(_metricasCache.mes||'')+'</code> (mesma fonte da aba Pipeline Comercial)'
         + '</div>';
+      /* Seções: ordem dinâmica — não-vazias primeiro, vazias por último.
+         Dentro de cada grupo, mantém a ordem natural (Pagos · Entrada · Negociação · Aberto). */
+      var secoes = [
+        { titulo:'✅ Pagos',         arr:pagosL,   vazio:'Nenhum cliente pago no mês.' },
+        { titulo:'💵 Com entrada',   arr:entradaL, vazio:'Nenhum cliente com entrada parcial.' },
+        { titulo:'🤝 Em negociação', arr:negocL,   vazio:'Nenhum cliente em negociação.' },
+        { titulo:'📋 Em aberto',     arr:abertoL,  vazio:'🎉 Carteira inteira engajada.' }
+      ];
+      /* sort estável: 0 vai pro fim */
+      secoes.sort(function(a,b){
+        var az = a.arr.length === 0 ? 1 : 0;
+        var bz = b.arr.length === 0 ? 1 : 0;
+        return az - bz;
+      });
+      var secoesHtml = secoes.map(function(s){
+        return '<div class="fb-det-secao-h">'+s.titulo+' ('+s.arr.length+')</div>' + tbl(s.arr, s.vazio);
+      }).join('');
       return formulaHtml
         + '<div class="fb-det-stats">'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Total carteira</div><div class="fb-det-stat-val">'+(m.total||0)+'</div></div>'
@@ -1404,10 +1421,7 @@
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Aproveitamento</div><div class="fb-det-stat-val blue">'+(m.pct!=null?Math.round(m.pct*100)+'%':'—')+'</div></div>'
         + '</div>'
         + notaOrigem
-        + '<div class="fb-det-secao-h">✅ Pagos ('+pagosL.length+')</div>'  + tbl(pagosL,  'Nenhum cliente pago no mês.')
-        + '<div class="fb-det-secao-h">💵 Com entrada ('+entradaL.length+')</div>' + tbl(entradaL, 'Nenhum cliente com entrada parcial.')
-        + '<div class="fb-det-secao-h">🤝 Em negociação ('+negocL.length+')</div>' + tbl(negocL, 'Nenhum cliente em negociação.')
-        + '<div class="fb-det-secao-h">📋 Em aberto ('+abertoL.length+')</div>' + tbl(abertoL, '🎉 Carteira inteira engajada.');
+        + secoesHtml;
     }
 
     /* ── Visão (Oportunidades) ── */
