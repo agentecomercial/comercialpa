@@ -171,10 +171,10 @@ function _cardAtualizarMetricas(){
       if(e && typeof allTrainers!=='undefined' && allTrainers.length){
         var _miniG=typeof _getTurmaMinistante==='function'?_getTurmaMinistante():null;
         e.innerHTML=allTrainers.map(function(t){
-          var tP=data.filter(function(d){return d.treinador===t&&d.status==='pago';}).reduce(function(a,d){return a+d.valor;},0);
-          var tT=data.filter(function(d){return d.treinador===t;}).reduce(function(a,d){return a+d.valor;},0);
-          var tA=data.filter(function(d){return d.treinador===t&&d.status==='aberto';}).reduce(function(a,d){return a+d.valor;},0);
-          var tC=data.filter(function(d){return d.treinador===t;}).length;
+          var tP=data.filter(function(d){return d&&d.treinador===t&&d.status==='pago';}).reduce(function(a,d){return a+d.valor;},0);
+          var tT=data.filter(function(d){return d&&d.treinador===t;}).reduce(function(a,d){return a+d.valor;},0);
+          var tA=data.filter(function(d){return d&&d.treinador===t&&d.status==='aberto';}).reduce(function(a,d){return a+d.valor;},0);
+          var tC=data.filter(function(d){return d&&d.treinador===t;}).length;
           var tPct=_META>0?Math.round((tP/_META)*100):0;
           var tBw=Math.min(Math.round((tP/(_META*1.5))*100),100);
           var tCol=getCol(tPct);
