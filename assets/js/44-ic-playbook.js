@@ -465,10 +465,39 @@
      gatilho:'individualmente seu time pode ser bom — coletivamente, quase nunca está alinhado'}
   ];
 
-  /* ── Gera 2 scripts por produto (apresentação + fechamento) ── */
+  /* ── Gera 8 scripts por produto (1 por categoria) ── */
   function _pbScriptsPorProduto(){
     var out = [];
     PRODUTOS.forEach(function(p){
+
+      /* 1. ABERTURA — primeiro contato com pitch curto do produto */
+      out.push({
+        categoria:'abertura',
+        titulo:'Abertura · '+p.nome,
+        situacao:'Primeiro contato com cliente que se encaixa no perfil do '+p.cod,
+        script:
+'Oi [Nome], aqui é o [Vendedor] da Febracis. Tudo bem?\n\n'+
+'Te procurei especificamente por causa do '+p.nome+'. Esse programa é pra '+p.publico+' — e olhando seu perfil, faz total sentido a gente conversar.\n\n'+
+'Não vou te tomar muito tempo. Me dá 3 minutos pra eu te contar por que ele se encaixa exatamente onde você está hoje?',
+        produtos:[p.cod],
+        tags:['primeiro-contato','abertura-produto']
+      });
+
+      /* 2. QUALIFICAÇÃO — descobre se ele encaixa no produto */
+      out.push({
+        categoria:'qualificacao',
+        titulo:'Qualificação · '+p.nome,
+        situacao:'Cliente demonstrou interesse — preciso checar se o '+p.cod+' é mesmo o caminho dele',
+        script:
+'Antes de eu te falar do '+p.cod+', preciso entender uma coisa pra não te oferecer algo que não te serve.\n\n'+
+'O '+p.nome+' foi feito pra quem hoje quer atacar '+p.pilar+', com objetivo de '+p.transformacao+'.\n\n'+
+'Me responde com sinceridade: isso é o que tá te mexendo hoje, ou seu ponto é outro?\n\n'+
+'Pergunto porque dependendo da resposta talvez eu te recomende outro programa — quero te entregar o certo pra você, não o que eu tenho pra vender.',
+        produtos:[p.cod],
+        tags:['descoberta','fit-produto']
+      });
+
+      /* 3. APRESENTAÇÃO — pitch completo */
       out.push({
         categoria:'apresentacao',
         titulo:'Apresentação · '+p.nome,
@@ -483,6 +512,20 @@
         tags:['pitch','apresentacao-produto']
       });
 
+      /* 4. OBJEÇÕES — objeção típica do produto */
+      out.push({
+        categoria:'objecoes',
+        titulo:'Objeção · "Não é minha prioridade agora" — '+p.nome,
+        situacao:'Cliente diz que '+p.cod+' não é o foco dele neste momento',
+        script:
+'Entendo. Só me responde uma coisa: quanto tempo você acha que vai esperar pra atacar '+p.pilar+'?\n\n'+
+'Pergunto porque '+p.gatilho+'. E adiar isso não é neutro — cada mês sem o '+p.cod+' é mais um mês longe de '+p.transformacao+'.\n\n'+
+'Posso te perguntar: o que precisaria acontecer pra esse virar uma prioridade pra você? Talvez já tenha acontecido e você ainda não percebeu.',
+        produtos:[p.cod],
+        tags:['prioridade','procrastinacao']
+      });
+
+      /* 5. FECHAMENTO */
       out.push({
         categoria:'fechamento',
         titulo:'Fechamento · '+p.nome,
@@ -494,6 +537,45 @@
 'Posso te confirmar a vaga? Você prefere começar na turma de [Data 1] ou [Data 2]?',
         produtos:[p.cod],
         tags:['fechamento','produto-especifico']
+      });
+
+      /* 6. FOLLOW-UP — retomada após silêncio */
+      out.push({
+        categoria:'followup',
+        titulo:'Follow-up · '+p.nome,
+        situacao:'Cliente conversou sobre o '+p.cod+', demonstrou interesse, mas sumiu',
+        script:
+'Oi [Nome], pensei em você hoje.\n\n'+
+'Sem pressão, só te lembrando que nossa conversa sobre o '+p.nome+' ficou em aberto. Você havia falado que queria atacar '+p.pilar+' — e o programa começa na turma de [Data].\n\n'+
+'Se algo mudou no seu caminho, me conta com sinceridade. Se ainda faz sentido, marca 5 minutos comigo hoje pra a gente fechar — [link / horário].',
+        produtos:[p.cod],
+        tags:['retomada','soft-followup']
+      });
+
+      /* 7. RECUPERAÇÃO — após "não" */
+      out.push({
+        categoria:'recuperacao',
+        titulo:'Recuperação · '+p.nome,
+        situacao:'Cliente recusou o '+p.cod+' — quer reabrir a porta no futuro',
+        script:
+'[Nome], tudo bem? Sem nenhuma intenção de te convencer agora.\n\n'+
+'Sobre o '+p.nome+' — entendi que esse não era seu momento. Só queria te perguntar uma coisa pra eu aprender: o que pesou mais na sua decisão?\n\n'+
+'Pergunto porque quero respeitar seu critério. Se em [3-6 meses] o cenário mudar, posso te procurar de novo com uma condição alinhada ao que você precisa?',
+        produtos:[p.cod],
+        tags:['pos-nao','reabertura']
+      });
+
+      /* 8. COBRANÇA — lembrete saudável para cliente do produto */
+      out.push({
+        categoria:'cobranca',
+        titulo:'Cobrança · '+p.nome,
+        situacao:'Lembrete de parcela do '+p.cod+' próximo do vencimento',
+        script:
+'Oi [Nome], tudo bem?\n\n'+
+'Passando rápido só pra te lembrar: sua parcela do '+p.nome+' vence em [data]. Sei que você é organizado, então certamente já agendou — estou só na pré-jogada pra evitar surpresa.\n\n'+
+'Qualquer ajuste de data ou dúvida, me chama aqui. Abraço, e bom programa!',
+        produtos:[p.cod],
+        tags:['lembrete','parcela']
       });
     });
     return out;
