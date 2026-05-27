@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Preview · Inteligência Comercial — Alertas + Pareto (Fase 6)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;
+  --surface:#1a1a1a;
+  --surface2:#222;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --text:#f0f0f0;
+  --muted:#888;
+  --accent:#c8f05a;
+  --green:#34d399;
+  --amber:#ffb740;
+  --red:#ff5f57;
+  --blue:#60a5fa;
+  --purple:#a78bfa;
+  --radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px;line-height:1.4;}
+
+.preview-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.preview-title{font-size:18px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;}
+.preview-title small{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-left:4px;}
+.preview-sub{font-size:12px;color:var(--muted);margin-top:6px;max-width:680px;line-height:1.55;}
+.preview-toggle{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 24px;}
+.preview-toggle button{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  border-radius:6px;padding:8px 14px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;
+  transition:all .14s;
+}
+.preview-toggle button:hover{background:var(--surface);border-color:rgba(255,255,255,.25);}
+.preview-toggle button.active{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+
+.section-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:24px 0 10px;}
+
+/* ── ALERTAS (copia exata do main.css) ───────────────── */
+.ic-alertas-box{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px;margin-bottom:18px;}
+.ic-alerta{
+  background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--muted);
+  border-radius:var(--radius-sm);padding:12px 14px;display:flex;flex-direction:column;gap:6px;transition:transform .12s;
+}
+.ic-alerta:hover{transform:translateY(-1px);}
+.ic-alerta.critico{border-left-color:var(--red);background:rgba(255,95,87,.05);}
+.ic-alerta.atencao{border-left-color:var(--amber);background:rgba(255,183,64,.05);}
+.ic-alerta.info{border-left-color:var(--blue);background:rgba(96,165,250,.05);}
+.ic-alerta.ok{border-left-color:var(--green);background:rgba(52,211,153,.05);}
+.ic-alerta-h{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.ic-alerta-titulo{font-size:13px;font-weight:800;color:var(--text);}
+.ic-alerta-tag{
+  font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;
+  padding:2px 7px;background:var(--surface2);border-radius:10px;
+}
+.ic-alerta-msg{font-size:12px;color:#ddd;line-height:1.5;}
+.ic-alerta-msg b{color:var(--text);font-weight:700;}
+.ic-alerta-acao{
+  font-size:11px;color:var(--muted);font-style:italic;margin-top:4px;
+  padding-top:6px;border-top:1px dashed var(--border);
+}
+
+/* ── PARETO (copia exata do main.css) ────────────────── */
+.tpanel{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:16px 18px;}
+.tpanel-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.panel-title{font-size:13px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px;}
+
+.ic-pareto-resumo{font-size:12px;color:#ccc;margin-bottom:12px;padding:8px 10px;background:var(--surface2);border-radius:6px;line-height:1.5;}
+.ic-pareto-resumo b{color:var(--text);font-weight:800;}
+.ic-pareto-row{
+  display:grid;grid-template-columns:140px 1fr 90px 110px;gap:10px;align-items:center;
+  padding:7px 4px;border-bottom:1px solid var(--border);font-size:11.5px;
+}
+.ic-pareto-row:last-child{border-bottom:none;}
+.ic-pareto-row.no-pareto{opacity:.65;}
+.ic-pareto-nome{font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ic-pareto-bar{height:14px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative;}
+.ic-pareto-bar-fill{
+  height:100%;border-radius:4px;transition:width .4s ease;
+}
+.ic-pareto-bar-fill.dentro{background:linear-gradient(90deg,var(--green),#86efac);}
+.ic-pareto-bar-fill.fora{background:linear-gradient(90deg,var(--blue),#93c5fd);}
+.ic-pareto-val{font-variant-numeric:tabular-nums;font-weight:700;color:var(--text);text-align:right;font-size:11px;}
+.ic-pareto-acum{font-variant-numeric:tabular-nums;color:var(--muted);font-size:10.5px;text-align:right;}
+
+/* legenda */
+.ic-pareto-leg{
+  font-size:10px;color:var(--muted);margin-bottom:6px;
+  display:flex;justify-content:flex-end;gap:14px;
+}
+.ic-pareto-leg span{display:flex;align-items:center;gap:4px;}
+.ic-pareto-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;}
+
+.cenario-info{
+  font-size:11px;color:var(--muted);padding:8px 12px;background:rgba(96,165,250,.06);
+  border-left:2px solid var(--blue);border-radius:4px;margin-bottom:14px;line-height:1.55;
+}
+</style>
+</head>
+<body>
+
+<div class="preview-header">
+  <div>
+    <div class="preview-title">📊 Alertas Estratégicos + Pareto <small>Fase 6 · Preview</small></div>
+    <div class="preview-sub">Como o banner de alertas e o gráfico Pareto aparecerão no topo do Dashboard da Inteligência Comercial. Use os botões abaixo para alternar entre cenários — cada um exercita uma combinação diferente de regras.</div>
+  </div>
+</div>
+
+<div class="preview-toggle">
+  <button class="active" onclick="renderCenario('concentrado', this)">📌 Time concentrado (default)</button>
+  <button onclick="renderCenario('saudavel', this)">✅ Time saudável</button>
+  <button onclick="renderCenario('critico', this)">🚨 Cenário crítico</button>
+  <button onclick="renderCenario('vazio', this)">📭 Sem dados</button>
+</div>
+
+<div id="cenarioInfo" class="cenario-info"></div>
+
+<div class="section-label">→ Banner de alertas (aparece logo acima dos KPIs)</div>
+<div class="ic-alertas-box" id="alertasBox"></div>
+
+<div class="section-label">→ Painel Pareto (aparece entre KPIs e Faturamento por Consultor)</div>
+<div class="tpanel" id="paretoPanel">
+  <div class="tpanel-header">
+    <span class="panel-title">📊 Concentração de Faturamento · Pareto</span>
+    <span id="paretoSub" style="font-size:11px;color:var(--muted);"></span>
+  </div>
+  <div id="paretoChart" style="padding:6px 4px;"></div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   DADOS DE EXEMPLO POR CENÁRIO
+   ════════════════════════════════════════════════════════ */
+var CENARIOS = {
+  concentrado: {
+    info: 'Cenário realista: <b>1 top performer puxa quase 40%</b>, alguns no meio e cauda longa. Dispara dependência alta + ciclos atrasados + 2 inativos.',
+    consultores: [
+      {nome:'MARIANA SILVA',    fat: 285000},
+      {nome:'PABLO CORREIA',    fat: 142000},
+      {nome:'JOÃO PEREIRA',     fat:  98000},
+      {nome:'AMANDA COSTA',     fat:  76000},
+      {nome:'RAFAEL DIAS',      fat:  54000},
+      {nome:'CAMILA NOVAES',    fat:  38000},
+      {nome:'BRUNO VIANA',      fat:  24000},
+      {nome:'LUCAS MARTINS',    fat:  18000},
+      {nome:'PRISCILA REIS',    fat:      0},
+      {nome:'DANIEL ARAÚJO',    fat:      0}
+    ],
+    alertas: [
+      {sev:'atencao', tag:'Dependência', titulo:'⚖ Dependência alta',
+       msg:'<b>MARIANA SILVA</b> concentra <b>40%</b> do faturamento — acima do desejável (35%).',
+       acao:'Considere distribuir leads de modo a balancear o peso do top 1.'},
+      {sev:'atencao', tag:'Inatividade', titulo:'😴 Consultores sem faturamento',
+       msg:'<b>2 consultores</b> sem nenhum pago no período: PRISCILA REIS, DANIEL ARAÚJO',
+       acao:'Revisar pipeline e marcar 1:1 imediato.'},
+      {sev:'atencao', tag:'Feedback', titulo:'📅 Ciclos de feedback atrasados',
+       msg:'<b>3 consultores</b> sem ciclo há mais de 14 dias: BRUNO VIANA (22d), LUCAS MARTINS (31d), DANIEL ARAÚJO (∞)',
+       acao:'Marcar 1:1 nesta semana — abrir aba Desenvolvimento.'},
+      {sev:'info', tag:'Produto', titulo:'📦 Treinamentos sem venda',
+       msg:'<b>2 treinamentos</b> não tiveram nenhuma venda no período: PDA, GE',
+       acao:'Revisar pitch ou retirar da oferta ativa.'}
+    ]
+  },
+  saudavel: {
+    info: 'Time balanceado: <b>top 1 fica em 22%</b>, cauda pequena. Nenhum alerta crítico — sistema mostra sinal verde.',
+    consultores: [
+      {nome:'MARIANA SILVA',    fat: 165000},
+      {nome:'PABLO CORREIA',    fat: 142000},
+      {nome:'JOÃO PEREIRA',     fat: 128000},
+      {nome:'AMANDA COSTA',     fat: 110000},
+      {nome:'RAFAEL DIAS',      fat:  98000},
+      {nome:'CAMILA NOVAES',    fat:  82000},
+      {nome:'BRUNO VIANA',      fat:  64000},
+      {nome:'LUCAS MARTINS',    fat:  52000}
+    ],
+    alertas: [
+      {sev:'ok', tag:'Tudo certo', titulo:'✅ Nenhum alerta crítico',
+       msg:'O time está dentro dos parâmetros esperados para o período.',
+       acao:'Mantenha a cadência de feedback e revisão de PDI.'}
+    ]
+  },
+  critico: {
+    info: 'Cenário de risco: <b>1 consultor responde por 58%</b> do faturamento, time inteiro depende dele. 80/20 desbalanceado + PDIs faltando + 4 inativos.',
+    consultores: [
+      {nome:'MARIANA SILVA',    fat: 580000},
+      {nome:'PABLO CORREIA',    fat: 145000},
+      {nome:'JOÃO PEREIRA',     fat:  98000},
+      {nome:'AMANDA COSTA',     fat:  72000},
+      {nome:'RAFAEL DIAS',      fat:  58000},
+      {nome:'CAMILA NOVAES',    fat:  30000},
+      {nome:'BRUNO VIANA',      fat:  17000},
+      {nome:'LUCAS MARTINS',    fat:      0},
+      {nome:'PRISCILA REIS',    fat:      0},
+      {nome:'DANIEL ARAÚJO',    fat:      0},
+      {nome:'FERNANDA LIMA',    fat:      0}
+    ],
+    alertas: [
+      {sev:'critico', tag:'Dependência', titulo:'🚨 Concentração crítica',
+       msg:'<b>MARIANA SILVA</b> responde por <b>58%</b> do faturamento. Se sair, perde quase metade do time.',
+       acao:'Plano de ramp-up do #2 + cota mínima distribuída.'},
+      {sev:'critico', tag:'Pareto', titulo:'📊 80/20 desbalanceado',
+       msg:'<b>2 de 11 consultores</b> (18%) fazem 80% do faturamento. Concentração extrema.',
+       acao:'Estratégia de desenvolvimento dos demais é prioridade.'},
+      {sev:'atencao', tag:'Inatividade', titulo:'😴 Consultores sem faturamento',
+       msg:'<b>4 consultores</b> sem nenhum pago no período: LUCAS MARTINS, PRISCILA REIS, DANIEL ARAÚJO, FERNANDA LIMA',
+       acao:'Revisar pipeline e marcar 1:1 imediato.'},
+      {sev:'atencao', tag:'PDI', titulo:'🌱 PDIs faltando',
+       msg:'<b>3 consultores</b> com score &lt; 7 sem PDI ativo: CAMILA NOVAES (6.1), BRUNO VIANA (5.8), RAFAEL DIAS (6.4)',
+       acao:'Criar PDI focado nas 2 competências mais baixas — aba PDI.'},
+      {sev:'atencao', tag:'Feedback', titulo:'📅 Ciclos de feedback atrasados',
+       msg:'<b>6 consultores</b> sem ciclo há mais de 14 dias: BRUNO VIANA (22d), LUCAS MARTINS (45d), PRISCILA REIS (∞), DANIEL ARAÚJO (∞)…',
+       acao:'Marcar 1:1 nesta semana — abrir aba Desenvolvimento.'},
+      {sev:'info', tag:'Produto', titulo:'📦 Treinamentos sem venda',
+       msg:'<b>3 treinamentos</b> não tiveram nenhuma venda no período: PDA, GE, MAESTRIA',
+       acao:'Revisar pitch ou retirar da oferta ativa.'}
+    ]
+  },
+  vazio: {
+    info: 'Nenhum registro no período selecionado. O painel Pareto fica oculto; o banner mostra apenas o sinal de OK.',
+    consultores: [],
+    alertas: [
+      {sev:'ok', tag:'Tudo certo', titulo:'✅ Nenhum alerta crítico',
+       msg:'O time está dentro dos parâmetros esperados para o período.',
+       acao:'Mantenha a cadência de feedback e revisão de PDI.'}
+    ]
+  }
+};
+
+function fmtR(v){ return 'R$ '+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function renderAlertas(alertas){
+  var box = document.getElementById('alertasBox');
+  box.innerHTML = alertas.map(function(a){
+    return '<div class="ic-alerta '+a.sev+'">'
+      + '<div class="ic-alerta-h">'
+      +   '<div class="ic-alerta-titulo">'+a.titulo+'</div>'
+      +   '<span class="ic-alerta-tag">'+a.tag+'</span>'
+      + '</div>'
+      + '<div class="ic-alerta-msg">'+a.msg+'</div>'
+      + (a.acao ? '<div class="ic-alerta-acao">→ '+a.acao+'</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function renderPareto(consultores){
+  var panel = document.getElementById('paretoPanel');
+  var chart = document.getElementById('paretoChart');
+  var sub = document.getElementById('paretoSub');
+  var lista = consultores.slice().sort(function(a,b){return b.fat-a.fat;});
+  var totFat = lista.reduce(function(s,c){return s+c.fat;},0);
+  if(!lista.length || totFat === 0){ panel.style.display = 'none'; return; }
+  panel.style.display = '';
+  var max = lista[0].fat || 1;
+  var acum = 0, dentro80 = 0, marcou = false;
+  for(var i=0;i<lista.length;i++){
+    acum += lista[i].fat;
+    if(!marcou){ dentro80++; if(acum/totFat >= 0.8) marcou = true; }
+  }
+  var resumo = '<b>'+dentro80+'</b> de <b>'+lista.length+'</b> consultor'+(lista.length>1?'es':'')+
+               ' compõem <b>80%</b> do faturamento (<b>'+fmtR(totFat)+'</b> no total).';
+  acum = 0;
+  var linhas = lista.map(function(c, i){
+    acum += c.fat;
+    var pct = totFat? c.fat/totFat : 0;
+    var pctAcum = totFat? acum/totFat : 0;
+    var bw = Math.round((c.fat/max)*100);
+    var dentro = (i+1) <= dentro80;
+    return '<div class="ic-pareto-row '+(dentro?'':'no-pareto')+'">'
+      + '<div class="ic-pareto-nome">'+(i+1)+'. '+c.nome+'</div>'
+      + '<div class="ic-pareto-bar"><div class="ic-pareto-bar-fill '+(dentro?'dentro':'fora')+'" style="width:'+bw+'%;"></div></div>'
+      + '<div class="ic-pareto-val">'+fmtR(c.fat)+'</div>'
+      + '<div class="ic-pareto-acum">'+Math.round(pct*100)+'% · acum '+Math.round(pctAcum*100)+'%</div>'
+      + '</div>';
+  }).join('');
+  chart.innerHTML = '<div class="ic-pareto-resumo">'+resumo+'</div>'
+    + '<div class="ic-pareto-leg">'
+    +   '<span><i style="background:var(--green);"></i>Top 80%</span>'
+    +   '<span><i style="background:var(--blue);"></i>Cauda</span>'
+    + '</div>'
+    + linhas;
+  sub.textContent = lista.length+' consultor'+(lista.length>1?'es':'')+' · '+fmtR(totFat);
+}
+
+function renderCenario(key, btn){
+  var c = CENARIOS[key];
+  document.getElementById('cenarioInfo').innerHTML = c.info;
+  renderAlertas(c.alertas);
+  renderPareto(c.consultores);
+  document.querySelectorAll('.preview-toggle button').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+}
+
+renderCenario('concentrado');
+</script>
+</body>
+</html>

@@ -263,12 +263,10 @@
     if(sub) sub.textContent = lista.length+' consultor'+(lista.length>1?'es':'')+' · '+_fmtR(totFat);
   }
 
-  /* ── Hook no _mapFiltrar pra gerar alertas/pareto após cada render ── */
+  /* ── Recalcula alertas + pareto a partir de window._mapDados ── */
   function _icAlAtualizar(){
-    if(typeof window._mapDados === 'undefined') return;
     var registros = window._mapDados;
-    if(!registros) return;
-    /* Re-aplica filtro de período (mesma lógica do _mapFiltrar) */
+    if(!registros || !registros.length) return;
     var anoSel = (typeof window._mapAnoSel !== 'undefined') ? window._mapAnoSel : 0;
     var mesesSel = (typeof window._mapMesesSel !== 'undefined' && Array.isArray(window._mapMesesSel)) ? window._mapMesesSel : [];
     var filtrados = registros.filter(function(r){
@@ -282,32 +280,40 @@
       _icParetoRender(filtrados);
     });
   }
+  /* Expõe para debug pelo console */
+  window._icAlAtualizar = _icAlAtualizar;
 
-  /* ── Hook em _mapFiltrar (do 30-sync-ferramentas.js) ─── */
-  function _hookarMapFiltrar(){
-    var orig = window._mapFiltrar;
-    if(typeof orig !== 'function') return false;
-    window._mapFiltrar = function(){
-      orig.apply(this, arguments);
-      setTimeout(_icAlAtualizar, 80);
-    };
-    return true;
+  /* ── Estratégia robusta: MutationObserver no #mapKpis ──
+     Todo render do mapeamento atualiza #mapKpis. Quando ele muda,
+     sabemos que houve novo cálculo — e disparamos alertas/pareto.
+     Funciona independente de quem chamou _mapFiltrar internamente.   */
+  var _icAlPending = false;
+  function _icAlScheduleUpdate(){
+    if(_icAlPending) return;
+    _icAlPending = true;
+    requestAnimationFrame(function(){
+      _icAlPending = false;
+      _icAlAtualizar();
+    });
   }
-  /* Tenta hookar logo; se _mapFiltrar ainda não existir, tenta de novo em loop curto */
-  function _tentarHook(tentativas){
-    if(_hookarMapFiltrar()) return;
-    if(tentativas <= 0) return;
-    setTimeout(function(){ _tentarHook(tentativas - 1); }, 200);
+  function _icAlObservar(){
+    var alvo = document.getElementById('mapKpis');
+    if(!alvo){ setTimeout(_icAlObservar, 300); return; }
+    var obs = new MutationObserver(_icAlScheduleUpdate);
+    obs.observe(alvo, {childList:true, subtree:true, characterData:true});
+    /* Primeira tentativa após observar */
+    setTimeout(_icAlAtualizar, 200);
   }
-  _tentarHook(20);
+  _icAlObservar();
 
-  /* ── Hook abrirMapeamento: dispara primeira atualização ── */
+  /* ── Hook abrirMapeamento: garante primeira atualização mesmo
+       que o MutationObserver tenha sido instalado depois do render ── */
   var _origAbrirMapAl = window.abrirMapeamento;
   if(typeof _origAbrirMapAl === 'function'){
     window.abrirMapeamento = function(btn){
       _origAbrirMapAl(btn);
-      /* Espera dados carregarem + renderer rodar */
       setTimeout(_icAlAtualizar, 1200);
+      setTimeout(_icAlAtualizar, 2500);
     };
   }
 
