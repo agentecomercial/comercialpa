@@ -1292,6 +1292,46 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   font-family:inherit;transition:all .12s;white-space:nowrap;
 }
 .fb-sug:hover{background:rgba(200,240,90,.20);border-style:solid;}
+/* Tooltip rico — usado em .fb-sug e .fb-sug-acao-lamp dentro do IC */
+#mapeamentoScreen [data-tip]{position:relative;}
+#mapeamentoScreen [data-tip]:hover::after{
+  content:attr(data-tip);
+  position:absolute;
+  bottom:calc(100% + 8px);
+  left:50%;
+  transform:translateX(-50%);
+  background:var(--surface);
+  border:1px solid var(--accent);
+  border-radius:8px;
+  padding:10px 14px;
+  font-size:11px;
+  font-weight:500;
+  color:var(--text);
+  white-space:pre-wrap;
+  max-width:320px;
+  min-width:220px;
+  width:max-content;
+  z-index:9999;
+  box-shadow:0 6px 20px rgba(0,0,0,.5);
+  text-align:left;
+  line-height:1.55;
+  pointer-events:none;
+  font-family:'DM Sans',sans-serif;
+}
+#mapeamentoScreen [data-tip]:hover::before{
+  content:'';position:absolute;
+  bottom:calc(100% + 3px);left:50%;
+  transform:translateX(-50%);
+  border:5px solid transparent;
+  border-top-color:var(--accent);
+  z-index:9999;pointer-events:none;
+}
+/* Lâmpada na sugestão do plano de ação */
+.fb-sug-acao-lamp{
+  display:inline-block;cursor:help;font-size:14px;margin-right:4px;
+  transition:transform .12s;
+}
+.fb-sug-acao-lamp:hover{transform:scale(1.2);}
 /* Sugestões de plano de ação */
 .fb-sug-plano{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
 .fb-sug-plano:empty{display:none;}

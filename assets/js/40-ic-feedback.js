@@ -442,8 +442,8 @@
           : '<span style="font-size:9px;color:var(--muted);">qualitativa</span>';
         return;
       }
-      var det = _icFbDetalheCurto(c.key, dado);
-      slot.innerHTML = '<button class="fb-sug" onclick="_fbAceitarSug(\''+c.key+'\','+dado.auto+')" title="'+(det||'')+'">💡 '+dado.auto+'</button>';
+      var exp = (_icFbDetalheExplicacao(c.key, dado)||'').replace(/"/g,'&quot;');
+      slot.innerHTML = '<button class="fb-sug" data-tip="'+exp+'" onclick="_fbAceitarSug(\''+c.key+'\','+dado.auto+')">💡 '+dado.auto+'</button>';
     });
     /* Botão "Aplicar todas" no header da seção */
     var btn = document.getElementById('fbSugAll');
@@ -467,6 +467,76 @@
     if(key==='const') return d.batidos+'/'+d.totalComMeta+' meses na meta';
     if(key==='mix') return d.distintos+' treinamentos distintos vendidos';
     if(key==='apr'){ var p2 = d.pct!=null?Math.round(d.pct*100)+'%':'—'; return p2+' da carteira convertida'; }
+    return '';
+  }
+  /* Explicação detalhada da sugestão — usada no tooltip ao passar mouse */
+  function _icFbDetalheExplicacao(key, d){
+    if(!d || d.auto == null) return 'Sem dado suficiente para sugerir um score.';
+    var cab = '💡 Como o '+d.auto+'/10 foi calculado:\n\n';
+    if(key==='prosp'){
+      var ratio = d.media > 0 ? (d.meu / d.media).toFixed(2) : '—';
+      return cab
+        + '• Clientes novos no mês: '+d.meu+'\n'
+        + '• Média do time: '+d.media+'\n'
+        + '• Razão (meu/time): '+ratio+'\n'
+        + '• Score = round(razão × 6), capado em 1–10\n\n'
+        + 'Interpretação: '+(d.auto>=8?'acima da média do time':d.auto>=6?'na média':'abaixo da média — atenção');
+    }
+    if(key==='qual'){
+      var pct = d.pct!=null ? (d.pct*100).toFixed(0)+'%' : '—';
+      return cab
+        + '• Total clientes do consultor: '+d.total+'\n'
+        + '• Em aberto (não avançaram): '+d.aberto+'\n'
+        + '• Avançaram (negoc/pago/entrada): '+(d.total-d.aberto)+' ('+pct+')\n'
+        + '• Score = round(% avançado × 10)\n\n'
+        + 'Sinal: '+(d.auto>=8?'qualifica bem, carteira viva':d.auto>=6?'qualifica médio':'carteira está parada — risco de leads esquecidos');
+    }
+    if(key==='neg'){
+      var conv = d.convMeu!=null ? (d.convMeu*100).toFixed(0)+'%' : '—';
+      var convT = d.convTime!=null ? (d.convTime*100).toFixed(0)+'%' : '—';
+      var tk = d.ticketMeu ? 'R$ '+Math.round(d.ticketMeu).toLocaleString('pt-BR') : '—';
+      var tkT = d.ticketTime ? 'R$ '+Math.round(d.ticketTime).toLocaleString('pt-BR') : '—';
+      var ratio = d.ticketTime > 0 ? (d.ticketMeu/d.ticketTime).toFixed(2) : '—';
+      return cab
+        + '• Conversão final: '+conv+' (time: '+convT+')\n'
+        + '  fórmula: pagos ÷ (pagos+negoc+entrada)\n'
+        + '• Ticket médio: '+tk+' (time: '+tkT+')\n'
+        + '• Ticket relativo: '+ratio+'×\n'
+        + '• Score = 70% conversão + 30% ticket relativo\n\n'
+        + 'Sinal: '+(d.auto>=8?'fecha bem e mantém ticket':d.auto>=6?'fecha médio':'gargalo no fechamento ou descontos demais');
+    }
+    if(key==='fup'){
+      return cab
+        + '• Negociações ativas: '+d.totalNeg+'\n'
+        + '• Paradas há > 14 dias: '+d.parados+'\n'
+        + '• Score = 10 − (2 × paradas), mínimo 1\n\n'
+        + 'Sinal: '+(d.auto>=8?'cadência saudável':d.auto>=6?'algumas perdas':'cliente esfriando — risco real');
+    }
+    if(key==='const'){
+      var p = d.totalComMeta>0 ? Math.round(d.batidos/d.totalComMeta*100)+'%' : '—';
+      return cab
+        + '• Meses com meta configurada: '+d.totalComMeta+'\n'
+        + '• Meses na meta (≥ Mínima): '+d.batidos+'\n'
+        + '• Constância: '+p+'\n'
+        + '• Score = ('+d.batidos+'/'+d.totalComMeta+') × 10\n\n'
+        + 'Sinal: '+(d.auto>=8?'rocha — previsível':d.auto>=6?'consistente':'oscila — depende de fatores externos');
+    }
+    if(key==='mix'){
+      return cab
+        + '• Pagos no mês: '+d.pagos+'\n'
+        + '• Treinamentos distintos: '+d.distintos+'\n'
+        + '• Curva: 1=4 · 2=6 · 3=7 · 4=8 · 5=9 · 7+=10\n\n'
+        + 'Sinal: '+(d.auto>=8?'vende portfólio amplo':d.auto>=6?'mix médio':'concentrado em poucos produtos — risco e perda de upsell');
+    }
+    if(key==='apr'){
+      var pp = d.pct!=null ? (d.pct*100).toFixed(0)+'%' : '—';
+      return cab
+        + '• Pagos: '+d.pagos+'\n'
+        + '• Total da carteira: '+d.total+'\n'
+        + '• Aproveitamento: '+pp+'\n'
+        + '• Score = round(% × 10)\n\n'
+        + 'Sinal: '+(d.auto>=8?'extrai bem do que tem':d.auto>=6?'aproveita médio':'lead desperdiçado — CAC sobe');
+    }
     return '';
   }
   window._fbAceitarSug = function(compKey, valor){
@@ -500,42 +570,75 @@
     if(pior && piorScore <= 6){
       sugs.push({
         chave: 'foco-'+pior.key,
-        texto: 'Foco em '+pior.label+': '+_icFbDetalheCurto(pior.key, m[pior.key])+' — abaixo da expectativa.'
+        texto: 'Foco em '+pior.label+': '+_icFbDetalheCurto(pior.key, m[pior.key])+' — abaixo da expectativa.',
+        motivo: '🎯 Por que esta sugestão?\n\n'
+              + 'Esta foi a competência com o MENOR score do ciclo ('+piorScore+'/10).\n\n'
+              + 'É aqui que o desenvolvimento individual tem maior potencial — atacar o ponto mais fraco rende mais que afinar o que já está bom. '
+              + 'O playbook orienta priorizar 1 frente de cada vez no PDI.'
       });
     }
     /* Mix de produto baixo */
     if(m.mix && m.mix.auto != null && m.mix.distintos <= 2 && m.mix.pagos > 0){
       sugs.push({
         chave: 'mix',
-        texto: 'Diversificar carteira: vendeu só '+m.mix.distintos+' produto'+(m.mix.distintos!==1?'s':'')+'. Meta: 1 fechamento de outro treinamento no próximo ciclo.'
+        texto: 'Diversificar carteira: vendeu só '+m.mix.distintos+' produto'+(m.mix.distintos!==1?'s':'')+'. Meta: 1 fechamento de outro treinamento no próximo ciclo.',
+        motivo: '🎒 Por que esta sugestão?\n\n'
+              + 'No mês corrente o consultor vendeu apenas '+m.mix.distintos+' treinamento'+(m.mix.distintos!==1?'s':'')+' distinto'+(m.mix.distintos!==1?'s':'')+' (de 15 disponíveis no portfólio).\n\n'
+              + 'Concentração em poucos produtos gera 2 riscos: '
+              + '(1) se o produto principal sai do mercado/promoção, o faturamento despenca; '
+              + '(2) perde oportunidade de upsell em cada cliente já fechado. '
+              + 'Closer multi-produto vale 2× no longo prazo.'
       });
     }
     /* Negociações paradas */
     if(m.fup && m.fup.parados >= 2){
       sugs.push({
         chave: 'parados',
-        texto: 'Resgatar '+m.fup.parados+' negociações paradas há mais de 14 dias — agendar follow-up estruturado esta semana.'
+        texto: 'Resgatar '+m.fup.parados+' negociações paradas há mais de 14 dias — agendar follow-up estruturado esta semana.',
+        motivo: '📨 Por que esta sugestão?\n\n'
+              + 'Detectamos '+m.fup.parados+' negociações sem update há mais de 14 dias.\n\n'
+              + 'Estudos comerciais clássicos mostram que a chance de fechar uma negociação cai ~5% a cada dia parado a partir do D+7. '
+              + 'No D+14 a temperatura já está em ~50% do ideal. '
+              + 'Recuperar agora é mais barato que prospectar um novo lead pra repor.'
       });
     }
     /* Aproveitamento baixo */
     if(m.apr && m.apr.auto != null && m.apr.pct != null && m.apr.pct < 0.30 && m.apr.total >= 3){
       sugs.push({
         chave: 'aprov',
-        texto: 'Aproveitamento da carteira em '+Math.round(m.apr.pct*100)+'% — revisar qualificação inicial e tempo de resposta a lead.'
+        texto: 'Aproveitamento da carteira em '+Math.round(m.apr.pct*100)+'% — revisar qualificação inicial e tempo de resposta a lead.',
+        motivo: '⚡ Por que esta sugestão?\n\n'
+              + 'O consultor pagou '+m.apr.pagos+' de '+m.apr.total+' clientes na carteira ('+Math.round(m.apr.pct*100)+'%).\n\n'
+              + 'Aproveitamento abaixo de 30% costuma indicar 2 causas:\n'
+              + '(1) qualificação rasa — leads errados entram e travam o funil;\n'
+              + '(2) tempo de resposta longo — lead esfria antes do 1º contato real.\n\n'
+              + 'Corrigir aqui aumenta o ROI sobre a base já paga de prospecção.'
       });
     }
     /* Conversão baixa em negociação */
     if(m.neg && m.neg.convMeu != null && m.neg.convTime != null && m.neg.convMeu < m.neg.convTime * 0.7){
       sugs.push({
         chave: 'conv',
-        texto: 'Conversão final ('+Math.round(m.neg.convMeu*100)+'%) bem abaixo do time ('+Math.round(m.neg.convTime*100)+'%) — role-play de fechamento + revisar quebra de objeções.'
+        texto: 'Conversão final ('+Math.round(m.neg.convMeu*100)+'%) bem abaixo do time ('+Math.round(m.neg.convTime*100)+'%) — role-play de fechamento + revisar quebra de objeções.',
+        motivo: '🤝 Por que esta sugestão?\n\n'
+              + 'A conversão deste consultor ('+Math.round(m.neg.convMeu*100)+'%) está abaixo de 70% da média do time ('+Math.round(m.neg.convTime*100)+'%).\n\n'
+              + 'Gap dessa magnitude raramente é "azar do mês" — geralmente revela gargalo específico em fechamento: '
+              + 'medo de pedir o sim, dificuldade em quebrar objeção de preço/tempo, ou pitch que apresenta bem mas não conclui. '
+              + 'Role-play estruturado das top 5 objeções costuma resolver em 2–3 sessões.'
       });
     }
     /* Constância */
     if(m.const && m.const.auto != null && m.const.auto <= 5){
       sugs.push({
         chave: 'const',
-        texto: 'Constância: '+m.const.batidos+'/'+m.const.totalComMeta+' meses na meta — sustentar ritmo, não só explosões. Desdobrar meta semanal.'
+        texto: 'Constância: '+m.const.batidos+'/'+m.const.totalComMeta+' meses na meta — sustentar ritmo, não só explosões. Desdobrar meta semanal.',
+        motivo: '📅 Por que esta sugestão?\n\n'
+              + 'Bateu meta em '+m.const.batidos+' dos '+m.const.totalComMeta+' meses analisados — performance irregular.\n\n'
+              + 'Consultor que oscila tem 3 problemas ocultos: '
+              + '(1) dificulta planejamento da operação (forecast vira chute); '
+              + '(2) costuma depender de fatores externos (turma boa, lead farto); '
+              + '(3) sofre mais emocionalmente nos meses ruins.\n\n'
+              + 'Desdobrar meta mensal em semanal cria visibilidade contínua e reduz o "explode-vai" → "explode-vai".'
       });
     }
     /* Render no container */
@@ -546,10 +649,12 @@
       return;
     }
     box.innerHTML = sugs.map(function(s){
+      var motivoEsc = (s.motivo||'').replace(/"/g,'&quot;');
+      var textoEsc  = s.texto.replace(/'/g,"\\'");
       return '<div class="fb-sug-acao" data-chave="'+s.chave+'">'
-        + '<div class="fb-sug-acao-txt">💡 '+s.texto+'</div>'
+        + '<div class="fb-sug-acao-txt"><span class="fb-sug-acao-lamp" data-tip="'+motivoEsc+'">💡</span>'+s.texto+'</div>'
         + '<div class="fb-sug-acao-btns">'
-        +   '<button class="fb-sug-btn aceitar" onclick="_fbAceitarSugAcao(\''+s.chave+'\',\''+s.texto.replace(/'/g,"\\'")+'\')">✓ Aceitar</button>'
+        +   '<button class="fb-sug-btn aceitar" onclick="_fbAceitarSugAcao(\''+s.chave+'\',\''+textoEsc+'\')">✓ Aceitar</button>'
         +   '<button class="fb-sug-btn ignorar" onclick="this.closest(\'.fb-sug-acao\').remove()">× Ignorar</button>'
         + '</div>'
         + '</div>';
