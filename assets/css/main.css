@@ -3451,3 +3451,41 @@ textarea.pb-input{resize:vertical;font-family:inherit;line-height:1.5;}
 }
 .ic-btn.danger:hover, .pb-btn.danger:hover, .cb-btn.danger:hover{background:rgba(255,95,87,.20);color:var(--red);}
 
+/* ══════════════════════════════════════════════════════════════
+   IC · Card unificado (Etapa 4)
+   Padroniza .ic-card + aliases .pb-card .cb-card .fb-card
+   Variantes semânticas:
+     .accent   → border-left var(--accent)
+     .info     → border-left var(--blue)
+     .warn     → border-left var(--amber)
+     .success  → border-left var(--green)
+     .danger   → border-left var(--red)
+   Aliases legacy (Cobrança): .est-pendente=.warn · .est-vencida=.danger
+   .est-honrada=.success · .est-quebrada=.danger · .est-reagendada=.info
+   ══════════════════════════════════════════════════════════════ */
+.ic-card, .pb-card, .cb-card, .fb-card{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-left:3px solid var(--border2);
+  border-radius:12px;
+  padding:14px 16px;
+  display:flex;flex-direction:column;gap:8px;
+  transition:transform .14s, border-color .14s, box-shadow .14s;
+}
+.ic-card:hover, .pb-card:hover, .cb-card:hover, .fb-card:hover{
+  transform:translateY(-2px);
+  border-color:var(--accent);
+  box-shadow:0 6px 18px rgba(0,0,0,.22);
+}
+/* Variantes — border-left semântica */
+.ic-card.accent, .pb-card{border-left-color:var(--accent);}
+.ic-card.info, .cb-card.est-reagendada{border-left-color:var(--blue);}
+.ic-card.warn, .cb-card.est-pendente{border-left-color:var(--amber);}
+.ic-card.success, .cb-card.est-honrada{border-left-color:var(--green);}
+.ic-card.danger, .cb-card.est-vencida, .cb-card.est-quebrada{border-left-color:var(--red);}
+/* Opacity nos cards finalizados (mantém comportamento atual da Cobrança) */
+.cb-card.est-honrada{opacity:.88;}
+.cb-card.est-quebrada{opacity:.75;}
+.cb-card.est-reagendada{opacity:.78;}
+.cb-card.est-vencida{background:rgba(255,95,87,.04);}
+
