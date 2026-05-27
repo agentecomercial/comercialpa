@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260527-114217">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260527-114217">
+<link rel="stylesheet" href="assets/css/main.css?v=20260527-115403">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260527-115403">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260527-114217">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260527-115403">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1913,6 +1913,7 @@
       <button class="ic-tab" data-icpane="desenvolvimento" onclick="_icShowPane('desenvolvimento')">📈 Desenvolvimento</button>
       <button class="ic-tab" data-icpane="pdi" onclick="_icShowPane('pdi')">🌱 PDI</button>
       <button class="ic-tab" data-icpane="playbook" onclick="_icShowPane('playbook')">📖 Playbook</button>
+      <button class="ic-tab" data-icpane="cobranca" onclick="_icShowPane('cobranca')">💰 Cobrança</button>
       <button class="ic-tab" data-icpane="ia" onclick="_icShowPane('ia')" id="icTabIa" style="display:none;">🤖 IA</button>
     </div>
 
@@ -2363,6 +2364,120 @@
       </div>
     </div>
     <!-- /PANE: PLAYBOOK -->
+
+    <!-- PANE: COBRANÇA SAUDÁVEL (Fase 8) — promessas de pagamento -->
+    <div class="ic-pane" data-icpane="cobranca">
+      <div class="cb-header" style="padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:18px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;">💰 Cobrança Saudável <small style="font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.06em;text-transform:uppercase;">· acompanhamento de promessas</small></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">Registre cada promessa de pagamento do cliente. O sistema avisa antes do vencimento e mede quantas são honradas — qualidade da abordagem, não pressão.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="cb-btn primary" onclick="_cbNovaPromessa()">＋ Nova promessa</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div id="cbKpis" class="cb-kpis"></div>
+
+      <!-- Filtros -->
+      <div class="cb-filtros" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;">Estado:</label>
+          <button class="cb-est-chip active" data-est="todos" onclick="_cbSetEstado('todos')">Todos</button>
+          <button class="cb-est-chip" data-est="pendente" onclick="_cbSetEstado('pendente')">🟡 Pendente</button>
+          <button class="cb-est-chip" data-est="vencida" onclick="_cbSetEstado('vencida')">🔴 Vencida</button>
+          <button class="cb-est-chip" data-est="honrada" onclick="_cbSetEstado('honrada')">✅ Honrada</button>
+          <button class="cb-est-chip" data-est="quebrada" onclick="_cbSetEstado('quebrada')">❌ Quebrada</button>
+          <button class="cb-est-chip" data-est="reagendada" onclick="_cbSetEstado('reagendada')">↻ Reagendada</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;">Período:</label>
+          <button class="cb-per-chip active" data-per="3m" onclick="_cbSetPer('3m')">Últimos 3m</button>
+          <button class="cb-per-chip" data-per="6m" onclick="_cbSetPer('6m')">Últimos 6m</button>
+          <button class="cb-per-chip" data-per="tudo" onclick="_cbSetPer('tudo')">Tudo</button>
+        </div>
+        <div style="flex:1;min-width:180px;display:flex;align-items:center;gap:6px;">
+          <input type="text" id="cbBusca" placeholder="🔎 Buscar cliente/produto..." oninput="_cbBuscar()" style="flex:1;padding:7px 11px;font-size:12px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:6px;font-family:inherit;">
+          <select id="cbConsultorFiltro" onchange="_cbBuscar()" style="display:none;padding:7px 11px;font-size:12px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:6px;font-family:inherit;">
+            <option value="">Todos os consultores</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Lista de promessas -->
+      <div id="cbLista" class="cb-lista"></div>
+      <div id="cbVazio" class="pb-vazio" style="display:none;">
+        <div style="font-size:32px;margin-bottom:10px;">💸</div>
+        <div style="font-weight:700;color:var(--text);margin-bottom:6px;">Nenhuma promessa registrada</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Quando um cliente prometer um pagamento, registre aqui. O sistema acompanha e mostra quem honrou.</div>
+      </div>
+
+      <!-- Modal criar/editar promessa -->
+      <div id="cbEditModal" class="fb-det-modal" onclick="if(event.target===this)_cbEditFechar()">
+        <div class="fb-det-modal-box" style="max-width:600px;">
+          <div class="fb-det-h">
+            <div class="fb-det-h-titulo" id="cbEditTitulo">Nova promessa</div>
+            <button class="fb-det-x" onclick="_cbEditFechar()">×</button>
+          </div>
+          <div class="fb-det-body">
+            <div class="pb-form">
+              <label class="pb-lbl">Cliente</label>
+              <input type="text" id="cbFormCliente" class="pb-input" placeholder="Nome do cliente">
+
+              <label class="pb-lbl">Produto</label>
+              <select id="cbFormProduto" class="pb-input">
+                <option value="">— Escolha o produto —</option>
+              </select>
+
+              <label class="pb-lbl">Valor prometido (R$)</label>
+              <input type="text" id="cbFormValor" class="pb-input" placeholder="Ex: 2.997,00" inputmode="decimal">
+
+              <label class="pb-lbl">Data prometida</label>
+              <input type="date" id="cbFormData" class="pb-input">
+
+              <label class="pb-lbl">Canal</label>
+              <select id="cbFormCanal" class="pb-input">
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Telefone">Telefone</option>
+                <option value="E-mail">E-mail</option>
+                <option value="Presencial">Presencial</option>
+                <option value="Outro">Outro</option>
+              </select>
+
+              <label class="pb-lbl">Observação <small style="color:var(--muted);font-weight:400;">(o que ele disse exatamente)</small></label>
+              <textarea id="cbFormObs" class="pb-input" rows="3" placeholder="Ex: 'Pago dia 15 sem falta — recebi um adiantamento'"></textarea>
+
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;">
+                <button class="cb-btn ghost" onclick="_cbEditFechar()">Cancelar</button>
+                <button class="cb-btn danger" id="cbBtnExcluir" onclick="_cbExcluir()" style="display:none;margin-right:auto;">🗑 Excluir</button>
+                <button class="cb-btn primary" onclick="_cbSalvar()">💾 Salvar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de transição (honrada / quebrada / reagendar) -->
+      <div id="cbAcaoModal" class="fb-det-modal" onclick="if(event.target===this)_cbAcaoFechar()">
+        <div class="fb-det-modal-box" style="max-width:520px;">
+          <div class="fb-det-h">
+            <div class="fb-det-h-titulo" id="cbAcaoTitulo">—</div>
+            <button class="fb-det-x" onclick="_cbAcaoFechar()">×</button>
+          </div>
+          <div class="fb-det-body">
+            <div id="cbAcaoCorpo" class="pb-form"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+              <button class="cb-btn ghost" onclick="_cbAcaoFechar()">Cancelar</button>
+              <button class="cb-btn primary" id="cbAcaoConfirm" onclick="_cbAcaoConfirmar()">Confirmar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /PANE: COBRANÇA -->
 
     <div class="ic-pane" data-icpane="ia">
       <div class="ia-header" style="padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px;">
@@ -2918,7 +3033,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260527-114217"></script>
+<script defer src="assets/js/00-utils.js?v=20260527-115403"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -3012,34 +3127,35 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260527-114217"></script>
-<script defer src="assets/js/29-login.js?v=20260527-114217"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260527-114217"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260527-114217"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260527-114217"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260527-114217"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260527-114217"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260527-114217"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260527-114217"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260527-114217"></script>
-<script defer src="assets/js/40-ic-feedback.js?v=20260527-114217"></script>
-<script defer src="assets/js/41-ic-pdi.js?v=20260527-114217"></script>
-<script defer src="assets/js/42-ic-ia.js?v=20260527-114217"></script>
-<script defer src="assets/js/43-ic-alertas.js?v=20260527-114217"></script>
-<script defer src="assets/js/44-ic-playbook.js?v=20260527-114217"></script>
-<script defer src="assets/js/99-diag.js?v=20260527-114217"></script>
-<script defer src="assets/js/21-turmas.js?v=20260527-114217"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260527-114217"></script>
+<script defer src="assets/js/02-main.js?v=20260527-115403"></script>
+<script defer src="assets/js/29-login.js?v=20260527-115403"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260527-115403"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260527-115403"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260527-115403"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260527-115403"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260527-115403"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260527-115403"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260527-115403"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260527-115403"></script>
+<script defer src="assets/js/40-ic-feedback.js?v=20260527-115403"></script>
+<script defer src="assets/js/41-ic-pdi.js?v=20260527-115403"></script>
+<script defer src="assets/js/42-ic-ia.js?v=20260527-115403"></script>
+<script defer src="assets/js/43-ic-alertas.js?v=20260527-115403"></script>
+<script defer src="assets/js/44-ic-playbook.js?v=20260527-115403"></script>
+<script defer src="assets/js/45-ic-cobranca.js?v=20260527-115403"></script>
+<script defer src="assets/js/99-diag.js?v=20260527-115403"></script>
+<script defer src="assets/js/21-turmas.js?v=20260527-115403"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260527-115403"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260527-114217"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260527-114217"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260527-114217"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260527-114217"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260527-114217"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260527-114217"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260527-115403"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260527-115403"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260527-115403"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260527-115403"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260527-115403"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260527-115403"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260527-114217"></script>
-<script defer src="assets/js/17-presenca.js?v=20260527-114217"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260527-115403"></script>
+<script defer src="assets/js/17-presenca.js?v=20260527-115403"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -3051,20 +3167,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260527-114217">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260527-115403">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260527-114217"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260527-115403"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260527-114217"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260527-114217"></script>
+<script defer src="assets/js/05-importacao.js?v=20260527-115403"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260527-115403"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260527-114217">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260527-115403">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260527-114217"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260527-115403"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -3100,7 +3216,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260527-114217"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260527-115403"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -3125,14 +3241,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260527-114217"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260527-114217"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260527-114217"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260527-114217"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260527-114217"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260527-114217"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260527-114217"></script>
-<script defer src="assets/js/08-realtime.js?v=20260527-114217"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260527-115403"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260527-115403"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260527-115403"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260527-115403"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260527-115403"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260527-115403"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260527-115403"></script>
+<script defer src="assets/js/08-realtime.js?v=20260527-115403"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -3165,7 +3281,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260527-114217"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260527-115403"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -3722,16 +3838,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260527-114217"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260527-115403"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260527-114217"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260527-115403"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260527-114217"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260527-115403"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260527-114217"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260527-115403"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
