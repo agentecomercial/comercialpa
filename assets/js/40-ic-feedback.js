@@ -93,13 +93,18 @@
     document.getElementById('fbNotaAuto').addEventListener('input', _icFbColetaDoc);
     _icFbRenderComps();
     _icFbRenderRadar();
-    /* Inicializa a janela default (3 meses) e marca o chip */
-    if(window._icFbJanelaMeses == null) window._icFbJanelaMeses = 3;
+    /* Inicializa a janela default (só mês do ciclo) e marca o chip */
+    if(window._icFbJanelaMeses == null) window._icFbJanelaMeses = 0;
     document.querySelectorAll('.fb-jan').forEach(function(b){
       b.classList.toggle('active', +b.getAttribute('data-jan') === window._icFbJanelaMeses);
     });
     var info = document.getElementById('fbJanInfo');
-    if(info && window._icFbJanelaMeses === 3) info.textContent = 'últimos 3 meses (incluindo o do ciclo)';
+    if(info){
+      var v = window._icFbJanelaMeses;
+      info.textContent = v === 0 ? 'apenas o mês do ciclo'
+                       : v === -1 ? 'todos os meses disponíveis (até 24)'
+                       : 'últimos '+v+' meses (incluindo o do ciclo)';
+    }
   }
 
   /* Popular o select de consultores. Carrega de window._npUsuarios se já
@@ -232,7 +237,7 @@
     var pe = (t.periodEnd||'').slice(0,7);
     var mm = String(t.mesMeta||'').slice(0,7);
     var janela = window._icFbJanelaMeses;
-    if(janela == null) janela = 3;
+    if(janela == null) janela = 0;
     /* Mínimo do range = mesAlvo - (janela-1) meses; se -1 = sem mínimo */
     var minMes = null;
     if(janela > 0){
@@ -326,7 +331,7 @@
     if(typeof window._fbGet !== 'function') return Promise.resolve(null);
     var mesAlvo = _icFbMesKey(dataYmd);
     var janela = window._icFbJanelaMeses;
-    if(janela == null) janela = 3;
+    if(janela == null) janela = 0;
     var mesesAvulso = [];
     if(janela === -1){
       /* Carrega até 24 meses para trás como aproximação de "tudo" */
@@ -1923,6 +1928,228 @@
 
     return '<div class="fb-det-vazio">Sem detalhes disponíveis para esta competência.</div>';
   }
+
+  /* ══════════════════════════════════════════════════════════
+     POPOVER ANO/MÊS/DIA para o campo "Data do ciclo"
+     ══════════════════════════════════════════════════════════ */
+  var _fbCalMode = 'mes';     /* 'ano' | 'mes' | 'dia' */
+  var _fbPending = null;      /* {mode,y,m,d} */
+  var _fbCalY = (new Date()).getFullYear();
+  var _fbCalM = (new Date()).getMonth()+1;
+  var _MESES_BR2 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var _MESES_FULL2 = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var _DOW2 = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  function _fbHojeObj(){ var d=new Date(); return {y:d.getFullYear(),m:d.getMonth()+1,d:d.getDate()}; }
+  function _fbDiasMes(y,m){ return new Date(y, m, 0).getDate(); }
+  function _fbParseData(ymd){
+    if(!ymd) return _fbHojeObj();
+    var p = String(ymd).split('-');
+    if(p.length !== 3) return _fbHojeObj();
+    return { y:+p[0], m:+p[1], d:+p[2] };
+  }
+  function _fbFmtPicker(mode, sel){
+    if(!sel) return 'Selecionar...';
+    if(mode === 'ano') return 'Ano '+sel.y;
+    if(mode === 'mes') return _MESES_FULL2[sel.m-1]+' / '+sel.y;
+    return String(sel.d).padStart(2,'0')+' '+_MESES_BR2[sel.m-1]+' / '+sel.y;
+  }
+  function _fbAtualizarLabelData(){
+    var inp = document.getElementById('fbData');
+    var lbl = document.getElementById('fbDataLabel');
+    if(!inp || !lbl) return;
+    var ymd = inp.value;
+    if(!ymd){ lbl.textContent = 'Selecionar...'; return; }
+    var s = _fbParseData(ymd);
+    /* Heurística do modo a exibir: se vier window._fbCalMode salvo, usa */
+    var mode = window._fbCalLastMode || 'mes';
+    lbl.textContent = _fbFmtPicker(mode, s);
+  }
+
+  window._fbCalAbrir = function(e){
+    if(e){ e.stopPropagation(); }
+    var pop = document.getElementById('fbCalPop');
+    if(!pop) return;
+    var inp = document.getElementById('fbData');
+    var atual = inp && inp.value ? _fbParseData(inp.value) : _fbHojeObj();
+    _fbCalY = atual.y; _fbCalM = atual.m;
+    _fbCalMode = window._fbCalLastMode || 'mes';
+    _fbPending = { mode:_fbCalMode, y:atual.y, m:atual.m, d:atual.d };
+    _fbCalSincTabs();
+    _fbCalRenderAtual();
+    _fbCalAtualizarResumo();
+    pop.classList.add('show');
+  };
+  window._fbCalFechar = function(e){
+    if(e) e.stopPropagation();
+    var pop = document.getElementById('fbCalPop');
+    if(pop) pop.classList.remove('show');
+    _fbPending = null;
+  };
+  document.addEventListener('click', function(e){
+    var pop = document.getElementById('fbCalPop');
+    if(!pop) return;
+    if(pop.contains(e.target)) return;
+    if(e.target.closest('#fbDataTrigger')) return;
+    pop.classList.remove('show');
+  });
+
+  window._fbCalTab = function(mode, e){
+    if(e) e.stopPropagation();
+    if(_fbPending) _fbPending.mode = mode;
+    else _fbCalMode = mode;
+    _fbCalSincTabs();
+    _fbCalRenderAtual();
+    _fbCalAtualizarResumo();
+  };
+  function _fbCalSincTabs(){
+    var mode = _fbPending ? _fbPending.mode : _fbCalMode;
+    document.querySelectorAll('#fbCalPop .np-cal-tab').forEach(function(t){
+      t.classList.toggle('active', t.getAttribute('data-mode') === mode);
+    });
+    document.querySelectorAll('#fbCalPop .np-cal-pane').forEach(function(p){
+      p.classList.toggle('show', p.getAttribute('data-pane') === mode);
+    });
+  }
+  function _fbCalRenderAtual(){
+    var mode = _fbPending ? _fbPending.mode : _fbCalMode;
+    if(mode === 'ano') _fbCalRenderAno();
+    else if(mode === 'mes') _fbCalRenderMes();
+    else _fbCalRenderDia();
+  }
+  function _fbCalAtualizarResumo(){
+    var el = document.getElementById('fbCalResumo');
+    if(!el) return;
+    if(!_fbPending){ el.textContent = '—'; return; }
+    el.innerHTML = 'Selecionado: <b style="color:var(--accent);">'+_fbFmtPicker(_fbPending.mode, _fbPending)+'</b>';
+  }
+  window._fbCalMesNav = function(delta, e){
+    if(e) e.stopPropagation();
+    _fbCalY += delta;
+    _fbCalRenderMes();
+  };
+  window._fbCalDiaNav = function(delta, e){
+    if(e) e.stopPropagation();
+    _fbCalM += delta;
+    if(_fbCalM<1){_fbCalM=12;_fbCalY--;}
+    if(_fbCalM>12){_fbCalM=1;_fbCalY++;}
+    _fbCalRenderDia();
+  };
+  function _fbCalRenderAno(){
+    var grid = document.getElementById('fbCalGridAno');
+    if(!grid) return;
+    grid.innerHTML = '';
+    var H = _fbHojeObj();
+    var base = H.y - 4;
+    for(var i=0;i<9;i++){
+      var ano = base + i;
+      var btn = document.createElement('button');
+      btn.className = 'np-cal-cell';
+      btn.textContent = ano;
+      if(ano === H.y) btn.classList.add('atual');
+      if(_fbPending && _fbPending.mode==='ano' && ano === _fbPending.y) btn.classList.add('selected');
+      (function(a){
+        btn.addEventListener('click', function(ev){
+          ev.stopPropagation();
+          if(_fbPending){ _fbPending.mode='ano'; _fbPending.y=a; }
+          _fbCalRenderAno();
+          _fbCalAtualizarResumo();
+        });
+      })(ano);
+      grid.appendChild(btn);
+    }
+  }
+  function _fbCalRenderMes(){
+    var lbl = document.getElementById('fbCalMesYearLabel');
+    if(lbl) lbl.textContent = _fbCalY;
+    var grid = document.getElementById('fbCalGridMes');
+    if(!grid) return;
+    grid.innerHTML = '';
+    var H = _fbHojeObj();
+    for(var i=1;i<=12;i++){
+      var btn = document.createElement('button');
+      btn.className = 'np-cal-cell';
+      btn.textContent = _MESES_BR2[i-1];
+      if(_fbCalY===H.y && i===H.m) btn.classList.add('atual');
+      if(_fbPending && _fbPending.mode==='mes' && _fbCalY===_fbPending.y && i===_fbPending.m) btn.classList.add('selected');
+      (function(mi){
+        btn.addEventListener('click', function(ev){
+          ev.stopPropagation();
+          if(_fbPending){ _fbPending.mode='mes'; _fbPending.y=_fbCalY; _fbPending.m=mi; }
+          _fbCalRenderMes();
+          _fbCalAtualizarResumo();
+        });
+      })(i);
+      grid.appendChild(btn);
+    }
+  }
+  function _fbCalRenderDia(){
+    var lbl = document.getElementById('fbCalDiaLabel');
+    if(lbl) lbl.textContent = _MESES_FULL2[_fbCalM-1] + ' / ' + _fbCalY;
+    var grid = document.getElementById('fbCalGridDia');
+    if(!grid) return;
+    grid.innerHTML = '';
+    _DOW2.forEach(function(d){
+      var h = document.createElement('div');
+      h.className = 'dow'; h.textContent = d;
+      grid.appendChild(h);
+    });
+    var prim = new Date(_fbCalY, _fbCalM-1, 1).getDay();
+    var total = _fbDiasMes(_fbCalY, _fbCalM);
+    for(var v=0;v<prim;v++){
+      var ph = document.createElement('div');
+      ph.className = 'np-cal-cell empty';
+      grid.appendChild(ph);
+    }
+    var H = _fbHojeObj();
+    for(var i=1;i<=total;i++){
+      var btn = document.createElement('button');
+      btn.className = 'np-cal-cell';
+      btn.textContent = i;
+      if(_fbCalY===H.y && _fbCalM===H.m && i===H.d) btn.classList.add('atual');
+      if(_fbPending && _fbPending.mode==='dia' && _fbCalY===_fbPending.y && _fbCalM===_fbPending.m && i===_fbPending.d) btn.classList.add('selected');
+      (function(di){
+        btn.addEventListener('click', function(ev){
+          ev.stopPropagation();
+          if(_fbPending){ _fbPending.mode='dia'; _fbPending.y=_fbCalY; _fbPending.m=_fbCalM; _fbPending.d=di; }
+          _fbCalRenderDia();
+          _fbCalAtualizarResumo();
+        });
+      })(i);
+      grid.appendChild(btn);
+    }
+  }
+  window._fbCalAplicar = function(e){
+    if(e) e.stopPropagation();
+    if(!_fbPending){ window._fbCalFechar(); return; }
+    var p = _fbPending;
+    /* Converte para YYYY-MM-DD conforme o modo */
+    var ymd;
+    if(p.mode === 'ano'){ ymd = p.y+'-01-01'; }
+    else if(p.mode === 'mes'){ ymd = p.y+'-'+String(p.m).padStart(2,'0')+'-01'; }
+    else { ymd = p.y+'-'+String(p.m).padStart(2,'0')+'-'+String(p.d).padStart(2,'0'); }
+    _fbCalMode = p.mode;
+    window._fbCalLastMode = p.mode;
+    var inp = document.getElementById('fbData');
+    if(inp){
+      inp.value = ymd;
+      /* Dispara change handlers existentes */
+      try { inp.dispatchEvent(new Event('change')); } catch(err){}
+    }
+    _fbAtualizarLabelData();
+    window._fbCalFechar();
+  };
+
+  /* Sobrescreve a inicialização da data: ao iniciar o módulo, popula com hoje
+     e mostra no label customizado. */
+  var _origIcFbInit = _icFbInit;
+  _icFbInit = function(){
+    _origIcFbInit();
+    var inp = document.getElementById('fbData');
+    if(inp && !inp.value){
+      inp.value = _hoje();
+    }
+    _fbAtualizarLabelData();
+  };
 
   /* ── Hook: quando abrir o Mapeamento, popular consultores
         no select assim que _npUsuarios estiver carregado. */
