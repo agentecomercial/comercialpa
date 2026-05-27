@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260527-020936">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260527-020936">
+<link rel="stylesheet" href="assets/css/main.css?v=20260527-022152">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260527-022152">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260527-020936">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260527-022152">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1912,6 +1912,7 @@
       <button class="ic-tab active" data-icpane="dashboard" onclick="_icShowPane('dashboard')">📊 Dashboard</button>
       <button class="ic-tab" data-icpane="desenvolvimento" onclick="_icShowPane('desenvolvimento')">📈 Desenvolvimento</button>
       <button class="ic-tab" data-icpane="pdi" onclick="_icShowPane('pdi')">🌱 PDI</button>
+      <button class="ic-tab" data-icpane="ia" onclick="_icShowPane('ia')" id="icTabIa" style="display:none;">🤖 IA</button>
     </div>
 
     <!-- PANE: DASHBOARD (conteúdo original do Mapeamento) -->
@@ -2231,6 +2232,73 @@
       </div>
     </div>
     <!-- /PANE: PDI -->
+
+    <!-- PANE: IA · Inteligência conversacional (Fase 5) -->
+    <div class="ic-pane" data-icpane="ia">
+      <div class="ia-header" style="padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:18px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;">🤖 IA · Inteligência Comercial <small style="font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.06em;text-transform:uppercase;">· análise estratégica do time</small></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">Catálogo de análises prontas + perguntas livres pra você copiar e jogar no Claude.ai (usa sua conta MAX, sem API).</div>
+          </div>
+          <!-- Seletor de período para análise IA -->
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;">Período:</label>
+            <button class="ia-per-chip active" data-per="mes" onclick="_iaSetPer('mes')">Mês corrente</button>
+            <button class="ia-per-chip" data-per="3m" onclick="_iaSetPer('3m')">Últimos 3m</button>
+            <button class="ia-per-chip" data-per="6m" onclick="_iaSetPer('6m')">Últimos 6m</button>
+            <button class="ia-per-chip" data-per="manual" onclick="_iaSetPer('manual')">📅 Personalizado</button>
+            <input type="month" id="iaPerStart" style="display:none;padding:5px 9px;font-size:11px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:6px;font-family:inherit;">
+            <input type="month" id="iaPerEnd" style="display:none;padding:5px 9px;font-size:11px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:6px;font-family:inherit;">
+          </div>
+        </div>
+      </div>
+
+      <div class="ia-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <!-- LADO ESQUERDO: catálogo de análises prontas -->
+        <div class="ia-side ia-side-cat">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">📋 Catálogo · análises prontas</div>
+          <div id="iaCatList" class="ia-cat-list"></div>
+        </div>
+
+        <!-- LADO DIREITO: pergunta livre + resposta -->
+        <div class="ia-side ia-side-livre">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">💬 Pergunta livre (para Claude)</div>
+          <div class="ia-livre-box">
+            <textarea id="iaPergunta" placeholder="Ex: Compare DARLEY e JULIANA nos últimos 3 ciclos · Quem precisa de PDI urgente? · Se o top performer sair, qual o impacto?" rows="4"></textarea>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap;">
+              <button class="ia-btn ghost" onclick="_iaPrev()">👁 Visualizar prompt</button>
+              <button class="ia-btn primary" onclick="_iaCopiar()">📋 Copiar para Claude</button>
+            </div>
+            <div id="iaPromptPreview" style="display:none;margin-top:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:'DM Mono',ui-monospace,monospace;font-size:10.5px;color:#bcd87a;white-space:pre-wrap;max-height:280px;overflow:auto;line-height:1.5;"></div>
+          </div>
+
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px;">📥 Cole a resposta do Claude aqui</div>
+          <div class="ia-resp-box">
+            <textarea id="iaResposta" placeholder="Cole aqui a resposta do Claude para salvar no histórico..." rows="6"></textarea>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+              <button class="ia-btn ghost" onclick="document.getElementById('iaResposta').value='';">Limpar</button>
+              <button class="ia-btn primary" onclick="_iaSalvarResposta()">💾 Salvar no histórico</button>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px;">🕒 Histórico de consultas</div>
+          <div id="iaHistorico" class="ia-hist"></div>
+        </div>
+      </div>
+
+      <!-- Modal de visualização de resultado de catálogo -->
+      <div id="iaResModal" class="fb-det-modal" onclick="if(event.target===this)_iaResFechar()">
+        <div class="fb-det-modal-box" style="max-width:920px;">
+          <div class="fb-det-h">
+            <div class="fb-det-h-titulo" id="iaResTitulo">—</div>
+            <button class="fb-det-x" onclick="_iaResFechar()">×</button>
+          </div>
+          <div class="fb-det-body" id="iaResBody">—</div>
+        </div>
+      </div>
+    </div>
+    <!-- /PANE: IA -->
 
     <!-- Modal compartilhado: drill-down de competência -->
     <div class="fb-det-modal" id="fbDetModal" onclick="if(event.target===this)_fbDetFechar()">
@@ -2720,7 +2788,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260527-020936"></script>
+<script defer src="assets/js/00-utils.js?v=20260527-022152"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -2814,31 +2882,32 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260527-020936"></script>
-<script defer src="assets/js/29-login.js?v=20260527-020936"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260527-020936"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260527-020936"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260527-020936"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260527-020936"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260527-020936"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260527-020936"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260527-020936"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260527-020936"></script>
-<script defer src="assets/js/40-ic-feedback.js?v=20260527-020936"></script>
-<script defer src="assets/js/41-ic-pdi.js?v=20260527-020936"></script>
-<script defer src="assets/js/99-diag.js?v=20260527-020936"></script>
-<script defer src="assets/js/21-turmas.js?v=20260527-020936"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260527-020936"></script>
+<script defer src="assets/js/02-main.js?v=20260527-022152"></script>
+<script defer src="assets/js/29-login.js?v=20260527-022152"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260527-022152"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260527-022152"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260527-022152"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260527-022152"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260527-022152"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260527-022152"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260527-022152"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260527-022152"></script>
+<script defer src="assets/js/40-ic-feedback.js?v=20260527-022152"></script>
+<script defer src="assets/js/41-ic-pdi.js?v=20260527-022152"></script>
+<script defer src="assets/js/42-ic-ia.js?v=20260527-022152"></script>
+<script defer src="assets/js/99-diag.js?v=20260527-022152"></script>
+<script defer src="assets/js/21-turmas.js?v=20260527-022152"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260527-022152"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260527-020936"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260527-020936"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260527-020936"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260527-020936"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260527-020936"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260527-020936"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260527-022152"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260527-022152"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260527-022152"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260527-022152"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260527-022152"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260527-022152"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260527-020936"></script>
-<script defer src="assets/js/17-presenca.js?v=20260527-020936"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260527-022152"></script>
+<script defer src="assets/js/17-presenca.js?v=20260527-022152"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -2850,20 +2919,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260527-020936">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260527-022152">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260527-020936"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260527-022152"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260527-020936"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260527-020936"></script>
+<script defer src="assets/js/05-importacao.js?v=20260527-022152"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260527-022152"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260527-020936">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260527-022152">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260527-020936"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260527-022152"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -2899,7 +2968,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260527-020936"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260527-022152"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -2924,14 +2993,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260527-020936"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260527-020936"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260527-020936"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260527-020936"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260527-020936"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260527-020936"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260527-020936"></script>
-<script defer src="assets/js/08-realtime.js?v=20260527-020936"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260527-022152"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260527-022152"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260527-022152"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260527-022152"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260527-022152"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260527-022152"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260527-022152"></script>
+<script defer src="assets/js/08-realtime.js?v=20260527-022152"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -2964,7 +3033,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260527-020936"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260527-022152"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -3521,16 +3590,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260527-020936"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260527-022152"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260527-020936"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260527-022152"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260527-020936"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260527-022152"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260527-020936"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260527-022152"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">

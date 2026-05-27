@@ -1272,6 +1272,32 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .fb-ciclo-tab:hover{color:var(--accent);}
 .fb-ciclo-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3);}
 
+/* ── IA · Inteligência conversacional (Fase 5) ── */
+@media(max-width:1100px){.ia-layout{grid-template-columns:1fr !important;}}
+.ia-per-chip{background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-size:11px;font-weight:600;padding:5px 11px;border-radius:14px;cursor:pointer;font-family:inherit;transition:all .12s;}
+.ia-per-chip:hover{border-color:var(--accent);color:var(--accent);}
+.ia-per-chip.active{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+.ia-cat-list{display:flex;flex-direction:column;gap:8px;max-height:720px;overflow-y:auto;padding-right:4px;}
+.ia-cat-item{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .12s;}
+.ia-cat-item:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2);}
+.ia-cat-item-h{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.ia-cat-item-titulo{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.ia-cat-item-tag{font-size:9px;font-weight:700;color:var(--muted);background:var(--surface2);padding:2px 7px;border-radius:8px;text-transform:uppercase;letter-spacing:.04em;}
+.ia-cat-item-desc{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;}
+.ia-livre-box,.ia-resp-box{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:14px;}
+.ia-livre-box textarea,.ia-resp-box textarea{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:11px 13px;font-size:13px;line-height:1.55;font-family:inherit;resize:vertical;min-height:80px;outline:none;}
+.ia-livre-box textarea:focus,.ia-resp-box textarea:focus{border-color:var(--accent);}
+.ia-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:11px;font-weight:700;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .12s;text-transform:uppercase;letter-spacing:.04em;}
+.ia-btn.ghost{color:var(--muted);}
+.ia-btn.ghost:hover{color:var(--text);}
+.ia-btn.primary{background:var(--accent);color:#0f0f0f;border-color:var(--accent);}
+.ia-btn.primary:hover{filter:brightness(1.06);}
+.ia-hist{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;}
+.ia-hist-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;}
+.ia-hist-item:hover{border-color:var(--accent);}
+.ia-hist-q{font-size:12px;color:var(--text);font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ia-hist-meta{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+
 /* Chips de janela de análise (escolhe quantos meses para trás contar) */
 .fb-jan{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-size:11px;font-weight:600;padding:5px 11px;border-radius:14px;cursor:pointer;font-family:inherit;transition:all .12s;}
 .fb-jan:hover{border-color:var(--accent);color:var(--accent);}
