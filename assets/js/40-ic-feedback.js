@@ -240,14 +240,16 @@
         if(cls && !Array.isArray(cls) && typeof cls === 'object') cls = Object.values(cls).filter(Boolean);
         cls = cls || [];
         cls.forEach(function(c){
-          if(!c || !c.cliente) return;
-          var consultor = String(c.consultor||'').toUpperCase().trim();
+          if(!c) return;
+          var nomeCli = c.cliente || c.clienteNome;
+          if(!nomeCli) return;
+          var consultor = String(c.consultor || c.consultorNome || '').toUpperCase().trim();
           if(Array.isArray(c.treinamentos) && c.treinamentos.length){
             c.treinamentos.forEach(function(sub){
               if(!sub) return;
               itens.push({
                 consultor: consultor,
-                cliente: String(c.cliente).toUpperCase(),
+                cliente: String(nomeCli).toUpperCase(),
                 treinamento: String(sub.cod||c.treinamento||'').toUpperCase(),
                 valor: +sub.valor||0,
                 status: sub.status||c.status||'aberto',
@@ -260,7 +262,7 @@
           } else {
             itens.push({
               consultor: consultor,
-              cliente: String(c.cliente).toUpperCase(),
+              cliente: String(nomeCli).toUpperCase(),
               treinamento: String(c.treinamento||'').toUpperCase(),
               valor: +c.valor||0,
               status: c.status||'aberto',
@@ -276,14 +278,16 @@
     if(vendasAvulso && typeof vendasAvulso === 'object'){
       Object.values(vendasAvulso).forEach(function(v){
         if(!v) return;
+        /* Schema do Pipeline · Vendas avulsas grava com clienteNome /
+           consultorNome / produto. Fallback para nomes legados. */
         itens.push({
-          consultor: String(v.consultor||'').toUpperCase().trim(),
-          cliente: String(v.cliente||'').toUpperCase(),
-          treinamento: String(v.produto||v.treinamento||'').toUpperCase(),
-          valor: +v.valor||0,
-          status: v.status||'aberto',
-          entrada: +v.entrada||0,
-          data: v.data||'',
+          consultor: String(v.consultorNome || v.consultor || '').toUpperCase().trim(),
+          cliente: String(v.clienteNome || v.cliente || '').toUpperCase(),
+          treinamento: String(v.produto || v.treinamento || '').toUpperCase(),
+          valor: +v.valor || 0,
+          status: v.status || 'aberto',
+          entrada: +v.entrada || 0,
+          data: v.data || '',
           src: 'avulso',
           srcNome: 'Venda avulsa'
         });
@@ -463,15 +467,17 @@
         var t = dados.turmas[tid];
         if(!t) return;
         var ps = (t.periodStart||'').slice(0,7);
-        if(!ps || ps >= dados.mesAlvo) return; /* só turmas anteriores */
+        if(!ps || ps >= dados.mesAlvo) return; /* só turmas anteriores (qualquer status, fechadas inclusive) */
         if(cutoff && ps < cutoff) return;       /* respeita cutoff retroativo */
         var nomeTurma = String(t.nome||t.titulo||tid).toUpperCase();
         var cls = t.clientes;
         if(cls && !Array.isArray(cls) && typeof cls === 'object') cls = Object.values(cls).filter(Boolean);
         cls = cls || [];
         cls.forEach(function(c){
-          if(!c || !c.cliente) return;
-          var consultC = String(c.consultor||'').toUpperCase().trim();
+          if(!c) return;
+          var nomeCli = c.cliente || c.clienteNome;
+          if(!nomeCli) return;
+          var consultC = String(c.consultor || c.consultorNome || '').toUpperCase().trim();
           if(consultC !== nome) return;
           /* status efetivo: se tem subs, pega o mais avançado */
           var status = c.status || 'aberto';
@@ -488,7 +494,7 @@
           var vivo = status === 'negociacao' || status === 'entrada' || status === 'pago';
           if(vivo) clienAntigosVivos++;
           recuperacaoList.push({
-            cliente: String(c.cliente).toUpperCase(),
+            cliente: String(nomeCli).toUpperCase(),
             treinamento: String(trein||'').toUpperCase(),
             status: status,
             valor: valor,

@@ -1304,7 +1304,7 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 /* Modal de drill-down */
 .fb-det-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:10000;padding:24px;}
 .fb-det-modal.show{display:flex;}
-.fb-det-modal-box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;max-width:780px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.6);}
+.fb-det-modal-box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;max-width:1180px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.6);}
 .fb-det-h{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
 .fb-det-h-titulo{font-size:15px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;}
 .fb-det-h-score{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
