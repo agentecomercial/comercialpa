@@ -1944,6 +1944,8 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 
 /* Scroll suave no body */
 .np-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px;display:none;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;min-height:0;}
+/* Padronização: conteúdo do Pipeline centralizado igual IC/Turmas (max-width 1200px) */
+.np-body > *{max-width:1200px;margin-left:auto;margin-right:auto;}
 .np-body.ativo{display:block;min-height:0;}
 #npTabFunil.ativo{display:flex;flex-direction:column;overflow:hidden;padding:0;}
 .np-body::-webkit-scrollbar{width:4px;}
