@@ -1489,39 +1489,45 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   position:relative;overflow:hidden;
 }
 .ic-podio-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.3);}
+/* Pos 1 (🥇 ouro) → cor accent do tema */
 .ic-podio-card.pos-1{
-  background:linear-gradient(180deg, rgba(255,215,0,.08), var(--surface) 60%);
-  border-color:rgba(255,215,0,.30);
+  background:linear-gradient(180deg, var(--accent-dim), var(--surface) 60%);
+  border-color:var(--accent);
   padding-top:24px;padding-bottom:20px;
 }
-.ic-podio-card.pos-1:hover{border-color:rgba(255,215,0,.55);}
+.ic-podio-card.pos-1:hover{border-color:var(--accent);box-shadow:0 8px 24px var(--accent-dim);}
+/* Pos 2 (🥈 prata) → cinza neutro derivado de --text */
 .ic-podio-card.pos-2{
-  background:linear-gradient(180deg, rgba(192,192,192,.07), var(--surface) 60%);
-  border-color:rgba(192,192,192,.25);
+  background:linear-gradient(180deg, rgba(255,255,255,.06), var(--surface) 60%);
+  border-color:var(--border2);
 }
+/* Pos 3 (🥉 bronze) → accent esmaecido */
 .ic-podio-card.pos-3{
-  background:linear-gradient(180deg, rgba(205,127,50,.08), var(--surface) 60%);
-  border-color:rgba(205,127,50,.30);
+  background:linear-gradient(180deg, var(--accent-dim), var(--surface) 70%);
+  border-color:var(--border2);
+  opacity:.92;
 }
 .ic-podio-medal{font-size:24px;line-height:1;}
 .ic-podio-card.pos-1 .ic-podio-medal{font-size:32px;}
 .ic-podio-aval{
   width:48px;height:48px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:800;color:#0f0f0f;letter-spacing:.04em;
-  background:linear-gradient(135deg, var(--accent), #34d399);
+  font-size:16px;font-weight:800;color:var(--bg);letter-spacing:.04em;
+  background:var(--accent);
   border:2px solid rgba(255,255,255,.1);
 }
 .ic-podio-card.pos-1 .ic-podio-aval{
   width:60px;height:60px;font-size:20px;
-  background:linear-gradient(135deg, #ffd700, #ffaa00);
-  box-shadow:0 4px 16px rgba(255,215,0,.25);
+  background:var(--accent);
+  box-shadow:0 4px 16px var(--accent-dim);
 }
 .ic-podio-card.pos-2 .ic-podio-aval{
-  background:linear-gradient(135deg, #e0e0e0, #a8a8a8);
+  background:var(--surface2);color:var(--text);
+  border:2px solid var(--border2);
 }
 .ic-podio-card.pos-3 .ic-podio-aval{
-  background:linear-gradient(135deg, #cd7f32, #a05a23);color:#fff;
+  background:var(--accent-dim);color:var(--text);
+  border:2px solid var(--accent);
 }
 .ic-podio-nome{
   font-size:12px;font-weight:800;color:var(--text);
@@ -1533,9 +1539,9 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   font-size:18px;font-weight:800;color:var(--accent);
   font-variant-numeric:tabular-nums;letter-spacing:-.2px;
 }
-.ic-podio-card.pos-1 .ic-podio-fat{font-size:22px;color:#ffd700;}
-.ic-podio-card.pos-2 .ic-podio-fat{color:#d8d8d8;}
-.ic-podio-card.pos-3 .ic-podio-fat{color:#e6a86a;}
+.ic-podio-card.pos-1 .ic-podio-fat{font-size:22px;color:var(--accent);}
+.ic-podio-card.pos-2 .ic-podio-fat{color:var(--text);}
+.ic-podio-card.pos-3 .ic-podio-fat{color:var(--text);opacity:.85;}
 .ic-podio-meta{font-size:10px;color:var(--muted);font-weight:600;}
 
 .ic-alertas-box{display:flex;flex-wrap:nowrap;gap:10px;margin:0 0 18px;align-items:stretch;}
