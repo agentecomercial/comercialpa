@@ -2820,3 +2820,80 @@ body{overflow-x:hidden;}
   .agenda-card-v2 .ac-evts{grid-template-columns:1fr;}
 }
 
+/* ══════════════════════════════════════════════════════════════
+   Playbook (IC · Fase 7) — biblioteca de scripts por situação
+   ══════════════════════════════════════════════════════════════ */
+.pb-header{margin-bottom:20px;}
+.pb-cat-chip{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  border-radius:14px;padding:5px 11px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;
+  transition:all .12s;white-space:nowrap;
+}
+.pb-cat-chip:hover{border-color:rgba(200,240,90,.4);}
+.pb-cat-chip.active{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+
+.pb-btn{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  border-radius:6px;padding:7px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;
+  transition:all .12s;
+}
+.pb-btn:hover{background:var(--surface);border-color:rgba(255,255,255,.25);}
+.pb-btn.primary{background:rgba(200,240,90,.14);border-color:rgba(200,240,90,.4);color:var(--accent);}
+.pb-btn.primary:hover{background:rgba(200,240,90,.24);border-color:var(--accent);}
+.pb-btn.ghost{background:transparent;}
+.pb-btn.danger{background:rgba(255,95,87,.10);border-color:rgba(255,95,87,.35);color:var(--red);}
+.pb-btn.danger:hover{background:rgba(255,95,87,.18);}
+
+.pb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;}
+.pb-card{
+  background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;
+  display:flex;flex-direction:column;gap:8px;transition:transform .12s, border-color .12s, box-shadow .12s;
+}
+.pb-card:hover{transform:translateY(-2px);border-color:rgba(200,240,90,.3);box-shadow:0 6px 16px rgba(0,0,0,.25);}
+.pb-card-h{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.pb-card-cat{
+  font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;
+  display:flex;align-items:center;gap:5px;
+}
+.pb-card-cat span{font-size:13px;}
+.pb-card-edit{
+  background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;
+  border-radius:4px;transition:all .12s;
+}
+.pb-card-edit:hover{background:var(--surface2);color:var(--accent);}
+.pb-card-titulo{font-size:14px;font-weight:800;color:var(--text);line-height:1.35;}
+.pb-card-situacao{font-size:11.5px;color:#ddd;line-height:1.5;padding:6px 8px;background:var(--surface2);border-radius:5px;border-left:2px solid var(--blue);}
+.pb-card-situacao b{color:var(--text);font-weight:700;}
+.pb-card-script{
+  font-size:12px;color:var(--text);line-height:1.55;padding:8px 10px;
+  background:rgba(200,240,90,.04);border:1px dashed rgba(200,240,90,.20);border-radius:5px;
+  max-height:160px;overflow:auto;white-space:pre-wrap;
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
+}
+.pb-card-script::-webkit-scrollbar{width:5px;}
+.pb-card-script::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.pb-card-tags{display:flex;flex-wrap:wrap;gap:5px;}
+.pb-chip{
+  font-size:9.5px;font-weight:700;color:var(--muted);background:var(--surface2);
+  padding:2px 7px;border-radius:8px;letter-spacing:.04em;
+}
+.pb-chip.prod{background:rgba(200,240,90,.10);color:var(--accent);border:1px solid rgba(200,240,90,.25);}
+.pb-card-acoes{display:flex;justify-content:flex-end;gap:6px;margin-top:auto;padding-top:4px;}
+
+.pb-vazio{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px 24px;text-align:center;background:var(--surface);
+  border:1px dashed var(--border2);border-radius:10px;
+}
+
+/* Modal de edição */
+#pbEditModal .pb-form{display:flex;flex-direction:column;gap:4px;}
+.pb-lbl{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:10px;}
+.pb-input{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  border-radius:6px;padding:8px 11px;font-size:12px;font-family:inherit;outline:none;
+  transition:border-color .12s;
+}
+.pb-input:focus{border-color:var(--accent);}
+textarea.pb-input{resize:vertical;font-family:inherit;line-height:1.5;}
+
