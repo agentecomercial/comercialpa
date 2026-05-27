@@ -357,8 +357,17 @@ window.cardExcluirSelecionados = cardExcluirSelecionados;
       setTimeout(_instalarObserver, 200);
       return;
     }
+    /* Debounce via requestAnimationFrame: várias mutations em sequência
+       (que acontecem durante scroll/render em rajada) viram 1 atualização
+       por frame, eliminando o flicker do header mobile. */
+    var _pending = false;
     var obs = new MutationObserver(function(){
-      try { _atualizarHeader(); } catch(_e){}
+      if(_pending) return;
+      _pending = true;
+      (window.requestAnimationFrame || function(cb){setTimeout(cb,16);})(function(){
+        _pending = false;
+        try { _atualizarHeader(); } catch(_e){}
+      });
     });
     obs.observe(alvo, { childList:true, subtree:true, characterData:true });
     /* Faz primeira atualização */

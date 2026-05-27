@@ -404,6 +404,10 @@ function entrarTurma(id){
       if(_tli!==-1){_tls[_tli].ministrante=null;_saveTurmas(_tls);_turmaAtiva=_tls[_tli];}
     }
 
+    /* Normaliza schema híbrido (cliente.treinamento legado → cliente.treinamentos[])
+       antes de qualquer render para evitar perda de treinamentos vinculados
+       quando o array está vazio mas o scalar legado existe. */
+    if(typeof _migrarTreinamentosHibrido==='function') _migrarTreinamentosHibrido(data);
     savedData=JSON.stringify(data);
 
     // allConsultors e allTrainers já populados pelo entrarTurma (usuarios/ + clientes)
