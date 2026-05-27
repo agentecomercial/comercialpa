@@ -449,14 +449,23 @@
     var cobertura = metaBas > 0 ? (rPag + rNeg + rEnt) / metaBas : null;
     var potencial = cobertura != null ? Math.min(1.5, cobertura) / 1.5 : null;
     /* A · Recuperação — proxy: clientes "vivos" (negoc/entrada/pago) vindos
-       de turmas cujo periodStart é ANTERIOR ao mês alvo. */
+       de turmas cujo periodStart é ANTERIOR ao mês alvo.
+       O usuário pode ajustar até quantos meses retroceder via _icFbVisRetroMeses
+       (default 0 = todas as turmas anteriores). Coletamos a LISTA detalhada
+       para o drill-down explicar de onde veio cada um. */
+    var retroMeses = +(window._icFbVisRetroMeses || 0); /* 0 = ilimitado */
+    var cutoff = null;
+    if(retroMeses > 0) cutoff = _icFbAddMeses(dados.mesAlvo, -retroMeses);
     var clienAntigos = 0, clienAntigosVivos = 0;
+    var recuperacaoList = []; /* {cliente, status, srcNome, turmaPeriodStart, ...} */
     if(dados.turmas){
-      Object.values(dados.turmas).forEach(function(t){
+      Object.keys(dados.turmas).forEach(function(tid){
+        var t = dados.turmas[tid];
         if(!t) return;
         var ps = (t.periodStart||'').slice(0,7);
         if(!ps || ps >= dados.mesAlvo) return; /* só turmas anteriores */
-        if(!_icFbMesNaTurma(dados.mesAlvo, t)) return; /* mas ainda ativas no mês */
+        if(cutoff && ps < cutoff) return;       /* respeita cutoff retroativo */
+        var nomeTurma = String(t.nome||t.titulo||tid).toUpperCase();
         var cls = t.clientes;
         if(cls && !Array.isArray(cls) && typeof cls === 'object') cls = Object.values(cls).filter(Boolean);
         cls = cls || [];
@@ -466,15 +475,27 @@
           if(consultC !== nome) return;
           /* status efetivo: se tem subs, pega o mais avançado */
           var status = c.status || 'aberto';
+          var trein = c.treinamento || '';
+          var valor = +c.valor || 0;
           if(Array.isArray(c.treinamentos) && c.treinamentos.length){
             var ord = {aberto:0, negociacao:1, entrada:2, pago:3, desistiu:-1};
             c.treinamentos.forEach(function(s){
               var sst = (s && s.status) || c.status || 'aberto';
-              if((ord[sst]||0) > (ord[status]||0)) status = sst;
+              if((ord[sst]||0) > (ord[status]||0)){ status = sst; if(s && s.cod) trein = s.cod; if(s && s.valor) valor = +s.valor; }
             });
           }
           clienAntigos++;
-          if(status === 'negociacao' || status === 'entrada' || status === 'pago') clienAntigosVivos++;
+          var vivo = status === 'negociacao' || status === 'entrada' || status === 'pago';
+          if(vivo) clienAntigosVivos++;
+          recuperacaoList.push({
+            cliente: String(c.cliente).toUpperCase(),
+            treinamento: String(trein||'').toUpperCase(),
+            status: status,
+            valor: valor,
+            srcNome: nomeTurma,
+            turmaInicio: ps,
+            vivo: vivo
+          });
         });
       });
     }
@@ -519,7 +540,9 @@
                  preserv: preserv, perdidos: perdidos,
                  potencial: potencial, cobertura: cobertura, metaBas: metaBas,
                  rPag: rPag, rNeg: rNeg, rEnt: rEnt,
-                 recup: recup, clienAntigos: clienAntigos, clienAntigosVivos: clienAntigosVivos }
+                 recup: recup, clienAntigos: clienAntigos, clienAntigosVivos: clienAntigosVivos,
+                 retroMeses: retroMeses, cutoff: cutoff,
+                 recuperacaoList: recuperacaoList }
       },
       contexto: {
         consultor: nome,
@@ -1147,6 +1170,16 @@
     var m = document.getElementById('fbDetModal');
     if(m) m.classList.remove('show');
   };
+  /* Troca o filtro retroativo de Recuperação (Visão) e re-renderiza o modal */
+  window._fbVisSetRetro = function(meses){
+    window._icFbVisRetroMeses = +meses || 0;
+    /* recalcula métricas pra refletir o novo cutoff */
+    _icFbAtualizarSugestoes();
+    /* re-abre o detalhe da Visão depois que recalcular (defer 1 tick) */
+    setTimeout(function(){
+      if(typeof window._fbDetAbrir === 'function') window._fbDetAbrir('vis');
+    }, 400);
+  };
 
   function _srcTag(src, srcNome){
     var t = (src==='turma'?'TURMA':'AVULSO');
@@ -1434,10 +1467,11 @@
         if(v >= 0.4) return 'amber';
         return 'red';
       }
+      var retroLbl = m.retroMeses > 0 ? ('últimos '+m.retroMeses+' meses') : 'todas as turmas anteriores';
       var componentes = [
         { lbl:'🛡 Preservação',           peso:40, val:m.preserv,   det:'1 − (desistiu '+(m.perdidos? '· '+m.perdidos : '0')+' + sem-status) ÷ '+ (_metricasCache.metricas.qual.total||0) +' total' },
         { lbl:'🔭 Potencial / Cobertura', peso:40, val:m.cobertura!=null?Math.min(1.5,m.cobertura)/1.5:null, det:'Pipeline R$ ('+_fmtR(m.rPag+m.rNeg+m.rEnt)+') ÷ meta básica '+_fmtR(m.metaBas)+' = '+pct(m.cobertura) },
-        { lbl:'♻ Recuperação',            peso:20, val:m.recup,     det:m.clienAntigosVivos+' vivos de '+m.clienAntigos+' clientes de turmas anteriores' }
+        { lbl:'♻ Recuperação',            peso:20, val:m.recup,     det:(m.clienAntigosVivos||0)+' vivos de '+(m.clienAntigos||0)+' · '+retroLbl }
       ];
       var compCards = '<div class="fb-det-stats">'
         + componentes.map(function(c){
@@ -1448,7 +1482,25 @@
               + '</div>';
           }).join('')
         + '</div>';
-      /* Tabelas auxiliares: perdidos vs vivos antigos */
+      /* Controle de retroação — chips clicáveis */
+      var retroOpts = [
+        { v:0, lbl:'Todas anteriores' },
+        { v:3, lbl:'3 meses' },
+        { v:6, lbl:'6 meses' },
+        { v:12, lbl:'12 meses' }
+      ];
+      var ativo = +(window._icFbVisRetroMeses || 0);
+      var ctrlRetro = '<div style="margin:14px 0;padding:12px 14px;background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.25);border-radius:8px;">'
+        + '<div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;">♻ Recuperação · até que mês retroagir?</div>'
+        + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+        + retroOpts.map(function(o){
+            var cls = o.v === ativo ? 'fb-btn primary' : 'fb-btn ghost';
+            return '<button class="'+cls+'" style="padding:5px 12px;font-size:11px;" onclick="_fbVisSetRetro('+o.v+')">'+o.lbl+'</button>';
+          }).join('')
+        + '</div>'
+        + (m.cutoff ? '<div style="font-size:10px;color:var(--muted);margin-top:6px;">Filtrando turmas com periodStart ≥ <b style="color:var(--text);">'+m.cutoff+'</b></div>' : '')
+        + '</div>';
+      /* Tabelas auxiliares */
       var perdidosL = itens.filter(function(it){
         var s = String(it.status||'').trim().toLowerCase();
         return s === 'desistiu' || s === '' || s === '-';
@@ -1456,6 +1508,7 @@
       var pipelineVivo = itens.filter(function(it){
         return it.status === 'negociacao' || it.status === 'entrada';
       });
+      var recList = m.recuperacaoList || [];
       function tblVis(arr, vazio, colVal){
         if(!arr.length) return '<div class="fb-det-vazio">'+vazio+'</div>';
         return '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th>Status</th><th class="val">'+colVal+'</th></tr></thead><tbody>'
@@ -1467,12 +1520,38 @@
             }).join('')
           + '</tbody></table>';
       }
+      function tblRec(arr, vazio){
+        if(!arr.length) return '<div class="fb-det-vazio">'+vazio+'</div>';
+        return '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Turma (início)</th><th>Status atual</th><th class="val">Valor</th></tr></thead><tbody>'
+          + arr.map(function(r){
+              return '<tr><td class="nome">'+r.cliente+'</td><td>'+(r.treinamento||'—')+'</td>'
+                + '<td><span class="fb-det-src-tag turma" title="'+r.srcNome+'">TURMA</span> <span style="font-size:11px;color:var(--muted);margin-left:4px;">'+r.srcNome+' · '+r.turmaInicio+'</span></td>'
+                + '<td>'+_stTag(r.status||'aberto')+'</td>'
+                + '<td class="val">'+_fmtR(r.valor)+'</td></tr>';
+            }).join('')
+          + '</tbody></table>';
+      }
+      var vivos = recList.filter(function(r){return r.vivo;});
+      var mortos = recList.filter(function(r){return !r.vivo;});
+      /* Ordena seções: vazias por último */
+      var secoes = [
+        { titulo:'♻ Recuperados / vivos · de turmas anteriores', arr:vivos, render:function(){return tblRec(vivos, 'Nenhum cliente vivo vindo de turmas anteriores no escopo.');} },
+        { titulo:'⚰ Parados / mortos · de turmas anteriores',     arr:mortos, render:function(){return tblRec(mortos, 'Nenhum cliente parado/morto.');} },
+        { titulo:'🔭 Pipeline cultivado · negociação + entrada', arr:pipelineVivo, render:function(){return tblVis(pipelineVivo, 'Sem pipeline ativo — falta cultivar.', 'Valor');}, suf:' · '+_fmtR(m.rNeg+m.rEnt) },
+        { titulo:'⚠ Oportunidades perdidas · desistiu / sem status', arr:perdidosL, render:function(){return tblVis(perdidosL, '✅ Nada perdido neste mês.', 'Valor');} }
+      ];
+      secoes.sort(function(a,b){
+        var az = a.arr.length === 0 ? 1 : 0;
+        var bz = b.arr.length === 0 ? 1 : 0;
+        return az - bz;
+      });
+      var secoesHtml = secoes.map(function(s){
+        return '<div class="fb-det-secao-h">'+s.titulo+' ('+s.arr.length+(s.suf||'')+')</div>' + s.render();
+      }).join('');
       return formulaHtml
         + compCards
-        + '<div class="fb-det-secao-h">🔭 Pipeline cultivado · negociação + entrada ('+pipelineVivo.length+' · '+_fmtR(m.rNeg+m.rEnt)+')</div>'
-        + tblVis(pipelineVivo, 'Sem pipeline ativo — falta cultivar.', 'Valor')
-        + '<div class="fb-det-secao-h">⚠ Oportunidades perdidas · desistiu / sem status ('+perdidosL.length+')</div>'
-        + tblVis(perdidosL, '✅ Nada perdido neste mês.', 'Valor');
+        + ctrlRetro
+        + secoesHtml;
     }
 
     return '<div class="fb-det-vazio">Sem detalhes disponíveis para esta competência.</div>';
