@@ -21,14 +21,15 @@
   /* 8 competências = 5 clássicas + 3 hard-skill auto-mensuráveis.
      Flag auto=true → sistema calcula sugestão a partir dos dados do mês. */
   var COMPS_DEF = [
-    { key:'prosp', label:'Prospecção',     ico:'🎯', auto:true,  desc:'Clientes novos no mês vs média do time.' },
-    { key:'qual',  label:'Qualificação',   ico:'🔍', auto:true,  desc:'% de clientes que avançaram (não-aberto).' },
-    { key:'apres', label:'Apresentação',   ico:'🎤', auto:false, desc:'Qualidade da apresentação (manual).' },
-    { key:'neg',   label:'Negociação',     ico:'🤝', auto:true,  desc:'Conversão final + ticket relativo.' },
-    { key:'fup',   label:'Follow-up',      ico:'📨', auto:true,  desc:'Reflete a saúde da carteira em negociação.' },
-    { key:'const', label:'Constância',     ico:'📅', auto:true,  desc:'% meses na meta nos últimos 6 (estimado).' },
-    { key:'mix',   label:'Mix de produto', ico:'🎒', auto:true,  desc:'Diversidade de treinamentos vendidos no mês.' },
-    { key:'apr',   label:'Aproveitamento', ico:'⚡', auto:true,  desc:'% da carteira do consultor convertida em pago.' }
+    { key:'prosp', label:'Prospecção',                ico:'🎯', auto:true,  desc:'Clientes novos no mês vs média do time.' },
+    { key:'qual',  label:'Qualificação',              ico:'🔍', auto:true,  desc:'% de clientes que avançaram (não-aberto).' },
+    { key:'apres', label:'Apresentação',              ico:'🎤', auto:false, desc:'Qualidade da apresentação (manual).' },
+    { key:'neg',   label:'Negociação',                ico:'🤝', auto:true,  desc:'Conversão final + ticket relativo.' },
+    { key:'fup',   label:'Follow-up',                 ico:'📨', auto:true,  desc:'Reflete a saúde da carteira em negociação.' },
+    { key:'const', label:'Constância',                ico:'📅', auto:true,  desc:'% meses na meta nos últimos 6 (estimado).' },
+    { key:'mix',   label:'Mix de produto',            ico:'🎒', auto:true,  desc:'Diversidade de treinamentos vendidos no mês.' },
+    { key:'apr',   label:'Aproveitamento',            ico:'⚡', auto:true,  desc:'% da carteira do consultor convertida em pago.' },
+    { key:'vis',   label:'Visão (Oportunidades)',     ico:'🔭', auto:true,  desc:'Combinação: Preservação (não perde) + Potencial (cultiva pipeline > meta) + Recuperação (mantém vivo de turmas antigas).' }
   ];
   var MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
@@ -37,7 +38,7 @@
   var _consultorAtivo = '';    /* string UPPER */
   var _ciclo = 'quinzenal';
   var _historico = [];         /* todos os docs do consultor, mais recente primeiro */
-  var _medTime = [6,6,6,6,6,6,6,6]; /* fallback (8 comps) */
+  var _medTime = [6,6,6,6,6,6,6,6,6]; /* fallback (9 comps) */
   var _metricasCache = null;   /* { metricas: {comp: {auto, ...detalhes}}, contexto: {...} } */
 
   /* ── Helpers de cicloId ───────────────────────────────── */
@@ -423,6 +424,70 @@
     /* Aproveitamento */
     var aprScore = pctScore(apvPct);
 
+    /* ── Visão (Gestão de Oportunidades) — combinada A+B+C ─────────────
+       Preservação (B) → 40%: 1 - (desistiu+semStatus)/total
+       Potencial    (C) → 40%: min(1, (R$_negoc + R$_entrada) / meta_basica)
+       Recuperação  (A) → 20%: clientes vivos vindos de turmas anteriores
+                                ÷ total clientes de turmas anteriores
+       Score final = média ponderada × 10 */
+    /* B · Preservação */
+    var perdidos = desistiuMeus + semStatusMeus;
+    var preserv = totalMeus > 0 ? (1 - perdidos/totalMeus) : null;
+    /* C · Potencial — meta básica do consultor no mês */
+    var metaBas = 0;
+    if(dados.goalsHist && dados.goalsHist.length){
+      var mesAtual = dados.goalsHist.filter(function(g){return g.mes===dados.mesAlvo;})[0];
+      if(mesAtual && mesAtual.goals && mesAtual.goals[nome]){
+        var gn = mesAtual.goals[nome];
+        metaBas = +(gn.metaBasica||gn.metaValor||0);
+      }
+    }
+    var rNeg = meus.filter(function(it){return it.status==='negociacao';}).reduce(function(s,it){return s+(+it.valor||0);},0);
+    var rEnt = meus.filter(function(it){return it.status==='entrada';}).reduce(function(s,it){return s+(+it.valor||0);},0);
+    var rPag = meus.filter(function(it){return it.status==='pago';}).reduce(function(s,it){return s+(+it.valor||0);},0);
+    /* Cobertura = (pago + negociação + entrada) ÷ meta básica */
+    var cobertura = metaBas > 0 ? (rPag + rNeg + rEnt) / metaBas : null;
+    var potencial = cobertura != null ? Math.min(1.5, cobertura) / 1.5 : null;
+    /* A · Recuperação — proxy: clientes "vivos" (negoc/entrada/pago) vindos
+       de turmas cujo periodStart é ANTERIOR ao mês alvo. */
+    var clienAntigos = 0, clienAntigosVivos = 0;
+    if(dados.turmas){
+      Object.values(dados.turmas).forEach(function(t){
+        if(!t) return;
+        var ps = (t.periodStart||'').slice(0,7);
+        if(!ps || ps >= dados.mesAlvo) return; /* só turmas anteriores */
+        if(!_icFbMesNaTurma(dados.mesAlvo, t)) return; /* mas ainda ativas no mês */
+        var cls = t.clientes;
+        if(cls && !Array.isArray(cls) && typeof cls === 'object') cls = Object.values(cls).filter(Boolean);
+        cls = cls || [];
+        cls.forEach(function(c){
+          if(!c || !c.cliente) return;
+          var consultC = String(c.consultor||'').toUpperCase().trim();
+          if(consultC !== nome) return;
+          /* status efetivo: se tem subs, pega o mais avançado */
+          var status = c.status || 'aberto';
+          if(Array.isArray(c.treinamentos) && c.treinamentos.length){
+            var ord = {aberto:0, negociacao:1, entrada:2, pago:3, desistiu:-1};
+            c.treinamentos.forEach(function(s){
+              var sst = (s && s.status) || c.status || 'aberto';
+              if((ord[sst]||0) > (ord[status]||0)) status = sst;
+            });
+          }
+          clienAntigos++;
+          if(status === 'negociacao' || status === 'entrada' || status === 'pago') clienAntigosVivos++;
+        });
+      });
+    }
+    var recup = clienAntigos > 0 ? clienAntigosVivos/clienAntigos : null;
+
+    /* Score combinado: média ponderada dos 3 componentes (nulls ignorados) */
+    var visScore = null;
+    var soma = 0, pesoTot = 0;
+    if(preserv != null){ soma += preserv * 0.4; pesoTot += 0.4; }
+    if(potencial != null){ soma += potencial * 0.4; pesoTot += 0.4; }
+    if(recup != null){ soma += recup * 0.2; pesoTot += 0.2; }
+    if(pesoTot > 0) visScore = clamp(Math.round((soma/pesoTot) * 10));
+
     /* Para drill-down: lista de negociações paradas com info de data */
     var paradasItens = meus.filter(function(it){
       if(it.status !== 'negociacao' || !it.data) return false;
@@ -449,7 +514,12 @@
         fup:   { auto: fupScore,   parados: negParados, totalNeg: negocMeus },
         const: { auto: constScore, batidos: mesesNaMeta, totalComMeta: mesesComMeta },
         mix:   { auto: mixScore,   distintos: nTrDistintos, pagos: pagosMeus, treinList: Object.keys(trDistintos) },
-        apr:   { auto: aprScore,   pagos: pagosMeus, total: totalMeus, pct: apvPct }
+        apr:   { auto: aprScore,   pagos: pagosMeus, total: totalMeus, pct: apvPct },
+        vis:   { auto: visScore,
+                 preserv: preserv, perdidos: perdidos,
+                 potencial: potencial, cobertura: cobertura, metaBas: metaBas,
+                 rPag: rPag, rNeg: rNeg, rEnt: rEnt,
+                 recup: recup, clienAntigos: clienAntigos, clienAntigosVivos: clienAntigosVivos }
       },
       contexto: {
         consultor: nome,
@@ -589,6 +659,24 @@
         + '• Aproveitamento: '+pp+'\n'
         + '• Score = round(% × 10)\n\n'
         + 'Sinal: '+(d.auto>=8?'extrai bem do que tem':d.auto>=6?'aproveita médio':'lead desperdiçado — CAC sobe');
+    }
+    if(key==='vis'){
+      var pres = d.preserv!=null ? (d.preserv*100).toFixed(0)+'%' : '—';
+      var pot  = d.cobertura!=null ? (d.cobertura*100).toFixed(0)+'%' : '—';
+      var rec  = d.recup!=null ? (d.recup*100).toFixed(0)+'%' : '—';
+      return cab
+        + 'Combinação ponderada de 3 sinais:\n\n'
+        + '🛡 Preservação (40%): '+pres+'\n'
+        + '   1 − (desistiu + sem-status) ÷ total\n'
+        + '   = quanto NÃO perde\n\n'
+        + '🔭 Potencial / Cobertura (40%): '+pot+'\n'
+        + '   (R$ pago + negoc + entrada) ÷ meta básica\n'
+        + '   = quanto pipeline cultivado vs meta\n\n'
+        + '♻ Recuperação (20%): '+rec+'\n'
+        + '   clientes vivos vindos de turmas anteriores\n'
+        + '   ÷ total clientes dessas turmas\n'
+        + '   = capacidade de manter oportunidade fria\n\n'
+        + 'Sinal: '+(d.auto>=8?'visão estratégica — cultiva, preserva e recupera':d.auto>=6?'visão média':'oportunidades evaporando');
     }
     return '';
   }
@@ -1320,6 +1408,57 @@
         + '<div class="fb-det-secao-h">💵 Com entrada ('+entradaL.length+')</div>' + tbl(entradaL, 'Nenhum cliente com entrada parcial.')
         + '<div class="fb-det-secao-h">🤝 Em negociação ('+negocL.length+')</div>' + tbl(negocL, 'Nenhum cliente em negociação.')
         + '<div class="fb-det-secao-h">📋 Em aberto ('+abertoL.length+')</div>' + tbl(abertoL, '🎉 Carteira inteira engajada.');
+    }
+
+    /* ── Visão (Oportunidades) ── */
+    if(key === 'vis'){
+      function pct(v){return v!=null?Math.round(v*100)+'%':'—';}
+      function corDe(v){
+        if(v == null) return '';
+        if(v >= 0.8) return 'green';
+        if(v >= 0.6) return 'blue';
+        if(v >= 0.4) return 'amber';
+        return 'red';
+      }
+      var componentes = [
+        { lbl:'🛡 Preservação',           peso:40, val:m.preserv,   det:'1 − (desistiu '+(m.perdidos? '· '+m.perdidos : '0')+' + sem-status) ÷ '+ (_metricasCache.metricas.qual.total||0) +' total' },
+        { lbl:'🔭 Potencial / Cobertura', peso:40, val:m.cobertura!=null?Math.min(1.5,m.cobertura)/1.5:null, det:'Pipeline R$ ('+_fmtR(m.rPag+m.rNeg+m.rEnt)+') ÷ meta básica '+_fmtR(m.metaBas)+' = '+pct(m.cobertura) },
+        { lbl:'♻ Recuperação',            peso:20, val:m.recup,     det:m.clienAntigosVivos+' vivos de '+m.clienAntigos+' clientes de turmas anteriores' }
+      ];
+      var compCards = '<div class="fb-det-stats">'
+        + componentes.map(function(c){
+            return '<div class="fb-det-stat" style="grid-column:span 1;">'
+              + '<div class="fb-det-stat-lbl">'+c.lbl+' · '+c.peso+'%</div>'
+              + '<div class="fb-det-stat-val '+corDe(c.val)+'">'+pct(c.val)+'</div>'
+              + '<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4;">'+c.det+'</div>'
+              + '</div>';
+          }).join('')
+        + '</div>';
+      /* Tabelas auxiliares: perdidos vs vivos antigos */
+      var perdidosL = itens.filter(function(it){
+        var s = String(it.status||'').trim().toLowerCase();
+        return s === 'desistiu' || s === '' || s === '-';
+      });
+      var pipelineVivo = itens.filter(function(it){
+        return it.status === 'negociacao' || it.status === 'entrada';
+      });
+      function tblVis(arr, vazio, colVal){
+        if(!arr.length) return '<div class="fb-det-vazio">'+vazio+'</div>';
+        return '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th>Status</th><th class="val">'+colVal+'</th></tr></thead><tbody>'
+          + arr.map(function(it){
+              return '<tr><td class="nome">'+it.cliente+'</td><td>'+(it.treinamento||'—')+'</td>'
+                + '<td>'+_srcTag(it.src, it.srcNome)+' <span style="font-size:11px;color:var(--muted);margin-left:4px;">'+_srcDescr(it)+'</span></td>'
+                + '<td>'+_stTag(it.status||'aberto')+'</td>'
+                + '<td class="val">'+_fmtR(it.valor)+'</td></tr>';
+            }).join('')
+          + '</tbody></table>';
+      }
+      return formulaHtml
+        + compCards
+        + '<div class="fb-det-secao-h">🔭 Pipeline cultivado · negociação + entrada ('+pipelineVivo.length+' · '+_fmtR(m.rNeg+m.rEnt)+')</div>'
+        + tblVis(pipelineVivo, 'Sem pipeline ativo — falta cultivar.', 'Valor')
+        + '<div class="fb-det-secao-h">⚠ Oportunidades perdidas · desistiu / sem status ('+perdidosL.length+')</div>'
+        + tblVis(perdidosL, '✅ Nada perdido neste mês.', 'Valor');
     }
 
     return '<div class="fb-det-vazio">Sem detalhes disponíveis para esta competência.</div>';

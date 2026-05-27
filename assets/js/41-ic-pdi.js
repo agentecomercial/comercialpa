@@ -20,16 +20,17 @@
 ══════════════════════════════════════════════════════════════ */
 (function(){
 
-  /* Mesmas 8 competências do Feedback */
+  /* Mesmas 9 competências do Feedback */
   var COMPS_DEF = [
-    { key:'prosp', label:'Prospecção',     ico:'🎯', treins:['DP','MAESTRIA'] },
-    { key:'qual',  label:'Qualificação',   ico:'🔍', treins:['DP','CIS'] },
-    { key:'apres', label:'Apresentação',   ico:'🎤', treins:['CIS','MAESTRIA','TEAM'] },
-    { key:'neg',   label:'Negociação',     ico:'🤝', treins:['CIS','PDA','ML5'] },
-    { key:'fup',   label:'Follow-up',      ico:'📨', treins:['MAESTRIA','PDA','TEAM'] },
-    { key:'const', label:'Constância',     ico:'📅', treins:['MAESTRIA','PDA'] },
-    { key:'mix',   label:'Mix de produto', ico:'🎒', treins:['MAESTRIA'] },
-    { key:'apr',   label:'Aproveitamento', ico:'⚡', treins:['MAESTRIA','DP'] }
+    { key:'prosp', label:'Prospecção',            ico:'🎯', treins:['DP','MAESTRIA'] },
+    { key:'qual',  label:'Qualificação',          ico:'🔍', treins:['DP','CIS'] },
+    { key:'apres', label:'Apresentação',          ico:'🎤', treins:['CIS','MAESTRIA','TEAM'] },
+    { key:'neg',   label:'Negociação',            ico:'🤝', treins:['CIS','PDA','ML5'] },
+    { key:'fup',   label:'Follow-up',             ico:'📨', treins:['MAESTRIA','PDA','TEAM'] },
+    { key:'const', label:'Constância',            ico:'📅', treins:['MAESTRIA','PDA'] },
+    { key:'mix',   label:'Mix de produto',        ico:'🎒', treins:['MAESTRIA'] },
+    { key:'apr',   label:'Aproveitamento',        ico:'⚡', treins:['MAESTRIA','DP'] },
+    { key:'vis',   label:'Visão (Oportunidades)', ico:'🔭', treins:['MAESTRIA','PDA','CIS','DP'] }
   ];
   var TREINOS = ['IF','MASTER','CEOP','BHP','CIS','ML5','TAV','JE','GE','MAESTRIA','PDA','DP','FCIS','TEAM','FGPC','CIS_GLOBAL'];
   var NIVEIS_DESC = {
@@ -40,7 +41,8 @@
     fup:   ['Esquece clientes','1–2 perdas/mês','Cadência básica','Cadência estruturada','Ressuscita cliente frio'],
     const: ['Bate raramente','Oscila muito','Bate maioria dos meses','Quase sempre na meta','100% de constância'],
     mix:   ['1 produto só','2 produtos','3 produtos','4 produtos','Portfólio completo'],
-    apr:   ['Carteira inflada','Conversão fraca','Aproveita médio','Carteira enxuta e eficiente','80%+ de conversão']
+    apr:   ['Carteira inflada','Conversão fraca','Aproveita médio','Carteira enxuta e eficiente','80%+ de conversão'],
+    vis:   ['Perde oportunidade','Pipeline raso','Cultiva o suficiente','Cobertura > meta','Visão estratégica · cultiva, preserva e recupera']
   };
 
   /* Estado */
