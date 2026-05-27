@@ -1199,7 +1199,9 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 /* ════════════════════════════════════════════════
    NOVA PIPELINE COMERCIAL — CSS
 ════════════════════════════════════════════════ */
-#novaPipelineScreen{background:var(--bg);display:none;flex-direction:column;height:100vh;overflow:hidden;min-height:0;}
+#novaPipelineScreen{background:var(--bg);display:none;flex-direction:column;height:100vh;overflow:hidden;min-height:0;font-family:'DM Sans',sans-serif;}
+#novaPipelineScreen *{font-family:inherit;}
+#novaPipelineScreen .np-kpi-val,#novaPipelineScreen .np-cons-kpi-val,#novaPipelineScreen .np-perf-pct{letter-spacing:-.3px;}
 #novaPipelineScreen.active{display:flex;}
 .np-nav{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;gap:12px;}
 .np-nav-left{display:flex;align-items:center;gap:12px;}
