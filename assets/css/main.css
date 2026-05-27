@@ -1252,22 +1252,25 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
    Inteligência Comercial — Tabs internas (Dashboard / Desenvolvimento)
    Isolado em #mapeamentoScreen. Não afeta Pipeline nem Turmas.
 ═══════════════════════════════════════════════════════ */
-/* Tabs do IC · estilo Glassmorphism (variante 5 do preview) */
+/* Tabs do IC · estilo Glassmorphism (variante 5 do preview)
+   Largura total: distribui as abas igualmente entre si */
 .ic-tabs{
   display:flex;gap:4px;
   background:linear-gradient(135deg, rgba(200,240,90,.06), rgba(52,211,153,.02) 60%, transparent);
   padding:6px;border-radius:14px;
   border:1px solid rgba(255,255,255,.06);
-  width:fit-content;margin:0 0 22px;
+  width:100%;margin:0 0 22px;
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
   box-shadow:0 8px 32px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.05);
 }
 .ic-tab{
+  flex:1 1 0;min-width:0;
   background:none;border:none;color:#aaa;
-  font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
-  padding:9px 16px;border-radius:10px;cursor:pointer;font-family:inherit;
-  display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  padding:9px 12px;border-radius:10px;cursor:pointer;font-family:inherit;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   transition:all .16s;
 }
 .ic-tab:hover{color:#fff;background:rgba(255,255,255,.04);}
@@ -1278,6 +1281,11 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
     0 4px 14px rgba(200,240,90,.35),
     inset 0 1px 0 rgba(255,255,255,.3),
     inset 0 -1px 0 rgba(0,0,0,.1);
+}
+/* Em telas estreitas: scroll horizontal em vez de quebrar */
+@media(max-width:880px){
+  .ic-tabs{overflow-x:auto;scrollbar-width:thin;}
+  .ic-tab{flex:0 0 auto;padding:9px 14px;}
 }
 .ic-pane{display:none;}
 .ic-pane.show{display:block;}
