@@ -1438,6 +1438,21 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .pdi-diag-btn{background:rgba(200,240,90,.10);border:1px dashed rgba(200,240,90,.40);color:var(--accent);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;transition:all .12s;margin-top:4px;}
 .pdi-diag-btn:hover{background:rgba(200,240,90,.20);border-style:solid;}
 .pdi-diag-btn.added{background:var(--surface);border-color:var(--border);color:var(--muted);cursor:not-allowed;border-style:solid;}
+/* Atalhos rápidos do período (chips) */
+.pdi-atalhos{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 16px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.pdi-atalhos-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-right:4px;}
+.pdi-atalho{background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-size:11px;font-weight:600;padding:5px 11px;border-radius:14px;cursor:pointer;font-family:inherit;transition:all .12s;}
+.pdi-atalho:hover{border-color:var(--accent);color:var(--accent);}
+.pdi-atalho.active{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+/* Chip strip de competências (todas as 8, ⭐ nas sugeridas) */
+.pdi-chip-strip-wrap{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.pdi-chip-strip-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:8px;}
+.pdi-chip-strip{display:flex;flex-wrap:wrap;gap:6px;}
+.pdi-chip-comp{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:11px;font-weight:600;padding:5px 11px;border-radius:14px;cursor:pointer;font-family:inherit;transition:all .12s;display:inline-flex;align-items:center;gap:5px;}
+.pdi-chip-comp:hover{border-color:var(--accent);color:var(--accent);}
+.pdi-chip-comp.sugerida::before{content:'⭐';font-size:10px;}
+.pdi-chip-comp.added{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+.pdi-chip-comp.added::after{content:'✓';font-size:11px;font-weight:800;margin-left:3px;}
 
 .pdi-alvo{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:18px;margin-bottom:12px;position:relative;}
 .pdi-alvo.in-andamento{border-left:3px solid #ffe000;}

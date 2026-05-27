@@ -135,22 +135,26 @@
       if(_perEnd < _perStart){ _perEnd = _perStart; this.value = _perStart; }
       _pdiCarregar();
     });
-    document.getElementById('pdiPerAtalho').addEventListener('change', function(){
-      var v = this.value; if(!v) return;
-      var hoje = _hojeYM();
-      if(v === 'prox3'){ _perStart = hoje; _perEnd = _addMes(hoje, 2); }
-      else if(v === 'atual3'){
-        var d = new Date();
-        var qStart = new Date(d.getFullYear(), Math.floor(d.getMonth()/3)*3, 1);
-        _perStart = _ym(qStart);
-        _perEnd = _addMes(_perStart, 2);
-      }
-      else if(v === 'prox6'){ _perStart = hoje; _perEnd = _addMes(hoje, 5); }
-      else if(v === 'ant3'){ _perStart = _addMes(hoje, -3); _perEnd = _addMes(hoje, -1); }
-      document.getElementById('pdiPerStart').value = _perStart;
-      document.getElementById('pdiPerEnd').value = _perEnd;
-      this.value = '';
-      _pdiCarregar();
+    /* Chips de atalho do período (linha separada, fora dos controles) */
+    document.querySelectorAll('.pdi-atalho').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var v = btn.getAttribute('data-atalho');
+        var hoje = _hojeYM();
+        if(v === 'prox3'){ _perStart = hoje; _perEnd = _addMes(hoje, 2); }
+        else if(v === 'atual3'){
+          var d = new Date();
+          var qStart = new Date(d.getFullYear(), Math.floor(d.getMonth()/3)*3, 1);
+          _perStart = _ym(qStart);
+          _perEnd = _addMes(_perStart, 2);
+        }
+        else if(v === 'prox6'){ _perStart = hoje; _perEnd = _addMes(hoje, 5); }
+        else if(v === 'ant3'){ _perStart = _addMes(hoje, -3); _perEnd = _addMes(hoje, -1); }
+        document.getElementById('pdiPerStart').value = _perStart;
+        document.getElementById('pdiPerEnd').value = _perEnd;
+        document.querySelectorAll('.pdi-atalho').forEach(function(b){b.classList.remove('active');});
+        btn.classList.add('active');
+        _pdiCarregar();
+      });
     });
   }
 
@@ -258,24 +262,32 @@
   }
 
   /* ── Diagnóstico (sugestões baseadas no feedback) ── */
-  function _pdiRenderDiag(){
-    var el = document.getElementById('pdiDiagList');
-    if(!el) return;
-    if(!_consultorAtivo){
-      el.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:14px;grid-column:1/-1;">Selecione um consultor para ver as sugestões.</div>';
-      return;
-    }
-    if(!_medFeedback){
-      el.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:14px;grid-column:1/-1;">Sem feedbacks anteriores para este consultor — adicione competências manualmente abaixo.</div>';
-      return;
-    }
+  /* Retorna as 4 competências com menor média (= sugeridas pela competência) */
+  function _pdiSugeridas(){
+    if(!_medFeedback) return [];
     var ord = COMPS_DEF.slice().sort(function(a,b){
       var ma = _medFeedback[a.key], mb = _medFeedback[b.key];
       if(ma == null) return 1; if(mb == null) return -1;
       return ma - mb;
     });
-    var top4 = ord.slice(0,4);
-    el.innerHTML = top4.map(function(c){
+    return ord.slice(0,4).map(function(c){return c.key;});
+  }
+  function _pdiRenderDiag(){
+    var el = document.getElementById('pdiDiagList');
+    if(!el) return;
+    if(!_consultorAtivo){
+      el.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:14px;grid-column:1/-1;">Selecione um consultor para ver as sugestões.</div>';
+      _pdiRenderChipStrip();
+      return;
+    }
+    if(!_medFeedback){
+      el.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:14px;grid-column:1/-1;">Sem feedbacks anteriores para este consultor — escolha competências manualmente nos chips abaixo.</div>';
+      _pdiRenderChipStrip();
+      return;
+    }
+    var sugeridas = _pdiSugeridas();
+    el.innerHTML = sugeridas.map(function(key){
+      var c = COMPS_DEF.find(function(x){return x.key===key;});
       var m = _medFeedback[c.key];
       var jaAdded = (_doc.alvos||[]).some(function(a){return a.key === c.key;});
       var sc = m == null ? '—' : m.toFixed(1);
@@ -283,7 +295,7 @@
       var info = m == null ? 'Sem dados nos últimos ciclos' : (m < 6 ? '⚠ candidata prioritária' : 'oportunidade de evolução');
       return '<div class="pdi-diag-card">'
         + '<div class="pdi-diag-top">'
-        +   '<div class="pdi-diag-lbl"><span>'+c.ico+'</span>'+c.label+'</div>'
+        +   '<div class="pdi-diag-lbl"><span>'+c.ico+'</span>'+c.label+' <span style="color:#f59e0b;font-size:11px;">⭐</span></div>'
         +   '<div class="pdi-diag-score '+cls+'">'+sc+'</div>'
         + '</div>'
         + '<div class="pdi-diag-info">Média dos últimos 3 ciclos · '+info+'</div>'
@@ -292,7 +304,34 @@
         + '</button>'
         + '</div>';
     }).join('');
+    _pdiRenderChipStrip();
   }
+
+  /* Chip strip: todas as 8 competências; ⭐ nas 4 sugeridas; ✓ nas adicionadas.
+     Clique alterna add/remove. Permite escolha 100% manual ou retirar sugestão. */
+  function _pdiRenderChipStrip(){
+    var wrap = document.getElementById('pdiChipStripWrap');
+    var box  = document.getElementById('pdiChipStrip');
+    if(!wrap || !box) return;
+    if(!_consultorAtivo){ wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    var sugeridas = _pdiSugeridas();
+    var alvos = (_doc && _doc.alvos) || [];
+    box.innerHTML = COMPS_DEF.map(function(c){
+      var added = alvos.some(function(a){return a.key === c.key;});
+      var sug = sugeridas.indexOf(c.key) >= 0;
+      var cls = 'pdi-chip-comp' + (added?' added':'') + (sug?' sugerida':'');
+      return '<button class="'+cls+'" onclick="_pdiToggleAlvo(\''+c.key+'\')">'+c.ico+' '+c.label+'</button>';
+    }).join('');
+  }
+  window._pdiToggleAlvo = function(key){
+    var idx = (_doc.alvos||[]).findIndex(function(a){return a.key === key;});
+    if(idx >= 0){
+      window._pdiRmAlvo(idx);
+    } else {
+      window._pdiAddAlvo(key);
+    }
+  };
 
   /* ── Adicionar / remover competência alvo ── */
   window._pdiAddAlvo = function(key){
@@ -407,6 +446,8 @@
         + '</div>';
     }).join('');
     document.getElementById('pdiAlvoCount').textContent = alvos.length;
+    /* Mantém o chip strip sincronizado (✓ nas adicionadas) */
+    _pdiRenderChipStrip();
   }
 
   /* Setters */

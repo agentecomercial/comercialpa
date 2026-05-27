@@ -458,6 +458,8 @@
         });
       };
     }
+    /* Sincroniza as tags auto/manual após calcular as sugestões */
+    _icFbSyncTagsAutoManual();
   }
   function _icFbDetalheCurto(key, d){
     if(key==='prosp') return d.meu+' clientes novos · média do time '+d.media;
@@ -549,6 +551,9 @@
     if(inp) inp.value = valor;
     var el = document.getElementById('fbCv'+idx);
     if(el){ el.textContent = valor; el.className = 'fb-comp-val '+_lvClass(valor); }
+    /* Aplicou sugestão → tag volta para "auto" */
+    var tag = document.getElementById('fbTag'+idx);
+    if(tag){ tag.className = 'fb-comp-tag'; tag.textContent = 'auto'; }
     _icFbRenderRadar();
     _icFbRenderComparativo();
   };
@@ -674,11 +679,13 @@
   function _icFbRenderComps(){
     var html = COMPS_DEF.map(function(c,i){
       var v = (_doc && _doc.comps && _doc.comps[c.key]) || 6;
+      /* Tag inicial: para comps auto, será "auto" se valor == sugestão (ou ainda
+         não houver sugestão); fica "manual" quando user edita o slider OU quando
+         valor diverge da sugestão calculada. Para comps não-auto: sempre manual. */
       return '<div class="fb-comp">'
         + '<div class="fb-comp-label">'
         +   '<span class="ico">'+c.ico+'</span>'+c.label
-        +   (c.auto ? '<span class="fb-comp-tag" title="'+(c.desc||'')+'">auto</span>'
-                    : '<span class="fb-comp-tag manual" title="'+(c.desc||'')+'">manual</span>')
+        +   '<span class="fb-comp-tag '+(c.auto?'':'manual')+'" id="fbTag'+i+'" title="'+(c.desc||'')+'">'+(c.auto?'auto':'manual')+'</span>'
         + '</div>'
         + '<div class="fb-comp-slider">'
         +   '<input type="range" min="1" max="10" step="1" value="'+v+'" data-idx="'+i+'" data-comp="'+c.key+'">'
@@ -699,12 +706,34 @@
         if(_doc && _doc.comps) _doc.comps[k] = v;
         var el = document.getElementById('fbCv'+i);
         if(el){ el.textContent = v; el.className = 'fb-comp-val '+_lvClass(v); }
+        /* Marca como "manual" — o gestor mexeu */
+        var tag = document.getElementById('fbTag'+i);
+        if(tag){ tag.className = 'fb-comp-tag manual'; tag.textContent = 'manual'; }
         _icFbRenderRadar();
         _icFbRenderComparativo();
       });
     });
     /* Se temos métricas em cache, re-renderiza os slots */
     if(_metricasCache) _icFbRenderSugestoes();
+  }
+
+  /* Sincroniza a tag "auto/manual" com base no valor atual vs sugestão.
+     Chamado depois de aplicar sugestão (clique em 💡 ou "Aplicar todas") e
+     também após carregar documento existente. */
+  function _icFbSyncTagsAutoManual(){
+    if(!_doc || !_doc.comps) return;
+    var m = _metricasCache && _metricasCache.metricas;
+    COMPS_DEF.forEach(function(c, i){
+      var tag = document.getElementById('fbTag'+i);
+      if(!tag) return;
+      if(!c.auto){ tag.className = 'fb-comp-tag manual'; tag.textContent = 'manual'; return; }
+      var atual = _doc.comps[c.key];
+      var sug   = m && m[c.key] && m[c.key].auto;
+      /* Se valor atual = sugestão automática, tag = auto. Caso contrário, manual. */
+      var isAuto = (sug != null && atual === sug);
+      tag.className = 'fb-comp-tag '+(isAuto?'':'manual');
+      tag.textContent = isAuto ? 'auto' : 'manual';
+    });
   }
 
   /* ── Ações (plano para o próximo ciclo) ─────────────────── */
