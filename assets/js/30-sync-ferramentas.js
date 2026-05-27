@@ -392,7 +392,7 @@ function _mapAtualizarBotoesMes() {
 }
 
 function _mapLimparUI() {
-  ['mapKpis','mapConsultorRows','mapTreinamentoRows'].forEach(function(id) {
+  ['mapKpis','mapConsultorRows','mapTreinamentoRows','mapTop3Podio'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.innerHTML = '';
   });
   var t = document.getElementById('mapCorrelacaoTable'); if (t) t.innerHTML = '';
@@ -400,31 +400,87 @@ function _mapLimparUI() {
 
 function _mapRenderKpis(registros) {
   var totalFat   = registros.reduce(function(a, r) { return a + r.valor; }, 0);
-  var consultores = [...new Set(registros.map(function(r) { return r.consultor; }))];
+  var consultoresArr = [...new Set(registros.map(function(r) { return r.consultor; }))];
   var treinamentos = [...new Set(registros.map(function(r) { return r.treinamento; }))];
-  var melhor = '';
-  var melhorVal = 0;
-  consultores.forEach(function(c) {
-    var v = registros.filter(function(r) { return r.consultor === c; }).reduce(function(a, r) { return a + r.valor; }, 0);
-    if (v > melhorVal) { melhorVal = v; melhor = c; }
-  });
+  var avulsos = registros.filter(function(r){ return r._src === 'avulso'; });
+  var turmaRegs = registros.filter(function(r){ return r._src === 'turma'; });
+  var fatAvulso = avulsos.reduce(function(a,r){return a+r.valor;},0);
+  var fatTurma  = turmaRegs.reduce(function(a,r){return a+r.valor;},0);
+  var pctAvulso = totalFat > 0 ? Math.round((fatAvulso/totalFat)*100) : 0;
+  var ticketMedio = registros.length > 0 ? totalFat / registros.length : 0;
 
   var kpis = [
-    { label: 'Faturamento Total', val: formatVal(totalFat), cor: 'var(--accent)' },
-    { label: 'Clientes Pagos',    val: registros.length,    cor: 'var(--blue)'   },
-    { label: 'Consultores',       val: consultores.length,  cor: 'var(--green)'  },
-    { label: 'Treinamentos',      val: treinamentos.length, cor: 'var(--amber)'  },
-    { label: 'Maior Performance', val: melhor || '—',       cor: '#c8f05a'       },
+    { label: 'Faturamento Total', val: formatVal(totalFat),     cor: 'accent', sub: registros.length + ' venda' + (registros.length===1?'':'s') },
+    { label: 'Vendas pagas',      val: registros.length,         cor: 'blue',   sub: 'turma '+turmaRegs.length+' · avulso '+avulsos.length },
+    { label: 'Ticket médio',      val: formatVal(ticketMedio),   cor: 'green',  sub: 'por venda paga' },
+    { label: 'Consultores ativos',val: consultoresArr.length,    cor: 'amber',  sub: treinamentos.length + ' produto' + (treinamentos.length===1?'':'s') },
+    { label: '% Vendas avulsas',  val: pctAvulso + '%',          cor: pctAvulso >= 30 ? 'green' : (pctAvulso >= 15 ? 'amber' : 'red'), sub: formatVal(fatAvulso) }
   ];
 
   var el = document.getElementById('mapKpis');
   if (!el) return;
   el.innerHTML = kpis.map(function(k) {
-    return '<div class="tpanel" style="padding:16px 18px;">'
-      + '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">' + k.label + '</div>'
-      + '<div style="font-size:20px;font-weight:800;color:' + k.cor + ';line-height:1.1;">' + k.val + '</div>'
+    return '<div class="ic-kpi ic-kpi--'+k.cor+'">'
+      +   '<div class="ic-kpi-lbl">' + k.label + '</div>'
+      +   '<div class="ic-kpi-val">' + k.val + '</div>'
+      +   (k.sub ? '<div class="ic-kpi-sub">' + k.sub + '</div>' : '')
       + '</div>';
   }).join('');
+
+  /* Top 3 Pódio (separado em sua própria função) */
+  _mapRenderTop3(registros);
+}
+
+/* ── Top 3 Consultores em formato pódio (2º · 1º · 3º) ─── */
+function _mapRenderTop3(registros){
+  var el = document.getElementById('mapTop3Podio');
+  if(!el) return;
+  /* Agrega por consultor */
+  var byCons = {};
+  registros.forEach(function(r){
+    if(!r || !r.consultor) return;
+    if(!byCons[r.consultor]) byCons[r.consultor] = {nome:r.consultor, fat:0, qtd:0};
+    byCons[r.consultor].fat += r.valor;
+    byCons[r.consultor].qtd++;
+  });
+  var lista = Object.values(byCons).sort(function(a,b){return b.fat-a.fat;}).slice(0,3);
+  if(lista.length < 1){ el.style.display = 'none'; return; }
+  el.style.display = '';
+
+  /* Iniciais do consultor (primeiras letras dos 2 primeiros nomes) */
+  function iniciais(nome){
+    var partes = String(nome||'').trim().split(/\s+/);
+    if(!partes.length) return '?';
+    if(partes.length === 1) return partes[0].slice(0,2).toUpperCase();
+    return (partes[0][0]+partes[partes.length-1][0]).toUpperCase();
+  }
+
+  var totFat = lista.reduce(function(s,c){return s+c.fat;},0);
+  /* Layout pódio: ordem visual = 2º · 1º · 3º */
+  var ordemVisual = [];
+  if(lista[1]) ordemVisual.push({pos:2, c:lista[1]});
+  if(lista[0]) ordemVisual.push({pos:1, c:lista[0]});
+  if(lista[2]) ordemVisual.push({pos:3, c:lista[2]});
+
+  var medals = {1:'🥇',2:'🥈',3:'🥉'};
+
+  el.innerHTML = '<div class="ic-podio-h">'
+    + '<div class="ic-podio-titulo">🏆 Pódio · Top 3 Consultores</div>'
+    + '<div class="ic-podio-sub">Soma do trio: '+formatVal(totFat)+'</div>'
+    + '</div>'
+    + '<div class="ic-podio-grid">'
+    + ordemVisual.map(function(o){
+        var c = o.c;
+        var pct = totFat > 0 ? Math.round((c.fat/totFat)*100) : 0;
+        return '<div class="ic-podio-card pos-'+o.pos+'" onclick="_mapToggleConsultor(\''+_mapEscAttr(c.nome)+'\')" title="Filtrar por '+c.nome+'">'
+          + '<div class="ic-podio-medal">'+medals[o.pos]+'</div>'
+          + '<div class="ic-podio-aval">'+iniciais(c.nome)+'</div>'
+          + '<div class="ic-podio-nome">'+c.nome+'</div>'
+          + '<div class="ic-podio-fat">'+formatVal(c.fat)+'</div>'
+          + '<div class="ic-podio-meta">'+c.qtd+' venda'+(c.qtd===1?'':'s')+' · '+pct+'% do trio</div>'
+          + '</div>';
+      }).join('')
+    + '</div>';
 }
 
 function _mapRenderConsultores(registros) {
