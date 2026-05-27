@@ -719,27 +719,21 @@ function _mapRenderTreinamentos(registros) {
 
   var totalGeral = lista.reduce(function(a, t) { return a + t.total; }, 0);
   var maxVal = lista[0].total || 1;
+  var coresBarra = ['#22d3ee','#fb923c','#facc15','#34d399','#a78bfa','#f472b6','#60a5fa','#c8f05a'];
   el.innerHTML = lista.map(function(t, i) {
-    var pct = totalGeral > 0 ? ((t.total / totalGeral) * 100).toFixed(1) : '0.0';
+    var pct = totalGeral > 0 ? Math.round((t.total / totalGeral) * 100) : 0;
     var bw  = Math.round((t.total / maxVal) * 100);
-    var cor = i === 0 ? '#c8f05a' : 'var(--blue)';
+    var cor = coresBarra[i % coresBarra.length];
     var ativo = f && f.trein === t.nome;
-    var classe = 'map-row-click' + (ativo ? ' ativo' : '');
-    return '<div class="'+classe+'" onclick="_mapToggleTreinamento(\''+_mapEscAttr(t.nome)+'\')" title="Filtrar por '+t.nome+'" style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border2);">'
-      + '<div style="font-size:13px;font-weight:700;color:var(--muted);width:24px;text-align:center;">' + (i + 1) + '</div>'
-      + '<div style="flex:1;min-width:0;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">'
-      + '<span style="font-size:13px;font-weight:700;color:var(--text);">' + t.nome + '</span>'
-      + '<span style="font-size:12px;font-weight:700;color:' + cor + ';">' + formatVal(t.total) + '</span>'
-      + '</div>'
-      + '<div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;">'
-      + '<div style="height:100%;width:' + bw + '%;background:' + cor + ';border-radius:2px;"></div>'
-      + '</div>'
-      + '</div>'
-      + '<div style="text-align:right;flex-shrink:0;">'
-      + '<div style="font-size:12px;font-weight:600;color:var(--text);">' + t.qtd + ' venda' + (t.qtd !== 1 ? 's' : '') + '</div>'
-      + '<div style="font-size:10px;color:var(--muted);">' + pct + '%</div>'
-      + '</div></div>';
+    var classe = 'np-cons-row' + (ativo ? ' ativo' : '');
+    var pctClass = pct >= 20 ? 'txt-green' : pct >= 10 ? 'txt-amber' : 'txt-red';
+    return '<div class="'+classe+'" onclick="_mapToggleTreinamento(\''+_mapEscAttr(t.nome)+'\')" title="Filtrar por '+t.nome+'">'
+      + '<div class="np-cons-nome">' + (i+1) + '. ' + t.nome + '</div>'
+      + '<div class="np-cons-bar"><div class="np-cons-bar-fill" style="width:'+bw+'%;background:'+cor+';"></div></div>'
+      + '<div class="np-cons-val">' + formatVal(t.total) + '</div>'
+      + '<div class="np-cons-pct ' + pctClass + '">' + pct + '%</div>'
+      + '<div class="np-cons-meta">' + t.qtd + ' venda' + (t.qtd !== 1 ? 's' : '') + '</div>'
+      + '</div>';
   }).join('');
 }
 
