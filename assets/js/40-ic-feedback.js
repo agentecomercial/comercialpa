@@ -18,21 +18,27 @@
 (function(){
 
   /* ── Estado ─────────────────────────────────────────── */
+  /* 8 competências = 5 clássicas + 3 hard-skill auto-mensuráveis.
+     Flag auto=true → sistema calcula sugestão a partir dos dados do mês. */
   var COMPS_DEF = [
-    { key:'prosp', label:'Prospecção',   ico:'🎯' },
-    { key:'qual',  label:'Qualificação', ico:'🔍' },
-    { key:'apres', label:'Apresentação', ico:'🎤' },
-    { key:'neg',   label:'Negociação',   ico:'🤝' },
-    { key:'fup',   label:'Follow-up',    ico:'📨' }
+    { key:'prosp', label:'Prospecção',     ico:'🎯', auto:true,  desc:'Clientes novos no mês vs média do time.' },
+    { key:'qual',  label:'Qualificação',   ico:'🔍', auto:true,  desc:'% de clientes que avançaram (não-aberto).' },
+    { key:'apres', label:'Apresentação',   ico:'🎤', auto:false, desc:'Qualidade da apresentação (manual).' },
+    { key:'neg',   label:'Negociação',     ico:'🤝', auto:true,  desc:'Conversão final + ticket relativo.' },
+    { key:'fup',   label:'Follow-up',      ico:'📨', auto:true,  desc:'Reflete a saúde da carteira em negociação.' },
+    { key:'const', label:'Constância',     ico:'📅', auto:true,  desc:'% meses na meta nos últimos 6 (estimado).' },
+    { key:'mix',   label:'Mix de produto', ico:'🎒', auto:true,  desc:'Diversidade de treinamentos vendidos no mês.' },
+    { key:'apr',   label:'Aproveitamento', ico:'⚡', auto:true,  desc:'% da carteira do consultor convertida em pago.' }
   ];
   var MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
   /* doc atual carregado / em edição */
-  var _doc = null;            /* { ciclo, data, comps, notaGestor, notaAuto, acoes, status } */
-  var _consultorAtivo = '';   /* string UPPER */
+  var _doc = null;             /* { ciclo, data, comps, notaGestor, notaAuto, acoes, status, metricas } */
+  var _consultorAtivo = '';    /* string UPPER */
   var _ciclo = 'quinzenal';
-  var _historico = [];        /* todos os docs do consultor, mais recente primeiro */
-  var _medTime = [6,6,6,6,6]; /* fallback antes de termos médias reais */
+  var _historico = [];         /* todos os docs do consultor, mais recente primeiro */
+  var _medTime = [6,6,6,6,6,6,6,6]; /* fallback (8 comps) */
+  var _metricasCache = null;   /* { metricas: {comp: {auto, ...detalhes}}, contexto: {...} } */
 
   /* ── Helpers de cicloId ───────────────────────────────── */
   function _hoje(){
@@ -158,16 +164,8 @@
   }
 
   function _icFbAplicarDocNaUI(){
-    /* Comps → sliders */
-    COMPS_DEF.forEach(function(c,i){
-      var inp = document.querySelector('input[data-comp="'+c.key+'"]');
-      if(!inp) return;
-      var v = +(_doc.comps && _doc.comps[c.key]);
-      if(!v || v<1) v = 6;
-      inp.value = v;
-      var val = document.getElementById('fbCv'+i);
-      if(val){ val.textContent = v; val.className = 'fb-comp-val '+_lvClass(v); }
-    });
+    /* Re-render lista pra refletir mudança no número de competências */
+    _icFbRenderComps();
     /* Textareas */
     document.getElementById('fbNotaGestor').value = _doc.notaGestor || '';
     document.getElementById('fbNotaAuto').value   = _doc.notaAuto   || '';
@@ -178,19 +176,397 @@
     /* Radar / comparativo */
     _icFbRenderRadar();
     _icFbRenderComparativo();
+    /* Disparar cálculo de sugestões com base nos dados reais do mês */
+    _icFbAtualizarSugestoes();
   }
 
-  /* ── Render do bloco de competências (sliders) ──────────── */
+  /* ══════════════════════════════════════════════════════════
+     CÁLCULO DE MÉTRICAS DO MÊS — base para sugestões automáticas
+     Lê (somente) turmas + pipelineSales + pipelineGoals do Firebase
+     ════════════════════════════════════════════════════════ */
+  function _icFbMesKey(ymd){
+    var p = (ymd||_hoje()).split('-'); return p[0]+'-'+p[1];
+  }
+  function _icFbAddMeses(ymd, delta){
+    var p = (ymd||_hoje()).split('-');
+    var d = new Date(+p[0], +p[1]-1+delta, 1);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  }
+  function _icFbDiasEntre(ymd1, ymd2){
+    return Math.round((new Date(ymd2) - new Date(ymd1)) / 86400000);
+  }
+
+  /* Achata um conjunto de turmas + vendas avulsas num array uniforme:
+     [{consultor, cliente, treinamento, valor, status, entrada, data, src}] */
+  function _icFbAchatar(turmas, vendasAvulso, mesAlvo){
+    var itens = [];
+    if(turmas && typeof turmas === 'object'){
+      Object.keys(turmas).forEach(function(tid){
+        var t = turmas[tid]; if(!t) return;
+        var mesT = (t.periodStart||'').slice(0,7) || (t.periodEnd||'').slice(0,7) || (t.mesMeta||'');
+        if(mesAlvo && mesT && mesT !== mesAlvo) return;
+        var cls = t.clientes;
+        if(cls && !Array.isArray(cls) && typeof cls === 'object') cls = Object.values(cls).filter(Boolean);
+        cls = cls || [];
+        cls.forEach(function(c){
+          if(!c || !c.cliente) return;
+          var consultor = String(c.consultor||'').toUpperCase().trim();
+          if(Array.isArray(c.treinamentos) && c.treinamentos.length){
+            c.treinamentos.forEach(function(sub){
+              if(!sub) return;
+              itens.push({
+                consultor: consultor,
+                cliente: String(c.cliente).toUpperCase(),
+                treinamento: String(sub.cod||c.treinamento||'').toUpperCase(),
+                valor: +sub.valor||0,
+                status: sub.status||c.status||'aberto',
+                entrada: +sub.entrada||0,
+                data: c.data||t.periodStart||'',
+                src: 'turma'
+              });
+            });
+          } else {
+            itens.push({
+              consultor: consultor,
+              cliente: String(c.cliente).toUpperCase(),
+              treinamento: String(c.treinamento||'').toUpperCase(),
+              valor: +c.valor||0,
+              status: c.status||'aberto',
+              entrada: +c.entrada||0,
+              data: c.data||t.periodStart||'',
+              src: 'turma'
+            });
+          }
+        });
+      });
+    }
+    if(vendasAvulso && typeof vendasAvulso === 'object'){
+      Object.values(vendasAvulso).forEach(function(v){
+        if(!v) return;
+        itens.push({
+          consultor: String(v.consultor||'').toUpperCase().trim(),
+          cliente: String(v.cliente||'').toUpperCase(),
+          treinamento: String(v.produto||v.treinamento||'').toUpperCase(),
+          valor: +v.valor||0,
+          status: v.status||'aberto',
+          entrada: +v.entrada||0,
+          data: v.data||'',
+          src: 'avulso'
+        });
+      });
+    }
+    return itens;
+  }
+
+  /* Carrega tudo que é necessário pra calcular: vendas do mês alvo + 6 meses
+     anteriores (para Constância) + goals do mês. Retorna Promise. */
+  function _icFbLoadDados(dataYmd){
+    if(typeof window._fbGet !== 'function') return Promise.resolve(null);
+    var mesAlvo = _icFbMesKey(dataYmd);
+    /* Em vez de fazer N requests, lê turmas inteira (geralmente cabe) +
+       pipelineSales do mês + N pipelineGoals (1 por mês últimos 6). */
+    var meses6 = [];
+    for(var i=0;i<6;i++) meses6.push(_icFbAddMeses(dataYmd, -i));
+    return Promise.all([
+      window._fbGet('turmas').catch(function(){return {};}),
+      window._fbGet('pipelineSales/'+mesAlvo).catch(function(){return {};}),
+      Promise.all(meses6.map(function(mk){
+        return window._fbGet('pipelineGoals/'+mk).then(function(g){return {mes:mk,goals:g||{}};}).catch(function(){return {mes:mk,goals:{}};});
+      }))
+    ]).then(function(res){
+      return {
+        mesAlvo: mesAlvo,
+        turmas: res[0]||{},
+        vendasAvulso: res[1]||{},
+        goalsHist: res[2]||[]
+      };
+    });
+  }
+
+  /* Calcula métricas do consultor no mês (e da equipe pra comparação) */
+  function _icFbCalcular(dados, consultor){
+    var nome = String(consultor||'').toUpperCase().trim();
+    var itensMes = _icFbAchatar(dados.turmas, dados.vendasAvulso, dados.mesAlvo);
+    var meus = itensMes.filter(function(it){return it.consultor === nome;});
+    var time = itensMes;
+    /* listas de consultores únicos para média */
+    var consultoresSet = {};
+    time.forEach(function(it){ if(it.consultor) consultoresSet[it.consultor]=true; });
+    var nConsultores = Math.max(1, Object.keys(consultoresSet).length);
+    /* ── Métricas individuais ── */
+    function clientesUnicos(arr){ var s={}; arr.forEach(function(it){s[it.cliente]=true;}); return Object.keys(s).length; }
+    var prospMeus = clientesUnicos(meus);
+    var prospTime = clientesUnicos(time);
+    var prospMedia = prospTime / nConsultores;
+
+    var statusCount = function(arr, st){ return arr.filter(function(it){return (it.status||'')===st;}).length; };
+    var totalMeus = meus.length;
+    var pagosMeus = statusCount(meus, 'pago');
+    var negocMeus = statusCount(meus, 'negociacao');
+    var abertosMeus = statusCount(meus, 'aberto');
+    var entradaMeus = statusCount(meus, 'entrada');
+
+    var pagosTime = statusCount(time, 'pago');
+    var negocTime = statusCount(time, 'negociacao');
+    var entradaTime = statusCount(time, 'entrada');
+
+    /* Qualificação: % avançado / total */
+    var qualPct = totalMeus ? (totalMeus - abertosMeus)/totalMeus : null;
+    /* Negociação: conversão + ticket */
+    var convDenom = pagosMeus + negocMeus + entradaMeus;
+    var convMeu = convDenom ? (pagosMeus/convDenom) : null;
+    var ticketMeu = pagosMeus ? meus.filter(function(it){return it.status==='pago';}).reduce(function(s,it){return s+(+it.valor||0);},0) / pagosMeus : 0;
+    var convDenomTime = pagosTime+negocTime+entradaTime;
+    var convTime = convDenomTime ? pagosTime/convDenomTime : null;
+    var ticketTime = pagosTime ? time.filter(function(it){return it.status==='pago';}).reduce(function(s,it){return s+(+it.valor||0);},0) / pagosTime : 0;
+    /* Follow-up: # negociações sem evolução (proxy: data > 14 dias atrás) */
+    var hoje = new Date();
+    var negParados = meus.filter(function(it){
+      if(it.status !== 'negociacao' || !it.data) return false;
+      try { return _icFbDiasEntre(it.data, hoje.toISOString().slice(0,10)) > 14; } catch(e){ return false; }
+    }).length;
+    /* Constância: % meses na meta (mínima) nos últimos 6 */
+    var mesesNaMeta = 0, mesesComMeta = 0;
+    dados.goalsHist.forEach(function(gh){
+      var g = (gh.goals||{})[nome];
+      if(!g) return;
+      var meta = +(g.metaMinima||g.metaBasica||g.metaValor||0);
+      if(meta <= 0) return;
+      mesesComMeta++;
+      /* Pago no mês: lê turmas + avulso do mês — aproximação usando só o mês alvo se for o atual.
+         Para os outros 5 meses não fazemos request extra (custo); usa goals.realizado se existir. */
+      var realizado = +(g.realizado||0);
+      if(gh.mes === dados.mesAlvo){
+        realizado = meus.filter(function(it){return it.status==='pago';}).reduce(function(s,it){return s+(+it.valor||0);},0);
+      }
+      if(realizado >= meta) mesesNaMeta++;
+    });
+    /* Mix: treinamentos distintos vendidos no mês (em pago) */
+    var trDistintos = {};
+    meus.filter(function(it){return it.status==='pago';}).forEach(function(it){
+      if(it.treinamento) trDistintos[it.treinamento]=true;
+    });
+    var nTrDistintos = Object.keys(trDistintos).length;
+    /* Aproveitamento: pagos / total clientes do consultor */
+    var apvPct = totalMeus ? pagosMeus/totalMeus : null;
+
+    /* ── Conversão das métricas em score 1-10 ── */
+    function clamp(n){ return Math.max(1, Math.min(10, n)); }
+    function pctScore(p){ if(p==null) return null; return clamp(Math.round(p*10)); }
+    /* Prospecção: meu/média * 6, cap 10 */
+    var prospScore = prospMedia > 0 ? clamp(Math.round(prospMeus / prospMedia * 6)) : (prospMeus > 0 ? 6 : 1);
+    var qualScore = pctScore(qualPct);
+    /* Negociação: 70% conversão + 30% ticket relativo */
+    var negScore = null;
+    if(convMeu != null){
+      var conv01 = convMeu;
+      var ticketRel = ticketTime > 0 ? ticketMeu/ticketTime : 1;
+      var blend = 0.7*conv01 + 0.3*Math.min(1.5, ticketRel)/1.5;
+      negScore = clamp(Math.round(blend*10));
+    }
+    /* Follow-up: 10 se 0 parados; -2 por parado; mínimo 1 */
+    var fupScore = clamp(10 - negParados*2);
+    /* Constância: pct meses na meta */
+    var constScore = mesesComMeta > 0 ? clamp(Math.round((mesesNaMeta/mesesComMeta)*10)) : null;
+    /* Mix: 0=1, 1=4, 2=6, 3=7, 4=8, 5+=9, 7+=10 */
+    var mixScore = null;
+    if(meus.filter(function(it){return it.status==='pago';}).length > 0){
+      if(nTrDistintos >= 7) mixScore = 10;
+      else if(nTrDistintos >= 5) mixScore = 9;
+      else if(nTrDistintos >= 4) mixScore = 8;
+      else if(nTrDistintos >= 3) mixScore = 7;
+      else if(nTrDistintos >= 2) mixScore = 6;
+      else if(nTrDistintos >= 1) mixScore = 4;
+      else mixScore = 1;
+    }
+    /* Aproveitamento */
+    var aprScore = pctScore(apvPct);
+
+    return {
+      mes: dados.mesAlvo,
+      metricas: {
+        prosp: { auto: prospScore, meu: prospMeus, media: +(prospMedia.toFixed(1)) },
+        qual:  { auto: qualScore,  pago: pagosMeus, negoc: negocMeus, aberto: abertosMeus, total: totalMeus, pct: qualPct },
+        apres: { auto: null }, /* manual */
+        neg:   { auto: negScore,   convMeu: convMeu, convTime: convTime, ticketMeu: ticketMeu, ticketTime: ticketTime },
+        fup:   { auto: fupScore,   parados: negParados, totalNeg: negocMeus },
+        const: { auto: constScore, batidos: mesesNaMeta, totalComMeta: mesesComMeta },
+        mix:   { auto: mixScore,   distintos: nTrDistintos, pagos: pagosMeus },
+        apr:   { auto: aprScore,   pagos: pagosMeus, total: totalMeus, pct: apvPct }
+      },
+      contexto: {
+        consultor: nome,
+        totalConsultoresAtivos: nConsultores,
+        prospTime: prospTime,
+        pagosTime: pagosTime,
+        clientesParados: negParados
+      }
+    };
+  }
+
+  /* Atalho público: calcular e popular sugestões */
+  function _icFbAtualizarSugestoes(){
+    if(!_consultorAtivo){ return; }
+    var dataYmd = (document.getElementById('fbData')||{}).value || _hoje();
+    _icFbLoadDados(dataYmd).then(function(dados){
+      if(!dados) return;
+      _metricasCache = _icFbCalcular(dados, _consultorAtivo);
+      _icFbRenderSugestoes();
+      _icFbGerarPlanoSugestoes();
+    });
+  }
+  function _icFbRenderSugestoes(){
+    if(!_metricasCache) return;
+    var m = _metricasCache.metricas;
+    COMPS_DEF.forEach(function(c, i){
+      var slot = document.getElementById('fbSug'+i);
+      if(!slot) return;
+      var dado = m[c.key];
+      if(!c.auto || !dado || dado.auto == null){
+        slot.innerHTML = c.auto
+          ? '<span style="font-size:9px;color:var(--muted);">sem dado</span>'
+          : '<span style="font-size:9px;color:var(--muted);">qualitativa</span>';
+        return;
+      }
+      var det = _icFbDetalheCurto(c.key, dado);
+      slot.innerHTML = '<button class="fb-sug" onclick="_fbAceitarSug(\''+c.key+'\','+dado.auto+')" title="'+(det||'')+'">💡 '+dado.auto+'</button>';
+    });
+    /* Botão "Aplicar todas" no header da seção */
+    var btn = document.getElementById('fbSugAll');
+    if(btn){
+      btn.style.display = '';
+      btn.onclick = function(){
+        COMPS_DEF.forEach(function(c){
+          var dado = m[c.key];
+          if(c.auto && dado && dado.auto != null){
+            window._fbAceitarSug(c.key, dado.auto);
+          }
+        });
+      };
+    }
+  }
+  function _icFbDetalheCurto(key, d){
+    if(key==='prosp') return d.meu+' clientes novos · média do time '+d.media;
+    if(key==='qual'){ var p = d.pct!=null?Math.round(d.pct*100)+'%':'—'; return p+' avançaram ('+(d.total-d.aberto)+'/'+d.total+')'; }
+    if(key==='neg'){ var c = d.convMeu!=null?Math.round(d.convMeu*100)+'%':'—'; var t = d.ticketMeu?Math.round(d.ticketMeu).toLocaleString('pt-BR'):'—'; return 'conversão '+c+' · ticket R$ '+t; }
+    if(key==='fup') return d.parados+' negociações paradas > 14 dias';
+    if(key==='const') return d.batidos+'/'+d.totalComMeta+' meses na meta';
+    if(key==='mix') return d.distintos+' treinamentos distintos vendidos';
+    if(key==='apr'){ var p2 = d.pct!=null?Math.round(d.pct*100)+'%':'—'; return p2+' da carteira convertida'; }
+    return '';
+  }
+  window._fbAceitarSug = function(compKey, valor){
+    if(!_doc) return;
+    _doc.comps = _doc.comps || {};
+    _doc.comps[compKey] = valor;
+    /* Atualizar slider + display */
+    var idx = COMPS_DEF.findIndex(function(c){return c.key===compKey;});
+    var inp = document.querySelector('input[data-comp="'+compKey+'"]');
+    if(inp) inp.value = valor;
+    var el = document.getElementById('fbCv'+idx);
+    if(el){ el.textContent = valor; el.className = 'fb-comp-val '+_lvClass(valor); }
+    _icFbRenderRadar();
+    _icFbRenderComparativo();
+  };
+
+  /* Gera 3-5 sugestões de plano de ação com base nas métricas */
+  function _icFbGerarPlanoSugestoes(){
+    if(!_metricasCache) return;
+    var m = _metricasCache.metricas;
+    var ctx = _metricasCache.contexto;
+    var sugs = [];
+    /* Pior competência auto */
+    var pior = null, piorScore = 99;
+    COMPS_DEF.forEach(function(c){
+      var d = m[c.key];
+      if(c.auto && d && d.auto != null && d.auto < piorScore){
+        piorScore = d.auto; pior = c;
+      }
+    });
+    if(pior && piorScore <= 6){
+      sugs.push({
+        chave: 'foco-'+pior.key,
+        texto: 'Foco em '+pior.label+': '+_icFbDetalheCurto(pior.key, m[pior.key])+' — abaixo da expectativa.'
+      });
+    }
+    /* Mix de produto baixo */
+    if(m.mix && m.mix.auto != null && m.mix.distintos <= 2 && m.mix.pagos > 0){
+      sugs.push({
+        chave: 'mix',
+        texto: 'Diversificar carteira: vendeu só '+m.mix.distintos+' produto'+(m.mix.distintos!==1?'s':'')+'. Meta: 1 fechamento de outro treinamento no próximo ciclo.'
+      });
+    }
+    /* Negociações paradas */
+    if(m.fup && m.fup.parados >= 2){
+      sugs.push({
+        chave: 'parados',
+        texto: 'Resgatar '+m.fup.parados+' negociações paradas há mais de 14 dias — agendar follow-up estruturado esta semana.'
+      });
+    }
+    /* Aproveitamento baixo */
+    if(m.apr && m.apr.auto != null && m.apr.pct != null && m.apr.pct < 0.30 && m.apr.total >= 3){
+      sugs.push({
+        chave: 'aprov',
+        texto: 'Aproveitamento da carteira em '+Math.round(m.apr.pct*100)+'% — revisar qualificação inicial e tempo de resposta a lead.'
+      });
+    }
+    /* Conversão baixa em negociação */
+    if(m.neg && m.neg.convMeu != null && m.neg.convTime != null && m.neg.convMeu < m.neg.convTime * 0.7){
+      sugs.push({
+        chave: 'conv',
+        texto: 'Conversão final ('+Math.round(m.neg.convMeu*100)+'%) bem abaixo do time ('+Math.round(m.neg.convTime*100)+'%) — role-play de fechamento + revisar quebra de objeções.'
+      });
+    }
+    /* Constância */
+    if(m.const && m.const.auto != null && m.const.auto <= 5){
+      sugs.push({
+        chave: 'const',
+        texto: 'Constância: '+m.const.batidos+'/'+m.const.totalComMeta+' meses na meta — sustentar ritmo, não só explosões. Desdobrar meta semanal.'
+      });
+    }
+    /* Render no container */
+    var box = document.getElementById('fbSugPlano');
+    if(!box) return;
+    if(!sugs.length){
+      box.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px;text-align:center;">✅ Nenhum gargalo crítico identificado no mês corrente.</div>';
+      return;
+    }
+    box.innerHTML = sugs.map(function(s){
+      return '<div class="fb-sug-acao" data-chave="'+s.chave+'">'
+        + '<div class="fb-sug-acao-txt">💡 '+s.texto+'</div>'
+        + '<div class="fb-sug-acao-btns">'
+        +   '<button class="fb-sug-btn aceitar" onclick="_fbAceitarSugAcao(\''+s.chave+'\',\''+s.texto.replace(/'/g,"\\'")+'\')">✓ Aceitar</button>'
+        +   '<button class="fb-sug-btn ignorar" onclick="this.closest(\'.fb-sug-acao\').remove()">× Ignorar</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  window._fbAceitarSugAcao = function(chave, texto){
+    if(!_doc) _icFbResetDoc();
+    _doc.acoes = _doc.acoes || [];
+    _doc.acoes.push({ feito:false, texto:texto, origem:chave });
+    _icFbRenderAcoes(_doc.acoes);
+    /* remove o card da sugestão */
+    var card = document.querySelector('.fb-sug-acao[data-chave="'+chave+'"]');
+    if(card) card.remove();
+  };
+
+  /* ── Render do bloco de competências (sliders + slot de sugestão) ──── */
   function _icFbRenderComps(){
     var html = COMPS_DEF.map(function(c,i){
       var v = (_doc && _doc.comps && _doc.comps[c.key]) || 6;
       return '<div class="fb-comp">'
-        + '<div class="fb-comp-label"><span class="ico">'+c.ico+'</span>'+c.label+'</div>'
+        + '<div class="fb-comp-label">'
+        +   '<span class="ico">'+c.ico+'</span>'+c.label
+        +   (c.auto ? '<span class="fb-comp-tag" title="'+(c.desc||'')+'">auto</span>'
+                    : '<span class="fb-comp-tag manual" title="'+(c.desc||'')+'">manual</span>')
+        + '</div>'
         + '<div class="fb-comp-slider">'
         +   '<input type="range" min="1" max="10" step="1" value="'+v+'" data-idx="'+i+'" data-comp="'+c.key+'">'
         +   '<div class="fb-comp-scale"><span>1</span><span>3</span><span>5</span><span>7</span><span>10</span></div>'
         + '</div>'
         + '<div class="fb-comp-val '+_lvClass(v)+'" id="fbCv'+i+'">'+v+'</div>'
+        + '<div class="fb-sug-slot" id="fbSug'+i+'"></div>'
         + '</div>';
     }).join('');
     var list = document.getElementById('fbCompList');
@@ -208,6 +584,8 @@
         _icFbRenderComparativo();
       });
     });
+    /* Se temos métricas em cache, re-renderiza os slots */
+    if(_metricasCache) _icFbRenderSugestoes();
   }
 
   /* ── Ações (plano para o próximo ciclo) ─────────────────── */
@@ -300,6 +678,11 @@
     if(typeof window._fbSave !== 'function'){
       if(typeof _showToast==='function') _showToast('❌ Firebase indisponível.','var(--red)');
       return;
+    }
+    /* Snapshot das métricas que originaram o ciclo (audit trail) */
+    if(_metricasCache){
+      _doc.metricas = _metricasCache.metricas;
+      _doc.contexto = _metricasCache.contexto;
     }
     window._fbSave('icFeedbacks/'+_consultorAtivo+'/'+id, _doc).then(function(){
       if(showToast && typeof _showToast==='function'){
