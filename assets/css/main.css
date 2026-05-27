@@ -3231,11 +3231,16 @@ body{overflow-x:hidden;}
 .cb-est-chip:hover, .cb-per-chip:hover{border-color:rgba(200,240,90,.4);background:var(--surface);}
 .cb-est-chip.active, .cb-per-chip.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
 
-/* Inputs/Selects dos filtros do Playbook e Cobrança — mesma altura dos chips */
+/* Inputs/Selects dos filtros do Playbook e Cobrança — mesma altura/look dos chips */
 #pbBusca, #pbProdFiltro, #cbBusca, #cbConsultorFiltro{
-  padding:8px 12px;font-size:11.5px;font-weight:600;border-radius:14px;
+  padding:8px 12px;font-size:11.5px;font-weight:600;
+  border-radius:14px;border:1px solid var(--border2);
+  background:var(--surface2);color:var(--text);font-family:inherit;
+  outline:none;transition:border-color .14s;
 }
+#pbBusca:focus, #pbProdFiltro:focus, #cbBusca:focus, #cbConsultorFiltro:focus{border-color:var(--accent);}
 #pbBusca, #cbBusca{min-height:36px;}
+#cbBusca{flex:1;}
 
 .cb-btn{
   background:var(--surface2);border:1px solid var(--border2);color:var(--text);
