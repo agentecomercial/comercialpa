@@ -1932,10 +1932,17 @@
   /* ══════════════════════════════════════════════════════════
      POPOVER ANO/MÊS/DIA para o campo "Data do ciclo"
      ══════════════════════════════════════════════════════════ */
-  var _fbCalMode = 'mes';     /* 'ano' | 'mes' | 'dia' */
-  var _fbPending = null;      /* {mode,y,m,d} */
+  var _fbCalMode = 'mes';     /* 'ano' | 'mes' | 'dia' | 'periodo' */
+  var _fbPending = null;      /* {mode,y,m,d, per:{start,end}} */
   var _fbCalY = (new Date()).getFullYear();
   var _fbCalM = (new Date()).getMonth()+1;
+  /* Estado dos 2 mini-cals do Período */
+  var _fbPerIniY = _fbCalY, _fbPerIniM = _fbCalM;
+  var _fbPerFimY = _fbCalY, _fbPerFimM = _fbCalM;
+  function _fbAddMes(ymObj, delta){
+    var d = new Date(ymObj.y, ymObj.m-1+delta, ymObj.d || 1);
+    return { y:d.getFullYear(), m:d.getMonth()+1, d:d.getDate() };
+  }
   var _MESES_BR2 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   var _MESES_FULL2 = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var _DOW2 = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -1951,8 +1958,14 @@
     if(!sel) return 'Selecionar...';
     if(mode === 'ano') return 'Ano '+sel.y;
     if(mode === 'mes') return _MESES_FULL2[sel.m-1]+' / '+sel.y;
+    if(mode === 'periodo' && sel.per && sel.per.start && sel.per.end){
+      var s=sel.per.start, e=sel.per.end;
+      return _MESES_BR2[s.m-1]+'/'+s.y+' → '+_MESES_BR2[e.m-1]+'/'+e.y;
+    }
     return String(sel.d).padStart(2,'0')+' '+_MESES_BR2[sel.m-1]+' / '+sel.y;
   }
+  function _fbTsDmy(o){ return o ? new Date(o.y, o.m-1, o.d).getTime() : null; }
+  function _fbFmtDataCurta2(o){ return o ? String(o.d).padStart(2,'0')+'/'+String(o.m).padStart(2,'0')+'/'+o.y : '—'; }
   function _fbAtualizarLabelData(){
     var inp = document.getElementById('fbData');
     var lbl = document.getElementById('fbDataLabel');
@@ -1960,9 +1973,12 @@
     var ymd = inp.value;
     if(!ymd){ lbl.textContent = 'Selecionar...'; return; }
     var s = _fbParseData(ymd);
-    /* Heurística do modo a exibir: se vier window._fbCalMode salvo, usa */
     var mode = window._fbCalLastMode || 'mes';
-    lbl.textContent = _fbFmtPicker(mode, s);
+    if(mode === 'periodo' && window._fbCalLastPer){
+      lbl.textContent = _fbFmtPicker('periodo', { per: window._fbCalLastPer });
+    } else {
+      lbl.textContent = _fbFmtPicker(mode, s);
+    }
   }
 
   window._fbCalAbrir = function(e){
@@ -1974,6 +1990,19 @@
     _fbCalY = atual.y; _fbCalM = atual.m;
     _fbCalMode = window._fbCalLastMode || 'mes';
     _fbPending = { mode:_fbCalMode, y:atual.y, m:atual.m, d:atual.d };
+    /* Restaura última seleção de período se houver */
+    if(window._fbCalLastPer && window._fbCalLastPer.start && window._fbCalLastPer.end){
+      _fbPending.per = {
+        start: Object.assign({}, window._fbCalLastPer.start),
+        end:   Object.assign({}, window._fbCalLastPer.end)
+      };
+      _fbPerIniY = _fbPending.per.start.y; _fbPerIniM = _fbPending.per.start.m;
+      _fbPerFimY = _fbPending.per.end.y;   _fbPerFimM = _fbPending.per.end.m;
+    } else {
+      _fbPending.per = { start:null, end:null };
+      _fbPerIniY = atual.y; _fbPerIniM = atual.m;
+      _fbPerFimY = atual.y; _fbPerFimM = atual.m;
+    }
     _fbCalSincTabs();
     _fbCalRenderAtual();
     _fbCalAtualizarResumo();
@@ -2014,6 +2043,7 @@
     var mode = _fbPending ? _fbPending.mode : _fbCalMode;
     if(mode === 'ano') _fbCalRenderAno();
     else if(mode === 'mes') _fbCalRenderMes();
+    else if(mode === 'periodo') _fbCalRenderPeriodo();
     else _fbCalRenderDia();
   }
   function _fbCalAtualizarResumo(){
@@ -2118,6 +2148,124 @@
       grid.appendChild(btn);
     }
   }
+  /* ── PERÍODO: mini calendários + presets ─────────────────── */
+  function _fbCalRenderPeriodo(){
+    document.getElementById('fbCalPerIniLabel').textContent = _MESES_FULL2[_fbPerIniM-1]+' / '+_fbPerIniY;
+    document.getElementById('fbCalPerFimLabel').textContent = _MESES_FULL2[_fbPerFimM-1]+' / '+_fbPerFimY;
+    _fbRenderPerMini('fbCalPerIniGrid', _fbPerIniY, _fbPerIniM);
+    _fbRenderPerMini('fbCalPerFimGrid', _fbPerFimY, _fbPerFimM);
+    var res = document.getElementById('fbCalPerResumo');
+    var per = (_fbPending && _fbPending.per) || {start:null,end:null};
+    if(per.start && per.end){
+      var dias = Math.round((_fbTsDmy(per.end) - _fbTsDmy(per.start)) / 86400000) + 1;
+      res.innerHTML = '<b>'+_fbFmtDataCurta2(per.start)+'</b> → <b>'+_fbFmtDataCurta2(per.end)+'</b> · '+dias+' dia'+(dias!==1?'s':'');
+    } else if(per.start){
+      res.innerHTML = '<b>'+_fbFmtDataCurta2(per.start)+'</b> → escolha o fim';
+    } else {
+      res.textContent = '— escolha início e fim —';
+    }
+  }
+  function _fbRenderPerMini(gridId, y, m){
+    var grid = document.getElementById(gridId);
+    if(!grid) return;
+    grid.innerHTML = '';
+    _DOW2.forEach(function(d){
+      var h = document.createElement('div');
+      h.className = 'dow'; h.textContent = d;
+      grid.appendChild(h);
+    });
+    var per = (_fbPending && _fbPending.per) || {start:null,end:null};
+    var prim = new Date(y, m-1, 1).getDay();
+    var total = _fbDiasMes(y, m);
+    for(var v=0;v<prim;v++){
+      var ph = document.createElement('div');
+      ph.className = 'np-cal-cell empty';
+      grid.appendChild(ph);
+    }
+    var H = _fbHojeObj();
+    var sIni = _fbTsDmy(per.start), sFim = _fbTsDmy(per.end);
+    for(var i=1;i<=total;i++){
+      var btn = document.createElement('button');
+      btn.className = 'np-cal-cell';
+      btn.textContent = i;
+      var sCur = new Date(y, m-1, i).getTime();
+      if(y===H.y && m===H.m && i===H.d) btn.classList.add('atual');
+      if((sIni && sCur===sIni) || (sFim && sCur===sFim)) btn.classList.add('range-edge');
+      else if(sIni && sFim && sCur>sIni && sCur<sFim) btn.classList.add('range-mid');
+      (function(di, dy, dm){
+        btn.addEventListener('click', function(ev){
+          ev.stopPropagation();
+          _fbCalPerClick({y:dy, m:dm, d:di});
+        });
+      })(i, y, m);
+      grid.appendChild(btn);
+    }
+  }
+  function _fbCalPerClick(date){
+    if(!_fbPending) return;
+    if(!_fbPending.per) _fbPending.per = {start:null,end:null};
+    var p = _fbPending.per;
+    var sCur = _fbTsDmy(date);
+    var sIni = _fbTsDmy(p.start);
+    if(!p.start){ p.start = date; p.end = null; }
+    else if(p.start && !p.end){
+      if(sCur < sIni){ p.start = date; }
+      else { p.end = date; }
+    } else { p.start = date; p.end = null; }
+    document.querySelectorAll('.np-per-preset').forEach(function(b){b.classList.remove('active');});
+    _fbCalRenderPeriodo();
+    _fbCalAtualizarResumo();
+  }
+  window._fbCalPerNav = function(qual, delta, e){
+    if(e) e.stopPropagation();
+    if(qual === 'ini'){
+      _fbPerIniM += delta;
+      if(_fbPerIniM<1){_fbPerIniM=12;_fbPerIniY--;}
+      if(_fbPerIniM>12){_fbPerIniM=1;_fbPerIniY++;}
+    } else {
+      _fbPerFimM += delta;
+      if(_fbPerFimM<1){_fbPerFimM=12;_fbPerFimY--;}
+      if(_fbPerFimM>12){_fbPerFimM=1;_fbPerFimY++;}
+    }
+    _fbCalRenderPeriodo();
+  };
+  window._fbCalPerPreset = function(preset, e){
+    if(e) e.stopPropagation();
+    if(!_fbPending) return;
+    var H = _fbHojeObj();
+    var hd = new Date(H.y, H.m-1, H.d);
+    function _toDmy(dt){return {y:dt.getFullYear(),m:dt.getMonth()+1,d:dt.getDate()};}
+    var start=null, end=null;
+    if(preset === 'atual3'){
+      var qi = Math.floor((H.m-1)/3)*3 + 1;
+      var qf = qi + 2;
+      start = {y:H.y, m:qi, d:1};
+      end   = {y:H.y, m:qf, d:_fbDiasMes(H.y, qf)};
+    } else if(preset === 'ult3'){
+      var fim3 = hd, ini3 = new Date(fim3); ini3.setMonth(ini3.getMonth()-2); ini3.setDate(1);
+      start = _toDmy(ini3); end = _toDmy(fim3);
+    } else if(preset === 'ult6'){
+      var fim6 = hd, ini6 = new Date(fim6); ini6.setMonth(ini6.getMonth()-5); ini6.setDate(1);
+      start = _toDmy(ini6); end = _toDmy(fim6);
+    } else if(preset === 'ano'){
+      start = {y:H.y, m:1, d:1};
+      end   = {y:H.y, m:12, d:31};
+    }
+    _fbPending.mode = 'periodo';
+    _fbPending.per = { start:start, end:end };
+    if(start){ _fbPerIniY=start.y; _fbPerIniM=start.m; }
+    if(end){ _fbPerFimY=end.y; _fbPerFimM=end.m; }
+    document.querySelectorAll('.np-per-preset').forEach(function(b){
+      b.classList.toggle('active', b.textContent.toLowerCase().indexOf(preset) >= 0 ||
+        (preset==='atual3' && b.textContent.indexOf('Trimestre')>=0) ||
+        (preset==='ult3' && b.textContent.indexOf('3')>=0 && b.textContent.indexOf('Últimos')>=0) ||
+        (preset==='ult6' && b.textContent.indexOf('6')>=0) ||
+        (preset==='ano' && b.textContent.indexOf('Ano')>=0));
+    });
+    _fbCalRenderPeriodo();
+    _fbCalAtualizarResumo();
+  };
+
   window._fbCalAplicar = function(e){
     if(e) e.stopPropagation();
     if(!_fbPending){ window._fbCalFechar(); return; }
@@ -2126,13 +2274,33 @@
     var ymd;
     if(p.mode === 'ano'){ ymd = p.y+'-01-01'; }
     else if(p.mode === 'mes'){ ymd = p.y+'-'+String(p.m).padStart(2,'0')+'-01'; }
+    else if(p.mode === 'periodo'){
+      if(!p.per || !p.per.start || !p.per.end){
+        if(typeof _showToast==='function') _showToast('⚠️ Escolha início e fim do período.','var(--amber)');
+        return;
+      }
+      /* Data do ciclo = fim · Janela de análise = N meses (incluindo start) */
+      var endDt = p.per.end;
+      ymd = endDt.y+'-'+String(endDt.m).padStart(2,'0')+'-'+String(endDt.d).padStart(2,'0');
+      var sd = p.per.start, ed = p.per.end;
+      var diffMeses = (ed.y - sd.y)*12 + (ed.m - sd.m) + 1;
+      if(diffMeses < 1) diffMeses = 1;
+      window._icFbJanelaMeses = diffMeses;
+      /* Atualiza os chips de janela visualmente */
+      document.querySelectorAll('.fb-jan').forEach(function(b){
+        var v = +b.getAttribute('data-jan');
+        b.classList.toggle('active', v === diffMeses || (diffMeses > 12 && v === -1));
+      });
+      var info = document.getElementById('fbJanInfo');
+      if(info) info.textContent = 'período personalizado · '+diffMeses+' meses ('+_fbFmtDataCurta2(sd)+' → '+_fbFmtDataCurta2(ed)+')';
+    }
     else { ymd = p.y+'-'+String(p.m).padStart(2,'0')+'-'+String(p.d).padStart(2,'0'); }
     _fbCalMode = p.mode;
     window._fbCalLastMode = p.mode;
+    window._fbCalLastPer = p.mode === 'periodo' ? p.per : null;
     var inp = document.getElementById('fbData');
     if(inp){
       inp.value = ymd;
-      /* Dispara change handlers existentes */
       try { inp.dispatchEvent(new Event('change')); } catch(err){}
     }
     _fbAtualizarLabelData();
