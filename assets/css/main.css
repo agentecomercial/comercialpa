@@ -3240,7 +3240,11 @@ body{overflow-x:hidden;}
 }
 #pbBusca:focus, #pbProdFiltro:focus, #cbBusca:focus, #cbConsultorFiltro:focus{border-color:var(--accent);}
 #pbBusca, #cbBusca{min-height:36px;}
-#cbBusca{flex:1;}
+#cbBusca{flex:1 1 0;min-width:0;}
+#cbConsultorFiltro{flex:0 0 auto;width:180px;max-width:200px;}
+/* Wrapper do input+select da Cobrança: deixar shrinkable e respeitar o container */
+.cb-filtros > div:last-child{flex:1 1 auto;min-width:0;max-width:100%;}
+.cb-filtros{max-width:100%;}
 
 .cb-btn{
   background:var(--surface2);border:1px solid var(--border2);color:var(--text);
