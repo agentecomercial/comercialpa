@@ -212,13 +212,29 @@
 
   /* Achata um conjunto de turmas + vendas avulsas num array uniforme:
      [{consultor, cliente, treinamento, valor, status, entrada, data, src}] */
+  /* Decide se o mês alvo está "dentro" de uma turma.
+     Inclui: turma cujo periodStart é o mês, OU turma em andamento
+     (mês alvo entre periodStart e periodEnd), OU mesMeta = mês alvo.
+     Antes só pegava turmas cujo periodStart batia exatamente — vendas
+     de turmas longas (ex: BHP Abr→Jun) sumiam no mês de Maio. */
+  function _icFbMesNaTurma(mesAlvo, t){
+    if(!mesAlvo) return true;
+    var ps = (t.periodStart||'').slice(0,7);
+    var pe = (t.periodEnd||'').slice(0,7);
+    var mm = String(t.mesMeta||'').slice(0,7);
+    if(mm && mm === mesAlvo) return true;          /* mesMeta explícito casa */
+    if(ps && pe) return mesAlvo >= ps && mesAlvo <= pe;  /* mês dentro do range */
+    if(ps && !pe) return ps === mesAlvo;            /* só início → exato */
+    if(!ps && pe) return pe === mesAlvo;            /* só fim → exato */
+    return true;                                    /* sem info → inclui */
+  }
   function _icFbAchatar(turmas, vendasAvulso, mesAlvo){
     var itens = [];
     if(turmas && typeof turmas === 'object'){
       Object.keys(turmas).forEach(function(tid){
         var t = turmas[tid]; if(!t) return;
-        var mesT = (t.periodStart||'').slice(0,7) || (t.periodEnd||'').slice(0,7) || (t.mesMeta||'');
-        if(mesAlvo && mesT && mesT !== mesAlvo) return;
+        if(!_icFbMesNaTurma(mesAlvo, t)) return;
+        var nomeTurma = String(t.nome||t.titulo||tid).toUpperCase();
         var cls = t.clientes;
         if(cls && !Array.isArray(cls) && typeof cls === 'object') cls = Object.values(cls).filter(Boolean);
         cls = cls || [];
@@ -236,7 +252,8 @@
                 status: sub.status||c.status||'aberto',
                 entrada: +sub.entrada||0,
                 data: c.data||t.periodStart||'',
-                src: 'turma'
+                src: 'turma',
+                srcNome: nomeTurma
               });
             });
           } else {
@@ -248,7 +265,8 @@
               status: c.status||'aberto',
               entrada: +c.entrada||0,
               data: c.data||t.periodStart||'',
-              src: 'turma'
+              src: 'turma',
+              srcNome: nomeTurma
             });
           }
         });
@@ -265,7 +283,8 @@
           status: v.status||'aberto',
           entrada: +v.entrada||0,
           data: v.data||'',
-          src: 'avulso'
+          src: 'avulso',
+          srcNome: 'Venda avulsa'
         });
       });
     }
@@ -1029,8 +1048,15 @@
     if(m) m.classList.remove('show');
   };
 
-  function _srcTag(src){
-    return '<span class="fb-det-src-tag '+(src==='turma'?'turma':'avulso')+'">'+(src==='turma'?'TURMA':'AVULSO')+'</span>';
+  function _srcTag(src, srcNome){
+    var t = (src==='turma'?'TURMA':'AVULSO');
+    var titulo = srcNome ? srcNome.replace(/"/g,'&quot;') : t;
+    return '<span class="fb-det-src-tag '+(src==='turma'?'turma':'avulso')+'" title="'+titulo+'">'+t+'</span>';
+  }
+  function _srcDescr(it){
+    /* descrição textual completa da origem (pra coluna larga) */
+    if(it.src === 'avulso') return 'Venda avulsa';
+    return it.srcNome || 'Turma';
   }
   function _stTag(st){
     return '<span class="fb-det-st-tag '+st+'">'+st+'</span>';
@@ -1088,7 +1114,7 @@
             + lista.map(function(it){
                 return '<tr>'
                   + '<td class="nome">'+it.cliente+'</td>'
-                  + '<td>'+_srcTag(it.src)+'</td>'
+                  + '<td>'+_srcTag(it.src, it.srcNome)+'</td>'
                   + '<td>'+_fmtData(it.data)+'</td>'
                   + '<td>'+_stTag(it.status)+'</td>'
                   + '</tr>';
@@ -1117,7 +1143,7 @@
         + '<div class="fb-det-secao-h">📋 Todos os clientes do consultor no mês</div>'
         + (lista.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Status</th><th>Origem</th><th class="val">Valor</th></tr></thead><tbody>'
             + lista.sort(function(a,b){return (a.status==='aberto'?1:0)-(b.status==='aberto'?1:0);}).map(function(it){
-                return '<tr><td class="nome">'+it.cliente+'</td><td>'+_stTag(it.status)+'</td><td>'+_srcTag(it.src)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
+                return '<tr><td class="nome">'+it.cliente+'</td><td>'+_stTag(it.status)+'</td><td>'+_srcTag(it.src, it.srcNome)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
               }).join('')
             + '</tbody></table>'
           : '<div class="fb-det-vazio">Sem clientes neste mês.</div>');
@@ -1138,14 +1164,14 @@
         + '<div class="fb-det-secao-h">✅ Pagos no mês ('+pagos.length+')</div>'
         + (pagos.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th class="val">Valor</th></tr></thead><tbody>'
             + pagos.map(function(it){
-                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
+                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src, it.srcNome)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
               }).join('')
             + '</tbody></table>'
           : '<div class="fb-det-vazio">Nenhuma venda paga neste mês.</div>')
         + '<div class="fb-det-secao-h">🤝 Em negociação ('+negs.length+')</div>'
         + (negs.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th class="val">Valor estimado</th></tr></thead><tbody>'
             + negs.map(function(it){
-                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
+                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src, it.srcNome)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
               }).join('')
             + '</tbody></table>'
           : '<div class="fb-det-vazio">Nenhuma negociação em curso.</div>');
@@ -1165,7 +1191,7 @@
             + paradas.map(function(it){
                 var dias = '—';
                 try { dias = _icFbDiasEntre(it.data, hoje.toISOString().slice(0,10)); } catch(e){}
-                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src)+'</td><td>'+_fmtData(it.data)+'</td><td class="val" style="color:var(--red);">'+dias+'d</td></tr>';
+                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src, it.srcNome)+'</td><td>'+_fmtData(it.data)+'</td><td class="val" style="color:var(--red);">'+dias+'d</td></tr>';
               }).join('')
             + '</tbody></table>'
           : '<div class="fb-det-vazio">✅ Nenhuma negociação parada — cadência saudável!</div>');
@@ -1219,36 +1245,40 @@
 
     /* ── Aproveitamento ── */
     if(key === 'apr'){
-      /* lista de clientes do mês com status agrupado por cliente */
-      var unq3 = {};
-      itens.forEach(function(it){
-        if(!unq3[it.cliente]) unq3[it.cliente] = it;
-        var ordem = {aberto:0, negociacao:1, entrada:2, pago:3};
-        if((ordem[it.status]||0) > (ordem[unq3[it.cliente].status]||0)) unq3[it.cliente] = it;
-      });
-      var lista = Object.values(unq3);
-      var pagosL = lista.filter(function(it){return it.status==='pago';});
-      var naoPagos = lista.filter(function(it){return it.status!=='pago';});
+      /* Mostra TODOS os itens do mês (cada treinamento por cliente vira linha) */
+      var pagosL  = itens.filter(function(it){return it.status==='pago';});
+      var negocL  = itens.filter(function(it){return it.status==='negociacao';});
+      var entradaL = itens.filter(function(it){return it.status==='entrada';});
+      var abertoL = itens.filter(function(it){return it.status==='aberto';});
+      /* Soma de turmas vs avulsas */
+      var qTurma = itens.filter(function(it){return it.src==='turma';}).length;
+      var qAvulso = itens.filter(function(it){return it.src==='avulso';}).length;
+      function tbl(arr, vazio){
+        if(!arr.length) return '<div class="fb-det-vazio">'+vazio+'</div>';
+        return '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem detalhada</th><th>Status</th><th class="val">Valor</th></tr></thead><tbody>'
+          + arr.map(function(it){
+              return '<tr>'
+                + '<td class="nome">'+it.cliente+'</td>'
+                + '<td>'+(it.treinamento||'—')+'</td>'
+                + '<td>'+_srcTag(it.src, it.srcNome)+' <span style="font-size:11px;color:var(--muted);margin-left:4px;">'+_srcDescr(it)+'</span></td>'
+                + '<td>'+_stTag(it.status)+'</td>'
+                + '<td class="val">'+_fmtR(it.valor)+'</td>'
+              + '</tr>';
+            }).join('')
+          + '</tbody></table>';
+      }
       return formulaHtml
         + '<div class="fb-det-stats">'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Total carteira</div><div class="fb-det-stat-val">'+(m.total||0)+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos</div><div class="fb-det-stat-val green">'+(m.pagos||0)+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Aproveitamento</div><div class="fb-det-stat-val blue">'+(m.pct!=null?Math.round(m.pct*100)+'%':'—')+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Vindas de turma</div><div class="fb-det-stat-val">'+qTurma+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Vindas avulsas</div><div class="fb-det-stat-val">'+qAvulso+'</div></div>'
         + '</div>'
-        + '<div class="fb-det-secao-h">✅ Quem pagou ('+pagosL.length+')</div>'
-        + (pagosL.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th class="val">Valor</th></tr></thead><tbody>'
-            + pagosL.map(function(it){
-                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
-              }).join('')
-            + '</tbody></table>'
-          : '<div class="fb-det-vazio">Nenhum cliente pago no mês.</div>')
-        + '<div class="fb-det-secao-h">⏳ Quem não pagou ainda ('+naoPagos.length+')</div>'
-        + (naoPagos.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Status</th><th>Origem</th><th class="val">Valor estimado</th></tr></thead><tbody>'
-            + naoPagos.map(function(it){
-                return '<tr><td class="nome">'+it.cliente+'</td><td>'+_stTag(it.status)+'</td><td>'+_srcTag(it.src)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
-              }).join('')
-            + '</tbody></table>'
-          : '<div class="fb-det-vazio">🎉 Todos os clientes da carteira pagaram!</div>');
+        + '<div class="fb-det-secao-h">✅ Pagos ('+pagosL.length+')</div>'  + tbl(pagosL,  'Nenhum cliente pago no mês.')
+        + '<div class="fb-det-secao-h">💵 Com entrada ('+entradaL.length+')</div>' + tbl(entradaL, 'Nenhum cliente com entrada parcial.')
+        + '<div class="fb-det-secao-h">🤝 Em negociação ('+negocL.length+')</div>' + tbl(negocL, 'Nenhum cliente em negociação.')
+        + '<div class="fb-det-secao-h">📋 Em aberto ('+abertoL.length+')</div>' + tbl(abertoL, '🎉 Carteira inteira engajada.');
     }
 
     return '<div class="fb-det-vazio">Sem detalhes disponíveis para esta competência.</div>';
