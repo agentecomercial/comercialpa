@@ -672,6 +672,7 @@
     if(key==='prosp'){
       var ratio = d.media > 0 ? (d.meu / d.media).toFixed(2) : '—';
       return cab
+        + '👥 Clientes considerados: '+d.meu+' novos do consultor (vs média '+d.media+' do time)\n\n'
         + '• Clientes novos no mês: '+d.meu+'\n'
         + '• Média do time: '+d.media+'\n'
         + '• Razão (meu/time): '+ratio+'\n'
@@ -684,6 +685,7 @@
       if(d.desistiu) det += '   — destes, '+d.desistiu+' "desistiu"\n';
       if(d.semStatus) det += '   — destes, '+d.semStatus+' sem status definido ("-")\n';
       return cab
+        + '👥 Clientes considerados: '+d.total+' totais do consultor\n\n'
         + '• Total clientes do consultor: '+d.total+'\n'
         + '• Não avançaram (aberto + desistiu + "-"): '+d.aberto+'\n'
         + det
@@ -699,22 +701,27 @@
       var ratio = d.ticketTime > 0 ? (d.ticketMeu/d.ticketTime).toFixed(2) : '—';
       var tp = d.taxaPerda != null ? (d.taxaPerda*100).toFixed(0)+'%' : '—';
       var cc = d.convCombinada != null ? (d.convCombinada*100).toFixed(0)+'%' : '—';
+      var pP = d.pagos||0, pN = d.negoc||0, pE = d.entrada||0, pD = d.desistiu||0;
+      var denomConv = pP + pN + pE;
+      var denomFinal = denomConv + pD;
       return cab
+        + '👥 Clientes considerados: '+(denomConv+pD)+' (pagos='+pP+' · negoc='+pN+' · entrada='+pE+' · desistiu='+pD+')\n\n'
         + '• Conversão (oficial): '+conv+' (time: '+convT+')\n'
-        + '  fórmula: pagos ÷ (pagos+negoc+entrada)\n'
-        + '• Ticket médio: '+tk+' (time: '+tkT+')\n'
+        + '  fórmula: pagos ÷ (pagos+negoc+entrada) = '+pP+' ÷ ('+pP+'+'+pN+'+'+pE+') = '+pP+' ÷ '+denomConv+'\n'
+        + '• Ticket médio: '+tk+' (média de '+pP+' venda'+(pP!==1?'s':'')+' paga'+(pP!==1?'s':'')+') · time: '+tkT+'\n'
         + '• Ticket relativo: '+ratio+'×\n'
         + '• Score = 70% conversão + 30% ticket relativo\n\n'
         + '⚠ Sinal complementar — Taxa de perda na negociação: '+tp+'\n'
-        + '  fórmula: desistiu ('+(d.desistiu||0)+') ÷ (pagos+negoc+entrada+desistiu)\n'
+        + '  fórmula: desistiu ('+pD+') ÷ (pagos+negoc+entrada+desistiu) = '+pD+' ÷ '+denomFinal+'\n'
         + '  → NÃO entra no score, mas alerta para clientes que escaparam\n\n'
         + '🧮 Conversão FINAL combinada com taxa de perda: '+cc+'\n'
-        + '  fórmula: pagos ÷ (pagos+negoc+entrada+desistiu)\n'
+        + '  fórmula: pagos ÷ (pagos+negoc+entrada+desistiu) = '+pP+' ÷ '+denomFinal+'\n'
         + '  = conversão × (1 − taxa de perda) → '+conv+' × (1 − '+tp+') = '+cc+'\n\n'
         + 'Sinal: '+(d.auto>=8?'fecha bem e mantém ticket':d.auto>=6?'fecha médio':'gargalo no fechamento ou descontos demais');
     }
     if(key==='fup'){
       return cab
+        + '👥 Clientes considerados: '+d.totalNeg+' em negociação no escopo\n\n'
         + '• Negociações ativas: '+d.totalNeg+'\n'
         + '• Paradas há > 14 dias: '+d.parados+'\n'
         + '• Score = 10 − (2 × paradas), mínimo 1\n\n'
@@ -723,6 +730,7 @@
     if(key==='const'){
       var p = d.totalComMeta>0 ? Math.round(d.batidos/d.totalComMeta*100)+'%' : '—';
       return cab
+        + '📅 Meses considerados: '+d.totalComMeta+' (com meta configurada)\n\n'
         + '• Meses com meta configurada: '+d.totalComMeta+'\n'
         + '• Meses na meta (≥ Mínima): '+d.batidos+'\n'
         + '• Constância: '+p+'\n'
@@ -731,6 +739,7 @@
     }
     if(key==='mix'){
       return cab
+        + '👥 Clientes considerados: '+d.pagos+' pagos no escopo\n\n'
         + '• Pagos no mês: '+d.pagos+'\n'
         + '• Treinamentos distintos: '+d.distintos+'\n'
         + '• Curva: 1=4 · 2=6 · 3=7 · 4=8 · 5=9 · 7+=10\n\n'
@@ -739,6 +748,7 @@
     if(key==='apr'){
       var pp = d.pct!=null ? (d.pct*100).toFixed(0)+'%' : '—';
       return cab
+        + '👥 Clientes considerados: '+d.total+' totais na carteira\n\n'
         + '• Pagos: '+d.pagos+'\n'
         + '• Total da carteira: '+d.total+'\n'
         + '• Aproveitamento: '+pp+'\n'
@@ -749,7 +759,12 @@
       var pres = d.preserv!=null ? (d.preserv*100).toFixed(0)+'%' : '—';
       var pot  = d.cobertura!=null ? (d.cobertura*100).toFixed(0)+'%' : '—';
       var rec  = d.recup!=null ? (d.recup*100).toFixed(0)+'%' : '—';
+      var totalQual = (_metricasCache && _metricasCache.metricas.qual && _metricasCache.metricas.qual.total) || 0;
       return cab
+        + '👥 Universos considerados:\n'
+        + '   • Preservação: '+totalQual+' clientes no escopo · '+(d.perdidos||0)+' perdidos (desistiu+sem-status)\n'
+        + '   • Potencial: pipeline cultivado R$ '+Math.round((d.rPag||0)+(d.rNeg||0)+(d.rEnt||0)).toLocaleString('pt-BR')+' vs meta R$ '+Math.round(d.metaBas||0).toLocaleString('pt-BR')+'\n'
+        + '   • Recuperação: '+(d.clienAntigosVivos||0)+' vivos de '+(d.clienAntigos||0)+' clientes em turmas anteriores\n\n'
         + 'Combinação ponderada de 3 sinais:\n\n'
         + '🛡 Preservação (40%): '+pres+'\n'
         + '   1 − (desistiu + sem-status) ÷ total\n'
