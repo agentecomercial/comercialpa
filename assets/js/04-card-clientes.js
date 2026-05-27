@@ -43,8 +43,16 @@ function cardCellChange(el){
   }
   if(typeof markUnsaved==='function') markUnsaved();
   if(typeof saveStorage==='function') saveStorage();
-  // Re-render parcial: atualiza métricas sem redesenhar toda a tabela
-  _cardAtualizarMetricas();
+  /* Mudanças em treinamento/treinador/consultor/status podem alterar o
+     conjunto filtrado (e portanto os índices data-ri). Re-render completo
+     da tabela garante data-ri sempre alinhado com o data[] real e impede
+     o bug "mexi no status de um e parece que mexeu em outro". */
+  if(campo === 'status' || campo === 'treinamento' || campo === 'treinador' || campo === 'consultor'){
+    if(typeof renderAll === 'function') renderAll();
+    else _cardAtualizarMetricas();
+  } else {
+    _cardAtualizarMetricas();
+  }
 }
 
 /* Atualiza data[] ao mudar um input numérico (valor, entrada) */
@@ -62,7 +70,10 @@ function cardNumChange(el){
   }
   if(typeof markUnsaved==='function') markUnsaved();
   if(typeof saveStorage==='function') saveStorage();
-  _cardAtualizarMetricas();
+  /* Entrada/valor podem afetar filtros (ex: filtro "entrada" usa entrada>0).
+     Re-render mantém a tabela consistente. */
+  if(typeof renderAll === 'function') renderAll();
+  else _cardAtualizarMetricas();
 }
 
 /* Cor do input de valor por faixa de ticket */
