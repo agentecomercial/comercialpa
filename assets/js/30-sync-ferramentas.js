@@ -561,26 +561,22 @@ function _mapRenderConsultores(registros) {
 
   var maxVal = lista[0].total || 1;
   var medals = ['🥇', '🥈', '🥉'];
+  var coresBarra = ['#22d3ee','#fb923c','#facc15','#ff5f57','#a78bfa','#34d399','#60a5fa','#c8f05a'];
   el.innerHTML = lista.map(function(c, i) {
-    var pct = totalGeral > 0 ? ((c.total / totalGeral) * 100).toFixed(1) : '0.0';
+    var pct = totalGeral > 0 ? Math.round((c.total / totalGeral) * 100) : 0;
     var bw  = Math.round((c.total / maxVal) * 100);
-    var cor = i === 0 ? '#c8f05a' : i === 1 ? 'var(--blue)' : i === 2 ? 'var(--amber)' : 'var(--muted)';
     var ativo = f && f.cons === c.nome;
-    var classe = 'map-row-click' + (ativo ? ' ativo' : '');
-    return '<div class="'+classe+'" onclick="_mapToggleConsultor(\''+_mapEscAttr(c.nome)+'\')" title="Filtrar por '+c.nome+'" style="padding:12px 14px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border2);">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-      + '<div style="display:flex;align-items:center;gap:8px;">'
-      + '<span style="font-size:16px;">' + (medals[i] || (i + 1) + 'º') + '</span>'
-      + '<span style="font-weight:700;font-size:13px;color:var(--text);">' + c.nome + '</span>'
-      + '<span style="font-size:11px;color:var(--muted);">' + c.qtd + ' cliente' + (c.qtd !== 1 ? 's' : '') + '</span>'
-      + '</div>'
-      + '<div style="text-align:right;">'
-      + '<div style="font-size:15px;font-weight:800;color:' + cor + ';">' + formatVal(c.total) + '</div>'
-      + '<div style="font-size:10px;color:var(--muted);">' + pct + '% do total</div>'
-      + '</div></div>'
-      + '<div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">'
-      + '<div style="height:100%;width:' + bw + '%;background:' + cor + ';border-radius:3px;transition:width .4s;"></div>'
-      + '</div></div>';
+    var classe = 'np-cons-row' + (ativo ? ' ativo' : '');
+    var prefix = (medals[i] || (i + 1) + 'º') + ' ';
+    var cor = coresBarra[i % coresBarra.length];
+    var pctClass = pct >= 70 ? 'txt-green' : pct >= 40 ? 'txt-amber' : 'txt-red';
+    return '<div class="'+classe+'" onclick="_mapToggleConsultor(\''+_mapEscAttr(c.nome)+'\')" title="Filtrar por '+c.nome+'">'
+      + '<div class="np-cons-nome">' + prefix + c.nome + '</div>'
+      + '<div class="np-cons-bar"><div class="np-cons-bar-fill" style="width:'+bw+'%;background:'+cor+';"></div></div>'
+      + '<div class="np-cons-val">' + formatVal(c.total) + '</div>'
+      + '<div class="np-cons-pct ' + pctClass + '">' + pct + '%</div>'
+      + '<div class="np-cons-meta">' + c.qtd + ' cliente' + (c.qtd !== 1 ? 's' : '') + '</div>'
+      + '</div>';
   }).join('');
 }
 
