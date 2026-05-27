@@ -1273,24 +1273,20 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .fb-ciclo-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3);}
 
 /* ── Alertas estratégicos + Pareto (Fase 6) ── */
-.ic-alertas-box{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin:0 0 18px;}
+.ic-alertas-box{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px;margin:0 0 18px;}
 .ic-alertas-box:empty{margin:0;}
 .ic-alerta{background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--muted);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;transition:transform .12s, box-shadow .12s;}
 .ic-alerta:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2);}
 .ic-alerta.critico{border-left-color:var(--red);background:rgba(255,95,87,.05);}
-.ic-alerta.atencao{border-left-color:var(--amber);background:rgba(255,183,64,.04);}
-.ic-alerta.info{border-left-color:var(--blue);background:rgba(96,165,250,.04);}
-.ic-alerta.ok{border-left-color:var(--green);background:rgba(52,211,153,.04);}
+.ic-alerta.atencao{border-left-color:var(--amber);background:rgba(255,183,64,.05);}
+.ic-alerta.info{border-left-color:var(--blue);background:rgba(96,165,250,.05);}
+.ic-alerta.ok{border-left-color:var(--green);background:rgba(52,211,153,.05);}
 .ic-alerta-h{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.ic-alerta-titulo{font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.04em;}
-.ic-alerta-tag{font-size:9px;font-weight:800;padding:2px 7px;border-radius:8px;text-transform:uppercase;letter-spacing:.05em;}
-.ic-alerta.critico .ic-alerta-tag{background:rgba(255,95,87,.14);color:var(--red);}
-.ic-alerta.atencao .ic-alerta-tag{background:rgba(255,183,64,.14);color:var(--amber);}
-.ic-alerta.info .ic-alerta-tag{background:rgba(96,165,250,.14);color:var(--blue);}
-.ic-alerta.ok .ic-alerta-tag{background:rgba(52,211,153,.14);color:var(--green);}
-.ic-alerta-msg{font-size:12px;color:var(--text);line-height:1.55;}
-.ic-alerta-msg b{color:var(--text);}
-.ic-alerta-acao{font-size:10px;color:var(--muted);margin-top:2px;font-style:italic;}
+.ic-alerta-titulo{font-size:13px;font-weight:800;color:var(--text);}
+.ic-alerta-tag{font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;background:var(--surface2);border-radius:10px;}
+.ic-alerta-msg{font-size:12px;color:#ddd;line-height:1.5;}
+.ic-alerta-msg b{color:var(--text);font-weight:700;}
+.ic-alerta-acao{font-size:11px;color:var(--muted);font-style:italic;margin-top:4px;padding-top:6px;border-top:1px dashed var(--border);}
 /* Pareto bars */
 .ic-pareto-row{display:grid;grid-template-columns:140px 1fr 70px 70px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
 .ic-pareto-row:last-child{border-bottom:none;}
