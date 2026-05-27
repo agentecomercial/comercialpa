@@ -182,10 +182,22 @@ function _mapCarregar(forcar) {
   /* REGRA GRANULAR — soma APENAS sub-treinamentos com status='pago'.
      Cliente em negociação com 1 sub pago entra com o valor desse sub.
      Mesma regra do KPI Faturado, filtro PAGO do card Clientes e tela Turmas.
-     Cada SUB pago vira 1 registro: { consultor, treinamento, valor, ano, mes, turmaId } */
-  window._fbGet(TURMAS_NODE).then(function(fbTurmas){
+     Cada SUB pago vira 1 registro: { consultor, treinamento, valor, ano, mes, turmaId, _src }
+
+     UNIFICAÇÃO COM PIPELINE COMERCIAL (fonte da verdade):
+     - turmas/* → registros com _src='turma'
+     - pipelineSales/* → vendas avulsas com status='pago' viram registros com _src='avulso'
+     - Schema idêntico entre as duas origens, garantindo que KPIs, Pareto, alertas
+       e dashboard executivo reflitam o total real do funil (Pipeline). */
+  Promise.all([
+    window._fbGet(TURMAS_NODE).catch(function(){return {};}),
+    window._fbGet('pipelineSales').catch(function(){return {};})
+  ]).then(function(res){
+    var fbTurmas       = res[0] || {};
+    var fbPipelineSales = res[1] || {};
     if (loading) loading.style.display = 'none';
-    if (!fbTurmas || !Object.keys(fbTurmas).length) {
+    if ((!fbTurmas || !Object.keys(fbTurmas).length) &&
+        (!fbPipelineSales || !Object.keys(fbPipelineSales).length)) {
       if (vazio) vazio.style.display = 'block';
       return;
     }
@@ -193,6 +205,7 @@ function _mapCarregar(forcar) {
     var registros = [];
     var anosSet   = new Set();
 
+    /* ── FONTE A: Turmas ─────────────────────────────── */
     Object.keys(fbTurmas).forEach(function(tid) {
       var t = fbTurmas[tid];
       if (!t) return;
@@ -225,7 +238,8 @@ function _mapCarregar(forcar) {
               valor:       Number(sub.valor || 0) || 0,
               ano:         ano,
               mes:         mes,
-              turmaId:     tid
+              turmaId:     tid,
+              _src:        'turma'
             });
           });
         } else {
@@ -237,18 +251,62 @@ function _mapCarregar(forcar) {
             valor:       Number(c.valor || 0) || 0,
             ano:         ano,
             mes:         mes,
-            turmaId:     tid
+            turmaId:     tid,
+            _src:        'turma'
           });
         }
       });
     });
 
-    _mapDados = registros;
+    /* ── FONTE B: Vendas avulsas (pipelineSales/{ym}/{id}) ── */
+    Object.keys(fbPipelineSales).forEach(function(ymKey){
+      var bucket = fbPipelineSales[ymKey];
+      if (!bucket || typeof bucket !== 'object') return;
+      Object.keys(bucket).forEach(function(vid){
+        var v = bucket[vid];
+        if (!v) return;
+        var status = String(v.status || '').toLowerCase().trim();
+        if (status !== 'pago') return;
 
-    /* Diagnóstico no console — para conferência rápida com a tela Turmas */
-    console.group('%c[Mapeamento] _mapCarregar — regra granular (subs pagos)', 'background:#c8f05a;color:#000;padding:2px 8px;font-weight:700;');
-    console.log('Sub-treinamentos pagos consolidados:', registros.length);
-    console.log('Soma total: R$ ' + registros.reduce(function(a,r){return a+r.valor;},0).toFixed(2));
+        /* ano/mes — prioridade: v.data (YYYY-MM-DD) → v.mes (YYYY-MM) → key ymKey */
+        var ano = 0, mes = 0;
+        var src = String(v.data || v.mes || ymKey || '');
+        if (src){
+          var p = src.split('-');
+          ano = parseInt(p[0]) || 0;
+          mes = parseInt(p[1]) || 0;
+        }
+        if (ano > 0) anosSet.add(ano);
+
+        var consultor = String(v.consultorNome || v.consultor || '—').trim().toUpperCase();
+        var produto   = String(v.produto || v.treinamento || '—').trim().toUpperCase();
+        registros.push({
+          consultor:   consultor,
+          treinamento: produto,
+          valor:       Number(v.valor || 0) || 0,
+          ano:         ano,
+          mes:         mes,
+          turmaId:     null,
+          vendaId:     vid,
+          _src:        'avulso'
+        });
+      });
+    });
+
+    _mapDados = registros;
+    /* Expõe pro IC (43-ic-alertas, 47-ic-executivo) */
+    window._mapDados = registros;
+
+    /* Diagnóstico — conferência rápida com Turmas e Pipeline Comercial */
+    var qTurma  = registros.filter(function(r){return r._src==='turma';}).length;
+    var qAvulso = registros.filter(function(r){return r._src==='avulso';}).length;
+    var sTurma  = registros.filter(function(r){return r._src==='turma';}).reduce(function(a,r){return a+r.valor;},0);
+    var sAvulso = registros.filter(function(r){return r._src==='avulso';}).reduce(function(a,r){return a+r.valor;},0);
+    console.group('%c[Mapeamento] _mapCarregar — turmas + avulsas (Pipeline = fonte da verdade)', 'background:#c8f05a;color:#000;padding:2px 8px;font-weight:700;');
+    console.log('Total de registros pagos:', registros.length, '(turma: '+qTurma+' · avulso: '+qAvulso+')');
+    console.log('Soma turmas:  R$ ' + sTurma.toFixed(2));
+    console.log('Soma avulsas: R$ ' + sAvulso.toFixed(2));
+    console.log('Soma total:   R$ ' + (sTurma + sAvulso).toFixed(2));
     console.groupEnd();
 
     // Popular select de anos (2026 em diante)
