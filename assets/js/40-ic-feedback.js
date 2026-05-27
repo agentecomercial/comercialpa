@@ -93,6 +93,13 @@
     document.getElementById('fbNotaAuto').addEventListener('input', _icFbColetaDoc);
     _icFbRenderComps();
     _icFbRenderRadar();
+    /* Inicializa a janela default (3 meses) e marca o chip */
+    if(window._icFbJanelaMeses == null) window._icFbJanelaMeses = 3;
+    document.querySelectorAll('.fb-jan').forEach(function(b){
+      b.classList.toggle('active', +b.getAttribute('data-jan') === window._icFbJanelaMeses);
+    });
+    var info = document.getElementById('fbJanInfo');
+    if(info && window._icFbJanelaMeses === 3) info.textContent = 'últimos 3 meses (incluindo o do ciclo)';
   }
 
   /* Popular o select de consultores. Carrega de window._npUsuarios se já
@@ -213,21 +220,37 @@
 
   /* Achata um conjunto de turmas + vendas avulsas num array uniforme:
      [{consultor, cliente, treinamento, valor, status, entrada, data, src}] */
-  /* Decide se o mês alvo está "dentro" de uma turma.
-     Inclui: turma cujo periodStart é o mês, OU turma em andamento
-     (mês alvo entre periodStart e periodEnd), OU mesMeta = mês alvo.
-     Antes só pegava turmas cujo periodStart batia exatamente — vendas
-     de turmas longas (ex: BHP Abr→Jun) sumiam no mês de Maio. */
+  /* Decide se uma turma entra no escopo de análise.
+     A janela de análise é controlada por window._icFbJanelaMeses:
+       0  → só mês do ciclo (snapshot mensal estrito)
+       N  → últimos N meses até o mês do ciclo (inclusive)
+       -1 → tudo (cumulativo: qualquer turma com periodStart <= mês alvo)
+     Default = 3 meses (cobre o ciclo + 2 anteriores). */
   function _icFbMesNaTurma(mesAlvo, t){
     if(!mesAlvo) return true;
     var ps = (t.periodStart||'').slice(0,7);
     var pe = (t.periodEnd||'').slice(0,7);
     var mm = String(t.mesMeta||'').slice(0,7);
-    if(mm && mm === mesAlvo) return true;          /* mesMeta explícito casa */
-    if(ps && pe) return mesAlvo >= ps && mesAlvo <= pe;  /* mês dentro do range */
-    if(ps && !pe) return ps === mesAlvo;            /* só início → exato */
-    if(!ps && pe) return pe === mesAlvo;            /* só fim → exato */
-    return true;                                    /* sem info → inclui */
+    var janela = window._icFbJanelaMeses;
+    if(janela == null) janela = 3;
+    /* Mínimo do range = mesAlvo - (janela-1) meses; se -1 = sem mínimo */
+    var minMes = null;
+    if(janela > 0){
+      minMes = _icFbAddMeses(mesAlvo, -(janela - 1));
+    } else if(janela === 0){
+      minMes = mesAlvo;
+    } /* -1 = sem mínimo (tudo) */
+    function _passaMin(m){ return !minMes || m >= minMes; }
+    /* Casa explícito por mesMeta */
+    if(mm && mm >= (minMes||'0000-00') && mm <= mesAlvo) return true;
+    /* Range completo: alguma parte da turma cai dentro da janela */
+    if(ps && pe){
+      /* turma cobre [ps,pe]; janela cobre [minMes,mesAlvo]; há intersecção se ps<=mesAlvo e pe>=minMes */
+      return ps <= mesAlvo && (!minMes || pe >= minMes);
+    }
+    if(ps && !pe) return ps <= mesAlvo && _passaMin(ps);
+    if(!ps && pe) return pe <= mesAlvo && _passaMin(pe);
+    return true; /* sem info → inclui */
   }
   function _icFbAchatar(turmas, vendasAvulso, mesAlvo){
     var itens = [];
@@ -296,27 +319,45 @@
     return itens;
   }
 
-  /* Carrega tudo que é necessário pra calcular: vendas do mês alvo + 6 meses
-     anteriores (para Constância) + goals do mês. Retorna Promise. */
+  /* Carrega dados: turmas (inteiras) + pipelineSales de TODOS os meses da
+     janela + pipelineGoals dos últimos 6 (para Constância). Retorna Promise.
+     A janela de meses respeita window._icFbJanelaMeses (default 3). */
   function _icFbLoadDados(dataYmd){
     if(typeof window._fbGet !== 'function') return Promise.resolve(null);
     var mesAlvo = _icFbMesKey(dataYmd);
-    /* Em vez de fazer N requests, lê turmas inteira (geralmente cabe) +
-       pipelineSales do mês + N pipelineGoals (1 por mês últimos 6). */
+    var janela = window._icFbJanelaMeses;
+    if(janela == null) janela = 3;
+    var mesesAvulso = [];
+    if(janela === -1){
+      /* Carrega até 24 meses para trás como aproximação de "tudo" */
+      for(var i=0;i<24;i++) mesesAvulso.push(_icFbAddMeses(dataYmd, -i));
+    } else if(janela === 0){
+      mesesAvulso = [mesAlvo];
+    } else {
+      for(var i=0;i<janela;i++) mesesAvulso.push(_icFbAddMeses(dataYmd, -i));
+    }
     var meses6 = [];
     for(var i=0;i<6;i++) meses6.push(_icFbAddMeses(dataYmd, -i));
     return Promise.all([
       window._fbGet('turmas').catch(function(){return {};}),
-      window._fbGet('pipelineSales/'+mesAlvo).catch(function(){return {};}),
+      Promise.all(mesesAvulso.map(function(mk){
+        return window._fbGet('pipelineSales/'+mk).then(function(d){return d||{};}).catch(function(){return {};});
+      })),
       Promise.all(meses6.map(function(mk){
         return window._fbGet('pipelineGoals/'+mk).then(function(g){return {mes:mk,goals:g||{}};}).catch(function(){return {mes:mk,goals:{}};});
       }))
     ]).then(function(res){
+      /* Achata todas as avulsas em um único objeto (compatível com schema antigo) */
+      var avulsoMerge = {};
+      (res[1]||[]).forEach(function(mesData){
+        Object.assign(avulsoMerge, mesData);
+      });
       return {
         mesAlvo: mesAlvo,
         turmas: res[0]||{},
-        vendasAvulso: res[1]||{},
-        goalsHist: res[2]||[]
+        vendasAvulso: avulsoMerge,
+        goalsHist: res[2]||[],
+        janela: janela
       };
     });
   }
@@ -1176,6 +1217,25 @@
     var m = document.getElementById('fbDetModal');
     if(m) m.classList.remove('show');
   };
+  /* Janela de análise: escolhe quantos meses para trás considerar.
+     0 = só mês do ciclo · 3/6/12 = últimos N meses · -1 = tudo (até 24m) */
+  window._fbSetJanela = function(meses){
+    window._icFbJanelaMeses = meses;
+    /* visual: marca o chip ativo */
+    document.querySelectorAll('.fb-jan').forEach(function(b){
+      b.classList.toggle('active', +b.getAttribute('data-jan') === meses);
+    });
+    var info = document.getElementById('fbJanInfo');
+    if(info){
+      var txt = meses === 0 ? 'apenas o mês do ciclo'
+              : meses === -1 ? 'todos os meses disponíveis (até 24)'
+              : 'últimos '+meses+' meses (incluindo o do ciclo)';
+      info.textContent = txt;
+    }
+    /* Recalcula sugestões e re-renderiza */
+    _icFbAtualizarSugestoes();
+  };
+
   /* Aproveitamento: alterna a inclusão de uma origem (turma/avulso) */
   window._fbAprToggleSrc = function(src){
     if(!window._fbAprSrcs || !window._fbAprSrcs.size){
