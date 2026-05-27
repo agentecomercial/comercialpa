@@ -3089,10 +3089,10 @@ body{overflow-x:hidden;}
 .pb-header{margin-bottom:20px;}
 .pb-cat-chip{
   background:var(--surface2);border:1px solid var(--border2);color:var(--text);
-  border-radius:14px;padding:5px 11px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;
-  transition:all .12s;white-space:nowrap;
+  border-radius:14px;padding:8px 14px;font-size:11.5px;font-weight:700;font-family:inherit;cursor:pointer;
+  transition:all .14s;white-space:nowrap;
 }
-.pb-cat-chip:hover{border-color:rgba(200,240,90,.4);}
+.pb-cat-chip:hover{border-color:rgba(200,240,90,.4);background:var(--surface);}
 .pb-cat-chip.active{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
 
 .pb-btn{
@@ -3195,11 +3195,17 @@ body{overflow-x:hidden;}
 
 .cb-est-chip, .cb-per-chip{
   background:var(--surface2);border:1px solid var(--border2);color:var(--text);
-  border-radius:14px;padding:5px 11px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;
-  transition:all .12s;white-space:nowrap;
+  border-radius:14px;padding:8px 14px;font-size:11.5px;font-weight:700;font-family:inherit;cursor:pointer;
+  transition:all .14s;white-space:nowrap;
 }
-.cb-est-chip:hover, .cb-per-chip:hover{border-color:rgba(200,240,90,.4);}
+.cb-est-chip:hover, .cb-per-chip:hover{border-color:rgba(200,240,90,.4);background:var(--surface);}
 .cb-est-chip.active, .cb-per-chip.active{background:rgba(200,240,90,.14);border-color:var(--accent);color:var(--accent);}
+
+/* Inputs/Selects dos filtros do Playbook e Cobrança — mesma altura dos chips */
+#pbBusca, #pbProdFiltro, #cbBusca, #cbConsultorFiltro{
+  padding:8px 12px;font-size:11.5px;font-weight:600;border-radius:14px;
+}
+#pbBusca, #cbBusca{min-height:36px;}
 
 .cb-btn{
   background:var(--surface2);border:1px solid var(--border2);color:var(--text);
