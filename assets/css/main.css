@@ -3559,6 +3559,68 @@ textarea.pb-input{resize:vertical;font-family:inherit;line-height:1.5;}
 .np-cons-meta b{color:var(--text);font-weight:700;}
 
 /* ══════════════════════════════════════════════════════════════
+   .fpc-tbl — Tabela compacta · alta densidade
+   (Faturamento por Consultor — variante "Tabela compacta")
+   ══════════════════════════════════════════════════════════════ */
+.fpc-tbl{
+  width:100%;border-collapse:separate;border-spacing:0;
+  font-family:'DM Sans',sans-serif;font-size:12px;
+}
+.fpc-tbl thead th{
+  font-size:9.5px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.08em;
+  text-align:left;padding:10px 8px;
+  border-bottom:1px solid var(--border2);
+  white-space:nowrap;background:var(--surface);
+  position:sticky;top:0;z-index:1;
+}
+.fpc-tbl thead th.r{text-align:right;}
+.fpc-tbl tbody td{
+  padding:11px 8px;
+  border-bottom:1px solid var(--border);
+  vertical-align:middle;
+}
+.fpc-row{cursor:pointer;transition:background .12s;}
+.fpc-row:hover td{background:var(--surface2);}
+.fpc-row.ativo td{background:var(--accent-dim);}
+
+.fpc-rk{
+  font-weight:700;color:var(--muted);width:36px;text-align:center;
+  font-variant-numeric:tabular-nums;font-size:11px;
+}
+.fpc-nome{
+  font-weight:700;color:var(--text);letter-spacing:.04em;
+  white-space:nowrap;font-size:12px;
+}
+.fpc-medal{font-size:14px;margin-right:2px;}
+.fpc-prog{min-width:160px;width:100%;}
+.fpc-bar{
+  height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;
+  min-width:120px;
+}
+.fpc-bar-fill{height:100%;border-radius:3px;transition:width .4s;}
+.fpc-val{
+  text-align:right;font-variant-numeric:tabular-nums;
+  font-weight:800;font-size:13px;letter-spacing:-.2px;white-space:nowrap;
+}
+.fpc-pct{
+  text-align:right;font-variant-numeric:tabular-nums;
+  font-weight:800;font-size:12px;white-space:nowrap;
+}
+.fpc-meta{
+  text-align:right;font-variant-numeric:tabular-nums;
+  color:var(--muted);font-weight:500;font-size:11px;white-space:nowrap;
+}
+.fpc-falta{
+  text-align:right;font-variant-numeric:tabular-nums;
+  font-weight:700;font-size:12px;white-space:nowrap;
+}
+.fpc-pct.txt-green,.fpc-falta.txt-green,.fpc-val.txt-green{color:var(--green);}
+.fpc-pct.txt-amber,.fpc-falta.txt-amber{color:var(--amber);}
+.fpc-pct.txt-red,.fpc-falta.txt-red{color:var(--red);}
+.fpc-pct.muted,.fpc-falta.muted{color:var(--muted);font-weight:500;}
+
+/* ══════════════════════════════════════════════════════════════
    Matriz Consultor × Treinamento (#mapCorrelacaoTable .map-mtx)
    ══════════════════════════════════════════════════════════════ */
 table.map-mtx{

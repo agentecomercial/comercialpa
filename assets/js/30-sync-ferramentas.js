@@ -562,22 +562,50 @@ function _mapRenderConsultores(registros) {
   var maxVal = lista[0].total || 1;
   var medals = ['🥇', '🥈', '🥉'];
   var coresBarra = ['#22d3ee','#fb923c','#facc15','#ff5f57','#a78bfa','#34d399','#60a5fa','#c8f05a'];
-  el.innerHTML = lista.map(function(c, i) {
-    var pct = totalGeral > 0 ? Math.round((c.total / totalGeral) * 100) : 0;
-    var bw  = Math.round((c.total / maxVal) * 100);
+  /* Tenta puxar metas do Pipeline (window._npGoals) se disponível */
+  var goals = (typeof window._npGoals === 'object' && window._npGoals) ? window._npGoals : {};
+
+  var html = '<table class="fpc-tbl">'
+    + '<thead><tr>'
+    +   '<th>#</th>'
+    +   '<th>Consultor</th>'
+    +   '<th>Progresso</th>'
+    +   '<th class="r">Faturado</th>'
+    +   '<th class="r">%</th>'
+    +   '<th class="r">Meta</th>'
+    +   '<th class="r">Falta</th>'
+    + '</tr></thead><tbody>';
+
+  lista.forEach(function(c, i){
     var ativo = f && f.cons === c.nome;
-    var classe = 'np-cons-row' + (ativo ? ' ativo' : '');
-    var prefix = (medals[i] || (i + 1) + 'º') + ' ';
+    var medal = medals[i] || '';
     var cor = coresBarra[i % coresBarra.length];
-    var pctClass = pct >= 70 ? 'txt-green' : pct >= 40 ? 'txt-amber' : 'txt-red';
-    return '<div class="'+classe+'" onclick="_mapToggleConsultor(\''+_mapEscAttr(c.nome)+'\')" title="Filtrar por '+c.nome+'">'
-      + '<div class="np-cons-nome">' + prefix + c.nome + '</div>'
-      + '<div class="np-cons-bar"><div class="np-cons-bar-fill" style="width:'+bw+'%;background:'+cor+';"></div></div>'
-      + '<div class="np-cons-val">' + formatVal(c.total) + '</div>'
-      + '<div class="np-cons-pct ' + pctClass + '">' + pct + '%</div>'
-      + '<div class="np-cons-meta">' + c.qtd + ' cliente' + (c.qtd !== 1 ? 's' : '') + '</div>'
-      + '</div>';
-  }).join('');
+    var bw  = Math.round((c.total / maxVal) * 100);
+    var pctTotal = totalGeral > 0 ? Math.round((c.total / totalGeral) * 100) : 0;
+
+    /* Meta vem do Pipeline goals (se houver registro pra esse consultor) */
+    var g = goals[c.nome] || {};
+    var meta = +(g.metaMinima || g.metaValor || g.metaBasica || 0);
+    var temMeta = meta > 0;
+    var pctMeta = temMeta ? Math.round((c.total / meta) * 100) : null;
+    var falta = temMeta ? Math.max(0, meta - c.total) : null;
+
+    var pctClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : pctMeta >= 70 ? 'txt-amber' : 'txt-red';
+    var pctDisp = !temMeta ? (pctTotal + '%') : (pctMeta + '%');
+    var faltaClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : 'txt-amber';
+
+    html += '<tr class="fpc-row'+(ativo?' ativo':'')+'" onclick="_mapToggleConsultor(\''+_mapEscAttr(c.nome)+'\')" title="Filtrar por '+c.nome+'">'
+      + '<td class="fpc-rk">' + (i+1) + '</td>'
+      + '<td class="fpc-nome">' + (medal ? '<span class="fpc-medal">'+medal+'</span> ' : '') + c.nome + '</td>'
+      + '<td class="fpc-prog"><div class="fpc-bar"><div class="fpc-bar-fill" style="width:'+bw+'%;background:'+cor+';"></div></div></td>'
+      + '<td class="fpc-val txt-green">' + formatVal(c.total) + '</td>'
+      + '<td class="fpc-pct ' + pctClass + '">' + pctDisp + '</td>'
+      + '<td class="fpc-meta">' + (temMeta ? formatVal(meta) : 'sem meta') + '</td>'
+      + '<td class="fpc-falta ' + faltaClass + '">' + (temMeta ? formatVal(falta) : '—') + '</td>'
+      + '</tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
 }
 
 function _mapRenderCorrelacao(registros) {
