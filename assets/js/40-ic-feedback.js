@@ -1152,29 +1152,37 @@
     /* ── Negociação ── */
     if(key === 'neg'){
       var pagos = itens.filter(function(it){return it.status==='pago';});
-      var negs = itens.filter(function(it){return it.status==='negociacao';});
-      var ents = itens.filter(function(it){return it.status==='entrada';});
+      var negs  = itens.filter(function(it){return it.status==='negociacao';});
+      var ents  = itens.filter(function(it){return it.status==='entrada';});
+      /* Soma de entradas (R$) — vem do campo it.entrada quando o sub tem entrada parcial */
+      var totalEntradas = ents.reduce(function(s,it){return s+(+it.entrada||0)+((+it.valor||0)*0);},0);
+      /* Se entrada não tiver valor próprio, usa it.valor como referência */
+      var totalEntradasVal = ents.reduce(function(s,it){
+        var v = +it.entrada || 0;
+        return s + (v > 0 ? v : (+it.valor || 0));
+      }, 0);
+      function tblNeg(arr, colVal){
+        return '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th class="val">'+colVal+'</th></tr></thead><tbody>'
+          + arr.map(function(it){
+              var v = (colVal === 'Entrada paga') ? ((+it.entrada||0) || (+it.valor||0)) : (+it.valor||0);
+              return '<tr><td class="nome">'+it.cliente+'</td><td>'+(it.treinamento||'—')+'</td><td>'+_srcTag(it.src, it.srcNome)+' <span style="font-size:11px;color:var(--muted);margin-left:4px;">'+_srcDescr(it)+'</span></td><td class="val">'+_fmtR(v)+'</td></tr>';
+            }).join('')
+          + '</tbody></table>';
+      }
       return formulaHtml
         + '<div class="fb-det-stats">'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos</div><div class="fb-det-stat-val green">'+(m.pagos||0)+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Em negociação</div><div class="fb-det-stat-val amber">'+(m.negoc||0)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Com entrada</div><div class="fb-det-stat-val" style="color:#ffb740;">'+(m.entrada||ents.length||0)+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Conversão</div><div class="fb-det-stat-val blue">'+(m.convMeu!=null?Math.round(m.convMeu*100)+'%':'—')+'</div></div>'
         +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Ticket médio</div><div class="fb-det-stat-val">'+(m.ticketMeu?_fmtR(m.ticketMeu):'—')+'</div></div>'
         + '</div>'
         + '<div class="fb-det-secao-h">✅ Pagos no mês ('+pagos.length+')</div>'
-        + (pagos.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th class="val">Valor</th></tr></thead><tbody>'
-            + pagos.map(function(it){
-                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src, it.srcNome)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
-              }).join('')
-            + '</tbody></table>'
-          : '<div class="fb-det-vazio">Nenhuma venda paga neste mês.</div>')
+        + (pagos.length ? tblNeg(pagos, 'Valor pago') : '<div class="fb-det-vazio">Nenhuma venda paga neste mês.</div>')
         + '<div class="fb-det-secao-h">🤝 Em negociação ('+negs.length+')</div>'
-        + (negs.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th class="val">Valor estimado</th></tr></thead><tbody>'
-            + negs.map(function(it){
-                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src, it.srcNome)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
-              }).join('')
-            + '</tbody></table>'
-          : '<div class="fb-det-vazio">Nenhuma negociação em curso.</div>');
+        + (negs.length ? tblNeg(negs, 'Valor estimado') : '<div class="fb-det-vazio">Nenhuma negociação em curso.</div>')
+        + '<div class="fb-det-secao-h">💵 Com entrada parcial ('+ents.length+(totalEntradasVal>0?' · '+_fmtR(totalEntradasVal):'')+')</div>'
+        + (ents.length ? tblNeg(ents, 'Entrada paga') : '<div class="fb-det-vazio">Nenhum cliente com entrada parcial.</div>');
     }
 
     /* ── Follow-up ── */
