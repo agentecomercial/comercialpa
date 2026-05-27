@@ -1274,6 +1274,64 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 
 /* ── Alertas estratégicos + Pareto (Fase 6) ── */
 /* ══════════════════════════════════════════════════════════════
+   Filtros + Atalhos rápidos do Dashboard IC
+   ══════════════════════════════════════════════════════════════ */
+.ic-filtros-wrap{
+  display:flex;flex-direction:column;gap:10px;
+  padding:16px 0 20px;border-bottom:1px solid var(--border);margin-bottom:24px;
+}
+.ic-filtros-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.ic-filtros-lbl{
+  font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;
+  font-weight:700;margin-right:4px;
+}
+.ic-atalho{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  border-radius:14px;padding:6px 13px;font-size:11.5px;font-weight:700;
+  font-family:inherit;cursor:pointer;transition:all .14s;white-space:nowrap;
+}
+.ic-atalho:hover{border-color:rgba(200,240,90,.4);background:var(--surface);}
+.ic-atalho.active{
+  background:rgba(200,240,90,.16);border-color:var(--accent);color:var(--accent);
+  box-shadow:0 0 0 1px rgba(200,240,90,.3) inset;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Painéis IC com hierarquia visual
+   ══════════════════════════════════════════════════════════════ */
+.tpanel.ic-panel{
+  border-radius:12px;padding:18px 20px;
+  transition:box-shadow .18s, border-color .18s;
+}
+.tpanel.ic-panel:hover{
+  box-shadow:0 6px 22px rgba(0,0,0,.18);
+  border-color:rgba(255,255,255,.16);
+}
+.ic-panel-h{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.ic-panel-h-l{display:flex;align-items:center;gap:12px;}
+.ic-panel-icone{
+  font-size:22px;line-height:1;
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  background:rgba(200,240,90,.10);border:1px solid rgba(200,240,90,.22);
+  border-radius:8px;flex-shrink:0;
+}
+.ic-panel-titulo{
+  font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.2px;
+  line-height:1.2;
+}
+.ic-panel-subt{
+  font-size:11px;color:var(--muted);font-weight:500;margin-top:2px;
+  letter-spacing:.02em;
+}
+.ic-panel-meta{
+  font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;font-weight:600;
+}
+
+/* ══════════════════════════════════════════════════════════════
    Hero do Dashboard IC
    ══════════════════════════════════════════════════════════════ */
 .ic-hero{

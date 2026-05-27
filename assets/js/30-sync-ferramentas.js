@@ -382,6 +382,60 @@ function _mapToggleMesTodos() {
   _mapFiltrar();
 }
 
+/* ── Atalhos rápidos de período ─────────────────────────
+   modo: 'mes' | 'trim' | 'sem' | 'ytd' | 'ano' | 'tudo'  */
+function _mapAtalho(modo){
+  var hoje = new Date();
+  var anoAtual = hoje.getFullYear();
+  var mesAtual = hoje.getMonth() + 1;
+  var meses = [];
+  var ano = anoAtual;
+
+  if(modo === 'mes'){
+    meses = [mesAtual];
+  } else if(modo === 'trim'){
+    var trimIni = Math.floor((mesAtual-1)/3)*3 + 1;
+    meses = [trimIni, trimIni+1, trimIni+2];
+  } else if(modo === 'sem'){
+    var semIni = mesAtual <= 6 ? 1 : 7;
+    meses = [];
+    for(var i=0; i<6; i++) meses.push(semIni + i);
+  } else if(modo === 'ytd'){
+    meses = [];
+    for(var m=1; m<=mesAtual; m++) meses.push(m);
+  } else if(modo === 'ano'){
+    meses = []; /* todos os meses do ano */
+  } else if(modo === 'tudo'){
+    ano = 0; meses = [];
+  }
+
+  /* Aplica ano */
+  var sel = document.getElementById('mapAno');
+  if(sel){
+    /* Se o ano selecionado não existe no select, mantém o atual */
+    var temAno = Array.prototype.some.call(sel.options, function(o){ return parseInt(o.value) === ano; });
+    if(temAno || ano === 0){
+      sel.value = String(ano);
+      _mapAnoSel = ano;
+    } else {
+      _mapAnoSel = parseInt(sel.value) || 0;
+    }
+  } else {
+    _mapAnoSel = ano;
+  }
+
+  _mapMesesSel = meses;
+  _mapAtualizarBotoesMes();
+
+  /* Highlight visual do atalho ativo */
+  document.querySelectorAll('.ic-atalho').forEach(function(b){
+    var on = (b.getAttribute('onclick')||'').indexOf("'"+modo+"'") >= 0;
+    b.classList.toggle('active', on);
+  });
+
+  _mapFiltrar();
+}
+
 function _mapAtualizarBotoesMes() {
   var todos = document.getElementById('mapMTodos');
   if (todos) todos.className = 'fbtn' + (_mapMesesSel.length === 0 ? ' active' : '');
