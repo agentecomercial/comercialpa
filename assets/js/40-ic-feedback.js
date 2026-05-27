@@ -396,16 +396,32 @@
     /* Aproveitamento */
     var aprScore = pctScore(apvPct);
 
+    /* Para drill-down: lista de negociações paradas com info de data */
+    var paradasItens = meus.filter(function(it){
+      if(it.status !== 'negociacao' || !it.data) return false;
+      try { return _icFbDiasEntre(it.data, hoje.toISOString().slice(0,10)) > 14; } catch(e){ return false; }
+    });
+    /* Para Constância: mês a mês */
+    var constHist = dados.goalsHist.map(function(gh){
+      var g = (gh.goals||{})[nome] || null;
+      var meta = g ? +(g.metaMinima||g.metaBasica||g.metaValor||0) : 0;
+      var realizado = +((g||{}).realizado||0);
+      if(gh.mes === dados.mesAlvo){
+        realizado = meus.filter(function(it){return it.status==='pago';}).reduce(function(s,it){return s+(+it.valor||0);},0);
+      }
+      return { mes: gh.mes, meta: meta, realizado: realizado, batido: meta > 0 && realizado >= meta };
+    });
+
     return {
       mes: dados.mesAlvo,
       metricas: {
         prosp: { auto: prospScore, meu: prospMeus, media: +(prospMedia.toFixed(1)) },
         qual:  { auto: qualScore,  pago: pagosMeus, negoc: negocMeus, aberto: abertosMeus, total: totalMeus, pct: qualPct },
         apres: { auto: null }, /* manual */
-        neg:   { auto: negScore,   convMeu: convMeu, convTime: convTime, ticketMeu: ticketMeu, ticketTime: ticketTime },
+        neg:   { auto: negScore,   convMeu: convMeu, convTime: convTime, ticketMeu: ticketMeu, ticketTime: ticketTime, pagos: pagosMeus, negoc: negocMeus, entrada: entradaMeus },
         fup:   { auto: fupScore,   parados: negParados, totalNeg: negocMeus },
         const: { auto: constScore, batidos: mesesNaMeta, totalComMeta: mesesComMeta },
-        mix:   { auto: mixScore,   distintos: nTrDistintos, pagos: pagosMeus },
+        mix:   { auto: mixScore,   distintos: nTrDistintos, pagos: pagosMeus, treinList: Object.keys(trDistintos) },
         apr:   { auto: aprScore,   pagos: pagosMeus, total: totalMeus, pct: apvPct }
       },
       contexto: {
@@ -414,7 +430,10 @@
         prospTime: prospTime,
         pagosTime: pagosTime,
         clientesParados: negParados
-      }
+      },
+      itens: meus,             /* todos os itens do consultor no mês alvo */
+      paradasItens: paradasItens,
+      constHist: constHist
     };
   }
 
@@ -436,14 +455,15 @@
       var slot = document.getElementById('fbSug'+i);
       if(!slot) return;
       var dado = m[c.key];
+      var detBtn = '<button class="fb-comp-info" onclick="_fbDetAbrir(\''+c.key+'\')" title="Ver os dados que originaram este score">🔍 Detalhes</button>';
       if(!c.auto || !dado || dado.auto == null){
-        slot.innerHTML = c.auto
+        slot.innerHTML = (c.auto
           ? '<span style="font-size:9px;color:var(--muted);">sem dado</span>'
-          : '<span style="font-size:9px;color:var(--muted);">qualitativa</span>';
+          : '<span style="font-size:9px;color:var(--muted);">qualitativa</span>') + detBtn;
         return;
       }
       var exp = (_icFbDetalheExplicacao(c.key, dado)||'').replace(/"/g,'&quot;');
-      slot.innerHTML = '<button class="fb-sug" data-tip="'+exp+'" onclick="_fbAceitarSug(\''+c.key+'\','+dado.auto+')">💡 '+dado.auto+'</button>';
+      slot.innerHTML = '<button class="fb-sug" data-tip="'+exp+'" onclick="_fbAceitarSug(\''+c.key+'\','+dado.auto+')">💡 '+dado.auto+'</button>' + detBtn;
     });
     /* Botão "Aplicar todas" no header da seção */
     var btn = document.getElementById('fbSugAll');
@@ -692,7 +712,9 @@
         +   '<div class="fb-comp-scale"><span>1</span><span>3</span><span>5</span><span>7</span><span>10</span></div>'
         + '</div>'
         + '<div class="fb-comp-val '+_lvClass(v)+'" id="fbCv'+i+'">'+v+'</div>'
-        + '<div class="fb-sug-slot" id="fbSug'+i+'"></div>'
+        + '<div class="fb-sug-slot" id="fbSug'+i+'">'
+        +   '<button class="fb-comp-info" onclick="_fbDetAbrir(\''+c.key+'\')" title="Ver os dados que originaram este score">🔍 Detalhes</button>'
+        + '</div>'
         + '</div>';
     }).join('');
     var list = document.getElementById('fbCompList');
@@ -997,6 +1019,239 @@
         + '</div>';
     });
     el.innerHTML = rows.join('');
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     MODAL DE DRILL-DOWN — mostra os dados que originaram cada score
+     ════════════════════════════════════════════════════════ */
+  window._fbDetFechar = function(){
+    var m = document.getElementById('fbDetModal');
+    if(m) m.classList.remove('show');
+  };
+
+  function _srcTag(src){
+    return '<span class="fb-det-src-tag '+(src==='turma'?'turma':'avulso')+'">'+(src==='turma'?'TURMA':'AVULSO')+'</span>';
+  }
+  function _stTag(st){
+    return '<span class="fb-det-st-tag '+st+'">'+st+'</span>';
+  }
+  function _fmtData(d){
+    if(!d) return '—';
+    var p = String(d).split('-');
+    return p.length===3 ? (p[2]+'/'+p[1]+'/'+p[0]) : d;
+  }
+  function _fmtR(v){
+    return 'R$ '+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  window._fbDetAbrir = function(compKey){
+    if(!_metricasCache){
+      if(typeof _showToast==='function') _showToast('⚠️ Selecione um consultor e aguarde o cálculo.','var(--amber)');
+      return;
+    }
+    var c = COMPS_DEF.find(function(x){return x.key===compKey;});
+    if(!c) return;
+    var dado = _metricasCache.metricas[compKey];
+    var score = (_doc && _doc.comps && _doc.comps[compKey]) || (dado && dado.auto) || '—';
+    var titulo = c.ico+' '+c.label;
+    document.getElementById('fbDetTitulo').innerHTML = titulo
+      + '  <span class="fb-det-h-score '+_lvClass(+score||0)+'">'+score+'</span>';
+    document.getElementById('fbDetBody').innerHTML = _icFbRenderDetalhe(compKey);
+    document.getElementById('fbDetModal').classList.add('show');
+  };
+
+  function _icFbRenderDetalhe(key){
+    var m = _metricasCache.metricas[key] || {};
+    var itens = _metricasCache.itens || [];
+    var ctx = _metricasCache.contexto || {};
+    var formulaHtml = '<div class="fb-det-formula">'+_icFbDetalheExplicacao(key, m)+'</div>';
+
+    /* ── Apresentação (qualitativa) ── */
+    if(key === 'apres'){
+      return '<div class="fb-det-formula">⚠ Esta competência é <b>qualitativa</b> — depende de observação direta do gestor (call gravada, role-play, presença em apresentação).\n\nO sistema não tem proxy automático limpo para ela hoje. Possíveis sinais indiretos para considerar manualmente:\n• Cliente faz mais perguntas que objeções na apresentação\n• Engajamento durante a demo\n• Storytelling: usa case real ou só slide?\n• Adapta o pitch para cada cliente?</div>';
+    }
+
+    /* ── Prospecção ── */
+    if(key === 'prosp'){
+      /* clientes únicos do consultor neste mês */
+      var unq = {};
+      itens.forEach(function(it){ if(it.cliente) unq[it.cliente] = it; });
+      var lista = Object.values(unq);
+      return formulaHtml
+        + '<div class="fb-det-stats">'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Clientes novos · meus</div><div class="fb-det-stat-val green">'+m.meu+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Média do time</div><div class="fb-det-stat-val">'+m.media+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Time total</div><div class="fb-det-stat-val">'+(ctx.prospTime||0)+'</div></div>'
+        + '</div>'
+        + '<div class="fb-det-secao-h">📋 Clientes únicos do consultor no mês ('+lista.length+')</div>'
+        + (lista.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Origem</th><th>1ª data</th><th>Status atual</th></tr></thead><tbody>'
+            + lista.map(function(it){
+                return '<tr>'
+                  + '<td class="nome">'+it.cliente+'</td>'
+                  + '<td>'+_srcTag(it.src)+'</td>'
+                  + '<td>'+_fmtData(it.data)+'</td>'
+                  + '<td>'+_stTag(it.status)+'</td>'
+                  + '</tr>';
+              }).join('')
+            + '</tbody></table>'
+          : '<div class="fb-det-vazio">Nenhum cliente prospectado neste mês.</div>');
+    }
+
+    /* ── Qualificação ── */
+    if(key === 'qual'){
+      var unq2 = {};
+      itens.forEach(function(it){
+        if(!unq2[it.cliente]) unq2[it.cliente] = it;
+        /* prioriza status mais avançado */
+        var ordem = {aberto:0, negociacao:1, entrada:2, pago:3};
+        if((ordem[it.status]||0) > (ordem[unq2[it.cliente].status]||0)) unq2[it.cliente] = it;
+      });
+      var lista = Object.values(unq2);
+      return formulaHtml
+        + '<div class="fb-det-stats">'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Total clientes</div><div class="fb-det-stat-val">'+m.total+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Em aberto</div><div class="fb-det-stat-val red">'+m.aberto+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Avançados</div><div class="fb-det-stat-val green">'+(m.total-m.aberto)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">% avançado</div><div class="fb-det-stat-val blue">'+(m.pct!=null?Math.round(m.pct*100)+'%':'—')+'</div></div>'
+        + '</div>'
+        + '<div class="fb-det-secao-h">📋 Todos os clientes do consultor no mês</div>'
+        + (lista.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Status</th><th>Origem</th><th class="val">Valor</th></tr></thead><tbody>'
+            + lista.sort(function(a,b){return (a.status==='aberto'?1:0)-(b.status==='aberto'?1:0);}).map(function(it){
+                return '<tr><td class="nome">'+it.cliente+'</td><td>'+_stTag(it.status)+'</td><td>'+_srcTag(it.src)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
+              }).join('')
+            + '</tbody></table>'
+          : '<div class="fb-det-vazio">Sem clientes neste mês.</div>');
+    }
+
+    /* ── Negociação ── */
+    if(key === 'neg'){
+      var pagos = itens.filter(function(it){return it.status==='pago';});
+      var negs = itens.filter(function(it){return it.status==='negociacao';});
+      var ents = itens.filter(function(it){return it.status==='entrada';});
+      return formulaHtml
+        + '<div class="fb-det-stats">'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos</div><div class="fb-det-stat-val green">'+(m.pagos||0)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Em negociação</div><div class="fb-det-stat-val amber">'+(m.negoc||0)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Conversão</div><div class="fb-det-stat-val blue">'+(m.convMeu!=null?Math.round(m.convMeu*100)+'%':'—')+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Ticket médio</div><div class="fb-det-stat-val">'+(m.ticketMeu?_fmtR(m.ticketMeu):'—')+'</div></div>'
+        + '</div>'
+        + '<div class="fb-det-secao-h">✅ Pagos no mês ('+pagos.length+')</div>'
+        + (pagos.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th class="val">Valor</th></tr></thead><tbody>'
+            + pagos.map(function(it){
+                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
+              }).join('')
+            + '</tbody></table>'
+          : '<div class="fb-det-vazio">Nenhuma venda paga neste mês.</div>')
+        + '<div class="fb-det-secao-h">🤝 Em negociação ('+negs.length+')</div>'
+        + (negs.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th class="val">Valor estimado</th></tr></thead><tbody>'
+            + negs.map(function(it){
+                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
+              }).join('')
+            + '</tbody></table>'
+          : '<div class="fb-det-vazio">Nenhuma negociação em curso.</div>');
+    }
+
+    /* ── Follow-up ── */
+    if(key === 'fup'){
+      var paradas = _metricasCache.paradasItens || [];
+      var hoje = new Date();
+      return formulaHtml
+        + '<div class="fb-det-stats">'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Negociações ativas</div><div class="fb-det-stat-val">'+(m.totalNeg||0)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Paradas > 14 dias</div><div class="fb-det-stat-val red">'+(m.parados||0)+'</div></div>'
+        + '</div>'
+        + '<div class="fb-det-secao-h">⏰ Negociações paradas > 14 dias ('+paradas.length+')</div>'
+        + (paradas.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th>Último update</th><th>Dias parado</th></tr></thead><tbody>'
+            + paradas.map(function(it){
+                var dias = '—';
+                try { dias = _icFbDiasEntre(it.data, hoje.toISOString().slice(0,10)); } catch(e){}
+                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src)+'</td><td>'+_fmtData(it.data)+'</td><td class="val" style="color:var(--red);">'+dias+'d</td></tr>';
+              }).join('')
+            + '</tbody></table>'
+          : '<div class="fb-det-vazio">✅ Nenhuma negociação parada — cadência saudável!</div>');
+    }
+
+    /* ── Constância ── */
+    if(key === 'const'){
+      var hist = _metricasCache.constHist || [];
+      return formulaHtml
+        + '<div class="fb-det-stats">'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Meses analisados</div><div class="fb-det-stat-val">'+(m.totalComMeta||0)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Bateu meta</div><div class="fb-det-stat-val green">'+(m.batidos||0)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">% atingimento</div><div class="fb-det-stat-val blue">'+(m.totalComMeta>0?Math.round(m.batidos/m.totalComMeta*100)+'%':'—')+'</div></div>'
+        + '</div>'
+        + '<div class="fb-det-secao-h">📅 Mês a mês (últimos 6)</div>'
+        + (hist.length ? '<table class="fb-det-tbl"><thead><tr><th>Mês</th><th class="val">Meta (Mínima)</th><th class="val">Realizado</th><th>Bateu?</th></tr></thead><tbody>'
+            + hist.slice().reverse().map(function(h){
+                return '<tr><td class="nome">'+h.mes+'</td><td class="val">'+_fmtR(h.meta)+'</td><td class="val">'+_fmtR(h.realizado)+'</td><td>'+(h.batido?'<span class="fb-det-st-tag pago">✓ SIM</span>':h.meta>0?'<span class="fb-det-st-tag aberto" style="color:var(--red);">✗ NÃO</span>':'<span class="fb-det-st-tag aberto">sem meta</span>')+'</td></tr>';
+              }).join('')
+            + '</tbody></table>'
+          : '<div class="fb-det-vazio">Sem histórico de metas configuradas.</div>');
+    }
+
+    /* ── Mix de produto ── */
+    if(key === 'mix'){
+      var pagos = itens.filter(function(it){return it.status==='pago';});
+      var porTrein = {};
+      pagos.forEach(function(it){
+        var t = it.treinamento || '—';
+        if(!porTrein[t]) porTrein[t] = { qtd:0, total:0, clientes:[] };
+        porTrein[t].qtd++;
+        porTrein[t].total += +it.valor||0;
+        porTrein[t].clientes.push(it.cliente);
+      });
+      var lista = Object.keys(porTrein).map(function(t){
+        return Object.assign({treinamento:t}, porTrein[t]);
+      });
+      return formulaHtml
+        + '<div class="fb-det-stats">'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Treinamentos distintos</div><div class="fb-det-stat-val blue">'+(m.distintos||0)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos totais</div><div class="fb-det-stat-val green">'+(m.pagos||0)+'</div></div>'
+        + '</div>'
+        + '<div class="fb-det-secao-h">🎒 Produtos vendidos no mês ('+lista.length+')</div>'
+        + (lista.length ? '<table class="fb-det-tbl"><thead><tr><th>Treinamento</th><th class="val">Qtd</th><th class="val">Total R$</th><th>Clientes</th></tr></thead><tbody>'
+            + lista.sort(function(a,b){return b.qtd-a.qtd;}).map(function(l){
+                return '<tr><td class="nome">'+l.treinamento+'</td><td class="val">'+l.qtd+'</td><td class="val">'+_fmtR(l.total)+'</td><td style="font-size:11px;color:var(--muted);">'+l.clientes.join(', ')+'</td></tr>';
+              }).join('')
+            + '</tbody></table>'
+          : '<div class="fb-det-vazio">Nenhuma venda paga neste mês.</div>');
+    }
+
+    /* ── Aproveitamento ── */
+    if(key === 'apr'){
+      /* lista de clientes do mês com status agrupado por cliente */
+      var unq3 = {};
+      itens.forEach(function(it){
+        if(!unq3[it.cliente]) unq3[it.cliente] = it;
+        var ordem = {aberto:0, negociacao:1, entrada:2, pago:3};
+        if((ordem[it.status]||0) > (ordem[unq3[it.cliente].status]||0)) unq3[it.cliente] = it;
+      });
+      var lista = Object.values(unq3);
+      var pagosL = lista.filter(function(it){return it.status==='pago';});
+      var naoPagos = lista.filter(function(it){return it.status!=='pago';});
+      return formulaHtml
+        + '<div class="fb-det-stats">'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Total carteira</div><div class="fb-det-stat-val">'+(m.total||0)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Pagos</div><div class="fb-det-stat-val green">'+(m.pagos||0)+'</div></div>'
+        +   '<div class="fb-det-stat"><div class="fb-det-stat-lbl">Aproveitamento</div><div class="fb-det-stat-val blue">'+(m.pct!=null?Math.round(m.pct*100)+'%':'—')+'</div></div>'
+        + '</div>'
+        + '<div class="fb-det-secao-h">✅ Quem pagou ('+pagosL.length+')</div>'
+        + (pagosL.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Treinamento</th><th>Origem</th><th class="val">Valor</th></tr></thead><tbody>'
+            + pagosL.map(function(it){
+                return '<tr><td class="nome">'+it.cliente+'</td><td>'+it.treinamento+'</td><td>'+_srcTag(it.src)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
+              }).join('')
+            + '</tbody></table>'
+          : '<div class="fb-det-vazio">Nenhum cliente pago no mês.</div>')
+        + '<div class="fb-det-secao-h">⏳ Quem não pagou ainda ('+naoPagos.length+')</div>'
+        + (naoPagos.length ? '<table class="fb-det-tbl"><thead><tr><th>Cliente</th><th>Status</th><th>Origem</th><th class="val">Valor estimado</th></tr></thead><tbody>'
+            + naoPagos.map(function(it){
+                return '<tr><td class="nome">'+it.cliente+'</td><td>'+_stTag(it.status)+'</td><td>'+_srcTag(it.src)+'</td><td class="val">'+_fmtR(it.valor)+'</td></tr>';
+              }).join('')
+            + '</tbody></table>'
+          : '<div class="fb-det-vazio">🎉 Todos os clientes da carteira pagaram!</div>');
+    }
+
+    return '<div class="fb-det-vazio">Sem detalhes disponíveis para esta competência.</div>';
   }
 
   /* ── Hook: quando abrir o Mapeamento, popular consultores
