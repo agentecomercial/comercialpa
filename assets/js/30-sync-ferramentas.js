@@ -602,20 +602,22 @@ function _mapRenderCorrelacao(registros) {
   var consultores = Array.from(new Set(registros.map(function(r){ return r.consultor; }))).sort();
 
   function _sortArrow(col){
-    if (_mapProdSortCol !== col) return '<span style="color:var(--border2);font-size:10px;margin-left:3px;">↕</span>';
+    if (_mapProdSortCol !== col) return '<span class="map-mtx-arrow inactive">↕</span>';
     return _mapProdSortDir === -1
-      ? '<span style="color:var(--accent);font-size:10px;margin-left:3px;">↓</span>'
-      : '<span style="color:var(--accent);font-size:10px;margin-left:3px;">↑</span>';
+      ? '<span class="map-mtx-arrow active">↓</span>'
+      : '<span class="map-mtx-arrow active">↑</span>';
   }
 
+  /* Marca a tabela com a classe para o CSS */
+  el.className = 'map-mtx';
   var html = '<thead><tr>'
-    + '<th style="text-align:left;min-width:120px;cursor:pointer;" onclick="_setMapProdSort(\'consultor\')">Consultor ' + _sortArrow('consultor') + '</th>';
+    + '<th class="map-mtx-th-cons" onclick="_setMapProdSort(\'consultor\')">Consultor ' + _sortArrow('consultor') + '</th>';
   produtos.forEach(function(p){
     var key = 'prod_' + p;
-    html += '<th style="text-align:center;white-space:nowrap;cursor:pointer;" onclick="_setMapProdSort(\'' + key + '\')">' + p + ' ' + _sortArrow(key) + '</th>';
+    html += '<th class="map-mtx-th-prod" onclick="_setMapProdSort(\'' + key + '\')">' + p + ' ' + _sortArrow(key) + '</th>';
   });
-  html += '<th style="text-align:center;white-space:nowrap;cursor:pointer;" onclick="_setMapProdSort(\'qtd\')">Total trein. ' + _sortArrow('qtd') + '</th>';
-  html += '<th style="text-align:center;white-space:nowrap;cursor:pointer;" onclick="_setMapProdSort(\'total\')">Total pago ' + _sortArrow('total') + '</th>';
+  html += '<th class="map-mtx-th-total" onclick="_setMapProdSort(\'qtd\')">Total trein. ' + _sortArrow('qtd') + '</th>';
+  html += '<th class="map-mtx-th-total" onclick="_setMapProdSort(\'total\')">Total pago ' + _sortArrow('total') + '</th>';
   html += '</tr></thead><tbody>';
 
   /* Pré-cálculo das linhas por consultor */
@@ -650,8 +652,8 @@ function _mapRenderCorrelacao(registros) {
   linhas.forEach(function(l){
     var rowAtivo = f && f.cons === l.c;
     var corNome = _mapEscAttr(l.c);
-    html += '<tr'+(rowAtivo?' class="map-cruz-row-ativo"':'')+'>'
-      + '<td onclick="_mapToggleConsultor(\''+corNome+'\')" title="Filtrar por '+l.c+'" class="map-cell-click" style="font-weight:600;text-align:left;text-transform:uppercase;white-space:nowrap;cursor:pointer;">' + l.c + '</td>';
+    html += '<tr class="map-mtx-row'+(rowAtivo?' map-mtx-row--ativo':'')+'">'
+      + '<td onclick="_mapToggleConsultor(\''+corNome+'\')" title="Filtrar por '+l.c+'" class="map-mtx-td-cons">' + l.c + '</td>';
     produtos.forEach(function(p){
       var v   = l.prodVals['prod_' + p] || 0;
       var qtd = l.prodVals['prod_' + p + '_qtd'] || 0;
@@ -660,38 +662,38 @@ function _mapRenderCorrelacao(registros) {
       if (qtd > 0) {
         var cellAtivo = f && f.tipo==='cruz' && f.cons===l.c && f.trein===p;
         var colAtivo  = f && f.trein===p && !cellAtivo;
-        var bg = cellAtivo ? 'background:rgba(200,240,90,.25);' : colAtivo ? 'background:rgba(200,240,90,.06);' : '';
+        var cls = 'map-mtx-cell' + (cellAtivo ? ' map-mtx-cell--ativa' : colAtivo ? ' map-mtx-cell--col-ativa' : '');
         var prodEsc = _mapEscAttr(p);
-        html += '<td onclick="_mapToggleCruz(\''+corNome+'\',\''+prodEsc+'\')" title="'+l.c+' × '+p+'" class="map-cell-click" style="text-align:center;cursor:pointer;'+bg+'">'
-          + '<span style="font-size:13px;font-weight:700;color:var(--accent);">' + qtd + '</span>'
-          + '<br><span style="font-size:11px;color:var(--muted);white-space:nowrap;">' + formatVal(v) + '</span>'
+        html += '<td class="'+cls+'" onclick="_mapToggleCruz(\''+corNome+'\',\''+prodEsc+'\')" title="'+l.c+' × '+p+'">'
+          + '<span class="map-mtx-qtd">' + qtd + '</span>'
+          + '<span class="map-mtx-val">' + formatVal(v) + '</span>'
           + '</td>';
       } else {
-        html += '<td style="text-align:center;color:var(--border2);">—</td>';
+        html += '<td class="map-mtx-cell map-mtx-cell--empty">—</td>';
       }
     });
     totalGeral    += l.linhaTotal;
     totalQtdGeral += l.linhaQtd;
-    html += '<td style="text-align:center;font-weight:700;white-space:nowrap;color:var(--accent);">' + l.linhaQtd + '</td>';
-    html += '<td style="text-align:center;font-weight:700;white-space:nowrap;color:var(--accent);">' + formatVal(l.linhaTotal) + '</td>';
+    html += '<td class="map-mtx-total-cell"><span class="map-mtx-total-num">' + l.linhaQtd + '</span></td>';
+    html += '<td class="map-mtx-total-cell"><span class="map-mtx-total-val">' + formatVal(l.linhaTotal) + '</span></td>';
     html += '</tr>';
   });
 
   /* Linha de totais */
-  html += '<tr style="border-top:2px solid var(--border2);background:var(--surface2);">'
-    + '<td style="font-weight:700;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);">Total</td>';
+  html += '<tr class="map-mtx-row map-mtx-row--total">'
+    + '<td class="map-mtx-td-cons map-mtx-total-label">Total</td>';
   produtos.forEach(function(p){
     if (totaisQtd[p] > 0) {
-      html += '<td style="text-align:center;font-weight:700;">'
-        + '<span style="font-size:12px;color:var(--accent);">' + totaisQtd[p] + '</span>'
-        + '<br><span style="font-size:11px;color:var(--muted);">' + formatVal(totaisProd[p]) + '</span>'
+      html += '<td class="map-mtx-cell">'
+        + '<span class="map-mtx-qtd">' + totaisQtd[p] + '</span>'
+        + '<span class="map-mtx-val">' + formatVal(totaisProd[p]) + '</span>'
         + '</td>';
     } else {
-      html += '<td style="text-align:center;color:var(--border2);">—</td>';
+      html += '<td class="map-mtx-cell map-mtx-cell--empty">—</td>';
     }
   });
-  html += '<td style="text-align:center;font-weight:700;white-space:nowrap;color:var(--accent);">' + totalQtdGeral + '</td>';
-  html += '<td style="text-align:center;font-weight:700;white-space:nowrap;color:var(--accent);">' + formatVal(totalGeral) + '</td>';
+  html += '<td class="map-mtx-total-cell"><span class="map-mtx-total-num">' + totalQtdGeral + '</span></td>';
+  html += '<td class="map-mtx-total-cell"><span class="map-mtx-total-val">' + formatVal(totalGeral) + '</span></td>';
   html += '</tr></tbody>';
   el.innerHTML = html;
 }
