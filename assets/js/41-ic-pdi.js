@@ -44,47 +44,57 @@
   };
 
   /* Estado */
-  var _doc = null;           /* { trimestre, status, alvos[], ... } */
+  var _doc = null;            /* { periodo, status, alvos[], ... } */
   var _consultorAtivo = '';
-  var _trimestre = '';       /* "YYYY-Q1".."YYYY-Q4" */
+  var _perStart = '';         /* "YYYY-MM" */
+  var _perEnd   = '';         /* "YYYY-MM" */
   var _historico = [];
-  var _medFeedback = null;   /* {key: media1-10} — vem de icFeedbacks */
-  var _comparativoTime = null;
+  var _medFeedback = null;    /* {key: media1-10} — vem de icFeedbacks */
+  var MESES_BR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-  /* ── Helpers ── */
-  function _trimAtual(){
-    var d = new Date();
-    var q = Math.floor(d.getMonth()/3) + 1;
-    return d.getFullYear()+'-Q'+q;
+  /* ── Helpers de período flexível ── */
+  function _ym(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+  function _hojeYM(){ return _ym(new Date()); }
+  function _addMes(ym, delta){
+    var p = (ym||_hojeYM()).split('-');
+    var d = new Date(+p[0], +p[1]-1+delta, 1);
+    return _ym(d);
   }
-  function _trimLabel(tid){
-    if(!tid) return '—';
-    var p = tid.split('-Q');
-    var nomes = {1:'Jan–Mar', 2:'Abr–Jun', 3:'Jul–Set', 4:'Out–Dez'};
-    return 'Q'+p[1]+' / '+p[0]+' ('+nomes[+p[1]]+')';
+  function _diffMeses(a, b){
+    var pa = a.split('-'), pb = b.split('-');
+    return (+pb[0] - +pa[0])*12 + (+pb[1] - +pa[1]);
   }
-  function _trimOptions(){
-    var d = new Date();
-    var y = d.getFullYear();
-    var atual = _trimAtual();
-    var opts = [];
-    /* últimos 8 trimestres */
-    for(var i=-1; i<=6; i++){
-      var ym = (i>=4 ? y+1 : y);
-      var qi = ((d.getMonth()/3|0) + 1 - i);
-      while(qi < 1){ qi += 4; }
-      while(qi > 4){ qi -= 4; }
-      /* simplificação: gera 8 trimestres em torno do atual */
+  function _periodoId(){
+    if(!_perStart || !_perEnd) return '';
+    return _perStart+'_'+_perEnd;
+  }
+  function _periodoLabel(id){
+    if(!id) return '—';
+    /* aceita "YYYY-MM_YYYY-MM" e o legado "YYYY-Q1..Q4" */
+    if(id.indexOf('_') < 0){
+      /* legado trimestre */
+      var p = id.split('-Q');
+      var nomes = {1:'Jan–Mar',2:'Abr–Jun',3:'Jul–Set',4:'Out–Dez'};
+      return 'Q'+p[1]+'/'+p[0]+' ('+nomes[+p[1]]+')';
     }
-    /* gerar 6 trimestres: atual + 5 anteriores + 2 futuros */
-    var trims = [];
-    var dt = new Date(d.getFullYear(), Math.floor(d.getMonth()/3)*3, 1);
-    for(var i=-5; i<=2; i++){
-      var ddt = new Date(dt.getFullYear(), dt.getMonth()+i*3, 1);
-      var qq = Math.floor(ddt.getMonth()/3)+1;
-      trims.push(ddt.getFullYear()+'-Q'+qq);
+    var pp = id.split('_');
+    var a = pp[0].split('-'), b = pp[1].split('-');
+    var labA = MESES_BR[+a[1]-1]+'/'+a[0];
+    var labB = MESES_BR[+b[1]-1]+'/'+b[0];
+    var dur = _diffMeses(pp[0], pp[1]) + 1;
+    return labA+' → '+labB+' · '+dur+' mês'+(dur>1?'es':'');
+  }
+  function _periodoMeses(idStart, idEnd){
+    /* retorna array de YYYY-MM entre start e end (inclusivo) */
+    var meses = [];
+    var cur = idStart;
+    var safe = 0;
+    while(cur <= idEnd && safe < 48){
+      meses.push(cur);
+      cur = _addMes(cur, 1);
+      safe++;
     }
-    return trims;
+    return meses;
   }
 
   /* ── Hook no _icShowPane (já definido em 40-ic-feedback.js) ── */
@@ -105,7 +115,7 @@
   var _initDone = false;
   function _pdiInit(){
     _pdiPopularConsultores();
-    _pdiPopularTrimestres();
+    _pdiInitPeriodo();
     if(_initDone) return;
     _initDone = true;
     document.getElementById('pdiConsultor').addEventListener('change', function(){
@@ -114,37 +124,78 @@
       _pdiCarregarHistorico();
       _pdiCarregarFeedbackMedias();
     });
-    document.getElementById('pdiTrimestre').addEventListener('change', function(){
-      _trimestre = this.value || _trimAtual();
+    document.getElementById('pdiPerStart').addEventListener('change', function(){
+      _perStart = this.value || _hojeYM();
+      if(_perEnd && _perStart > _perEnd) _perEnd = _addMes(_perStart, 2);
+      document.getElementById('pdiPerEnd').value = _perEnd;
       _pdiCarregar();
     });
+    document.getElementById('pdiPerEnd').addEventListener('change', function(){
+      _perEnd = this.value || _addMes(_perStart, 2);
+      if(_perEnd < _perStart){ _perEnd = _perStart; this.value = _perStart; }
+      _pdiCarregar();
+    });
+    document.getElementById('pdiPerAtalho').addEventListener('change', function(){
+      var v = this.value; if(!v) return;
+      var hoje = _hojeYM();
+      if(v === 'prox3'){ _perStart = hoje; _perEnd = _addMes(hoje, 2); }
+      else if(v === 'atual3'){
+        var d = new Date();
+        var qStart = new Date(d.getFullYear(), Math.floor(d.getMonth()/3)*3, 1);
+        _perStart = _ym(qStart);
+        _perEnd = _addMes(_perStart, 2);
+      }
+      else if(v === 'prox6'){ _perStart = hoje; _perEnd = _addMes(hoje, 5); }
+      else if(v === 'ant3'){ _perStart = _addMes(hoje, -3); _perEnd = _addMes(hoje, -1); }
+      document.getElementById('pdiPerStart').value = _perStart;
+      document.getElementById('pdiPerEnd').value = _perEnd;
+      this.value = '';
+      _pdiCarregar();
+    });
+  }
+
+  /* Define o período padrão = trimestre atual (3 meses) */
+  function _pdiInitPeriodo(){
+    var d = new Date();
+    if(!_perStart){
+      var qStart = new Date(d.getFullYear(), Math.floor(d.getMonth()/3)*3, 1);
+      _perStart = _ym(qStart);
+      _perEnd = _addMes(_perStart, 2);
+    }
+    var i1 = document.getElementById('pdiPerStart');
+    var i2 = document.getElementById('pdiPerEnd');
+    if(i1) i1.value = _perStart;
+    if(i2) i2.value = _perEnd;
   }
 
   function _pdiPopularConsultores(){
     var sel = document.getElementById('pdiConsultor');
     if(!sel) return;
-    var usuarios = window._npUsuarios || {};
-    var nomes = [];
-    Object.values(usuarios).forEach(function(u){
-      if(u && u.perfil === 'consultor' && u.nome) nomes.push(u.nome);
-    });
-    nomes.sort(function(a,b){return String(a).localeCompare(String(b),'pt-BR');});
-    var atualVal = sel.value;
-    sel.innerHTML = '<option value="">— selecione um consultor —</option>'
-      + nomes.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
-    if(atualVal && nomes.indexOf(atualVal) >= 0) sel.value = atualVal;
-    else if(_consultorAtivo && nomes.indexOf(_consultorAtivo) >= 0) sel.value = _consultorAtivo;
+    function _build(usuarios){
+      var nomes = [];
+      Object.values(usuarios||{}).forEach(function(u){
+        if(u && u.perfil === 'consultor' && u.nome) nomes.push(u.nome);
+      });
+      nomes.sort(function(a,b){return String(a).localeCompare(String(b),'pt-BR');});
+      var atualVal = sel.value;
+      sel.innerHTML = '<option value="">— selecione um consultor —</option>'
+        + nomes.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+      if(atualVal && nomes.indexOf(atualVal) >= 0) sel.value = atualVal;
+      else if(_consultorAtivo && nomes.indexOf(_consultorAtivo) >= 0) sel.value = _consultorAtivo;
+    }
+    if(window._npUsuarios && Object.keys(window._npUsuarios).length > 0){
+      _build(window._npUsuarios); return;
+    }
+    if(typeof window._fbGet === 'function'){
+      window._fbGet('usuarios').then(function(us){
+        window._npUsuarios = us || {};
+        _build(window._npUsuarios);
+      }).catch(function(){ _build({}); });
+    } else {
+      _build({});
+    }
   }
-  function _pdiPopularTrimestres(){
-    var sel = document.getElementById('pdiTrimestre');
-    if(!sel) return;
-    var atual = _trimAtual();
-    if(!_trimestre) _trimestre = atual;
-    sel.innerHTML = _trimOptions().reverse().map(function(t){
-      var lbl = _trimLabel(t) + (t===atual ? ' · atual' : '');
-      return '<option value="'+t+'"'+(t===_trimestre?' selected':'')+'>'+lbl+'</option>';
-    }).join('');
-  }
+  /* (função antiga _pdiPopularTrimestres substituída por _pdiInitPeriodo + inputs type=month) */
 
   /* ── Carrega feedbacks médios dos últimos 3 ciclos do consultor ── */
   function _pdiCarregarFeedbackMedias(){
@@ -175,14 +226,16 @@
   function _pdiCarregar(){
     if(!_consultorAtivo){ _pdiResetDoc(); return; }
     if(typeof window._fbGet !== 'function'){ _pdiResetDoc(); return; }
-    window._fbGet('icPDIs/'+_consultorAtivo+'/'+_trimestre).then(function(d){
+    window._fbGet('icPDIs/'+_consultorAtivo+'/'+_periodoId()).then(function(d){
       if(d){ _doc = d; _pdiAplicarDocNaUI(); }
       else { _pdiResetDoc(); }
     }).catch(_pdiResetDoc);
   }
   function _pdiResetDoc(){
     _doc = {
-      trimestre: _trimestre,
+      periodo: _periodoId(),
+      perStart: _perStart,
+      perEnd: _perEnd,
       status: 'rascunho',
       alvos: []
     };
@@ -413,7 +466,7 @@
       if(typeof _showToast==='function') _showToast('❌ Firebase indisponível.','var(--red)');
       return;
     }
-    window._fbSave('icPDIs/'+_consultorAtivo+'/'+_trimestre, _doc).then(function(){
+    window._fbSave('icPDIs/'+_consultorAtivo+'/'+_periodoId(), _doc).then(function(){
       if(showToast && typeof _showToast==='function'){
         _showToast('✅ '+(_doc.status==='iniciado'?'PDI enviado ao consultor.':'Rascunho salvo.'),'var(--accent)');
       }
@@ -462,7 +515,7 @@
       var barCol = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
       var compsTxt = alvos.length ? ating+'/'+alvos.length+' atingidas' : 'sem competências';
       return '<div class="pdi-hist-item" data-id="'+h._id+'">'
-        + '<div class="pdi-hist-row"><span class="pdi-hist-trim">'+_trimLabel(h._id)+'</span><span class="pdi-hist-pct '+pctCls+'">'+pct+'%</span></div>'
+        + '<div class="pdi-hist-row"><span class="pdi-hist-trim">'+_periodoLabel(h._id)+'</span><span class="pdi-hist-pct '+pctCls+'">'+pct+'%</span></div>'
         + '<div class="pdi-hist-bar"><div class="pdi-hist-bar-fill" style="width:'+pct+'%;background:'+barCol+';"></div></div>'
         + '<div class="pdi-hist-comps">'+compsTxt+'</div>'
         + '</div>';
@@ -470,8 +523,13 @@
     el.querySelectorAll('.pdi-hist-item').forEach(function(it){
       it.addEventListener('click', function(){
         var id = it.getAttribute('data-id');
-        var sel = document.getElementById('pdiTrimestre');
-        if(sel){ sel.value = id; _trimestre = id; _pdiCarregar(); }
+        if(id.indexOf('_') > 0){
+          var pp = id.split('_');
+          _perStart = pp[0]; _perEnd = pp[1];
+          var i1 = document.getElementById('pdiPerStart'); if(i1) i1.value = _perStart;
+          var i2 = document.getElementById('pdiPerEnd');   if(i2) i2.value = _perEnd;
+          _pdiCarregar();
+        }
       });
     });
   }

@@ -94,23 +94,37 @@
     _icFbRenderRadar();
   }
 
-  /* Popular o select de consultores (lê de window._npUsuarios, igual ao Pipeline) */
+  /* Popular o select de consultores. Carrega de window._npUsuarios se já
+     existe (Pipeline já abriu); senão lê 'usuarios' direto do Firebase. */
   function _icFbPopularConsultores(){
     var sel = document.getElementById('fbConsultor');
     if(!sel) return;
-    var usuarios = window._npUsuarios || {};
-    var nomes = [];
-    Object.values(usuarios).forEach(function(u){
-      if(u && u.perfil === 'consultor' && u.nome) nomes.push(u.nome);
-    });
-    nomes.sort(function(a,b){return String(a).localeCompare(String(b),'pt-BR');});
-    var atualVal = sel.value;
-    sel.innerHTML = '<option value="">— selecione um consultor —</option>'
-      + nomes.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
-    /* Tentativa de manter seleção */
-    if(atualVal && nomes.indexOf(atualVal) >= 0) sel.value = atualVal;
-    else if(nomes.length === 1){ sel.value = nomes[0]; _consultorAtivo = nomes[0]; _icFbCarregar(); _icFbCarregarHistorico(); }
-    else if(_consultorAtivo && nomes.indexOf(_consultorAtivo) >= 0) sel.value = _consultorAtivo;
+    function _build(usuarios){
+      var nomes = [];
+      Object.values(usuarios||{}).forEach(function(u){
+        if(u && u.perfil === 'consultor' && u.nome) nomes.push(u.nome);
+      });
+      nomes.sort(function(a,b){return String(a).localeCompare(String(b),'pt-BR');});
+      var atualVal = sel.value;
+      sel.innerHTML = '<option value="">— selecione um consultor —</option>'
+        + nomes.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+      if(atualVal && nomes.indexOf(atualVal) >= 0) sel.value = atualVal;
+      else if(nomes.length === 1){ sel.value = nomes[0]; _consultorAtivo = nomes[0]; _icFbCarregar(); _icFbCarregarHistorico(); }
+      else if(_consultorAtivo && nomes.indexOf(_consultorAtivo) >= 0) sel.value = _consultorAtivo;
+    }
+    /* Cache já populado pelo Pipeline */
+    if(window._npUsuarios && Object.keys(window._npUsuarios).length > 0){
+      _build(window._npUsuarios); return;
+    }
+    /* Fallback: lê direto do Firebase */
+    if(typeof window._fbGet === 'function'){
+      window._fbGet('usuarios').then(function(us){
+        window._npUsuarios = us || {};
+        _build(window._npUsuarios);
+      }).catch(function(){ _build({}); });
+    } else {
+      _build({});
+    }
   }
 
   /* Troca de ciclo (Semanal/Quinzenal/Mensal) */
