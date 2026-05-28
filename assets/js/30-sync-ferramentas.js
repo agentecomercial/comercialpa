@@ -620,7 +620,6 @@ function _mapRenderConsultores(registros) {
     var ativo = f && f.cons === c.nome;
     var medal = medals[i] || '';
     var cor = coresBarra[i % coresBarra.length];
-    var bw  = Math.round((c.total / maxVal) * 100);
     var pctTotal = totalGeral > 0 ? Math.round((c.total / totalGeral) * 100) : 0;
 
     /* Metas do Pipeline (3 tiers) */
@@ -634,6 +633,9 @@ function _mapRenderConsultores(registros) {
     var pctMeta = temMeta ? Math.round((c.total / metaRef) * 100) : null;
     var pctClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : pctMeta >= 70 ? 'txt-amber' : 'txt-red';
     var pctDisp = !temMeta ? (pctTotal + '%') : (pctMeta + '%');
+    /* Barra reflete o % efetivo: % da meta (cap 100) se tiver meta,
+       senão proporção do maior do ranking. */
+    var bw = temMeta ? Math.min(100, pctMeta) : Math.round((c.total / maxVal) * 100);
 
     html += '<tr class="fpc-row'+(ativo?' ativo':'')+'" onclick="_mapToggleConsultor(\''+_mapEscAttr(c.nome)+'\')" title="Filtrar por '+c.nome+'">'
       + '<td class="fpc-rk">' + (i+1) + '</td>'

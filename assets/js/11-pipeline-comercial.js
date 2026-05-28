@@ -679,7 +679,6 @@
 
         ranking.forEach(function(r,i){
           var cor=COR[i%COR.length];
-          var barPct=Math.round(r.pago/maxV*100);
           var medal = medals[i] || '';
 
           var g = _goalsCh[r.nome] || {};
@@ -691,6 +690,9 @@
           var pctMeta = temMeta ? Math.round((r.pago / metaRef) * 100) : null;
           var pctClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : pctMeta >= 70 ? 'txt-amber' : 'txt-red';
           var pctDisp = !temMeta ? '—' : (pctMeta + '%');
+          /* Barra agora reflete o % da meta (cap em 100% pra não estourar visualmente).
+             Sem meta: fallback à proporção do maior do ranking. */
+          var barPct = temMeta ? Math.min(100, pctMeta) : Math.round(r.pago/maxV*100);
 
           html += '<tr class="fpc-row">'
             +'<td class="fpc-rk">'+(i+1)+'</td>'
