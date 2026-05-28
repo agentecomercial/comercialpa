@@ -128,7 +128,16 @@ function _addTreinRow(listId,cod,val){
   var container=document.getElementById(listId);
   if(!container)return;
   var opts='<option value="-">—</option>';
-  var _tl=(typeof allTreinamentos!=='undefined'&&Array.isArray(allTreinamentos))?allTreinamentos:[];
+  var _tl=(typeof allTreinamentos!=='undefined'&&Array.isArray(allTreinamentos))?allTreinamentos.slice():[];
+  /* PROTEÇÃO: se o cod salvo do cliente NÃO está em allTreinamentos
+     (turma com lista customizada, ou treinamento removido depois), inclui
+     mesmo assim para preservar o valor salvo. Evita render vazio → save vazio. */
+  var codStr = String(cod||'').trim();
+  if(codStr && codStr!=='-' && _tl.indexOf(codStr)===-1){
+    var codUp = codStr.toUpperCase();
+    var jaTemCaseInsensitive = _tl.some(function(t){return String(t).toUpperCase()===codUp;});
+    if(!jaTemCaseInsensitive) _tl.push(codStr);
+  }
   _tl.forEach(function(t){opts+='<option value="'+t+'"'+(cod===t?' selected':'')+'>'+t+'</option>';});
   var valStr=val?Number(val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
   var row=document.createElement('div');
