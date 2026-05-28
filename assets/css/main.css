@@ -1943,7 +1943,11 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 /* ── NOVA PIPELINE v2 — CSS adicional ── */
 
 /* Scroll suave no body */
-.np-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px;display:none;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;min-height:0;}
+/* Pipeline centralizado em 1400px usando padding lateral dinâmico
+   (em vez de max-width + margin:auto, que quebrava .np-metas-grid).
+   Como padding cresce simetricamente, o conteúdo fica centralizado
+   em 1400px sem mexer no flex/width do .np-body. */
+.np-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px max(20px, calc((100% - 1400px) / 2));display:none;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;min-height:0;}
 .np-body.ativo{display:block;min-height:0;}
 #npTabFunil.ativo{display:flex;flex-direction:column;overflow:hidden;padding:0;}
 .np-body::-webkit-scrollbar{width:4px;}
