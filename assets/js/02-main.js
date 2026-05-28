@@ -427,16 +427,18 @@ function entrarTurma(id){
   }
   } // end _doEntrar
 
-  // Firebase: lê nó unificado turmas/{id} + usuarios/ em paralelo
+  // Firebase: lê nó unificado turmas/{id} + usuarios/ + lista global de treinamentos
   if(window._fbGet){
     Promise.all([
       window._fbGet(TURMAS_NODE+'/'+id).catch(function(){return null;}),
       window._fbGet('turma_dados/'+id).catch(function(){return null;}),
-      window._fbGet('usuarios').catch(function(){return null;})
+      window._fbGet('usuarios').catch(function(){return null;}),
+      window._fbGet('appConfig/treinamentos').catch(function(){return null;})
     ]).then(function(results){
       var fbTurma=results[0];    // novo nó unificado
       var fbDadosAntigo=results[1]; // fallback estrutura antiga
       var fbUsuarios=results[2]; // nó usuarios/
+      var fbTreinGlobais=results[3]; // lista global de treinamentos (appConfig/treinamentos)
 
       var consultoresDB=[];
       var treinadoresDB=[];
@@ -560,14 +562,29 @@ function entrarTurma(id){
       allConsultors=consultoresDB;
       allTrainers=treinadoresDB;
 
-      // Carregar treinamentos customizados salvos na turma
-      var _fbTreinList=(fbTurma&&Array.isArray(fbTurma.treinamentos))?fbTurma.treinamentos
-        :(fbDadosAntigo&&Array.isArray(fbDadosAntigo.treinamentos))?fbDadosAntigo.treinamentos
-        :null;
-      if(_fbTreinList&&_fbTreinList.length){
-        allTreinamentos.length=0;
-        _fbTreinList.forEach(function(t){allTreinamentos.push(t);});
-      }
+      /* allTreinamentos = UNION (unique, case-insensitive) de 3 fontes:
+         1) appConfig/treinamentos (GLOBAL — fonte de verdade nova)
+         2) turmas/{id}/treinamentos OU turma_dados (LEGADO — turmas antigas)
+         3) APP_CONST.TREINAMENTOS (DEFAULT hardcoded)
+         Garante que treinamentos criados em qualquer turma apareçam em todas. */
+      var _treinGlobais = Array.isArray(fbTreinGlobais) ? fbTreinGlobais : [];
+      var _treinTurma   = (fbTurma&&Array.isArray(fbTurma.treinamentos)) ? fbTurma.treinamentos
+                        : (fbDadosAntigo&&Array.isArray(fbDadosAntigo.treinamentos)) ? fbDadosAntigo.treinamentos
+                        : [];
+      var _treinDefault = Array.isArray(APP_CONST.TREINAMENTOS) ? APP_CONST.TREINAMENTOS : [];
+      var _seen = {};
+      var _merge = [];
+      [_treinGlobais, _treinTurma, _treinDefault].forEach(function(arr){
+        arr.forEach(function(t){
+          if(!t) return;
+          var up = String(t).trim().toUpperCase();
+          if(!up || _seen[up]) return;
+          _seen[up] = true;
+          _merge.push(String(t).trim());
+        });
+      });
+      allTreinamentos.length = 0;
+      _merge.forEach(function(t){ allTreinamentos.push(t); });
 
       _doEntrar(turmaObj,dadosFinais);
     }).catch(function(e){

@@ -66,14 +66,14 @@
     if(typeof _showToast==='function') _showToast('🗑 Treinamento "'+nome+'" removido.','var(--red)');
   };
 
-  /* ── Persistência Firebase ── */
+  /* ── Persistência Firebase ──
+     Lista de treinamentos é GLOBAL (não por turma). Salva em
+     'appConfig/treinamentos' para que toda turma tenha acesso à
+     mesma lista atualizada. */
   function _salvarTreinamentosFirebase(){
     if(typeof window._fbSave!=='function') return;
-    var turmaId = (window._turmaAtiva&&window._turmaAtiva.id)?window._turmaAtiva.id:null;
-    if(turmaId){
-      window._fbSave('turmas/'+turmaId+'/treinamentos', allTreinamentos)
-        .catch(function(e){ console.warn('[Treinamentos] Firebase save:', e); });
-    }
+    window._fbSave('appConfig/treinamentos', allTreinamentos)
+      .catch(function(e){ console.warn('[Treinamentos] Firebase save:', e); });
   }
 
   /* ── Mostrar/ocultar botão ao abrir o modal ──
@@ -166,10 +166,9 @@
     if(typeof buildSelects==='function') buildSelects();
     window._renderListaTreinamentosGerenciar && window._renderListaTreinamentosGerenciar();
     if(typeof _showToast==='function') _showToast('✅ "'+nome+'" adicionado!','var(--accent)');
-    // Persistir Firebase (função interna do módulo)
-    var turmaId=(window._turmaAtiva&&window._turmaAtiva.id)?window._turmaAtiva.id:null;
-    if(turmaId&&typeof window._fbSave==='function'){
-      window._fbSave('turmas/'+turmaId+'/treinamentos',allTreinamentos)
+    /* Persistir Firebase no nó GLOBAL (mesma lista pra todas as turmas) */
+    if(typeof window._fbSave==='function'){
+      window._fbSave('appConfig/treinamentos',allTreinamentos)
         .catch(function(e){console.warn('[GTM] Firebase:',e);});
     }
   };
@@ -183,9 +182,9 @@
     if(typeof buildSelects==='function') buildSelects();
     window._renderListaTreinamentosGerenciar && window._renderListaTreinamentosGerenciar();
     if(typeof _showToast==='function') _showToast('🗑 "'+nome+'" removido.','var(--red)');
-    var turmaId=(window._turmaAtiva&&window._turmaAtiva.id)?window._turmaAtiva.id:null;
-    if(turmaId&&typeof window._fbSave==='function'){
-      window._fbSave('turmas/'+turmaId+'/treinamentos',allTreinamentos)
+    /* Persistir no nó GLOBAL */
+    if(typeof window._fbSave==='function'){
+      window._fbSave('appConfig/treinamentos',allTreinamentos)
         .catch(function(e){console.warn('[GTM] Firebase:',e);});
     }
   };
