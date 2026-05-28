@@ -598,14 +598,23 @@ function _mapRenderConsultores(registros) {
 
   var html = '<table class="fpc-tbl">'
     + '<thead><tr>'
-    +   '<th>#</th>'
-    +   '<th>Consultor</th>'
-    +   '<th>Progresso</th>'
-    +   '<th class="r">Faturado</th>'
-    +   '<th class="r">%</th>'
-    +   '<th class="r">Meta</th>'
-    +   '<th class="r">Falta</th>'
+    +   '<th class="c">#</th>'
+    +   '<th class="c">Consultor</th>'
+    +   '<th class="c">Progresso</th>'
+    +   '<th class="c">Faturado</th>'
+    +   '<th class="c">%</th>'
+    +   '<th class="c">Meta</th>'
+    +   '<th class="c">Falta Mínima</th>'
+    +   '<th class="c">Falta Básica</th>'
+    +   '<th class="c">Falta Master</th>'
     + '</tr></thead><tbody>';
+
+  function _faltaCell(metaVal, total){
+    if(!metaVal || metaVal <= 0) return '<td class="fpc-falta muted">—</td>';
+    var diff = metaVal - total;
+    if(diff <= 0) return '<td class="fpc-falta txt-green">✓ batida</td>';
+    return '<td class="fpc-falta txt-amber">' + formatVal(diff) + '</td>';
+  }
 
   lista.forEach(function(c, i){
     var ativo = f && f.cons === c.nome;
@@ -614,16 +623,17 @@ function _mapRenderConsultores(registros) {
     var bw  = Math.round((c.total / maxVal) * 100);
     var pctTotal = totalGeral > 0 ? Math.round((c.total / totalGeral) * 100) : 0;
 
-    /* Meta vem do Pipeline goals (se houver registro pra esse consultor) */
+    /* Metas do Pipeline (3 tiers) */
     var g = goals[c.nome] || {};
-    var meta = +(g.metaMinima || g.metaValor || g.metaBasica || 0);
-    var temMeta = meta > 0;
-    var pctMeta = temMeta ? Math.round((c.total / meta) * 100) : null;
-    var falta = temMeta ? Math.max(0, meta - c.total) : null;
-
+    var metaMin = +(g.metaMinima || 0);
+    var metaBas = +(g.metaBasica || g.metaValor || 0);
+    var metaMas = +(g.metaMaster || 0);
+    /* Meta de referência pra % (preferência: mínima > básica > master) */
+    var metaRef = metaMin || metaBas || metaMas || 0;
+    var temMeta = metaRef > 0;
+    var pctMeta = temMeta ? Math.round((c.total / metaRef) * 100) : null;
     var pctClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : pctMeta >= 70 ? 'txt-amber' : 'txt-red';
     var pctDisp = !temMeta ? (pctTotal + '%') : (pctMeta + '%');
-    var faltaClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : 'txt-amber';
 
     html += '<tr class="fpc-row'+(ativo?' ativo':'')+'" onclick="_mapToggleConsultor(\''+_mapEscAttr(c.nome)+'\')" title="Filtrar por '+c.nome+'">'
       + '<td class="fpc-rk">' + (i+1) + '</td>'
@@ -631,8 +641,10 @@ function _mapRenderConsultores(registros) {
       + '<td class="fpc-prog"><div class="fpc-bar"><div class="fpc-bar-fill" style="width:'+bw+'%;background:'+cor+';"></div></div></td>'
       + '<td class="fpc-val txt-green">' + formatVal(c.total) + '</td>'
       + '<td class="fpc-pct ' + pctClass + '">' + pctDisp + '</td>'
-      + '<td class="fpc-meta">' + (temMeta ? formatVal(meta) : 'sem meta') + '</td>'
-      + '<td class="fpc-falta ' + faltaClass + '">' + (temMeta ? formatVal(falta) : '—') + '</td>'
+      + '<td class="fpc-meta">' + (temMeta ? formatVal(metaRef) : 'sem meta') + '</td>'
+      + _faltaCell(metaMin, c.total)
+      + _faltaCell(metaBas, c.total)
+      + _faltaCell(metaMas, c.total)
       + '</tr>';
   });
   html += '</tbody></table>';
