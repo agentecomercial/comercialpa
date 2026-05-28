@@ -3603,6 +3603,33 @@ textarea.pb-input{resize:vertical;font-family:inherit;line-height:1.5;}
   min-width:100px;margin:0 auto;
 }
 .fpc-bar-fill{height:100%;border-radius:3px;transition:width .4s;}
+
+/* Variante 3 — Barra segmentada · 3 sub-trilhas (Mínima · Básica · Master) */
+.fpc-bar-tiers{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;
+  min-width:160px;max-width:200px;margin:0 auto;
+}
+.fpc-seg{
+  height:7px;background:var(--surface2);border-radius:2px;
+  overflow:hidden;position:relative;
+}
+.fpc-seg-fill{height:100%;transition:width .35s;}
+.fpc-seg.minima .fpc-seg-fill{background:var(--red);}
+.fpc-seg.basica .fpc-seg-fill{background:var(--amber);}
+.fpc-seg.master .fpc-seg-fill{background:var(--green);}
+.fpc-seg-labels{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;
+  min-width:160px;max-width:200px;margin:3px auto 0;
+}
+.fpc-seg-l{
+  font-size:8.5px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.04em;text-align:center;
+}
+.fpc-seg-l.batida{color:var(--accent);}
+.fpc-tier{
+  font-size:9.5px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.05em;margin-top:2px;
+}
 .fpc-val{
   text-align:center;font-variant-numeric:tabular-nums;
   font-weight:800;font-size:13px;letter-spacing:-.2px;white-space:nowrap;

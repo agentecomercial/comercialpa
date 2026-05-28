@@ -616,6 +616,17 @@ function _mapRenderConsultores(registros) {
     return '<td class="fpc-falta txt-amber">' + formatVal(diff) + '</td>';
   }
 
+  /* LÓGICA PROGRESSIVA — alvo dinâmico Mínima → Básica → Master */
+  function _proxTierMeta(mn, bs, ms, total){
+    if(mn>0 && total<mn) return {meta:mn, label:'Mínima', tier:'minima', batida:false};
+    if(bs>0 && total<bs) return {meta:bs, label:'Básica', tier:'basica', batida:false};
+    if(ms>0 && total<ms) return {meta:ms, label:'Master', tier:'master', batida:false};
+    if(ms>0) return {meta:ms, label:'Master', tier:'master', batida:true};
+    if(bs>0) return {meta:bs, label:'Básica', tier:'basica', batida:true};
+    if(mn>0) return {meta:mn, label:'Mínima', tier:'minima', batida:true};
+    return null;
+  }
+
   lista.forEach(function(c, i){
     var ativo = f && f.cons === c.nome;
     var medal = medals[i] || '';
@@ -627,22 +638,43 @@ function _mapRenderConsultores(registros) {
     var metaMin = +(g.metaMinima || 0);
     var metaBas = +(g.metaBasica || g.metaValor || 0);
     var metaMas = +(g.metaMaster || 0);
-    /* Meta de referência = MASTER (objetivo máximo). Barra 100% = bateu o teto.
-       Fallback: básica > mínima quando o tier maior não está configurado. */
-    var metaRef = metaMas || metaBas || metaMin || 0;
+
+    var px = _proxTierMeta(metaMin, metaBas, metaMas, c.total);
+    var metaRef = px ? px.meta : 0;
     var temMeta = metaRef > 0;
     var pctMeta = temMeta ? Math.round((c.total / metaRef) * 100) : null;
     var pctClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : pctMeta >= 70 ? 'txt-amber' : 'txt-red';
     var pctDisp = !temMeta ? (pctTotal + '%') : (pctMeta + '%');
-    /* Barra e % usam mesmo denominador (metaRef = master) → barra 90% ⇔ "90%" */
-    var bw = temMeta ? Math.min(100, pctMeta) : Math.round((c.total / maxVal) * 100);
+    var tierLbl = px ? px.label : '';
+
+    /* Barra segmentada: cada tier preenche conforme avança */
+    var fMin = metaMin > 0 ? Math.min(100, Math.round(c.total/metaMin*100)) : 0;
+    var fBas = (metaBas > 0 && metaBas > metaMin) ? Math.max(0, Math.min(100, Math.round((c.total-metaMin)/(metaBas-metaMin)*100))) : 0;
+    var fMas = (metaMas > 0 && metaMas > metaBas) ? Math.max(0, Math.min(100, Math.round((c.total-metaBas)/(metaMas-metaBas)*100))) : 0;
+
+    var progHtml;
+    if(temMeta){
+      progHtml = '<div class="fpc-bar-tiers">'
+        + '<div class="fpc-seg minima"><div class="fpc-seg-fill" style="width:'+(metaMin?fMin:0)+'%"></div></div>'
+        + '<div class="fpc-seg basica"><div class="fpc-seg-fill" style="width:'+(metaBas?fBas:0)+'%"></div></div>'
+        + '<div class="fpc-seg master"><div class="fpc-seg-fill" style="width:'+(metaMas?fMas:0)+'%"></div></div>'
+      + '</div>'
+      + '<div class="fpc-seg-labels">'
+        + '<div class="fpc-seg-l'+(fMin>=100?' batida':'')+'">Mín</div>'
+        + '<div class="fpc-seg-l'+(fBas>=100?' batida':'')+'">Bás</div>'
+        + '<div class="fpc-seg-l'+(fMas>=100?' batida':'')+'">Mas</div>'
+      + '</div>';
+    } else {
+      var bw = Math.round((c.total / maxVal) * 100);
+      progHtml = '<div class="fpc-bar"><div class="fpc-bar-fill" style="width:'+bw+'%;background:'+cor+';"></div></div>';
+    }
 
     html += '<tr class="fpc-row'+(ativo?' ativo':'')+'" onclick="_mapToggleConsultor(\''+_mapEscAttr(c.nome)+'\')" title="Filtrar por '+c.nome+'">'
       + '<td class="fpc-rk">' + (i+1) + '</td>'
       + '<td class="fpc-nome">' + (medal ? '<span class="fpc-medal">'+medal+'</span> ' : '') + c.nome + '</td>'
-      + '<td class="fpc-prog"><div class="fpc-bar"><div class="fpc-bar-fill" style="width:'+bw+'%;background:'+cor+';"></div></div></td>'
+      + '<td class="fpc-prog">' + progHtml + '</td>'
       + '<td class="fpc-val txt-green">' + formatVal(c.total) + '</td>'
-      + '<td class="fpc-pct ' + pctClass + '">' + pctDisp + '</td>'
+      + '<td class="fpc-pct ' + pctClass + '">' + pctDisp + (tierLbl?'<div class="fpc-tier">'+tierLbl+'</div>':'') + '</td>'
       + '<td class="fpc-meta">' + (temMeta ? formatVal(metaRef) : 'sem meta') + '</td>'
       + _faltaCell(metaMin, c.total)
       + _faltaCell(metaBas, c.total)

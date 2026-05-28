@@ -685,24 +685,49 @@
           var metaMin = +(g.metaMinima || 0);
           var metaBas = +(g.metaBasica || g.metaValor || 0);
           var metaMas = +(g.metaMaster || 0);
-          /* Meta de referência = MASTER (objetivo máximo). Fallback pra
-             básica > mínima quando o tier maior não está configurado.
-             Barra cheia = bateu o teto. */
-          var metaRef = metaMas || metaBas || metaMin || 0;
+
+          /* LÓGICA PROGRESSIVA — tier-alvo muda dinamicamente.
+             Faturado < Mínima → alvo=Mínima · ≥Mínima → Básica · ≥Básica → Master */
+          var px = (typeof _npProxTier==='function') ? _npProxTier(g, r.pago) : null;
+          var metaRef = (px && px.meta) || 0;
+          var tierLbl = px ? String(px.label||'').replace(/^[^A-Za-zÀ-ú]+/,'').trim() : '';
+          var tierKey = px && px.batida ? px.batida : (px ? (px.label||'').toLowerCase().replace(/[^a-z]/g,'') : '');
+          if(!tierKey && tierLbl){ tierKey = tierLbl.toLowerCase().replace(/[^a-z]/g,''); }
           var temMeta = metaRef > 0;
           var pctMeta = temMeta ? Math.round((r.pago / metaRef) * 100) : null;
           var pctClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : pctMeta >= 70 ? 'txt-amber' : 'txt-red';
           var pctDisp = !temMeta ? '—' : (pctMeta + '%');
-          /* Barra e % medidos contra o mesmo denominador (metaRef = master)
-             → barra 90% ⇔ coluna "90%". Cap 100% pra não estourar visualmente. */
-          var barPct = temMeta ? Math.min(100, pctMeta) : Math.round(r.pago/maxV*100);
+
+          /* Barra segmentada: cada um dos 3 tiers enche conforme avança.
+             Mínima: 0 → metaMin     · Básica: metaMin → metaBas    · Master: metaBas → metaMas */
+          var fMin = metaMin > 0 ? Math.min(100, Math.round(r.pago/metaMin*100)) : 0;
+          var fBas = (metaBas > 0 && metaBas > metaMin) ? Math.max(0, Math.min(100, Math.round((r.pago-metaMin)/(metaBas-metaMin)*100))) : 0;
+          var fMas = (metaMas > 0 && metaMas > metaBas) ? Math.max(0, Math.min(100, Math.round((r.pago-metaBas)/(metaMas-metaBas)*100))) : 0;
+          var hasMin = metaMin > 0, hasBas = metaBas > 0, hasMas = metaMas > 0;
+
+          var progHtml = '';
+          if(temMeta){
+            progHtml = '<div class="fpc-bar-tiers">'
+              + '<div class="fpc-seg minima"><div class="fpc-seg-fill" style="width:'+(hasMin?fMin:0)+'%"></div></div>'
+              + '<div class="fpc-seg basica"><div class="fpc-seg-fill" style="width:'+(hasBas?fBas:0)+'%"></div></div>'
+              + '<div class="fpc-seg master"><div class="fpc-seg-fill" style="width:'+(hasMas?fMas:0)+'%"></div></div>'
+            + '</div>'
+            + '<div class="fpc-seg-labels">'
+              + '<div class="fpc-seg-l'+(fMin>=100?' batida':'')+'">Mín</div>'
+              + '<div class="fpc-seg-l'+(fBas>=100?' batida':'')+'">Bás</div>'
+              + '<div class="fpc-seg-l'+(fMas>=100?' batida':'')+'">Mas</div>'
+            + '</div>';
+          } else {
+            var barPct = Math.round(r.pago/maxV*100);
+            progHtml = '<div class="fpc-bar"><div class="fpc-bar-fill" style="width:'+barPct+'%;background:'+cor+';"></div></div>';
+          }
 
           html += '<tr class="fpc-row">'
             +'<td class="fpc-rk">'+(i+1)+'</td>'
             +'<td class="fpc-nome">'+(medal?'<span class="fpc-medal">'+medal+'</span> ':'')+_esc(r.nome)+'</td>'
-            +'<td class="fpc-prog"><div class="fpc-bar"><div class="fpc-bar-fill" style="width:'+barPct+'%;background:'+cor+';"></div></div></td>'
+            +'<td class="fpc-prog">'+progHtml+'</td>'
             +'<td class="fpc-val txt-green">'+_fmtR(r.pago)+'</td>'
-            +'<td class="fpc-pct '+pctClass+'">'+pctDisp+'</td>'
+            +'<td class="fpc-pct '+pctClass+'">'+pctDisp+(tierLbl?'<div class="fpc-tier">'+tierLbl+'</div>':'')+'</td>'
             +'<td class="fpc-meta">'+(temMeta?_fmtR(metaRef):'sem meta')+'</td>'
             + _faltaCellNP(metaMin, r.pago)
             + _faltaCellNP(metaBas, r.pago)
