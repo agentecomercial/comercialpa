@@ -566,12 +566,19 @@ function entrarTurma(id){
          1) appConfig/treinamentos (GLOBAL — fonte de verdade nova)
          2) turmas/{id}/treinamentos OU turma_dados (LEGADO — turmas antigas)
          3) APP_CONST.TREINAMENTOS (DEFAULT hardcoded)
-         Garante que treinamentos criados em qualquer turma apareçam em todas. */
-      var _treinGlobais = Array.isArray(fbTreinGlobais) ? fbTreinGlobais : [];
-      var _treinTurma   = (fbTurma&&Array.isArray(fbTurma.treinamentos)) ? fbTurma.treinamentos
-                        : (fbDadosAntigo&&Array.isArray(fbDadosAntigo.treinamentos)) ? fbDadosAntigo.treinamentos
+         Garante que treinamentos criados em qualquer turma apareçam em todas.
+         IMPORTANTE: Firebase às vezes retorna arrays como objetos
+         ({0:"X",1:"Y"}) — _toArr() normaliza nas duas formas. */
+      function _toArr(v){
+        if(Array.isArray(v)) return v;
+        if(v && typeof v==='object') return Object.values(v);
+        return [];
+      }
+      var _treinGlobais = _toArr(fbTreinGlobais);
+      var _treinTurma   = fbTurma ? _toArr(fbTurma.treinamentos)
+                        : fbDadosAntigo ? _toArr(fbDadosAntigo.treinamentos)
                         : [];
-      var _treinDefault = Array.isArray(APP_CONST.TREINAMENTOS) ? APP_CONST.TREINAMENTOS : [];
+      var _treinDefault = _toArr(APP_CONST.TREINAMENTOS);
       var _seen = {};
       var _merge = [];
       [_treinGlobais, _treinTurma, _treinDefault].forEach(function(arr){
@@ -585,6 +592,11 @@ function entrarTurma(id){
       });
       allTreinamentos.length = 0;
       _merge.forEach(function(t){ allTreinamentos.push(t); });
+      /* Diagnóstico: facilita rastrear se a lista global está chegando */
+      console.log('[Treinamentos] globais='+_treinGlobais.length
+        +' · turma='+_treinTurma.length
+        +' · default='+_treinDefault.length
+        +' → final='+allTreinamentos.length, allTreinamentos);
 
       _doEntrar(turmaObj,dadosFinais);
     }).catch(function(e){

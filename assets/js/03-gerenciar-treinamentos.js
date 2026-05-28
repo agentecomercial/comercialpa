@@ -108,6 +108,43 @@
     setTimeout(_verificarPermissaoTreinamentos, 0);
   }
 
+  /* Listener Firebase: quando OUTRO usuário adiciona/remove treinamento
+     no nó global, sincroniza allTreinamentos da sessão atual em runtime. */
+  function _instalarListenerGlobal(){
+    if(typeof window._fbChange !== 'function') return;
+    try{
+      window._fbChange('appConfig/treinamentos', function(data){
+        if(!Array.isArray(allTreinamentos)) return;
+        var nova = Array.isArray(data) ? data
+                 : (data && typeof data==='object') ? Object.values(data)
+                 : [];
+        if(!nova.length) return;
+        /* Mescla preservando o default + lista da turma; o save é idempotente */
+        var seen = {};
+        var merge = [];
+        function _add(arr){ arr.forEach(function(t){
+          if(!t) return;
+          var up = String(t).trim().toUpperCase();
+          if(!up || seen[up]) return;
+          seen[up] = true; merge.push(String(t).trim());
+        }); }
+        _add(nova);
+        _add(allTreinamentos);
+        var mudou = (merge.length !== allTreinamentos.length)
+          || merge.some(function(t,i){return allTreinamentos[i]!==t;});
+        if(mudou){
+          allTreinamentos.length = 0;
+          merge.forEach(function(t){allTreinamentos.push(t);});
+          if(typeof buildSelects==='function') buildSelects();
+          if(typeof window._renderListaTreinamentosGerenciar==='function') window._renderListaTreinamentosGerenciar();
+          if(typeof gtmRenderLista==='function') gtmRenderLista();
+          console.log('[Treinamentos] lista global sincronizada em runtime · total='+allTreinamentos.length);
+        }
+      });
+    }catch(e){ console.warn('[Treinamentos] listener:', e); }
+  }
+  setTimeout(_instalarListenerGlobal, 800);
+
   window._renderListaTreinamentosGerenciar = window._renderListaTreinamentosGerenciar;
   window._addTreinamentoGerenciar          = window._addTreinamentoGerenciar;
   window._removerTreinamentoGerenciar      = window._removerTreinamentoGerenciar;
