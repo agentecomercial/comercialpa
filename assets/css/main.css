@@ -25,6 +25,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* turmasScreen gerenciado pelo bloco de telas fixas acima */
 .turmas-header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid var(--border);background:var(--surface);}
 .turmas-main{padding:28px;max-width:1200px;margin:0 auto;}
+/* IC (Mapeamento) usa 1400px — alinhado com Pipeline (mesma largura
+   em todo app estratégico). Outras telas (Home, Turmas) ficam em 1200px. */
+#mapeamentoScreen .turmas-main{max-width:1400px;}
 /* Mobile: calibrado para iPhone 16 Pro Max (440×956) sem zoom */
 @media(max-width:560px){
   .turmas-main{padding:14px 10px;}
