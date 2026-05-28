@@ -598,6 +598,52 @@ function entrarTurma(id){
         +' · default='+_treinDefault.length
         +' → final='+allTreinamentos.length, allTreinamentos);
 
+      /* MIGRAÇÃO AUTOMÁTICA: turmas antigas têm treinamentos salvos
+         localmente em turmas/{id}/treinamentos que NUNCA foram coletados
+         para appConfig/treinamentos. Se a lista global está incompleta
+         (menos itens que a soma de todas as turmas), varremos todas as
+         turmas, coletamos o que falta e gravamos no nó global.
+         Roda só 1x por sessão (cache em window._treinMigDone). */
+      if(!window._treinMigDone && typeof window._fbGet==='function'){
+        window._treinMigDone = true;
+        window._fbGet(TURMAS_NODE).then(function(todasTurmas){
+          if(!todasTurmas || typeof todasTurmas !== 'object') return;
+          var coletados = {};
+          allTreinamentos.forEach(function(t){
+            coletados[String(t).trim().toUpperCase()] = String(t).trim();
+          });
+          var antes = Object.keys(coletados).length;
+          Object.values(todasTurmas).forEach(function(t){
+            if(!t) return;
+            var lt = _toArr(t.treinamentos);
+            lt.forEach(function(item){
+              if(!item) return;
+              var up = String(item).trim().toUpperCase();
+              if(!up || coletados[up]) return;
+              coletados[up] = String(item).trim();
+            });
+          });
+          var depois = Object.keys(coletados).length;
+          if(depois > antes){
+            var listaFinal = Object.values(coletados);
+            /* Atualiza global em runtime */
+            allTreinamentos.length = 0;
+            listaFinal.forEach(function(t){ allTreinamentos.push(t); });
+            if(typeof buildSelects==='function') buildSelects();
+            /* Persiste no nó global pra outras turmas/sessões */
+            if(typeof window._fbSave==='function'){
+              window._fbSave('appConfig/treinamentos', listaFinal)
+                .then(function(){
+                  console.log('[Treinamentos] migração: +'+(depois-antes)+' itens coletados das turmas antigas, salvos no global. Total='+depois);
+                })
+                .catch(function(e){ console.warn('[Treinamentos] migração save:', e); });
+            }
+          } else {
+            console.log('[Treinamentos] migração: nenhum item novo nas turmas antigas.');
+          }
+        }).catch(function(e){ console.warn('[Treinamentos] migração:', e); });
+      }
+
       _doEntrar(turmaObj,dadosFinais);
     }).catch(function(e){
       _showToast('❌ Erro ao carregar turma: '+(e&&e.message?e.message:e),'var(--red)');
