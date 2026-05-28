@@ -1944,9 +1944,10 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 
 /* Scroll suave no body */
 .np-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px;display:none;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;min-height:0;}
-/* Padronização: conteúdo do Pipeline centralizado em 1300px (intermediário entre IC 1200 e full) */
-.np-body > *{max-width:1300px;margin-left:auto;margin-right:auto;}
-.np-body.ativo{display:block;min-height:0;}
+/* Padronização: conteúdo do Pipeline centralizado em 1300px (intermediário entre IC 1200 e full).
+   IMPORTANTE: aplicar no PRÓPRIO .np-body, NÃO nos filhos diretos — caso contrário
+   conflita com grids inline (ex: cabeçalho flex da aba Metas) e desfigura o layout. */
+.np-body.ativo{display:block;min-height:0;max-width:1300px;width:100%;margin-left:auto;margin-right:auto;}
 #npTabFunil.ativo{display:flex;flex-direction:column;overflow:hidden;padding:0;}
 .np-body::-webkit-scrollbar{width:4px;}
 .np-body::-webkit-scrollbar-track{background:transparent;}
