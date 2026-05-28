@@ -644,39 +644,70 @@
       }).join('');
     }
 
-    /* Grafico consultores */
+    /* Grafico consultores — Tabela compacta no estilo .fpc-tbl do IC.
+       9 colunas: # · Consultor · Progresso · Faturado · % · Meta ·
+       Falta Mínima · Falta Básica · Falta Master */
     var chartCons=document.getElementById('npChartConsultores');
     if(chartCons){
       var _goalsCh=window._npGoals||{};
       var maxV=ranking.length?Math.max.apply(null,ranking.map(function(r){return r.pago;})):1;
       if(!maxV) maxV=1;
-      chartCons.innerHTML=ranking.length
-        ?ranking.map(function(r,i){
-            var cor=COR[i%COR.length];
-            var barPct=Math.round(r.pago/maxV*100);
-            /* PROGRESSIVO: % e label refletem o PRÓXIMO tier (Mínima → Básica → Master).
-               Sem mais "76% Básica" quando ainda não passou pela Mínima. */
-            var px = (typeof _npProxTier==='function')?_npProxTier(_goalsCh[r.nome]||{},r.pago):null;
-            var col, info;
-            if(!px || !px.meta){
-              col = _npGetCol(0);
-              info = '<span style="font-size:9px;color:var(--muted);margin-left:4px;">sem meta</span>';
-            } else if(px.batida === 'master'){
-              col = _npGetCol(100);
-              info = '<span style="font-size:9px;color:var(--pago);margin-left:6px;font-weight:700;">✅ Master batida</span>';
-            } else {
-              var pctNext = Math.round(r.pago / px.meta * 100);
-              col = _npGetCol(pctNext);
-              info = '<span style="font-size:9px;color:'+col.text+';margin-left:6px;font-weight:700;">'+pctNext+'% '+px.label+'</span>'
-                   + '<span style="font-size:9px;color:var(--muted);margin-left:4px;">Falta '+_fmtR(px.falta)+'</span>';
-            }
-            return '<div class="np-bar-row">'
-              +'<div class="np-bar-nome" title="'+_esc(r.nome)+'">'+_esc(r.nome)+'</div>'
-              +'<div class="np-bar-track"><div class="np-bar-fill" style="width:'+barPct+'%;background:'+col.bar+'"></div></div>'
-              +'<div class="np-bar-val" style="color:'+col.text+';">'+_fmtR(r.pago)+info+'</div>'
-              +'</div>';
-          }).join('')
-        :'<div class="np-empty">Sem dados.</div>';
+      var medals=['🥇','🥈','🥉'];
+
+      function _faltaCellNP(meta, total){
+        if(!meta || meta<=0) return '<td class="fpc-falta muted">—</td>';
+        var diff = meta - total;
+        if(diff<=0) return '<td class="fpc-falta txt-green">✓ batida</td>';
+        return '<td class="fpc-falta txt-amber">'+_fmtR(diff)+'</td>';
+      }
+
+      if(!ranking.length){
+        chartCons.innerHTML='<div class="np-empty">Sem dados.</div>';
+      } else {
+        var html='<table class="fpc-tbl">'
+          +'<thead><tr>'
+          +'<th class="c">#</th>'
+          +'<th class="c">Consultor</th>'
+          +'<th class="c">Progresso</th>'
+          +'<th class="c">Faturado</th>'
+          +'<th class="c">%</th>'
+          +'<th class="c">Meta</th>'
+          +'<th class="c">Falta Mínima</th>'
+          +'<th class="c">Falta Básica</th>'
+          +'<th class="c">Falta Master</th>'
+          +'</tr></thead><tbody>';
+
+        ranking.forEach(function(r,i){
+          var cor=COR[i%COR.length];
+          var barPct=Math.round(r.pago/maxV*100);
+          var medal = medals[i] || '';
+
+          var g = _goalsCh[r.nome] || {};
+          var metaMin = +(g.metaMinima || 0);
+          var metaBas = +(g.metaBasica || g.metaValor || 0);
+          var metaMas = +(g.metaMaster || 0);
+          var metaRef = metaMin || metaBas || metaMas || 0;
+          var temMeta = metaRef > 0;
+          var pctMeta = temMeta ? Math.round((r.pago / metaRef) * 100) : null;
+          var pctClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : pctMeta >= 70 ? 'txt-amber' : 'txt-red';
+          var pctDisp = !temMeta ? '—' : (pctMeta + '%');
+
+          html += '<tr class="fpc-row">'
+            +'<td class="fpc-rk">'+(i+1)+'</td>'
+            +'<td class="fpc-nome">'+(medal?'<span class="fpc-medal">'+medal+'</span> ':'')+_esc(r.nome)+'</td>'
+            +'<td class="fpc-prog"><div class="fpc-bar"><div class="fpc-bar-fill" style="width:'+barPct+'%;background:'+cor+';"></div></div></td>'
+            +'<td class="fpc-val txt-green">'+_fmtR(r.pago)+'</td>'
+            +'<td class="fpc-pct '+pctClass+'">'+pctDisp+'</td>'
+            +'<td class="fpc-meta">'+(temMeta?_fmtR(metaRef):'sem meta')+'</td>'
+            + _faltaCellNP(metaMin, r.pago)
+            + _faltaCellNP(metaBas, r.pago)
+            + _faltaCellNP(metaMas, r.pago)
+            +'</tr>';
+        });
+
+        html += '</tbody></table>';
+        chartCons.innerHTML = html;
+      }
     }
 
     /* Grafico Meta x Realizado */
