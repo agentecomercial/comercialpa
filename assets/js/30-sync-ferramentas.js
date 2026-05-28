@@ -627,14 +627,14 @@ function _mapRenderConsultores(registros) {
     var metaMin = +(g.metaMinima || 0);
     var metaBas = +(g.metaBasica || g.metaValor || 0);
     var metaMas = +(g.metaMaster || 0);
-    /* Meta de referência pra % (preferência: mínima > básica > master) */
-    var metaRef = metaMin || metaBas || metaMas || 0;
+    /* Meta de referência = MASTER (objetivo máximo). Barra 100% = bateu o teto.
+       Fallback: básica > mínima quando o tier maior não está configurado. */
+    var metaRef = metaMas || metaBas || metaMin || 0;
     var temMeta = metaRef > 0;
     var pctMeta = temMeta ? Math.round((c.total / metaRef) * 100) : null;
     var pctClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : pctMeta >= 70 ? 'txt-amber' : 'txt-red';
     var pctDisp = !temMeta ? (pctTotal + '%') : (pctMeta + '%');
-    /* Barra reflete o % efetivo: % da meta (cap 100) se tiver meta,
-       senão proporção do maior do ranking. */
+    /* Barra e % usam mesmo denominador (metaRef = master) → barra 90% ⇔ "90%" */
     var bw = temMeta ? Math.min(100, pctMeta) : Math.round((c.total / maxVal) * 100);
 
     html += '<tr class="fpc-row'+(ativo?' ativo':'')+'" onclick="_mapToggleConsultor(\''+_mapEscAttr(c.nome)+'\')" title="Filtrar por '+c.nome+'">'

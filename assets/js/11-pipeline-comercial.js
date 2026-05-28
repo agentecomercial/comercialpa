@@ -685,13 +685,16 @@
           var metaMin = +(g.metaMinima || 0);
           var metaBas = +(g.metaBasica || g.metaValor || 0);
           var metaMas = +(g.metaMaster || 0);
-          var metaRef = metaMin || metaBas || metaMas || 0;
+          /* Meta de referência = MASTER (objetivo máximo). Fallback pra
+             básica > mínima quando o tier maior não está configurado.
+             Barra cheia = bateu o teto. */
+          var metaRef = metaMas || metaBas || metaMin || 0;
           var temMeta = metaRef > 0;
           var pctMeta = temMeta ? Math.round((r.pago / metaRef) * 100) : null;
           var pctClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : pctMeta >= 70 ? 'txt-amber' : 'txt-red';
           var pctDisp = !temMeta ? '—' : (pctMeta + '%');
-          /* Barra agora reflete o % da meta (cap em 100% pra não estourar visualmente).
-             Sem meta: fallback à proporção do maior do ranking. */
+          /* Barra e % medidos contra o mesmo denominador (metaRef = master)
+             → barra 90% ⇔ coluna "90%". Cap 100% pra não estourar visualmente. */
           var barPct = temMeta ? Math.min(100, pctMeta) : Math.round(r.pago/maxV*100);
 
           html += '<tr class="fpc-row">'
