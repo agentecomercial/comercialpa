@@ -240,6 +240,26 @@ function lcCellChange(el){
   } else {
     data[idx][campo] = val;
   }
+  /* SYNC schema híbrido: ao mudar o select TREINAMENTO inline, atualiza
+     também o array d.treinamentos[] — senão _migrarTreinamentosHibrido
+     reverte o scalar pra treinamentos[0].cod no próximo render. */
+  if(campo==='treinamento'){
+    var d = data[idx];
+    if(!Array.isArray(d.treinamentos) || !d.treinamentos.length){
+      d.treinamentos = [{
+        cod: val,
+        valor: Number(d.valor||0)||0,
+        entrada: Number(d.entrada||0)||0,
+        status: d.status || 'aberto'
+      }];
+    } else if(d.treinamentos.length === 1){
+      d.treinamentos[0].cod = val;
+    } else {
+      /* Cliente com 2+ subs: ambíguo, mas atualiza o primeiro pra refletir
+         a escolha do usuário (única intenção possível pelo select da grade). */
+      d.treinamentos[0].cod = val;
+    }
+  }
   if(typeof markUnsaved==='function') markUnsaved();
   if(typeof saveStorage==='function') saveStorage();
   // Re-render instantâneo após edição inline no modal Gerenciar Clientes

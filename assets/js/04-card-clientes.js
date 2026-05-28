@@ -19,6 +19,22 @@ function cardCellChange(el){
   var val   = el.value;
   if(!Array.isArray(data)||!data[ri]) return;
   data[ri][campo] = val;
+  /* SYNC schema híbrido: ao mudar select de TREINAMENTO inline, atualiza
+     também d.treinamentos[] — senão _migrarTreinamentosHibrido reverte
+     o scalar para treinamentos[0].cod no próximo render. */
+  if(campo==='treinamento'){
+    var d = data[ri];
+    if(!Array.isArray(d.treinamentos) || !d.treinamentos.length){
+      d.treinamentos = [{
+        cod: val,
+        valor: Number(d.valor||0)||0,
+        entrada: Number(d.entrada||0)||0,
+        status: d.status || 'aberto'
+      }];
+    } else {
+      d.treinamentos[0].cod = val;
+    }
+  }
   // Atualizar classe de cor do status se for o select de status
   if(campo==='status'){
     cardUpdateStatusClass(el);
