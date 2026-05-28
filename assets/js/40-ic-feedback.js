@@ -1167,46 +1167,52 @@
     });
   }
 
-  /* ── Radar SVG ─────────────────────────────────────────── */
+  /* ── Radar SVG · TODAS as competências de COMPS_DEF ────── */
   function _icFbRenderRadar(){
     var svg = document.getElementById('fbRadar');
     if(!svg) return;
+    var N = COMPS_DEF.length;         /* nº dinâmico (hoje 9) */
     var R = 90;
+    var ANG_STEP = 2*Math.PI/N;
     svg.innerHTML = '';
     var labels = COMPS_DEF.map(function(c){return c.label;});
     var atual = COMPS_DEF.map(function(c){return (_doc && _doc.comps && _doc.comps[c.key]) || 0;});
     var anterior = _icFbAnteriorVals();
-    /* Grid */
+    /* Grid concêntrico (N-gono em cada nível) */
     for(var g=2; g<=10; g+=2){
       var pts = '';
-      for(var i=0;i<5;i++){
-        var ang = -Math.PI/2 + i*(2*Math.PI/5);
+      for(var i=0;i<N;i++){
+        var ang = -Math.PI/2 + i*ANG_STEP;
         var r = (g/10)*R;
         pts += (r*Math.cos(ang))+','+(r*Math.sin(ang))+' ';
       }
       svg.innerHTML += '<polygon points="'+pts.trim()+'" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>';
     }
     /* Eixos + labels */
-    for(var i=0;i<5;i++){
-      var ang = -Math.PI/2 + i*(2*Math.PI/5);
+    for(var i=0;i<N;i++){
+      var ang = -Math.PI/2 + i*ANG_STEP;
       var x = R*Math.cos(ang), y = R*Math.sin(ang);
       svg.innerHTML += '<line x1="0" y1="0" x2="'+x+'" y2="'+y+'" stroke="rgba(255,255,255,.06)" stroke-width="1"/>';
-      var lx = (R+18)*Math.cos(ang), ly = (R+18)*Math.sin(ang) + 4;
+      var lx = (R+16)*Math.cos(ang), ly = (R+16)*Math.sin(ang) + 3;
       var anchor = Math.abs(Math.cos(ang)) < 0.2 ? 'middle' : (Math.cos(ang) > 0 ? 'start' : 'end');
-      svg.innerHTML += '<text x="'+lx+'" y="'+ly+'" fill="#bbb" font-size="10" font-weight="700" text-anchor="'+anchor+'">'+labels[i]+'</text>';
+      /* Label encurta se for grande (evita sobreposição com 9 eixos) */
+      var lbl = labels[i].length > 12 ? labels[i].slice(0,11)+'…' : labels[i];
+      svg.innerHTML += '<text x="'+lx+'" y="'+ly+'" fill="#bbb" font-size="9" font-weight="700" text-anchor="'+anchor+'">'+lbl+'</text>';
     }
     function poly(vals, color, opacity){
       if(!vals || !vals.length) return;
       var pts = '';
-      for(var i=0;i<5;i++){
-        var ang = -Math.PI/2 + i*(2*Math.PI/5);
-        var r = (vals[i]/10)*R;
+      for(var i=0;i<N;i++){
+        var ang = -Math.PI/2 + i*ANG_STEP;
+        var v = +(vals[i] || 0);
+        var r = (v/10)*R;
         pts += (r*Math.cos(ang))+','+(r*Math.sin(ang))+' ';
       }
       svg.innerHTML += '<polygon points="'+pts.trim()+'" fill="'+color+'" fill-opacity="'+opacity+'" stroke="'+color+'" stroke-width="2"/>';
-      for(var i=0;i<5;i++){
-        var ang = -Math.PI/2 + i*(2*Math.PI/5);
-        var r = (vals[i]/10)*R;
+      for(var i=0;i<N;i++){
+        var ang = -Math.PI/2 + i*ANG_STEP;
+        var v = +(vals[i] || 0);
+        var r = (v/10)*R;
         svg.innerHTML += '<circle cx="'+(r*Math.cos(ang))+'" cy="'+(r*Math.sin(ang))+'" r="3" fill="'+color+'"/>';
       }
     }
