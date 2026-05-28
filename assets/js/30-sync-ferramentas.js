@@ -803,6 +803,26 @@ function _mapRenderCorrelacao(registros) {
   el.innerHTML = html;
 }
 
+/* Estado de ordenação do Ranking de Treinamentos: 'fat' | 'qtd' */
+var _mapTreinSort = 'fat';
+
+/* Handler do pill segmented (chamado via onclick no HTML) */
+window._mapSetTreinSort = function(sort){
+  if(sort !== 'fat' && sort !== 'qtd') return;
+  _mapTreinSort = sort;
+  /* Atualiza estado visual dos botões */
+  var bar = document.getElementById('mapTreinSortBar');
+  if(bar){
+    bar.querySelectorAll('button').forEach(function(b){
+      b.classList.toggle('active', b.dataset.sort === sort);
+    });
+  }
+  /* Re-renderiza só o painel */
+  if(typeof _mapDados !== 'undefined' && _mapDados && typeof _mapFiltrar === 'function'){
+    _mapFiltrar();
+  }
+};
+
 function _mapRenderTreinamentos(registros) {
   /* Filtro cruzado: se há consultor selecionado, restringe a esse consultor.
      O painel próprio do treinamento mantém todos (highlight no selecionado). */
@@ -818,18 +838,28 @@ function _mapRenderTreinamentos(registros) {
   });
   var lista = Object.keys(map).map(function(t) {
     return { nome: t, total: map[t].total, qtd: map[t].qtd };
-  }).sort(function(a, b) { return b.total - a.total; });
+  });
+
+  /* Ordenação dinâmica: faturamento ou quantidade de vendas */
+  lista.sort(function(a, b){
+    if(_mapTreinSort === 'qtd') return b.qtd - a.qtd;
+    return b.total - a.total;
+  });
 
   var el = document.getElementById('mapTreinamentoRows');
   if (!el) return;
   if (!lista.length) { el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px;">Nenhum dado no período.</div>'; return; }
 
   var totalGeral = lista.reduce(function(a, t) { return a + t.total; }, 0);
-  var maxVal = lista[0].total || 1;
+  /* maxVal acompanha o critério atual: por faturamento ou por qtd */
+  var maxVal = _mapTreinSort === 'qtd'
+    ? (lista[0].qtd || 1)
+    : (lista[0].total || 1);
   var coresBarra = ['#22d3ee','#fb923c','#facc15','#34d399','#a78bfa','#f472b6','#60a5fa','#c8f05a'];
   el.innerHTML = lista.map(function(t, i) {
     var pct = totalGeral > 0 ? Math.round((t.total / totalGeral) * 100) : 0;
-    var bw  = Math.round((t.total / maxVal) * 100);
+    var refMax = _mapTreinSort === 'qtd' ? t.qtd : t.total;
+    var bw  = Math.round((refMax / maxVal) * 100);
     var cor = coresBarra[i % coresBarra.length];
     var ativo = f && f.trein === t.nome;
     var classe = 'np-cons-row' + (ativo ? ' ativo' : '');
