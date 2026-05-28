@@ -35,6 +35,28 @@ function cardCellChange(el){
       d.treinamentos[0].cod = val;
     }
   }
+  /* SYNC STATUS: _statusEfetivoCliente() (chamado dentro de
+     _migrarTreinamentosHibrido) recalcula d.status baseado em
+     d.treinamentos[].status. Se o usuário muda o STATUS na grade
+     mas os subs continuam 'aberto', o render seguinte reverte.
+     Propaga o novo status pros subs:
+       - 1 sub: muda o status desse sub
+       - 2+ subs: se novo='pago' marca todos pagos (sentido óbvio);
+                  caso contrário, muda só os NÃO pagos (preserva já-pagos). */
+  if(campo==='status'){
+    var dS = data[ri];
+    if(Array.isArray(dS.treinamentos) && dS.treinamentos.length){
+      if(dS.treinamentos.length === 1){
+        dS.treinamentos[0].status = val;
+      } else if(val === 'pago'){
+        dS.treinamentos.forEach(function(t){ if(t) t.status = 'pago'; });
+      } else {
+        dS.treinamentos.forEach(function(t){
+          if(t && t.status !== 'pago') t.status = val;
+        });
+      }
+    }
+  }
   // Atualizar classe de cor do status se for o select de status
   if(campo==='status'){
     cardUpdateStatusClass(el);

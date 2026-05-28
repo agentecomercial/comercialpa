@@ -260,6 +260,23 @@ function lcCellChange(el){
       d.treinamentos[0].cod = val;
     }
   }
+  /* SYNC STATUS: _statusEfetivoCliente() (chamado em _migrarTreinamentosHibrido)
+     recalcula d.status baseado em d.treinamentos[].status. Sem propagar pros
+     subs, mudança manual no select STATUS é revertida no render seguinte. */
+  if(campo==='status'){
+    var dS = data[idx];
+    if(Array.isArray(dS.treinamentos) && dS.treinamentos.length){
+      if(dS.treinamentos.length === 1){
+        dS.treinamentos[0].status = val;
+      } else if(val === 'pago'){
+        dS.treinamentos.forEach(function(t){ if(t) t.status = 'pago'; });
+      } else {
+        dS.treinamentos.forEach(function(t){
+          if(t && t.status !== 'pago') t.status = val;
+        });
+      }
+    }
+  }
   if(typeof markUnsaved==='function') markUnsaved();
   if(typeof saveStorage==='function') saveStorage();
   // Re-render instantâneo após edição inline no modal Gerenciar Clientes
