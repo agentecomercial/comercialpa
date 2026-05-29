@@ -724,7 +724,7 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   .cli-bar-unica .cli-spacer,
   .cli-bar-unica .cli-menu,
   .cli-bar-unica .cli-row-break,
-  .filtros-mobile{display:none !important;}
+  .cli-bar-unica .filtros-mobile{display:none !important;}
 
   /* ============ ROW 1 — SEARCH | FILTROS | + ============ */
   /* SEARCH ocupa coluna 1, full width, 38px altura FIXA */
