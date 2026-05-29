@@ -1181,7 +1181,17 @@ function _entradaParaSub(d, ai){
   if(!d || !Array.isArray(d.treinamentos) || !d.treinamentos[ai]) return 0;
   var sub = d.treinamentos[ai];
   var stSub = sub.status || d.status || 'aberto';
-  if(stSub === 'pago') return 0;
+  if(stSub === 'pago'){
+    /* Sub pago normalmente retorna 0 (entrada foi consumida na venda e reatribuída
+       a outro sub não-pago). MAS se for o ÚNICO sub do cliente, não há pra onde
+       reatribuir — retorna a entrada própria (caso JOABE: 1 sub CI pago com R$ 20k
+       de entrada PIX deve ser visível no modal). */
+    if(d.treinamentos.length === 1){
+      var entSub = Number(sub.entrada||0)||0;
+      return entSub || Number(d.entrada||0)||0;
+    }
+    return 0;
+  }
   var minha = Number(sub.entrada||0)||0;
   var idxElegivel = _idxSubElegivelEntrada(d);
   if(ai === idxElegivel){
