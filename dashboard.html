@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260528-112648">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260528-112648">
+<link rel="stylesheet" href="assets/css/main.css?v=20260529-151103">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260529-151103">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260528-112648">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260529-151103">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -1910,7 +1910,8 @@
     <!-- Tabs internas da Inteligência Comercial (espelham o padrão visual do Pipeline)
          Tudo abaixo fica isolado em #mapeamentoScreen — nada toca Turmas ou Pipeline. -->
     <div class="ic-tabs" id="icTabs">
-      <button class="ic-tab active" data-icpane="dashboard" onclick="_icShowPane('dashboard')">📊 Dashboard</button>
+      <button class="ic-tab active" data-icpane="funil" onclick="_icShowPane('funil')">🎯 Funil de Vendas</button>
+      <button class="ic-tab" data-icpane="dashboard" onclick="_icShowPane('dashboard')">📊 Dashboard</button>
       <button class="ic-tab" data-icpane="desenvolvimento" onclick="_icShowPane('desenvolvimento')">📈 Desenvolvimento</button>
       <button class="ic-tab" data-icpane="pdi" onclick="_icShowPane('pdi')">🌱 PDI</button>
       <button class="ic-tab" data-icpane="playbook" onclick="_icShowPane('playbook')">📖 Playbook</button>
@@ -1919,8 +1920,13 @@
       <button class="ic-tab" data-icpane="manual" onclick="_icShowPane('manual')" id="icTabManual" style="display:none;">📚 Manual</button>
     </div>
 
+    <!-- PANE: FUNIL DE VENDAS (CRM Kanban + Lista) -->
+    <div class="ic-pane show" data-icpane="funil">
+      <div id="funilVendasRoot"></div>
+    </div>
+
     <!-- PANE: DASHBOARD (conteúdo original do Mapeamento) -->
-    <div class="ic-pane show" data-icpane="dashboard">
+    <div class="ic-pane" data-icpane="dashboard">
 
     <!-- Hero do Dashboard IC -->
     <div class="ic-hero">
@@ -2227,37 +2233,90 @@
 
     <!-- PANE: PDI (Plano de Desenvolvimento Individual · Fase 4) -->
     <div class="ic-pane" data-icpane="pdi">
-      <div class="pdi-header" style="padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px;">
+      <div class="pdi-header" style="padding:14px 0 14px;border-bottom:1px solid var(--border);margin-bottom:16px;">
         <div>
           <div class="pdi-title">🌱 PDI · Plano de Desenvolvimento Individual <small>· trimestral</small></div>
-          <div style="font-size:12px;color:var(--muted);margin-top:6px;">3 competências-alvo escolhidas com base nos últimos ciclos de Feedback. Cada uma com nível atual, nível alvo, ações e treinamentos vinculados.</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px;">3 competências-alvo escolhidas com base nos últimos ciclos de Feedback.</div>
         </div>
-        <div class="pdi-controls">
-          <div class="pdi-control">
-            <label>Consultor</label>
-            <select id="pdiConsultor" class="modal-select" style="padding:7px 11px;font-size:12px;min-width:200px;"></select>
-          </div>
-          <div class="pdi-control">
-            <label>Mês inicial</label>
-            <input type="month" id="pdiPerStart" class="modal-select" style="padding:6px 10px;font-size:12px;">
-          </div>
-          <div class="pdi-control">
-            <label>Mês final</label>
-            <input type="month" id="pdiPerEnd" class="modal-select" style="padding:6px 10px;font-size:12px;">
-          </div>
-          <div class="pdi-statusbar iniciado" id="pdiStatusBar">⚙ Não iniciado</div>
-        </div>
-      </div>
-      <!-- Atalhos rápidos do período (chips, fora da linha de controles) -->
-      <div class="pdi-atalhos">
-        <span class="pdi-atalhos-lbl">Atalhos:</span>
-        <button class="pdi-atalho" data-atalho="prox3">Próximos 3 meses</button>
-        <button class="pdi-atalho" data-atalho="atual3">Trimestre atual</button>
-        <button class="pdi-atalho" data-atalho="prox6">Próximos 6 meses</button>
-        <button class="pdi-atalho" data-atalho="ant3">3 meses anteriores</button>
       </div>
 
       <div class="pdi-layout">
+        <!-- SIDEBAR: configuração + status + histórico + escala -->
+        <div class="pdi-side">
+          <div class="pdi-side-card pdi-cfg-card">
+            <div class="pdi-side-h">⚙️ PDI · Configurar</div>
+            <div class="pdi-cfg-field">
+              <label>Consultor</label>
+              <select id="pdiConsultor" class="modal-select" style="width:100%;padding:7px 11px;font-size:12px;"></select>
+            </div>
+            <div class="pdi-cfg-field">
+              <label>Mês inicial</label>
+              <input type="month" id="pdiPerStart" class="modal-select" style="width:100%;padding:6px 10px;font-size:12px;">
+            </div>
+            <div class="pdi-cfg-field">
+              <label>Mês final</label>
+              <input type="month" id="pdiPerEnd" class="modal-select" style="width:100%;padding:6px 10px;font-size:12px;">
+            </div>
+            <div class="pdi-cfg-field">
+              <label>Atalhos</label>
+              <div class="pdi-atalhos-side">
+                <button class="pdi-atalho" data-atalho="prox3">Próximos 3 meses</button>
+                <button class="pdi-atalho" data-atalho="atual3">Trimestre atual</button>
+                <button class="pdi-atalho" data-atalho="prox6">Próximos 6 meses</button>
+                <button class="pdi-atalho" data-atalho="ant3">3 meses anteriores</button>
+              </div>
+            </div>
+
+            <div class="pdi-status-box">
+              <div class="pdi-status-lbl">📊 Status do PDI</div>
+              <div class="pdi-status-big nao" id="pdiStatusBig">
+                <span class="pdi-status-dot"></span>
+                <div class="pdi-status-info">
+                  <div class="pdi-status-tit" id="pdiStatusTit">NÃO INICIADO</div>
+                  <div class="pdi-status-sub" id="pdiStatusSub">Aguardando definição</div>
+                </div>
+              </div>
+              <div class="pdi-status-prog">
+                <div class="pdi-status-prog-bar"><div class="pdi-status-prog-fill" id="pdiProgFill" style="width:0%;"></div></div>
+                <div class="pdi-status-prog-meta">
+                  <span>Iniciado</span>
+                  <span id="pdiProgPct" style="color:var(--accent);">0%</span>
+                  <span>Concluído</span>
+                </div>
+              </div>
+              <select id="pdiStatusSel" class="modal-select" style="width:100%;padding:6px 10px;font-size:11px;margin-top:8px;">
+                <option value="nao">⏸ Não iniciado</option>
+                <option value="andamento">🚀 Em andamento</option>
+                <option value="concluido">✅ Concluído</option>
+                <option value="pausado">⏸️ Pausado</option>
+                <option value="cancelado">❌ Cancelado</option>
+              </select>
+              <!-- Mantém o statusbar legado oculto pra compatibilidade com handlers do JS antigo -->
+              <div class="pdi-statusbar iniciado" id="pdiStatusBar" style="display:none;">⚙ Não iniciado</div>
+            </div>
+          </div>
+
+          <div class="pdi-side-card">
+            <div class="pdi-side-h">📚 Escala de níveis (1–5)</div>
+            <div style="font-size:11px;line-height:1.7;color:var(--text);">
+              <div><b style="color:var(--red);">1 · Iniciante</b> — precisa supervisão constante</div>
+              <div><b style="color:var(--amber);">2 · Básico</b> — executa com ajuda esporádica</div>
+              <div><b style="color:#ffe000;">3 · Intermediário</b> — executa sozinho com qualidade</div>
+              <div><b style="color:var(--blue);">4 · Proficiente</b> — referência do time</div>
+              <div><b style="color:var(--accent);">5 · Mestre</b> — ensina/mentora outros</div>
+            </div>
+          </div>
+          <div class="pdi-side-card">
+            <div class="pdi-side-h">🕒 Histórico de PDIs</div>
+            <div class="pdi-hist" id="pdiHist"><div style="font-size:11px;color:var(--muted);text-align:center;padding:14px;">Sem PDIs anteriores.</div></div>
+          </div>
+          <div class="pdi-side-card">
+            <div class="pdi-side-h">👥 Comparativo com o time</div>
+            <div id="pdiComparativo" style="font-size:11px;line-height:1.7;color:var(--text);">—</div>
+          </div>
+        </div>
+
+        <!-- MAIN: conteúdo principal -->
         <div class="pdi-main">
           <!-- DIAGNÓSTICO -->
           <div class="pdi-card">
@@ -2296,26 +2355,6 @@
           </div>
         </div>
 
-        <div class="pdi-side">
-          <div class="pdi-side-card">
-            <div class="pdi-side-h">📚 Escala de níveis (1–5)</div>
-            <div style="font-size:11px;line-height:1.7;color:var(--text);">
-              <div><b style="color:var(--red);">1 · Iniciante</b> — precisa supervisão constante</div>
-              <div><b style="color:var(--amber);">2 · Básico</b> — executa com ajuda esporádica</div>
-              <div><b style="color:#ffe000;">3 · Intermediário</b> — executa sozinho com qualidade</div>
-              <div><b style="color:var(--blue);">4 · Proficiente</b> — referência do time</div>
-              <div><b style="color:var(--accent);">5 · Mestre</b> — ensina/mentora outros</div>
-            </div>
-          </div>
-          <div class="pdi-side-card">
-            <div class="pdi-side-h">🕒 Histórico de PDIs</div>
-            <div class="pdi-hist" id="pdiHist"><div style="font-size:11px;color:var(--muted);text-align:center;padding:14px;">Sem PDIs anteriores.</div></div>
-          </div>
-          <div class="pdi-side-card">
-            <div class="pdi-side-h">👥 Comparativo com o time</div>
-            <div id="pdiComparativo" style="font-size:11px;line-height:1.7;color:var(--text);">—</div>
-          </div>
-        </div>
       </div>
     </div>
     <!-- /PANE: PDI -->
@@ -2376,9 +2415,9 @@
           <button class="pb-cat-chip" data-cat="recuperacao" onclick="_pbSetCat('recuperacao')">♻ Recuperação</button>
           <button class="pb-cat-chip" data-cat="cobranca" onclick="_pbSetCat('cobranca')">💰 Cobrança</button>
         </div>
-        <div style="flex:1;min-width:200px;display:flex;align-items:center;gap:6px;">
-          <input type="text" id="pbBusca" placeholder="🔎 Buscar no playbook..." oninput="_pbBuscar()" style="flex:1;padding:7px 11px;font-size:12px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:6px;font-family:inherit;">
-          <select id="pbProdFiltro" onchange="_pbBuscar()" style="padding:7px 11px;font-size:12px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:6px;font-family:inherit;">
+        <div style="flex:1;min-width:200px;max-width:100%;display:flex;align-items:center;gap:6px;box-sizing:border-box;">
+          <input type="text" id="pbBusca" placeholder="🔎 Buscar no playbook..." oninput="_pbBuscar()" style="flex:1;min-width:0;padding:7px 11px;font-size:12px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:6px;font-family:inherit;box-sizing:border-box;">
+          <select id="pbProdFiltro" onchange="_pbBuscar()" style="flex:0 0 auto;max-width:170px;padding:7px 11px;font-size:12px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:6px;font-family:inherit;box-sizing:border-box;">
             <option value="">Todos os produtos</option>
           </select>
         </div>
@@ -2842,7 +2881,7 @@
 
             <div class="mn-faq">
               <b>Q: Atualizei o código e não vejo a mudança no navegador.</b><br>
-              <span>R: Rode <code>bump.cmd</code> (ou <code>scripts/bump-cache.ps1</code>) — incrementa o <code>?v=20260528-112648"mn-faq">
+              <span>R: Rode <code>bump.cmd</code> (ou <code>scripts/bump-cache.ps1</code>) — incrementa o <code>?v=20260529-151103"mn-faq">
               <b>Q: Promessa de cobrança ficou "Pendente" mesmo após a data.</b><br>
               <span>R: O estado <b>Vencida</b> é calculado em tempo de render (não persistido). Se a promessa está marcada manualmente como <b>Honrada/Quebrada/Reagendada</b>, esses tem prioridade. Caso contrário, basta abrir a aba que ela aparece como Vencida.</span>
             </div>
@@ -3369,7 +3408,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260528-112648"></script>
+<script defer src="assets/js/00-utils.js?v=20260529-151103"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -3463,37 +3502,38 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260528-112648"></script>
-<script defer src="assets/js/29-login.js?v=20260528-112648"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260528-112648"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260528-112648"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260528-112648"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260528-112648"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260528-112648"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260528-112648"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260528-112648"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260528-112648"></script>
-<script defer src="assets/js/40-ic-feedback.js?v=20260528-112648"></script>
-<script defer src="assets/js/41-ic-pdi.js?v=20260528-112648"></script>
-<script defer src="assets/js/42-ic-ia.js?v=20260528-112648"></script>
-<script defer src="assets/js/43-ic-alertas.js?v=20260528-112648"></script>
-<script defer src="assets/js/44-ic-playbook.js?v=20260528-112648"></script>
-<script defer src="assets/js/45-ic-cobranca.js?v=20260528-112648"></script>
-<script defer src="assets/js/46-ic-manual.js?v=20260528-112648"></script>
-<script defer src="assets/js/47-ic-executivo.js?v=20260528-112648"></script>
-<script defer src="assets/js/99-diag.js?v=20260528-112648"></script>
-<script defer src="assets/js/21-turmas.js?v=20260528-112648"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260528-112648"></script>
+<script defer src="assets/js/02-main.js?v=20260529-151103"></script>
+<script defer src="assets/js/29-login.js?v=20260529-151103"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260529-151103"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260529-151103"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260529-151103"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260529-151103"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260529-151103"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260529-151103"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260529-151103"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260529-151103"></script>
+<script defer src="assets/js/40-ic-feedback.js?v=20260529-151103"></script>
+<script defer src="assets/js/41-ic-pdi.js?v=20260529-151103"></script>
+<script defer src="assets/js/42-ic-ia.js?v=20260529-151103"></script>
+<script defer src="assets/js/43-ic-alertas.js?v=20260529-151103"></script>
+<script defer src="assets/js/44-ic-playbook.js?v=20260529-151103"></script>
+<script defer src="assets/js/45-ic-cobranca.js?v=20260529-151103"></script>
+<script defer src="assets/js/46-ic-manual.js?v=20260529-151103"></script>
+<script defer src="assets/js/47-ic-executivo.js?v=20260529-151103"></script>
+<script defer src="assets/js/48-ic-funil-vendas.js?v=20260529-151103"></script>
+<script defer src="assets/js/99-diag.js?v=20260529-151103"></script>
+<script defer src="assets/js/21-turmas.js?v=20260529-151103"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260529-151103"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260528-112648"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260528-112648"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260528-112648"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260528-112648"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260528-112648"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260528-112648"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260529-151103"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260529-151103"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260529-151103"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260529-151103"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260529-151103"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260529-151103"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260528-112648"></script>
-<script defer src="assets/js/17-presenca.js?v=20260528-112648"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260529-151103"></script>
+<script defer src="assets/js/17-presenca.js?v=20260529-151103"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -3505,20 +3545,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260528-112648">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260529-151103">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260528-112648"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260529-151103"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260528-112648"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260528-112648"></script>
+<script defer src="assets/js/05-importacao.js?v=20260529-151103"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260529-151103"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260528-112648">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260529-151103">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260528-112648"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260529-151103"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -3554,7 +3594,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260528-112648"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260529-151103"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -3579,14 +3619,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260528-112648"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260528-112648"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260528-112648"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260528-112648"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260528-112648"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260528-112648"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260528-112648"></script>
-<script defer src="assets/js/08-realtime.js?v=20260528-112648"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260529-151103"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260529-151103"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260529-151103"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260529-151103"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260529-151103"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260529-151103"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260529-151103"></script>
+<script defer src="assets/js/08-realtime.js?v=20260529-151103"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -3619,7 +3659,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260528-112648"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260529-151103"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -4176,16 +4216,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260528-112648"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260529-151103"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260528-112648"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260529-151103"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260528-112648"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260529-151103"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260528-112648"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260529-151103"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
