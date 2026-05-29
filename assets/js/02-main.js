@@ -871,7 +871,13 @@ function salvarNovaTurma(){
 ═══════════════════════════════════════════ */
 function _migrarTreinamentosHibrido(arr){
   if(!Array.isArray(arr)) return arr;
-  arr.forEach(function(d){
+  /* Coleta correções para persistir no Firebase (auto-healing).
+     Adicionado em 2026-05-29: evita que órfãos (sub.valor=0 mas scalar>0)
+     fiquem só corrigidos em memória — sem persistir, o bug volta toda sessão
+     e quebra filtros/somatórias agregadas por status (negociação, etc). */
+  var _correcoesValor = [];   /* [{idx, valor}] */
+  var _correcoesEntrada = []; /* [{idx, entrada}] */
+  arr.forEach(function(d, idx){
     if(!d) return;
     var temArray  = Array.isArray(d.treinamentos) && d.treinamentos.length>0;
     var temScalar = d.treinamento && String(d.treinamento).trim()!=='' && String(d.treinamento)!=='—';
@@ -901,6 +907,7 @@ function _migrarTreinamentosHibrido(arr){
         if(!algumSubTemEntrada){
           d.treinamentos[0] = d.treinamentos[0] || {};
           d.treinamentos[0].entrada = rowEnt;
+          _correcoesEntrada.push({idx: idx, entrada: rowEnt});
         }
       }
       // Coerência de VALOR: se algum sub não tem valor mas d.valor>0 e há só 1 sub,
@@ -909,7 +916,10 @@ function _migrarTreinamentosHibrido(arr){
         var s0 = d.treinamentos[0] || {};
         var subVal = Number(s0.valor||0)||0;
         var rowVal = Number(d.valor||0)||0;
-        if(subVal===0 && rowVal>0){ s0.valor = rowVal; d.treinamentos[0] = s0; }
+        if(subVal===0 && rowVal>0){
+          s0.valor = rowVal; d.treinamentos[0] = s0;
+          _correcoesValor.push({idx: idx, valor: rowVal, cliente: d.cliente});
+        }
       }
     }
     // CASO C (sem array nem scalar): deixa como está — cliente sem treinamento é válido
@@ -925,6 +935,24 @@ function _migrarTreinamentosHibrido(arr){
       if(statusEfetivo) d.status = statusEfetivo;
     }
   });
+
+  /* AUTO-HEAL: persiste as correções no Firebase de forma idempotente.
+     Evita órfãos crônicos (sub.valor=0 com scalar>0) que faziam o KPI
+     Negociação NÃO somar o cliente. Roda 1x por sessão por turma. */
+  if((_correcoesValor.length || _correcoesEntrada.length)
+     && typeof window._fbSave === 'function'
+     && window._turmaAtiva && window._turmaAtiva.id){
+    var _tid = window._turmaAtiva.id;
+    _correcoesValor.forEach(function(c){
+      window._fbSave('turmas/'+_tid+'/clientes/'+c.idx+'/treinamentos/0/valor', c.valor)
+        .then(function(){ console.log('[Auto-heal] '+c.cliente+' · sub.valor → R$ '+c.valor.toLocaleString('pt-BR')); })
+        .catch(function(e){ console.warn('[Auto-heal] falha:', e); });
+    });
+    _correcoesEntrada.forEach(function(c){
+      window._fbSave('turmas/'+_tid+'/clientes/'+c.idx+'/treinamentos/0/entrada', c.entrada)
+        .catch(function(e){ console.warn('[Auto-heal entrada] falha:', e); });
+    });
+  }
   return arr;
 }
 window._migrarTreinamentosHibrido = _migrarTreinamentosHibrido;
