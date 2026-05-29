@@ -608,6 +608,14 @@ window._ciSelectChange=function(sel){
     }
   } else if(campo==='status'){
     alvo.status=sel.value;
+    /* SYNC SCALAR: quando muda o status de um sub no modal, recalcula
+       o status efetivo do cliente (d.status) para que o card de
+       Clientes, KPIs e filtros fiquem coerentes. Sem isso, o cliente
+       seguia mostrando o status antigo na grade do card. */
+    if(ehSub && typeof window._statusEfetivoCliente === 'function'){
+      var stEf = window._statusEfetivoCliente(data[ri]);
+      if(stEf) data[ri].status = stEf;
+    }
     // Re-render do extrato inteiro para refletir status (mudança de cor de borda/badge)
     if(typeof _ciIdx==='number' && _ciIdx!==null && typeof openClientInfo==='function'){
       // Re-render apenas o bloco extrato (não reabre modal todo)
