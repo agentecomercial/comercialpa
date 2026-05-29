@@ -416,8 +416,9 @@
     'CI', 'BHP', 'CEOP', 'FCIS', 'FGPC', 'IF', 'ML5', 'TAV',
     'MASTER COACHING',
     'TCE - BRONZE', 'TCE - OURO', 'TCE - BLACK', 'TCE - VIP',
-    'CIS', 'CIS-GL', 'MAESTRIA',
-    'MENT. IA PARA NEGOCIOS'
+    'CIS', 'CIS_GLOBAL', 'MAESTRIA',
+    'MENT. IA PARA NEGOCIOS',
+    'JE', 'GE', 'PDA', 'DP', 'TEAM COACHING'
   ];
   var LS_KEY_ORDEM = 'ms_filt_ordem_treinamentos_v1';
 

@@ -257,10 +257,12 @@
     if(!sel) return;
     var atual = sel.value;
     var prods = [];
-    if(typeof window._PRODUTOS_PROPOSTA === 'object' && window._PRODUTOS_PROPOSTA){
+    /* Prioriza window.allTreinamentos (catálogo oficial · appConfig/treinamentos)
+       Fallback: _PRODUTOS_PROPOSTA (legacy hardcoded) */
+    if(Array.isArray(window.allTreinamentos) && window.allTreinamentos.length){
+      prods = window.allTreinamentos.slice().sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+    } else if(typeof window._PRODUTOS_PROPOSTA === 'object' && window._PRODUTOS_PROPOSTA){
       prods = Object.keys(window._PRODUTOS_PROPOSTA);
-    } else if(Array.isArray(window.allTreinamentos)){
-      prods = window.allTreinamentos.slice();
     }
     sel.innerHTML = '<option value="">— Escolha o produto —</option>' +
       prods.map(function(p){return '<option value="'+p+'">'+p+'</option>';}).join('') +

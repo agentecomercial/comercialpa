@@ -48,6 +48,12 @@ var _PROPOSTA_PRECOS = {
   'TAV':       {integral:3997.00,  parcelado:333.08,  parcelado_desc:249.75,   avista_credito:2497.00, avista:1997.00,  reciclagem:1498.50},
   'MAESTRIA':  {integral:85000.00, parcelado:9925.48, parcelado_desc:9925.48,  avista_credito:85000.00,avista:85000.00, reciclagem:850000.00},
   'CIS_GLOBAL':{integral:1997.00,  parcelado:199.70,  parcelado_desc:199.70,   avista_credito:1997.00, avista:1997.00,  reciclagem:998.50},
+  /* Placeholders adicionados — preços virão da hidratação do Firebase (appConfig/treinamentosMeta) */
+  'JE':        {integral:0, parcelado:0, parcelado_desc:0, avista_credito:0, avista:0, reciclagem:0},
+  'GE':        {integral:0, parcelado:0, parcelado_desc:0, avista_credito:0, avista:0, reciclagem:0},
+  'PDA':       {integral:0, parcelado:0, parcelado_desc:0, avista_credito:0, avista:0, reciclagem:0},
+  'DP':        {integral:0, parcelado:0, parcelado_desc:0, avista_credito:0, avista:0, reciclagem:0},
+  'TEAM':      {integral:0, parcelado:0, parcelado_desc:0, avista_credito:0, avista:0, reciclagem:0},
 };
 
 var _PROPOSTA_LABELS = {
@@ -81,6 +87,43 @@ var _PRODUTOS_PROPOSTA={
 'CIS':{customRenderer:true,nome:'Método CIS Presencial',codigo:'CIS',img:'assets/img/propostas/CIS.png',texto:'O Método CIS (Coaching Integral Sistêmico) é o maior e mais completo treinamento de inteligência emocional do mundo, criado por Paulo Vieira — especialista em comportamento humano e presidente da Febracis.\n\nCom mais de 248 edições realizadas e 1,8 milhão de pessoas impactadas em 83 países, o programa é projetado para ajudar você a desbloquear seu potencial máximo através de 5 pilares essenciais que transformam todas as 11 áreas da sua vida:\n\n✅ Performance: maior capacidade de liderança\n✅ Emocional: elimine hábitos tóxicos e sabotadores\n✅ Financeiro: organize e alavanche sua vida financeira\n✅ Profissional: cresça e se destaque na sua área\n✅ Relacionamentos: restaure e fortaleça seus laços\n\nSão mais de 50 horas de imersão profunda em 3 dias de treinamento presencial, com Paulo Vieira, Camila Vieira e Júlia Vieira.\n\nNão perca essa oportunidade de transformar sua vida de dentro para fora!',preco:'R$ [VALOR]',validade:'30 dias'},
 'TEAM':{nome:'Team Coaching Febracis',codigo:'TEAM',img:'assets/img/propostas/TEAM.png',texto:'\u00c9 uma imensa honra convidá-lo(a) para o Team Coaching Febracis.\n\n[TEXTO_DO_PRODUTO — substitua com base no PDF do treinamento]\n\nNão deixe essa oportunidade passar!',preco:'R$ [VALOR]',validade:'30 dias'},
 };
+
+/* ─────────────────────────────────────────────────────────────────
+   HIDRATAÇÃO assíncrona: lê appConfig/treinamentosMeta do Firebase
+   e sobrescreve preços e metadados (nome/img/texto/validade) em runtime.
+   Permite admin editar tabela de preços e textos sem mexer no código.
+   Os hardcoded acima permanecem como fallback se Firebase falhar.
+   ─────────────────────────────────────────────────────────────── */
+(function _hidratarPropostas(){
+  if(typeof window._fbGet !== 'function') return;
+  /* Mapeia chave canônica do Firebase → chave legada do hardcoded */
+  var REVERSE = { 'MASTER COACHING':'MASTER', 'TEAM COACHING':'TEAM' };
+  setTimeout(function(){
+    window._fbGet('appConfig/treinamentosMeta').then(function(meta){
+      if(!meta || typeof meta !== 'object') return;
+      var n = 0;
+      Object.keys(meta).forEach(function(canonKey){
+        var m = meta[canonKey]; if(!m) return;
+        var k = REVERSE[canonKey] || canonKey;
+        /* Preços (sobrescreve campo-a-campo se vier) */
+        if(m.precos && _PROPOSTA_PRECOS[k]){
+          ['integral','avista','avista_credito','parcelado','parcelado_desc','reciclagem'].forEach(function(c){
+            if(m.precos[c] != null) _PROPOSTA_PRECOS[k][c] = m.precos[c];
+          });
+          n++;
+        }
+        /* Metadados */
+        if(_PRODUTOS_PROPOSTA[k]){
+          if(m.nome)     _PRODUTOS_PROPOSTA[k].nome     = m.nome;
+          if(m.img)      _PRODUTOS_PROPOSTA[k].img      = m.img;
+          if(m.texto)    _PRODUTOS_PROPOSTA[k].texto    = m.texto;
+          if(m.validade) _PRODUTOS_PROPOSTA[k].validade = m.validade;
+        }
+      });
+      if(n > 0) console.log('[Propostas] '+n+' produto(s) hidratado(s) do Firebase (appConfig/treinamentosMeta)');
+    }).catch(function(e){ console.warn('[Propostas] Falha ao hidratar:', e); });
+  }, 1500);
+})();
 
 function abrirPropostaModal(){
   var sess = _getSessao ? _getSessao() : null;

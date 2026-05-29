@@ -119,7 +119,7 @@ window.APP_CONST = {
   PALETTE_SWIM:    ['var(--blue)','var(--accent)','#a78bfa','var(--red)','var(--amber)','var(--green)','#f472b6','#fb923c','#38bdf8','#e879f9'],
   PALETTE_SWIM_BG: ['rgba(96,165,250,.15)','rgba(200,240,90,.15)','rgba(167,139,250,.18)','rgba(255,95,87,.15)','rgba(255,183,64,.15)','rgba(52,211,153,.15)','rgba(244,114,182,.15)','rgba(251,146,60,.15)','rgba(56,189,248,.15)','rgba(232,121,249,.15)'],
   NB_CLS: ['nb-blue','nb-green','nb-amber','nb-pink','nb-purple','nb-orange'],
-  TREINAMENTOS: ['BHP','CEOP','CI','FCIS','FGPC','IF','ML5','TAV','MAESTRIA','MASTER COACHING','CIS-GL','CIS','TCE - BRONZE','TCE - OURO','TCE - BLACK'],
+  TREINAMENTOS: ['BHP','CEOP','CI','FCIS','FGPC','IF','ML5','TAV','MAESTRIA','MASTER COACHING','CIS_GLOBAL','CIS','TCE - BRONZE','TCE - OURO','TCE - BLACK','TCE - VIP','MENT. IA PARA NEGOCIOS','JE','GE','PDA','DP','TEAM COACHING'],
 };
 
 // Aliases preservando 100% da API existente
@@ -603,8 +603,12 @@ function entrarTurma(id){
          para appConfig/treinamentos. Se a lista global está incompleta
          (menos itens que a soma de todas as turmas), varremos todas as
          turmas, coletamos o que falta e gravamos no nó global.
-         Roda só 1x por sessão (cache em window._treinMigDone). */
-      if(!window._treinMigDone && typeof window._fbGet==='function'){
+         Roda só 1x por sessão (cache em window._treinMigDone).
+         DESABILITADA em 2026-05-29 (Etapa 5): cumpriu seu papel de
+         consolidar turmas antigas; agora causava re-injeção de itens
+         removidos (TOURs, CIS-GL etc). appConfig/treinamentos virou
+         a fonte única após a Etapa 4. Pra reativar: remover "false &&". */
+      if(false && !window._treinMigDone && typeof window._fbGet==='function'){
         window._treinMigDone = true;
         window._fbGet(TURMAS_NODE).then(function(todasTurmas){
           if(!todasTurmas || typeof todasTurmas !== 'object') return;
