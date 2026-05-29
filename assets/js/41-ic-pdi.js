@@ -158,6 +158,24 @@
         _pdiCarregar();
       });
     });
+    /* Status Box (V3+C) — troca manual via <select> */
+    var statusSel = document.getElementById('pdiStatusSel');
+    if(statusSel){
+      statusSel.addEventListener('change', function(){
+        if(!_consultorAtivo){ _pdiRenderStatusBox(); return; /* sem consultor não persiste */ }
+        if(!_doc) _doc = {};
+        var v = this.value;
+        if(v === 'nao')           _doc.status = 'rascunho';
+        else if(v === 'andamento')_doc.status = 'iniciado';
+        else if(v === 'concluido')_doc.status = 'concluido';
+        else if(v === 'pausado')  _doc.status = 'pausado';
+        else if(v === 'cancelado')_doc.status = 'cancelado';
+        _pdiRenderStatus();
+        if(typeof _pdiSalvarRascunho === 'function') _pdiSalvarRascunho();
+      });
+    }
+    /* Render inicial do status box (mesmo sem consultor) */
+    _pdiRenderStatusBox();
   }
 
   /* Define o período padrão = trimestre atual (3 meses) */
@@ -261,6 +279,61 @@
     if(s === 'iniciado'){ bar.textContent = '⚙ Em andamento'; bar.classList.add('iniciado'); }
     else if(s === 'concluido'){ bar.textContent = '✅ Concluído'; bar.classList.add('concluido'); }
     else { bar.textContent = '○ Rascunho'; }
+    /* Atualiza também o novo Status Box (V3+C) */
+    _pdiRenderStatusBox();
+  }
+
+  /* Mapeia status legado → status novo box */
+  function _pdiStatusKey(){
+    if(!_consultorAtivo) return 'nao';
+    if(!_doc) return 'nao';
+    var s = _doc.status || 'rascunho';
+    if(s === 'iniciado') return 'andamento';
+    if(s === 'concluido') return 'concluido';
+    if(s === 'pausado') return 'pausado';
+    if(s === 'cancelado') return 'cancelado';
+    return 'nao'; /* rascunho/vazio = não iniciado */
+  }
+  var _pdiStatusLabels = {
+    nao:       {tit:'NÃO INICIADO',  sub:'Aguardando definição'},
+    andamento: {tit:'EM ANDAMENTO',  sub:'Acompanhe a evolução'},
+    concluido: {tit:'CONCLUÍDO',     sub:'Objetivos atingidos'},
+    pausado:   {tit:'PAUSADO',       sub:'Retomada pendente'},
+    cancelado: {tit:'CANCELADO',     sub:'PDI encerrado'}
+  };
+  function _pdiCalcProgresso(){
+    if(!_doc || !Array.isArray(_doc.alvos) || !_doc.alvos.length) return 0;
+    var totalAcoes = 0, feitas = 0;
+    _doc.alvos.forEach(function(a){
+      var ax = Array.isArray(a.acoes) ? a.acoes : [];
+      totalAcoes += ax.length;
+      feitas += ax.filter(function(x){return x && x.feito;}).length;
+    });
+    if(totalAcoes === 0){
+      /* fallback: % de alvos cujo atual >= alvo */
+      var atingidos = _doc.alvos.filter(function(a){ return a && a.atual != null && a.alvo != null && a.atual >= a.alvo; }).length;
+      return Math.round((atingidos / _doc.alvos.length) * 100);
+    }
+    return Math.round((feitas / totalAcoes) * 100);
+  }
+  function _pdiRenderStatusBox(){
+    var box  = document.getElementById('pdiStatusBig');
+    var tit  = document.getElementById('pdiStatusTit');
+    var sub  = document.getElementById('pdiStatusSub');
+    var fill = document.getElementById('pdiProgFill');
+    var pct  = document.getElementById('pdiProgPct');
+    var sel  = document.getElementById('pdiStatusSel');
+    if(!box) return;
+    var key = _pdiStatusKey();
+    var lbl = _pdiStatusLabels[key] || _pdiStatusLabels.nao;
+    box.classList.remove('nao','andamento','concluido','pausado','cancelado');
+    box.classList.add(key);
+    if(tit) tit.textContent = lbl.tit;
+    if(sub) sub.textContent = lbl.sub;
+    var prog = _pdiCalcProgresso();
+    if(fill) fill.style.width = prog + '%';
+    if(pct)  pct.textContent  = prog + '%';
+    if(sel)  sel.value = key;
   }
 
   /* ── Diagnóstico (sugestões baseadas no feedback) ── */
@@ -543,6 +616,26 @@
       _pdiRenderHistorico();
     });
   }
+  /* Converte ID do histórico → {start,end} no formato YYYY-MM. Aceita formato novo "YYYY-MM_YYYY-MM" e legado "YYYY-Q1..Q4" */
+  function _idParaPeriodo(id){
+    if(!id) return null;
+    if(id.indexOf('_') > 0){
+      var pp = id.split('_');
+      return {start:pp[0], end:pp[1]};
+    }
+    /* Legado YYYY-Q1..Q4 → mapeia pro trimestre correspondente */
+    var m = /^(\d{4})-Q([1-4])$/.exec(id);
+    if(m){
+      var ano = m[1], q = +m[2];
+      var startM = ((q-1)*3) + 1;
+      var endM   = startM + 2;
+      var ms = String(startM).padStart(2,'0');
+      var me = String(endM).padStart(2,'0');
+      return {start: ano+'-'+ms, end: ano+'-'+me};
+    }
+    return null;
+  }
+
   function _pdiRenderHistorico(){
     var el = document.getElementById('pdiHist');
     if(!el) return;
@@ -557,22 +650,49 @@
       var pctCls = pct >= 80 ? 'good' : pct >= 50 ? 'mid' : 'bad';
       var barCol = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
       var compsTxt = alvos.length ? ating+'/'+alvos.length+' atingidas' : 'sem competências';
-      return '<div class="pdi-hist-item" data-id="'+h._id+'">'
-        + '<div class="pdi-hist-row"><span class="pdi-hist-trim">'+_periodoLabel(h._id)+'</span><span class="pdi-hist-pct '+pctCls+'">'+pct+'%</span></div>'
-        + '<div class="pdi-hist-bar"><div class="pdi-hist-bar-fill" style="width:'+pct+'%;background:'+barCol+';"></div></div>'
-        + '<div class="pdi-hist-comps">'+compsTxt+'</div>'
+      var legado = (h._id||'').indexOf('_') < 0;
+      var tagLegado = legado ? '<span title="Formato legado (trimestre fixo)" style="background:rgba(168,85,247,0.15);color:#a855f7;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;margin-left:4px;">legado</span>' : '';
+      return '<div class="pdi-hist-item" data-id="'+h._id+'" style="position:relative;">'
+        + '<div class="pdi-hist-row" data-act="abrir"><span class="pdi-hist-trim">'+_periodoLabel(h._id)+tagLegado+'</span><span class="pdi-hist-pct '+pctCls+'">'+pct+'%</span></div>'
+        + '<div class="pdi-hist-bar" data-act="abrir"><div class="pdi-hist-bar-fill" style="width:'+pct+'%;background:'+barCol+';"></div></div>'
+        + '<div class="pdi-hist-comps" data-act="abrir">'+compsTxt+'</div>'
+        + '<button class="pdi-hist-del" data-act="excluir" title="Excluir este PDI">🗑</button>'
         + '</div>';
     }).join('');
     el.querySelectorAll('.pdi-hist-item').forEach(function(it){
-      it.addEventListener('click', function(){
-        var id = it.getAttribute('data-id');
-        if(id.indexOf('_') > 0){
-          var pp = id.split('_');
-          _perStart = pp[0]; _perEnd = pp[1];
+      var id = it.getAttribute('data-id');
+      /* Click no item (corpo) → abre */
+      it.querySelectorAll('[data-act="abrir"]').forEach(function(z){
+        z.addEventListener('click', function(){
+          var per = _idParaPeriodo(id);
+          if(!per){
+            (window._showToast||alert)('PDI com ID inválido: '+id);
+            return;
+          }
+          _perStart = per.start; _perEnd = per.end;
           var i1 = document.getElementById('pdiPerStart'); if(i1) i1.value = _perStart;
           var i2 = document.getElementById('pdiPerEnd');   if(i2) i2.value = _perEnd;
           _pdiCarregar();
-        }
+        });
+      });
+      /* Botão excluir */
+      var btnDel = it.querySelector('[data-act="excluir"]');
+      if(btnDel) btnDel.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(!_consultorAtivo){ (window._showToast||alert)('Sem consultor selecionado.'); return; }
+        if(!confirm('Excluir o PDI "'+_periodoLabel(id)+'" de '+_consultorAtivo+'?\n\nIsso remove o registro do Firebase e NÃO pode ser desfeito.')) return;
+        var path = 'icPDIs/'+_consultorAtivo+'/'+id;
+        var saveFn = window._fbSave || function(p,v){ return Promise.reject(new Error('Firebase indisponível')); };
+        /* _fbSave com null deleta o nó em RTDB */
+        saveFn(path, null).then(function(){
+          (window._showToast||alert)('PDI excluído.');
+          /* Se o atual estava aberto, limpa */
+          if(_doc && (_doc.periodo === id || _periodoId() === id)) _doc = null;
+          _pdiCarregarHistorico();
+          _pdiCarregar();
+        }).catch(function(err){
+          alert('Erro ao excluir: '+(err && err.message || err));
+        });
       });
     });
   }
