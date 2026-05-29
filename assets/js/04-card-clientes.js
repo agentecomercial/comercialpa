@@ -101,6 +101,15 @@ function cardNumChange(el){
   var raw   = el.value.trim().replace(/R\$\s*/,'').replace(/\./g,'').replace(',','.');
   var num   = parseFloat(raw)||0;
   data[ri][campo] = num;
+  /* SYNC SUB: ao digitar entrada/valor na grade, propaga pro sub quando há
+     EXATAMENTE 1 sub-treinamento. Sem isso, o modal "Ver informações" e o
+     card de Clientes ficavam mostrando valores divergentes (scalar vs sub).
+     Para 2+ subs, mantém só o scalar (o usuário usa o modal pra granular). */
+  var d = data[ri];
+  if((campo === 'entrada' || campo === 'valor')
+     && Array.isArray(d.treinamentos) && d.treinamentos.length === 1){
+    d.treinamentos[0][campo] = num;
+  }
   // FIX: atualizar cor do input de valor por faixa de ticket ao digitar
   if(campo==='valor'){
     var isPago = data[ri].status==='pago';

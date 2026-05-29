@@ -1739,8 +1739,18 @@ function renderAll(){
       const statusCls='cs-status-'+(d.status||'aberto');
 
       // Fix 5: formatar valor/entrada como BRL para exibição no input
+      // ENTRADA — total visível (soma dos subs ou fallback p/ scalar):
+      // garante que entrada cadastrada via modal (em sub.entrada) apareça
+      // na grade do card, mesmo quando d.entrada (scalar) ficou em 0.
+      const entradaTotalVisivel = (function(){
+        if(Array.isArray(d.treinamentos) && d.treinamentos.length){
+          var sumSubs = d.treinamentos.reduce(function(a, s){ return a + (Number(s && s.entrada)||0); }, 0);
+          if(sumSubs > 0) return sumSubs;
+        }
+        return Number(d.entrada || 0);
+      })();
       const valEdit = d.valor  ? d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})  : '';
-      const entEdit = d.entrada? d.entrada.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
+      const entEdit = entradaTotalVisivel ? entradaTotalVisivel.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
 
       // Fix 7: treinamento — opção vazia obrigatória, NUNCA pré-selecionar
       const treinOpts='<option value="">—</option>'
