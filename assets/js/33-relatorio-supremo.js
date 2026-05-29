@@ -108,9 +108,11 @@
   function _bResumo(itens){
     var totPago=0, qtdPago=0, totEntrada=0, qtdEntrada=0, totNeg=0, qtdNeg=0;
     var clientesPagos=new Set(), clientesEntrada=new Set(), clientesNeg=new Set();
+    /* Mesma regra do PDF: entradas de subs já pagos NÃO entram em totEntrada,
+       pois a entrada virou parte do it.valor pago (evita duplicar receita). */
     itens.forEach(function(it){
       if(it.status==='pago'){ totPago+=it.valor; qtdPago++; clientesPagos.add(it.cliente); }
-      if(it.entrada>0){ totEntrada+=it.entrada; qtdEntrada++; clientesEntrada.add(it.cliente); }
+      if(it.entrada>0 && it.status!=='pago'){ totEntrada+=it.entrada; qtdEntrada++; clientesEntrada.add(it.cliente); }
       if(it.status==='negociacao'){ totNeg+=it.valor; qtdNeg++; clientesNeg.add(it.cliente); }
     });
     var tg = totPago+totEntrada;
@@ -118,11 +120,11 @@
       SEP_LIN,
       '💰 RESUMO FINANCEIRO',
       SEP_LIN,
-      'Total faturado (PAGO):  '+_padL(_fmtR(totPago),14)+'  ·  '+qtdPago+' treinamento'+(qtdPago!==1?'s':'')+'  ·  '+clientesPagos.size+' cliente'+(clientesPagos.size!==1?'s':''),
-      'Total em entradas:      '+_padL(_fmtR(totEntrada),14)+'  ·  '+clientesEntrada.size+' cliente'+(clientesEntrada.size!==1?'s':''),
-      'Em negociação:          '+_padL(_fmtR(totNeg),14)+'  ·  '+qtdNeg+' treinamento'+(qtdNeg!==1?'s':'')+'  ·  '+clientesNeg.size+' cliente'+(clientesNeg.size!==1?'s':''),
+      'Total faturado (PAGO):    '+_padL(_fmtR(totPago),14)+'  ·  '+qtdPago+' treinamento'+(qtdPago!==1?'s':'')+'  ·  '+clientesPagos.size+' cliente'+(clientesPagos.size!==1?'s':''),
+      'Entradas pendentes:       '+_padL(_fmtR(totEntrada),14)+'  ·  '+clientesEntrada.size+' cliente'+(clientesEntrada.size!==1?'s':''),
+      'Em negociação:            '+_padL(_fmtR(totNeg),14)+'  ·  '+qtdNeg+' treinamento'+(qtdNeg!==1?'s':'')+'  ·  '+clientesNeg.size+' cliente'+(clientesNeg.size!==1?'s':''),
       SEP_DOT,
-      'TOTAL GERAL (faturado): '+_padL(_fmtR(tg),14),
+      'TOTAL GERAL (receita realizada): '+_padL(_fmtR(tg),14),
       ''
     ].join('\n');
   }
@@ -779,15 +781,20 @@
           _drawH2('Resumo Financeiro');
           var totPago=0,qtdPago=0,totEnt=0,totNeg=0,qtdNeg=0;
           var cliPagos=new Set(),cliEnt=new Set(),cliNeg=new Set();
+          /* IMPORTANTE: a ENTRADA de subs com status='pago' já está embutida
+             em totPago (porque it.valor inclui o valor cheio do sub pago,
+             que cobre a entrada paga). Então só contabilizamos entradas
+             quando o sub NÃO está pago — isso evita duplicar receita no
+             TOTAL GERAL e nos contadores de Entradas Recebidas. */
           itens.forEach(function(it){
             if(it.status==='pago'){totPago+=it.valor;qtdPago++;cliPagos.add(it.cliente);}
-            if(it.entrada>0){totEnt+=it.entrada;cliEnt.add(it.cliente);}
+            if(it.entrada>0 && it.status!=='pago'){totEnt+=it.entrada;cliEnt.add(it.cliente);}
             if(it.status==='negociacao'){totNeg+=it.valor;qtdNeg++;cliNeg.add(it.cliente);}
           });
           _drawKv('Total faturado (PAGO) · '+qtdPago+' treinos · '+cliPagos.size+' clientes', _fmtR(totPago));
-          _drawKv('Total em entradas · '+cliEnt.size+' clientes', _fmtR(totEnt));
+          _drawKv('Entradas pendentes (sub não-pago) · '+cliEnt.size+' clientes', _fmtR(totEnt));
           _drawKv('Em negociação · '+qtdNeg+' treinos · '+cliNeg.size+' clientes', _fmtR(totNeg));
-          _drawTotal('Total Geral', _fmtR(totPago+totEnt));
+          _drawTotal('Total Geral (receita realizada)', _fmtR(totPago+totEnt));
         }
 
         // PAGOS
@@ -798,9 +805,10 @@
           else _drawKv('Nenhum pagamento registrado.', '—');
         }
 
-        // ENTRADAS
+        // ENTRADAS — só de subs NÃO pagos (entradas de subs já pagos viram
+        // parte do valor cheio na seção Pagos; listar aqui seria dupla contagem)
         if(_sel.entradas){
-          var ents = itens.filter(function(it){return it.entrada>0;}).sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+          var ents = itens.filter(function(it){return it.entrada>0 && it.status!=='pago';}).sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
           _drawH2('Entradas Recebidas ('+ents.length+')');
           if(ents.length) _tabelaItens(ents, {usaEntrada:true});
           else _drawKv('Nenhuma entrada registrada.', '—');
