@@ -15,8 +15,8 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260531-182700">
-<link rel="stylesheet" href="assets/css/themes.css?v=20260531-182700">
+<link rel="stylesheet" href="assets/css/main.css?v=20260531-202215">
+<link rel="stylesheet" href="assets/css/themes.css?v=20260531-202215">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
   try {
@@ -59,7 +59,7 @@
 
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
-<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260531-182700">
+<link rel="stylesheet" href="assets/css/homeScreen.css?v=20260531-202215">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -2067,6 +2067,7 @@
         <div>
           <div class="fb-title">📈 Feedback &amp; Desenvolvimento <small>· ciclo do consultor</small></div>
           <div style="font-size:12px;color:var(--muted);margin-top:6px;">Registro estruturado para desenvolver o consultor — não substitui a conversa, instrumenta ela.</div>
+          <button class="np-btn primary" style="margin-top:10px;padding:7px 14px;font-size:11px;" onclick="window._icAbrirDossie && window._icAbrirDossie(null, document.getElementById('fbConsultor') ? document.getElementById('fbConsultor').value : '')">🧬 Dossiê Comportamental + Análise IA</button>
         </div>
         <div class="fb-controls">
           <div class="fb-control">
@@ -2881,7 +2882,7 @@
 
             <div class="mn-faq">
               <b>Q: Atualizei o código e não vejo a mudança no navegador.</b><br>
-              <span>R: Rode <code>bump.cmd</code> (ou <code>scripts/bump-cache.ps1</code>) — incrementa o <code>?v=20260531-182700"mn-faq">
+              <span>R: Rode <code>bump.cmd</code> (ou <code>scripts/bump-cache.ps1</code>) — incrementa o <code>?v=20260531-202215"mn-faq">
               <b>Q: Promessa de cobrança ficou "Pendente" mesmo após a data.</b><br>
               <span>R: O estado <b>Vencida</b> é calculado em tempo de render (não persistido). Se a promessa está marcada manualmente como <b>Honrada/Quebrada/Reagendada</b>, esses tem prioridade. Caso contrário, basta abrir a aba que ela aparece como Vencida.</span>
             </div>
@@ -3408,7 +3409,7 @@
   </div>
 </div>
 
-<script defer src="assets/js/00-utils.js?v=20260531-182700"></script>
+<script defer src="assets/js/00-utils.js?v=20260531-202215"></script>
 <script defer src="assets/js/00-firebase-stubs.js"></script>
 <script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
@@ -3502,40 +3503,41 @@ try{
     <script defer src="assets/js/propostas/proposta-tav.js"></script>
     <script defer src="assets/js/propostas/proposta-cis.js"></script>
     <script defer src="assets/js/propostas/proposta-cis-global.js"></script>
-<script defer src="assets/js/02-main.js?v=20260531-182700"></script>
-<script defer src="assets/js/29-login.js?v=20260531-182700"></script>
-<script defer src="assets/js/30-sync-ferramentas.js?v=20260531-182700"></script>
-<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260531-182700"></script>
-<script defer src="assets/js/33-relatorio-supremo.js?v=20260531-182700"></script>
-<script defer src="assets/js/34-ms-status-filter.js?v=20260531-182700"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260531-182700"></script>
-<script defer src="assets/js/36-col-filter.js?v=20260531-182700"></script>
-<script defer src="assets/js/37-theme-picker.js?v=20260531-182700"></script>
-<script defer src="assets/js/38-audit-treinamentos.js?v=20260531-182700"></script>
-<script defer src="assets/js/40-ic-feedback.js?v=20260531-182700"></script>
-<script defer src="assets/js/41-ic-pdi.js?v=20260531-182700"></script>
-<script defer src="assets/js/42-ic-ia.js?v=20260531-182700"></script>
-<script defer src="assets/js/43-ic-alertas.js?v=20260531-182700"></script>
-<script defer src="assets/js/44-ic-playbook.js?v=20260531-182700"></script>
-<script defer src="assets/js/45-ic-cobranca.js?v=20260531-182700"></script>
-<script defer src="assets/js/46-ic-manual.js?v=20260531-182700"></script>
-<script defer src="assets/js/47-ic-executivo.js?v=20260531-182700"></script>
-<script defer src="assets/js/48-ic-funil-vendas.js?v=20260531-182700"></script>
-<script defer src="assets/js/99-diag.js?v=20260531-182700"></script>
-<script defer src="assets/js/99-schema-asserter.js?v=20260531-182700"></script>
-<script defer src="assets/js/99-smoke-test.js?v=20260531-182700"></script>
-<script defer src="assets/js/21-turmas.js?v=20260531-182700"></script>
-<script defer src="assets/js/22-pdf-consultor.js?v=20260531-182700"></script>
+<script defer src="assets/js/02-main.js?v=20260531-202215"></script>
+<script defer src="assets/js/29-login.js?v=20260531-202215"></script>
+<script defer src="assets/js/30-sync-ferramentas.js?v=20260531-202215"></script>
+<script defer src="assets/js/31-modo-consultor-desktop.js?v=20260531-202215"></script>
+<script defer src="assets/js/33-relatorio-supremo.js?v=20260531-202215"></script>
+<script defer src="assets/js/34-ms-status-filter.js?v=20260531-202215"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260531-202215"></script>
+<script defer src="assets/js/36-col-filter.js?v=20260531-202215"></script>
+<script defer src="assets/js/37-theme-picker.js?v=20260531-202215"></script>
+<script defer src="assets/js/38-audit-treinamentos.js?v=20260531-202215"></script>
+<script defer src="assets/js/40-ic-feedback.js?v=20260531-202215"></script>
+<script defer src="assets/js/41-ic-pdi.js?v=20260531-202215"></script>
+<script defer src="assets/js/42-ic-ia.js?v=20260531-202215"></script>
+<script defer src="assets/js/43-ic-alertas.js?v=20260531-202215"></script>
+<script defer src="assets/js/44-ic-playbook.js?v=20260531-202215"></script>
+<script defer src="assets/js/45-ic-cobranca.js?v=20260531-202215"></script>
+<script defer src="assets/js/46-ic-manual.js?v=20260531-202215"></script>
+<script defer src="assets/js/47-ic-executivo.js?v=20260531-202215"></script>
+<script defer src="assets/js/48-ic-funil-vendas.js?v=20260531-202215"></script>
+<script defer src="assets/js/49-ic-analise-perfil.js?v=20260531-202215"></script>
+<script defer src="assets/js/99-diag.js?v=20260531-202215"></script>
+<script defer src="assets/js/99-schema-asserter.js?v=20260531-202215"></script>
+<script defer src="assets/js/99-smoke-test.js?v=20260531-202215"></script>
+<script defer src="assets/js/21-turmas.js?v=20260531-202215"></script>
+<script defer src="assets/js/22-pdf-consultor.js?v=20260531-202215"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
-<script defer src="assets/js/24-aba-produto.js?v=20260531-182700"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260531-182700"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260531-182700"></script>
-<script defer src="assets/js/27-novos-membros.js?v=20260531-182700"></script>
-<script defer src="assets/js/28-modais-cliente.js?v=20260531-182700"></script>
-<script defer src="assets/js/18-usuarios.js?v=20260531-182700"></script>
+<script defer src="assets/js/24-aba-produto.js?v=20260531-202215"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260531-202215"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260531-202215"></script>
+<script defer src="assets/js/27-novos-membros.js?v=20260531-202215"></script>
+<script defer src="assets/js/28-modais-cliente.js?v=20260531-202215"></script>
+<script defer src="assets/js/18-usuarios.js?v=20260531-202215"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260531-182700"></script>
-<script defer src="assets/js/17-presenca.js?v=20260531-182700"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260531-202215"></script>
+<script defer src="assets/js/17-presenca.js?v=20260531-202215"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
 
@@ -3547,20 +3549,20 @@ try{
      Requisitos: consultor editável, resumo por consultor,
      botão confirmar funcionando, escopo 100% correto
 ══════════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260531-182700">
+<link rel="stylesheet" href="assets/css/cardClientes.css?v=20260531-202215">
 
-<script defer src="assets/js/04-card-clientes.js?v=20260531-182700"></script>
+<script defer src="assets/js/04-card-clientes.js?v=20260531-202215"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260531-182700"></script>
-<script defer src="assets/js/05b-lista-clientes.js?v=20260531-182700"></script>
+<script defer src="assets/js/05-importacao.js?v=20260531-202215"></script>
+<script defer src="assets/js/05b-lista-clientes.js?v=20260531-202215"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      MÓDULO v13 — Selects, Máscara BRL, Excluir Dinâmico
      Requisitos 1-7 completos
 ══════════════════════════════════════════════════════════ -->
-<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260531-182700">
+<link rel="stylesheet" href="assets/css/modaisExtras.css?v=20260531-202215">
 
-<script defer src="assets/js/06-modulo-v13.js?v=20260531-182700"></script>
+<script defer src="assets/js/06-modulo-v13.js?v=20260531-202215"></script>
 <!-- ══ MODAL: CLIENTES VINCULADOS AO CONSULTOR ══════════════════════
      Abre ao clicar no ranking — mostra TODOS os clientes,
      sem filtro de status (não apenas pagos)
@@ -3596,7 +3598,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/07-clientes-vinculados.js?v=20260531-182700"></script>
+<script defer src="assets/js/07-clientes-vinculados.js?v=20260531-202215"></script>
 
 <!-- ══════════════════════════════════════════════════════════════
      AUTO-REFRESH REALTIME v19
@@ -3621,14 +3623,14 @@ try{
      F6 rt-tx:        Transactional writes (anti race condition)
      Carregam ANTES do 08-realtime.js
 ═════════════════════════════════════════════════════════════════ -->
-<script defer src="assets/js/realtime/rt-core.js?v=20260531-182700"></script>
-<script defer src="assets/js/realtime/rt-subs.js?v=20260531-182700"></script>
-<script defer src="assets/js/realtime/rt-buffer.js?v=20260531-182700"></script>
-<script defer src="assets/js/realtime/rt-render.js?v=20260531-182700"></script>
-<script defer src="assets/js/realtime/rt-presence.js?v=20260531-182700"></script>
-<script defer src="assets/js/realtime/rt-optimistic.js?v=20260531-182700"></script>
-<script defer src="assets/js/realtime/rt-tx.js?v=20260531-182700"></script>
-<script defer src="assets/js/08-realtime.js?v=20260531-182700"></script>
+<script defer src="assets/js/realtime/rt-core.js?v=20260531-202215"></script>
+<script defer src="assets/js/realtime/rt-subs.js?v=20260531-202215"></script>
+<script defer src="assets/js/realtime/rt-buffer.js?v=20260531-202215"></script>
+<script defer src="assets/js/realtime/rt-render.js?v=20260531-202215"></script>
+<script defer src="assets/js/realtime/rt-presence.js?v=20260531-202215"></script>
+<script defer src="assets/js/realtime/rt-optimistic.js?v=20260531-202215"></script>
+<script defer src="assets/js/realtime/rt-tx.js?v=20260531-202215"></script>
+<script defer src="assets/js/08-realtime.js?v=20260531-202215"></script>
 
 <!-- MODAL GERENCIAR TREINAMENTOS -->
 <div class="modal-overlay" id="gerenciarTreinamentosModalOverlay" style="z-index:1800;" onclick="if(event.target===this)fecharGerenciarTreinamentosModal()">
@@ -3661,7 +3663,7 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/09-lc-resumo.js?v=20260531-182700"></script>
+<script defer src="assets/js/09-lc-resumo.js?v=20260531-202215"></script>
 
 <script defer src="assets/js/10-longpress.js"></script>
 
@@ -4218,16 +4220,16 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260531-182700"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260531-202215"></script>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260531-182700"></script>
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260531-202215"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
-<script defer src="assets/js/14-notificacoes.js?v=20260531-182700"></script>
+<script defer src="assets/js/14-notificacoes.js?v=20260531-202215"></script>
 <script defer src="assets/js/15-pipeline-followup.js"></script>
 <!-- Tesseract.js (OCR ~2MB) é carregado SOB DEMANDA pelo 16-pipeline-leads.js
      apenas quando o usuário envia a primeira imagem na aba Leads. -->
-<script defer src="assets/js/16-pipeline-leads.js?v=20260531-182700"></script>
+<script defer src="assets/js/16-pipeline-leads.js?v=20260531-202215"></script>
 
 <!-- ══ MODAL: CHAVE API IA (opcional) ═══════════════════════════ -->
 <div class="np-modal-overlay" id="npLdApiKeyOverlay" onclick="if(event.target===this)window._ldFecharChave()">
@@ -4357,6 +4359,266 @@ try{
 </div>
 
 <!-- CSS de audit-row e afins movido para assets/css/modaisExtras.css -->
+
+<!-- ═════════════════════════════════════════════════════════════
+     MODAL: DOSSIÊ COMPORTAMENTAL + ANÁLISE IA
+     Acessado por window._icAbrirDossie(uid, nome) — botão na aba
+     Desenvolvimento. Renderiza form com 4 blocos (DISC nat/adapt,
+     dimensões, 16 traços, 6 valores) + 2 botões de análise.
+═════════════════════════════════════════════════════════════════ -->
+<div id="icPerfilModal" class="modal-overlay" style="display:none;align-items:center;justify-content:center;">
+  <div class="modal-content" style="max-width:900px;width:96vw;max-height:92vh;display:flex;flex-direction:column;">
+    <div class="modal-header" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);">
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:800;color:var(--text);">🧬 Dossiê Comportamental · <span id="icPerfNomeTit">—</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">DISC + Dimensões + 16 traços + 6 valores · vira input do PDI</div>
+      </div>
+      <button class="np-btn ghost" onclick="window._icFecharDossie && window._icFecharDossie()">✕ Fechar</button>
+    </div>
+
+    <div style="overflow-y:auto;padding:18px;flex:1;" class="ic-perf-body">
+
+      <!-- META -->
+      <div class="ic-perf-card">
+        <div class="ic-perf-card-h">📌 Identificação</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;">
+          <div><label class="ic-perf-lbl">Aplicado em</label><input type="date" id="icPerfAplicadoEm" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Próx. reavaliação</label><input type="date" id="icPerfProxReav" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Tempo de casa</label><input type="text" id="icPerfTempoCasa" placeholder="ex: 2 anos" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Cargo</label><input type="text" id="icPerfCargo" placeholder="Consultor" class="ic-perf-input"></div>
+        </div>
+      </div>
+
+      <!-- ANEXOS -->
+      <div class="ic-perf-card">
+        <div class="ic-perf-card-h">📎 Anexos do perfil (PDF / imagem)</div>
+        <div id="icPerfAnexos" style="margin-bottom:8px;"></div>
+        <label class="ic-perf-anexo-add">
+          <input type="file" accept=".pdf,image/*" onchange="window._icPerfilAddAnexo && window._icPerfilAddAnexo(this)" style="display:none;">
+          + Adicionar arquivo
+        </label>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;">Até 5MB por arquivo · armazenado inline (base64) no Firebase</div>
+      </div>
+
+      <!-- A · DISC NATURAL × ADAPTADO -->
+      <div class="ic-perf-card">
+        <div class="ic-perf-card-h">A · DISC <small>· Natural (como é) × Adaptado (como age no cargo)</small></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div>
+            <div class="ic-perf-sublbl">Natural (ID)</div>
+            <div class="ic-perf-disc-row">
+              <label>D</label><input type="number" id="icPerfDN_D" min="0" max="100" class="ic-perf-input ic-perf-num"></div>
+            <div class="ic-perf-disc-row">
+              <label>I</label><input type="number" id="icPerfDN_I" min="0" max="100" class="ic-perf-input ic-perf-num"></div>
+            <div class="ic-perf-disc-row">
+              <label>S</label><input type="number" id="icPerfDN_S" min="0" max="100" class="ic-perf-input ic-perf-num"></div>
+            <div class="ic-perf-disc-row">
+              <label>C</label><input type="number" id="icPerfDN_C" min="0" max="100" class="ic-perf-input ic-perf-num"></div>
+          </div>
+          <div>
+            <div class="ic-perf-sublbl">Adaptado (SCD)</div>
+            <div class="ic-perf-disc-row">
+              <label>D</label><input type="number" id="icPerfDA_D" min="0" max="100" class="ic-perf-input ic-perf-num"></div>
+            <div class="ic-perf-disc-row">
+              <label>I</label><input type="number" id="icPerfDA_I" min="0" max="100" class="ic-perf-input ic-perf-num"></div>
+            <div class="ic-perf-disc-row">
+              <label>S</label><input type="number" id="icPerfDA_S" min="0" max="100" class="ic-perf-input ic-perf-num"></div>
+            <div class="ic-perf-disc-row">
+              <label>C</label><input type="number" id="icPerfDA_C" min="0" max="100" class="ic-perf-input ic-perf-num"></div>
+          </div>
+        </div>
+        <div id="icPerfGaps" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- B · DIMENSÕES COGNITIVAS -->
+      <div class="ic-perf-card">
+        <div class="ic-perf-card-h">B · Dimensões cognitivas <small>· 0-100 (lado esquerdo dominante)</small></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div><label class="ic-perf-lbl">Extroversão (% vs Introversão)</label><input type="number" id="icPerfDimExtr" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Intuição (% vs Sensação)</label><input type="number" id="icPerfDimIntu" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Pensamento (% vs Sentimento)</label><input type="number" id="icPerfDimPens" min="0" max="100" class="ic-perf-input"></div>
+        </div>
+      </div>
+
+      <!-- C · 16 TRAÇOS COMPORTAMENTAIS -->
+      <div class="ic-perf-card">
+        <div class="ic-perf-card-h">C · 16 traços comportamentais <small>· 0-100</small></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+          <div><label class="ic-perf-lbl">Ousadia</label><input type="number" id="icPerfTr_ousadia" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Comando</label><input type="number" id="icPerfTr_comando" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Objetividade</label><input type="number" id="icPerfTr_objetividade" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Assertividade</label><input type="number" id="icPerfTr_assertividade" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Persuasão</label><input type="number" id="icPerfTr_persuasao" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Extroversão</label><input type="number" id="icPerfTr_extroversao" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Entusiasmo</label><input type="number" id="icPerfTr_entusiasmo" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Sociabilidade</label><input type="number" id="icPerfTr_sociabilidade" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Empatia</label><input type="number" id="icPerfTr_empatia" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Paciência</label><input type="number" id="icPerfTr_paciencia" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Persistência</label><input type="number" id="icPerfTr_persistencia" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Planejamento</label><input type="number" id="icPerfTr_planejamento" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Organização</label><input type="number" id="icPerfTr_organizacao" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Detalhismo</label><input type="number" id="icPerfTr_detalhismo" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Prudência</label><input type="number" id="icPerfTr_prudencia" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Concentração</label><input type="number" id="icPerfTr_concentracao" min="0" max="100" class="ic-perf-input"></div>
+        </div>
+      </div>
+
+      <!-- D · 6 VALORES MOTIVACIONAIS -->
+      <div class="ic-perf-card">
+        <div class="ic-perf-card-h">D · 6 valores motivacionais <small>· &lt;30 indiferente · 30-55 circunstancial · &gt;55 significativo</small></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+          <div><label class="ic-perf-lbl">Conhecimento <small>(Teórico)</small></label><input type="number" id="icPerfVa_teorico" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Harmonia <small>(Estético)</small></label><input type="number" id="icPerfVa_estetico" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Altruísmo <small>(Social)</small></label><input type="number" id="icPerfVa_social" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Poder <small>(Político)</small></label><input type="number" id="icPerfVa_politico" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Utilidade <small>(Econômico)</small></label><input type="number" id="icPerfVa_economico" min="0" max="100" class="ic-perf-input"></div>
+          <div><label class="ic-perf-lbl">Princípios <small>(Religioso)</small></label><input type="number" id="icPerfVa_religioso" min="0" max="100" class="ic-perf-input"></div>
+        </div>
+      </div>
+
+      <!-- AÇÕES DE ANÁLISE -->
+      <div class="ic-perf-card">
+        <div class="ic-perf-card-h">🎯 Gerar análise contextualizada</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button class="np-btn primary" onclick="window._icPerfilGerarRegras && window._icPerfilGerarRegras()">📐 Gerar com REGRAS (instantâneo)</button>
+          <button class="np-btn ghost" onclick="window._icPerfilCopiarPrompt && window._icPerfilCopiarPrompt()">📋 Copiar prompt para IA</button>
+          <button class="np-btn ghost" onclick="window._icPerfilSalvar && window._icPerfilSalvar()">💾 Salvar dossiê</button>
+        </div>
+        <details style="margin-top:8px;">
+          <summary style="cursor:pointer;font-size:11px;color:var(--muted);padding:6px 10px;background:var(--surface2);border-radius:6px;">📥 Colar resposta JSON da IA</summary>
+          <div style="margin-top:8px;">
+            <textarea id="icPerfRespIA" placeholder='Cole aqui o JSON que a IA retornou (com ou sem ```json wrappers)...' style="width:100%;min-height:120px;padding:10px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:monospace;resize:vertical;"></textarea>
+            <button class="np-btn primary" style="margin-top:8px;" onclick="window._icPerfilColarResposta && window._icPerfilColarResposta()">Aplicar análise da IA</button>
+          </div>
+        </details>
+      </div>
+
+      <!-- RESULTADO DA ANÁLISE -->
+      <div class="ic-perf-card">
+        <div class="ic-perf-card-h">📋 Plano contextualizado</div>
+        <div id="icPerfAnalise"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+/* ── Dossiê Comportamental ───────────────────────────────── */
+#icPerfilModal.open { display:flex !important; }
+.ic-perf-body { background:var(--bg); }
+.ic-perf-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.ic-perf-card-h {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.ic-perf-card-h small {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 10px;
+}
+.ic-perf-lbl {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+.ic-perf-lbl small {
+  text-transform: none;
+  font-weight: 500;
+  color: var(--muted);
+  opacity: 0.7;
+}
+.ic-perf-sublbl {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+  text-align: center;
+  padding: 4px 0;
+  background: var(--surface2);
+  border-radius: 4px;
+}
+.ic-perf-input {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 12px;
+  font-family: inherit;
+}
+.ic-perf-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.ic-perf-num {
+  text-align: center;
+  font-weight: 700;
+}
+.ic-perf-disc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.ic-perf-disc-row label {
+  width: 24px;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--text);
+  text-align: center;
+}
+.ic-perf-anexo-add {
+  display: inline-block;
+  padding: 6px 14px;
+  background: var(--surface2);
+  border: 1px dashed var(--border2);
+  border-radius: 6px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ic-perf-anexo-add:hover {
+  background: rgba(200,240,90,.08);
+  border-color: var(--accent);
+}
+.ic-perf-bloco {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.ic-perf-bloco-tit {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+</style>
 
 <script defer src="assets/js/06-tce-importacao.js"></script>
 </body>
