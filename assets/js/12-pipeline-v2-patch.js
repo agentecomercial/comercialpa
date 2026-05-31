@@ -501,9 +501,19 @@
     var medalBorder=['#fbbf24','#c0c0c0','#cd7f32'];
 
     ranking.forEach(function(r){
-      var t=_npGetMetaAtiva(_goals[r.nome]||{},r.pago);
-      r._tier=t;
-      r._col=_npGetCol(t.pct);
+      /* PROGRESSIVO — mesma lógica do top 3 do dashboard:
+         Mínima -> Básica -> Master. Mostra o próximo alvo a perseguir. */
+      var g=_goals[r.nome]||{};
+      var px=_npProxTier(g, r.pago);
+      var pct=(px.meta>0)?Math.round(r.pago/px.meta*100):0;
+      r._tier={
+        meta: px.meta,
+        label: px.label,
+        falta: px.falta,
+        batida: px.batida,
+        pct: pct
+      };
+      r._col=_npGetCol(pct);
       r._conv=r.qtd?Math.round(r.qtdPago/r.qtd*100):0;
       r._ticket=r.qtdPago?Math.round(r.pago/r.qtdPago):0;
     });
@@ -525,7 +535,11 @@
       var totPagoN=ranking.reduce(function(acc,r){return acc+r.qtdPago;},0);
       var totQtd=ranking.reduce(function(acc,r){return acc+r.qtd;},0);
       var convG=totQtd?Math.round(totPagoN/totQtd*100):0;
-      var naMeta=ranking.filter(function(r){return (r._tier.pct||0)>=100;}).length;
+      /* "Na meta" = bateu pelo menos a Básica (ou Master). Não conta só a Mínima. */
+      var naMeta=ranking.filter(function(r){
+        var b=r._tier&&r._tier.batida;
+        return b==='basica'||b==='master';
+      }).length;
       kpisEl.innerHTML='<div class="np-rank-kpis">'
         +'<div class="np-rank-kpi"><div class="np-rank-kpi-v">'+_npFmtR2(totPago)+'</div><div class="np-rank-kpi-l">Faturado</div></div>'
         +'<div class="np-rank-kpi"><div class="np-rank-kpi-v">'+_npFmtR2(totPot)+'</div><div class="np-rank-kpi-l">Potencial</div></div>'
@@ -541,7 +555,14 @@
       var t=r._tier;
       var barW=t.pct!==null?Math.min(t.pct,100):0;
       var accentBorder=i<3?'border-left:3px solid '+medalBorder[i]+';':'';
-      var gap=t.meta&&t.pct<100?_npFmtR(Math.max(0,t.meta-r.pago))+' p/ meta':'';
+      /* Tag de progresso PROGRESSIVO: "Faltam R$X para 🥈 Mínima" / 🥉 Básica / 🥇 Master,
+         ou "✅ Master batida (+R$ X)" se já passou de todas. */
+      var gap='';
+      if(t.batida==='master'){
+        gap='✅ Master batida (+'+_npFmtR(r.pago-t.meta)+')';
+      } else if(t.meta>0 && t.falta>0){
+        gap='Faltam '+_npFmtR(t.falta)+' p/ '+t.label;
+      }
       var pctBadge=t.meta
         ?'<span class="np-ri-pct-badge" style="background:'+col.bg+';color:'+col.text+';border:1px solid '+col.border+';">'+t.pct+'%</span>'
         :'';
@@ -560,7 +581,7 @@
           +'<div class="np-ri-tags">'
             +'<span class="np-ri-tier" style="color:'+col.text+';border-color:'+col.border+';">'+t.label+'</span>'
             +pctBadge
-            +(gap?'<span class="np-ri-badge">⏳ '+gap+'</span>':'')
+            +(gap?'<span class="np-ri-badge">'+(t.batida==='master'?'':'⏳ ')+gap+'</span>':'')
             +'<span class="np-ri-badge">'+r.qtdPago+'/'+r.qtd+' pago'+(r.qtdPago!==1?'s':'')+'</span>'
             +'<span class="np-ri-badge">'+r._conv+'% conv</span>'
             +(r._ticket?'<span class="np-ri-badge">tkt '+_npFmtR(r._ticket)+'</span>':'')
