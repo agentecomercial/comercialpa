@@ -52,13 +52,15 @@
     {k:'religioso',l:'Princípios',   sub:'Religioso'}
   ];
 
-  /* Caminho do prompt versionado (carregado on-demand) */
+  /* Caminhos dos prompts versionados (carregados on-demand) */
   var PROMPT_PATH = 'assets/prompts/analise-perfil-consultor.md';
+  var EXTRATOR_PATH = 'assets/prompts/extrair-perfil-pdf.md';
 
   /* ── Estado ──────────────────────────────────────────────────── */
   var _consultorAtual = null;  /* { uid, nome } */
   var _dossie = null;          /* objeto completo do dossiê */
-  var _promptCache = null;     /* texto do prompt MD em cache */
+  var _promptCache = null;     /* texto do prompt de análise (cache) */
+  var _extratorCache = null;   /* texto do prompt extrator (cache) */
 
   /* ── Helpers ─────────────────────────────────────────────────── */
   function _g(id){ return document.getElementById(id); }
@@ -186,6 +188,220 @@
     _renderAnexos();
     _renderAnaliseAtual();
     _calcularGaps();
+    _renderGraficos();
+  }
+
+  /* ── Gráficos SVG ────────────────────────────────────────────────
+     4 visualizações padronizadas do sistema, agnósticas ao formato
+     do PDF de origem. Renderizam em tempo real conforme o gestor
+     edita os campos. */
+
+  var COR_DISC = { D:'#ef4444', I:'#f59e0b', S:'#34d399', C:'#60a5fa' };
+
+  function _renderGraficos(){
+    _coletarForm();  /* garante que _dossie reflete o que está no form */
+    _renderGraficoDISC();
+    _renderGraficoDimensoes();
+    _renderGraficoTracos();
+    _renderGraficoValores();
+  }
+
+  /* ── Gráfico A · DISC Natural × Adaptado ── */
+  function _renderGraficoDISC(){
+    var el = _g('icPerfGrafDISC'); if(!el) return;
+    var nat = _dossie.disc.natural;
+    var ada = _dossie.disc.adaptado;
+    var temNat = nat.D!=null || nat.I!=null || nat.S!=null || nat.C!=null;
+    var temAda = ada.D!=null || ada.I!=null || ada.S!=null || ada.C!=null;
+    if(!temNat && !temAda){
+      el.innerHTML = '<div style="font-size:10px;color:var(--muted);text-align:center;padding:14px;font-style:italic;">preencha D/I/S/C para visualizar</div>';
+      return;
+    }
+    var eixos = ['D','I','S','C'];
+    var w = 380, h = 200, padTop = 30, padBot = 36, padL = 8;
+    var grupoW = (w - padL*2) / 2;            /* 2 grupos: Natural / Adaptado */
+    var barGap = 6;
+    var barW = (grupoW - (barGap * (eixos.length+1))) / eixos.length;
+    var altMax = h - padTop - padBot;
+
+    function _renderGrupo(xStart, vals, label){
+      var s = '<text x="'+(xStart + grupoW/2)+'" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="var(--accent)" letter-spacing="0.05em">'+label+'</text>';
+      eixos.forEach(function(eixo, i){
+        var v = vals[eixo];
+        var x = xStart + barGap + i*(barW + barGap);
+        var alt = (v==null) ? 0 : Math.max(0, Math.min(100, v)) / 100 * altMax;
+        var y = padTop + (altMax - alt);
+        var cor = COR_DISC[eixo];
+        s += '<rect x="'+x+'" y="'+padTop+'" width="'+barW+'" height="'+altMax+'" fill="rgba(255,255,255,.04)" rx="3"/>';
+        if(v!=null){
+          s += '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+alt+'" fill="'+cor+'" rx="3" opacity="0.9"/>';
+          s += '<text x="'+(x+barW/2)+'" y="'+(y-3)+'" text-anchor="middle" font-size="11" font-weight="700" fill="'+cor+'">'+v+'</text>';
+        } else {
+          s += '<text x="'+(x+barW/2)+'" y="'+(padTop + altMax/2)+'" text-anchor="middle" font-size="9" fill="var(--muted)" font-style="italic">—</text>';
+        }
+        s += '<text x="'+(x+barW/2)+'" y="'+(padTop + altMax + 14)+'" text-anchor="middle" font-size="11" font-weight="800" fill="'+cor+'">'+eixo+'</text>';
+      });
+      return s;
+    }
+
+    var svg = '<svg viewBox="0 0 '+w+' '+h+'" width="100%" preserveAspectRatio="xMidYMid meet" style="max-width:380px;">'
+      + _renderGrupo(padL, nat, 'NATURAL (ID)')
+      + _renderGrupo(padL + grupoW, ada, 'ADAPTADO (SCD)')
+      + '<line x1="'+(padL+grupoW)+'" y1="22" x2="'+(padL+grupoW)+'" y2="'+(h-padBot+10)+'" stroke="var(--border)" stroke-dasharray="2,3"/>';
+
+    /* Anotações de gap relevante */
+    var anotacoes = [];
+    eixos.forEach(function(eixo){
+      if(nat[eixo]!=null && ada[eixo]!=null){
+        var gap = ada[eixo] - nat[eixo];
+        if(Math.abs(gap) >= 10){
+          anotacoes.push(eixo+' '+(gap>0?'↑+':'↓')+gap);
+        }
+      }
+    });
+    if(anotacoes.length){
+      svg += '<text x="'+(w/2)+'" y="'+(h-6)+'" text-anchor="middle" font-size="10" fill="#f59e0b" font-weight="600">Δ '+anotacoes.join(' · ')+'</text>';
+    }
+    svg += '</svg>';
+    el.innerHTML = svg;
+  }
+
+  /* ── Gráfico B · 3 Dimensões cognitivas (sliders) ── */
+  function _renderGraficoDimensoes(){
+    var el = _g('icPerfGrafDim'); if(!el) return;
+    var dims = [
+      { v:_dossie.dimensoes.extroversao, esq:'Extroversão', dir:'Introversão', cor:'#f59e0b' },
+      { v:_dossie.dimensoes.intuicao,    esq:'Intuição',    dir:'Sensação',    cor:'#a78bfa' },
+      { v:_dossie.dimensoes.pensamento,  esq:'Pensamento',  dir:'Sentimento',  cor:'#60a5fa' }
+    ];
+    var preenchido = dims.some(function(d){ return d.v!=null; });
+    if(!preenchido){
+      el.innerHTML = '<div style="font-size:10px;color:var(--muted);text-align:center;padding:14px;font-style:italic;">preencha as 3 dimensões para visualizar</div>';
+      return;
+    }
+    var w = 460, rowH = 38, h = rowH * dims.length + 10;
+    var trackY0 = 18, padL = 100, padR = 100;
+    var svg = '<svg viewBox="0 0 '+w+' '+h+'" width="100%" preserveAspectRatio="xMidYMid meet">';
+    dims.forEach(function(d, i){
+      var y = i * rowH + trackY0;
+      var trackW = w - padL - padR;
+      svg += '<text x="'+(padL-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="var(--text)" font-weight="600">'+d.esq+'</text>';
+      svg += '<text x="'+(w-padR+8)+'" y="'+(y+4)+'" text-anchor="start" font-size="10" fill="var(--muted)">'+d.dir+'</text>';
+      /* trilho */
+      svg += '<rect x="'+padL+'" y="'+y+'" width="'+trackW+'" height="6" fill="rgba(255,255,255,.06)" rx="3"/>';
+      if(d.v != null){
+        var pct = Math.max(0, Math.min(100, d.v));
+        var bx = padL + (pct/100) * trackW;
+        /* fill esquerdo */
+        svg += '<rect x="'+padL+'" y="'+y+'" width="'+(bx-padL)+'" height="6" fill="'+d.cor+'" rx="3" opacity="0.7"/>';
+        /* bolinha */
+        svg += '<circle cx="'+bx+'" cy="'+(y+3)+'" r="7" fill="'+d.cor+'" stroke="var(--bg)" stroke-width="2"/>';
+        svg += '<text x="'+bx+'" y="'+(y-3)+'" text-anchor="middle" font-size="10" font-weight="700" fill="'+d.cor+'">'+pct+'%</text>';
+      }
+    });
+    svg += '</svg>';
+    el.innerHTML = svg;
+  }
+
+  /* ── Gráfico C · Radar 16 traços ── */
+  function _renderGraficoTracos(){
+    var el = _g('icPerfGrafTracos'); if(!el) return;
+    var labels = TRACOS_ORDEM.map(function(t){ return t.l; });
+    var vals = TRACOS_ORDEM.map(function(t){ return _dossie.tracos[t.k]; });
+    var N = labels.length;
+    var algumPreenchido = vals.some(function(v){ return v!=null; });
+    if(!algumPreenchido){
+      el.innerHTML = '<div style="font-size:10px;color:var(--muted);text-align:center;padding:14px;font-style:italic;">preencha os 16 traços para visualizar o radar</div>';
+      return;
+    }
+    var cx=200, cy=200, raioMax=130;
+    var svg = '<svg viewBox="0 0 400 400" width="100%" preserveAspectRatio="xMidYMid meet" style="max-width:400px;">';
+    /* Grade circular: 20/40/60/80/100 */
+    [20,40,60,80,100].forEach(function(esc){
+      var r = raioMax * esc / 100;
+      svg += '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--border)" stroke-width="1" opacity="0.45"/>';
+      svg += '<text x="'+(cx+3)+'" y="'+(cy-r+10)+'" font-size="8" fill="var(--muted)" opacity="0.7">'+esc+'</text>';
+    });
+    /* Linhas radiais + labels */
+    function _ang(i){ return (Math.PI*2*i/N) - Math.PI/2; }
+    function _pt(i, r){
+      var a = _ang(i);
+      return { x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r };
+    }
+    for(var i=0; i<N; i++){
+      var p = _pt(i, raioMax);
+      svg += '<line x1="'+cx+'" y1="'+cy+'" x2="'+p.x+'" y2="'+p.y+'" stroke="var(--border)" stroke-width="1" opacity="0.35"/>';
+      var pl = _pt(i, raioMax + 18);
+      var anchor = (pl.x < cx-3) ? 'end' : (pl.x > cx+3 ? 'start' : 'middle');
+      svg += '<text x="'+pl.x+'" y="'+(pl.y+3)+'" text-anchor="'+anchor+'" font-size="9" fill="var(--text)" font-weight="600">'+labels[i]+'</text>';
+    }
+    /* Polígono Natural (ciano sólido) */
+    var pontos = vals.map(function(v, i){
+      var r = (v==null) ? 0 : Math.max(0, Math.min(100, v)) / 100 * raioMax;
+      var p = _pt(i, r);
+      return p.x.toFixed(1)+','+p.y.toFixed(1);
+    }).join(' ');
+    svg += '<polygon points="'+pontos+'" fill="rgba(96,165,250,0.18)" stroke="#60a5fa" stroke-width="1.8"/>';
+    /* Pontos */
+    for(var i=0; i<N; i++){
+      var v = vals[i]; if(v==null) continue;
+      var r = Math.max(0, Math.min(100, v)) / 100 * raioMax;
+      var p = _pt(i, r);
+      svg += '<circle cx="'+p.x+'" cy="'+p.y+'" r="3" fill="#60a5fa" stroke="var(--bg)" stroke-width="1"/>';
+    }
+    svg += '</svg>';
+    el.innerHTML = svg;
+  }
+
+  /* ── Gráfico D · 6 valores motivacionais (barras com faixa) ── */
+  function _renderGraficoValores(){
+    var el = _g('icPerfGrafVal'); if(!el) return;
+    var vals = VALORES_ORDEM.map(function(v){
+      return { l:v.l, sub:v.sub, k:v.k, v:_dossie.valores[v.k] };
+    });
+    var algum = vals.some(function(x){ return x.v!=null; });
+    if(!algum){
+      el.innerHTML = '<div style="font-size:10px;color:var(--muted);text-align:center;padding:14px;font-style:italic;">preencha os 6 valores para visualizar</div>';
+      return;
+    }
+    function _faixa(v){
+      if(v == null) return {cor:'#666', tag:'—'};
+      if(v > 55)    return {cor:'#34d399', tag:'Significativo'};
+      if(v >= 30)   return {cor:'#f59e0b', tag:'Circunstancial'};
+      return        {cor:'#9ca3af', tag:'Indiferente'};
+    }
+    var w = 520, rowH = 32, padTop = 32, padL = 130, padR = 120;
+    var trackW = w - padL - padR;
+    var h = padTop + rowH * vals.length + 8;
+    var svg = '<svg viewBox="0 0 '+w+' '+h+'" width="100%" preserveAspectRatio="xMidYMid meet">';
+    /* Cabeçalho com faixas */
+    var seg30 = padL + 30/100 * trackW;
+    var seg55 = padL + 55/100 * trackW;
+    svg += '<rect x="'+padL+'"  y="14" width="'+(seg30-padL)+'"   height="6" fill="rgba(156,163,175,.25)" rx="2"/>';
+    svg += '<rect x="'+seg30+'" y="14" width="'+(seg55-seg30)+'" height="6" fill="rgba(245,158,11,.25)"  rx="2"/>';
+    svg += '<rect x="'+seg55+'" y="14" width="'+(padL+trackW-seg55)+'" height="6" fill="rgba(52,211,153,.25)" rx="2"/>';
+    svg += '<text x="'+((padL+seg30)/2)+'"  y="10" text-anchor="middle" font-size="8" fill="var(--muted)">indif.</text>';
+    svg += '<text x="'+((seg30+seg55)/2)+'" y="10" text-anchor="middle" font-size="8" fill="#f59e0b">circunst.</text>';
+    svg += '<text x="'+((seg55+padL+trackW)/2)+'" y="10" text-anchor="middle" font-size="8" fill="#34d399">significativo</text>';
+
+    vals.forEach(function(d, i){
+      var y = padTop + i * rowH;
+      var f = _faixa(d.v);
+      svg += '<text x="'+(padL-8)+'" y="'+(y+12)+'" text-anchor="end" font-size="10" fill="var(--text)" font-weight="600">'+d.l+'</text>';
+      svg += '<text x="'+(padL-8)+'" y="'+(y+22)+'" text-anchor="end" font-size="8" fill="var(--muted)">('+d.sub+')</text>';
+      /* trilho */
+      svg += '<rect x="'+padL+'" y="'+(y+8)+'" width="'+trackW+'" height="10" fill="rgba(255,255,255,.04)" rx="3"/>';
+      if(d.v != null){
+        var bw = Math.max(0, Math.min(100, d.v)) / 100 * trackW;
+        svg += '<rect x="'+padL+'" y="'+(y+8)+'" width="'+bw+'" height="10" fill="'+f.cor+'" rx="3" opacity="0.9"/>';
+        svg += '<text x="'+(w-padR+8)+'" y="'+(y+12)+'" font-size="11" font-weight="700" fill="'+f.cor+'">'+d.v+'</text>';
+        svg += '<text x="'+(w-padR+8)+'" y="'+(y+22)+'" font-size="8" fill="'+f.cor+'" opacity="0.8">'+f.tag+'</text>';
+      } else {
+        svg += '<text x="'+(w-padR+8)+'" y="'+(y+16)+'" font-size="9" fill="var(--muted)" font-style="italic">—</text>';
+      }
+    });
+    svg += '</svg>';
+    el.innerHTML = svg;
   }
 
   function _renderAnexos(){
@@ -750,16 +966,178 @@
     });
   };
 
-  /* ── Listeners dos inputs (auto-salvar gaps em tempo real) ───── */
-  function _bindListeners(){
-    ['icPerfDN_D','icPerfDN_I','icPerfDN_S','icPerfDN_C',
-     'icPerfDA_D','icPerfDA_I','icPerfDA_S','icPerfDA_C'].forEach(function(id){
-      var el = _g(id);
-      if(el) el.addEventListener('input', function(){
-        _coletarForm();
-        _calcularGaps();
-      });
+  /* ── EXTRATOR DE PDF/IMAGEM VIA IA ─────────────────────────────
+     Sistema é AGNÓSTICO ao formato do relatório de origem (qualquer
+     PDF/imagem de perfil DISC, MBTI, Big Five, etc.). O prompt
+     extrator orienta a IA a mapear nomes diferentes pro schema
+     padrão do sistema. */
+  function _carregarExtrator(){
+    if(_extratorCache) return Promise.resolve(_extratorCache);
+    return fetch(EXTRATOR_PATH).then(function(r){
+      if(!r.ok) throw new Error('http '+r.status);
+      return r.text();
+    }).then(function(txt){
+      _extratorCache = txt;
+      return _extratorCache;
+    }).catch(function(){
+      _extratorCache = _extratorFallback();
+      return _extratorCache;
     });
+  }
+
+  function _extratorFallback(){
+    /* Fallback inline (caso fetch falhe — file://). */
+    return 'Você é um EXTRATOR de dados de relatórios comportamentais. '
+      +'Olhe o documento ANEXADO e devolva ESTRITAMENTE este JSON (sem texto antes/depois, sem markdown wrappers):\n\n'
+      +'{"meta":{"nome_consultor":"","instrumento":"","data_aplicacao":""},'
+      +'"disc":{"natural":{"D":null,"I":null,"S":null,"C":null},"adaptado":{"D":null,"I":null,"S":null,"C":null}},'
+      +'"dimensoes":{"extroversao":null,"intuicao":null,"pensamento":null},'
+      +'"tracos":{"ousadia":null,"comando":null,"objetividade":null,"assertividade":null,"persuasao":null,"extroversao":null,"entusiasmo":null,"sociabilidade":null,"empatia":null,"paciencia":null,"persistencia":null,"planejamento":null,"organizacao":null,"detalhismo":null,"prudencia":null,"concentracao":null},'
+      +'"valores":{"teorico":null,"estetico":null,"social":null,"politico":null,"economico":null,"religioso":null},'
+      +'"notas_de_mapeamento":"","campos_pendentes":[]}\n\n'
+      +'REGRAS:\n'
+      +'• Todos os números devem ser inteiros 0-100. Converta se a escala original for diferente.\n'
+      +'• Campos não encontrados = null (não invente).\n'
+      +'• DISC Natural pode aparecer como "Espontâneo", "ID", "Tendência". Adaptado como "Cargo", "SCD", "Máscara".\n'
+      +'• Traços renomeados pelo relatório (ex: "Foco" → "concentracao") devem ser mapeados e explicados em notas_de_mapeamento.\n'
+      +'• dimensoes.extroversao é o valor 0-100 do LADO ESQUERDO do par (Extroversão). O lado direito (Introversão) é 100 - valor.\n'
+      +'• Se o documento não for um relatório comportamental: responda {"erro":"documento não é um relatório de perfil comportamental"}\n\n'
+      +'Agora extraia e responda APENAS com o JSON.';
+  }
+
+  window._icPerfilCopiarExtrator = function(){
+    _carregarExtrator().then(function(extrator){
+      var ta = document.createElement('textarea');
+      ta.value = extrator;
+      ta.style.cssText = 'position:fixed;top:-9999px;';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch(e) {}
+      document.body.removeChild(ta);
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(extrator).then(function(){
+          _toast('✅ Prompt extrator copiado. Abra Claude/ChatGPT, anexe o PDF e cole.', 'var(--accent)');
+        }).catch(function(){
+          if(ok) _toast('✅ Prompt extrator copiado', 'var(--accent)');
+          else _toast('⚠ Copie manualmente do textarea', 'var(--amber)');
+        });
+      } else {
+        _toast(ok?'✅ Prompt extrator copiado':'⚠ Falha ao copiar', ok?'var(--accent)':'var(--amber)');
+      }
+    });
+  };
+
+  window._icPerfilColarExtracao = function(){
+    var ta = _g('icPerfRespExtrator');
+    var txt = ta ? ta.value.trim() : '';
+    if(!txt){ _toast('⚠ Cole o JSON extraído pela IA antes', 'var(--amber)'); return; }
+    /* tira markdown wrappers se vierem */
+    var match = txt.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if(match) txt = match[1].trim();
+    var dados;
+    try {
+      dados = JSON.parse(txt);
+    } catch(e){
+      _toast('❌ JSON inválido: '+(e.message||e), 'var(--red)');
+      return;
+    }
+    if(dados.erro){
+      _toast('⚠ IA reportou: '+dados.erro, 'var(--amber)');
+      return;
+    }
+    _aplicarExtracao(dados);
+  };
+
+  function _aplicarExtracao(dados){
+    /* Aplica o JSON extraído ao _dossie e re-renderiza. Preserva
+       valores já preenchidos manualmente: só sobrescreve onde a
+       IA retornou número (campos null da IA não tocam nada). */
+    var sobrescritos = 0;
+
+    if(dados.disc){
+      ['natural','adaptado'].forEach(function(modo){
+        var src = dados.disc[modo];
+        if(!src) return;
+        ['D','I','S','C'].forEach(function(k){
+          if(src[k] != null && !isNaN(src[k])){
+            _dossie.disc[modo][k] = +src[k];
+            sobrescritos++;
+          }
+        });
+      });
+    }
+    if(dados.dimensoes){
+      ['extroversao','intuicao','pensamento'].forEach(function(k){
+        if(dados.dimensoes[k] != null && !isNaN(dados.dimensoes[k])){
+          _dossie.dimensoes[k] = +dados.dimensoes[k];
+          sobrescritos++;
+        }
+      });
+    }
+    if(dados.tracos){
+      TRACOS_ORDEM.forEach(function(t){
+        var v = dados.tracos[t.k];
+        if(v != null && !isNaN(v)){
+          _dossie.tracos[t.k] = +v;
+          sobrescritos++;
+        }
+      });
+    }
+    if(dados.valores){
+      VALORES_ORDEM.forEach(function(v){
+        var x = dados.valores[v.k];
+        if(x != null && !isNaN(x)){
+          _dossie.valores[v.k] = +x;
+          sobrescritos++;
+        }
+      });
+    }
+    if(dados.meta){
+      if(dados.meta.data_aplicacao) _dossie.aplicadoEm = dados.meta.data_aplicacao;
+      if(dados.meta.instrumento) _dossie.origem = dados.meta.instrumento;
+    }
+
+    if(sobrescritos === 0){
+      _toast('⚠ Nenhum campo válido encontrado no JSON', 'var(--amber)');
+      return;
+    }
+    _renderForm();
+    _salvar().then(function(){
+      var nota = dados.notas_de_mapeamento ? ' · '+dados.notas_de_mapeamento : '';
+      _toast('✅ '+sobrescritos+' campo(s) preenchido(s)'+nota, 'var(--accent)');
+      var ta = _g('icPerfRespExtrator');
+      if(ta) ta.value = '';
+    });
+  }
+
+  /* ── Listeners dos inputs (re-render gráficos + gaps em tempo real) ── */
+  function _bindListeners(){
+    if(_bindListeners._done) return; /* idempotente: só plug uma vez por sessão */
+    var ids = [];
+    /* DISC nat + adapt */
+    ['D','I','S','C'].forEach(function(k){
+      ids.push('icPerfDN_'+k);
+      ids.push('icPerfDA_'+k);
+    });
+    /* 3 dimensões */
+    ids.push('icPerfDimExtr','icPerfDimIntu','icPerfDimPens');
+    /* 16 traços */
+    TRACOS_ORDEM.forEach(function(t){ ids.push('icPerfTr_'+t.k); });
+    /* 6 valores */
+    VALORES_ORDEM.forEach(function(v){ ids.push('icPerfVa_'+v.k); });
+
+    ids.forEach(function(id){
+      var el = _g(id);
+      if(el){
+        el.addEventListener('input', function(){
+          _coletarForm();
+          _calcularGaps();
+          _renderGraficos();
+        });
+      }
+    });
+    _bindListeners._done = true;
   }
 
   /* ── Modal open/close ────────────────────────────────────────── */
