@@ -309,46 +309,67 @@
     var labels = TRACOS_ORDEM.map(function(t){ return t.l; });
     var vals = TRACOS_ORDEM.map(function(t){ return _dossie.tracos[t.k]; });
     var N = labels.length;
-    var algumPreenchido = vals.some(function(v){ return v!=null; });
-    if(!algumPreenchido){
-      el.innerHTML = '<div style="font-size:10px;color:var(--muted);text-align:center;padding:14px;font-style:italic;">preencha os 16 traços para visualizar o radar</div>';
-      return;
-    }
-    var cx=200, cy=200, raioMax=130;
-    var svg = '<svg viewBox="0 0 400 400" width="100%" preserveAspectRatio="xMidYMid meet" style="max-width:400px;">';
-    /* Grade circular: 20/40/60/80/100 */
+    var preenchidos = vals.filter(function(v){ return v!=null; }).length;
+
+    /* viewBox amplo para caber labels longos */
+    var VB = 460, cx = VB/2, cy = VB/2, raioMax = 145;
+    var svg = '<svg viewBox="0 0 '+VB+' '+VB+'" width="100%" preserveAspectRatio="xMidYMid meet" style="max-width:460px;">';
+
+    /* Grade circular: 20/40/60/80/100 — SEMPRE renderiza pra mostrar o esqueleto */
     [20,40,60,80,100].forEach(function(esc){
       var r = raioMax * esc / 100;
-      svg += '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--border)" stroke-width="1" opacity="0.45"/>';
-      svg += '<text x="'+(cx+3)+'" y="'+(cy-r+10)+'" font-size="8" fill="var(--muted)" opacity="0.7">'+esc+'</text>';
+      svg += '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--border)" stroke-width="1" opacity="0.5"/>';
+      svg += '<text x="'+(cx+4)+'" y="'+(cy-r+10)+'" font-size="8" fill="var(--muted)" opacity="0.6">'+esc+'</text>';
     });
-    /* Linhas radiais + labels */
+
     function _ang(i){ return (Math.PI*2*i/N) - Math.PI/2; }
     function _pt(i, r){
       var a = _ang(i);
       return { x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r };
     }
+
+    /* Linhas radiais + labels nas 16 pontas — SEMPRE renderiza */
     for(var i=0; i<N; i++){
       var p = _pt(i, raioMax);
-      svg += '<line x1="'+cx+'" y1="'+cy+'" x2="'+p.x+'" y2="'+p.y+'" stroke="var(--border)" stroke-width="1" opacity="0.35"/>';
-      var pl = _pt(i, raioMax + 18);
+      svg += '<line x1="'+cx+'" y1="'+cy+'" x2="'+p.x+'" y2="'+p.y+'" stroke="var(--border)" stroke-width="1" opacity="0.4"/>';
+      var pl = _pt(i, raioMax + 22);
       var anchor = (pl.x < cx-3) ? 'end' : (pl.x > cx+3 ? 'start' : 'middle');
-      svg += '<text x="'+pl.x+'" y="'+(pl.y+3)+'" text-anchor="'+anchor+'" font-size="9" fill="var(--text)" font-weight="600">'+labels[i]+'</text>';
+      var dy = (pl.y < cy-10) ? -2 : (pl.y > cy+10 ? 8 : 3);
+      svg += '<text x="'+pl.x+'" y="'+(pl.y+dy)+'" text-anchor="'+anchor+'" font-size="10" fill="var(--text)" font-weight="600">'+labels[i]+'</text>';
     }
-    /* Polígono Natural (ciano sólido) */
-    var pontos = vals.map(function(v, i){
-      var r = (v==null) ? 0 : Math.max(0, Math.min(100, v)) / 100 * raioMax;
-      var p = _pt(i, r);
-      return p.x.toFixed(1)+','+p.y.toFixed(1);
-    }).join(' ');
-    svg += '<polygon points="'+pontos+'" fill="rgba(96,165,250,0.18)" stroke="#60a5fa" stroke-width="1.8"/>';
-    /* Pontos */
-    for(var i=0; i<N; i++){
-      var v = vals[i]; if(v==null) continue;
-      var r = Math.max(0, Math.min(100, v)) / 100 * raioMax;
-      var p = _pt(i, r);
-      svg += '<circle cx="'+p.x+'" cy="'+p.y+'" r="3" fill="#60a5fa" stroke="var(--bg)" stroke-width="1"/>';
+
+    if(preenchidos === 0){
+      svg += '<text x="'+cx+'" y="'+cy+'" text-anchor="middle" font-size="11" fill="var(--muted)" font-style="italic">preencha os 16 traços</text>';
+    } else {
+      /* Polígono fechado: só com pontos PREENCHIDOS (pontos null são puladas).
+         Se faltam pontos, vira polígono incompleto mas reconhecível. */
+      var preench = [];
+      for(var i=0; i<N; i++){
+        if(vals[i] != null){
+          var r = Math.max(0, Math.min(100, vals[i])) / 100 * raioMax;
+          preench.push(_pt(i, r));
+        }
+      }
+      var pontosStr = preench.map(function(p){ return p.x.toFixed(1)+','+p.y.toFixed(1); }).join(' ');
+      if(preench.length >= 3){
+        svg += '<polygon points="'+pontosStr+'" fill="rgba(96,165,250,0.18)" stroke="#60a5fa" stroke-width="2"/>';
+      } else if(preench.length === 2){
+        svg += '<line x1="'+preench[0].x+'" y1="'+preench[0].y+'" x2="'+preench[1].x+'" y2="'+preench[1].y+'" stroke="#60a5fa" stroke-width="2"/>';
+      }
+
+      /* Pontos preenchidos com bolinha + valor flutuante */
+      for(var i=0; i<N; i++){
+        if(vals[i] == null) continue;
+        var r = Math.max(0, Math.min(100, vals[i])) / 100 * raioMax;
+        var p = _pt(i, r);
+        svg += '<circle cx="'+p.x+'" cy="'+p.y+'" r="4" fill="#60a5fa" stroke="var(--bg)" stroke-width="1.5"/>';
+        svg += '<text x="'+p.x+'" y="'+(p.y-7)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#60a5fa">'+vals[i]+'</text>';
+      }
+
+      /* Status: quantos preenchidos / 16 */
+      svg += '<text x="'+(VB-10)+'" y="'+(VB-10)+'" text-anchor="end" font-size="9" fill="var(--muted)">'+preenchidos+'/'+N+' traços</text>';
     }
+
     svg += '</svg>';
     el.innerHTML = svg;
   }
@@ -963,6 +984,22 @@
     _salvar().then(function(){
       _toast('💾 Dossiê salvo', 'var(--accent)');
       _calcularGaps();
+    });
+  };
+
+  window._icPerfilLimpar = function(){
+    if(!_consultorAtual){ _toast('⚠ Selecione um consultor primeiro', 'var(--amber)'); return; }
+    var nome = _consultorAtual.nome || 'consultor';
+    if(!confirm('Limpar TODOS os dados do dossiê de '+nome+'?\n\n'
+      +'• Apaga DISC, dimensões, traços, valores\n'
+      +'• Apaga anexos (PDFs/imagens)\n'
+      +'• Apaga análise gerada\n\n'
+      +'Não pode ser desfeito.')) return;
+
+    _dossie = _dossieVazio();
+    _renderForm();
+    _salvar().then(function(){
+      _toast('🗑 Dossiê limpo', 'var(--accent)');
     });
   };
 
