@@ -1,0 +1,115 @@
+#!/bin/bash
+# ════════════════════════════════════════════════════════════════════
+# pre-commit — Valida sintaxe de .js staged antes de cada commit
+# ════════════════════════════════════════════════════════════════════
+# Roda automaticamente em `git commit`. Se algum .js staged tiver
+# erro de sintaxe (chaves desbalanceadas, etc), o commit é BLOQUEADO.
+#
+# Estratégia:
+#   1. Se `node` está disponível → usa `node --check` (mais forte)
+#   2. Senão → delega ao PowerShell script `scripts/check-js-syntax.ps1`
+#      que tokeniza JS e detecta REGRESSÃO de balanceamento vs HEAD
+#      (não dá falso positivo em código legado já válido)
+#
+# Para pular em emergência (NÃO recomendado):
+#   git commit --no-verify
+# ════════════════════════════════════════════════════════════════════
+
+set -u
+
+if [ -t 1 ]; then
+  RED='\033[0;31m'; YEL='\033[0;33m'; GRN='\033[0;32m'; DIM='\033[0;90m'; NC='\033[0m'
+else
+  RED=''; YEL=''; GRN=''; DIM=''; NC=''
+fi
+
+echo -e "${DIM}[pre-commit] validando arquivos staged...${NC}"
+
+# ── Localiza node em paths comuns do Windows ────────────────────────
+NODE_BIN=""
+for cand in \
+  "node" \
+  "/c/Program Files/nodejs/node.exe" \
+  "/c/Program Files (x86)/nodejs/node.exe" \
+  "$LOCALAPPDATA/Programs/nodejs/node.exe" \
+  "$HOME/AppData/Local/Programs/nodejs/node.exe"; do
+  if command -v "$cand" >/dev/null 2>&1 || [ -x "$cand" ]; then
+    NODE_BIN="$cand"
+    break
+  fi
+done
+
+if [ -z "$NODE_BIN" ]; then
+  for cand in "$HOME"/AppData/Roaming/nvm/v*/node.exe \
+              "$HOME"/AppData/Local/fnm/node-versions/v*/installation/node.exe; do
+    if [ -x "$cand" ]; then NODE_BIN="$cand"; break; fi
+  done
+fi
+
+# ── Coleta .js staged ───────────────────────────────────────────────
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.js$' || true)
+
+if [ -z "$STAGED" ]; then
+  echo -e "${DIM}[pre-commit] nenhum .js no commit - OK${NC}"
+  exit 0
+fi
+
+QTD=$(echo "$STAGED" | wc -l | tr -d ' ')
+echo -e "${DIM}[pre-commit] $QTD arquivo(s) .js staged${NC}"
+
+FAILED=0
+FAILED_FILES=""
+
+# ── Modo node (FORTE) ───────────────────────────────────────────────
+if [ -n "$NODE_BIN" ]; then
+  echo -e "${DIM}[pre-commit] modo: node --check${NC}"
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    [ -f "$f" ] || continue
+    OUT=$("$NODE_BIN" --check "$f" 2>&1)
+    if [ $? -ne 0 ]; then
+      echo -e "${RED}  ERR $f${NC}"
+      echo -e "${RED}$OUT${NC}" | head -10
+      FAILED=$((FAILED+1))
+      FAILED_FILES="$FAILED_FILES\n  $f"
+    else
+      echo -e "${GRN}  OK  $f${NC}"
+    fi
+  done <<< "$STAGED"
+
+# ── Modo PowerShell (REGRESSÃO vs HEAD) ─────────────────────────────
+else
+  echo -e "${DIM}[pre-commit] modo: PowerShell (regressão vs HEAD)${NC}"
+  # Junta arquivos em string com vírgula para passar ao PS
+  ARG_FILES=$(echo "$STAGED" | tr '\n' ',' | sed 's/,$//')
+  PS_SCRIPT="$(git rev-parse --show-toplevel)/scripts/check-js-syntax.ps1"
+  if [ ! -f "$PS_SCRIPT" ]; then
+    echo -e "${RED}[pre-commit] ERRO: scripts/check-js-syntax.ps1 não encontrado${NC}"
+    echo -e "${YEL}[pre-commit] pulando validação (commit liberado)${NC}"
+    exit 0
+  fi
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PS_SCRIPT" -Files "$ARG_FILES"
+  PS_EXIT=$?
+  if [ $PS_EXIT -ne 0 ]; then
+    FAILED=$PS_EXIT
+    FAILED_FILES="(ver mensagens acima)"
+  fi
+fi
+
+# ── Resultado final ─────────────────────────────────────────────────
+if [ $FAILED -gt 0 ]; then
+  echo ""
+  echo -e "${RED}===============================================${NC}"
+  echo -e "${RED}  COMMIT BLOQUEADO - erro(s) de sintaxe${NC}"
+  echo -e "${RED}===============================================${NC}"
+  if [ -n "$FAILED_FILES" ] && [ "$FAILED_FILES" != "(ver mensagens acima)" ]; then
+    echo -e "Arquivos com problema:${RED}$FAILED_FILES${NC}"
+  fi
+  echo ""
+  echo -e "${DIM}Corrija e tente novamente. Em emergência:${NC}"
+  echo -e "${DIM}  git commit --no-verify${NC}"
+  exit 1
+fi
+
+echo -e "${GRN}[pre-commit] OK - $QTD arquivo(s) validado(s)${NC}"
+exit 0

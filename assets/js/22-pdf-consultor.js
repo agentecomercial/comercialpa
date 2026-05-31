@@ -66,6 +66,7 @@ function _togglePdfConsultor(nome){
 }
 
 function gerarPdfConsultor(acao){
+  if(window._smoke && !window._smoke.gate('gerar PDF do consultor')) return;
   var selecionados=allConsultors.filter(function(c){return _pdfConsultores[c];});
   if(!selecionados.length){_showToast('⚠️ Selecione ao menos um consultor.','var(--amber)');return;}
   var algumStatus=_pdfSecs.pagos||_pdfSecs.em_aberto||_pdfSecs.entrada||_pdfSecs.tabela||_pdfSecs.ranking||_pdfSecs.potencial||_pdfSecs.faturado||_pdfSecs.aberto||_pdfSecs.meta;

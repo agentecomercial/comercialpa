@@ -414,6 +414,9 @@ function entrarTurma(id){
     buildSelects();buildFilterBtns();renderAll();
     switchTab(abaInicial);
     startRealtimeSync();
+
+    /* Notifica o asserter e o smoke-test que os dados foram aplicados. */
+    try { document.dispatchEvent(new CustomEvent('data:applied',{detail:{data:data}})); } catch(_){}
   }
 
   // Usar dados já carregados pelo chamador

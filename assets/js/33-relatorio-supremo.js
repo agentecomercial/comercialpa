@@ -434,6 +434,7 @@
   };
 
   window._supCopiar = function(){
+    if(window._smoke && !window._smoke.gate('copiar relatório')) return;
     var txt = _gerarRelatorio();
     if(navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(txt).then(function(){
@@ -464,6 +465,7 @@
   }
 
   window._supBaixarTxt = function(){
+    if(window._smoke && !window._smoke.gate('baixar relatório TXT')) return;
     var t = _turmaTxt();
     var fname = 'relatorio-supremo-'+String(t.nome||'turma').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+new Date().toISOString().slice(0,10)+'.txt';
     var blob = new Blob([_gerarRelatorio()],{type:'text/plain;charset=utf-8'});
@@ -480,6 +482,7 @@
 
   /* PDF — Corporate minimal (Preview 01): papel branco · serif executiva · preto/ocre/cinza */
   window._supBaixarPdf = function(){
+    if(window._smoke && !window._smoke.gate('gerar PDF do relatório')) return;
     if(typeof _ensureJsPDF!=='function'){
       if(typeof _showToast==='function') _showToast('jsPDF não disponível.','var(--red)');
       return;
@@ -947,6 +950,7 @@
   /* WhatsApp — copia o relatório com markdown WhatsApp (*bold* em headers).
      Não abre o WhatsApp; usuário cola onde quiser (chat, grupo, etc). */
   window._supWhatsApp = function(){
+    if(window._smoke && !window._smoke.gate('copiar para WhatsApp')) return;
     var txt = _gerarRelatorio();
     // Aplica markdown WhatsApp: linhas que começam com emoji + texto = bold
     // (WhatsApp renderiza *texto* como negrito)
