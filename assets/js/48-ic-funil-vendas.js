@@ -24,7 +24,7 @@
   let _leads = [];                 // [{id, nome, empresa, valor, prob, etapa(0..6), treinamento, origem, consultor, prazo, temp(q/m/f), wpp, email, notas, criadoEm, atividade:[]}]
   let _historico = [];             // [{leadId, nome, txt, quando, autor, tipo}]
   let _filtroEtapa = null;
-  let _filtros = { cons:'', trein:'', turma:'', per:'mes', perDe:'', perAte:'', origem:'', busca:'', temp:'' };
+  let _filtros = { cons:'', trein:'', turma:'', per:'mes', perDe:'', perAte:'', origem:'', busca:'', temp:'', atraso:false };
   let _modoLista = false;
   let _maxCards = 5;
   /* Cards colapsados (click simples toggleia). Sessão-only, sem persistência. */
@@ -111,7 +111,15 @@
 .fv-alertas-txt b{ color:#ef4444; }
 
 .fv-kpis{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:12px; }
-.fv-kpi{ background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:10px; padding:11px 14px; }
+.fv-kpi{
+  background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:10px; padding:11px 14px;
+  cursor:pointer; text-align:left; font-family:inherit; color:inherit;
+  transition:border-color .15s, background .15s, transform .1s;
+}
+.fv-kpi:hover{ border-color:var(--accent); background:rgba(212,165,116,0.05); }
+.fv-kpi:active{ transform:scale(0.98); }
+.fv-kpi.active{ border-color:var(--accent); background:rgba(212,165,116,0.12); box-shadow:0 0 0 1px var(--accent) inset; }
+.fv-kpi.active .fv-kpi-l{ color:var(--accent); }
 .fv-kpi-l{ font-size:10px; color:var(--txt-2); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; font-weight:500; }
 .fv-kpi-v{ font-size:19px; font-weight:700; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; line-height:1.1; }
 .fv-kpi.accent .fv-kpi-v{ color:var(--accent); }
@@ -1516,6 +1524,10 @@
         if(!((l.nome||'').toLowerCase().includes(q) || (l.empresa||'').toLowerCase().includes(q))) return false;
       }
       if(_filtros.temp && l.temp !== _filtros.temp) return false;
+      if(_filtros.atraso){
+        const d = _diasAteHoje(l.prazo);
+        if(d == null || d >= 0 || l.etapa === 6) return false;
+      }
       /* Filtro de período · usa l.criadoEm (YYYY-MM-DD)
          IMPORTANTE: comparações de mês/ano são feitas via STRING (slice)
          pra evitar bug de timezone com new Date('YYYY-MM-DD'), que o JS
@@ -1585,23 +1597,41 @@
 
   function _renderKpis(arr){
     const k = _calcKpis(arr);
+    /* [label, classe-cor, valor, data-kpi]. data-kpi vazio = não clicável (mas mantemos hover, fica info-only). */
     const r1 = [
-      ['Em Negociação','accent', k.emNeg],
-      ['Vendidos','green', k.vendidos],
-      ['Conversão Geral','blue', k.taxaConv.toFixed(1).replace('.',',')+'%'],
-      ['Ticket Médio','amber', moedaCurta(k.ticket)],
-      ['Follow-up Atraso','red', k.atrasos]
+      ['Em Negociação','accent', k.emNeg, 'negociacao'],
+      ['Vendidos','green', k.vendidos, 'vendidos'],
+      ['Conversão Geral','blue', k.taxaConv.toFixed(1).replace('.',',')+'%', 'conversao'],
+      ['Ticket Médio','amber', moedaCurta(k.ticket), 'ticket'],
+      ['Follow-up Atraso','red', k.atrasos, 'atraso']
     ];
     const r2 = [
-      ['Pipeline Ponderado','accent', moedaCurta(k.pipeline)],
-      ['Ciclo Médio','purple', k.cicloMed + 'd'],
-      ['Temperatura Fria','cyan', k.noShow + '%'],
-      ['Total Ativo','green', arr.length],
-      ['Origens Distintas','accent', new Set(arr.map(l=>l.origem)).size]
+      ['Pipeline Ponderado','accent', moedaCurta(k.pipeline), 'pipeline'],
+      ['Ciclo Médio','purple', k.cicloMed + 'd', 'ciclo'],
+      ['Temperatura Fria','cyan', k.noShow + '%', 'fria'],
+      ['Total Ativo','green', arr.length, 'ativo'],
+      ['Origens Distintas','accent', new Set(arr.map(l=>l.origem)).size, 'origens']
     ];
-    const mk = (it,cls)=>it.map(([l,c,v])=>`<div class="fv-kpi ${c}"><div class="fv-kpi-l">${l}</div><div class="fv-kpi-v">${v}</div></div>`).join('');
+    const isActive = kpi => {
+      if(kpi === 'negociacao') return _filtroEtapa === 3;
+      if(kpi === 'vendidos')   return _filtroEtapa === 6;
+      if(kpi === 'atraso')     return !!_filtros.atraso;
+      if(kpi === 'fria')       return _filtros.temp === 'f';
+      return false;
+    };
+    const mk = items => items.map(([l,c,v,kpi]) => {
+      const active = isActive(kpi) ? ' active' : '';
+      return `<button class="fv-kpi ${c}${active}" data-kpi="${kpi}" title="${esc(l)}"><div class="fv-kpi-l">${l}</div><div class="fv-kpi-v">${v}</div></button>`;
+    }).join('');
     $('#fvKpis1').innerHTML = mk(r1);
     $('#fvKpis2').innerHTML = mk(r2);
+
+    /* Handlers de click — guarda info de cálculo pra usar nos toasts */
+    const totalArr = arr.length;
+    const origensSet = new Set(arr.map(l=>l.origem).filter(Boolean));
+    $$('.fv-kpi[data-kpi]').forEach(btn => btn.addEventListener('click', () => {
+      _onKpiClick(btn.dataset.kpi, { k, total: totalArr, origens: origensSet });
+    }));
 
     // Alertas
     const alertas = [];
@@ -1610,6 +1640,62 @@
     if(parados > 0) alertas.push(`<b>${parados} card${parados>1?'s':''} parado${parados>1?'s':''} há +14 dias</b>`);
     const bar = $('#fvAlertas'); const txt = $('#fvAlertasTxt');
     if(alertas.length){ bar.style.display='flex'; txt.innerHTML = alertas.join(' · '); } else { bar.style.display='none'; }
+  }
+
+  /* Click em KPI: aplica filtro (toggle) ou exibe toast com detalhe da métrica. */
+  function _onKpiClick(kpi, ctx){
+    const k = ctx.k;
+    switch(kpi){
+      case 'negociacao': {
+        _filtroEtapa = (_filtroEtapa === 3) ? null : 3;
+        _toast(_filtroEtapa === 3 ? 'Filtrando: Em Negociação' : 'Filtro removido');
+        _render(); return;
+      }
+      case 'vendidos': {
+        _filtroEtapa = (_filtroEtapa === 6) ? null : 6;
+        _toast(_filtroEtapa === 6 ? 'Filtrando: Vendidos' : 'Filtro removido');
+        _render(); return;
+      }
+      case 'atraso': {
+        _filtros.atraso = !_filtros.atraso;
+        _toast(_filtros.atraso ? `Filtrando: ${k.atrasos} em atraso` : 'Filtro removido');
+        _render(); return;
+      }
+      case 'fria': {
+        _filtros.temp = (_filtros.temp === 'f') ? '' : 'f';
+        $$('.fv-fchip').forEach(x => x.classList.toggle('active', x.dataset.temp === _filtros.temp));
+        _toast(_filtros.temp === 'f' ? 'Filtrando: Temperatura Fria' : 'Filtro removido');
+        _render(); return;
+      }
+      case 'ativo': {
+        _filtroEtapa = null;
+        _filtros.cons=''; _filtros.trein=''; _filtros.turma=''; _filtros.origem='';
+        _filtros.busca=''; _filtros.temp=''; _filtros.atraso=false;
+        _toast(`Filtros limpos · ${ctx.total} lead${ctx.total===1?'':'s'} ativo${ctx.total===1?'':'s'}`);
+        _render(); return;
+      }
+      case 'origens': {
+        const lista = Array.from(ctx.origens).sort().join(', ') || 'Nenhuma origem cadastrada';
+        _toast(`Origens (${ctx.origens.size}): ${lista}`);
+        return;
+      }
+      case 'conversao': {
+        _toast(`Conversão: ${k.taxaConv.toFixed(1).replace('.',',')}% · ${k.vendidos} venda${k.vendidos===1?'':'s'} / ${ctx.total} lead${ctx.total===1?'':'s'}`);
+        return;
+      }
+      case 'ticket': {
+        _toast(`Ticket médio: ${moedaCurta(k.ticket)} · média dos ${k.vendidos} vendidos`);
+        return;
+      }
+      case 'pipeline': {
+        _toast(`Pipeline ponderado: ${moedaCurta(k.pipeline)} · Σ (valor × prob/100) dos leads ativos`);
+        return;
+      }
+      case 'ciclo': {
+        _toast(`Ciclo médio: ${k.cicloMed} dia${k.cicloMed===1?'':'s'} · do criar à venda`);
+        return;
+      }
+    }
   }
 
   function _renderFunilSide(arr){
