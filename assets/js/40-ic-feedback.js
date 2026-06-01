@@ -1630,18 +1630,21 @@
       var statusLbl = (h.status === 'enviado') ? '✓ Enviado' :
                        (h.status === 'respondido') ? '✓ Respondido' :
                        'Rascunho';
-      return '<div class="fb-hist-item" data-id="'+h._id+'">'
+      return '<div class="fb-hist-item" data-id="'+h._id+'" style="position:relative;">'
         + '<div class="fb-hist-row">'
         +   '<span class="fb-hist-data">'+_fmtDataBR(h.data||'')+'</span>'
         +   '<span class="fb-hist-ciclo '+(h.ciclo||'quinzenal')+'">'+cicloLbl+'</span>'
         + '</div>'
         + '<div class="fb-hist-media">Média '+media.toFixed(1)+' '+arrow+'</div>'
         + '<div class="fb-hist-status">'+statusLbl+'</div>'
+        + '<button class="fb-hist-rm" data-id="'+h._id+'" title="Excluir este ciclo do histórico" style="position:absolute;top:6px;right:6px;width:22px;height:22px;padding:0;background:transparent;color:#ef4444;border:1px solid transparent;border-radius:4px;cursor:pointer;font-size:12px;line-height:1;opacity:0.5;transition:opacity .15s,background .15s,border-color .15s;">🗑</button>'
         + '</div>';
     }).join('');
     /* Click no histórico → carregar aquele doc */
     el.querySelectorAll('.fb-hist-item').forEach(function(item){
-      item.addEventListener('click', function(){
+      item.addEventListener('click', function(ev){
+        /* Ignora clique no botão de excluir */
+        if(ev.target && ev.target.classList && ev.target.classList.contains('fb-hist-rm')) return;
         var id = item.getAttribute('data-id');
         var found = _historico.filter(function(h){return h._id===id;})[0];
         if(!found) return;
@@ -1653,10 +1656,90 @@
         var inpData = document.getElementById('fbData');
         if(inpData) inpData.value = found.data || _hoje();
         _atualizarInfoCiclo();
+        if(!_doc.tipo) _doc.tipo = 'completo';
+        _fbModo = _doc.tipo;
+        _fbModoManual = false;
         _icFbAplicarDocNaUI();
       });
     });
+    /* Hover no botão de excluir + click handler */
+    el.querySelectorAll('.fb-hist-rm').forEach(function(btn){
+      btn.addEventListener('mouseenter', function(){
+        btn.style.opacity = '1';
+        btn.style.background = 'rgba(239,68,68,.1)';
+        btn.style.borderColor = 'rgba(239,68,68,.4)';
+      });
+      btn.addEventListener('mouseleave', function(){
+        btn.style.opacity = '0.5';
+        btn.style.background = 'transparent';
+        btn.style.borderColor = 'transparent';
+      });
+      btn.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        var id = btn.getAttribute('data-id');
+        var found = _historico.filter(function(h){return h._id===id;})[0];
+        if(!found) return;
+        var label = _fmtDataBR(found.data||'') + ' · ' + (found.ciclo||'') + ' · ' + (found.status||'rascunho');
+        if(!confirm('Excluir este ciclo do histórico?\n\n'+label+'\n\nNão pode ser desfeito.')) return;
+        _icFbExcluirCiclo(id);
+      });
+    });
   }
+
+  /* Exclui um ciclo do Firebase + atualiza estado local. */
+  function _icFbExcluirCiclo(cicloId){
+    if(!_consultorAtivo || !cicloId) return;
+    if(typeof window._fbSave !== 'function'){
+      if(typeof _showToast==='function') _showToast('❌ Firebase indisponível.','var(--red)');
+      return;
+    }
+    /* Firebase remove ao gravar null no path */
+    window._fbSave('icFeedbacks/'+_consultorAtivo+'/'+cicloId, null).then(function(){
+      _historico = _historico.filter(function(h){return h._id !== cicloId;});
+      /* Se o doc atual em edição é o excluído, reseta */
+      if(_doc && _doc._id === cicloId){
+        _icFbResetDoc();
+      }
+      _icFbRenderHistorico();
+      _icFbRenderRadar();
+      _icFbRenderComparativo();
+      if(typeof _showToast==='function') _showToast('🗑 Ciclo excluído', 'var(--accent)');
+    }).catch(function(err){
+      console.error('[ic-feedback] excluir falhou', err);
+      if(typeof _showToast==='function') _showToast('❌ Erro ao excluir.','var(--red)');
+    });
+  }
+
+  /* Iniciar do zero — limpa o doc atual SEM tocar no histórico.
+     Útil pra começar um novo ciclo em data diferente. */
+  window._fbNovoCiclo = function(){
+    if(!_consultorAtivo){
+      if(typeof _showToast==='function') _showToast('⚠ Selecione um consultor.','var(--amber)');
+      return;
+    }
+    /* Se há rascunho não salvo, confirma */
+    var temConteudo = _doc && (
+      (_doc.notaGestor && _doc.notaGestor.trim()) ||
+      (_doc.notaAuto && _doc.notaAuto.trim()) ||
+      (_doc.acoes && _doc.acoes.length) ||
+      (_doc.compromissos && _doc.compromissos.length) ||
+      _doc.termometro != null
+    );
+    if(temConteudo && !confirm('Limpar o ciclo atual e começar um novo?\n\nSe não foi salvo, será perdido.')) return;
+
+    /* Reseta a data pra hoje e limpa o doc */
+    var inp = document.getElementById('fbData');
+    if(inp) inp.value = _hoje();
+    _atualizarInfoCiclo();
+    /* Re-detecta modo automaticamente (sem fixar manualmente) */
+    _fbModoManual = false;
+    var sug = _icFbDetectarModo();
+    _fbModo = sug.modo;
+    _icFbResetDoc();
+    _icFbRenderModoTabs();
+    _icFbRenderModoBlocos();
+    if(typeof _showToast==='function') _showToast('🆕 Novo ciclo criado · '+_fmtDataBR(_hoje()), 'var(--accent)');
+  };
 
   /* ── Radar SVG · TODAS as competências de COMPS_DEF ────── */
   function _icFbRenderRadar(){
