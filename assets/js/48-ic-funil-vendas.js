@@ -173,7 +173,21 @@
 .fv-hist-cd{ color:var(--txt-3,#6b7280); margin-top:1px; }
 .fv-hist-t{ color:var(--txt-3,#6b7280); font-size:9px; white-space:nowrap; }
 
-.fv-op{ background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:14px; padding:14px; position:relative; }
+/* Opção 4 · Gradient mesh elevado: 2 luminosidades (dourado + roxo) + sombra cinematográfica */
+.fv-op{
+  background:
+    radial-gradient(60% 70% at 20% 0%, rgba(212,165,116,.10), transparent 60%),
+    radial-gradient(50% 50% at 100% 100%, rgba(168,85,247,.08), transparent 60%),
+    linear-gradient(135deg, #181d27 0%, #11151c 100%);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:18px;
+  padding:14px;
+  position:relative;
+  box-shadow:
+    0 30px 60px -20px rgba(0,0,0,.8),
+    0 8px 16px rgba(0,0,0,.4),
+    0 0 0 1px rgba(255,255,255,.03) inset;
+}
 .fv-op-h{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 2px; flex-wrap:wrap; gap:8px; cursor:pointer; }
 .fv-op-h:hover .fv-op-tit{ color:var(--accent); }
 .fv-op-tit{ font-size:13px; font-weight:600; color:var(--txt-2); text-transform:uppercase; letter-spacing:0.06em; display:flex; align-items:center; gap:6px; }
