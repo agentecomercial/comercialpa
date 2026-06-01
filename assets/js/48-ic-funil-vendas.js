@@ -1584,7 +1584,9 @@
     const stats = _statsEtapas(arr);
     const total = arr.length;
     const vendidos = stats[6].qtd;
-    const emNeg = total - vendidos;
+    /* "Em Negociação" deve refletir SÓ a etapa Negociação (3) — o click no KPI
+       filtra _filtroEtapa=3, então a contagem precisa bater. */
+    const emNeg = stats[3].qtd;
     const taxaConv = total ? (vendidos / total * 100) : 0;
     const ticket = vendidos ? stats[6].soma / vendidos : 0;
     const atrasos = arr.filter(l => { const d=_diasAteHoje(l.prazo); return d != null && d < 0 && l.etapa !== 6; }).length;
