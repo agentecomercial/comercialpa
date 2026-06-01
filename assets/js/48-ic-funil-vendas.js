@@ -1614,16 +1614,8 @@
       ['Total Ativo','green', arr.length, 'ativo'],
       ['Origens Distintas','accent', new Set(arr.map(l=>l.origem)).size, 'origens']
     ];
-    const isActive = kpi => {
-      if(kpi === 'negociacao') return _filtroEtapa === 3;
-      if(kpi === 'vendidos')   return _filtroEtapa === 6;
-      if(kpi === 'atraso')     return !!_filtros.atraso;
-      if(kpi === 'fria')       return _filtros.temp === 'f';
-      return false;
-    };
     const mk = items => items.map(([l,c,v,kpi]) => {
-      const active = isActive(kpi) ? ' active' : '';
-      return `<button class="fv-kpi ${c}${active}" data-kpi="${kpi}" title="${esc(l)}"><div class="fv-kpi-l">${l}</div><div class="fv-kpi-v">${v}</div></button>`;
+      return `<button class="fv-kpi ${c}" data-kpi="${kpi}" title="${esc(l)} · clique para abrir detalhe"><div class="fv-kpi-l">${l}</div><div class="fv-kpi-v">${v}</div></button>`;
     }).join('');
     $('#fvKpis1').innerHTML = mk(r1);
     $('#fvKpis2').innerHTML = mk(r2);
@@ -1644,60 +1636,202 @@
     if(alertas.length){ bar.style.display='flex'; txt.innerHTML = alertas.join(' · '); } else { bar.style.display='none'; }
   }
 
-  /* Click em KPI: aplica filtro (toggle) ou exibe toast com detalhe da métrica. */
+  /* Click em KPI: abre modal drill-down (lista de leads ou detalhe da métrica).
+     Sem filtro persistido — modal independente do kanban. */
   function _onKpiClick(kpi, ctx){
-    const k = ctx.k;
-    switch(kpi){
-      case 'negociacao': {
-        _filtroEtapa = (_filtroEtapa === 3) ? null : 3;
-        _toast(_filtroEtapa === 3 ? 'Filtrando: Em Negociação' : 'Filtro removido');
-        _render(); return;
+    _abrirModalKpi(kpi, ctx);
+  }
+
+  /* Configs dos KPIs · cada uma resolve {titulo, sub, body(leads,k)} */
+  const _KPI_CFG = {
+    negociacao: {
+      titulo: '🤝 Em Negociação',
+      sub: 'Leads na etapa Negociação',
+      leads: arr => arr.filter(l => l.etapa === 3)
+    },
+    vendidos: {
+      titulo: '✅ Vendidos',
+      sub: 'Leads que fecharam (Pós-Venda)',
+      leads: arr => arr.filter(l => l.etapa === 6)
+    },
+    atraso: {
+      titulo: '⚠ Follow-up em Atraso',
+      sub: 'Leads ativos com prazo vencido',
+      leads: arr => arr.filter(l => { const d=_diasAteHoje(l.prazo); return d != null && d < 0 && l.etapa !== 6; })
+    },
+    fria: {
+      titulo: '❄ Temperatura Fria',
+      sub: 'Leads classificados como frios',
+      leads: arr => arr.filter(l => l.temp === 'f')
+    },
+    ativo: {
+      titulo: '📊 Total Ativo',
+      sub: 'Todos os leads (após filtros atuais)',
+      leads: arr => arr.slice()
+    },
+    origens: {
+      titulo: '📡 Origens Distintas',
+      sub: 'Quantidade e valor por origem',
+      breakdown: arr => {
+        const map = new Map();
+        arr.forEach(l => {
+          const k = l.origem || '(Sem origem)';
+          const cur = map.get(k) || { qtd:0, valor:0 };
+          cur.qtd++; cur.valor += +(l.valor||0);
+          map.set(k, cur);
+        });
+        return Array.from(map.entries())
+          .map(([nome,v]) => ({ nome, qtd:v.qtd, valor:v.valor }))
+          .sort((a,b) => b.qtd - a.qtd);
       }
-      case 'vendidos': {
-        _filtroEtapa = (_filtroEtapa === 6) ? null : 6;
-        _toast(_filtroEtapa === 6 ? 'Filtrando: Vendidos' : 'Filtro removido');
-        _render(); return;
-      }
-      case 'atraso': {
-        _filtros.atraso = !_filtros.atraso;
-        _toast(_filtros.atraso ? `Filtrando: ${k.atrasos} em atraso` : 'Filtro removido');
-        _render(); return;
-      }
-      case 'fria': {
-        _filtros.temp = (_filtros.temp === 'f') ? '' : 'f';
-        $$('.fv-fchip').forEach(x => x.classList.toggle('active', x.dataset.temp === _filtros.temp));
-        _toast(_filtros.temp === 'f' ? 'Filtrando: Temperatura Fria' : 'Filtro removido');
-        _render(); return;
-      }
-      case 'ativo': {
-        _filtroEtapa = null;
-        _filtros.cons=''; _filtros.trein=''; _filtros.turma=''; _filtros.origem='';
-        _filtros.busca=''; _filtros.temp=''; _filtros.atraso=false;
-        _toast(`Filtros limpos · ${ctx.total} lead${ctx.total===1?'':'s'} ativo${ctx.total===1?'':'s'}`);
-        _render(); return;
-      }
-      case 'origens': {
-        const lista = Array.from(ctx.origens).sort().join(', ') || 'Nenhuma origem cadastrada';
-        _toast(`Origens (${ctx.origens.size}): ${lista}`);
-        return;
-      }
-      case 'conversao': {
-        _toast(`Conversão: ${k.taxaConv.toFixed(1).replace('.',',')}% · ${k.vendidos} venda${k.vendidos===1?'':'s'} / ${ctx.total} lead${ctx.total===1?'':'s'}`);
-        return;
-      }
-      case 'ticket': {
-        _toast(`Ticket médio: ${moedaCurta(k.ticket)} · média dos ${k.vendidos} vendidos`);
-        return;
-      }
-      case 'pipeline': {
-        _toast(`Pipeline ponderado: ${moedaCurta(k.pipeline)} · Σ (valor × prob/100) dos leads ativos`);
-        return;
-      }
-      case 'ciclo': {
-        _toast(`Ciclo médio: ${k.cicloMed} dia${k.cicloMed===1?'':'s'} · do criar à venda`);
-        return;
-      }
+    },
+    conversao: {
+      titulo: '📈 Conversão Geral',
+      sub: 'Taxa de leads que viraram venda',
+      metrica: (arr,k) => ({
+        principal: k.taxaConv.toFixed(1).replace('.',',')+'%',
+        detalhe: `${k.vendidos} venda${k.vendidos===1?'':'s'} de ${arr.length} lead${arr.length===1?'':'s'}`,
+        formula: 'vendidos ÷ total × 100'
+      })
+    },
+    ticket: {
+      titulo: '💰 Ticket Médio',
+      sub: 'Valor médio dos vendidos',
+      metrica: (arr,k) => ({
+        principal: moedaCurta(k.ticket),
+        detalhe: `Média dos ${k.vendidos} lead${k.vendidos===1?'':'s'} em Pós-Venda`,
+        formula: 'Σ valor dos vendidos ÷ qtd de vendidos'
+      })
+    },
+    pipeline: {
+      titulo: '🎯 Pipeline Ponderado',
+      sub: 'Receita esperada com probabilidade',
+      metrica: (arr,k) => ({
+        principal: moedaCurta(k.pipeline),
+        detalhe: `Sobre ${arr.length} lead${arr.length===1?'':'s'} no funil`,
+        formula: 'Σ (valor × prob/100) de todos os leads'
+      })
+    },
+    ciclo: {
+      titulo: '⏱ Ciclo Médio',
+      sub: 'Tempo médio para fechar uma venda',
+      metrica: (arr,k) => ({
+        principal: k.cicloMed + ' dia' + (k.cicloMed===1?'':'s'),
+        detalhe: `Média sobre ${k.vendidos} venda${k.vendidos===1?'':'s'}`,
+        formula: 'média de (hoje − criadoEm) dos vendidos'
+      })
     }
+  };
+
+  function _abrirModalKpi(kpi, ctx){
+    const cfg = _KPI_CFG[kpi]; if(!cfg) return;
+    const arr = _filtrar(_leads); /* respeita filtros já aplicados na tela */
+    const k = ctx.k;
+
+    let bodyHtml = '';
+    if(cfg.leads){
+      const ls = cfg.leads(arr);
+      const total = ls.reduce((s,l) => s + +(l.valor||0), 0);
+      if(!ls.length){
+        bodyHtml = `<div style="text-align:center;padding:24px;color:var(--txt-3,#6b7280);font-size:12px;">Nenhum lead nesta categoria.</div>`;
+      } else {
+        const linhas = ls.map(l => {
+          const et = ETAPAS[l.etapa] || ETAPAS[0];
+          const tempIcon = l.temp==='q'?'🔥':(l.temp==='m'?'🌤':(l.temp==='f'?'❄':l.etapa===6?'✓':''));
+          const dias = _diasAteHoje(l.prazo);
+          let prazoTxt = '—';
+          if(l.prazo){
+            if(dias < 0) prazoTxt = `<span style="color:#ef4444;">${dias}d ⚠</span>`;
+            else if(dias === 0) prazoTxt = '<span style="color:#34d399;">Hoje</span>';
+            else if(dias === 1) prazoTxt = '<span style="color:#34d399;">Amanhã</span>';
+            else prazoTxt = dias + 'd';
+          }
+          return `<tr data-id="${l.id}" style="cursor:pointer;">
+            <td style="text-align:center;">${tempIcon}</td>
+            <td><div style="font-weight:600;color:var(--txt);">${esc(l.nome)}</div>${l.empresa?`<div style="font-size:10px;color:var(--txt-3,#6b7280);">${esc(l.empresa)}</div>`:''}</td>
+            <td style="color:var(--accent);font-weight:700;">${moedaCurta(l.valor)}</td>
+            <td><span style="background:${et.cor};color:white;padding:2px 8px;border-radius:5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;">${et.nome}</span></td>
+            <td style="color:var(--txt-2);">${esc(l.consultor||'—')}</td>
+            <td>${prazoTxt}</td>
+          </tr>`;
+        }).join('');
+        bodyHtml = `
+          <div style="display:flex;gap:14px;padding:10px 14px;background:rgba(212,165,116,0.08);border-radius:8px;margin-bottom:12px;font-size:11px;">
+            <div><span style="color:var(--txt-3,#6b7280);">Total:</span> <b style="color:var(--accent);">${ls.length} lead${ls.length===1?'':'s'}</b></div>
+            <div><span style="color:var(--txt-3,#6b7280);">Valor:</span> <b style="color:var(--accent);">${moedaCurta(total)}</b></div>
+          </div>
+          <div style="max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+            <table style="width:100%;border-collapse:separate;border-spacing:0;font-size:11px;">
+              <thead><tr style="background:var(--bg-3,#1c2128);position:sticky;top:0;z-index:1;">
+                <th style="padding:8px;text-align:center;width:30px;"></th>
+                <th style="padding:8px;text-align:left;color:var(--txt-2);font-size:9px;text-transform:uppercase;letter-spacing:.06em;">Cliente</th>
+                <th style="padding:8px;text-align:left;color:var(--txt-2);font-size:9px;text-transform:uppercase;letter-spacing:.06em;">Valor</th>
+                <th style="padding:8px;text-align:left;color:var(--txt-2);font-size:9px;text-transform:uppercase;letter-spacing:.06em;">Etapa</th>
+                <th style="padding:8px;text-align:left;color:var(--txt-2);font-size:9px;text-transform:uppercase;letter-spacing:.06em;">Consultor</th>
+                <th style="padding:8px;text-align:left;color:var(--txt-2);font-size:9px;text-transform:uppercase;letter-spacing:.06em;">Prazo</th>
+              </tr></thead>
+              <tbody class="fv-kpi-tbody">${linhas}</tbody>
+            </table>
+          </div>
+          <div style="margin-top:8px;font-size:10px;color:var(--txt-3,#6b7280);text-align:right;">Clique em um lead para abrir o detalhe</div>
+        `;
+      }
+    } else if(cfg.breakdown){
+      const items = cfg.breakdown(arr);
+      const totQtd = items.reduce((s,x)=>s+x.qtd,0);
+      const totVal = items.reduce((s,x)=>s+x.valor,0);
+      const maxQtd = Math.max(1, ...items.map(x=>x.qtd));
+      bodyHtml = items.length ? `
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${items.map(x => {
+            const pct = Math.round(x.qtd/maxQtd*100);
+            return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg-3,#1c2128);border:1px solid var(--border);border-radius:8px;">
+              <div style="flex:1;">
+                <div style="font-weight:600;font-size:12px;color:var(--txt);">${esc(x.nome)}</div>
+                <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;margin-top:5px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--accent);"></div></div>
+              </div>
+              <div style="font-size:11px;color:var(--txt-2);min-width:60px;text-align:right;"><b style="color:var(--accent);">${x.qtd}</b> lead${x.qtd===1?'':'s'}</div>
+              <div style="font-size:11px;font-weight:700;color:var(--accent);min-width:75px;text-align:right;">${moedaCurta(x.valor)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="display:flex;gap:14px;padding:10px 14px;background:rgba(212,165,116,0.08);border-radius:8px;margin-top:12px;font-size:11px;">
+          <div><span style="color:var(--txt-3,#6b7280);">Origens:</span> <b style="color:var(--accent);">${items.length}</b></div>
+          <div><span style="color:var(--txt-3,#6b7280);">Total leads:</span> <b style="color:var(--accent);">${totQtd}</b></div>
+          <div><span style="color:var(--txt-3,#6b7280);">Total valor:</span> <b style="color:var(--accent);">${moedaCurta(totVal)}</b></div>
+        </div>` : `<div style="text-align:center;padding:24px;color:var(--txt-3,#6b7280);font-size:12px;">Nenhuma origem cadastrada.</div>`;
+    } else if(cfg.metrica){
+      const m = cfg.metrica(arr, k);
+      bodyHtml = `
+        <div style="text-align:center;padding:24px 14px;">
+          <div style="font-size:48px;font-weight:800;color:var(--accent);letter-spacing:-0.02em;line-height:1;">${m.principal}</div>
+          <div style="margin-top:10px;font-size:13px;color:var(--txt-2);">${esc(m.detalhe)}</div>
+          <div style="margin-top:14px;display:inline-block;padding:6px 12px;background:rgba(255,255,255,0.03);border:1px dashed var(--border);border-radius:6px;font-size:10px;color:var(--txt-3,#6b7280);font-family:monospace;">${esc(m.formula)}</div>
+        </div>`;
+    }
+
+    const html = `<div class="fv-overlay show" id="fvKpiOv">
+      <div class="fv-modal" style="max-width:780px;">
+        <div class="fv-modal-h">
+          <div>
+            <div style="font-size:16px;font-weight:700;color:var(--txt);">${cfg.titulo}</div>
+            <div style="font-size:11px;color:var(--txt-2);margin-top:2px;">${esc(cfg.sub)}</div>
+          </div>
+          <button class="fv-close" data-close>✕</button>
+        </div>
+        <div class="fv-modal-b">${bodyHtml}</div>
+      </div>
+    </div>`;
+    const wrap = document.createElement('div'); wrap.innerHTML = html; document.body.appendChild(wrap.firstElementChild);
+    const ov = $('#fvKpiOv');
+    const close = () => ov.remove();
+    ov.querySelector('[data-close]').addEventListener('click', close);
+    ov.addEventListener('click', e => { if(e.target === ov) close(); });
+    /* Click em linha de lead abre o modal Detalhe do lead */
+    ov.querySelectorAll('.fv-kpi-tbody tr[data-id]').forEach(tr => tr.addEventListener('click', () => {
+      close();
+      _abrirDetalhe(tr.dataset.id);
+    }));
   }
 
   function _renderFunilSide(arr){
