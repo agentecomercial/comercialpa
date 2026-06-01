@@ -52,8 +52,31 @@
     const d = new Date();
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   };
-  const _diasAteHoje = iso => { if(!iso) return null; const d=new Date(iso), h=new Date(); h.setHours(0,0,0,0); d.setHours(0,0,0,0); return Math.round((d-h)/86400000); };
-  const _difDias = iso => { if(!iso) return null; const d=new Date(iso), n=new Date(); return Math.floor((n-d)/86400000); };
+  /* Dias até hoje. Parser DEFENSIVO contra timezone: YYYY-MM-DD precisa virar
+     midnight LOCAL, não UTC. new Date('2026-06-01') = UTC midnight, que em
+     UTC-3 vira 2026-05-31 21:00 e dá -1 dia. */
+  const _diasAteHoje = iso => {
+    if(!iso) return null;
+    const s = String(iso).slice(0,10);
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    const d = m ? new Date(+m[1], +m[2]-1, +m[3]) : new Date(iso);
+    if(isNaN(d.getTime())) return null;
+    const h = new Date();
+    h.setHours(0,0,0,0);
+    d.setHours(0,0,0,0);
+    return Math.round((d - h) / 86400000);
+  };
+  /* Diferença em dias entre hoje e a data passada. YYYY-MM-DD é tratado como
+     local midnight (mesma defesa de timezone do _diasAteHoje). */
+  const _difDias = iso => {
+    if(!iso) return null;
+    const s = String(iso).slice(0,10);
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    const d = m ? new Date(+m[1], +m[2]-1, +m[3]) : new Date(iso);
+    if(isNaN(d.getTime())) return null;
+    const n = new Date();
+    return Math.floor((n - d) / 86400000);
+  };
   const _inic = nome => (nome||'?').split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
 
   function _papel(){
