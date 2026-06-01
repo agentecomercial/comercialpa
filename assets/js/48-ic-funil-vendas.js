@@ -94,7 +94,10 @@
 .fv-kpi.purple .fv-kpi-v{ color:#a855f7; }
 .fv-kpi.cyan   .fv-kpi-v{ color:#06b6d4; }
 
-.fv-filtros{ background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:10px; padding:10px 13px; margin-bottom:14px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.fv-filtros{ background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:10px; padding:10px 13px; margin-bottom:14px; display:flex; gap:8px; align-items:center; flex-wrap:nowrap; overflow-x:auto; }
+.fv-filtros::-webkit-scrollbar{ height:6px; }
+.fv-filtros::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.15); border-radius:3px; }
+.fv-filtros > *{ flex-shrink:0; }
 .fv-filtros-label{ font-size:10px; text-transform:uppercase; color:var(--txt-3,#6b7280); letter-spacing:0.06em; font-weight:600; }
 .fv-filtros-divider{ width:1px; height:22px; background:var(--border); margin:0 4px; }
 .fv-finput{ background:var(--bg-3,#1c2128); border:1px solid var(--border); color:var(--txt); padding:6px 10px; border-radius:6px; font-size:12px; font-family:inherit; }
