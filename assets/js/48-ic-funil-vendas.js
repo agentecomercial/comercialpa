@@ -9,13 +9,13 @@
 
   /* ── Constantes ── */
   const ETAPAS = [
-    {id:'prospec', nome:'Prospecção',  cor:'#ff8fa8', prob:10, sla:3},
-    {id:'qualif',  nome:'Qualificação', cor:'#ff6b8a', prob:30, sla:3},
-    {id:'apres',   nome:'Apresentação', cor:'#e94f74', prob:50, sla:5},
-    {id:'negoc',   nome:'Negociação',  cor:'#d63960', prob:70, sla:7},
-    {id:'propos',  nome:'Proposta',    cor:'#b82550', prob:80, sla:5},
-    {id:'fecham',  nome:'Fechamento',  cor:'#9a1740', prob:95, sla:3},
-    {id:'pos',     nome:'Pós-Venda',   cor:'#7a0d30', prob:100, sla:30}
+    {id:'prospec', nome:'Prospecção',  cor:'#ff8fa8', prob:10, sla:3,  ico:'🎯'},
+    {id:'qualif',  nome:'Qualificação', cor:'#ff6b8a', prob:30, sla:3,  ico:'🔍'},
+    {id:'apres',   nome:'Apresentação', cor:'#e94f74', prob:50, sla:5,  ico:'🎤'},
+    {id:'negoc',   nome:'Negociação',  cor:'#d63960', prob:70, sla:7,  ico:'🤝'},
+    {id:'propos',  nome:'Proposta',    cor:'#b82550', prob:80, sla:5,  ico:'📋'},
+    {id:'fecham',  nome:'Fechamento',  cor:'#9a1740', prob:95, sla:3,  ico:'🔒'},
+    {id:'pos',     nome:'Pós-Venda',   cor:'#7a0d30', prob:100, sla:30, ico:'✅'}
   ];
   const ORIGENS_PADRAO = ['Instagram','Indicação','Lead','Indicação de Lead','Carteira','Indicação de Carteira','Conhecido'];
   const FB_NODE = 'funil_vendas';
@@ -183,6 +183,48 @@
 .fv-card-prazo{ font-size:9px; color:#f59e0b; font-weight:600; }
 .fv-card-prazo.ok{ color:#34d399; } .fv-card-prazo.atr{ color:#ef4444; }
 .fv-card-act{ font-size:9px; color:var(--txt-3,#6b7280); margin-top:3px; }
+.fv-card-foot-valor{
+  margin-top:6px; padding-top:6px; border-top:1px dashed rgba(255,255,255,.08);
+  text-align:right; font-size:11px; color:var(--accent); font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+.fv-card-foot-valor b{ font-weight:800; }
+
+/* ─── OPÇÃO 8 · Colunas vazias iconizadas com nome em vertical ─── */
+.fv-col.fv-col-vazia{
+  min-width:64px; max-width:64px; padding:10px 4px;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  gap:8px; cursor:default;
+  background:rgba(255,255,255,.015);
+}
+.fv-col-vazia-icone{
+  width:38px; height:38px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0;
+  border:1px solid;
+}
+.fv-col-vazia-nome{
+  /* Nome escrito na vertical · letras NÃO rotacionadas (sentido leitura cima→baixo) */
+  writing-mode:vertical-rl;
+  text-orientation:mixed;
+  transform:rotate(180deg);
+  font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.08em;
+  white-space:nowrap; margin-top:4px;
+  flex:1; display:flex; align-items:center;
+}
+.fv-col-vazia-add{
+  width:24px; height:24px; padding:0; flex-shrink:0;
+  background:transparent; color:var(--txt-3,#6b7280);
+  border:1px dashed rgba(255,255,255,.14); border-radius:50%;
+  font-size:13px; font-weight:700; cursor:pointer; line-height:1;
+  transition:all .15s; font-family:inherit;
+}
+.fv-col-vazia-add:hover{ color:var(--accent); border-color:var(--accent); }
+.fv-col.fv-col-vazia.drag-over{
+  background:rgba(167,139,250,.1);
+  border-color:var(--col-cor);
+  outline:2px dashed var(--col-cor); outline-offset:-4px;
+}
 .fv-col-mais{ position:sticky; bottom:0; background:linear-gradient(to top, var(--bg,#0d1117) 60%, transparent); text-align:center; font-size:10px; color:var(--accent); padding:8px 4px 4px; font-weight:700; letter-spacing:0.04em; cursor:pointer; margin:0 -10px -10px; }
 .fv-col-mais:hover{ color:var(--accent-2,#f0c896); }
 
@@ -1536,6 +1578,7 @@
         <div class="fv-card-prazo ${prazoCls}">${prazoTxt}</div>
       </div>
       <div class="fv-card-act">Última: ${ultTxt}</div>
+      <div class="fv-card-foot-valor">💰 <b>${moedaCurta(l.valor)}</b></div>
     </div>`;
   }
 
@@ -1543,9 +1586,19 @@
     const wrap = $('#fvKanban'); if(!wrap) return;
     wrap.innerHTML = ETAPAS.map((et, i) => {
       const leadsEt = arr.filter(l => l.etapa === i);
+      const vazia = leadsEt.length === 0;
       const soma = leadsEt.reduce((s,l)=>s+ +(l.valor||0),0);
       const cards = leadsEt.map(l => _cardHtml(l, et.cor)).join('');
       const mais = leadsEt.length > _maxCards ? `<div class="fv-col-mais">↓ Ver mais ${leadsEt.length - _maxCards} lead${leadsEt.length - _maxCards>1?'s':''}</div>` : '';
+      /* OPÇÃO 8: colunas vazias viram mini-colunas iconizadas com nome em vertical.
+         Mantém drag&drop funcionando (data-et). Click no botão "+" interno cria lead. */
+      if(vazia){
+        return `<div class="fv-col fv-col-vazia" data-et="${i}" style="--col-cor:${et.cor};" title="${esc(et.nome)} · 0 leads · clique no + pra criar">
+          <div class="fv-col-vazia-icone" style="background:${et.cor}22;border-color:${et.cor}55;color:${et.cor};">${et.ico||'•'}</div>
+          <div class="fv-col-vazia-nome" style="color:${et.cor};">${et.nome}</div>
+          <button class="fv-col-vazia-add" data-et="${i}" title="Adicionar lead em ${esc(et.nome)}">+</button>
+        </div>`;
+      }
       return `<div class="fv-col" data-et="${i}" style="--col-cor:${et.cor};">
         <div class="fv-col-h"><span class="fv-col-tit">${et.nome}</span><span class="fv-col-qtd">${leadsEt.length}</span></div>
         <div class="fv-col-soma">💰 <b>${moedaCurta(soma)}</b></div>
@@ -1714,6 +1767,8 @@
       });
     });
     $$('.fv-col-add').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); _abrirNovoLead(+b.dataset.et); }));
+    /* Botão + dentro das colunas vazias iconizadas (Opção 8) */
+    $$('.fv-col-vazia-add').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); _abrirNovoLead(+b.dataset.et); }));
   }
 
   /* ── F2 · Modal Detalhe ── */
