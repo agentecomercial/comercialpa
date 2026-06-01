@@ -45,6 +45,84 @@
     vis:   ['Perde oportunidade','Pipeline raso','Cultiva o suficiente','Cobertura > meta','Visão estratégica · cultiva, preserva e recupera']
   };
 
+  /* 5 frameworks de PDI suportados (Fase D) */
+  var FRAMEWORKS = {
+    GROW: {
+      label: 'GROW',
+      sub: 'Coaching estruturado · 4 perguntas',
+      campos: [
+        { k:'G', l:'G · Goal',    p:'Onde você quer chegar?' },
+        { k:'R', l:'R · Reality', p:'Onde você está hoje?' },
+        { k:'O', l:'O · Options', p:'Quais 3 caminhos pra fechar o gap?' },
+        { k:'W', l:'W · Will',    p:'Qual você escolhe e quando começa?' }
+      ]
+    },
+    OKRs: {
+      label: 'OKRs',
+      sub: '1 Objetivo + 3-5 Key Results numéricos',
+      campos: [
+        { k:'O',   l:'Objetivo (qualitativo)',     p:'Ex: "Tornar-me referência em fechamento"' },
+        { k:'KR1', l:'KR1 (numérico, mensurável)', p:'Ex: "Conversão Negociação→Pago ≥ 40%"' },
+        { k:'KR2', l:'KR2',                        p:'Ex: "Ticket médio ≥ R$ 5.000"' },
+        { k:'KR3', l:'KR3',                        p:'Ex: "Follow-up D+1 em 100% dos casos"' }
+      ]
+    },
+    'Performance Gap': {
+      label: 'Performance Gap',
+      sub: 'KPI fraco → causa raiz → ação corretiva',
+      campos: [
+        { k:'sintoma', l:'Sintoma (KPI fraco)',     p:'Ex: "Conversão 18%, abaixo da meta de 35%"' },
+        { k:'causa',   l:'Causa raiz (top hipótese)',p:'Ex: "Não cria urgência · deixa preço pra reunião 2"' },
+        { k:'acao',    l:'Ação corretiva',          p:'Ex: "Treinar SPIN 30min/dia por 2 semanas"' },
+        { k:'medir',   l:'Re-medição',              p:'Ex: "Conversão em 30 dias"' }
+      ]
+    },
+    STAR: {
+      label: 'STAR',
+      sub: 'Caso real → lição → ação futura',
+      campos: [
+        { k:'S',     l:'S · Situation', p:'Ex: "Cliente X, MASTER, lead frio"' },
+        { k:'T',     l:'T · Task',      p:'Ex: "Converter em 2 reuniões"' },
+        { k:'A',     l:'A · Action',    p:'Ex: "Mandei proposta no 1º contato"' },
+        { k:'R',     l:'R · Result',    p:'Ex: "Cliente sumiu"' },
+        { k:'licao', l:'Lição + ação futura', p:'Ex: "Nunca propor antes de mapear dor com SPIN"' }
+      ]
+    },
+    'Balanced Scorecard': {
+      label: 'Balanced Scorecard',
+      sub: '4 perspectivas equilibradas',
+      campos: [
+        { k:'fin',  l:'💰 Resultado financeiro', p:'Ex: "Meta de faturamento/comissão do trimestre"' },
+        { k:'cli',  l:'👥 Cliente',              p:'Ex: "NPS, retenção, indicações geradas"' },
+        { k:'proc', l:'⚙ Processo',             p:'Ex: "Tempo de ciclo, taxa de follow-up D+1"' },
+        { k:'aprd', l:'🌱 Aprendizado',          p:'Ex: "1 skill nova / livro / curso por ciclo"' }
+      ]
+    }
+  };
+  var FRAMEWORKS_ORDEM = ['GROW','OKRs','Performance Gap','STAR','Balanced Scorecard'];
+
+  /* Helper de dias úteis (V1: pula só sábado/domingo) — exposto global p/ reuso */
+  if(typeof window._icAddDiasUteis !== 'function'){
+    window._icAddDiasUteis = function(dataBase, nDiasUteis){
+      var d = dataBase instanceof Date ? new Date(dataBase) : new Date(dataBase || Date.now());
+      var add = 0;
+      while(add < nDiasUteis){
+        d.setDate(d.getDate() + 1);
+        var dow = d.getDay();
+        if(dow !== 0 && dow !== 6) add++;
+      }
+      return d;
+    };
+  }
+  if(typeof window._icFmtDataBR !== 'function'){
+    window._icFmtDataBR = function(d){
+      if(!d) return '—';
+      var dd = (d instanceof Date) ? d : new Date(d);
+      if(isNaN(dd.getTime())) return '—';
+      return String(dd.getDate()).padStart(2,'0')+'/'+String(dd.getMonth()+1).padStart(2,'0')+'/'+dd.getFullYear();
+    };
+  }
+
   /* Estado */
   var _doc = null;            /* { periodo, status, alvos[], ... } */
   var _consultorAtivo = '';
@@ -256,20 +334,126 @@
     }).catch(_pdiResetDoc);
   }
   function _pdiResetDoc(){
+    var sug = _pdiSugerirFramework();
     _doc = {
       periodo: _periodoId(),
       perStart: _perStart,
       perEnd: _perEnd,
       status: 'rascunho',
+      framework: sug.nome,         /* default = sugestão automática */
+      compromissoGestor: '',       /* o que o gestor se compromete a fornecer */
       alvos: []
     };
     _pdiAplicarDocNaUI();
   }
   function _pdiAplicarDocNaUI(){
+    /* compat: documentos antigos sem framework recebem GROW como default */
+    if(_doc && !_doc.framework) _doc.framework = 'GROW';
+    if(_doc && _doc.compromissoGestor == null) _doc.compromissoGestor = '';
+    _pdiRenderFrameworkBox();
     _pdiRenderAlvos();
     _pdiRenderStatus();
+    _pdiRenderCheckins();
+    _pdiRenderCompromisso();
     _pdiAtualizarFooter();
   }
+
+  /* ── Sugestão automática de framework por % meta do consultor ──
+     ≤ 70% → Performance Gap (precisa corrigir o gap urgente)
+     70-100% → OKRs (foco em manter e bater)
+     > 100% → GROW (foco em crescimento / próximo nível)
+     Sem dados → GROW (default neutro)
+  */
+  function _pdiSugerirFramework(){
+    var nome = (_consultorAtivo || '').toUpperCase();
+    if(!nome) return { nome: 'GROW', razao: 'default · sem consultor selecionado' };
+    var pctMeta = null;
+    try {
+      if(typeof window._npTodasVendas === 'function' && typeof window._npPorConsultor === 'function'){
+        var todas = window._npTodasVendas();
+        var rank = window._npPorConsultor(todas, '', 'pago');
+        var r = rank.find(function(x){ return String(x.nome).toUpperCase() === nome; });
+        if(r){
+          var g = window._npGoals && window._npGoals[r.nome];
+          var mb = g ? (+(g.metaBasica || g.metaValor || 0)) : 0;
+          if(mb > 0) pctMeta = r.pago / mb * 100;
+        }
+      }
+    } catch(e){ /* silencioso */ }
+    if(pctMeta == null)  return { nome: 'GROW', razao: 'sem KPIs · default neutro' };
+    if(pctMeta <= 70)    return { nome: 'Performance Gap', razao: Math.round(pctMeta)+'% da meta · foco em corrigir gap' };
+    if(pctMeta <= 100)   return { nome: 'OKRs', razao: Math.round(pctMeta)+'% da meta · foco em manter e bater' };
+    return { nome: 'GROW', razao: Math.round(pctMeta)+'% da meta · foco em crescimento' };
+  }
+  window._pdiSugerirFramework = _pdiSugerirFramework;
+
+  window._pdiSetFramework = function(nome){
+    if(!FRAMEWORKS[nome]) return;
+    _doc.framework = nome;
+    _pdiRenderFrameworkBox();
+    _pdiRenderAlvos();  /* re-render: campos por framework mudam */
+  };
+
+  function _pdiRenderFrameworkBox(){
+    var box = document.getElementById('pdiFrameworkBox');
+    if(!box || !_doc) return;
+    var atual = _doc.framework || 'GROW';
+    var sug = _pdiSugerirFramework();
+    var ehSug = sug.nome === atual;
+    var def = FRAMEWORKS[atual] || FRAMEWORKS.GROW;
+    var html = '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">📐 Framework do PDI</div>'
+      +'<select id="pdiFrameworkSel" onchange="window._pdiSetFramework(this.value)" class="modal-select" style="width:100%;padding:7px 11px;font-size:12px;font-weight:700;">'
+      +FRAMEWORKS_ORDEM.map(function(f){
+        return '<option value="'+f+'"'+(f===atual?' selected':'')+'>'+FRAMEWORKS[f].label+'</option>';
+      }).join('')
+      +'</select>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.4;">'+def.sub+'</div>';
+    if(!ehSug){
+      html += '<div style="margin-top:8px;padding:6px 10px;background:rgba(96,165,250,.08);border-left:3px solid var(--blue);border-radius:4px;font-size:10px;color:var(--blue);">'
+        +'💡 Sugerido: <b>'+sug.nome+'</b><br>'
+        +'<span style="color:var(--muted);">'+sug.razao+'</span><br>'
+        +'<button class="pdi-btn ghost" style="margin-top:4px;padding:4px 10px;font-size:10px;" onclick="window._pdiSetFramework(\''+sug.nome+'\')">Aplicar sugestão</button>'
+        +'</div>';
+    } else {
+      html += '<div style="margin-top:8px;padding:6px 10px;background:rgba(200,240,90,.06);border-left:3px solid var(--accent);border-radius:4px;font-size:10px;color:var(--accent);">'
+        +'✓ Usando sugestão automática<br>'
+        +'<span style="color:var(--muted);">'+sug.razao+'</span>'
+        +'</div>';
+    }
+    box.innerHTML = html;
+  }
+  function _pdiRenderCheckins(){
+    var el = document.getElementById('pdiCheckinsBox');
+    if(!el || !_doc) return;
+    var base = _doc.comecou ? new Date(_doc.comecou) : new Date();
+    var d30 = window._icAddDiasUteis(base, 30);
+    var d60 = window._icAddDiasUteis(base, 60);
+    var d90 = window._icAddDiasUteis(base, 90);
+    var hoje = new Date(); hoje.setHours(0,0,0,0);
+    function _pill(d, label){
+      var hojeMs = hoje.getTime();
+      var dMs = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      var diff = Math.round((dMs - hojeMs) / 86400000);
+      var cor = diff < 0 ? '#ef4444' : (diff <= 3 ? '#f59e0b' : '#34d399');
+      var sub = diff < 0 ? 'atrasado '+(-diff)+'d' : (diff === 0 ? 'hoje' : 'em '+diff+'d');
+      return '<div style="flex:1;text-align:center;padding:8px 6px;background:var(--surface2);border-radius:6px;border-top:3px solid '+cor+';">'
+        +'<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;">'+label+'</div>'
+        +'<div style="font-size:12px;color:var(--text);font-weight:700;margin:2px 0;">'+window._icFmtDataBR(d)+'</div>'
+        +'<div style="font-size:9px;color:'+cor+';">'+sub+'</div>'
+        +'</div>';
+    }
+    el.innerHTML = '<div style="display:flex;gap:6px;">'+_pill(d30,'30 du')+_pill(d60,'60 du')+_pill(d90,'90 du')+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:center;">'
+      +(_doc.comecou ? 'base: '+window._icFmtDataBR(_doc.comecou)+' (data de início do PDI)' : 'base: hoje (PDI ainda não iniciado)')
+      +'</div>';
+  }
+  function _pdiRenderCompromisso(){
+    var ta = document.getElementById('pdiCompromissoGestor');
+    if(ta) ta.value = _doc.compromissoGestor || '';
+  }
+  window._pdiSetCompromisso = function(v){
+    _doc.compromissoGestor = v;
+  };
 
   function _pdiRenderStatus(){
     var bar = document.getElementById('pdiStatusBar');
@@ -423,7 +607,8 @@
       acoes: [],
       prazo: '',
       evidencia: '',
-      status: 'iniciar'
+      status: 'iniciar',
+      framework_dados: {}   /* preenchido conforme o framework do _doc */
     });
     _pdiRenderAlvos();
     _pdiRenderDiag();
@@ -485,6 +670,7 @@
         +     '<div class="pdi-nivel-desc">'+(ndesc[a.alvo-1]||'')+'</div>'
         +   '</div>'
         + '</div>'
+        + _pdiRenderFrameworkAlvo(a, i)
         + '<div style="margin-bottom:12px;">'
         +   '<div class="pdi-nivel-lbl" style="margin-bottom:6px;">Treinamentos vinculados <small>(⭐ sugeridos pela competência)</small></div>'
         +   '<div class="pdi-trein-list">'
@@ -524,6 +710,34 @@
     /* Mantém o chip strip sincronizado (✓ nas adicionadas) */
     _pdiRenderChipStrip();
   }
+
+  /* Renderiza os campos do framework atual dentro do card de cada alvo.
+     Cada framework tem N campos (textareas livres). O conteúdo é salvo
+     em alvo.framework_dados[<framework>][<chave_campo>]. */
+  function _pdiRenderFrameworkAlvo(alvo, i){
+    var fw = _doc.framework || 'GROW';
+    var def = FRAMEWORKS[fw]; if(!def) return '';
+    alvo.framework_dados = alvo.framework_dados || {};
+    alvo.framework_dados[fw] = alvo.framework_dados[fw] || {};
+    var dados = alvo.framework_dados[fw];
+    var rows = def.campos.map(function(campo){
+      var v = dados[campo.k] || '';
+      return '<div style="margin-bottom:8px;">'
+        +'<label style="display:block;font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">'+campo.l+'</label>'
+        +'<textarea oninput="window._pdiSetFwCampo('+i+',\''+campo.k+'\',this.value)" placeholder="'+_escAttr(campo.p)+'" style="width:100%;min-height:50px;padding:7px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:11px;font-family:inherit;line-height:1.5;resize:vertical;">'+_escAttr(v)+'</textarea>'
+        +'</div>';
+    }).join('');
+    return '<div style="margin-bottom:14px;padding:12px;background:rgba(167,139,250,.04);border:1px solid rgba(167,139,250,.2);border-radius:8px;">'
+      +'<div style="font-size:10px;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">📐 Plano · '+def.label+' <small style="color:var(--muted);font-weight:500;">· '+def.sub+'</small></div>'
+      +rows
+      +'</div>';
+  }
+  window._pdiSetFwCampo = function(i, k, v){
+    var fw = _doc.framework || 'GROW';
+    _doc.alvos[i].framework_dados = _doc.alvos[i].framework_dados || {};
+    _doc.alvos[i].framework_dados[fw] = _doc.alvos[i].framework_dados[fw] || {};
+    _doc.alvos[i].framework_dados[fw][k] = v;
+  };
 
   /* Setters */
   window._pdiSetAtual = function(i,n){_doc.alvos[i].atual=n; _pdiRenderAlvos();};
@@ -705,5 +919,172 @@
       setTimeout(_pdiPopularConsultores, 600);
     };
   }
+
+  /* ── EXPORTAR PDF DO PDI (1 página, pra entregar no 1:1) ──── */
+  window._pdiExportarPdf = function(){
+    if(!_consultorAtivo){
+      if(typeof _showToast==='function') _showToast('⚠️ Selecione um consultor.','var(--amber)');
+      return;
+    }
+    if(typeof window._ensureJsPDF !== 'function'){
+      if(typeof _showToast==='function') _showToast('❌ jsPDF não disponível.','var(--red)');
+      return;
+    }
+    if(typeof _showToast==='function') _showToast('⏳ Gerando PDF…','var(--muted)');
+    window._ensureJsPDF().then(function(){
+      try {
+        var jsPDF = window.jspdf && window.jspdf.jsPDF;
+        if(!jsPDF){ throw new Error('jsPDF não carregou'); }
+        var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+        var W = 210, H = 297, M = 14;
+        var y = M;
+
+        function _txt(t, x, yy, opts){
+          opts = opts || {};
+          if(opts.size) doc.setFontSize(opts.size);
+          if(opts.style) doc.setFont(undefined, opts.style);
+          if(opts.color) doc.setTextColor(opts.color[0], opts.color[1], opts.color[2]);
+          else doc.setTextColor(20, 20, 20);
+          doc.text(String(t||''), x, yy);
+        }
+        function _line(yy){
+          doc.setDrawColor(180,180,180);
+          doc.setLineWidth(0.2);
+          doc.line(M, yy, W-M, yy);
+        }
+        function _wrap(t, maxW){
+          return doc.splitTextToSize(String(t||''), maxW);
+        }
+
+        /* ── Cabeçalho ── */
+        _txt('PLANO DE DESENVOLVIMENTO INDIVIDUAL', M, y, {size:14, style:'bold', color:[40,40,40]});
+        y += 6;
+        _txt(_consultorAtivo, M, y, {size:11, style:'bold'});
+        var hoje = new Date();
+        var perTxt = (_doc.perStart||'?')+' → '+(_doc.perEnd||'?');
+        _txt('Período: '+perTxt+'   |   Gerado em: '+window._icFmtDataBR(hoje), W-M, y, {size:8, color:[120,120,120]});
+        doc.setTextColor(120,120,120);
+        doc.text('Período: '+perTxt+'   |   Gerado em: '+window._icFmtDataBR(hoje), W-M, y, { align:'right' });
+        y += 4;
+        _line(y); y += 5;
+
+        /* ── Framework + Status ── */
+        var fwDef = FRAMEWORKS[_doc.framework||'GROW'] || FRAMEWORKS.GROW;
+        _txt('Framework: '+fwDef.label+' — '+fwDef.sub, M, y, {size:9, style:'bold', color:[100,100,180]});
+        var statusTxt = (_doc.status||'rascunho').toUpperCase();
+        doc.setTextColor(120,120,120);
+        doc.text('Status: '+statusTxt, W-M, y, { align:'right' });
+        y += 6;
+
+        /* ── Compromisso do gestor ── */
+        if(_doc.compromissoGestor && _doc.compromissoGestor.trim()){
+          _txt('COMPROMISSO DO GESTOR', M, y, {size:9, style:'bold', color:[200,140,30]});
+          y += 4;
+          var lns = _wrap(_doc.compromissoGestor.trim(), W-M*2);
+          doc.setFontSize(9); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
+          doc.text(lns, M, y);
+          y += lns.length * 4 + 3;
+        }
+
+        /* ── Competências-alvo ── */
+        var alvos = _doc.alvos || [];
+        if(!alvos.length){
+          _txt('(sem competências-alvo definidas)', M, y, {size:9, color:[150,150,150]});
+        } else {
+          alvos.forEach(function(a, idx){
+            var c = COMPS_DEF.find(function(x){return x.key===a.key;}) || {ico:'•', label:a.key};
+            if(y > H - 50){ doc.addPage(); y = M; }
+            _line(y); y += 4;
+            _txt((idx+1)+'. '+c.ico+'  '+c.label, M, y, {size:11, style:'bold', color:[40,40,40]});
+            doc.setTextColor(120,120,120); doc.setFontSize(9); doc.setFont(undefined,'normal');
+            doc.text('Nível: '+a.atual+' → '+a.alvo+'   |   Status: '+(a.status||'iniciar'), W-M, y, { align:'right' });
+            y += 5;
+
+            /* Campos do framework */
+            var fwDados = (a.framework_dados && a.framework_dados[_doc.framework||'GROW']) || {};
+            (fwDef.campos || []).forEach(function(campo){
+              var v = (fwDados[campo.k] || '').trim();
+              if(!v) return;  /* pula campos vazios */
+              _txt(campo.l+':', M, y, {size:9, style:'bold', color:[100,100,180]});
+              y += 3.5;
+              var lns = _wrap(v, W-M*2-3);
+              doc.setFontSize(9); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
+              doc.text(lns, M+3, y);
+              y += lns.length * 4 + 2;
+              if(y > H - 20){ doc.addPage(); y = M; }
+            });
+
+            /* Treinos vinculados */
+            if(a.treinos && a.treinos.length){
+              _txt('Treinamentos: '+a.treinos.join(' · '), M, y, {size:8, color:[120,120,120]});
+              y += 4;
+            }
+
+            /* Ações */
+            var acoesValidas = (a.acoes||[]).filter(function(x){ return x && x.texto && x.texto.trim(); });
+            if(acoesValidas.length){
+              _txt('Ações:', M, y, {size:9, style:'bold', color:[40,40,40]});
+              y += 4;
+              acoesValidas.forEach(function(ac){
+                var prefix = ac.feito ? '[x] ' : '[ ] ';
+                var lns = _wrap(prefix+ac.texto, W-M*2-3);
+                doc.setFontSize(8); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
+                doc.text(lns, M+3, y);
+                y += lns.length * 3.5;
+              });
+              y += 2;
+            }
+
+            if(a.evidencia && a.evidencia.trim()){
+              _txt('Evidências: ', M, y, {size:8, style:'bold', color:[100,100,100]});
+              y += 3.5;
+              var lns = _wrap(a.evidencia.trim(), W-M*2-3);
+              doc.setFontSize(8); doc.setFont(undefined,'italic'); doc.setTextColor(80,80,80);
+              doc.text(lns, M+3, y);
+              y += lns.length * 3.5 + 2;
+              doc.setFont(undefined,'normal');
+            }
+            y += 3;
+          });
+        }
+
+        /* ── Check-ins ── */
+        if(y > H - 30){ doc.addPage(); y = M; }
+        _line(y); y += 5;
+        _txt('CHECK-INS PROGRAMADOS (dias úteis)', M, y, {size:9, style:'bold', color:[100,100,180]});
+        y += 4;
+        var base = _doc.comecou ? new Date(_doc.comecou) : new Date();
+        var d30 = window._icAddDiasUteis(base, 30);
+        var d60 = window._icAddDiasUteis(base, 60);
+        var d90 = window._icAddDiasUteis(base, 90);
+        doc.setFontSize(9); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
+        doc.text('30 du: '+window._icFmtDataBR(d30)+'   |   60 du: '+window._icFmtDataBR(d60)+'   |   90 du: '+window._icFmtDataBR(d90), M, y);
+        y += 5;
+
+        /* ── Assinaturas ── */
+        if(y > H - 25){ doc.addPage(); y = M; }
+        y = Math.max(y, H - 25);
+        _line(y); y += 6;
+        doc.setFontSize(8); doc.setFont(undefined,'normal'); doc.setTextColor(100,100,100);
+        var col1 = M, col2 = W/2 + 5;
+        doc.text('______________________________', col1, y);
+        doc.text('______________________________', col2, y);
+        y += 3.5;
+        doc.text('Consultor: '+_consultorAtivo, col1, y);
+        var sess = typeof _getSessao==='function'?_getSessao():null;
+        doc.text('Gestor: '+((sess&&sess.nome)||'—'), col2, y);
+
+        var slug = String(_consultorAtivo).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+        var fname = 'pdi-'+slug+'-'+(_doc.periodo||'periodo')+'.pdf';
+        doc.save(fname);
+        if(typeof _showToast==='function') _showToast('✅ PDF gerado: '+fname,'var(--accent)');
+      } catch(e){
+        console.error('[pdi] export PDF falhou:', e);
+        if(typeof _showToast==='function') _showToast('❌ Erro ao gerar PDF: '+(e.message||e),'var(--red)');
+      }
+    }).catch(function(){
+      if(typeof _showToast==='function') _showToast('❌ jsPDF não carregou.','var(--red)');
+    });
+  };
 
 })();
