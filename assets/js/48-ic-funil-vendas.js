@@ -557,6 +557,10 @@
             ex.etapa = etapa;
             ex.temp = temp;
             ex.prob = ETAPAS[etapa] ? ETAPAS[etapa].prob : ex.prob;
+            /* Atualiza criadoEm com a data real da venda (se disponível) —
+               corrige leads antigos que tinham _hoje() em vez da data real */
+            var dataReal = (venda.data || '').slice(0,10) || venda.criadoEm;
+            if(dataReal) ex.criadoEm = dataReal;
             ex.atividade = ex.atividade || [];
             if(mudouEtapa){
               ex.atividade.unshift({quando:_hoje(), txt:'Sync Pipeline → '+nomeEtapa});
@@ -581,7 +585,9 @@
               wpp: '',
               email: '',
               notas: venda.obs || '',
-              criadoEm: _hoje(),
+              /* Usa a data ORIGINAL da venda no Pipeline (não a data da importação).
+                 Fallback _hoje() só se a venda não tiver data preenchida. */
+              criadoEm: (venda.data || '').slice(0,10) || venda.criadoEm || _hoje(),
               atividade: [{quando:_hoje(), txt:'Sync do Pipeline · ' + nomeEtapa}]
             };
             leads.push(novo);
@@ -658,6 +664,10 @@
           existente.etapa = etapa;
           existente.temp = temp;
           existente.prob = ETAPAS[etapa] ? ETAPAS[etapa].prob : existente.prob;
+          /* Atualiza criadoEm com a data real da venda (corrige leads
+             antigos com _hoje() em vez da data real do Pipeline) */
+          var dataRealS = (venda.data || '').slice(0,10) || venda.criadoEm;
+          if(dataRealS) existente.criadoEm = dataRealS;
           existente.atividade = existente.atividade || [];
           if(mudouEtapa){
             existente.atividade.unshift({quando:_hoje(), txt:'Status atualizado via Pipeline → '+nomeEtapa});
@@ -682,7 +692,9 @@
             wpp: '',
             email: '',
             notas: venda.obs || '',
-            criadoEm: _hoje(),
+            /* Usa a data ORIGINAL da venda no Pipeline (não a data da importação).
+               Fallback _hoje() só se a venda não tiver data preenchida. */
+            criadoEm: (venda.data || '').slice(0,10) || venda.criadoEm || _hoje(),
             atividade: [{quando:_hoje(), txt:'Importado do Pipeline · ' + nomeEtapa}]
           };
           leads.push(novo);
