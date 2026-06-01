@@ -24,7 +24,7 @@
   let _leads = [];                 // [{id, nome, empresa, valor, prob, etapa(0..6), treinamento, origem, consultor, prazo, temp(q/m/f), wpp, email, notas, criadoEm, atividade:[]}]
   let _historico = [];             // [{leadId, nome, txt, quando, autor, tipo}]
   let _filtroEtapa = null;
-  let _filtros = { cons:'', trein:'', turma:'', per:'', perDe:'', perAte:'', origem:'', busca:'', temp:'' };
+  let _filtros = { cons:'', trein:'', turma:'', per:'mes', perDe:'', perAte:'', origem:'', busca:'', temp:'' };
   let _modoLista = false;
   let _maxCards = 5;
   let _booted = false;
@@ -333,11 +333,14 @@
           <select class="fv-finput" id="fvFTrein"><option value="">🎓 Todos treinamentos</option></select>
           <select class="fv-finput" id="fvFTurma"><option value="">📚 Todas turmas</option></select>
           <select class="fv-finput" id="fvFPer">
-            <option value="">📅 Este mês</option>
-            <option value="7">Últimos 7 dias</option>
-            <option value="30">Últimos 30 dias</option>
-            <option value="trim">Trimestre</option>
-            <option value="__perso__">Personalizado…</option>
+            <option value="">📅 Sem filtro · todos</option>
+            <option value="mes" selected>📅 Este mês</option>
+            <option value="mes-1">📅 Mês anterior</option>
+            <option value="7">📅 Últimos 7 dias</option>
+            <option value="30">📅 Últimos 30 dias</option>
+            <option value="trim">📅 Trimestre atual</option>
+            <option value="ano">📅 Ano corrente</option>
+            <option value="__perso__">📅 Personalizado…</option>
           </select>
           <select class="fv-finput" id="fvFOrigem">
             <option value="">📡 Todas origens</option>
@@ -1333,9 +1336,40 @@
         if(!((l.nome||'').toLowerCase().includes(q) || (l.empresa||'').toLowerCase().includes(q))) return false;
       }
       if(_filtros.temp && l.temp !== _filtros.temp) return false;
-      if(_filtros.per === '7' || _filtros.per === '30'){
-        const dias = _difDias(l.criadoEm);
-        if(dias != null && dias > +_filtros.per) return false;
+      /* Filtro de período · usa l.criadoEm (YYYY-MM-DD) */
+      if(_filtros.per){
+        const dataLead = l.criadoEm || '';
+        if(!dataLead) return false; /* sem data não casa em nenhum filtro de período */
+        const dt = new Date(dataLead);
+        if(isNaN(dt.getTime())) return false;
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const per = _filtros.per;
+        if(per === '7' || per === '30'){
+          const dias = _difDias(dataLead);
+          if(dias == null || dias > +per) return false;
+        } else if(per === 'mes'){
+          /* Mês corrente */
+          if(dt.getFullYear() !== hoje.getFullYear() || dt.getMonth() !== hoje.getMonth()) return false;
+        } else if(per === 'mes-1'){
+          /* Mês anterior */
+          const ant = new Date(hoje.getFullYear(), hoje.getMonth()-1, 1);
+          if(dt.getFullYear() !== ant.getFullYear() || dt.getMonth() !== ant.getMonth()) return false;
+        } else if(per === 'trim'){
+          /* Trimestre atual (3 meses) */
+          const trimAtual = Math.floor(hoje.getMonth()/3);
+          const trimLead = Math.floor(dt.getMonth()/3);
+          if(dt.getFullYear() !== hoje.getFullYear() || trimLead !== trimAtual) return false;
+        } else if(per === 'ano'){
+          if(dt.getFullYear() !== hoje.getFullYear()) return false;
+        } else if(per === 'range'){
+          /* Período custom · perDe e perAte em formato YYYY-MM-DD */
+          if(_filtros.perDe && dataLead < _filtros.perDe) return false;
+          if(_filtros.perAte && dataLead > _filtros.perAte) return false;
+        } else if(per.indexOf('mes:') === 0){
+          /* Mês específico · per = 'mes:YYYY-MM' */
+          const ym = per.slice(4);
+          if(dataLead.slice(0,7) !== ym) return false;
+        }
       }
       return true;
     });
