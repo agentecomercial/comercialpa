@@ -1086,6 +1086,253 @@
     _aplicarExtracao(dados);
   };
 
+  /* ── EXTRATOR LOCAL · formato CIS Assessment ────────────────────
+     Usa pdf.js (assets/lib/pdfjs/) para ler texto do PDF anexado e
+     aplica parser específico do layout CIS Assessment (mesma estrutura
+     do exemplo da Roberta: 4 quadros DISC ID/SCD + 3 dimensões +
+     16 traços radar + 6 valores). Se reconhecer o formato, preenche
+     o form automaticamente sem precisar de IA externa. */
+  window._icPerfilExtrairCIS = function(){
+    if(typeof pdfjsLib === 'undefined'){
+      _toast('❌ pdf.js não carregou. Recarregue a página.', 'var(--red)');
+      return;
+    }
+    /* Acha o PDF mais recente nos anexos */
+    var pdfAnexo = null;
+    for(var i = _dossie.anexos.length-1; i >= 0; i--){
+      var a = _dossie.anexos[i];
+      if(a && a.dataUrl && (a.tipo === 'application/pdf' || (a.nome||'').toLowerCase().endsWith('.pdf'))){
+        pdfAnexo = a; break;
+      }
+    }
+    if(!pdfAnexo){
+      _toast('⚠ Anexe um PDF do CIS Assessment primeiro', 'var(--amber)');
+      return;
+    }
+    _toast('⏳ Extraindo dados do PDF…', 'var(--muted)');
+
+    /* Configura pdf.js para usar worker local (compat file://) */
+    if(!pdfjsLib.GlobalWorkerOptions.workerSrc){
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/lib/pdfjs/pdf.worker.min.js';
+    }
+
+    /* dataUrl → Uint8Array */
+    var base64 = pdfAnexo.dataUrl.split(',')[1];
+    var raw = atob(base64);
+    var arr = new Uint8Array(raw.length);
+    for(var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+
+    pdfjsLib.getDocument({ data: arr }).promise.then(function(pdf){
+      var pagePromises = [];
+      for(var p = 1; p <= pdf.numPages; p++){
+        pagePromises.push(pdf.getPage(p).then(function(page){
+          return page.getTextContent().then(function(tc){
+            return tc.items.map(function(item){
+              return { str: item.str, x: item.transform[4], y: item.transform[5] };
+            });
+          });
+        }));
+      }
+      return Promise.all(pagePromises);
+    }).then(function(paginas){
+      /* Junta todos os tokens (com x/y) numa lista única */
+      var tokens = [];
+      paginas.forEach(function(pageTokens, pi){
+        pageTokens.forEach(function(t){
+          tokens.push({ str: t.str, x: t.x, y: t.y, pi: pi });
+        });
+      });
+
+      var dados = _parsearCIS(tokens);
+      if(!dados._achouAlgo){
+        _toast('⚠ Não reconheci o formato CIS Assessment. Tente o botão 🪄 Extrair com IA.', 'var(--amber)');
+        return;
+      }
+      _aplicarExtracao(dados);
+    }).catch(function(e){
+      console.error('[ic-perfil] Erro extraindo PDF:', e);
+      _toast('❌ Erro ao ler PDF: '+(e.message||e), 'var(--red)');
+    });
+  };
+
+  /* Parser específico CIS Assessment.
+     Espera tokens [{str, x, y, pi}, ...] do pdf.js.
+     Retorna objeto no schema do _aplicarExtracao. */
+  function _parsearCIS(tokens){
+    var dados = {
+      disc: { natural:{D:null,I:null,S:null,C:null}, adaptado:{D:null,I:null,S:null,C:null} },
+      dimensoes: { extroversao:null, intuicao:null, pensamento:null },
+      tracos: {}, valores: {},
+      meta: { instrumento:'CIS Assessment' },
+      notas_de_mapeamento: 'Extraído localmente do PDF (formato CIS Assessment).',
+      campos_pendentes: [],
+      _achouAlgo: false
+    };
+
+    var texto = tokens.map(function(t){ return t.str; }).join(' ');
+    var textoUp = texto.toUpperCase();
+
+    /* ── Detecta se é mesmo CIS Assessment (sentinelas) ── */
+    var ehCIS = textoUp.indexOf('NATURAL') >= 0
+      && textoUp.indexOf('ADAPTADO') >= 0
+      && (textoUp.indexOf('OUSADIA') >= 0 || textoUp.indexOf('COMANDO') >= 0)
+      && (textoUp.indexOf('CONHECIMENTO') >= 0 || textoUp.indexOf('TEÓRICO') >= 0 || textoUp.indexOf('TEORICO') >= 0);
+    if(!ehCIS){
+      /* Layout diferente — devolve sem _achouAlgo */
+      return dados;
+    }
+
+    /* ── A. DISC Natural × Adaptado ──
+       No CIS Assessment, os números aparecem na ordem visual:
+       NATURAL ... D-num I-num S-num C-num ... ADAPTADO ... D-num I-num S-num C-num
+       Vou achar o token "NATURAL", pegar próximos 4 números antes
+       de "ADAPTADO", e do "ADAPTADO" os próximos 4 antes de
+       "Extroversão". */
+    function _idxToken(predicado, ini){
+      ini = ini || 0;
+      for(var i = ini; i < tokens.length; i++){
+        if(predicado(tokens[i].str)) return i;
+      }
+      return -1;
+    }
+    function _proxNumeros(ini, qtd, ate){
+      var nums = [];
+      for(var i = ini; i < tokens.length && nums.length < qtd; i++){
+        if(ate && ate(tokens[i].str)) break;
+        var s = tokens[i].str.replace(',','.').trim();
+        /* aceita 0-100 inteiro (ignora % e outros símbolos) */
+        var m = s.match(/^(\d{1,3})$/);
+        if(m){
+          var n = parseInt(m[1], 10);
+          if(n >= 0 && n <= 100) nums.push(n);
+        }
+      }
+      return nums;
+    }
+
+    var iNat = _idxToken(function(s){ return /^NATURAL$/i.test(s.trim()); });
+    var iAda = _idxToken(function(s){ return /^ADAPTADO$/i.test(s.trim()); });
+
+    if(iNat >= 0 && iAda > iNat){
+      var numsNat = _proxNumeros(iNat+1, 4, function(s){ return /^ADAPTADO$/i.test(s.trim()); });
+      if(numsNat.length === 4){
+        dados.disc.natural.D = numsNat[0];
+        dados.disc.natural.I = numsNat[1];
+        dados.disc.natural.S = numsNat[2];
+        dados.disc.natural.C = numsNat[3];
+        dados._achouAlgo = true;
+      }
+    }
+    if(iAda >= 0){
+      var numsAda = _proxNumeros(iAda+1, 4, function(s){ return /Extroversão|Extroversao/i.test(s); });
+      if(numsAda.length === 4){
+        dados.disc.adaptado.D = numsAda[0];
+        dados.disc.adaptado.I = numsAda[1];
+        dados.disc.adaptado.S = numsAda[2];
+        dados.disc.adaptado.C = numsAda[3];
+        dados._achouAlgo = true;
+      }
+    }
+
+    /* ── B. 3 Dimensões (Extroversão/Intuição/Pensamento) ──
+       Padrão no texto bruto: "Extroversão - 54%" "Introversão - 46%"
+       Pega o número antes de "%". */
+    function _achaDim(palavraEsq){
+      var re = new RegExp(palavraEsq + '\\s*-?\\s*(\\d{1,3})\\s*%', 'i');
+      var m = texto.match(re);
+      return m ? parseInt(m[1], 10) : null;
+    }
+    var dExtr = _achaDim('Extrovers[ãa]o');
+    var dIntu = _achaDim('Intui[çc][ãa]o');
+    var dPens = _achaDim('Pensamento');
+    if(dExtr != null){ dados.dimensoes.extroversao = dExtr; dados._achouAlgo = true; }
+    if(dIntu != null){ dados.dimensoes.intuicao    = dIntu; dados._achouAlgo = true; }
+    if(dPens != null){ dados.dimensoes.pensamento  = dPens; dados._achouAlgo = true; }
+
+    /* ── C. 16 Traços (radar) ──
+       No CIS, cada traço aparece como label próximo ao número.
+       Strategy: para cada label conhecido, acha o token com aquele
+       texto e pega o número mais próximo dele (menor distância x/y). */
+    var TRACOS_MAP = [
+      { k:'ousadia',      regex:/^OUSADIA$/i },
+      { k:'comando',      regex:/^COMANDO$/i },
+      { k:'objetividade', regex:/^OBJETIVIDADE$/i },
+      { k:'assertividade',regex:/^ASSERTIVIDADE$/i },
+      { k:'persuasao',    regex:/^PERSUAS[ÃA]O$/i },
+      { k:'extroversao',  regex:/^EXTROVERS[ÃA]O$/i },
+      { k:'entusiasmo',   regex:/^ENTUSIASMO$/i },
+      { k:'sociabilidade',regex:/^SOCIABILIDADE$/i },
+      { k:'empatia',      regex:/^EMPATIA$/i },
+      { k:'paciencia',    regex:/^PACI[ÊE]NCIA$/i },
+      { k:'persistencia', regex:/^PERSIST[ÊE]NCIA$/i },
+      { k:'planejamento', regex:/^PLANEJAMENTO$/i },
+      { k:'organizacao',  regex:/^ORGANIZA[ÇC][ÃA]O$/i },
+      { k:'detalhismo',   regex:/^DETALHISMO$/i },
+      { k:'prudencia',    regex:/^PRUD[ÊE]NCIA$/i },
+      { k:'concentracao', regex:/^CONCENTRA[ÇC][ÃA]O$/i }
+    ];
+    TRACOS_MAP.forEach(function(tr){
+      var labelTok = tokens.filter(function(t){ return tr.regex.test(t.str.trim()); })[0];
+      if(!labelTok) return;
+      /* Acha número mais próximo (menor distância euclidiana) que
+         seja 0-100 e não tenha "%" colado nem seja parte de outra label. */
+      var melhorDist = Infinity, melhorN = null;
+      tokens.forEach(function(t){
+        if(t.pi !== labelTok.pi) return;
+        var s = t.str.trim();
+        var m = s.match(/^(\d{1,3})$/);
+        if(!m) return;
+        var n = parseInt(m[1], 10);
+        if(n < 0 || n > 100) return;
+        var dx = t.x - labelTok.x;
+        var dy = t.y - labelTok.y;
+        var d = Math.sqrt(dx*dx + dy*dy);
+        if(d < melhorDist){ melhorDist = d; melhorN = n; }
+      });
+      if(melhorN != null && melhorDist < 200){  /* threshold de proximidade */
+        dados.tracos[tr.k] = melhorN;
+        dados._achouAlgo = true;
+      }
+    });
+
+    /* ── D. 6 Valores motivacionais ──
+       No CIS aparecem com labels como "CONHECIMENTO TEÓRICO 69"
+       (ou em colunas). Usa mesma estratégia de proximidade. */
+    var VALORES_MAP = [
+      { k:'teorico',  regex:/^CONHECIMENTO$|^TE[ÓO]RICO$/i },
+      { k:'estetico', regex:/^HARMONIA$|^EST[ÉE]TICO$/i },
+      { k:'social',   regex:/^ALTRU[ÍI]SMO$|^SOCIAL$/i },
+      { k:'politico', regex:/^PODER$|^POL[ÍI]TICO$/i },
+      { k:'economico',regex:/^UTILIDADE$|^ECON[ÔO]MICO$/i },
+      { k:'religioso',regex:/^PRINC[ÍI]PIOS$|^RELIGIOSO$/i }
+    ];
+    VALORES_MAP.forEach(function(vl){
+      var labelToks = tokens.filter(function(t){ return vl.regex.test(t.str.trim()); });
+      if(!labelToks.length) return;
+      /* Acha número 0-100 mais próximo de QUALQUER label do par */
+      var melhorDist = Infinity, melhorN = null;
+      tokens.forEach(function(t){
+        var s = t.str.trim();
+        var m = s.match(/^(\d{1,3})$/);
+        if(!m) return;
+        var n = parseInt(m[1], 10);
+        if(n < 0 || n > 100) return;
+        labelToks.forEach(function(lt){
+          if(t.pi !== lt.pi) return;
+          var dx = t.x - lt.x, dy = t.y - lt.y;
+          var d = Math.sqrt(dx*dx + dy*dy);
+          if(d < melhorDist){ melhorDist = d; melhorN = n; }
+        });
+      });
+      if(melhorN != null && melhorDist < 150){
+        dados.valores[vl.k] = melhorN;
+        dados._achouAlgo = true;
+      }
+    });
+
+    return dados;
+  }
+
   function _aplicarExtracao(dados){
     /* Aplica o JSON extraído ao _dossie e re-renderiza. Preserva
        valores já preenchidos manualmente: só sobrescreve onde a
