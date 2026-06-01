@@ -34,12 +34,20 @@
   var MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
   /* doc atual carregado / em edição */
-  var _doc = null;             /* { ciclo, data, comps, notaGestor, notaAuto, acoes, status, metricas } */
+  var _doc = null;             /* { ciclo, data, tipo, comps, notaGestor, notaAuto, acoes, status, metricas } */
   var _consultorAtivo = '';    /* string UPPER */
   var _ciclo = 'quinzenal';
   var _historico = [];         /* todos os docs do consultor, mais recente primeiro */
   var _medTime = [6,6,6,6,6,6,6,6,6]; /* fallback (9 comps) */
   var _metricasCache = null;   /* { metricas: {comp: {auto, ...detalhes}}, contexto: {...} } */
+
+  /* Modo do feedback (Fase B):
+     - 'onboarding'  → 1ª vez com o consultor (sem histórico)
+     - 'pulse'       → quinzenal, formato curto (Stop/Start/Continue)
+     - 'completo'    → cada 3 pulses, com 9 competências + diagnóstico
+     Docs antigos sem tipo são tratados como 'completo' (mesma UX). */
+  var _fbModo = 'completo';        /* default — recalculado em _icFbDetectarModo */
+  var _fbModoManual = false;       /* true se o gestor mudou manualmente nesta sessão */
 
   /* ── Helpers de cicloId ───────────────────────────────── */
   function _hoje(){
@@ -167,6 +175,11 @@
     window._fbGet('icFeedbacks/'+_consultorAtivo+'/'+id).then(function(d){
       if(d){
         _doc = d;
+        /* Fase B: doc antigo sem tipo → trata como completo (compat) */
+        if(!_doc.tipo) _doc.tipo = 'completo';
+        /* Modo segue o que está salvo no doc carregado */
+        _fbModo = _doc.tipo;
+        _fbModoManual = false;  /* novo doc, novo cálculo automático */
         _icFbAplicarDocNaUI();
       } else {
         _icFbResetDoc();
@@ -181,13 +194,97 @@
     _doc = {
       ciclo: _ciclo,
       data: dataYmd,
+      tipo: _fbModo,                          /* Fase B: tipo do feedback */
       comps: COMPS_DEF.reduce(function(o,c){o[c.key]=6;return o;},{}),
       notaGestor: '',
       notaAuto: '',
       acoes: [],
-      status: 'rascunho'
+      status: 'rascunho',
+      /* Campos novos por modo (Fase B) — preenchidos quando o modo for ativado */
+      termometro: null,                       /* Pulse · 1-5 */
+      stopStartContinue: { stop:'', start:'', continue:'' },
+      compromissos: [],                       /* [{texto, prazo, feito}] */
+      contexto: '',                           /* Onboarding · trajetória */
+      expectativas: '',                       /* Onboarding · expectativas mútuas */
+      diagnostico: { fortes:'', fracas:'' },  /* Completo · diagnóstico do gestor */
+      alvosSugeridos: []                      /* Completo · keys de competências */
     };
     _icFbAplicarDocNaUI();
+  }
+
+  /* ── Fase B: detecta modo automaticamente a partir do histórico ──
+     - Sem feedbacks → onboarding
+     - Tem feedbacks mas o último não foi "completo" há 3+ pulses → completo
+     - Caso geral → pulse
+     Retorna { modo, motivo } */
+  function _icFbDetectarModo(){
+    if(!_historico || !_historico.length){
+      return { modo:'onboarding', motivo:'primeiro feedback do consultor' };
+    }
+    /* Pulses consecutivos desde o último Completo */
+    var pulsesDesdeCompleto = 0;
+    for(var i = 0; i < _historico.length; i++){
+      var h = _historico[i];
+      var tipoHist = h.tipo || 'completo';   /* docs antigos = completo */
+      if(tipoHist === 'completo' || tipoHist === 'onboarding') break;
+      if(tipoHist === 'pulse') pulsesDesdeCompleto++;
+    }
+    if(pulsesDesdeCompleto >= 2){
+      return { modo:'completo', motivo:'3º pulse — hora do completo (deep dive)' };
+    }
+    return { modo:'pulse', motivo:'ritmo normal' };
+  }
+
+  /* ── Setter de modo (manual via tabs ou auto) ── */
+  window._fbSetModo = function(modo, manual){
+    if(['onboarding','pulse','completo'].indexOf(modo) < 0) return;
+    _fbModo = modo;
+    _fbModoManual = !!manual;
+    if(_doc) _doc.tipo = modo;
+    _icFbRenderModoTabs();
+    /* re-render: blocos visíveis mudam conforme o modo (Etapas 2/3/4) */
+    _icFbRenderModoBlocos();
+  };
+
+  /* Renderiza as tabs de modo no header com o sugerido em destaque */
+  function _icFbRenderModoTabs(){
+    var box = document.getElementById('fbModoTabs');
+    if(!box) return;
+    var sug = _icFbDetectarModo();
+    var atual = _fbModo || 'pulse';
+    var LBL = { onboarding:'👋 Onboarding', pulse:'⚡ Pulse', completo:'📋 Completo' };
+    var TIP = {
+      onboarding:'1ª vez com o consultor — mapeia trajetória, expectativas e linha de base',
+      pulse:'Quinzenal — termômetro + delta + Stop/Start/Continue (10-15 min)',
+      completo:'A cada 3 pulses — Pulse + 9 competências + diagnóstico + alvos pro PDI (30 min)'
+    };
+    var html = '<div class="fb-modo-tabs" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">';
+    ['onboarding','pulse','completo'].forEach(function(m){
+      var ehAtual = m === atual;
+      var ehSug = m === sug.modo && !_fbModoManual;
+      var bg = ehAtual ? 'var(--accent)' : 'var(--surface2)';
+      var color = ehAtual ? '#0a0e1a' : 'var(--text)';
+      var border = ehSug && !ehAtual ? '1px dashed var(--accent)' : '1px solid var(--border)';
+      html += '<button class="fb-modo-tab" title="'+TIP[m]+'" onclick="window._fbSetModo(\''+m+'\',true)" '
+        +'style="padding:6px 12px;font-size:11px;font-weight:700;background:'+bg+';color:'+color+';border:'+border+';border-radius:6px;cursor:pointer;font-family:inherit;">'
+        +LBL[m]+(ehSug && !ehAtual?' ★':'')+'</button>';
+    });
+    html += '<span style="margin-left:auto;font-size:10px;color:var(--muted);font-style:italic;">'
+      +'💡 Sugerido: <b style="color:var(--accent);font-style:normal;">'+LBL[sug.modo]+'</b> · '+sug.motivo
+      +(!_fbModoManual ? ' <span style="color:var(--accent);">(auto)</span>' : '')
+      +'</span>';
+    html += '</div>';
+    box.innerHTML = html;
+  }
+
+  /* Placeholder: nas Etapas 2/3/4, esta função vai ocultar/mostrar
+     blocos do form de acordo com o modo (atributos data-modo-show).
+     Por ora, Etapa 1, mantém todos os blocos visíveis. */
+  function _icFbRenderModoBlocos(){
+    /* Implementação completa nas Etapas 2/3/4 */
+    var root = document.querySelector('[data-icpane="desenvolvimento"]');
+    if(!root) return;
+    root.setAttribute('data-fbmodo', _fbModo);
   }
 
   function _icFbAplicarDocNaUI(){
@@ -1024,6 +1121,7 @@
   /* Coleta valores da UI → _doc (chamado em input changes) */
   function _icFbColetaDoc(){
     if(!_doc) return;
+    _doc.tipo = _fbModo;   /* Fase B: garante que o tipo atual é salvo */
     _doc.notaGestor = (document.getElementById('fbNotaGestor')||{}).value || '';
     _doc.notaAuto   = (document.getElementById('fbNotaAuto')||{}).value   || '';
     _doc.acoes = [];
@@ -1112,9 +1210,19 @@
       _icFbRenderHistorico();
       _icFbRenderRadar();
       _icFbRenderComparativo();
+      /* Fase B: histórico recém-carregado → re-avalia o modo automaticamente
+         (apenas se o gestor não fixou manualmente nesta sessão) */
+      if(!_fbModoManual){
+        var sug = _icFbDetectarModo();
+        _fbModo = sug.modo;
+        if(_doc) _doc.tipo = _fbModo;
+      }
+      _icFbRenderModoTabs();
+      _icFbRenderModoBlocos();
     }).catch(function(){
       _historico = [];
       _icFbRenderHistorico();
+      _icFbRenderModoTabs();
     });
   }
   function _icFbRenderHistorico(){
