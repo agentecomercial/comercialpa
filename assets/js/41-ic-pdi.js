@@ -142,18 +142,17 @@
   };
   var FRAMEWORKS_ORDEM = ['GROW','OKRs','Performance Gap','STAR','Balanced Scorecard'];
 
-  /* Helper de dias úteis (V1: pula só sábado/domingo) — exposto global p/ reuso */
-  if(typeof window._icAddDiasUteis !== 'function'){
-    window._icAddDiasUteis = function(dataBase, nDiasUteis){
+  /* Helper de dias corridos — exposto global p/ reuso */
+  if(typeof window._icAddDias !== 'function'){
+    window._icAddDias = function(dataBase, nDias){
       var d = dataBase instanceof Date ? new Date(dataBase) : new Date(dataBase || Date.now());
-      var add = 0;
-      while(add < nDiasUteis){
-        d.setDate(d.getDate() + 1);
-        var dow = d.getDay();
-        if(dow !== 0 && dow !== 6) add++;
-      }
+      d.setDate(d.getDate() + nDias);
       return d;
     };
+  }
+  /* Compat com chamadas antigas: alias para dias corridos */
+  if(typeof window._icAddDiasUteis !== 'function'){
+    window._icAddDiasUteis = window._icAddDias;
   }
   if(typeof window._icFmtDataBR !== 'function'){
     window._icFmtDataBR = function(d){
@@ -502,9 +501,9 @@
     var el = document.getElementById('pdiCheckinsBox');
     if(!el || !_doc) return;
     var base = _doc.comecou ? new Date(_doc.comecou) : new Date();
-    var d30 = window._icAddDiasUteis(base, 30);
-    var d60 = window._icAddDiasUteis(base, 60);
-    var d90 = window._icAddDiasUteis(base, 90);
+    var d30 = window._icAddDias(base, 30);
+    var d60 = window._icAddDias(base, 60);
+    var d90 = window._icAddDias(base, 90);
     var hoje = new Date(); hoje.setHours(0,0,0,0);
     function _pill(d, label){
       var hojeMs = hoje.getTime();
@@ -518,7 +517,7 @@
         +'<div style="font-size:9px;color:'+cor+';">'+sub+'</div>'
         +'</div>';
     }
-    el.innerHTML = '<div style="display:flex;gap:6px;">'+_pill(d30,'30 du')+_pill(d60,'60 du')+_pill(d90,'90 du')+'</div>'
+    el.innerHTML = '<div style="display:flex;gap:6px;">'+_pill(d30,'30 dias')+_pill(d60,'60 dias')+_pill(d90,'90 dias')+'</div>'
       +'<div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:center;">'
       +(_doc.comecou ? 'base: '+window._icFmtDataBR(_doc.comecou)+' (data de início do PDI)' : 'base: hoje (PDI ainda não iniciado)')
       +'</div>';
@@ -1142,14 +1141,14 @@
         /* ── Check-ins ── */
         if(y > H - 30){ doc.addPage(); y = M; }
         _line(y); y += 5;
-        _txt('CHECK-INS PROGRAMADOS (dias úteis)', M, y, {size:9, style:'bold', color:[100,100,180]});
+        _txt('CHECK-INS PROGRAMADOS', M, y, {size:9, style:'bold', color:[100,100,180]});
         y += 4;
         var base = _doc.comecou ? new Date(_doc.comecou) : new Date();
-        var d30 = window._icAddDiasUteis(base, 30);
-        var d60 = window._icAddDiasUteis(base, 60);
-        var d90 = window._icAddDiasUteis(base, 90);
+        var d30 = window._icAddDias(base, 30);
+        var d60 = window._icAddDias(base, 60);
+        var d90 = window._icAddDias(base, 90);
         doc.setFontSize(9); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
-        doc.text('30 du: '+window._icFmtDataBR(d30)+'   |   60 du: '+window._icFmtDataBR(d60)+'   |   90 du: '+window._icFmtDataBR(d90), M, y);
+        doc.text('30 dias: '+window._icFmtDataBR(d30)+'   |   60 dias: '+window._icFmtDataBR(d60)+'   |   90 dias: '+window._icFmtDataBR(d90), M, y);
         y += 5;
 
         /* ── Assinaturas ── */

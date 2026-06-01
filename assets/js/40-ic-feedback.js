@@ -569,15 +569,16 @@
     _doc.stopStartContinue[campo] = valor;
   };
 
-  /* ── BLOCO COMPROMISSOS (próximos 15 dias úteis no Pulse) ── */
+  /* ── BLOCO COMPROMISSOS (próximos 15 dias no Pulse) ── */
   function _icFbRenderCompromissos(){
     var box = document.getElementById('fbCompromissos');
     if(!box || !_doc) return;
     if(!Array.isArray(_doc.compromissos)) _doc.compromissos = [];
     var dataBase = _doc.data || _hoje();
     var prazoSugerido = '';
-    if(window._icAddDiasUteis){
-      var d = window._icAddDiasUteis(dataBase, 15);
+    var addDias = window._icAddDias || window._icAddDiasUteis;
+    if(addDias){
+      var d = addDias(dataBase, 15);
       prazoSugerido = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     }
     var html = _doc.compromissos.map(function(c, i){
@@ -590,7 +591,7 @@
     }).join('');
     html += '<button onclick="window._fbAddCompr()" style="margin-top:6px;padding:6px 14px;background:var(--surface2);color:var(--accent);border:1px dashed var(--accent);border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;font-family:inherit;">+ Adicionar compromisso</button>';
     if(_doc.compromissos.length){
-      html += '<div style="font-size:10px;color:var(--muted);margin-top:8px;font-style:italic;">💡 Prazo padrão = 15 dias úteis a partir da data do ciclo (próximo pulse).</div>';
+      html += '<div style="font-size:10px;color:var(--muted);margin-top:8px;font-style:italic;">💡 Prazo padrão = 15 dias a partir da data do ciclo (próximo pulse).</div>';
     }
     box.innerHTML = html;
   }
@@ -599,8 +600,9 @@
     if(!Array.isArray(_doc.compromissos)) _doc.compromissos = [];
     if(_doc.compromissos.length >= 5){ if(typeof _showToast==='function') _showToast('⚠ Máximo 5 compromissos por ciclo.', 'var(--amber)'); return; }
     var prazo = '';
-    if(window._icAddDiasUteis){
-      var d = window._icAddDiasUteis(_doc.data || _hoje(), 15);
+    var addDias = window._icAddDias || window._icAddDiasUteis;
+    if(addDias){
+      var d = addDias(_doc.data || _hoje(), 15);
       prazo = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     }
     _doc.compromissos.push({ texto:'', prazo:prazo, feito:false });
@@ -1514,6 +1516,11 @@
       }
       _icFbAplicarStatusNaUI();
       _icFbCarregarHistorico();
+      /* Fase A: recalcula próxima cadência a partir desta data */
+      if(typeof window._icCadenciaRecalc === 'function' && _doc.status !== 'rascunho'){
+        window._icCadenciaRecalc(_consultorAtivo, _doc.tipo || 'pulse', _doc.data || _hoje());
+        if(typeof window._icCadenciaAtualizarBadge === 'function') window._icCadenciaAtualizarBadge();
+      }
     }).catch(function(err){
       console.error('[ic-feedback] save falhou', err);
       if(typeof _showToast==='function') _showToast('❌ Erro ao salvar.','var(--red)');
