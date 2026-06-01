@@ -99,6 +99,71 @@
     _dossie.cargo           = _v('icPerfCargo') || 'Consultor';
   }
 
+  /* ── Helpers de data pros atalhos de período ── */
+  function _ymd(d){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function _addMeses(dataYmd, n){
+    var p = (dataYmd||_ymd(new Date())).split('-');
+    var d = new Date(+p[0], +p[1]-1, +p[2]);
+    d.setMonth(d.getMonth() + n);
+    return _ymd(d);
+  }
+
+  /* A · Validade do dossiê — preenche Aplicado em (=hoje) + Próx. reavaliação (=hoje + N meses) */
+  window._icPerfilSetValidade = function(meses){
+    var hoje = _ymd(new Date());
+    var prox = _addMeses(hoje, meses);
+    if(_dossie){
+      _dossie.aplicadoEm = hoje;
+      _dossie.proxReavaliacao = prox;
+    }
+    var elA = _g('icPerfAplicadoEm'); if(elA) elA.value = hoje;
+    var elP = _g('icPerfProxReav');   if(elP) elP.value = prox;
+    _coletarForm();
+    _salvar();
+    _toast('📅 Validade de '+meses+' meses · próx. reavaliação: '+prox.split('-').reverse().join('/'), 'var(--accent)');
+  };
+
+  /* C · Atalho de "Quando foi aplicado" — preenche só Aplicado em */
+  window._icPerfilSetAplicado = function(quando){
+    var d;
+    var hoje = new Date(); hoje.setHours(0,0,0,0);
+    if(quando === 'hoje'){
+      d = hoje;
+    } else if(quando === 'semana'){
+      /* Segunda-feira desta semana (1-7 dias atrás) */
+      d = new Date(hoje);
+      var dow = d.getDay(); /* 0=dom, 1=seg */
+      var diff = dow === 0 ? 6 : (dow - 1);
+      d.setDate(d.getDate() - diff);
+    } else if(quando === 'mes'){
+      /* 1º dia do mês corrente */
+      d = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    } else if(quando === 'trim'){
+      /* 1º dia do trimestre ANTERIOR */
+      var trimAtual = Math.floor(hoje.getMonth()/3);
+      var trimAnt = trimAtual - 1;
+      var ano = hoje.getFullYear();
+      if(trimAnt < 0){ trimAnt = 3; ano--; }
+      d = new Date(ano, trimAnt * 3, 1);
+    } else if(quando === 'outra'){
+      /* Foca o input pra abrir o calendário nativo */
+      var elA = _g('icPerfAplicadoEm');
+      if(elA){ elA.focus(); try { elA.showPicker && elA.showPicker(); } catch(e){} }
+      return;
+    } else {
+      return;
+    }
+    var ymd = _ymd(d);
+    if(_dossie) _dossie.aplicadoEm = ymd;
+    var elA = _g('icPerfAplicadoEm');
+    if(elA) elA.value = ymd;
+    _coletarForm();
+    _salvar();
+    _toast('📅 Aplicado em: '+ymd.split('-').reverse().join('/'), 'var(--accent)');
+  };
+
   /* ── Render ──────────────────────────────────────────────────── */
   function _renderForm(){
     if(!_dossie) _dossie = _dossieVazio();
