@@ -36,6 +36,25 @@ function _swimExtrairMes(t){
   if(t.periodStart){var m=parseInt((t.periodStart||''). slice(5,7));if(m>=1&&m<=12) return m;}
   return 0;
 }
+/* Data completa em milissegundos (pra ordenar turmas do mesmo mês pelo DIA).
+   Usa periodStart (YYYY-MM-DD); fallback: 1º dia do mês. */
+function _swimExtrairDataInicioMs(t){
+  if(t && t.periodStart){
+    var ts = new Date(t.periodStart).getTime();
+    if(!isNaN(ts)) return ts;
+  }
+  var a = _swimExtrairAno(t);
+  var m = _swimExtrairMes(t) || 1;
+  return new Date(a, m-1, 1).getTime();
+}
+function _swimExtrairDataFimMs(t){
+  if(t && t.periodEnd){
+    var ts = new Date(t.periodEnd).getTime();
+    if(!isNaN(ts)) return ts;
+  }
+  /* Sem periodEnd → usa início (turmas de 1 dia) */
+  return _swimExtrairDataInicioMs(t);
+}
 
 function _tturmasToggleDropdown(){
   var dd=document.getElementById('layoutDropdown');
@@ -400,22 +419,31 @@ function _renderTurmasSwim(turmas){
   var mesMap={};
   for(var m=1;m<=12;m++) mesMap[m]=[];
   turmasAno.forEach(function(t){var m=_swimExtrairMes(t);if(m>=1&&m<=12) mesMap[m].push(t);else mesMap[1].push(t);});
-  // Tipos únicos neste ano + mês mais recente de cada tipo (pra ordenação)
-  var tiposMesRecente={};
+  /* Pra cada tipo de treinamento, calcula:
+     - menorMs = data de INÍCIO da turma MAIS ANTIGA do tipo (pra ordem asc)
+     - maiorMs = data de INÍCIO da turma MAIS RECENTE do tipo (pra ordem desc)
+     A ordenação considera DIA, MÊS e ANO (não só o mês). */
+  var asc = _tturmasOrdem === 'asc';
+  var tiposData = {};   /* tipo -> { menorMs, maiorMs } */
   turmasAno.forEach(function(t){
-    var tipo=_swimExtrairTipo(t);
-    var mes=_swimExtrairMes(t)||1;
-    if(tiposMesRecente[tipo]==null || mes > tiposMesRecente[tipo]){
-      tiposMesRecente[tipo]=mes;
+    var tipo = _swimExtrairTipo(t);
+    var ms = _swimExtrairDataInicioMs(t);
+    if(!tiposData[tipo]){
+      tiposData[tipo] = { menorMs: ms, maiorMs: ms };
+    } else {
+      if(ms < tiposData[tipo].menorMs) tiposData[tipo].menorMs = ms;
+      if(ms > tiposData[tipo].maiorMs) tiposData[tipo].maiorMs = ms;
     }
   });
-  // Ordena por mês, respeitando _tturmasOrdem ('desc' = recente no topo,
-  // 'asc' = antiga no topo). Empate = alfabético.
-  var asc = _tturmasOrdem === 'asc';
-  var tipos=Object.keys(tiposMesRecente).sort(function(a,b){
-    var ma=tiposMesRecente[a], mb=tiposMesRecente[b];
-    if(mb !== ma) return asc ? (ma - mb) : (mb - ma);
-    return a.localeCompare(b,'pt-BR');
+  /* Ordena tipos:
+       asc  → pela data MAIS ANTIGA de cada tipo (qual aconteceu primeiro?)
+       desc → pela data MAIS RECENTE de cada tipo (qual aconteceu por último?)
+     Empate cai pra alfabético. */
+  var tipos = Object.keys(tiposData).sort(function(a, b){
+    var ta = asc ? tiposData[a].menorMs : tiposData[a].maiorMs;
+    var tb = asc ? tiposData[b].menorMs : tiposData[b].maiorMs;
+    if(ta !== tb) return asc ? (ta - tb) : (tb - ta);
+    return a.localeCompare(b, 'pt-BR');
   });
   var cols='110px repeat(12,1fr)';
   var html='<div class="swim-wrapper"><div style="display:grid;grid-template-columns:'+cols+';gap:3px;min-width:680px;">';
