@@ -368,10 +368,37 @@
   function _pdiCarregar(){
     if(!_consultorAtivo){ _pdiResetDoc(); return; }
     if(typeof window._fbGet !== 'function'){ _pdiResetDoc(); return; }
-    window._fbGet('icPDIs/'+_consultorAtivo+'/'+_periodoId()).then(function(d){
-      if(d){ _doc = d; _pdiAplicarDocNaUI(); _pdiAplicarHintsFeedback(); }
-      else { _pdiResetDoc(); _pdiAplicarHintsFeedback(); }
+    /* Fase E: pré-carrega análise IA do Dossiê pra usar na sugestão de framework */
+    var promIA = (typeof window._icCarregarPerfilIA === 'function')
+      ? window._icCarregarPerfilIA(_consultorAtivo)
+      : Promise.resolve(null);
+    promIA.then(function(ia){
+      _iaCache = ia;
+      return window._fbGet('icPDIs/'+_consultorAtivo+'/'+_periodoId());
+    }).then(function(d){
+      if(d){ _doc = d; _pdiAplicarDocNaUI(); _pdiAplicarHintsFeedback(); _pdiRenderEvitarDossie(); }
+      else { _pdiResetDoc(); _pdiAplicarHintsFeedback(); _pdiRenderEvitarDossie(); }
     }).catch(_pdiResetDoc);
+  }
+
+  /* Fase E: bloco "Evitar absolutamente" no sidebar (vindo da IA do Dossiê) */
+  function _pdiRenderEvitarDossie(){
+    var box = document.getElementById('pdiEvitarDossie');
+    if(!box) return;
+    var lista = (_iaCache && Array.isArray(_iaCache.evitar_absolutamente))
+      ? _iaCache.evitar_absolutamente : [];
+    if(!lista.length){
+      box.style.display = 'none';
+      return;
+    }
+    box.style.display = '';
+    box.innerHTML = '<div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-style:italic;">Do Dossiê IA — comportamentos a evitar com este consultor:</div>'
+      + lista.slice(0, 5).map(function(e){
+        return '<div style="padding:6px 8px;background:rgba(239,68,68,.06);border-left:3px solid #ef4444;border-radius:4px;margin-bottom:4px;font-size:10px;">'
+          +'<div style="color:var(--text);font-weight:600;">'+(_escAttr(e.comportamento||'?'))+'</div>'
+          +(e.porque?'<div style="color:var(--muted);margin-top:2px;line-height:1.4;">'+(_escAttr(e.porque))+'</div>':'')
+        +'</div>';
+      }).join('');
   }
 
   /* ── Fase B Etapa 4: pré-popula PDI com alvos do feedback Completo ──
@@ -432,15 +459,29 @@
     _pdiAtualizarFooter();
   }
 
-  /* ── Sugestão automática de framework por % meta do consultor ──
-     ≤ 70% → Performance Gap (precisa corrigir o gap urgente)
-     70-100% → OKRs (foco em manter e bater)
-     > 100% → GROW (foco em crescimento / próximo nível)
-     Sem dados → GROW (default neutro)
-  */
+  /* ── Sugestão automática de framework ──
+     Prioridade 1 (Fase E): framework recomendado pela IA no Dossiê
+     Prioridade 2: % meta do consultor
+       ≤ 70% → Performance Gap (precisa corrigir o gap urgente)
+       70-100% → OKRs (foco em manter e bater)
+       > 100% → GROW (foco em crescimento)
+     Sem dados → GROW (default neutro) */
+  var _iaCache = null;  /* cache da análise IA do dossiê (atualizada em _pdiCarregar) */
   function _pdiSugerirFramework(){
     var nome = (_consultorAtivo || '').toUpperCase();
-    if(!nome) return { nome: 'GROW', razao: 'default · sem consultor selecionado' };
+    if(!nome) return { nome: 'GROW', razao: 'default · sem consultor selecionado', fonte:'default' };
+
+    /* Prioridade 1: framework sugerido pela IA do Dossiê */
+    if(_iaCache && _iaCache.framework_pdi_recomendado && _iaCache.framework_pdi_recomendado.nome
+       && FRAMEWORKS[_iaCache.framework_pdi_recomendado.nome]){
+      return {
+        nome: _iaCache.framework_pdi_recomendado.nome,
+        razao: 'do Dossiê IA · ' + (_iaCache.framework_pdi_recomendado.razao || '').slice(0, 80),
+        fonte: 'dossie'
+      };
+    }
+
+    /* Prioridade 2: % meta */
     var pctMeta = null;
     try {
       if(typeof window._npTodasVendas === 'function' && typeof window._npPorConsultor === 'function'){
@@ -454,10 +495,10 @@
         }
       }
     } catch(e){ /* silencioso */ }
-    if(pctMeta == null)  return { nome: 'GROW', razao: 'sem KPIs · default neutro' };
-    if(pctMeta <= 70)    return { nome: 'Performance Gap', razao: Math.round(pctMeta)+'% da meta · foco em corrigir gap' };
-    if(pctMeta <= 100)   return { nome: 'OKRs', razao: Math.round(pctMeta)+'% da meta · foco em manter e bater' };
-    return { nome: 'GROW', razao: Math.round(pctMeta)+'% da meta · foco em crescimento' };
+    if(pctMeta == null)  return { nome: 'GROW', razao: 'sem KPIs · default neutro', fonte:'default' };
+    if(pctMeta <= 70)    return { nome: 'Performance Gap', razao: Math.round(pctMeta)+'% da meta · foco em corrigir gap', fonte:'meta' };
+    if(pctMeta <= 100)   return { nome: 'OKRs', razao: Math.round(pctMeta)+'% da meta · foco em manter e bater', fonte:'meta' };
+    return { nome: 'GROW', razao: Math.round(pctMeta)+'% da meta · foco em crescimento', fonte:'meta' };
   }
   window._pdiSugerirFramework = _pdiSugerirFramework;
 

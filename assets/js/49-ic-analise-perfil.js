@@ -75,6 +75,23 @@
     return window._fbSave('icPerfil/'+_consultorAtual.uid, _dossie);
   }
 
+  /* ── Fase E: helper compartilhado pra Feedback e PDI consumirem ──
+     Carrega a análise IA do dossiê de um consultor por NOME.
+     Retorna Promise<analiseIA | null>. Cacheia 60s por consultor. */
+  var _ia_cache = {};
+  window._icCarregarPerfilIA = function(consultorNome){
+    if(!consultorNome) return Promise.resolve(null);
+    var uid = 'uid_'+String(consultorNome).toUpperCase().replace(/\s+/g,'_');
+    var c = _ia_cache[uid];
+    if(c && (Date.now() - c.em) < 60000) return Promise.resolve(c.dados);
+    if(typeof window._fbGet !== 'function') return Promise.resolve(null);
+    return window._fbGet('icPerfil/'+uid).then(function(d){
+      var ia = (d && d.analiseIA) || null;
+      _ia_cache[uid] = { dados: ia, em: Date.now() };
+      return ia;
+    }).catch(function(){ return null; });
+  };
+
   function _coletarForm(){
     _dossie.aplicadoEm      = _v('icPerfAplicadoEm');
     _dossie.proxReavaliacao = _v('icPerfProxReav');

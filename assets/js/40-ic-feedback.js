@@ -95,6 +95,7 @@
       _consultorAtivo = sel.value || '';
       _icFbCarregar();
       _icFbCarregarHistorico();
+      _icFbRenderBannerDossie();    /* Fase E: banner com frase de abertura + tom */
     });
     /* Auto-save leve (rascunho) ao mexer em campos */
     document.getElementById('fbNotaGestor').addEventListener('input', _icFbColetaDoc);
@@ -210,6 +211,49 @@
       alvosSugeridos: []                      /* Completo · keys de competências */
     };
     _icFbAplicarDocNaUI();
+  }
+
+  /* ── Fase E: banner com frase de abertura + tom do Dossiê IA ──
+     Mostra no topo da aba Desenvolvimento sempre que um consultor é
+     selecionado e ele tem análise IA salva no dossiê. Funciona como
+     "memória curta" pro gestor antes/durante o 1:1. */
+  function _icFbRenderBannerDossie(){
+    var el = document.getElementById('fbBannerDossie');
+    if(!el) return;
+    if(!_consultorAtivo || typeof window._icCarregarPerfilIA !== 'function'){
+      el.style.display = 'none';
+      return;
+    }
+    window._icCarregarPerfilIA(_consultorAtivo).then(function(ia){
+      if(!ia){ el.style.display = 'none'; return; }
+      var frase = ia.frase_de_abertura_1a1;
+      var tom = ia.tom_de_feedback;
+      if(!frase && !tom){ el.style.display = 'none'; return; }
+      el.style.display = '';
+      var html = '';
+      if(frase){
+        html += '<div style="font-size:11px;color:var(--text);line-height:1.6;font-style:italic;">'
+          +'<b style="color:var(--blue);font-style:normal;">💬 Frase pra abrir:</b> "'+_esc(frase)+'"'
+          +'</div>';
+      }
+      if(tom){
+        var partes = [];
+        if(tom.estilo_geral)  partes.push('estilo: '+tom.estilo_geral);
+        if(tom.formato_ideal) partes.push(tom.formato_ideal);
+        if(tom.duracao_max)   partes.push('~'+tom.duracao_max);
+        if(partes.length){
+          html += '<div style="font-size:10px;color:var(--muted);margin-top:4px;">'
+            +'<b style="color:var(--accent);">💡 Tom ideal:</b> '+_esc(partes.join(' · '))
+            +'</div>';
+        }
+      }
+      el.innerHTML = html;
+    }).catch(function(){ el.style.display = 'none'; });
+  }
+  function _esc(s){
+    return String(s==null?'':s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
   }
 
   /* ── Fase B: detecta modo automaticamente a partir do histórico ──
