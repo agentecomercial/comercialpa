@@ -387,6 +387,7 @@
               <div class="fv-op-tit">📋 Operação · <span id="fvModoLabel">Kanban</span></div>
               <div class="fv-op-actions">
                 <div class="fv-op-instr" id="fvInstr">💡 Arraste cards · Clique p/ detalhar</div>
+                <button class="fv-btn fv-btn-primary" id="fvBtnFast" style="background:var(--blue);color:#0a0e1a;" title="Lead rápido (Nome+WhatsApp+Consultor+Origem) — abre o detalhe completo depois">⚡ Fast Lead</button>
                 <button class="fv-btn fv-btn-primary" id="fvBtnNovo">+ Novo</button>
                 <div class="fv-vtoggle">
                   <button class="fv-vbtn active" data-view="kanban">▦ Kanban</button>
@@ -1922,6 +1923,137 @@
     });
   }
 
+  /* ── F2.5 · Modal FAST LEAD ──
+     Versão rápida do Novo Lead: só 4 campos (Nome, WhatsApp, Consultor, Origem).
+     Cria o lead com defaults sensatos (etapa=Prospecção, prob=10, temp=Morno)
+     e abre o Detalhe do Lead pro gestor completar o resto se quiser. */
+  function _abrirFastLead(){
+    /* Reutiliza as mesmas fontes de consultores que o Novo Lead */
+    const consSet = new Map();
+    const addCons = (n) => {
+      if(!n) return;
+      const s = String(n).trim(); if(!s) return;
+      const k = s.toUpperCase();
+      if(!consSet.has(k)) consSet.set(k, s);
+    };
+    _leads.forEach(l => addCons(l.consultor));
+    if(Array.isArray(window.allConsultors)) window.allConsultors.forEach(addCons);
+    if(Array.isArray(window._npConsultores)) window._npConsultores.forEach(addCons);
+    if(window._npUsuarios){
+      Object.values(window._npUsuarios).forEach(u => {
+        if(u && u.perfil === 'consultor' && u.nome) addCons(u.nome);
+      });
+    }
+    const consultores = Array.from(consSet.values()).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+    const allOrigens = [...ORIGENS_PADRAO, ..._origensCustom];
+
+    const html = `<div class="fv-overlay show" id="fvFastOv">
+      <div class="fv-modal" style="max-width:480px;">
+        <div class="fv-modal-h">
+          <div class="fv-modal-tit">⚡ Fast Lead <small style="color:var(--txt-3,#6b7280);font-weight:400;font-size:11px;">· lançamento rápido pra distribuir consultor</small></div>
+          <button class="fv-close" data-close>✕</button>
+        </div>
+        <div class="fv-modal-b">
+          <div class="fv-novo-grid c1">
+            <div class="fv-novo-field"><span class="fv-novo-l req">Nome do cliente</span><input class="fv-novo-i" data-k="nome" placeholder="Ex: João Pedro Silva" autofocus></div>
+          </div>
+          <div class="fv-novo-grid c1">
+            <div class="fv-novo-field"><span class="fv-novo-l">WhatsApp</span><input class="fv-novo-i" data-k="wpp" placeholder="+55 91 9XXXX-XXXX"></div>
+          </div>
+          <div class="fv-novo-grid">
+            <div class="fv-novo-field"><span class="fv-novo-l req">Consultor</span><select class="fv-novo-s" data-k="consultor">${consultores.length?consultores.map(c=>`<option>${esc(c)}</option>`).join(''):'<option>Eu</option>'}</select></div>
+            <div class="fv-novo-field"><span class="fv-novo-l req">Origem</span><select class="fv-novo-s" data-k="origem"><option value="">Selecione…</option>${allOrigens.map(o=>`<option>${esc(o)}</option>`).join('')}</select></div>
+          </div>
+          <div style="margin-top:12px;padding:10px 12px;background:rgba(96,165,250,.06);border-left:3px solid var(--blue);border-radius:6px;font-size:11px;color:var(--text);line-height:1.55;">
+            💡 O lead será criado em <b>Prospecção</b> com probabilidade 10%. Após criar, abre o detalhe pra você completar treinamento, valor e outros campos se quiser.
+          </div>
+        </div>
+        <div class="fv-modal-f">
+          <button class="fv-btn" data-close>Cancelar</button>
+          <button class="fv-btn" id="fvFastCopiar" style="color:var(--blue);border-color:rgba(96,165,250,.4);" title="Copia mensagem pronta pra mandar pro consultor no WhatsApp">📋 Copiar p/ WhatsApp</button>
+          <button class="fv-btn fv-btn-primary" data-criar>⚡ Criar lead</button>
+        </div>
+      </div>
+    </div>`;
+    const wrap = document.createElement('div'); wrap.innerHTML = html;
+    document.body.appendChild(wrap.firstElementChild);
+    const ov = $('#fvFastOv');
+    const close = () => ov.remove();
+    ov.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
+    ov.addEventListener('click', e => { if(e.target === ov) close(); });
+
+    const get = k => ov.querySelector(`[data-k="${k}"]`)?.value || '';
+    function _msgTemplate(){
+      const nome = get('nome').trim() || '[nome]';
+      const wpp = get('wpp').trim() || '[whatsapp]';
+      const origem = get('origem') || '[origem]';
+      const cons = get('consultor');
+      return `🆕 NOVO LEAD pra você${cons?', '+cons:''}:\n\n`
+        + `👤 ${nome}\n`
+        + `📱 ${wpp}\n`
+        + `📡 Origem: ${origem}\n\n`
+        + `Por favor, faça contato em até 24h. Boa venda! 🚀`;
+    }
+
+    /* Botão Copiar */
+    ov.querySelector('#fvFastCopiar').addEventListener('click', () => {
+      const msg = _msgTemplate();
+      const ta = document.createElement('textarea');
+      ta.value = msg;
+      ta.style.cssText = 'position:fixed;top:-9999px;';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch(e){}
+      document.body.removeChild(ta);
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(msg).then(
+          () => _toast('📋 Mensagem copiada · cole no WhatsApp do consultor'),
+          () => { if(ok) _toast('📋 Mensagem copiada'); else _toast('⚠ Falha ao copiar'); }
+        );
+      } else {
+        _toast(ok ? '📋 Mensagem copiada' : '⚠ Falha ao copiar');
+      }
+    });
+
+    /* Botão Criar lead */
+    ov.querySelector('[data-criar]').addEventListener('click', () => {
+      const nome = get('nome').trim();
+      const consultor = get('consultor');
+      const origem = get('origem');
+      if(!nome){ _toast('Preencha o nome do cliente'); return; }
+      if(!consultor){ _toast('Selecione o consultor'); return; }
+      if(!origem){ _toast('Selecione a origem'); return; }
+
+      const novo = {
+        id: _id(),
+        nome,
+        empresa: '',
+        valor: 0,
+        prob: ETAPAS[0].prob,     /* 10% — etapa Prospecção */
+        etapa: 0,                 /* Prospecção */
+        treinamento: '',
+        origem,
+        consultor,
+        prazo: '',
+        temp: 'm',                /* Morno default */
+        wpp: get('wpp').trim(),
+        email: '',
+        notas: '',
+        criadoEm: _hoje(),
+        atividade: [{quando:_hoje(), txt:'Fast Lead criado · '+origem+' · atribuído a '+consultor}]
+      };
+      _leads.push(novo);
+      _historico.unshift({leadId:novo.id, nome:novo.nome, txt:'⚡ Fast Lead · '+origem+' → '+consultor, quando:new Date().toISOString(), autor:_papel(), tipo:'nova'});
+      _salvar();
+      close();
+      _render();
+      _toast('⚡ Lead criado · abrindo detalhe pra completar');
+      /* Abre detalhe do lead recém-criado pra completar (treinamento, valor, etc) */
+      setTimeout(() => _abrirDetalhe(novo.id), 200);
+    });
+  }
+
   /* ── F2/F4 · Modal Configurar ── */
   function _abrirConfig(){
     const html = `<div class="fv-overlay show" id="fvCfgOv">
@@ -2142,6 +2274,8 @@
     }));
     $$('.fv-vbtn').forEach(b => b.addEventListener('click', () => _setModo(b.dataset.view)));
     $('#fvBtnNovo').addEventListener('click', () => _abrirNovoLead(0));
+    const btnFast = $('#fvBtnFast');
+    if(btnFast) btnFast.addEventListener('click', () => _abrirFastLead());
     $('#fvBtnConfig').addEventListener('click', _abrirConfig);
     $('#fvListaClear').addEventListener('click', () => { _filtroEtapa = null; _render(); });
   }
