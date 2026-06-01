@@ -1821,19 +1821,39 @@
     $$('.fv-col-vazia-add').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); _abrirNovoLead(+b.dataset.et); }));
   }
 
-  /* ── F2 · Modal Detalhe ── */
+  /* ── F2 · Modal Detalhe (EDITÁVEL) ──
+     Todos os campos viram inputs/selects/textarea. Tab Notas funcional.
+     Botão 💾 Salvar coleta data-k de tudo e atualiza o lead. */
   function _abrirDetalhe(id){
     const l = _leads.find(x => x.id === id); if(!l) return;
-    const et = ETAPAS[l.etapa];
-    const dias = _diasAteHoje(l.prazo);
-    const prazoStatus = !l.prazo ? '—' : dias<0 ? `Atrasado ${dias}d ⚠` : dias===0?'Hoje':dias+' dias';
     const histLead = (l.atividade||[]).slice().reverse();
+
+    /* Fontes de dropdowns — mesmas regras do Novo Lead */
+    const trainings = (Array.isArray(window.allTreinamentos) && window.allTreinamentos.length)
+      ? window.allTreinamentos.slice().sort((a,b) => a.localeCompare(b,'pt-BR'))
+      : (window._PRODUTOS_PROPOSTA && Object.keys(window._PRODUTOS_PROPOSTA))
+        || ['IF','MASTER COACHING','CEOP','FGPC','BHP','FCIS','ML5','TAV','MAESTRIA','CIS_GLOBAL','CIS'];
+    const consSet = new Map();
+    const addCons = n => { if(!n) return; const s=String(n).trim(); if(s && !consSet.has(s.toUpperCase())) consSet.set(s.toUpperCase(), s); };
+    _leads.forEach(x => addCons(x.consultor));
+    if(Array.isArray(window.allConsultors)) window.allConsultors.forEach(addCons);
+    if(Array.isArray(window._npConsultores)) window._npConsultores.forEach(addCons);
+    if(window._npUsuarios) Object.values(window._npUsuarios).forEach(u => { if(u && u.perfil==='consultor' && u.nome) addCons(u.nome); });
+    if(l.consultor) addCons(l.consultor);
+    const consultores = Array.from(consSet.values()).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+    const allOrigens = [...ORIGENS_PADRAO, ..._origensCustom];
+    if(l.origem && !allOrigens.includes(l.origem)) allOrigens.push(l.origem);
+    if(l.treinamento && !trainings.includes(l.treinamento)) trainings.unshift(l.treinamento);
+
+    const et = ETAPAS[l.etapa];
+    const wppDigits = (l.wpp||'').replace(/\D/g,'');
+
     const html = `<div class="fv-overlay show" id="fvDetOv">
       <div class="fv-modal fv-det">
         <div class="fv-modal-h">
-          <div>
-            <div class="fv-det-nome">${esc(l.nome)}</div>
-            <div class="fv-det-emp">${esc(l.empresa||'—')}</div>
+          <div style="flex:1;">
+            <input class="fv-novo-i" data-k="nome" value="${esc(l.nome)}" style="font-size:17px;font-weight:700;background:transparent;border:1px solid transparent;padding:2px 6px;width:100%;max-width:340px;" placeholder="Nome do cliente">
+            <input class="fv-novo-i" data-k="empresa" value="${esc(l.empresa||'')}" style="font-size:11px;background:transparent;border:1px solid transparent;padding:2px 6px;margin-top:2px;width:100%;max-width:340px;color:var(--txt-2);" placeholder="Empresa">
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="fv-det-stage" style="background:${et.cor};">${et.nome}</div>
@@ -1841,25 +1861,65 @@
           </div>
         </div>
         <div class="fv-modal-b">
-          <div class="fv-det-grid">
-            <div class="fv-det-f"><div class="fv-det-fl">Valor</div><div class="fv-det-fv accent">${moeda(l.valor)}</div></div>
-            <div class="fv-det-f"><div class="fv-det-fl">Probabilidade</div><div class="fv-det-fv">${l.prob||0}% ${l.temp==='q'?'(Quente 🔥)':l.temp==='m'?'(Morno 🌤)':l.temp==='f'?'(Frio ❄)':''}</div></div>
-            <div class="fv-det-f"><div class="fv-det-fl">Treinamento</div><div class="fv-det-fv">${esc(l.treinamento||'—')}</div></div>
-            <div class="fv-det-f"><div class="fv-det-fl">Origem</div><div class="fv-det-fv">${esc(l.origem||'—')}</div></div>
-            <div class="fv-det-f"><div class="fv-det-fl">Consultor</div><div class="fv-det-fv">${esc(l.consultor||'—')}</div></div>
-            <div class="fv-det-f"><div class="fv-det-fl">Próximo follow-up</div><div class="fv-det-fv" style="color:${dias<0?'#ef4444':'inherit'};">${prazoStatus}</div></div>
-            <div class="fv-det-f"><div class="fv-det-fl">WhatsApp</div><div class="fv-det-fv">${esc(l.wpp||'—')}</div></div>
-            <div class="fv-det-f"><div class="fv-det-fl">E-mail</div><div class="fv-det-fv">${esc(l.email||'—')}</div></div>
+          <div class="fv-novo-grid c3">
+            <div class="fv-novo-field"><span class="fv-novo-l">Valor</span><input class="fv-novo-i" data-k="valor" type="number" step="0.01" value="${l.valor||''}"></div>
+            <div class="fv-novo-field"><span class="fv-novo-l">Probabilidade (%)</span><input class="fv-novo-i" data-k="prob" type="number" min="0" max="100" value="${l.prob||0}"></div>
+            <div class="fv-novo-field"><span class="fv-novo-l">Temperatura</span>
+              <select class="fv-novo-s" data-k="temp">
+                <option value="" ${!l.temp?'selected':''}>—</option>
+                <option value="q" ${l.temp==='q'?'selected':''}>🔥 Quente</option>
+                <option value="m" ${l.temp==='m'?'selected':''}>🌤 Morno</option>
+                <option value="f" ${l.temp==='f'?'selected':''}>❄ Frio</option>
+              </select>
+            </div>
           </div>
-          <div class="fv-det-tabs"><div class="fv-det-tab active">Histórico</div><div class="fv-det-tab">Notas</div></div>
-          <div style="display:flex;flex-direction:column;gap:8px;font-size:11px;">
-            ${histLead.length ? histLead.map(a=>`<div style="display:flex;gap:8px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0;"></div><div style="flex:1;color:var(--txt-2);">${esc(a.txt)}</div><div style="color:var(--txt-3,#6b7280);font-size:9px;">${a.quando}</div></div>`).join('') : '<div style="color:var(--txt-3,#6b7280);text-align:center;padding:10px;">Sem histórico</div>'}
+          <div class="fv-novo-grid">
+            <div class="fv-novo-field"><span class="fv-novo-l">Etapa</span>
+              <select class="fv-novo-s" data-k="etapa">
+                ${ETAPAS.map((e,i)=>`<option value="${i}" ${i===l.etapa?'selected':''}>${e.ico} ${e.nome}</option>`).join('')}
+              </select>
+            </div>
+            <div class="fv-novo-field"><span class="fv-novo-l">Treinamento</span>
+              <select class="fv-novo-s" data-k="treinamento">
+                <option value="">—</option>
+                ${trainings.map(t=>`<option ${t===l.treinamento?'selected':''}>${esc(t)}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="fv-novo-grid">
+            <div class="fv-novo-field"><span class="fv-novo-l">Consultor</span>
+              <select class="fv-novo-s" data-k="consultor">
+                <option value="">—</option>
+                ${consultores.map(c=>`<option ${c===l.consultor?'selected':''}>${esc(c)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="fv-novo-field"><span class="fv-novo-l">Origem</span>
+              <select class="fv-novo-s" data-k="origem">
+                <option value="">—</option>
+                ${allOrigens.map(o=>`<option ${o===l.origem?'selected':''}>${esc(o)}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="fv-novo-grid c3">
+            <div class="fv-novo-field"><span class="fv-novo-l">Próximo follow-up</span><input class="fv-novo-i" data-k="prazo" type="date" value="${esc(l.prazo||'')}"></div>
+            <div class="fv-novo-field"><span class="fv-novo-l">WhatsApp</span><input class="fv-novo-i" data-k="wpp" value="${esc(l.wpp||'')}" placeholder="+55 91 9XXXX-XXXX"></div>
+            <div class="fv-novo-field"><span class="fv-novo-l">E-mail</span><input class="fv-novo-i" data-k="email" type="email" value="${esc(l.email||'')}"></div>
+          </div>
+          <div class="fv-det-tabs">
+            <div class="fv-det-tab active" data-tab="hist">Histórico</div>
+            <div class="fv-det-tab" data-tab="notas">📝 Notas</div>
+          </div>
+          <div data-pane="hist" style="display:flex;flex-direction:column;gap:8px;font-size:11px;max-height:180px;overflow-y:auto;">
+            ${histLead.length ? histLead.map(a=>`<div style="display:flex;gap:8px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0;"></div><div style="flex:1;color:var(--txt-2);">${esc(a.txt)}</div><div style="color:var(--txt-3,#6b7280);font-size:9px;">${esc(a.quando)}</div></div>`).join('') : '<div style="color:var(--txt-3,#6b7280);text-align:center;padding:10px;">Sem histórico</div>'}
+          </div>
+          <div data-pane="notas" style="display:none;">
+            <textarea class="fv-novo-ta" data-k="notas" placeholder="Contexto, dor do cliente, próximos passos..." style="min-height:120px;width:100%;">${esc(l.notas||'')}</textarea>
           </div>
           <div class="fv-det-actions">
-            ${l.wpp?`<a class="fv-btn" href="https://wa.me/${l.wpp.replace(/\\D/g,'')}" target="_blank">📱 WhatsApp</a>`:''}
-            ${l.email?`<a class="fv-btn" href="mailto:${l.email}">✉ E-mail</a>`:''}
-            <button class="fv-btn" data-mover>→ Mover etapa</button>
-            ${_ehAdmin()?`<button class="fv-btn" style="color:#ef4444;border-color:rgba(239,68,68,0.3);" data-excluir>🗑 Excluir lead</button>`:''}
+            ${wppDigits?`<a class="fv-btn" href="https://wa.me/${wppDigits}" target="_blank">📱 WhatsApp</a>`:''}
+            ${l.email?`<a class="fv-btn" href="mailto:${esc(l.email)}">✉ E-mail</a>`:''}
+            <button class="fv-btn fv-btn-primary" data-salvar>💾 Salvar alterações</button>
+            ${_ehAdmin()?`<button class="fv-btn" style="color:#ef4444;border-color:rgba(239,68,68,0.3);margin-left:auto;" data-excluir>🗑 Excluir lead</button>`:''}
           </div>
         </div>
       </div>
@@ -1869,17 +1929,53 @@
     const close = () => ov.remove();
     ov.querySelector('[data-close]').addEventListener('click', close);
     ov.addEventListener('click', e => { if(e.target === ov) close(); });
-    ov.querySelector('[data-mover]')?.addEventListener('click', () => {
-      const novo = prompt('Nova etapa (0=Prospecção, 1=Qualificação, 2=Apresentação, 3=Negociação, 4=Proposta, 5=Fechamento, 6=Pós-Venda):', l.etapa);
-      const n = parseInt(novo, 10);
-      if(!isNaN(n) && n>=0 && n<=6 && n!==l.etapa){
-        const antigo = ETAPAS[l.etapa].nome;
-        l.etapa = n; l.prob = ETAPAS[n].prob;
-        l.atividade.push({quando:_hoje(), txt:`Movido ${antigo} → ${ETAPAS[n].nome}`});
-        _historico.unshift({leadId:l.id, nome:l.nome, txt:`${antigo} → ${ETAPAS[n].nome}`, quando:new Date().toISOString(), autor:_papel(), tipo:n===6?'sale':'move'});
-        _salvar(); close(); _render();
+
+    /* Tabs Histórico / Notas */
+    ov.querySelectorAll('.fv-det-tab').forEach(tab => tab.addEventListener('click', () => {
+      ov.querySelectorAll('.fv-det-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const k = tab.dataset.tab;
+      ov.querySelectorAll('[data-pane]').forEach(p => { p.style.display = (p.dataset.pane===k ? '' : 'none'); });
+    }));
+
+    /* Salvar — coleta todos campos data-k, atualiza lead, registra mudança de etapa no histórico */
+    ov.querySelector('[data-salvar]').addEventListener('click', () => {
+      const get = k => ov.querySelector(`[data-k="${k}"]`)?.value ?? '';
+      const nome = get('nome').trim();
+      if(!nome){ _toast('Nome do cliente é obrigatório'); return; }
+      const novaEtapa = parseInt(get('etapa'),10);
+      const etapaMudou = !isNaN(novaEtapa) && novaEtapa !== l.etapa;
+      const etapaAntiga = ETAPAS[l.etapa].nome;
+
+      l.nome        = nome;
+      l.empresa     = get('empresa').trim();
+      l.valor       = parseFloat(get('valor')) || 0;
+      l.prob        = parseInt(get('prob'),10) || 0;
+      l.temp        = get('temp');
+      l.etapa       = isNaN(novaEtapa) ? l.etapa : novaEtapa;
+      l.treinamento = get('treinamento');
+      l.consultor   = get('consultor');
+      l.origem      = get('origem');
+      l.prazo       = get('prazo');
+      l.wpp         = get('wpp').trim();
+      l.email       = get('email').trim();
+      l.notas       = get('notas');
+      l.atividade   = l.atividade || [];
+
+      if(etapaMudou){
+        const novaNome = ETAPAS[l.etapa].nome;
+        l.atividade.push({quando:_hoje(), txt:`Movido ${etapaAntiga} → ${novaNome}`});
+        _historico.unshift({leadId:l.id, nome:l.nome, txt:`${etapaAntiga} → ${novaNome}`, quando:new Date().toISOString(), autor:_papel(), tipo:l.etapa===6?'sale':'move'});
+      } else {
+        l.atividade.push({quando:_hoje(), txt:'Lead atualizado'});
       }
+
+      _salvar();
+      _toast('✅ Lead atualizado');
+      close();
+      _render();
     });
+
     ov.querySelector('[data-excluir]')?.addEventListener('click', () => {
       if(!confirm(`Excluir lead "${l.nome}"? Isso não pode ser desfeito.`)) return;
       _leads = _leads.filter(x => x.id !== l.id);
