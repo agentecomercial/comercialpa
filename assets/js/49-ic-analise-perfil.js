@@ -1143,10 +1143,25 @@
         });
       });
 
+      /* Debug: expõe tokens para inspeção no console */
+      window._lastPdfTokens = tokens;
+      console.group('%c[ic-perfil] PDF extraído: '+tokens.length+' tokens',
+        'background:#a78bfa;color:#fff;padding:3px 10px;font-weight:700;');
+      console.log('Acesso programático: window._lastPdfTokens');
+      console.log('Primeiros 30 tokens:', tokens.slice(0, 30).map(function(t){
+        return '['+t.pi+'] x='+Math.round(t.x)+' y='+Math.round(t.y)+' "'+t.str+'"';
+      }));
+      console.groupEnd();
+
       var dados = _parsearCIS(tokens);
       if(!dados._achouAlgo){
         _toast('⚠ Não reconheci o formato CIS Assessment. Tente o botão 🪄 Extrair com IA.', 'var(--amber)');
         return;
+      }
+      /* Aviso explícito sobre os 16 traços */
+      if(dados._tracosDetectados >= 12){
+        console.log('%c[ic-perfil] ⚠ 16 traços têm labels no PDF mas SEM números (são posições no radar). Preencher manualmente ou via 🪄 IA com visão.',
+          'color:#f59e0b;font-weight:600;');
       }
       _aplicarExtracao(dados);
     }).catch(function(e){
@@ -1250,50 +1265,27 @@
     if(dPens != null){ dados.dimensoes.pensamento  = dPens; dados._achouAlgo = true; }
 
     /* ── C. 16 Traços (radar) ──
-       No CIS, cada traço aparece como label próximo ao número.
-       Strategy: para cada label conhecido, acha o token com aquele
-       texto e pega o número mais próximo dele (menor distância x/y). */
-    var TRACOS_MAP = [
-      { k:'ousadia',      regex:/^OUSADIA$/i },
-      { k:'comando',      regex:/^COMANDO$/i },
-      { k:'objetividade', regex:/^OBJETIVIDADE$/i },
-      { k:'assertividade',regex:/^ASSERTIVIDADE$/i },
-      { k:'persuasao',    regex:/^PERSUAS[ÃA]O$/i },
-      { k:'extroversao',  regex:/^EXTROVERS[ÃA]O$/i },
-      { k:'entusiasmo',   regex:/^ENTUSIASMO$/i },
-      { k:'sociabilidade',regex:/^SOCIABILIDADE$/i },
-      { k:'empatia',      regex:/^EMPATIA$/i },
-      { k:'paciencia',    regex:/^PACI[ÊE]NCIA$/i },
-      { k:'persistencia', regex:/^PERSIST[ÊE]NCIA$/i },
-      { k:'planejamento', regex:/^PLANEJAMENTO$/i },
-      { k:'organizacao',  regex:/^ORGANIZA[ÇC][ÃA]O$/i },
-      { k:'detalhismo',   regex:/^DETALHISMO$/i },
-      { k:'prudencia',    regex:/^PRUD[ÊE]NCIA$/i },
-      { k:'concentracao', regex:/^CONCENTRA[ÇC][ÃA]O$/i }
+       LIMITAÇÃO IMPORTANTE: no PDF do CIS Assessment os 16 traços
+       são posições VISUAIS no gráfico de radar — apenas os LABELS
+       aparecem como texto extraível, os VALORES numéricos não estão
+       no fluxo de texto do PDF. Por isso o parser NÃO tenta extraí-los
+       (qualquer tentativa puxaria números errados de outros blocos
+       por proximidade espacial — DISC, escala 0-20-40-60-80-100, etc).
+
+       Os 16 traços ficam para preenchimento manual (visualmente,
+       olhando o radar do PDF anexado) OU via 🪄 Extrair com IA que
+       usa visão multimodal (Claude/GPT-4o veem a imagem). */
+    var TRACOS_LABELS_DETECTADOS = 0;
+    var TRACOS_MAP_DETECT = [
+      /^OUSADIA$/i, /^COMANDO$/i, /^OBJETIVIDADE$/i, /^ASSERTIVIDADE$/i,
+      /^PERSUAS[ÃA]O$/i, /^EXTROVERS[ÃA]O$/i, /^ENTUSIASMO$/i, /^SOCIABILIDADE$/i,
+      /^EMPATIA$/i, /^PACI[ÊE]NCIA$/i, /^PERSIST[ÊE]NCIA$/i, /^PLANEJAMENTO$/i,
+      /^ORGANIZA[ÇC][ÃA]O$/i, /^DETALHISMO$/i, /^PRUD[ÊE]NCIA$/i, /^CONCENTRA[ÇC][ÃA]O$/i
     ];
-    TRACOS_MAP.forEach(function(tr){
-      var labelTok = tokens.filter(function(t){ return tr.regex.test(t.str.trim()); })[0];
-      if(!labelTok) return;
-      /* Acha número mais próximo (menor distância euclidiana) que
-         seja 0-100 e não tenha "%" colado nem seja parte de outra label. */
-      var melhorDist = Infinity, melhorN = null;
-      tokens.forEach(function(t){
-        if(t.pi !== labelTok.pi) return;
-        var s = t.str.trim();
-        var m = s.match(/^(\d{1,3})$/);
-        if(!m) return;
-        var n = parseInt(m[1], 10);
-        if(n < 0 || n > 100) return;
-        var dx = t.x - labelTok.x;
-        var dy = t.y - labelTok.y;
-        var d = Math.sqrt(dx*dx + dy*dy);
-        if(d < melhorDist){ melhorDist = d; melhorN = n; }
-      });
-      if(melhorN != null && melhorDist < 200){  /* threshold de proximidade */
-        dados.tracos[tr.k] = melhorN;
-        dados._achouAlgo = true;
-      }
+    TRACOS_MAP_DETECT.forEach(function(re){
+      if(tokens.some(function(t){ return re.test(t.str.trim()); })) TRACOS_LABELS_DETECTADOS++;
     });
+    dados._tracosDetectados = TRACOS_LABELS_DETECTADOS;
 
     /* ── D. 6 Valores motivacionais ──
        No CIS aparecem com labels como "CONHECIMENTO TEÓRICO 69"
@@ -1383,13 +1375,21 @@
     }
 
     if(sobrescritos === 0){
-      _toast('⚠ Nenhum campo válido encontrado no JSON', 'var(--amber)');
+      _toast('⚠ Nenhum campo válido encontrado', 'var(--amber)');
       return;
     }
     _renderForm();
     _salvar().then(function(){
-      var nota = dados.notas_de_mapeamento ? ' · '+dados.notas_de_mapeamento : '';
-      _toast('✅ '+sobrescritos+' campo(s) preenchido(s)'+nota, 'var(--accent)');
+      var msg = '✅ '+sobrescritos+' campo(s) preenchido(s)';
+      /* Aviso explícito quando vem do parser CIS local com labels mas sem números dos traços */
+      if(dados._tracosDetectados >= 12){
+        var nTracos = TRACOS_ORDEM.filter(function(t){ return _dossie.tracos[t.k] != null; }).length;
+        if(nTracos === 0){
+          msg += ' · ⚠ 16 traços: preencha manualmente olhando o radar (não estão como texto no PDF)';
+        }
+      }
+      if(dados.notas_de_mapeamento) msg += ' · '+dados.notas_de_mapeamento;
+      _toast(msg, 'var(--accent)');
       var ta = _g('icPerfRespExtrator');
       if(ta) ta.value = '';
     });
