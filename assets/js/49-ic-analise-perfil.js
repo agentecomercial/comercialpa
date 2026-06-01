@@ -1,71 +1,31 @@
 /* ═══════════════════════════════════════════════════════════════
-   49-ic-analise-perfil.js — Dossiê Comportamental + Análise IA
+   49-ic-analise-perfil.js — Dossiê Comportamental MINIMALISTA
    ═══════════════════════════════════════════════════════════════
-   Modal acessível pelo botão "🧬 Dossiê" na aba Desenvolvimento.
+   Versão simplificada: gestor anexa o PDF do perfil comportamental
+   (CIS Assessment ou qualquer outro formato), clica em "Gerar análise"
+   que copia um prompt pra IA com visão (Claude/GPT-4o), gestor anexa
+   o MESMO PDF na IA + cola o prompt, recebe JSON, cola de volta e
+   o sistema renderiza o plano contextualizado.
 
-   Captura DISC Natural+Adaptado, 3 dimensões cognitivas, 16 traços
-   comportamentais e 6 valores motivacionais. Permite:
+   Sem form estruturado, sem gráficos do sistema, sem parser local.
+   O gráfico fica no PDF anexado (já bonito, gerado pelo instrumento).
 
-     • Anexar arquivos (PDF/imagem) do perfil
-     • Preencher manualmente os campos
-     • Gerar análise por REGRAS (instantâneo, sem IA)
-     • Copiar prompt pronto pra colar em qualquer IA
-     • Colar resposta JSON da IA e renderizar plano contextualizado
-
-   Persistência: icPerfil/{consultorUid} no Firebase
-   Anexos via base64 inline (sem Storage — mantém file:// funcional)
+   Persistência: icPerfil/{consultorUid} no Firebase.
 ═══════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
 
-  /* ── Constantes ──────────────────────────────────────────────── */
-  var COMPS_FEBRACIS = [
-    'Prospecção','Qualificação','Apresentação','Negociação','Follow-up',
-    'Constância','Mix de produto','Aproveitamento','Visão (Oportunidades)'
-  ];
-
-  var TRACOS_ORDEM = [
-    {k:'ousadia',     l:'Ousadia'},
-    {k:'comando',     l:'Comando'},
-    {k:'objetividade',l:'Objetividade'},
-    {k:'assertividade',l:'Assertividade'},
-    {k:'persuasao',   l:'Persuasão'},
-    {k:'extroversao', l:'Extroversão'},
-    {k:'entusiasmo',  l:'Entusiasmo'},
-    {k:'sociabilidade',l:'Sociabilidade'},
-    {k:'empatia',     l:'Empatia'},
-    {k:'paciencia',   l:'Paciência'},
-    {k:'persistencia',l:'Persistência'},
-    {k:'planejamento',l:'Planejamento'},
-    {k:'organizacao', l:'Organização'},
-    {k:'detalhismo',  l:'Detalhismo'},
-    {k:'prudencia',   l:'Prudência'},
-    {k:'concentracao',l:'Concentração'}
-  ];
-
-  var VALORES_ORDEM = [
-    {k:'teorico',  l:'Conhecimento', sub:'Teórico'},
-    {k:'estetico', l:'Harmonia',     sub:'Estético'},
-    {k:'social',   l:'Altruísmo',    sub:'Social'},
-    {k:'politico', l:'Poder',        sub:'Político'},
-    {k:'economico',l:'Utilidade',    sub:'Econômico'},
-    {k:'religioso',l:'Princípios',   sub:'Religioso'}
-  ];
-
-  /* Caminhos dos prompts versionados (carregados on-demand) */
+  /* Caminho do prompt versionado (carregado on-demand) */
   var PROMPT_PATH = 'assets/prompts/analise-perfil-consultor.md';
-  var EXTRATOR_PATH = 'assets/prompts/extrair-perfil-pdf.md';
 
   /* ── Estado ──────────────────────────────────────────────────── */
   var _consultorAtual = null;  /* { uid, nome } */
-  var _dossie = null;          /* objeto completo do dossiê */
-  var _promptCache = null;     /* texto do prompt de análise (cache) */
-  var _extratorCache = null;   /* texto do prompt extrator (cache) */
+  var _dossie = null;
+  var _promptCache = null;
 
   /* ── Helpers ─────────────────────────────────────────────────── */
   function _g(id){ return document.getElementById(id); }
   function _v(id){ var el=_g(id); return el ? el.value : ''; }
-  function _n(id){ var x = parseFloat(_v(id)); return isNaN(x) ? null : x; }
   function _esc(s){
     return String(s==null?'':s)
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -76,32 +36,21 @@
     else console.log('[dossie]', msg);
   }
 
-  /* ── Dossiê padrão (vazio) ───────────────────────────────────── */
+  /* ── Dossiê padrão ───────────────────────────────────────────── */
   function _dossieVazio(){
     return {
-      origem: 'Mapa Comportamental (DISC + Valores)',
-      aplicadoEm: '',
-      proxReavaliacao: '',
       tempoCasa: '',
       cargo: 'Consultor',
-      disc: {
-        natural:  { D:null, I:null, S:null, C:null },
-        adaptado: { D:null, I:null, S:null, C:null }
-      },
-      dimensoes: {
-        extroversao: null,  /* 0-100, lado extroversão */
-        intuicao:    null,
-        pensamento:  null
-      },
-      tracos: TRACOS_ORDEM.reduce(function(o,t){ o[t.k]=null; return o; }, {}),
-      valores: VALORES_ORDEM.reduce(function(o,v){ o[v.k]=null; return o; }, {}),
+      aplicadoEm: '',
+      proxReavaliacao: '',
+      origem: 'CIS Assessment',
       anexos: [],
       analiseIA: null,
       atualizadoEm: null
     };
   }
 
-  /* ── Carregar dossiê do Firebase ─────────────────────────────── */
+  /* ── Carregar / Salvar ───────────────────────────────────────── */
   function _carregar(consultorUid){
     if(typeof window._fbGet !== 'function'){
       _dossie = _dossieVazio();
@@ -109,14 +58,9 @@
     }
     return window._fbGet('icPerfil/'+consultorUid).then(function(d){
       _dossie = d || _dossieVazio();
-      /* Garante shape completo (compat se vier de versão antiga) */
-      if(!_dossie.disc) _dossie.disc = _dossieVazio().disc;
-      if(!_dossie.disc.natural) _dossie.disc.natural = {D:null,I:null,S:null,C:null};
-      if(!_dossie.disc.adaptado) _dossie.disc.adaptado = {D:null,I:null,S:null,C:null};
-      if(!_dossie.dimensoes) _dossie.dimensoes = {extroversao:null,intuicao:null,pensamento:null};
-      if(!_dossie.tracos) _dossie.tracos = {};
-      if(!_dossie.valores) _dossie.valores = {};
       if(!Array.isArray(_dossie.anexos)) _dossie.anexos = [];
+      if(!_dossie.origem) _dossie.origem = 'CIS Assessment';
+      if(!_dossie.cargo) _dossie.cargo = 'Consultor';
       return _dossie;
     }).catch(function(){
       _dossie = _dossieVazio();
@@ -131,305 +75,30 @@
     return window._fbSave('icPerfil/'+_consultorAtual.uid, _dossie);
   }
 
-  /* ── Coleta dados do form pra o objeto _dossie ───────────────── */
   function _coletarForm(){
     _dossie.aplicadoEm      = _v('icPerfAplicadoEm');
     _dossie.proxReavaliacao = _v('icPerfProxReav');
     _dossie.tempoCasa       = _v('icPerfTempoCasa');
     _dossie.cargo           = _v('icPerfCargo') || 'Consultor';
-
-    ['D','I','S','C'].forEach(function(k){
-      _dossie.disc.natural[k]  = _n('icPerfDN_'+k);
-      _dossie.disc.adaptado[k] = _n('icPerfDA_'+k);
-    });
-
-    _dossie.dimensoes.extroversao = _n('icPerfDimExtr');
-    _dossie.dimensoes.intuicao    = _n('icPerfDimIntu');
-    _dossie.dimensoes.pensamento  = _n('icPerfDimPens');
-
-    TRACOS_ORDEM.forEach(function(t){
-      _dossie.tracos[t.k] = _n('icPerfTr_'+t.k);
-    });
-
-    VALORES_ORDEM.forEach(function(v){
-      _dossie.valores[v.k] = _n('icPerfVa_'+v.k);
-    });
   }
 
-  /* ── Render do form com dados atuais ─────────────────────────── */
+  /* ── Render ──────────────────────────────────────────────────── */
   function _renderForm(){
     if(!_dossie) _dossie = _dossieVazio();
-
     _g('icPerfNomeTit').textContent = _consultorAtual ? _consultorAtual.nome : '—';
     _g('icPerfAplicadoEm').value    = _dossie.aplicadoEm || '';
     _g('icPerfProxReav').value      = _dossie.proxReavaliacao || '';
     _g('icPerfTempoCasa').value     = _dossie.tempoCasa || '';
     _g('icPerfCargo').value         = _dossie.cargo || 'Consultor';
-
-    ['D','I','S','C'].forEach(function(k){
-      _g('icPerfDN_'+k).value = _dossie.disc.natural[k] == null ? '' : _dossie.disc.natural[k];
-      _g('icPerfDA_'+k).value = _dossie.disc.adaptado[k] == null ? '' : _dossie.disc.adaptado[k];
-    });
-
-    _g('icPerfDimExtr').value = _dossie.dimensoes.extroversao == null ? '' : _dossie.dimensoes.extroversao;
-    _g('icPerfDimIntu').value = _dossie.dimensoes.intuicao    == null ? '' : _dossie.dimensoes.intuicao;
-    _g('icPerfDimPens').value = _dossie.dimensoes.pensamento  == null ? '' : _dossie.dimensoes.pensamento;
-
-    TRACOS_ORDEM.forEach(function(t){
-      var el = _g('icPerfTr_'+t.k);
-      if(el) el.value = _dossie.tracos[t.k] == null ? '' : _dossie.tracos[t.k];
-    });
-
-    VALORES_ORDEM.forEach(function(v){
-      var el = _g('icPerfVa_'+v.k);
-      if(el) el.value = _dossie.valores[v.k] == null ? '' : _dossie.valores[v.k];
-    });
-
     _renderAnexos();
     _renderAnaliseAtual();
-    _calcularGaps();
-    _renderGraficos();
-  }
-
-  /* ── Gráficos SVG ────────────────────────────────────────────────
-     4 visualizações padronizadas do sistema, agnósticas ao formato
-     do PDF de origem. Renderizam em tempo real conforme o gestor
-     edita os campos. */
-
-  var COR_DISC = { D:'#ef4444', I:'#f59e0b', S:'#34d399', C:'#60a5fa' };
-
-  function _renderGraficos(){
-    _coletarForm();  /* garante que _dossie reflete o que está no form */
-    _renderGraficoDISC();
-    _renderGraficoDimensoes();
-    _renderGraficoTracos();
-    _renderGraficoValores();
-  }
-
-  /* ── Gráfico A · DISC Natural × Adaptado ── */
-  function _renderGraficoDISC(){
-    var el = _g('icPerfGrafDISC'); if(!el) return;
-    var nat = _dossie.disc.natural;
-    var ada = _dossie.disc.adaptado;
-    var temNat = nat.D!=null || nat.I!=null || nat.S!=null || nat.C!=null;
-    var temAda = ada.D!=null || ada.I!=null || ada.S!=null || ada.C!=null;
-    if(!temNat && !temAda){
-      el.innerHTML = '<div style="font-size:10px;color:var(--muted);text-align:center;padding:14px;font-style:italic;">preencha D/I/S/C para visualizar</div>';
-      return;
-    }
-    var eixos = ['D','I','S','C'];
-    var w = 380, h = 200, padTop = 30, padBot = 36, padL = 8;
-    var grupoW = (w - padL*2) / 2;            /* 2 grupos: Natural / Adaptado */
-    var barGap = 6;
-    var barW = (grupoW - (barGap * (eixos.length+1))) / eixos.length;
-    var altMax = h - padTop - padBot;
-
-    function _renderGrupo(xStart, vals, label){
-      var s = '<text x="'+(xStart + grupoW/2)+'" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="var(--accent)" letter-spacing="0.05em">'+label+'</text>';
-      eixos.forEach(function(eixo, i){
-        var v = vals[eixo];
-        var x = xStart + barGap + i*(barW + barGap);
-        var alt = (v==null) ? 0 : Math.max(0, Math.min(100, v)) / 100 * altMax;
-        var y = padTop + (altMax - alt);
-        var cor = COR_DISC[eixo];
-        s += '<rect x="'+x+'" y="'+padTop+'" width="'+barW+'" height="'+altMax+'" fill="rgba(255,255,255,.04)" rx="3"/>';
-        if(v!=null){
-          s += '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+alt+'" fill="'+cor+'" rx="3" opacity="0.9"/>';
-          s += '<text x="'+(x+barW/2)+'" y="'+(y-3)+'" text-anchor="middle" font-size="11" font-weight="700" fill="'+cor+'">'+v+'</text>';
-        } else {
-          s += '<text x="'+(x+barW/2)+'" y="'+(padTop + altMax/2)+'" text-anchor="middle" font-size="9" fill="var(--muted)" font-style="italic">—</text>';
-        }
-        s += '<text x="'+(x+barW/2)+'" y="'+(padTop + altMax + 14)+'" text-anchor="middle" font-size="11" font-weight="800" fill="'+cor+'">'+eixo+'</text>';
-      });
-      return s;
-    }
-
-    var svg = '<svg viewBox="0 0 '+w+' '+h+'" width="100%" preserveAspectRatio="xMidYMid meet" style="max-width:380px;">'
-      + _renderGrupo(padL, nat, 'NATURAL (ID)')
-      + _renderGrupo(padL + grupoW, ada, 'ADAPTADO (SCD)')
-      + '<line x1="'+(padL+grupoW)+'" y1="22" x2="'+(padL+grupoW)+'" y2="'+(h-padBot+10)+'" stroke="var(--border)" stroke-dasharray="2,3"/>';
-
-    /* Anotações de gap relevante */
-    var anotacoes = [];
-    eixos.forEach(function(eixo){
-      if(nat[eixo]!=null && ada[eixo]!=null){
-        var gap = ada[eixo] - nat[eixo];
-        if(Math.abs(gap) >= 10){
-          anotacoes.push(eixo+' '+(gap>0?'↑+':'↓')+gap);
-        }
-      }
-    });
-    if(anotacoes.length){
-      svg += '<text x="'+(w/2)+'" y="'+(h-6)+'" text-anchor="middle" font-size="10" fill="#f59e0b" font-weight="600">Δ '+anotacoes.join(' · ')+'</text>';
-    }
-    svg += '</svg>';
-    el.innerHTML = svg;
-  }
-
-  /* ── Gráfico B · 3 Dimensões cognitivas (sliders) ── */
-  function _renderGraficoDimensoes(){
-    var el = _g('icPerfGrafDim'); if(!el) return;
-    var dims = [
-      { v:_dossie.dimensoes.extroversao, esq:'Extroversão', dir:'Introversão', cor:'#f59e0b' },
-      { v:_dossie.dimensoes.intuicao,    esq:'Intuição',    dir:'Sensação',    cor:'#a78bfa' },
-      { v:_dossie.dimensoes.pensamento,  esq:'Pensamento',  dir:'Sentimento',  cor:'#60a5fa' }
-    ];
-    var preenchido = dims.some(function(d){ return d.v!=null; });
-    if(!preenchido){
-      el.innerHTML = '<div style="font-size:10px;color:var(--muted);text-align:center;padding:14px;font-style:italic;">preencha as 3 dimensões para visualizar</div>';
-      return;
-    }
-    var w = 460, rowH = 38, h = rowH * dims.length + 10;
-    var trackY0 = 18, padL = 100, padR = 100;
-    var svg = '<svg viewBox="0 0 '+w+' '+h+'" width="100%" preserveAspectRatio="xMidYMid meet">';
-    dims.forEach(function(d, i){
-      var y = i * rowH + trackY0;
-      var trackW = w - padL - padR;
-      svg += '<text x="'+(padL-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="var(--text)" font-weight="600">'+d.esq+'</text>';
-      svg += '<text x="'+(w-padR+8)+'" y="'+(y+4)+'" text-anchor="start" font-size="10" fill="var(--muted)">'+d.dir+'</text>';
-      /* trilho */
-      svg += '<rect x="'+padL+'" y="'+y+'" width="'+trackW+'" height="6" fill="rgba(255,255,255,.06)" rx="3"/>';
-      if(d.v != null){
-        var pct = Math.max(0, Math.min(100, d.v));
-        var bx = padL + (pct/100) * trackW;
-        /* fill esquerdo */
-        svg += '<rect x="'+padL+'" y="'+y+'" width="'+(bx-padL)+'" height="6" fill="'+d.cor+'" rx="3" opacity="0.7"/>';
-        /* bolinha */
-        svg += '<circle cx="'+bx+'" cy="'+(y+3)+'" r="7" fill="'+d.cor+'" stroke="var(--bg)" stroke-width="2"/>';
-        svg += '<text x="'+bx+'" y="'+(y-3)+'" text-anchor="middle" font-size="10" font-weight="700" fill="'+d.cor+'">'+pct+'%</text>';
-      }
-    });
-    svg += '</svg>';
-    el.innerHTML = svg;
-  }
-
-  /* ── Gráfico C · Radar 16 traços ── */
-  function _renderGraficoTracos(){
-    var el = _g('icPerfGrafTracos'); if(!el) return;
-    var labels = TRACOS_ORDEM.map(function(t){ return t.l; });
-    var vals = TRACOS_ORDEM.map(function(t){ return _dossie.tracos[t.k]; });
-    var N = labels.length;
-    var preenchidos = vals.filter(function(v){ return v!=null; }).length;
-
-    /* viewBox amplo para caber labels longos */
-    var VB = 460, cx = VB/2, cy = VB/2, raioMax = 145;
-    var svg = '<svg viewBox="0 0 '+VB+' '+VB+'" width="100%" preserveAspectRatio="xMidYMid meet" style="max-width:460px;">';
-
-    /* Grade circular: 20/40/60/80/100 — SEMPRE renderiza pra mostrar o esqueleto */
-    [20,40,60,80,100].forEach(function(esc){
-      var r = raioMax * esc / 100;
-      svg += '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--border)" stroke-width="1" opacity="0.5"/>';
-      svg += '<text x="'+(cx+4)+'" y="'+(cy-r+10)+'" font-size="8" fill="var(--muted)" opacity="0.6">'+esc+'</text>';
-    });
-
-    function _ang(i){ return (Math.PI*2*i/N) - Math.PI/2; }
-    function _pt(i, r){
-      var a = _ang(i);
-      return { x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r };
-    }
-
-    /* Linhas radiais + labels nas 16 pontas — SEMPRE renderiza */
-    for(var i=0; i<N; i++){
-      var p = _pt(i, raioMax);
-      svg += '<line x1="'+cx+'" y1="'+cy+'" x2="'+p.x+'" y2="'+p.y+'" stroke="var(--border)" stroke-width="1" opacity="0.4"/>';
-      var pl = _pt(i, raioMax + 22);
-      var anchor = (pl.x < cx-3) ? 'end' : (pl.x > cx+3 ? 'start' : 'middle');
-      var dy = (pl.y < cy-10) ? -2 : (pl.y > cy+10 ? 8 : 3);
-      svg += '<text x="'+pl.x+'" y="'+(pl.y+dy)+'" text-anchor="'+anchor+'" font-size="10" fill="var(--text)" font-weight="600">'+labels[i]+'</text>';
-    }
-
-    if(preenchidos === 0){
-      svg += '<text x="'+cx+'" y="'+cy+'" text-anchor="middle" font-size="11" fill="var(--muted)" font-style="italic">preencha os 16 traços</text>';
-    } else {
-      /* Polígono fechado: só com pontos PREENCHIDOS (pontos null são puladas).
-         Se faltam pontos, vira polígono incompleto mas reconhecível. */
-      var preench = [];
-      for(var i=0; i<N; i++){
-        if(vals[i] != null){
-          var r = Math.max(0, Math.min(100, vals[i])) / 100 * raioMax;
-          preench.push(_pt(i, r));
-        }
-      }
-      var pontosStr = preench.map(function(p){ return p.x.toFixed(1)+','+p.y.toFixed(1); }).join(' ');
-      if(preench.length >= 3){
-        svg += '<polygon points="'+pontosStr+'" fill="rgba(96,165,250,0.18)" stroke="#60a5fa" stroke-width="2"/>';
-      } else if(preench.length === 2){
-        svg += '<line x1="'+preench[0].x+'" y1="'+preench[0].y+'" x2="'+preench[1].x+'" y2="'+preench[1].y+'" stroke="#60a5fa" stroke-width="2"/>';
-      }
-
-      /* Pontos preenchidos com bolinha + valor flutuante */
-      for(var i=0; i<N; i++){
-        if(vals[i] == null) continue;
-        var r = Math.max(0, Math.min(100, vals[i])) / 100 * raioMax;
-        var p = _pt(i, r);
-        svg += '<circle cx="'+p.x+'" cy="'+p.y+'" r="4" fill="#60a5fa" stroke="var(--bg)" stroke-width="1.5"/>';
-        svg += '<text x="'+p.x+'" y="'+(p.y-7)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#60a5fa">'+vals[i]+'</text>';
-      }
-
-      /* Status: quantos preenchidos / 16 */
-      svg += '<text x="'+(VB-10)+'" y="'+(VB-10)+'" text-anchor="end" font-size="9" fill="var(--muted)">'+preenchidos+'/'+N+' traços</text>';
-    }
-
-    svg += '</svg>';
-    el.innerHTML = svg;
-  }
-
-  /* ── Gráfico D · 6 valores motivacionais (barras com faixa) ── */
-  function _renderGraficoValores(){
-    var el = _g('icPerfGrafVal'); if(!el) return;
-    var vals = VALORES_ORDEM.map(function(v){
-      return { l:v.l, sub:v.sub, k:v.k, v:_dossie.valores[v.k] };
-    });
-    var algum = vals.some(function(x){ return x.v!=null; });
-    if(!algum){
-      el.innerHTML = '<div style="font-size:10px;color:var(--muted);text-align:center;padding:14px;font-style:italic;">preencha os 6 valores para visualizar</div>';
-      return;
-    }
-    function _faixa(v){
-      if(v == null) return {cor:'#666', tag:'—'};
-      if(v > 55)    return {cor:'#34d399', tag:'Significativo'};
-      if(v >= 30)   return {cor:'#f59e0b', tag:'Circunstancial'};
-      return        {cor:'#9ca3af', tag:'Indiferente'};
-    }
-    var w = 520, rowH = 32, padTop = 32, padL = 130, padR = 120;
-    var trackW = w - padL - padR;
-    var h = padTop + rowH * vals.length + 8;
-    var svg = '<svg viewBox="0 0 '+w+' '+h+'" width="100%" preserveAspectRatio="xMidYMid meet">';
-    /* Cabeçalho com faixas */
-    var seg30 = padL + 30/100 * trackW;
-    var seg55 = padL + 55/100 * trackW;
-    svg += '<rect x="'+padL+'"  y="14" width="'+(seg30-padL)+'"   height="6" fill="rgba(156,163,175,.25)" rx="2"/>';
-    svg += '<rect x="'+seg30+'" y="14" width="'+(seg55-seg30)+'" height="6" fill="rgba(245,158,11,.25)"  rx="2"/>';
-    svg += '<rect x="'+seg55+'" y="14" width="'+(padL+trackW-seg55)+'" height="6" fill="rgba(52,211,153,.25)" rx="2"/>';
-    svg += '<text x="'+((padL+seg30)/2)+'"  y="10" text-anchor="middle" font-size="8" fill="var(--muted)">indif.</text>';
-    svg += '<text x="'+((seg30+seg55)/2)+'" y="10" text-anchor="middle" font-size="8" fill="#f59e0b">circunst.</text>';
-    svg += '<text x="'+((seg55+padL+trackW)/2)+'" y="10" text-anchor="middle" font-size="8" fill="#34d399">significativo</text>';
-
-    vals.forEach(function(d, i){
-      var y = padTop + i * rowH;
-      var f = _faixa(d.v);
-      svg += '<text x="'+(padL-8)+'" y="'+(y+12)+'" text-anchor="end" font-size="10" fill="var(--text)" font-weight="600">'+d.l+'</text>';
-      svg += '<text x="'+(padL-8)+'" y="'+(y+22)+'" text-anchor="end" font-size="8" fill="var(--muted)">('+d.sub+')</text>';
-      /* trilho */
-      svg += '<rect x="'+padL+'" y="'+(y+8)+'" width="'+trackW+'" height="10" fill="rgba(255,255,255,.04)" rx="3"/>';
-      if(d.v != null){
-        var bw = Math.max(0, Math.min(100, d.v)) / 100 * trackW;
-        svg += '<rect x="'+padL+'" y="'+(y+8)+'" width="'+bw+'" height="10" fill="'+f.cor+'" rx="3" opacity="0.9"/>';
-        svg += '<text x="'+(w-padR+8)+'" y="'+(y+12)+'" font-size="11" font-weight="700" fill="'+f.cor+'">'+d.v+'</text>';
-        svg += '<text x="'+(w-padR+8)+'" y="'+(y+22)+'" font-size="8" fill="'+f.cor+'" opacity="0.8">'+f.tag+'</text>';
-      } else {
-        svg += '<text x="'+(w-padR+8)+'" y="'+(y+16)+'" font-size="9" fill="var(--muted)" font-style="italic">—</text>';
-      }
-    });
-    svg += '</svg>';
-    el.innerHTML = svg;
   }
 
   function _renderAnexos(){
     var box = _g('icPerfAnexos');
     if(!box) return;
     if(!_dossie.anexos.length){
-      box.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px 0;">Nenhum anexo. Clique abaixo para adicionar PDF ou imagem.</div>';
+      box.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px 0;font-style:italic;">Nenhum anexo. Adicione o PDF do perfil comportamental para gerar a análise.</div>';
       return;
     }
     box.innerHTML = _dossie.anexos.map(function(a, i){
@@ -493,195 +162,21 @@
     _salvar();
   };
 
-  /* ── Cálculos automáticos: gaps Natural × Adaptado ───────────── */
-  function _calcularGaps(){
-    var box = _g('icPerfGaps');
-    if(!box) return;
-    var alertas = [];
-    ['D','I','S','C'].forEach(function(k){
-      var n = _dossie.disc.natural[k];
-      var a = _dossie.disc.adaptado[k];
-      if(n == null || a == null) return;
-      var gap = a - n;
-      if(Math.abs(gap) >= 15){
-        alertas.push({
-          eixo: k,
-          gap: gap,
-          natural: n,
-          adaptado: a,
-          msg: 'Gap '+(gap>0?'+':'')+gap+' em '+k+' (Natural '+n+' → Adaptado '+a+')'
-        });
-      }
-    });
-    if(!alertas.length){
-      box.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px 12px;background:var(--surface2);border-radius:6px;">Sem gaps significativos entre Natural e Adaptado (variação < 15).</div>';
-      return;
-    }
-    box.innerHTML = '<div style="font-size:11px;color:#f59e0b;padding:10px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:6px;">'
-      +'<b>⚠ Sinais de adaptação significativa:</b><br>'
-      +alertas.map(function(a){ return '• '+a.msg; }).join('<br>')
-      +'<div style="margin-top:6px;font-size:10px;color:var(--muted);">→ O consultor pode estar se "forçando" a um papel diferente da natureza. Monitorar fadiga emocional em 6-12 meses.</div>'
-      +'</div>';
-  }
-
-  /* ── Análise por REGRAS (sem IA) ─────────────────────────────── */
-  function _analiseRegras(){
-    var d = _dossie;
-    var nat = d.disc.natural;
-    if(!nat || nat.D == null){
-      _toast('⚠ Preencha pelo menos DISC Natural', 'var(--amber)');
-      return null;
-    }
-
-    /* Perfil dominante */
-    var ordem = ['D','I','S','C'].sort(function(a,b){
-      return (nat[b]||0) - (nat[a]||0);
-    });
-    var dominante = ordem[0];
-    var secundario = ordem[1];
-
-    /* Top traços e gaps */
-    var tracos = TRACOS_ORDEM.map(function(t){
-      return { l: t.l, v: d.tracos[t.k] };
-    }).filter(function(t){ return t.v != null; });
-    var topTracos = tracos.slice().sort(function(a,b){ return b.v - a.v; }).slice(0,5).filter(function(t){return t.v > 55;});
-    var gapsTracos = tracos.slice().sort(function(a,b){ return a.v - b.v; }).slice(0,5).filter(function(t){return t.v < 45;});
-
-    /* Valores motivacionais classificados */
-    var motivadores = VALORES_ORDEM.map(function(v){
-      return { l:v.l+' ('+v.sub+')', v:d.valores[v.k] };
-    }).filter(function(v){ return v.v != null; });
-    var significativos = motivadores.filter(function(v){ return v.v > 55; }).sort(function(a,b){return b.v-a.v;});
-    var indiferentes = motivadores.filter(function(v){ return v.v < 30; });
-
-    /* Framework por perfil dominante */
-    var FRAMEWORK = {
-      D: { nome: 'OKRs', razao: 'D dominante quer meta numérica, autonomia, desafio. OKR entrega isso.' },
-      I: { nome: 'GROW', razao: 'I dominante responde a perguntas guiadas e autonomia, não a metas impostas.' },
-      S: { nome: 'Balanced Scorecard', razao: 'S valoriza plano estável e equilíbrio entre frentes. BSC dá previsibilidade.' },
-      C: { nome: 'Performance Gap', razao: 'C quer plano detalhado, métrica e lógica. Gap analítico é o que ressoa.' }
-    };
-
-    /* Tom de feedback por dominante */
-    var TOM = {
-      D: { estilo: 'Direto, curto, vai ao ponto', formato: 'Frente a frente, sem rodeios', duracao: '15-20 min' },
-      I: { estilo: 'Empático, narrativo, com casos', formato: 'Frente a frente, conversado', duracao: '30-40 min' },
-      S: { estilo: 'Paciente, estruturado, sem surpresa', formato: 'Calmo, com pauta enviada antes', duracao: '30-40 min' },
-      C: { estilo: 'Detalhado, com dados e lógica', formato: 'Doc + reunião pra discutir', duracao: '40-50 min' }
-    };
-
-    /* Frase de abertura por dominante */
-    var FRASE = {
-      D: 'Me conta direto: qual foi sua maior vitória esse ciclo e o que você quer atacar agora?',
-      I: 'Antes da gente olhar números — me conta o que te deixou mais entusiasmado nesse ciclo.',
-      S: 'Vou te mostrar um panorama do ciclo. Me diz, com calma, como você se sentiu em cada parte.',
-      C: 'Trouxe os números detalhados. Vamos analisar o que os dados estão dizendo sobre o ciclo?'
-    };
-
-    return {
-      leitura_geral: {
-        perfil_dominante: dominante,
-        perfil_secundario: secundario,
-        resumo_uma_frase: 'Perfil '+dominante+' dominante (Natural='+nat[dominante]+'), secundário '+secundario+' — '+
-          (topTracos.length ? 'pontos fortes em '+topTracos.slice(0,2).map(function(t){return t.l;}).join(' e ') : 'sem traços altos preenchidos')+'.',
-        alerta_principal: _alertaGap(),
-        sinal_de_atencao_kpi: 'Análise por regras — para correlação fina entre traços e KPIs, use a opção IA.'
-      },
-      competencias_alvo_sugeridas: _compsSugeridasRegras(dominante, gapsTracos),
-      framework_pdi_recomendado: {
-        nome: FRAMEWORK[dominante].nome,
-        razao: FRAMEWORK[dominante].razao,
-        tradeoff: 'Análise por regras — cada framework tem tradeoffs; veja na aba PDI.'
-      },
-      tom_de_feedback: {
-        estilo_geral: TOM[dominante].estilo,
-        formato_ideal: TOM[dominante].formato,
-        duracao_max: TOM[dominante].duracao,
-        publico_vs_privado: 'Privado por padrão'
-      },
-      frase_de_abertura_1a1: FRASE[dominante],
-      motivadores_para_usar: significativos.slice(0,3).map(function(m){
-        return { motivador: m.l+' = '+m.v, como_usar: 'Vincule reconhecimento e metas a esse motivador.', exemplo_frase: '' };
-      }),
-      evitar_absolutamente: [].concat(
-        indiferentes.slice(0,2).map(function(v){
-          return { comportamento:'Argumentar com base em '+v.l, porque:'Score '+v.v+' (indiferente) — não funciona como alavanca.' };
-        }),
-        gapsTracos.slice(0,2).map(function(t){
-          return { comportamento:'Exigir entregas que dependam de '+t.l+' sem apoio', porque:'Score '+t.v+' (baixo) — precisa estrutura externa.' };
-        })
-      ),
-      perguntas_para_aprofundar_no_proximo_1a1: [
-        'Em qual situação esse mês você se sentiu mais no seu elemento?',
-        'O que você gostaria de fazer MENOS no próximo ciclo?'
-      ],
-      campos_pendentes: _camposVaziosLista(),
-      _meta: { fonte:'regras', em: new Date().toISOString() }
-    };
-  }
-
-  function _alertaGap(){
-    var alertas = [];
-    ['D','I','S','C'].forEach(function(k){
-      var n = _dossie.disc.natural[k];
-      var a = _dossie.disc.adaptado[k];
-      if(n!=null && a!=null && Math.abs(a-n) >= 15){
-        alertas.push('Gap '+(a-n>0?'+':'')+(a-n)+' em '+k);
-      }
-    });
-    return alertas.length
-      ? alertas.join(' · ')+' — adaptação significativa, monitorar fadiga'
-      : 'Sem adaptação significativa entre Natural e Adaptado';
-  }
-
-  function _compsSugeridasRegras(dominante, gapsTracos){
-    /* Mapa heurístico: dominante → competências naturais */
-    var BASE = {
-      D: ['Negociação','Prospecção','Aproveitamento'],
-      I: ['Apresentação','Negociação','Prospecção'],
-      S: ['Follow-up','Constância','Qualificação'],
-      C: ['Qualificação','Mix de produto','Visão (Oportunidades)']
-    };
-    var bs = BASE[dominante] || ['Follow-up','Constância','Apresentação'];
-    return bs.slice(0,3).map(function(c, i){
-      return {
-        competencia: c,
-        prioridade: i+1,
-        porque: 'Sugestão por regra a partir do perfil '+dominante+' dominante.',
-        como_alavancar_perfil: 'Para análise correlacionada com seus traços fracos ('+
-          (gapsTracos.length ? gapsTracos.slice(0,2).map(function(t){return t.l;}).join(', ') : 'preencher 16 traços')+
-          '), use a opção IA.'
-      };
-    });
-  }
-
-  function _camposVaziosLista(){
-    var pend = [];
-    if(_dossie.disc.natural.D == null) pend.push('disc.natural');
-    if(_dossie.disc.adaptado.D == null) pend.push('disc.adaptado');
-    if(_dossie.dimensoes.extroversao == null) pend.push('dimensoes');
-    var nTr = TRACOS_ORDEM.filter(function(t){ return _dossie.tracos[t.k] != null; }).length;
-    if(nTr < 16) pend.push('tracos (faltam '+(16-nTr)+')');
-    var nVa = VALORES_ORDEM.filter(function(v){ return _dossie.valores[v.k] != null; }).length;
-    if(nVa < 6) pend.push('valores (faltam '+(6-nVa)+')');
-    return pend;
-  }
-
-  /* ── Renderização da análise (regras OU IA) ──────────────────── */
+  /* ── Render da análise (resultado da IA) ─────────────────────── */
   function _renderAnaliseAtual(){
     var box = _g('icPerfAnalise');
     if(!box) return;
     if(!_dossie.analiseIA){
-      box.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:14px;text-align:center;background:var(--surface2);border-radius:6px;">'
-        +'Nenhuma análise gerada ainda.<br>Use os botões abaixo para gerar.'
+      box.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:14px;text-align:center;background:var(--surface2);border-radius:6px;font-style:italic;">'
+        +'Nenhuma análise gerada ainda.<br>'
+        +'1. Anexe o PDF do perfil &middot; 2. Clique em "Copiar prompt" &middot; 3. Cole no Claude/ChatGPT (anexando o mesmo PDF) &middot; 4. Cole o JSON de resposta aqui'
         +'</div>';
       return;
     }
     var a = _dossie.analiseIA;
-    var fonte = a._meta && a._meta.fonte === 'regras' ? '📐 Regras' : '✨ IA';
     var quando = a._meta && a._meta.em ? new Date(a._meta.em).toLocaleString('pt-BR') : '';
 
-    var html = '<div style="font-size:10px;color:var(--muted);margin-bottom:10px;">Gerado por '+fonte+' · '+quando+'</div>';
+    var html = '<div style="font-size:10px;color:var(--muted);margin-bottom:10px;">Gerado por ✨ IA · '+quando+'</div>';
 
     if(a.leitura_geral){
       html += '<div class="ic-perf-bloco">'
@@ -772,17 +267,16 @@
 
     if(Array.isArray(a.campos_pendentes) && a.campos_pendentes.length){
       html += '<div style="margin-top:10px;padding:6px 10px;background:var(--surface2);border-radius:6px;font-size:10px;color:var(--muted);">'
-        +'⚠ Campos pendentes no input: '+a.campos_pendentes.map(_esc).join(', ')
+        +'⚠ Campos que a IA não conseguiu extrair: '+a.campos_pendentes.map(_esc).join(', ')
       +'</div>';
     }
 
     box.innerHTML = html;
   }
 
-  /* ── Carrega prompt do .md ───────────────────────────────────── */
+  /* ── Carrega prompt da IA ────────────────────────────────────── */
   function _carregarPrompt(){
     if(_promptCache) return Promise.resolve(_promptCache);
-    /* fetch() funciona em http://, falha em file:// — fallback embutido */
     return fetch(PROMPT_PATH).then(function(r){
       if(!r.ok) throw new Error('http '+r.status);
       return r.text();
@@ -790,27 +284,25 @@
       _promptCache = txt;
       return _promptCache;
     }).catch(function(){
-      /* Fallback: prompt mínimo embutido (caso fetch falhe — file://) */
       _promptCache = _promptFallback();
       return _promptCache;
     });
   }
 
   function _promptFallback(){
-    return '# ANÁLISE COMPORTAMENTAL — FALLBACK\n\n'
-      +'Você é consultor sênior em desenvolvimento de vendas (DISC + metodologias consultivas).\n'
-      +'Analise o consultor abaixo e responda ESTRITAMENTE em JSON válido (sem markdown wrappers).\n\n'
-      +'## INPUT\n\n'
-      +'Nome: {{NOME_CONSULTOR}}\n'
-      +'Tempo casa: {{TEMPO_CASA}}\n'
-      +'Cargo: {{CARGO}}\n\n'
-      +'KPIs: Faturado R$ {{FATURADO}} | Meta R$ {{META_BASICA}} ({{PCT_META}}%) | Conv {{CONVERSAO}}% | Ticket R$ {{TICKET_MEDIO}} | Posição {{POSICAO_RANKING}}/{{TOTAL_CONSULTORES}}\n\n'
-      +'9 Competências Febracis (1-10): Prosp {{NOTA_PROSP}} · Qual {{NOTA_QUAL}} · Apres {{NOTA_APRES}} · Neg {{NOTA_NEG}} · Fup {{NOTA_FUP}} · Const {{NOTA_CONST}} · Mix {{NOTA_MIX}} · Apr {{NOTA_APR}} · Vis {{NOTA_VIS}}\n\n'
-      +'DISC: D nat {{D_NAT}}/adap {{D_ADA}} · I nat {{I_NAT}}/adap {{I_ADA}} · S nat {{S_NAT}}/adap {{S_ADA}} · C nat {{C_NAT}}/adap {{C_ADA}}\n\n'
-      +'Dimensões: Extr {{EXTR}}% · Intu {{INTU}}% · Pens {{PENS}}%\n\n'
-      +'16 Traços: Ousadia {{T_OUS}} · Comando {{T_COM}} · Objetividade {{T_OBJ}} · Assertividade {{T_ASS}} · Persuasão {{T_PER}} · Extroversão {{T_EXT}} · Entusiasmo {{T_ENT}} · Sociabilidade {{T_SOC}} · Empatia {{T_EMP}} · Paciência {{T_PAC}} · Persistência {{T_PRS}} · Planejamento {{T_PLN}} · Organização {{T_ORG}} · Detalhismo {{T_DET}} · Prudência {{T_PRU}} · Concentração {{T_CON}}\n\n'
-      +'6 Valores: Teórico {{V_TEO}} · Estético {{V_EST}} · Social {{V_SOC}} · Político {{V_POL}} · Econômico {{V_ECO}} · Religioso {{V_REL}}\n\n'
-      +'## FORMATO DE SAÍDA (JSON puro)\n\n'
+    return '# ANÁLISE DE PERFIL COMPORTAMENTAL — FALLBACK\n\n'
+      +'Você é consultor sênior em desenvolvimento de vendas com domínio em metodologias DISC e vendas consultivas.\n'
+      +'O documento ANEXADO é o perfil comportamental completo de um consultor. Leia-o (incluindo gráficos visuais — DISC, dimensões, radar de traços, valores motivacionais) e produza uma análise contextualizada e acionável.\n\n'
+      +'## DADOS ADICIONAIS\n'
+      +'- Consultor: {{NOME_CONSULTOR}}\n'
+      +'- Tempo de casa: {{TEMPO_CASA}}\n'
+      +'- Cargo: {{CARGO}}\n'
+      +'- KPIs: Faturado R$ {{FATURADO}} · Meta R$ {{META_BASICA}} ({{PCT_META}}%) · Conversão {{CONVERSAO}}% · Ticket R$ {{TICKET_MEDIO}} · Posição {{POSICAO_RANKING}}/{{TOTAL_CONSULTORES}}\n\n'
+      +'## REGRAS\n'
+      +'- Responda APENAS com JSON (sem markdown wrappers, sem texto antes/depois)\n'
+      +'- Português do Brasil, tom profissional, sem clichê de coaching\n'
+      +'- Toda recomendação cita o dado visual de origem (ex: "I=58 dominante visível no DISC Natural")\n\n'
+      +'## FORMATO DE SAÍDA (JSON puro)\n'
       +'{"leitura_geral":{"perfil_dominante":"","perfil_secundario":"","resumo_uma_frase":"","alerta_principal":"","sinal_de_atencao_kpi":""},'
       +'"competencias_alvo_sugeridas":[{"competencia":"","prioridade":1,"porque":"","como_alavancar_perfil":""}],'
       +'"framework_pdi_recomendado":{"nome":"GROW","razao":"","tradeoff":""},'
@@ -819,7 +311,10 @@
       +'"motivadores_para_usar":[{"motivador":"","como_usar":"","exemplo_frase":""}],'
       +'"evitar_absolutamente":[{"comportamento":"","porque":""}],'
       +'"perguntas_para_aprofundar_no_proximo_1a1":[],'
-      +'"campos_pendentes":[]}';
+      +'"campos_pendentes":[]}\n\n'
+      +'competencia DEVE ser uma destas exatamente: "Prospecção" "Qualificação" "Apresentação" "Negociação" "Follow-up" "Constância" "Mix de produto" "Aproveitamento" "Visão (Oportunidades)"\n\n'
+      +'framework_pdi_recomendado.nome DEVE ser um destes: "GROW" "OKRs" "Performance Gap" "STAR" "Balanced Scorecard"\n\n'
+      +'Agora analise o PDF anexado e responda APENAS com o JSON.';
   }
 
   /* ── Monta prompt substituindo placeholders ──────────────────── */
@@ -827,11 +322,7 @@
     _coletarForm();
     var d = _dossie;
     var kpis = _coletarKpis();
-    var hist = _coletarHistorico();
-
-    function gap(n,a){ return (n!=null && a!=null) ? (a-n) : ''; }
     function v(x){ return x==null?'':x; }
-
     return prompt
       .replace(/\{\{NOME_CONSULTOR\}\}/g, _consultorAtual ? _consultorAtual.nome : '—')
       .replace(/\{\{TEMPO_CASA\}\}/g, v(d.tempoCasa))
@@ -842,49 +333,16 @@
       .replace(/\{\{CONVERSAO\}\}/g, v(kpis.conversao))
       .replace(/\{\{TICKET_MEDIO\}\}/g, v(kpis.ticket))
       .replace(/\{\{POSICAO_RANKING\}\}/g, v(kpis.pos))
-      .replace(/\{\{TOTAL_CONSULTORES\}\}/g, v(kpis.total))
-      .replace(/\{\{NOTA_PROSP\}\}/g, v(kpis.comps.prosp))
-      .replace(/\{\{NOTA_QUAL\}\}/g, v(kpis.comps.qual))
-      .replace(/\{\{NOTA_APRES\}\}/g, v(kpis.comps.apres))
-      .replace(/\{\{NOTA_NEG\}\}/g, v(kpis.comps.neg))
-      .replace(/\{\{NOTA_FUP\}\}/g, v(kpis.comps.fup))
-      .replace(/\{\{NOTA_CONST\}\}/g, v(kpis.comps.const_))
-      .replace(/\{\{NOTA_MIX\}\}/g, v(kpis.comps.mix))
-      .replace(/\{\{NOTA_APR\}\}/g, v(kpis.comps.apr))
-      .replace(/\{\{NOTA_VIS\}\}/g, v(kpis.comps.vis))
-      .replace(/\{\{D_NAT\}\}/g, v(d.disc.natural.D)).replace(/\{\{D_ADA\}\}/g, v(d.disc.adaptado.D)).replace(/\{\{D_GAP\}\}/g, v(gap(d.disc.natural.D, d.disc.adaptado.D)))
-      .replace(/\{\{I_NAT\}\}/g, v(d.disc.natural.I)).replace(/\{\{I_ADA\}\}/g, v(d.disc.adaptado.I)).replace(/\{\{I_GAP\}\}/g, v(gap(d.disc.natural.I, d.disc.adaptado.I)))
-      .replace(/\{\{S_NAT\}\}/g, v(d.disc.natural.S)).replace(/\{\{S_ADA\}\}/g, v(d.disc.adaptado.S)).replace(/\{\{S_GAP\}\}/g, v(gap(d.disc.natural.S, d.disc.adaptado.S)))
-      .replace(/\{\{C_NAT\}\}/g, v(d.disc.natural.C)).replace(/\{\{C_ADA\}\}/g, v(d.disc.adaptado.C)).replace(/\{\{C_GAP\}\}/g, v(gap(d.disc.natural.C, d.disc.adaptado.C)))
-      .replace(/\{\{EXTR\}\}/g, v(d.dimensoes.extroversao)).replace(/\{\{INTRO\}\}/g, d.dimensoes.extroversao!=null?(100-d.dimensoes.extroversao):'')
-      .replace(/\{\{INTU\}\}/g, v(d.dimensoes.intuicao)).replace(/\{\{SENS\}\}/g, d.dimensoes.intuicao!=null?(100-d.dimensoes.intuicao):'')
-      .replace(/\{\{PENS\}\}/g, v(d.dimensoes.pensamento)).replace(/\{\{SENT\}\}/g, d.dimensoes.pensamento!=null?(100-d.dimensoes.pensamento):'')
-      .replace(/\{\{T_OUS\}\}/g, v(d.tracos.ousadia)).replace(/\{\{T_COM\}\}/g, v(d.tracos.comando))
-      .replace(/\{\{T_OBJ\}\}/g, v(d.tracos.objetividade)).replace(/\{\{T_ASS\}\}/g, v(d.tracos.assertividade))
-      .replace(/\{\{T_PER\}\}/g, v(d.tracos.persuasao)).replace(/\{\{T_EXT\}\}/g, v(d.tracos.extroversao))
-      .replace(/\{\{T_ENT\}\}/g, v(d.tracos.entusiasmo)).replace(/\{\{T_SOC\}\}/g, v(d.tracos.sociabilidade))
-      .replace(/\{\{T_EMP\}\}/g, v(d.tracos.empatia)).replace(/\{\{T_PAC\}\}/g, v(d.tracos.paciencia))
-      .replace(/\{\{T_PRS\}\}/g, v(d.tracos.persistencia)).replace(/\{\{T_PLN\}\}/g, v(d.tracos.planejamento))
-      .replace(/\{\{T_ORG\}\}/g, v(d.tracos.organizacao)).replace(/\{\{T_DET\}\}/g, v(d.tracos.detalhismo))
-      .replace(/\{\{T_PRU\}\}/g, v(d.tracos.prudencia)).replace(/\{\{T_CON\}\}/g, v(d.tracos.concentracao))
-      .replace(/\{\{V_TEO\}\}/g, v(d.valores.teorico)).replace(/\{\{V_EST\}\}/g, v(d.valores.estetico))
-      .replace(/\{\{V_SOC\}\}/g, v(d.valores.social)).replace(/\{\{V_POL\}\}/g, v(d.valores.politico))
-      .replace(/\{\{V_ECO\}\}/g, v(d.valores.economico)).replace(/\{\{V_REL\}\}/g, v(d.valores.religioso))
-      .replace(/\{\{HISTORICO_CICLOS\}\}/g, hist.ciclos || 'não disponível')
-      .replace(/\{\{PDI_VIGENTE\}\}/g, hist.pdi || 'sem PDI vigente');
+      .replace(/\{\{TOTAL_CONSULTORES\}\}/g, v(kpis.total));
   }
 
   function _coletarKpis(){
-    /* Tenta puxar KPIs do consultor das fontes que já existem na IC.
-       Se nada estiver disponível, retorna placeholders vazios. */
     var nome = _consultorAtual && _consultorAtual.nome || '';
     var nomeUp = String(nome).toUpperCase();
     var kpis = {
       faturado:'', meta:'', pctMeta:'', conversao:'', ticket:'',
-      pos:'', total:'',
-      comps:{ prosp:'', qual:'', apres:'', neg:'', fup:'', const_:'', mix:'', apr:'', vis:'' }
+      pos:'', total:''
     };
-    /* KPIs do mês corrente (vindo do Pipeline _npPorConsultor) */
     if(typeof window._npTodasVendas === 'function' && typeof window._npPorConsultor === 'function'){
       try {
         var todas = window._npTodasVendas();
@@ -908,31 +366,15 @@
         }
       } catch(e){ /* silencioso */ }
     }
-    /* Competências do feedback mais recente do consultor */
-    /* (Por ora deixa em branco — o gestor pode preencher manual antes de copiar) */
     return kpis;
   }
 
-  function _coletarHistorico(){
-    /* Por ora retorna placeholder. Pode ser expandido pra puxar
-       feedbacks/PDI reais do consultor depois. */
-    return { ciclos:'', pdi:'' };
-  }
-
   /* ── Ações dos botões ────────────────────────────────────────── */
-  window._icPerfilGerarRegras = function(){
-    _coletarForm();
-    var analise = _analiseRegras();
-    if(!analise) return;
-    _dossie.analiseIA = analise;
-    _salvar().then(function(){
-      _renderAnaliseAtual();
-      _toast('✅ Análise por regras gerada', 'var(--accent)');
-    });
-  };
-
   window._icPerfilCopiarPrompt = function(){
     _coletarForm();
+    if(!_dossie.anexos.length){
+      if(!confirm('Nenhum PDF anexado. A IA não vai ter o perfil visual pra analisar.\n\nDeseja copiar o prompt mesmo assim?')) return;
+    }
     _carregarPrompt().then(function(prompt){
       var full = _montarPrompt(prompt);
       var ta = document.createElement('textarea');
@@ -945,7 +387,7 @@
       document.body.removeChild(ta);
       if(navigator.clipboard && navigator.clipboard.writeText){
         navigator.clipboard.writeText(full).then(function(){
-          _toast('✅ Prompt copiado ('+Math.round(full.length/1024)+' KB) — cole no Claude/ChatGPT', 'var(--accent)');
+          _toast('✅ Prompt copiado · Abra Claude/ChatGPT, ANEXE O PDF do perfil + cole', 'var(--accent)');
         }).catch(function(){
           if(ok) _toast('✅ Prompt copiado', 'var(--accent)');
           else _toast('⚠ Falha ao copiar — selecione manualmente', 'var(--amber)');
@@ -960,7 +402,6 @@
     var ta = _g('icPerfRespIA');
     var txt = ta ? ta.value.trim() : '';
     if(!txt){ _toast('⚠ Cole o JSON da resposta da IA antes', 'var(--amber)'); return; }
-    /* Tenta extrair JSON puro mesmo se vier embrulhado em ```json ... ``` */
     var match = txt.match(/```(?:json)?\s*([\s\S]*?)```/);
     if(match) txt = match[1].trim();
     var analise;
@@ -975,7 +416,7 @@
     _salvar().then(function(){
       _renderAnaliseAtual();
       if(ta) ta.value = '';
-      _toast('✅ Análise da IA aplicada e salva', 'var(--accent)');
+      _toast('✅ Análise aplicada e salva', 'var(--accent)');
     });
   };
 
@@ -983,7 +424,6 @@
     _coletarForm();
     _salvar().then(function(){
       _toast('💾 Dossiê salvo', 'var(--accent)');
-      _calcularGaps();
     });
   };
 
@@ -991,7 +431,7 @@
     if(!_consultorAtual){ _toast('⚠ Selecione um consultor primeiro', 'var(--amber)'); return; }
     var nome = _consultorAtual.nome || 'consultor';
     if(!confirm('Limpar TODOS os dados do dossiê de '+nome+'?\n\n'
-      +'• Apaga DISC, dimensões, traços, valores\n'
+      +'• Apaga identificação (datas, tempo de casa, cargo)\n'
       +'• Apaga anexos (PDFs/imagens)\n'
       +'• Apaga análise gerada\n\n'
       +'Não pode ser desfeito.')) return;
@@ -1003,431 +443,9 @@
     });
   };
 
-  /* ── EXTRATOR DE PDF/IMAGEM VIA IA ─────────────────────────────
-     Sistema é AGNÓSTICO ao formato do relatório de origem (qualquer
-     PDF/imagem de perfil DISC, MBTI, Big Five, etc.). O prompt
-     extrator orienta a IA a mapear nomes diferentes pro schema
-     padrão do sistema. */
-  function _carregarExtrator(){
-    if(_extratorCache) return Promise.resolve(_extratorCache);
-    return fetch(EXTRATOR_PATH).then(function(r){
-      if(!r.ok) throw new Error('http '+r.status);
-      return r.text();
-    }).then(function(txt){
-      _extratorCache = txt;
-      return _extratorCache;
-    }).catch(function(){
-      _extratorCache = _extratorFallback();
-      return _extratorCache;
-    });
-  }
-
-  function _extratorFallback(){
-    /* Fallback inline (caso fetch falhe — file://). */
-    return 'Você é um EXTRATOR de dados de relatórios comportamentais. '
-      +'Olhe o documento ANEXADO e devolva ESTRITAMENTE este JSON (sem texto antes/depois, sem markdown wrappers):\n\n'
-      +'{"meta":{"nome_consultor":"","instrumento":"","data_aplicacao":""},'
-      +'"disc":{"natural":{"D":null,"I":null,"S":null,"C":null},"adaptado":{"D":null,"I":null,"S":null,"C":null}},'
-      +'"dimensoes":{"extroversao":null,"intuicao":null,"pensamento":null},'
-      +'"tracos":{"ousadia":null,"comando":null,"objetividade":null,"assertividade":null,"persuasao":null,"extroversao":null,"entusiasmo":null,"sociabilidade":null,"empatia":null,"paciencia":null,"persistencia":null,"planejamento":null,"organizacao":null,"detalhismo":null,"prudencia":null,"concentracao":null},'
-      +'"valores":{"teorico":null,"estetico":null,"social":null,"politico":null,"economico":null,"religioso":null},'
-      +'"notas_de_mapeamento":"","campos_pendentes":[]}\n\n'
-      +'REGRAS:\n'
-      +'• Todos os números devem ser inteiros 0-100. Converta se a escala original for diferente.\n'
-      +'• Campos não encontrados = null (não invente).\n'
-      +'• DISC Natural pode aparecer como "Espontâneo", "ID", "Tendência". Adaptado como "Cargo", "SCD", "Máscara".\n'
-      +'• Traços renomeados pelo relatório (ex: "Foco" → "concentracao") devem ser mapeados e explicados em notas_de_mapeamento.\n'
-      +'• dimensoes.extroversao é o valor 0-100 do LADO ESQUERDO do par (Extroversão). O lado direito (Introversão) é 100 - valor.\n'
-      +'• Se o documento não for um relatório comportamental: responda {"erro":"documento não é um relatório de perfil comportamental"}\n\n'
-      +'Agora extraia e responda APENAS com o JSON.';
-  }
-
-  window._icPerfilCopiarExtrator = function(){
-    _carregarExtrator().then(function(extrator){
-      var ta = document.createElement('textarea');
-      ta.value = extrator;
-      ta.style.cssText = 'position:fixed;top:-9999px;';
-      document.body.appendChild(ta);
-      ta.select();
-      var ok = false;
-      try { ok = document.execCommand('copy'); } catch(e) {}
-      document.body.removeChild(ta);
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(extrator).then(function(){
-          _toast('✅ Prompt extrator copiado. Abra Claude/ChatGPT, anexe o PDF e cole.', 'var(--accent)');
-        }).catch(function(){
-          if(ok) _toast('✅ Prompt extrator copiado', 'var(--accent)');
-          else _toast('⚠ Copie manualmente do textarea', 'var(--amber)');
-        });
-      } else {
-        _toast(ok?'✅ Prompt extrator copiado':'⚠ Falha ao copiar', ok?'var(--accent)':'var(--amber)');
-      }
-    });
-  };
-
-  window._icPerfilColarExtracao = function(){
-    var ta = _g('icPerfRespExtrator');
-    var txt = ta ? ta.value.trim() : '';
-    if(!txt){ _toast('⚠ Cole o JSON extraído pela IA antes', 'var(--amber)'); return; }
-    /* tira markdown wrappers se vierem */
-    var match = txt.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if(match) txt = match[1].trim();
-    var dados;
-    try {
-      dados = JSON.parse(txt);
-    } catch(e){
-      _toast('❌ JSON inválido: '+(e.message||e), 'var(--red)');
-      return;
-    }
-    if(dados.erro){
-      _toast('⚠ IA reportou: '+dados.erro, 'var(--amber)');
-      return;
-    }
-    _aplicarExtracao(dados);
-  };
-
-  /* ── EXTRATOR LOCAL · formato CIS Assessment ────────────────────
-     Usa pdf.js (assets/lib/pdfjs/) para ler texto do PDF anexado e
-     aplica parser específico do layout CIS Assessment (mesma estrutura
-     do exemplo da Roberta: 4 quadros DISC ID/SCD + 3 dimensões +
-     16 traços radar + 6 valores). Se reconhecer o formato, preenche
-     o form automaticamente sem precisar de IA externa. */
-  window._icPerfilExtrairCIS = function(){
-    if(typeof pdfjsLib === 'undefined'){
-      _toast('❌ pdf.js não carregou. Recarregue a página.', 'var(--red)');
-      return;
-    }
-    /* Acha o PDF mais recente nos anexos */
-    var pdfAnexo = null;
-    for(var i = _dossie.anexos.length-1; i >= 0; i--){
-      var a = _dossie.anexos[i];
-      if(a && a.dataUrl && (a.tipo === 'application/pdf' || (a.nome||'').toLowerCase().endsWith('.pdf'))){
-        pdfAnexo = a; break;
-      }
-    }
-    if(!pdfAnexo){
-      _toast('⚠ Anexe um PDF do CIS Assessment primeiro', 'var(--amber)');
-      return;
-    }
-    _toast('⏳ Extraindo dados do PDF…', 'var(--muted)');
-
-    /* Configura pdf.js para usar worker local (compat file://) */
-    if(!pdfjsLib.GlobalWorkerOptions.workerSrc){
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/lib/pdfjs/pdf.worker.min.js';
-    }
-
-    /* dataUrl → Uint8Array */
-    var base64 = pdfAnexo.dataUrl.split(',')[1];
-    var raw = atob(base64);
-    var arr = new Uint8Array(raw.length);
-    for(var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
-
-    pdfjsLib.getDocument({ data: arr }).promise.then(function(pdf){
-      var pagePromises = [];
-      for(var p = 1; p <= pdf.numPages; p++){
-        pagePromises.push(pdf.getPage(p).then(function(page){
-          return page.getTextContent().then(function(tc){
-            return tc.items.map(function(item){
-              return { str: item.str, x: item.transform[4], y: item.transform[5] };
-            });
-          });
-        }));
-      }
-      return Promise.all(pagePromises);
-    }).then(function(paginas){
-      /* Junta todos os tokens (com x/y) numa lista única */
-      var tokens = [];
-      paginas.forEach(function(pageTokens, pi){
-        pageTokens.forEach(function(t){
-          tokens.push({ str: t.str, x: t.x, y: t.y, pi: pi });
-        });
-      });
-
-      /* Debug: expõe tokens para inspeção no console */
-      window._lastPdfTokens = tokens;
-      console.group('%c[ic-perfil] PDF extraído: '+tokens.length+' tokens',
-        'background:#a78bfa;color:#fff;padding:3px 10px;font-weight:700;');
-      console.log('Acesso programático: window._lastPdfTokens');
-      console.log('Primeiros 30 tokens:', tokens.slice(0, 30).map(function(t){
-        return '['+t.pi+'] x='+Math.round(t.x)+' y='+Math.round(t.y)+' "'+t.str+'"';
-      }));
-      console.groupEnd();
-
-      var dados = _parsearCIS(tokens);
-      if(!dados._achouAlgo){
-        _toast('⚠ Não reconheci o formato CIS Assessment. Tente o botão 🪄 Extrair com IA.', 'var(--amber)');
-        return;
-      }
-      /* Aviso explícito sobre os 16 traços */
-      if(dados._tracosDetectados >= 12){
-        console.log('%c[ic-perfil] ⚠ 16 traços têm labels no PDF mas SEM números (são posições no radar). Preencher manualmente ou via 🪄 IA com visão.',
-          'color:#f59e0b;font-weight:600;');
-      }
-      _aplicarExtracao(dados);
-    }).catch(function(e){
-      console.error('[ic-perfil] Erro extraindo PDF:', e);
-      _toast('❌ Erro ao ler PDF: '+(e.message||e), 'var(--red)');
-    });
-  };
-
-  /* Parser específico CIS Assessment.
-     Espera tokens [{str, x, y, pi}, ...] do pdf.js.
-     Retorna objeto no schema do _aplicarExtracao. */
-  function _parsearCIS(tokens){
-    var dados = {
-      disc: { natural:{D:null,I:null,S:null,C:null}, adaptado:{D:null,I:null,S:null,C:null} },
-      dimensoes: { extroversao:null, intuicao:null, pensamento:null },
-      tracos: {}, valores: {},
-      meta: { instrumento:'CIS Assessment' },
-      notas_de_mapeamento: 'Extraído localmente do PDF (formato CIS Assessment).',
-      campos_pendentes: [],
-      _achouAlgo: false
-    };
-
-    var texto = tokens.map(function(t){ return t.str; }).join(' ');
-    var textoUp = texto.toUpperCase();
-
-    /* ── Detecta se é mesmo CIS Assessment (sentinelas) ── */
-    var ehCIS = textoUp.indexOf('NATURAL') >= 0
-      && textoUp.indexOf('ADAPTADO') >= 0
-      && (textoUp.indexOf('OUSADIA') >= 0 || textoUp.indexOf('COMANDO') >= 0)
-      && (textoUp.indexOf('CONHECIMENTO') >= 0 || textoUp.indexOf('TEÓRICO') >= 0 || textoUp.indexOf('TEORICO') >= 0);
-    if(!ehCIS){
-      /* Layout diferente — devolve sem _achouAlgo */
-      return dados;
-    }
-
-    /* ── A. DISC Natural × Adaptado ──
-       No CIS Assessment, os números aparecem na ordem visual:
-       NATURAL ... D-num I-num S-num C-num ... ADAPTADO ... D-num I-num S-num C-num
-       Vou achar o token "NATURAL", pegar próximos 4 números antes
-       de "ADAPTADO", e do "ADAPTADO" os próximos 4 antes de
-       "Extroversão". */
-    function _idxToken(predicado, ini){
-      ini = ini || 0;
-      for(var i = ini; i < tokens.length; i++){
-        if(predicado(tokens[i].str)) return i;
-      }
-      return -1;
-    }
-    function _proxNumeros(ini, qtd, ate){
-      var nums = [];
-      for(var i = ini; i < tokens.length && nums.length < qtd; i++){
-        if(ate && ate(tokens[i].str)) break;
-        var s = tokens[i].str.replace(',','.').trim();
-        /* aceita 0-100 inteiro (ignora % e outros símbolos) */
-        var m = s.match(/^(\d{1,3})$/);
-        if(m){
-          var n = parseInt(m[1], 10);
-          if(n >= 0 && n <= 100) nums.push(n);
-        }
-      }
-      return nums;
-    }
-
-    var iNat = _idxToken(function(s){ return /^NATURAL$/i.test(s.trim()); });
-    var iAda = _idxToken(function(s){ return /^ADAPTADO$/i.test(s.trim()); });
-
-    if(iNat >= 0 && iAda > iNat){
-      var numsNat = _proxNumeros(iNat+1, 4, function(s){ return /^ADAPTADO$/i.test(s.trim()); });
-      if(numsNat.length === 4){
-        dados.disc.natural.D = numsNat[0];
-        dados.disc.natural.I = numsNat[1];
-        dados.disc.natural.S = numsNat[2];
-        dados.disc.natural.C = numsNat[3];
-        dados._achouAlgo = true;
-      }
-    }
-    if(iAda >= 0){
-      var numsAda = _proxNumeros(iAda+1, 4, function(s){ return /Extroversão|Extroversao/i.test(s); });
-      if(numsAda.length === 4){
-        dados.disc.adaptado.D = numsAda[0];
-        dados.disc.adaptado.I = numsAda[1];
-        dados.disc.adaptado.S = numsAda[2];
-        dados.disc.adaptado.C = numsAda[3];
-        dados._achouAlgo = true;
-      }
-    }
-
-    /* ── B. 3 Dimensões (Extroversão/Intuição/Pensamento) ──
-       Padrão no texto bruto: "Extroversão - 54%" "Introversão - 46%"
-       Pega o número antes de "%". */
-    function _achaDim(palavraEsq){
-      var re = new RegExp(palavraEsq + '\\s*-?\\s*(\\d{1,3})\\s*%', 'i');
-      var m = texto.match(re);
-      return m ? parseInt(m[1], 10) : null;
-    }
-    var dExtr = _achaDim('Extrovers[ãa]o');
-    var dIntu = _achaDim('Intui[çc][ãa]o');
-    var dPens = _achaDim('Pensamento');
-    if(dExtr != null){ dados.dimensoes.extroversao = dExtr; dados._achouAlgo = true; }
-    if(dIntu != null){ dados.dimensoes.intuicao    = dIntu; dados._achouAlgo = true; }
-    if(dPens != null){ dados.dimensoes.pensamento  = dPens; dados._achouAlgo = true; }
-
-    /* ── C. 16 Traços (radar) ──
-       LIMITAÇÃO IMPORTANTE: no PDF do CIS Assessment os 16 traços
-       são posições VISUAIS no gráfico de radar — apenas os LABELS
-       aparecem como texto extraível, os VALORES numéricos não estão
-       no fluxo de texto do PDF. Por isso o parser NÃO tenta extraí-los
-       (qualquer tentativa puxaria números errados de outros blocos
-       por proximidade espacial — DISC, escala 0-20-40-60-80-100, etc).
-
-       Os 16 traços ficam para preenchimento manual (visualmente,
-       olhando o radar do PDF anexado) OU via 🪄 Extrair com IA que
-       usa visão multimodal (Claude/GPT-4o veem a imagem). */
-    var TRACOS_LABELS_DETECTADOS = 0;
-    var TRACOS_MAP_DETECT = [
-      /^OUSADIA$/i, /^COMANDO$/i, /^OBJETIVIDADE$/i, /^ASSERTIVIDADE$/i,
-      /^PERSUAS[ÃA]O$/i, /^EXTROVERS[ÃA]O$/i, /^ENTUSIASMO$/i, /^SOCIABILIDADE$/i,
-      /^EMPATIA$/i, /^PACI[ÊE]NCIA$/i, /^PERSIST[ÊE]NCIA$/i, /^PLANEJAMENTO$/i,
-      /^ORGANIZA[ÇC][ÃA]O$/i, /^DETALHISMO$/i, /^PRUD[ÊE]NCIA$/i, /^CONCENTRA[ÇC][ÃA]O$/i
-    ];
-    TRACOS_MAP_DETECT.forEach(function(re){
-      if(tokens.some(function(t){ return re.test(t.str.trim()); })) TRACOS_LABELS_DETECTADOS++;
-    });
-    dados._tracosDetectados = TRACOS_LABELS_DETECTADOS;
-
-    /* ── D. 6 Valores motivacionais ──
-       No CIS aparecem com labels como "CONHECIMENTO TEÓRICO 69"
-       (ou em colunas). Usa mesma estratégia de proximidade. */
-    var VALORES_MAP = [
-      { k:'teorico',  regex:/^CONHECIMENTO$|^TE[ÓO]RICO$/i },
-      { k:'estetico', regex:/^HARMONIA$|^EST[ÉE]TICO$/i },
-      { k:'social',   regex:/^ALTRU[ÍI]SMO$|^SOCIAL$/i },
-      { k:'politico', regex:/^PODER$|^POL[ÍI]TICO$/i },
-      { k:'economico',regex:/^UTILIDADE$|^ECON[ÔO]MICO$/i },
-      { k:'religioso',regex:/^PRINC[ÍI]PIOS$|^RELIGIOSO$/i }
-    ];
-    VALORES_MAP.forEach(function(vl){
-      var labelToks = tokens.filter(function(t){ return vl.regex.test(t.str.trim()); });
-      if(!labelToks.length) return;
-      /* Acha número 0-100 mais próximo de QUALQUER label do par */
-      var melhorDist = Infinity, melhorN = null;
-      tokens.forEach(function(t){
-        var s = t.str.trim();
-        var m = s.match(/^(\d{1,3})$/);
-        if(!m) return;
-        var n = parseInt(m[1], 10);
-        if(n < 0 || n > 100) return;
-        labelToks.forEach(function(lt){
-          if(t.pi !== lt.pi) return;
-          var dx = t.x - lt.x, dy = t.y - lt.y;
-          var d = Math.sqrt(dx*dx + dy*dy);
-          if(d < melhorDist){ melhorDist = d; melhorN = n; }
-        });
-      });
-      if(melhorN != null && melhorDist < 150){
-        dados.valores[vl.k] = melhorN;
-        dados._achouAlgo = true;
-      }
-    });
-
-    return dados;
-  }
-
-  function _aplicarExtracao(dados){
-    /* Aplica o JSON extraído ao _dossie e re-renderiza. Preserva
-       valores já preenchidos manualmente: só sobrescreve onde a
-       IA retornou número (campos null da IA não tocam nada). */
-    var sobrescritos = 0;
-
-    if(dados.disc){
-      ['natural','adaptado'].forEach(function(modo){
-        var src = dados.disc[modo];
-        if(!src) return;
-        ['D','I','S','C'].forEach(function(k){
-          if(src[k] != null && !isNaN(src[k])){
-            _dossie.disc[modo][k] = +src[k];
-            sobrescritos++;
-          }
-        });
-      });
-    }
-    if(dados.dimensoes){
-      ['extroversao','intuicao','pensamento'].forEach(function(k){
-        if(dados.dimensoes[k] != null && !isNaN(dados.dimensoes[k])){
-          _dossie.dimensoes[k] = +dados.dimensoes[k];
-          sobrescritos++;
-        }
-      });
-    }
-    if(dados.tracos){
-      TRACOS_ORDEM.forEach(function(t){
-        var v = dados.tracos[t.k];
-        if(v != null && !isNaN(v)){
-          _dossie.tracos[t.k] = +v;
-          sobrescritos++;
-        }
-      });
-    }
-    if(dados.valores){
-      VALORES_ORDEM.forEach(function(v){
-        var x = dados.valores[v.k];
-        if(x != null && !isNaN(x)){
-          _dossie.valores[v.k] = +x;
-          sobrescritos++;
-        }
-      });
-    }
-    if(dados.meta){
-      if(dados.meta.data_aplicacao) _dossie.aplicadoEm = dados.meta.data_aplicacao;
-      if(dados.meta.instrumento) _dossie.origem = dados.meta.instrumento;
-    }
-
-    if(sobrescritos === 0){
-      _toast('⚠ Nenhum campo válido encontrado', 'var(--amber)');
-      return;
-    }
-    _renderForm();
-    _salvar().then(function(){
-      var msg = '✅ '+sobrescritos+' campo(s) preenchido(s)';
-      /* Aviso explícito quando vem do parser CIS local com labels mas sem números dos traços */
-      if(dados._tracosDetectados >= 12){
-        var nTracos = TRACOS_ORDEM.filter(function(t){ return _dossie.tracos[t.k] != null; }).length;
-        if(nTracos === 0){
-          msg += ' · ⚠ 16 traços: preencha manualmente olhando o radar (não estão como texto no PDF)';
-        }
-      }
-      if(dados.notas_de_mapeamento) msg += ' · '+dados.notas_de_mapeamento;
-      _toast(msg, 'var(--accent)');
-      var ta = _g('icPerfRespExtrator');
-      if(ta) ta.value = '';
-    });
-  }
-
-  /* ── Listeners dos inputs (re-render gráficos + gaps em tempo real) ── */
-  function _bindListeners(){
-    if(_bindListeners._done) return; /* idempotente: só plug uma vez por sessão */
-    var ids = [];
-    /* DISC nat + adapt */
-    ['D','I','S','C'].forEach(function(k){
-      ids.push('icPerfDN_'+k);
-      ids.push('icPerfDA_'+k);
-    });
-    /* 3 dimensões */
-    ids.push('icPerfDimExtr','icPerfDimIntu','icPerfDimPens');
-    /* 16 traços */
-    TRACOS_ORDEM.forEach(function(t){ ids.push('icPerfTr_'+t.k); });
-    /* 6 valores */
-    VALORES_ORDEM.forEach(function(v){ ids.push('icPerfVa_'+v.k); });
-
-    ids.forEach(function(id){
-      var el = _g(id);
-      if(el){
-        el.addEventListener('input', function(){
-          _coletarForm();
-          _calcularGaps();
-          _renderGraficos();
-        });
-      }
-    });
-    _bindListeners._done = true;
-  }
-
   /* ── Modal open/close ────────────────────────────────────────── */
   window._icAbrirDossie = function(consultorUid, consultorNome){
     if(!consultorUid && !consultorNome){
-      /* Tenta inferir consultor selecionado na aba Desenvolvimento */
       var sel = _g('fbConsultor');
       if(sel){
         consultorNome = sel.value || '';
@@ -1446,10 +464,7 @@
       return;
     }
     modal.classList.add('open');
-    _carregar(_consultorAtual.uid).then(function(){
-      _renderForm();
-      _bindListeners();
-    });
+    _carregar(_consultorAtual.uid).then(_renderForm);
   };
 
   window._icFecharDossie = function(){
@@ -1459,7 +474,6 @@
     if(modal) modal.classList.remove('open');
   };
 
-  /* Atalho: tecla Esc fecha o modal */
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape'){
       var modal = _g('icPerfilModal');
@@ -1467,16 +481,9 @@
     }
   });
 
-  /* ── Helpers expostos para templates HTML inline ──────────────── */
-  window._icPerfilHelpers = {
-    TRACOS_ORDEM: TRACOS_ORDEM,
-    VALORES_ORDEM: VALORES_ORDEM,
-    COMPS_FEBRACIS: COMPS_FEBRACIS
-  };
-
   /* Banner */
   setTimeout(function(){
-    console.log('%c[ic-perfil] dossiê comportamental ativo — _icAbrirDossie(uid, nome)',
+    console.log('%c[ic-perfil] dossiê comportamental ativo (versão minimalista) — _icAbrirDossie(uid, nome)',
       'color:#a78bfa;font-weight:600;');
   }, 2000);
 
