@@ -32,6 +32,8 @@
   /* Colunas com toggle invertido (sessão-only). Se está no Set, o default vazia/cheia
      é invertido: vazia vira coluna expandida e cheia vira mini-vertical retraída. */
   const _colsToggleadas = new Set();
+  /* Painel Operação · Kanban inicia colapsado a cada login/entrada no funil. */
+  let _opCollapsed = true;
   let _booted = false;
   let _origensCustom = [];         // origens adicionadas pelo admin
   let _zerado = false;             // true = usuário fez reset, não auto-importa
@@ -172,8 +174,16 @@
 .fv-hist-t{ color:var(--txt-3,#6b7280); font-size:9px; white-space:nowrap; }
 
 .fv-op{ background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:14px; padding:14px; position:relative; }
-.fv-op-h{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 2px; flex-wrap:wrap; gap:8px; }
-.fv-op-tit{ font-size:13px; font-weight:600; color:var(--txt-2); text-transform:uppercase; letter-spacing:0.06em; }
+.fv-op-h{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 2px; flex-wrap:wrap; gap:8px; cursor:pointer; }
+.fv-op-h:hover .fv-op-tit{ color:var(--accent); }
+.fv-op-tit{ font-size:13px; font-weight:600; color:var(--txt-2); text-transform:uppercase; letter-spacing:0.06em; display:flex; align-items:center; gap:6px; }
+.fv-op-chev{ display:inline-block; transition:transform .15s; font-size:11px; color:var(--txt-3,#6b7280); }
+.fv-op.collapsed .fv-op-chev{ transform:rotate(-90deg); }
+.fv-op.collapsed{ padding-bottom:14px; }
+.fv-op.collapsed .fv-op-h{ margin-bottom:0; }
+.fv-op.collapsed .fv-kanban,
+.fv-op.collapsed .fv-lista-wrap,
+.fv-op.collapsed .fv-op-instr{ display:none !important; }
 .fv-op-actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 .fv-op-instr{ font-size:10px; color:var(--txt-3,#6b7280); font-style:italic; }
 .fv-vtoggle{ display:inline-flex; background:var(--bg-3,#1c2128); border:1px solid var(--border); border-radius:8px; padding:3px; gap:2px; }
@@ -490,9 +500,9 @@
             </div>
           </aside>
 
-          <section class="fv-op modo-fit" id="fvOp">
-            <div class="fv-op-h">
-              <div class="fv-op-tit">📋 Operação · <span id="fvModoLabel">Kanban</span></div>
+          <section class="fv-op modo-fit collapsed" id="fvOp">
+            <div class="fv-op-h" id="fvOpHeader" title="Clique para expandir/recolher">
+              <div class="fv-op-tit"><span class="fv-op-chev" id="fvOpChev">▾</span>📋 Operação · <span id="fvModoLabel">Kanban</span></div>
               <div class="fv-op-actions">
                 <div class="fv-op-instr" id="fvInstr">💡 Arraste cards · Clique p/ detalhar</div>
                 <button class="fv-btn fv-btn-primary" id="fvBtnFast" style="background:var(--blue);color:#0a0e1a;" title="Lead rápido (Nome+WhatsApp+Consultor+Origem) — abre o detalhe completo depois">⚡ Fast Lead</button>
@@ -2817,11 +2827,24 @@
     $('#fvListaClear').addEventListener('click', () => { _filtroEtapa = null; _render(); });
   }
 
+  /* Toggle do painel Operação · Kanban (header clicável).
+     Ignora clicks em botões/toggle de visão dentro do header. */
+  function _attachOpToggle(){
+    const header = $('#fvOpHeader'); const op = $('#fvOp');
+    if(!header || !op) return;
+    header.addEventListener('click', e => {
+      if(e.target.closest('button, .fv-vtoggle, .fv-vbtn')) return;
+      _opCollapsed = !_opCollapsed;
+      op.classList.toggle('collapsed', _opCollapsed);
+    });
+  }
+
   /* ── Init ── */
   async function _init(){
     _injectCss();
     _buildShell();
     _attachFiltros();
+    _attachOpToggle();
     document.documentElement.style.setProperty('--fv-max', _maxCards);
     await _carregar();
     // Permissão visual
