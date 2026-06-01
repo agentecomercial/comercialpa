@@ -371,10 +371,21 @@ function _renderTurmasSwim(turmas){
   var mesMap={};
   for(var m=1;m<=12;m++) mesMap[m]=[];
   turmasAno.forEach(function(t){var m=_swimExtrairMes(t);if(m>=1&&m<=12) mesMap[m].push(t);else mesMap[1].push(t);});
-  // Tipos únicos neste ano
-  var tiposSet={};
-  turmasAno.forEach(function(t){tiposSet[_swimExtrairTipo(t)]=true;});
-  var tipos=Object.keys(tiposSet).sort();
+  // Tipos únicos neste ano + mês mais recente de cada tipo (pra ordenação)
+  var tiposMesRecente={};
+  turmasAno.forEach(function(t){
+    var tipo=_swimExtrairTipo(t);
+    var mes=_swimExtrairMes(t)||1;
+    if(tiposMesRecente[tipo]==null || mes > tiposMesRecente[tipo]){
+      tiposMesRecente[tipo]=mes;
+    }
+  });
+  // Ordena por mês mais recente DESC (turma mais nova no topo); empate = alfabético
+  var tipos=Object.keys(tiposMesRecente).sort(function(a,b){
+    var ma=tiposMesRecente[a], mb=tiposMesRecente[b];
+    if(mb !== ma) return mb - ma;
+    return a.localeCompare(b,'pt-BR');
+  });
   var cols='110px repeat(12,1fr)';
   var html='<div class="swim-wrapper"><div style="display:grid;grid-template-columns:'+cols+';gap:3px;min-width:680px;">';
   // Cabeçalho
