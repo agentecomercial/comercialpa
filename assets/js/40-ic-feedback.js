@@ -277,15 +277,171 @@
     box.innerHTML = html;
   }
 
-  /* Placeholder: nas Etapas 2/3/4, esta função vai ocultar/mostrar
-     blocos do form de acordo com o modo (atributos data-modo-show).
-     Por ora, Etapa 1, mantém todos os blocos visíveis. */
+  /* Controla visibilidade dos blocos de acordo com o modo:
+     - card data-fbblk="pulse"      → visível em pulse + completo
+     - card data-fbblk="onboarding" → visível só em onboarding
+     - card data-fbblk="completo"   → visível só em completo
+     - card data-fbblk="todos" (default) → sempre visível
+     - card data-fbblk="exceto-onboarding" → escondido em onboarding */
   function _icFbRenderModoBlocos(){
-    /* Implementação completa nas Etapas 2/3/4 */
     var root = document.querySelector('[data-icpane="desenvolvimento"]');
     if(!root) return;
     root.setAttribute('data-fbmodo', _fbModo);
+    document.querySelectorAll('[data-fbblk]').forEach(function(el){
+      var blk = el.getAttribute('data-fbblk');
+      var show =
+        blk === 'todos' ||
+        (blk === 'pulse'      && (_fbModo === 'pulse' || _fbModo === 'completo')) ||
+        (blk === 'onboarding' &&  _fbModo === 'onboarding') ||
+        (blk === 'completo'   &&  _fbModo === 'completo') ||
+        (blk === 'exceto-onboarding' && _fbModo !== 'onboarding');
+      el.style.display = show ? '' : 'none';
+    });
+    /* Renderiza dados do bloco Pulse quando ativo */
+    _icFbRenderPulse();
+    _icFbRenderCompromissos();
   }
+
+  /* ── BLOCO PULSE: termômetro + delta + Stop/Start/Continue ── */
+  function _icFbRenderPulse(){
+    if(_fbModo !== 'pulse' && _fbModo !== 'completo') return;
+    _icFbRenderTermometro();
+    _icFbRenderDelta();
+    _icFbRenderStopStartContinue();
+  }
+
+  function _icFbRenderTermometro(){
+    var box = document.getElementById('fbTermometro');
+    if(!box || !_doc) return;
+    var v = _doc.termometro;
+    var EMOJIS = [
+      { v:1, e:'😞', l:'Mal' },
+      { v:2, e:'😐', l:'Cansado' },
+      { v:3, e:'🙂', l:'OK'  },
+      { v:4, e:'😊', l:'Bem' },
+      { v:5, e:'🤩', l:'Top' }
+    ];
+    box.innerHTML = '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      +EMOJIS.map(function(em){
+        var sel = v === em.v;
+        return '<button onclick="window._fbSetTermometro('+em.v+')" '
+          +'style="flex:1;min-width:60px;padding:10px 6px;background:'+(sel?'rgba(200,240,90,.18)':'var(--surface2)')+';'
+          +'border:'+(sel?'2px solid var(--accent)':'1px solid var(--border)')+';border-radius:8px;cursor:pointer;font-family:inherit;">'
+          +'<div style="font-size:24px;">'+em.e+'</div>'
+          +'<div style="font-size:10px;color:'+(sel?'var(--accent)':'var(--muted)')+';font-weight:'+(sel?'700':'500')+';margin-top:2px;">'+em.l+'</div>'
+          +'</button>';
+      }).join('')
+      +'</div>';
+  }
+  window._fbSetTermometro = function(v){
+    if(!_doc) return;
+    _doc.termometro = (_doc.termometro === v) ? null : v;
+    _icFbRenderTermometro();
+  };
+
+  function _icFbRenderDelta(){
+    var box = document.getElementById('fbDelta');
+    if(!box || !_doc) return;
+    var nome = (_consultorAtivo || '').toUpperCase();
+    var kpis = { faturado:'—', conv:'—', ticket:'—' };
+    var deltaFat = null, deltaConv = null;
+    try {
+      if(typeof window._npTodasVendas === 'function' && typeof window._npPorConsultor === 'function'){
+        var todas = window._npTodasVendas();
+        var rank = window._npPorConsultor(todas, '', 'pago');
+        var r = rank.find(function(x){ return String(x.nome).toUpperCase() === nome; });
+        if(r){
+          kpis.faturado = 'R$ '+r.pago.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+          kpis.conv = (r.qtd ? Math.round(r.qtdPago/r.qtd*100) : 0)+'%';
+          kpis.ticket = r.qtdPago ? ('R$ '+Math.round(r.pago/r.qtdPago).toLocaleString('pt-BR')) : '—';
+        }
+      }
+    } catch(e){ /* silencioso */ }
+    /* Compromissos do último pulse: quantos foram cumpridos */
+    var ultPulse = _historico.find(function(h){ return h && (h.tipo === 'pulse' || h.tipo === 'completo'); });
+    var compStat = '—';
+    if(ultPulse && Array.isArray(ultPulse.compromissos) && ultPulse.compromissos.length){
+      var done = ultPulse.compromissos.filter(function(c){ return c && c.feito; }).length;
+      compStat = done+'/'+ultPulse.compromissos.length+' cumpridos';
+    }
+    box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">'
+      + _deltaCard('💰 Faturado', kpis.faturado, '')
+      + _deltaCard('📈 Conversão', kpis.conv, '')
+      + _deltaCard('🎯 Ticket médio', kpis.ticket, '')
+      + _deltaCard('🤝 Último pulse', compStat, 'compromissos')
+      +'</div>';
+  }
+  function _deltaCard(titulo, valor, sub){
+    return '<div style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;">'
+      +'<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;">'+titulo+'</div>'
+      +'<div style="font-size:14px;color:var(--text);font-weight:700;margin-top:4px;">'+valor+'</div>'
+      +(sub?'<div style="font-size:9px;color:var(--muted);margin-top:2px;">'+sub+'</div>':'')
+      +'</div>';
+  }
+
+  function _icFbRenderStopStartContinue(){
+    if(!_doc) return;
+    if(!_doc.stopStartContinue) _doc.stopStartContinue = { stop:'', start:'', continue:'' };
+    var s = _doc.stopStartContinue;
+    var stop = document.getElementById('fbStop'); if(stop) stop.value = s.stop || '';
+    var start = document.getElementById('fbStart'); if(start) start.value = s.start || '';
+    var cont = document.getElementById('fbContinue'); if(cont) cont.value = s.continue || '';
+  }
+  window._fbSetSSC = function(campo, valor){
+    if(!_doc) return;
+    if(!_doc.stopStartContinue) _doc.stopStartContinue = { stop:'', start:'', continue:'' };
+    _doc.stopStartContinue[campo] = valor;
+  };
+
+  /* ── BLOCO COMPROMISSOS (próximos 15 dias úteis no Pulse) ── */
+  function _icFbRenderCompromissos(){
+    var box = document.getElementById('fbCompromissos');
+    if(!box || !_doc) return;
+    if(!Array.isArray(_doc.compromissos)) _doc.compromissos = [];
+    var dataBase = _doc.data || _hoje();
+    var prazoSugerido = '';
+    if(window._icAddDiasUteis){
+      var d = window._icAddDiasUteis(dataBase, 15);
+      prazoSugerido = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    }
+    var html = _doc.compromissos.map(function(c, i){
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;">'
+        +'<input type="checkbox" '+(c.feito?'checked':'')+' onchange="window._fbToggleCompr('+i+')" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);">'
+        +'<input type="text" value="'+_escAttr(c.texto||'')+'" oninput="window._fbSetComprTexto('+i+',this.value)" placeholder="Compromisso..." style="flex:1;padding:5px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:11px;font-family:inherit;">'
+        +'<input type="date" value="'+(c.prazo||prazoSugerido)+'" oninput="window._fbSetComprPrazo('+i+',this.value)" style="padding:5px 8px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:10px;font-family:inherit;width:135px;">'
+        +'<button onclick="window._fbRmCompr('+i+')" style="padding:4px 8px;background:transparent;color:#ef4444;border:1px solid rgba(239,68,68,.3);border-radius:4px;cursor:pointer;font-size:11px;">×</button>'
+        +'</div>';
+    }).join('');
+    html += '<button onclick="window._fbAddCompr()" style="margin-top:6px;padding:6px 14px;background:var(--surface2);color:var(--accent);border:1px dashed var(--accent);border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;font-family:inherit;">+ Adicionar compromisso</button>';
+    if(_doc.compromissos.length){
+      html += '<div style="font-size:10px;color:var(--muted);margin-top:8px;font-style:italic;">💡 Prazo padrão = 15 dias úteis a partir da data do ciclo (próximo pulse).</div>';
+    }
+    box.innerHTML = html;
+  }
+  window._fbAddCompr = function(){
+    if(!_doc) return;
+    if(!Array.isArray(_doc.compromissos)) _doc.compromissos = [];
+    if(_doc.compromissos.length >= 5){ if(typeof _showToast==='function') _showToast('⚠ Máximo 5 compromissos por ciclo.', 'var(--amber)'); return; }
+    var prazo = '';
+    if(window._icAddDiasUteis){
+      var d = window._icAddDiasUteis(_doc.data || _hoje(), 15);
+      prazo = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    }
+    _doc.compromissos.push({ texto:'', prazo:prazo, feito:false });
+    _icFbRenderCompromissos();
+  };
+  window._fbRmCompr = function(i){
+    if(!_doc || !_doc.compromissos) return;
+    _doc.compromissos.splice(i, 1);
+    _icFbRenderCompromissos();
+  };
+  window._fbToggleCompr = function(i){
+    if(!_doc || !_doc.compromissos[i]) return;
+    _doc.compromissos[i].feito = !_doc.compromissos[i].feito;
+    _icFbRenderCompromissos();
+  };
+  window._fbSetComprTexto = function(i, v){ if(_doc && _doc.compromissos[i]) _doc.compromissos[i].texto = v; };
+  window._fbSetComprPrazo = function(i, v){ if(_doc && _doc.compromissos[i]) _doc.compromissos[i].prazo = v; };
 
   function _icFbAplicarDocNaUI(){
     /* Re-render lista pra refletir mudança no número de competências */
