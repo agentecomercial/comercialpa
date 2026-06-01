@@ -1563,7 +1563,8 @@
       ts:Date.now()
     };
     var mk=_mesKey();
-    var path='pipelineSales/'+mk+'/'+(_npVendaEditId||('v'+Date.now()));
+    var vendaId = _npVendaEditId || ('v'+Date.now());
+    var path='pipelineSales/'+mk+'/'+vendaId;
     window._fbSave(path,obj).then(function(){
       if(typeof _showToast==='function')_showToast('✅ Venda salva!','var(--accent)');
       npFecharModalVenda();
@@ -1572,6 +1573,11 @@
         window._fbGet('pipelineSales/'+mk).then(function(d){
           _npVendasAvulso=d||{};_npRenderTudo();
         }).catch(function(){});
+      }
+      /* Sync automático pro Funil de Vendas (lead com status mapeado) */
+      if(typeof window._fvAdicionarLeadDePipeline === 'function'){
+        try { window._fvAdicionarLeadDePipeline(obj, vendaId); }
+        catch(e){ console.warn('[NP] sync funil falhou', e); }
       }
     }).catch(function(e){
       if(typeof _showToast==='function')_showToast('❌ Erro ao salvar.','var(--red)');

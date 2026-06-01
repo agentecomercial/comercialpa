@@ -457,6 +457,91 @@
     return 'm';
   }
 
+  /* ═══════════════════════════════════════════════════════════════
+     Importa AUTOMATICAMENTE uma venda criada/editada no Pipeline
+     Comercial pro Funil de Vendas. Chamada por npSalvarVenda do
+     11-pipeline-comercial.js após cada save bem-sucedido.
+
+     Dedupe por _pipelineVendaId — se já existe lead vinculado a
+     essa venda, ATUALIZA (mantém id do funil); senão CRIA novo.
+     ═══════════════════════════════════════════════════════════════ */
+  window._fvAdicionarLeadDePipeline = function(venda, vendaId){
+    if(!venda) return;
+    if(!_booted){
+      /* Funil ainda não foi aberto pelo gestor nessa sessão.
+         Carrega o doc do Firebase pra preservar leads existentes
+         antes de adicionar. */
+      return _carregar().then(function(){ _adicionarLeadInterno(venda, vendaId); });
+    }
+    _adicionarLeadInterno(venda, vendaId);
+  };
+
+  function _adicionarLeadInterno(venda, vendaId){
+    if(!vendaId) vendaId = venda.vendaId || venda.id || ('v_' + Date.now());
+    var statusV = String(venda.status || 'aberto').toLowerCase();
+
+    /* Cancelada: se já existe lead, marca como perdido; senão ignora */
+    if(statusV === 'cancelado' || statusV === 'cancelada'){
+      var idxC = _leads.findIndex(function(l){ return l._pipelineVendaId === vendaId; });
+      if(idxC >= 0){
+        _leads[idxC].etapa = -1;  /* sinal de perdido (não está no kanban) */
+        _historico.unshift({leadId:_leads[idxC].id, nome:_leads[idxC].nome, txt:'Venda cancelada no Pipeline → lead perdido', quando:new Date().toISOString(), autor:_papel(), tipo:'lost'});
+        _salvar(); if(_booted) _render();
+      }
+      return;
+    }
+
+    var etapa = _statusParaEtapa(statusV);
+    var temp = _tempPorStatus(statusV, etapa);
+    var idx = _leads.findIndex(function(l){ return l._pipelineVendaId === vendaId; });
+
+    if(idx >= 0){
+      /* Atualiza lead existente — preserva o id do funil */
+      var existente = _leads[idx];
+      var mudouEtapa = existente.etapa !== etapa;
+      existente.nome = venda.clienteNome || venda.cliente || existente.nome;
+      existente.valor = +(venda.valor) || existente.valor;
+      existente.consultor = venda.consultorNome || venda.consultor || existente.consultor;
+      existente.treinamento = venda.produto || venda.treinamento || existente.treinamento;
+      existente.origem = venda.origemManual || venda.origem || existente.origem;
+      existente.notas = venda.obs || existente.notas;
+      existente.etapa = etapa;
+      existente.temp = temp;
+      existente.prob = ETAPAS[etapa] ? ETAPAS[etapa].prob : existente.prob;
+      existente.atividade = existente.atividade || [];
+      if(mudouEtapa){
+        existente.atividade.unshift({quando:_hoje(), txt:'Status atualizado via Pipeline → '+(ETAPAS[etapa] ? ETAPAS[etapa].nome : statusV)});
+        _historico.unshift({leadId:existente.id, nome:existente.nome, txt:'Sync do Pipeline · '+(ETAPAS[etapa] ? ETAPAS[etapa].nome : statusV), quando:new Date().toISOString(), autor:_papel(), tipo:'sync'});
+      }
+    } else {
+      /* Cria novo lead */
+      var novo = {
+        id: _id(),
+        _pipelineVendaId: vendaId,
+        _src: 'pipeline',
+        nome: venda.clienteNome || venda.cliente || 'Sem nome',
+        empresa: '',
+        valor: +(venda.valor) || 0,
+        prob: ETAPAS[etapa] ? ETAPAS[etapa].prob : 30,
+        etapa: etapa,
+        treinamento: venda.produto || venda.treinamento || '',
+        origem: venda.origemManual || venda.origem || 'Pipeline',
+        consultor: venda.consultorNome || venda.consultor || '',
+        prazo: '',
+        temp: temp,
+        wpp: '',
+        email: '',
+        notas: venda.obs || '',
+        criadoEm: _hoje(),
+        atividade: [{quando:_hoje(), txt:'Importado do Pipeline · ' + (ETAPAS[etapa] ? ETAPAS[etapa].nome : statusV)}]
+      };
+      _leads.push(novo);
+      _historico.unshift({leadId:novo.id, nome:novo.nome, txt:'Novo lead via Pipeline em '+(ETAPAS[etapa] ? ETAPAS[etapa].nome : statusV), quando:new Date().toISOString(), autor:_papel(), tipo:'nova'});
+    }
+    _salvar();
+    if(_booted) _render();
+  }
+
   /* ─────────────────────────────────────────────────────────────
      Escaneia candidatos sem importar — retorna array com:
      { origemKey, origemNome, origemTipo:'turma'|'avulsa', duplicado, lead:{...} }
