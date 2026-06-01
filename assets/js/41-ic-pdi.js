@@ -45,57 +45,98 @@
     vis:   ['Perde oportunidade','Pipeline raso','Cultiva o suficiente','Cobertura > meta','Visão estratégica · cultiva, preserva e recupera']
   };
 
-  /* 5 frameworks de PDI suportados (Fase D) */
+  /* 5 frameworks de PDI suportados (Fase D)
+     Cada framework tem:
+       label  — nome curto
+       sub    — 1 linha que aparece no header (resumo do método)
+       desc   — 1-2 frases que aparecem no card de alvo (pra que serve)
+       quando — quando faz sentido usar este framework
+       campos — lista de campos {k, l, p, exp}
+                  k:   chave técnica
+                  l:   label visível
+                  p:   placeholder do textarea
+                  exp: explicação curta — o que escrever neste campo */
   var FRAMEWORKS = {
     GROW: {
       label: 'GROW',
       sub: 'Coaching estruturado · 4 perguntas',
+      desc: 'Método de coaching desenvolvido por John Whitmore. O gestor faz perguntas guiadas pra que o consultor DESCUBRA o caminho — não impõe a resposta.',
+      quando: 'Consultor sênior, autônomo, que responde bem a perguntas em vez de ordens. Ideal pra perfis I (Influência) e quando o foco é crescimento, não correção.',
       campos: [
-        { k:'G', l:'G · Goal',    p:'Onde você quer chegar?' },
-        { k:'R', l:'R · Reality', p:'Onde você está hoje?' },
-        { k:'O', l:'O · Options', p:'Quais 3 caminhos pra fechar o gap?' },
-        { k:'W', l:'W · Will',    p:'Qual você escolhe e quando começa?' }
+        { k:'G', l:'G · Goal (Meta)',      p:'Ex: "Fechar 20 vendas/mês com ticket médio ≥ R$ 5k"',
+          exp:'A meta CLARA, mensurável e com prazo. Quanto, do quê, até quando.' },
+        { k:'R', l:'R · Reality (Realidade)', p:'Ex: "Hoje fecho 12/mês com ticket R$ 3,5k · conversão 28%"',
+          exp:'Estado atual com fatos e dados. Não opiniões. Inclui obstáculos já conhecidos.' },
+        { k:'O', l:'O · Options (Opções)',   p:'Ex: "1) Aumentar prospecção 2) Subir ticket médio 3) Melhorar fechamento"',
+          exp:'Liste 3-5 caminhos POSSÍVEIS pra fechar o gap entre G e R. Quantidade > qualidade nesta fase.' },
+        { k:'W', l:'W · Will (Comprometimento)', p:'Ex: "Vou treinar SPIN 30min/dia + bloquear 17h pra follow-up. Começa 03/06."',
+          exp:'O QUE o consultor vai fazer (uma das opções), QUANDO começa, e como vai medir.' }
       ]
     },
     OKRs: {
       label: 'OKRs',
       sub: '1 Objetivo + 3-5 Key Results numéricos',
+      desc: 'Modelo do Vale do Silício (Google, Intel). Combina uma ambição qualitativa (Objetivo) com 3-5 métricas duras (Key Results) que provam se a ambição foi atingida.',
+      quando: 'Consultor com KPIs maduros, que valoriza meta numérica e gosta de ser cobrado por resultado. Ideal pra perfis D (Dominância) e consultores na meta querendo subir.',
       campos: [
-        { k:'O',   l:'Objetivo (qualitativo)',     p:'Ex: "Tornar-me referência em fechamento"' },
-        { k:'KR1', l:'KR1 (numérico, mensurável)', p:'Ex: "Conversão Negociação→Pago ≥ 40%"' },
-        { k:'KR2', l:'KR2',                        p:'Ex: "Ticket médio ≥ R$ 5.000"' },
-        { k:'KR3', l:'KR3',                        p:'Ex: "Follow-up D+1 em 100% dos casos"' }
+        { k:'O',   l:'Objetivo (qualitativo)',     p:'Ex: "Tornar-me referência em fechamento de objeções"',
+          exp:'Ambição inspiradora, não numérica. Como o consultor quer SER no fim do ciclo.' },
+        { k:'KR1', l:'KR1 (numérico, mensurável)', p:'Ex: "Conversão Negociação→Pago ≥ 40%"',
+          exp:'Métrica DURA que prova o Objetivo. Tem que dar pra medir no dashboard. Específico.' },
+        { k:'KR2', l:'KR2 (numérico, mensurável)', p:'Ex: "Ticket médio ≥ R$ 5.000"',
+          exp:'Outra métrica complementar. Cada KR deve cobrir uma faceta diferente do Objetivo.' },
+        { k:'KR3', l:'KR3 (numérico, mensurável)', p:'Ex: "Follow-up D+1 em 100% das negociações"',
+          exp:'Terceira métrica (KRs ideais: 3-5). Inclua pelo menos um KR de PROCESSO, não só resultado.' }
       ]
     },
     'Performance Gap': {
       label: 'Performance Gap',
       sub: 'KPI fraco → causa raiz → ação corretiva',
+      desc: 'Diagnóstico estilo médico: identifica o sintoma (KPI fraco), investiga a causa raiz, prescreve a correção e marca a re-medição. Foco em CORRIGIR, não em crescer.',
+      quando: 'Consultor abaixo da meta (≤ 70%). Quando você sabe que algo está fora do lugar e precisa atacar a causa real, não os sintomas.',
       campos: [
-        { k:'sintoma', l:'Sintoma (KPI fraco)',     p:'Ex: "Conversão 18%, abaixo da meta de 35%"' },
-        { k:'causa',   l:'Causa raiz (top hipótese)',p:'Ex: "Não cria urgência · deixa preço pra reunião 2"' },
-        { k:'acao',    l:'Ação corretiva',          p:'Ex: "Treinar SPIN 30min/dia por 2 semanas"' },
-        { k:'medir',   l:'Re-medição',              p:'Ex: "Conversão em 30 dias"' }
+        { k:'sintoma', l:'Sintoma (KPI fraco)',     p:'Ex: "Conversão 18%, meta 35% — caindo há 3 meses"',
+          exp:'O DADO objetivo que está abaixo do esperado. Não generalize ("ele não vende bem") — seja específico.' },
+        { k:'causa',   l:'Causa raiz (top hipótese)',p:'Ex: "Não cria urgência · deixa preço pra reunião 2 · cliente esfria"',
+          exp:'Investigue por que o KPI caiu. Liste 1-3 hipóteses concretas — comportamentos, não fatores externos.' },
+        { k:'acao',    l:'Ação corretiva',          p:'Ex: "Treinar SPIN 30min/dia por 2 semanas + role-play 1x/sem com Pablo"',
+          exp:'O QUE será feito pra ATACAR diretamente a causa raiz. Tem que ter prazo e responsável.' },
+        { k:'medir',   l:'Re-medição',              p:'Ex: "Conversão medida em 30 dias — meta interna: chegar a 28% no 1º mês"',
+          exp:'Como saberemos se a ação funcionou. Quando vai medir e qual o número aceitável de melhora.' }
       ]
     },
     STAR: {
       label: 'STAR',
       sub: 'Caso real → lição → ação futura',
+      desc: 'Análise retrospectiva de casos REAIS que aconteceram (vendas perdidas ou ganhas). Extrai aprendizado concreto e define o que mudar no próximo caso parecido.',
+      quando: 'Consultor que aprende melhor com EXEMPLOS do que com teoria. Ótimo pra discutir 2-3 vendas reais perdidas no mês e tirar lição prática.',
       campos: [
-        { k:'S',     l:'S · Situation', p:'Ex: "Cliente X, MASTER, lead frio"' },
-        { k:'T',     l:'T · Task',      p:'Ex: "Converter em 2 reuniões"' },
-        { k:'A',     l:'A · Action',    p:'Ex: "Mandei proposta no 1º contato"' },
-        { k:'R',     l:'R · Result',    p:'Ex: "Cliente sumiu"' },
-        { k:'licao', l:'Lição + ação futura', p:'Ex: "Nunca propor antes de mapear dor com SPIN"' }
+        { k:'S',     l:'S · Situation (Situação)',  p:'Ex: "Cliente X, MASTER de R$ 8k, lead frio do LinkedIn"',
+          exp:'O contexto FACTUAL do caso. Quem, quando, qual produto, em que canal.' },
+        { k:'T',     l:'T · Task (Tarefa)',          p:'Ex: "Converter em vendas em até 2 reuniões"',
+          exp:'O que o consultor PRECISAVA fazer naquela situação. A meta específica daquele caso.' },
+        { k:'A',     l:'A · Action (Ação)',          p:'Ex: "Mandei proposta direto no 1º contato sem mapear a dor"',
+          exp:'O que o consultor REALMENTE fez. Honesto, sem maquiar. Inclui o que NÃO fez também.' },
+        { k:'R',     l:'R · Result (Resultado)',     p:'Ex: "Cliente leu, não respondeu, sumiu após 3 follow-ups"',
+          exp:'O que aconteceu no fim. Vendeu? Perdeu? Por quê?' },
+        { k:'licao', l:'📍 Lição + ação futura',      p:'Ex: "Nunca propor antes de mapear dor com SPIN — bloquear 20min pra qualificar antes de qualquer proposta"',
+          exp:'O que esse caso ENSINA pra próximos casos parecidos. Compromisso concreto pra mudar.' }
       ]
     },
     'Balanced Scorecard': {
       label: 'Balanced Scorecard',
       sub: '4 perspectivas equilibradas',
+      desc: 'Framework do Kaplan & Norton (Harvard). Garante que o consultor não desenvolva só "venda" e ignore cliente/processo/aprendizado. Visão 360º.',
+      quando: 'Consultor sênior em desenvolvimento de carreira (não só performance imediata). Bom pra perfis S (Estabilidade) que valorizam equilíbrio entre frentes.',
       campos: [
-        { k:'fin',  l:'💰 Resultado financeiro', p:'Ex: "Meta de faturamento/comissão do trimestre"' },
-        { k:'cli',  l:'👥 Cliente',              p:'Ex: "NPS, retenção, indicações geradas"' },
-        { k:'proc', l:'⚙ Processo',             p:'Ex: "Tempo de ciclo, taxa de follow-up D+1"' },
-        { k:'aprd', l:'🌱 Aprendizado',          p:'Ex: "1 skill nova / livro / curso por ciclo"' }
+        { k:'fin',  l:'💰 Resultado financeiro',  p:'Ex: "Atingir meta básica nos 3 meses + 1 vez a master"',
+          exp:'O que ELE vai entregar em $$$ no ciclo. Faturamento, comissão, ticket — números brutos.' },
+        { k:'cli',  l:'👥 Cliente',               p:'Ex: "NPS ≥ 9 · 3 indicações orgânicas · zero reclamação no SAC"',
+          exp:'Qualidade da relação com o cliente. Retenção, satisfação, indicações — o que prova que o cliente confia.' },
+        { k:'proc', l:'⚙ Processo',              p:'Ex: "Follow-up D+1 em 100% · CRM atualizado diariamente · ciclo de venda < 14 dias"',
+          exp:'Como o consultor trabalha por dentro. Disciplina de CRM, cadência, uso das ferramentas.' },
+        { k:'aprd', l:'🌱 Aprendizado',           p:'Ex: "Concluir CIS Sales · ler 2 livros · 1 mentoria/semana com sênior"',
+          exp:'Como ele vai EVOLUIR no ciclo. Cursos, leituras, mentorias — investimento em si mesmo.' }
       ]
     }
   };
@@ -401,13 +442,14 @@
     var sug = _pdiSugerirFramework();
     var ehSug = sug.nome === atual;
     var def = FRAMEWORKS[atual] || FRAMEWORKS.GROW;
-    var html = '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">📐 Framework do PDI</div>'
-      +'<select id="pdiFrameworkSel" onchange="window._pdiSetFramework(this.value)" class="modal-select" style="width:100%;padding:7px 11px;font-size:12px;font-weight:700;">'
+    var html = '<select id="pdiFrameworkSel" onchange="window._pdiSetFramework(this.value)" class="modal-select" style="width:100%;padding:7px 11px;font-size:12px;font-weight:700;">'
       +FRAMEWORKS_ORDEM.map(function(f){
         return '<option value="'+f+'"'+(f===atual?' selected':'')+'>'+FRAMEWORKS[f].label+'</option>';
       }).join('')
       +'</select>'
-      +'<div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.4;">'+def.sub+'</div>';
+      +'<div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.4;font-weight:600;">'+def.sub+'</div>'
+      +(def.desc?'<div style="font-size:10px;color:var(--text);margin-top:6px;line-height:1.45;padding:6px 8px;background:var(--surface2);border-radius:5px;">'+def.desc+'</div>':'')
+      +(def.quando?'<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4;font-style:italic;"><b style="color:var(--accent);font-style:normal;">Quando usar:</b> '+def.quando+'</div>':'');
     if(!ehSug){
       html += '<div style="margin-top:8px;padding:6px 10px;background:rgba(96,165,250,.08);border-left:3px solid var(--blue);border-radius:4px;font-size:10px;color:var(--blue);">'
         +'💡 Sugerido: <b>'+sug.nome+'</b><br>'
@@ -722,13 +764,28 @@
     var dados = alvo.framework_dados[fw];
     var rows = def.campos.map(function(campo){
       var v = dados[campo.k] || '';
-      return '<div style="margin-bottom:8px;">'
-        +'<label style="display:block;font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">'+campo.l+'</label>'
+      return '<div style="margin-bottom:10px;">'
+        +'<label style="display:block;font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">'+campo.l+'</label>'
+        +(campo.exp?'<div style="font-size:10px;color:var(--muted);margin-bottom:5px;line-height:1.45;font-style:italic;">↳ '+_escAttr(campo.exp)+'</div>':'')
         +'<textarea oninput="window._pdiSetFwCampo('+i+',\''+campo.k+'\',this.value)" placeholder="'+_escAttr(campo.p)+'" style="width:100%;min-height:50px;padding:7px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:11px;font-family:inherit;line-height:1.5;resize:vertical;">'+_escAttr(v)+'</textarea>'
         +'</div>';
     }).join('');
+    /* Header explicativo do framework: o QUE é + QUANDO usar */
+    var headExp = '';
+    if(def.desc || def.quando){
+      headExp = '<details style="margin-bottom:10px;">'
+        +'<summary style="cursor:pointer;font-size:10px;color:#a78bfa;font-weight:600;padding:4px 0;list-style:none;outline:none;">'
+          +'<span style="display:inline-block;transform:translateY(-1px);">ℹ️</span> O que é este framework e quando usar'
+        +'</summary>'
+        +'<div style="margin-top:6px;padding:8px 10px;background:rgba(167,139,250,.08);border-radius:6px;font-size:11px;line-height:1.55;color:var(--text);">'
+          +(def.desc?'<div style="margin-bottom:5px;"><b style="color:#a78bfa;">O que é:</b> '+_escAttr(def.desc)+'</div>':'')
+          +(def.quando?'<div><b style="color:#a78bfa;">Quando usar:</b> '+_escAttr(def.quando)+'</div>':'')
+        +'</div>'
+      +'</details>';
+    }
     return '<div style="margin-bottom:14px;padding:12px;background:rgba(167,139,250,.04);border:1px solid rgba(167,139,250,.2);border-radius:8px;">'
       +'<div style="font-size:10px;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">📐 Plano · '+def.label+' <small style="color:var(--muted);font-weight:500;">· '+def.sub+'</small></div>'
+      +headExp
       +rows
       +'</div>';
   }
