@@ -476,8 +476,12 @@
      Sync EM LOTE de TODAS as vendas do Pipeline → Funil de Vendas.
      Usa 1 fetch + 1 save (não 1 por venda). Chamado pelo botão
      "↻ Atualizar dados" via 30-sync-ferramentas.js.
+
+     Filtro opcional por período:
+       { de: 'YYYY-MM', ate: 'YYYY-MM' }
+     Se omitido, processa TODAS as vendas de todos os meses.
      ═══════════════════════════════════════════════════════════════ */
-  window._fvSincronizarTodasDoPipeline = function(){
+  window._fvSincronizarTodasDoPipeline = function(periodo){
     if(typeof window._fbGet !== 'function' || typeof window._fbSave !== 'function'){
       console.warn('[FV-sync-all] Firebase indisponível');
       return Promise.resolve({ criados:0, atualizados:0, ignorados:0, total:0 });
@@ -503,8 +507,19 @@
 
       var criados = 0, atualizados = 0, ignorados = 0, total = 0;
 
-      /* Itera todos os meses · todas as vendas */
+      /* Filtro opcional de período (YYYY-MM) */
+      var deYM = periodo && periodo.de ? periodo.de : null;
+      var ateYM = periodo && periodo.ate ? periodo.ate : null;
+      function _mesNoPeriodo(mesYM){
+        if(!deYM && !ateYM) return true;
+        if(deYM && mesYM < deYM) return false;
+        if(ateYM && mesYM > ateYM) return false;
+        return true;
+      }
+
+      /* Itera todos os meses · todas as vendas (com filtro de período) */
       Object.keys(sales).forEach(function(mes){
+        if(!_mesNoPeriodo(mes)) return;
         var bucket = sales[mes] || {};
         Object.keys(bucket).forEach(function(vendaId){
           var venda = bucket[vendaId];
@@ -2116,4 +2131,92 @@
   window._fvLeads = () => _leads;
   window._fvImportar = () => { _zerado = false; return _importarDoPipeline(false); };
   window._fvZerar = _zerarTudo;
+
+  /* ═══════════════════════════════════════════════════════════════
+     Modal "Atualizar dados" — abre quando clica em ↻ Atualizar dados.
+     Pede pro gestor escolher o período antes de sincronizar Pipeline→Funil.
+     ═══════════════════════════════════════════════════════════════ */
+  window._fvAbrirModalAtualizar = function(){
+    /* Calcula presets a partir do mês corrente */
+    function _ymToStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+    function _addMes(d, n){ var x = new Date(d); x.setMonth(x.getMonth()+n); return x; }
+    var hoje = new Date();
+    var atual = _ymToStr(hoje);
+    var ult3 = _ymToStr(_addMes(hoje, -2));
+    var ult6 = _ymToStr(_addMes(hoje, -5));
+    var ult12 = _ymToStr(_addMes(hoje, -11));
+    var anoIni = hoje.getFullYear()+'-01';
+
+    /* Remove modal anterior se existir */
+    var prev = document.getElementById('fvModalAtualizar');
+    if(prev) prev.remove();
+
+    var html = '<div id="fvModalAtualizar" class="fv-overlay show" style="z-index:9999;">'
+      +'<div class="fv-modal" style="max-width:520px;">'
+        +'<div class="fv-modal-h"><div class="fv-modal-tit">↻ Atualizar dados</div><button class="fv-close" data-close>✕</button></div>'
+        +'<div class="fv-modal-b">'
+          +'<div style="font-size:13px;color:var(--text);margin-bottom:14px;line-height:1.5;">'
+            +'Atualiza KPIs do IC + sincroniza vendas do Pipeline pro Funil. <b>Escolha o período:</b>'
+          +'</div>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">'
+            +'<button class="fv-btn _fvPer" data-de="'+atual+'" data-ate="'+atual+'" data-lbl="Este mês ('+atual+')">📅 Este mês</button>'
+            +'<button class="fv-btn _fvPer" data-de="'+ult3+'" data-ate="'+atual+'" data-lbl="Últimos 3 meses ('+ult3+' → '+atual+')">📅 Últimos 3 meses</button>'
+            +'<button class="fv-btn _fvPer" data-de="'+ult6+'" data-ate="'+atual+'" data-lbl="Últimos 6 meses">📅 Últimos 6 meses</button>'
+            +'<button class="fv-btn _fvPer" data-de="'+ult12+'" data-ate="'+atual+'" data-lbl="Últimos 12 meses">📅 Últimos 12 meses</button>'
+            +'<button class="fv-btn _fvPer" data-de="'+anoIni+'" data-ate="'+atual+'" data-lbl="Ano corrente ('+hoje.getFullYear()+')">📅 Ano corrente</button>'
+            +'<button class="fv-btn _fvPer" data-de="" data-ate="" data-lbl="Todo o histórico">📅 Tudo</button>'
+          +'</div>'
+          +'<div style="font-size:11px;color:var(--txt-3,#6b7280);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">Ou personalize:</div>'
+          +'<div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">'
+            +'<div style="flex:1;min-width:140px;"><label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px;">De</label>'
+              +'<input type="month" id="fvPerDe" style="width:100%;padding:7px 10px;background:var(--bg-3,#1c2128);color:var(--text);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;"></div>'
+            +'<div style="flex:1;min-width:140px;"><label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px;">Até</label>'
+              +'<input type="month" id="fvPerAte" value="'+atual+'" style="width:100%;padding:7px 10px;background:var(--bg-3,#1c2128);color:var(--text);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;"></div>'
+            +'<button class="fv-btn fv-btn-primary" id="fvPerCustom">Aplicar</button>'
+          +'</div>'
+          +'<div id="fvPerResumo" style="font-size:11px;color:var(--accent);margin-top:12px;padding:8px 12px;background:rgba(200,240,90,.06);border-left:3px solid var(--accent);border-radius:4px;display:none;"></div>'
+        +'</div>'
+        +'<div class="fv-modal-f"><button class="fv-btn" data-close>Cancelar</button></div>'
+      +'</div>'
+    +'</div>';
+    var wrap = document.createElement('div'); wrap.innerHTML = html;
+    document.body.appendChild(wrap.firstElementChild);
+    var ov = document.getElementById('fvModalAtualizar');
+    ov.querySelectorAll('[data-close]').forEach(function(b){ b.addEventListener('click', function(){ ov.remove(); }); });
+    ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
+
+    function _executar(de, ate, label){
+      ov.remove();
+      if(typeof _showToast === 'function') _showToast('⏳ Atualizando · '+label, 'var(--muted)');
+      /* 1. Atualiza _mapDados (sem disparar sync default — vamos passar período custom) */
+      var prevFn = window._fvSincronizarTodasDoPipeline;
+      /* Substitui temporariamente pra passar período · restaura depois */
+      window._fvSincronizarTodasDoPipeline = function(){
+        return prevFn(de || ate ? { de: de, ate: ate } : null);
+      };
+      if(typeof window._mapCarregar === 'function'){
+        window._mapCarregar(true);
+      } else {
+        /* fallback: chama direto */
+        window._fvSincronizarTodasDoPipeline();
+      }
+      /* Restaura após 2s (tempo do _mapCarregar terminar) */
+      setTimeout(function(){ window._fvSincronizarTodasDoPipeline = prevFn; }, 3000);
+    }
+
+    ov.querySelectorAll('._fvPer').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        _executar(btn.dataset.de, btn.dataset.ate, btn.dataset.lbl);
+      });
+    });
+    document.getElementById('fvPerCustom').addEventListener('click', function(){
+      var de = document.getElementById('fvPerDe').value;
+      var ate = document.getElementById('fvPerAte').value;
+      if(!de && !ate){ _toast('Selecione ao menos uma data'); return; }
+      if(de && ate && de > ate){ _toast('Período inválido (De > Até)'); return; }
+      var lbl = (de || '∞') + ' → ' + (ate || '∞');
+      _executar(de, ate, lbl);
+    });
+  };
+
 })();
