@@ -1570,8 +1570,10 @@
     const ov = $('#fvNovoOv');
     const close = () => ov.remove();
     let tempSel = '';
-    /* Popular select de Turma direto do Firebase (async) +
-       adicionar consultores dos clientes dessas turmas no select de consultor */
+    /* Popular select de Turma direto do Firebase (async).
+       O select de Consultor NÃO é alterado aqui — usa exatamente as
+       mesmas fontes do filtro principal (síncronas, já populadas no
+       HTML acima). */
     if(typeof window._fbGet === 'function'){
       window._fbGet('turmas').then(d => {
         if(!d || typeof d !== 'object') return;
@@ -1581,38 +1583,6 @@
         if(turmaSel){
           turmaSel.innerHTML = '<option value="">— Nenhuma (lead avulso) —</option>'
             + turmasArr.map(t => `<option value="${esc(t.id)}">${esc(t.nome || t.titulo || t.id)}</option>`).join('');
-        }
-        /* Acrescenta consultores dos clientes ao select de Consultor */
-        const consSel = ov.querySelector('[data-k="consultor"]');
-        if(consSel){
-          const existentes = new Set(Array.from(consSel.options).map(o => (o.textContent||'').toUpperCase()));
-          const novos = [];
-          turmasArr.forEach(t => {
-            const cls = t.clientes || [];
-            const arr = Array.isArray(cls) ? cls : (typeof cls === 'object' ? Object.values(cls).filter(Boolean) : []);
-            arr.forEach(c => {
-              if(c && c.consultor){
-                const n = String(c.consultor).trim();
-                if(n && !existentes.has(n.toUpperCase())){
-                  existentes.add(n.toUpperCase());
-                  novos.push(n);
-                }
-              }
-            });
-          });
-          if(novos.length){
-            const valAtual = consSel.value;
-            novos.sort((a,b) => a.localeCompare(b, 'pt-BR')).forEach(n => {
-              const opt = document.createElement('option');
-              opt.textContent = n;
-              consSel.appendChild(opt);
-            });
-            /* Re-ordena tudo alfabético */
-            const opts = Array.from(consSel.options).sort((a,b) => (a.textContent||'').localeCompare(b.textContent||'', 'pt-BR'));
-            consSel.innerHTML = '';
-            opts.forEach(o => consSel.appendChild(o));
-            consSel.value = valAtual;
-          }
         }
       }).catch(() => {});
     }
