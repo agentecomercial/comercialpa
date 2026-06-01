@@ -27,6 +27,8 @@
   let _filtros = { cons:'', trein:'', turma:'', per:'mes', perDe:'', perAte:'', origem:'', busca:'', temp:'' };
   let _modoLista = false;
   let _maxCards = 5;
+  /* Cards colapsados (click simples toggleia). Sessão-only, sem persistência. */
+  const _cardsCollapsed = new Set();
   let _booted = false;
   let _origensCustom = [];         // origens adicionadas pelo admin
   let _zerado = false;             // true = usuário fez reset, não auto-importa
@@ -189,6 +191,36 @@
   font-variant-numeric:tabular-nums;
 }
 .fv-card-foot-valor b{ font-weight:800; }
+
+/* ─── Toggle colapsado/expandido do card ─── */
+.fv-card-chev{
+  position:absolute; top:7px; right:26px;
+  font-size:10px; color:var(--txt-3,#6b7280);
+  pointer-events:none; user-select:none;
+  transition:transform .15s;
+}
+.fv-card-edit{
+  position:absolute; top:5px; right:7px;
+  width:18px; height:18px; padding:0;
+  background:transparent; color:var(--txt-3,#6b7280);
+  border:1px solid rgba(255,255,255,.08); border-radius:4px;
+  font-size:10px; cursor:pointer; font-family:inherit; line-height:1;
+  transition:all .15s;
+}
+.fv-card-edit:hover{ color:var(--accent); border-color:var(--accent); background:rgba(200,240,90,.06); }
+/* Quando temp está ativo, o ícone do clima já ocupa o canto · sobe a edição e chevron */
+.fv-card-temp + .fv-card-edit{ right:30px; }
+.fv-card-temp + .fv-card-edit + .fv-card-chev{ right:50px; }
+
+/* Estado colapsado: esconde tudo menos cabeçalho compacto */
+.fv-card.collapsed{ padding-bottom:8px; cursor:pointer; }
+.fv-card.collapsed .fv-card-emp,
+.fv-card.collapsed .fv-card-row,
+.fv-card.collapsed .fv-card-foot,
+.fv-card.collapsed .fv-card-act,
+.fv-card.collapsed .fv-card-foot-valor{ display:none; }
+.fv-card.collapsed .fv-card-nome{ margin-bottom:3px; }
+.fv-card.collapsed .fv-card-val{ font-size:10px; }
 
 /* ─── OPÇÃO 8 · Colunas vazias iconizadas com nome em vertical ─── */
 .fv-col.fv-col-vazia{
@@ -1564,8 +1596,11 @@
     }
     const ult = l.atividade && l.atividade[l.atividade.length-1];
     const ultTxt = ult ? `${_difDias(ult.quando)}d atrás` : '—';
-    return `<div class="fv-card ${cardCls}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};">
+    const colapsado = _cardsCollapsed.has(l.id);
+    return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};">
       ${tempIcon?`<span class="fv-card-temp">${tempIcon}</span>`:''}
+      <button class="fv-card-edit" data-edit="${l.id}" title="Abrir detalhes do lead">✎</button>
+      <span class="fv-card-chev" title="${colapsado?'expandir':'recolher'}">${colapsado?'▸':'▾'}</span>
       <div class="fv-card-nome">${esc(l.nome)}</div>
       ${l.empresa?`<div class="fv-card-emp">${esc(l.empresa)}</div>`:''}
       <div class="fv-card-val">${moedaCurta(l.valor)} <span class="fv-card-prob ${probCls}">${l.prob||0}%</span></div>
@@ -1743,9 +1778,24 @@
       c.addEventListener('dragend', () => { c.classList.remove('dragging'); _dragId = null; });
       c.addEventListener('click', e => {
         if(e.target.closest('button')) return;
+        /* Click no card alterna colapsado/expandido. Pra abrir detalhe, use o botão ✎ */
+        const id = c.dataset.id;
+        if(_cardsCollapsed.has(id)) _cardsCollapsed.delete(id);
+        else _cardsCollapsed.add(id);
+        _render();
+      });
+      /* Duplo click abre detalhe (atalho extra) */
+      c.addEventListener('dblclick', e => {
+        if(e.target.closest('button')) return;
+        e.preventDefault();
         _abrirDetalhe(c.dataset.id);
       });
     });
+    /* Botão ✎ — abre detalhe (forma explícita) */
+    $$('.fv-card-edit').forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation();
+      _abrirDetalhe(b.dataset.edit);
+    }));
     $$('.fv-col').forEach(col => {
       col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('dragover'); });
       col.addEventListener('dragleave', () => col.classList.remove('dragover'));
