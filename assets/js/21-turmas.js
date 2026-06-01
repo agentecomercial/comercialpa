@@ -90,38 +90,128 @@ function _tturmasSetView(v){
   }
 }
 
+/* Seletor de ano · POPOVER com grade visual + badges de qtd de turmas
+   (mesmo padrão do modal Gerenciar Turmas) */
 function _renderTurmasYearBar(turmas){
   var bar=document.getElementById('turmasYearBar');
   if(!bar) return;
-  var anosSet={};
-  turmas.forEach(function(t){anosSet[_swimExtrairAno(t)]=true;});
-  var anos=Object.keys(anosSet).map(Number).sort();
+  // Contar turmas por ano
+  var anosCount={};
+  turmas.forEach(function(t){
+    var a=_swimExtrairAno(t);
+    anosCount[a]=(anosCount[a]||0)+1;
+  });
+  var anos=Object.keys(anosCount).map(Number).sort();
   if(!anos.length) anos=[new Date().getFullYear()];
-  // Juntar anos extras
+  // Juntar anos extras (adicionados via "+ Ano")
   _tturmasAnosExtra.forEach(function(a){if(anos.indexOf(a)===-1) anos.push(a);});
   anos.sort();
   if(anos.indexOf(_tturmasAnoAtual)===-1) _tturmasAnoAtual=anos[0];
-  bar.innerHTML='<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-right:4px;">Ano</span>';
-  anos.forEach(function(a){
-    var btn=document.createElement('button');
-    btn.className='swim-year-btn'+(a===_tturmasAnoAtual?' on':'');
-    btn.textContent=a;
-    btn.addEventListener('click',function(){_tturmasAnoAtual=a;_renderTurmasSwim(_tturmasCache);});
-    bar.appendChild(btn);
+
+  // Salva referência pra reabertura/reuso do popover
+  bar._turmasAnosCache = anos;
+  bar._turmasAnosCount = anosCount;
+
+  bar.innerHTML=
+    '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-right:4px;">Ano</span>'+
+    '<div id="turmasAnoPopWrap" style="position:relative;display:inline-block;">'+
+      '<button id="turmasAnoTrigger" type="button" '+
+        'style="padding:5px 14px;border-radius:20px;border:none;background:linear-gradient(180deg,#d4f565,#c8f05a);color:#0f0f0f;font-family:\'DM Sans\',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">'+
+        _tturmasAnoAtual+' <span style="font-size:10px;opacity:.7;">📅</span>'+
+      '</button>'+
+      '<div id="turmasAnoPopover" style="display:none;position:absolute;top:calc(100% + 8px);left:0;z-index:1600;'+
+        'background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:14px;'+
+        'box-shadow:0 8px 28px rgba(0,0,0,.5);min-width:280px;">'+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('turmasAnoTrigger').addEventListener('click', function(e){
+    e.stopPropagation();
+    _turmasAnoPopAbrir();
   });
-  var addBtn=document.createElement('button');
-  addBtn.className='swim-year-add';
-  addBtn.textContent='+ Ano';
-  addBtn.addEventListener('click',function(){
-    var allYears=Array.from(bar.querySelectorAll('.swim-year-btn')).map(function(b){return parseInt(b.textContent);});
-    var maxY=allYears.length?Math.max.apply(null,allYears):new Date().getFullYear();
+}
+
+function _turmasAnoPopAbrir(){
+  var pop=document.getElementById('turmasAnoPopover');
+  var bar=document.getElementById('turmasYearBar');
+  if(!pop || !bar) return;
+  if(pop.style.display==='block'){ _turmasAnoPopFechar(); return; }
+
+  // Recoleta contagem do cache salvo no bar
+  var anos=bar._turmasAnosCache||[];
+  var anosCount=bar._turmasAnosCount||{};
+  var totalTurmas=0;
+  anos.forEach(function(a){ totalTurmas+=(anosCount[a]||0); });
+
+  var html='<div style="font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">📅 Escolha o ano</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">';
+  anos.forEach(function(a){
+    var qtd=anosCount[a]||0;
+    var ativa=(a===_tturmasAnoAtual);
+    html+='<button class="turmas-pop-ano" data-ano="'+a+'" '+
+      'style="position:relative;background:'+(ativa?'linear-gradient(180deg,#d4f565,#c8f05a)':'var(--surface2)')+';color:'+(ativa?'#0f0f0f':'var(--text)')+';padding:10px 0;text-align:center;font-weight:800;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid '+(ativa?'transparent':'var(--border)')+';font-family:inherit;transition:all .15s;">'+
+      a+
+      (qtd>0?'<span style="position:absolute;top:2px;right:4px;font-size:8px;background:'+(ativa?'#0a0e1a':'var(--blue)')+';color:'+(ativa?'#c8f05a':'#0a0e1a')+';padding:0 5px;border-radius:6px;font-weight:800;">'+qtd+'</span>':'')+
+    '</button>';
+  });
+  html+='</div>';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);">'+
+    '<span>Total · '+totalTurmas+' turma'+(totalTurmas!==1?'s':'')+' em '+anos.length+' ano'+(anos.length!==1?'s':'')+'</span>'+
+    '<button id="turmasPopAddAno" type="button" style="background:transparent;border:none;color:var(--accent);font-weight:700;font-size:11px;cursor:pointer;font-family:inherit;">+ Adicionar ano</button>'+
+  '</div>';
+  pop.innerHTML=html;
+  pop.style.display='block';
+
+  // Click em cada ano
+  pop.querySelectorAll('.turmas-pop-ano').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var ano=parseInt(btn.getAttribute('data-ano'),10);
+      _tturmasAnoAtual=ano;
+      _turmasAnoPopFechar();
+      _renderTurmasSwim(_tturmasCache);
+    });
+    btn.addEventListener('mouseenter', function(){
+      if(!btn.style.background.includes('linear-gradient')){
+        btn.style.borderColor='var(--accent)';
+        btn.style.color='var(--accent)';
+      }
+    });
+    btn.addEventListener('mouseleave', function(){
+      if(!btn.style.background.includes('linear-gradient')){
+        btn.style.borderColor='var(--border)';
+        btn.style.color='var(--text)';
+      }
+    });
+  });
+  // Adicionar ano
+  document.getElementById('turmasPopAddAno').addEventListener('click', function(){
+    var maxY=anos.length?Math.max.apply(null,anos):new Date().getFullYear();
     var novo=maxY+1;
     _tturmasAnosExtra.push(novo);
     _tturmasAnoAtual=novo;
     _renderTurmasYearBar(_tturmasCache);
     _renderTurmasSwim(_tturmasCache);
+    setTimeout(_turmasAnoPopAbrir, 50);
   });
-  bar.appendChild(addBtn);
+
+  // Fechar com click fora
+  setTimeout(function(){
+    document.addEventListener('click', _turmasAnoPopOnDocClick);
+  }, 0);
+}
+
+function _turmasAnoPopFechar(){
+  var pop=document.getElementById('turmasAnoPopover');
+  if(pop) pop.style.display='none';
+  document.removeEventListener('click', _turmasAnoPopOnDocClick);
+}
+
+function _turmasAnoPopOnDocClick(e){
+  var pop=document.getElementById('turmasAnoPopover');
+  var trig=document.getElementById('turmasAnoTrigger');
+  if(!pop || !trig) return;
+  if(pop.contains(e.target) || trig.contains(e.target)) return;
+  _turmasAnoPopFechar();
 }
 
 
