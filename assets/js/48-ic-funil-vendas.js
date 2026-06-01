@@ -39,7 +39,14 @@
   const moedaCurta = v => { if(v==null||isNaN(+v)) return '—'; v=+v; if(v>=1e6) return 'R$ '+(v/1e6).toFixed(1).replace('.',',')+'M'; if(v>=1e3) return 'R$ '+(v/1e3).toFixed(1).replace('.',',')+'k'; return 'R$ '+v.toFixed(0); };
   const _id = ()=> 'l'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
   const _toast = m => window._showToast ? window._showToast(m) : console.log('[FV]', m);
-  const _hoje = () => { const d=new Date(); return d.toISOString().slice(0,10); };
+  /* Hoje em LOCAL (não UTC) → YYYY-MM-DD.
+     Antes usava toISOString() que dá midnight UTC; em UTC-3 (Brasil) isso
+     bagunçava datas próximas da meia-noite (lead criado às 22h vinha como
+     dia seguinte em UTC). */
+  const _hoje = () => {
+    const d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  };
   const _diasAteHoje = iso => { if(!iso) return null; const d=new Date(iso), h=new Date(); h.setHours(0,0,0,0); d.setHours(0,0,0,0); return Math.round((d-h)/86400000); };
   const _difDias = iso => { if(!iso) return null; const d=new Date(iso), n=new Date(); return Math.floor((n-d)/86400000); };
   const _inic = nome => (nome||'?').split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
@@ -1336,37 +1343,44 @@
         if(!((l.nome||'').toLowerCase().includes(q) || (l.empresa||'').toLowerCase().includes(q))) return false;
       }
       if(_filtros.temp && l.temp !== _filtros.temp) return false;
-      /* Filtro de período · usa l.criadoEm (YYYY-MM-DD) */
+      /* Filtro de período · usa l.criadoEm (YYYY-MM-DD)
+         IMPORTANTE: comparações de mês/ano são feitas via STRING (slice)
+         pra evitar bug de timezone com new Date('YYYY-MM-DD'), que o JS
+         interpreta como midnight UTC — em UTC-3 isso vira o dia anterior. */
       if(_filtros.per){
-        const dataLead = l.criadoEm || '';
-        if(!dataLead) return false; /* sem data não casa em nenhum filtro de período */
-        const dt = new Date(dataLead);
-        if(isNaN(dt.getTime())) return false;
-        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const dataLead = (l.criadoEm || '').slice(0,10);
+        if(!dataLead) return false;
+
+        /* Hoje em local (não UTC) → YYYY-MM-DD */
+        const _h = new Date();
+        const hojeYMD = _h.getFullYear()+'-'+String(_h.getMonth()+1).padStart(2,'0')+'-'+String(_h.getDate()).padStart(2,'0');
+        const hojeYM = hojeYMD.slice(0,7);
+        const hojeYear = hojeYMD.slice(0,4);
         const per = _filtros.per;
+
         if(per === '7' || per === '30'){
           const dias = _difDias(dataLead);
           if(dias == null || dias > +per) return false;
         } else if(per === 'mes'){
-          /* Mês corrente */
-          if(dt.getFullYear() !== hoje.getFullYear() || dt.getMonth() !== hoje.getMonth()) return false;
+          /* Mês corrente · compara YYYY-MM em string */
+          if(dataLead.slice(0,7) !== hojeYM) return false;
         } else if(per === 'mes-1'){
-          /* Mês anterior */
-          const ant = new Date(hoje.getFullYear(), hoje.getMonth()-1, 1);
-          if(dt.getFullYear() !== ant.getFullYear() || dt.getMonth() !== ant.getMonth()) return false;
+          /* Mês anterior · calcula em local */
+          const ant = new Date(_h.getFullYear(), _h.getMonth()-1, 1);
+          const antYM = ant.getFullYear()+'-'+String(ant.getMonth()+1).padStart(2,'0');
+          if(dataLead.slice(0,7) !== antYM) return false;
         } else if(per === 'trim'){
-          /* Trimestre atual (3 meses) */
-          const trimAtual = Math.floor(hoje.getMonth()/3);
-          const trimLead = Math.floor(dt.getMonth()/3);
-          if(dt.getFullYear() !== hoje.getFullYear() || trimLead !== trimAtual) return false;
+          /* Trimestre atual (3 meses do mesmo ano) */
+          if(dataLead.slice(0,4) !== hojeYear) return false;
+          const mesLead = parseInt(dataLead.slice(5,7), 10) - 1;
+          const trimAtual = Math.floor(_h.getMonth()/3);
+          if(Math.floor(mesLead/3) !== trimAtual) return false;
         } else if(per === 'ano'){
-          if(dt.getFullYear() !== hoje.getFullYear()) return false;
+          if(dataLead.slice(0,4) !== hojeYear) return false;
         } else if(per === 'range'){
-          /* Período custom · perDe e perAte em formato YYYY-MM-DD */
           if(_filtros.perDe && dataLead < _filtros.perDe) return false;
           if(_filtros.perAte && dataLead > _filtros.perAte) return false;
         } else if(per.indexOf('mes:') === 0){
-          /* Mês específico · per = 'mes:YYYY-MM' */
           const ym = per.slice(4);
           if(dataLead.slice(0,7) !== ym) return false;
         }
