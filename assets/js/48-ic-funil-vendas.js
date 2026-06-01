@@ -462,85 +462,114 @@
      Comercial pro Funil de Vendas. Chamada por npSalvarVenda do
      11-pipeline-comercial.js após cada save bem-sucedido.
 
+     IMPLEMENTAÇÃO DEFENSIVA (não depende do estado interno do funil):
+       1. Lê o doc atual de funil_vendas/global do Firebase
+       2. Modifica o array de leads (dedupe por _pipelineVendaId)
+       3. Salva de volta
+       4. Se o funil estiver aberto na sessão (_booted), também
+          atualiza o estado local + re-render
+
      Dedupe por _pipelineVendaId — se já existe lead vinculado a
      essa venda, ATUALIZA (mantém id do funil); senão CRIA novo.
      ═══════════════════════════════════════════════════════════════ */
   window._fvAdicionarLeadDePipeline = function(venda, vendaId){
-    if(!venda) return;
-    if(!_booted){
-      /* Funil ainda não foi aberto pelo gestor nessa sessão.
-         Carrega o doc do Firebase pra preservar leads existentes
-         antes de adicionar. */
-      return _carregar().then(function(){ _adicionarLeadInterno(venda, vendaId); });
-    }
-    _adicionarLeadInterno(venda, vendaId);
-  };
-
-  function _adicionarLeadInterno(venda, vendaId){
+    if(!venda){ console.warn('[FV-sync] venda vazia'); return; }
     if(!vendaId) vendaId = venda.vendaId || venda.id || ('v_' + Date.now());
-    var statusV = String(venda.status || 'aberto').toLowerCase();
-
-    /* Cancelada: se já existe lead, marca como perdido; senão ignora */
-    if(statusV === 'cancelado' || statusV === 'cancelada'){
-      var idxC = _leads.findIndex(function(l){ return l._pipelineVendaId === vendaId; });
-      if(idxC >= 0){
-        _leads[idxC].etapa = -1;  /* sinal de perdido (não está no kanban) */
-        _historico.unshift({leadId:_leads[idxC].id, nome:_leads[idxC].nome, txt:'Venda cancelada no Pipeline → lead perdido', quando:new Date().toISOString(), autor:_papel(), tipo:'lost'});
-        _salvar(); if(_booted) _render();
-      }
+    if(typeof window._fbGet !== 'function' || typeof window._fbSave !== 'function'){
+      console.warn('[FV-sync] Firebase indisponível, lead não sincronizado');
       return;
     }
+    console.log('[FV-sync] recebendo venda do Pipeline:', vendaId, venda.clienteNome, venda.status);
 
-    var etapa = _statusParaEtapa(statusV);
-    var temp = _tempPorStatus(statusV, etapa);
-    var idx = _leads.findIndex(function(l){ return l._pipelineVendaId === vendaId; });
+    return window._fbGet(_fbPath()).then(function(d){
+      var doc = d || {};
+      var leads = Array.isArray(doc.leads) ? doc.leads.slice() : (doc.leads ? Object.values(doc.leads) : []);
+      var historico = Array.isArray(doc.historico) ? doc.historico.slice() : (doc.historico ? Object.values(doc.historico) : []);
+      var origensCustom = Array.isArray(doc.origensCustom) ? doc.origensCustom : [];
+      var zerado = !!doc.zerado;
 
-    if(idx >= 0){
-      /* Atualiza lead existente — preserva o id do funil */
-      var existente = _leads[idx];
-      var mudouEtapa = existente.etapa !== etapa;
-      existente.nome = venda.clienteNome || venda.cliente || existente.nome;
-      existente.valor = +(venda.valor) || existente.valor;
-      existente.consultor = venda.consultorNome || venda.consultor || existente.consultor;
-      existente.treinamento = venda.produto || venda.treinamento || existente.treinamento;
-      existente.origem = venda.origemManual || venda.origem || existente.origem;
-      existente.notas = venda.obs || existente.notas;
-      existente.etapa = etapa;
-      existente.temp = temp;
-      existente.prob = ETAPAS[etapa] ? ETAPAS[etapa].prob : existente.prob;
-      existente.atividade = existente.atividade || [];
-      if(mudouEtapa){
-        existente.atividade.unshift({quando:_hoje(), txt:'Status atualizado via Pipeline → '+(ETAPAS[etapa] ? ETAPAS[etapa].nome : statusV)});
-        _historico.unshift({leadId:existente.id, nome:existente.nome, txt:'Sync do Pipeline · '+(ETAPAS[etapa] ? ETAPAS[etapa].nome : statusV), quando:new Date().toISOString(), autor:_papel(), tipo:'sync'});
+      var statusV = String(venda.status || 'aberto').toLowerCase();
+      var idx = leads.findIndex(function(l){ return l && l._pipelineVendaId === vendaId; });
+
+      /* Cancelada: marca como perdido (etapa -1) se existir; senão ignora */
+      if(statusV === 'cancelado' || statusV === 'cancelada'){
+        if(idx >= 0){
+          leads[idx].etapa = -1;
+          historico.unshift({leadId:leads[idx].id, nome:leads[idx].nome, txt:'Venda cancelada no Pipeline → lead perdido', quando:new Date().toISOString(), autor:_papel(), tipo:'lost'});
+        } else {
+          return; /* nada a fazer */
+        }
+      } else {
+        var etapa = _statusParaEtapa(statusV);
+        var temp = _tempPorStatus(statusV, etapa);
+        var nomeEtapa = ETAPAS[etapa] ? ETAPAS[etapa].nome : statusV;
+
+        if(idx >= 0){
+          var existente = leads[idx];
+          var mudouEtapa = existente.etapa !== etapa;
+          existente.nome = venda.clienteNome || venda.cliente || existente.nome;
+          existente.valor = +(venda.valor) || existente.valor;
+          existente.consultor = venda.consultorNome || venda.consultor || existente.consultor;
+          existente.treinamento = venda.produto || venda.treinamento || existente.treinamento;
+          existente.origem = venda.origemManual || venda.origem || existente.origem;
+          existente.notas = venda.obs || existente.notas;
+          existente.etapa = etapa;
+          existente.temp = temp;
+          existente.prob = ETAPAS[etapa] ? ETAPAS[etapa].prob : existente.prob;
+          existente.atividade = existente.atividade || [];
+          if(mudouEtapa){
+            existente.atividade.unshift({quando:_hoje(), txt:'Status atualizado via Pipeline → '+nomeEtapa});
+            historico.unshift({leadId:existente.id, nome:existente.nome, txt:'Sync do Pipeline · '+nomeEtapa, quando:new Date().toISOString(), autor:_papel(), tipo:'sync'});
+          }
+          console.log('[FV-sync] lead atualizado:', existente.nome, '→', nomeEtapa);
+        } else {
+          var novo = {
+            id: _id(),
+            _pipelineVendaId: vendaId,
+            _src: 'pipeline',
+            nome: venda.clienteNome || venda.cliente || 'Sem nome',
+            empresa: '',
+            valor: +(venda.valor) || 0,
+            prob: ETAPAS[etapa] ? ETAPAS[etapa].prob : 30,
+            etapa: etapa,
+            treinamento: venda.produto || venda.treinamento || '',
+            origem: venda.origemManual || venda.origem || 'Pipeline',
+            consultor: venda.consultorNome || venda.consultor || '',
+            prazo: '',
+            temp: temp,
+            wpp: '',
+            email: '',
+            notas: venda.obs || '',
+            criadoEm: _hoje(),
+            atividade: [{quando:_hoje(), txt:'Importado do Pipeline · ' + nomeEtapa}]
+          };
+          leads.push(novo);
+          historico.unshift({leadId:novo.id, nome:novo.nome, txt:'Novo lead via Pipeline em '+nomeEtapa, quando:new Date().toISOString(), autor:_papel(), tipo:'nova'});
+          console.log('[FV-sync] lead criado:', novo.nome, '· etapa:', nomeEtapa, '· id:', novo.id);
+        }
       }
-    } else {
-      /* Cria novo lead */
-      var novo = {
-        id: _id(),
-        _pipelineVendaId: vendaId,
-        _src: 'pipeline',
-        nome: venda.clienteNome || venda.cliente || 'Sem nome',
-        empresa: '',
-        valor: +(venda.valor) || 0,
-        prob: ETAPAS[etapa] ? ETAPAS[etapa].prob : 30,
-        etapa: etapa,
-        treinamento: venda.produto || venda.treinamento || '',
-        origem: venda.origemManual || venda.origem || 'Pipeline',
-        consultor: venda.consultorNome || venda.consultor || '',
-        prazo: '',
-        temp: temp,
-        wpp: '',
-        email: '',
-        notas: venda.obs || '',
-        criadoEm: _hoje(),
-        atividade: [{quando:_hoje(), txt:'Importado do Pipeline · ' + (ETAPAS[etapa] ? ETAPAS[etapa].nome : statusV)}]
-      };
-      _leads.push(novo);
-      _historico.unshift({leadId:novo.id, nome:novo.nome, txt:'Novo lead via Pipeline em '+(ETAPAS[etapa] ? ETAPAS[etapa].nome : statusV), quando:new Date().toISOString(), autor:_papel(), tipo:'nova'});
-    }
-    _salvar();
-    if(_booted) _render();
-  }
+
+      /* Salva o doc completo no Firebase */
+      var docNovo = { leads: leads, historico: historico.slice(0,200), origensCustom: origensCustom, zerado: zerado };
+      return window._fbSave(_fbPath(), docNovo).then(function(){
+        console.log('[FV-sync] funil_vendas/global atualizado · '+leads.length+' lead(s) total');
+        /* Se o funil está aberto na sessão, atualiza estado local + render */
+        if(_booted){
+          _leads = leads;
+          _historico = historico;
+          _origensCustom = origensCustom;
+          _zerado = zerado;
+          _render();
+        }
+        if(typeof window._showToast === 'function'){
+          var act = idx >= 0 ? 'atualizado' : 'adicionado';
+          window._showToast('🎯 Lead '+act+' no Funil: '+(venda.clienteNome||venda.cliente||''), 'var(--accent)');
+        }
+      });
+    }).catch(function(e){
+      console.error('[FV-sync] erro ao sincronizar:', e);
+    });
+  };
 
   /* ─────────────────────────────────────────────────────────────
      Escaneia candidatos sem importar — retorna array com:
