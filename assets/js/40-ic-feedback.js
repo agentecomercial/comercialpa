@@ -2910,4 +2910,201 @@
     };
   }
 
+  /* ── EXPORTAR PDF DO FEEDBACK (1-2 páginas A4 portrait) ──
+     Conteúdo adapta-se ao modo (_doc.tipo):
+       onboarding → Contexto + Expectativas + Autoavaliação 1-5
+       pulse      → Termômetro + Stop/Start/Continue + Compromissos
+       completo   → Pulse + 9 Competências + Diagnóstico + Plano
+     Substitui o antigo "Enviar ao consultor" — gestor leva impresso. */
+  window._fbExportarPdf = function(){
+    if(!_consultorAtivo){
+      if(typeof _showToast==='function') _showToast('⚠️ Selecione um consultor.','var(--amber)');
+      return;
+    }
+    if(typeof window._ensureJsPDF !== 'function'){
+      if(typeof _showToast==='function') _showToast('❌ jsPDF não disponível.','var(--red)');
+      return;
+    }
+    /* Atualiza _doc com o estado atual do form antes de imprimir */
+    _icFbColetaDoc();
+    if(typeof _showToast==='function') _showToast('⏳ Gerando PDF…','var(--muted)');
+    window._ensureJsPDF().then(function(){
+      try {
+        var jsPDF = window.jspdf && window.jspdf.jsPDF;
+        if(!jsPDF) throw new Error('jsPDF não carregou');
+        var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+        var W = 210, H = 297, M = 14;
+        var y = M;
+        var tipo = _doc.tipo || 'completo';
+        var TIPO_LBL = { onboarding:'ONBOARDING', pulse:'PULSE', completo:'FEEDBACK COMPLETO' };
+
+        function _txt(t, x, yy, opts){
+          opts = opts || {};
+          if(opts.size) doc.setFontSize(opts.size);
+          if(opts.style) doc.setFont(undefined, opts.style);
+          if(opts.color) doc.setTextColor(opts.color[0],opts.color[1],opts.color[2]);
+          else doc.setTextColor(20,20,20);
+          doc.text(String(t||''), x, yy);
+        }
+        function _line(yy){
+          doc.setDrawColor(180,180,180); doc.setLineWidth(0.2);
+          doc.line(M, yy, W-M, yy);
+        }
+        function _wrap(t, maxW){
+          return doc.splitTextToSize(String(t||''), maxW);
+        }
+        function _bloco(label, conteudo, opts){
+          opts = opts || {};
+          if(!conteudo || (typeof conteudo === 'string' && !conteudo.trim())) return;
+          if(y > H - 30){ doc.addPage(); y = M; }
+          _txt(label, M, y, {size:9, style:'bold', color:[100,100,180]});
+          y += 4.5;
+          var lns = _wrap(String(conteudo), W - M*2);
+          doc.setFontSize(opts.size||10); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
+          doc.text(lns, M, y);
+          y += lns.length * (opts.size === 9 ? 4 : 4.5) + 3;
+        }
+
+        /* ── Cabeçalho ── */
+        _txt(TIPO_LBL[tipo]||'FEEDBACK', M, y, {size:14, style:'bold', color:[40,40,40]});
+        y += 6;
+        _txt(_consultorAtivo, M, y, {size:11, style:'bold'});
+        var hoje = new Date();
+        doc.setTextColor(120,120,120); doc.setFontSize(8); doc.setFont(undefined,'normal');
+        doc.text('Ciclo: '+(_doc.ciclo||'quinzenal')+' · Data: '+_fmtDataBR(_doc.data||'')+' · Gerado em: '+_fmtDataBR(hoje.toISOString().slice(0,10)), W-M, y, { align:'right' });
+        y += 4;
+        _line(y); y += 5;
+
+        /* ── ONBOARDING ── */
+        if(tipo === 'onboarding'){
+          _bloco('CONTEXTO DO CONSULTOR', _doc.contexto);
+          _bloco('EXPECTATIVAS MÚTUAS', _doc.expectativas);
+          /* Autoavaliação 1-5 (de _doc.comps em escala 1-10 → divide por 2) */
+          if(_doc.comps && Object.keys(_doc.comps).length){
+            if(y > H - 60){ doc.addPage(); y = M; }
+            _txt('AUTOAVALIAÇÃO 1-5 NAS 9 COMPETÊNCIAS', M, y, {size:9, style:'bold', color:[100,100,180]});
+            y += 5;
+            COMPS_DEF.forEach(function(c){
+              var v10 = _doc.comps[c.key];
+              if(v10 == null) return;
+              var v5 = Math.max(1, Math.min(5, Math.round(v10/2)));
+              var dots = '●'.repeat(v5)+'○'.repeat(5-v5);
+              doc.setFontSize(10); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
+              doc.text(c.label+' '+dots+' ('+v5+'/5)', M+3, y);
+              y += 4.5;
+            });
+            y += 2;
+          }
+        }
+
+        /* ── PULSE (também aparece em completo) ── */
+        if(tipo === 'pulse' || tipo === 'completo'){
+          if(_doc.termometro != null){
+            var EMOJI = ['','😞','😐','🙂','😊','🤩'];
+            _bloco('TERMÔMETRO RÁPIDO', EMOJI[_doc.termometro]+'  '+_doc.termometro+'/5');
+          }
+          var ssc = _doc.stopStartContinue || {};
+          if(ssc.stop || ssc.start || ssc.continue){
+            if(ssc.stop)     _bloco('⛔ PARAR DE', ssc.stop);
+            if(ssc.start)    _bloco('▶ COMEÇAR A', ssc.start);
+            if(ssc.continue) _bloco('✓ CONTINUAR', ssc.continue);
+          }
+          if(Array.isArray(_doc.compromissos) && _doc.compromissos.length){
+            if(y > H - 25){ doc.addPage(); y = M; }
+            _txt('COMPROMISSOS PRÓXIMOS 15 DIAS', M, y, {size:9, style:'bold', color:[100,100,180]});
+            y += 4.5;
+            _doc.compromissos.forEach(function(c){
+              if(!c || !c.texto) return;
+              var prazo = c.prazo ? ' (até '+_fmtDataBR(c.prazo)+')' : '';
+              var prefix = c.feito ? '[x] ' : '[ ] ';
+              var lns = _wrap(prefix+c.texto+prazo, W - M*2 - 3);
+              doc.setFontSize(10); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
+              doc.text(lns, M+3, y);
+              y += lns.length * 4.5;
+            });
+            y += 2;
+          }
+        }
+
+        /* ── COMPLETO ── */
+        if(tipo === 'completo'){
+          /* 9 competências escala 1-10 */
+          if(_doc.comps && Object.keys(_doc.comps).length){
+            if(y > H - 60){ doc.addPage(); y = M; }
+            _txt('AVALIAÇÃO POR COMPETÊNCIA (1-10)', M, y, {size:9, style:'bold', color:[100,100,180]});
+            y += 5;
+            COMPS_DEF.forEach(function(c){
+              var v = _doc.comps[c.key];
+              if(v == null) return;
+              doc.setFontSize(10); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
+              doc.text(c.label+': '+v+'/10', M+3, y);
+              y += 4.5;
+            });
+            y += 2;
+          }
+          /* Diagnóstico forças/gaps */
+          var diag = _doc.diagnostico || {};
+          if(diag.fortes) _bloco('🟢 FORÇAS DO CONSULTOR', diag.fortes);
+          if(diag.fracas) _bloco('🔴 GAPS A DESENVOLVER', diag.fracas);
+          /* Plano de ação */
+          if(Array.isArray(_doc.acoes) && _doc.acoes.length){
+            if(y > H - 25){ doc.addPage(); y = M; }
+            _txt('PLANO DE AÇÃO PARA O PRÓXIMO CICLO', M, y, {size:9, style:'bold', color:[100,100,180]});
+            y += 4.5;
+            _doc.acoes.forEach(function(a){
+              if(!a || !a.texto) return;
+              var prefix = a.feito ? '[x] ' : '[ ] ';
+              var lns = _wrap(prefix+a.texto, W - M*2 - 3);
+              doc.setFontSize(10); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
+              doc.text(lns, M+3, y);
+              y += lns.length * 4.5;
+            });
+          }
+          /* Alvos sugeridos pro PDI */
+          if(Array.isArray(_doc.alvosSugeridos) && _doc.alvosSugeridos.length){
+            if(y > H - 25){ doc.addPage(); y = M; }
+            _txt('ALVOS SUGERIDOS PRO PRÓXIMO PDI', M, y, {size:9, style:'bold', color:[100,100,180]});
+            y += 4.5;
+            _doc.alvosSugeridos.forEach(function(key){
+              var c = COMPS_DEF.find(function(x){return x.key===key;});
+              if(!c) return;
+              doc.setFontSize(10); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
+              doc.text('• '+c.label, M+3, y);
+              y += 4.5;
+            });
+          }
+        }
+
+        /* ── Observações + Auto-avaliação (em todos os modos exceto onboarding) ── */
+        if(tipo !== 'onboarding'){
+          if(_doc.notaGestor && _doc.notaGestor.trim()) _bloco('📝 OBSERVAÇÕES DO GESTOR', _doc.notaGestor);
+          if(_doc.notaAuto && _doc.notaAuto.trim()) _bloco('🪞 AUTO-AVALIAÇÃO DO CONSULTOR', _doc.notaAuto);
+        }
+
+        /* ── Assinaturas ── */
+        if(y > H - 25){ doc.addPage(); y = M; }
+        y = Math.max(y, H - 22);
+        _line(y); y += 6;
+        doc.setFontSize(8); doc.setFont(undefined,'normal'); doc.setTextColor(100,100,100);
+        var col1 = M, col2 = W/2 + 5;
+        doc.text('______________________________', col1, y);
+        doc.text('______________________________', col2, y);
+        y += 3.5;
+        doc.text('Consultor: '+_consultorAtivo, col1, y);
+        var sess = (typeof _getSessao==='function') ? _getSessao() : null;
+        doc.text('Gestor: '+((sess&&sess.nome)||'—'), col2, y);
+
+        var slug = String(_consultorAtivo).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+        var fname = 'feedback-'+tipo+'-'+slug+'-'+(_doc.data||'').replace(/-/g,'')+'.pdf';
+        doc.save(fname);
+        if(typeof _showToast==='function') _showToast('✅ PDF gerado: '+fname,'var(--accent)');
+      } catch(e){
+        console.error('[ic-feedback] export PDF falhou:', e);
+        if(typeof _showToast==='function') _showToast('❌ Erro ao gerar PDF: '+(e.message||e),'var(--red)');
+      }
+    }).catch(function(){
+      if(typeof _showToast==='function') _showToast('❌ jsPDF não carregou.','var(--red)');
+    });
+  };
+
 })();
