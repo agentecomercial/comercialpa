@@ -300,7 +300,75 @@
     /* Renderiza dados do bloco Pulse quando ativo */
     _icFbRenderPulse();
     _icFbRenderCompromissos();
+    /* Renderiza dados do bloco Onboarding quando ativo */
+    _icFbRenderOnboarding();
   }
+
+  /* ── BLOCO ONBOARDING (1ª vez com o consultor) ─────────────── */
+  function _icFbRenderOnboarding(){
+    if(_fbModo !== 'onboarding') return;
+    if(!_doc) return;
+    /* Contexto + Expectativas (textareas livres) */
+    var elCtx = document.getElementById('fbOnbContexto');
+    if(elCtx) elCtx.value = _doc.contexto || '';
+    var elExp = document.getElementById('fbOnbExpectativas');
+    if(elExp) elExp.value = _doc.expectativas || '';
+
+    /* Autoavaliação 1-5 das 9 competências (linha de base inicial) */
+    _icFbRenderAutoAvaliacao();
+
+    /* Link pro Dossiê do consultor */
+    var elDos = document.getElementById('fbOnbDossieLink');
+    if(elDos){
+      elDos.onclick = function(){
+        if(typeof window._icAbrirDossie === 'function'){
+          window._icAbrirDossie(null, _consultorAtivo);
+        }
+      };
+    }
+  }
+  window._fbSetOnbCtx = function(v){ if(_doc) _doc.contexto = v; };
+  window._fbSetOnbExp = function(v){ if(_doc) _doc.expectativas = v; };
+
+  /* Autoavaliação 1-5 das 9 competências (vira linha de base.
+     Importante: docs antigos têm comps em escala 1-10. No Onboarding
+     usamos escala 1-5 dentro do mesmo campo comps — multiplicada por 2
+     pra manter compatibilidade com o radar/histórico). */
+  function _icFbRenderAutoAvaliacao(){
+    var box = document.getElementById('fbOnbAuto');
+    if(!box || !_doc) return;
+    if(!_doc.comps) _doc.comps = {};
+    box.innerHTML = COMPS_DEF.map(function(c){
+      /* Valor armazenado é 1-10. Convertemos pra escala 1-5 na UI */
+      var v10 = _doc.comps[c.key];
+      var v5 = (v10 == null) ? null : Math.max(1, Math.min(5, Math.round(v10 / 2)));
+      var stars = [1,2,3,4,5].map(function(n){
+        var ativo = v5 != null && n <= v5;
+        return '<button onclick="window._fbSetAutoComp(\''+c.key+'\','+n+')" '
+          +'style="flex:1;padding:8px 4px;background:'+(ativo?'var(--accent)':'var(--surface2)')+';color:'+(ativo?'#0a0e1a':'var(--muted)')+';'
+          +'border:1px solid '+(ativo?'var(--accent)':'var(--border)')+';border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;">'+n+'</button>';
+      }).join('');
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;">'
+        +'<div style="width:160px;font-size:11px;color:var(--text);font-weight:600;">'+c.ico+' '+c.label+'</div>'
+        +'<div style="flex:1;display:flex;gap:3px;">'+stars+'</div>'
+        +'<div style="width:60px;text-align:right;font-size:10px;color:var(--muted);">'+(v5 == null ? '—' : v5+'/5')+'</div>'
+        +'</div>';
+    }).join('');
+  }
+  window._fbSetAutoComp = function(key, n5){
+    if(!_doc) return;
+    if(!_doc.comps) _doc.comps = {};
+    /* Toggle: se já estiver no valor, limpa */
+    var v10atual = _doc.comps[key];
+    var v5atual = (v10atual == null) ? null : Math.round(v10atual/2);
+    if(v5atual === n5){
+      delete _doc.comps[key];
+    } else {
+      /* Converte 1-5 pra 1-10 (mantém compat com histórico de escala 1-10) */
+      _doc.comps[key] = n5 * 2;
+    }
+    _icFbRenderAutoAvaliacao();
+  };
 
   /* ── BLOCO PULSE: termômetro + delta + Stop/Start/Continue ── */
   function _icFbRenderPulse(){
