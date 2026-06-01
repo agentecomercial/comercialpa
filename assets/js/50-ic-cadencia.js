@@ -117,6 +117,20 @@
     });
   };
 
+  /* Exclui a cadência de um consultor (some do painel "Pulses da semana").
+     Não apaga feedbacks/PDIs — só o registro de cadência (icCadencia/{uid}).
+     Pulse vai ser recalculado automaticamente no próximo feedback salvo. */
+  window._icCadenciaExcluir = function(consultorUid){
+    if(!consultorUid) return;
+    if(typeof window._fbSave !== 'function') return;
+    window._fbSave('icCadencia/'+consultorUid, null).then(function(){
+      if(typeof window._showToast === 'function') window._showToast('🗑 Cadência excluída', 'var(--accent)');
+      if(typeof window._icCadenciaAtualizarBadge === 'function') window._icCadenciaAtualizarBadge();
+    }).catch(function(){
+      if(typeof window._showToast === 'function') window._showToast('❌ Erro ao excluir cadência', 'var(--red)');
+    });
+  };
+
   window._icCadenciaRetomar = function(consultorUid){
     if(!consultorUid) return;
     if(typeof window._fbGet !== 'function') return;
@@ -227,6 +241,7 @@
             +(item.pausado
               ? '<button onclick="window._icCadenciaRetomar(\''+item.uid+'\');setTimeout(window._icCadenciaAbrirPainel,400)" style="padding:5px 10px;background:var(--accent);color:#0a0e1a;border:none;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;">▶ Retomar</button>'
               : '<button onclick="if(confirm(\'Pausar cadência de '+_esc(item.nome).replace(/\x27/g,'\\\x27')+'?\\n(férias, afastamento, etc.)\'))window._icCadenciaPausar(\''+item.uid+'\');setTimeout(window._icCadenciaAbrirPainel,400)" style="padding:5px 10px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:4px;font-size:10px;cursor:pointer;font-family:inherit;">⏸ Pausar</button>')
+            +'<button title="Excluir esta cadência" onclick="if(confirm(\'Excluir cadência de '+_esc(item.nome).replace(/\x27/g,'\\\x27')+'?\\n\\nO consultor some do painel. Feedbacks e PDIs NÃO são apagados.\\nA cadência volta a aparecer quando você salvar o próximo feedback dele.\'))window._icCadenciaExcluir(\''+item.uid+'\');setTimeout(window._icCadenciaAbrirPainel,400)" style="padding:5px 8px;background:transparent;color:#ef4444;border:1px solid rgba(239,68,68,.3);border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit;">🗑</button>'
           +'</div>';
         }).join('')
       +'</div>';
