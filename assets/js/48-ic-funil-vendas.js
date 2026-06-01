@@ -1301,10 +1301,60 @@
       sel.innerHTML = head + arr.map(x => `<option>${esc(x)}</option>`).join('');
       sel.value = v;
     };
-    const consultores = [...new Set(_leads.map(l=>l.consultor).filter(Boolean))].sort();
+
+    /* ── CONSULTORES ──
+       Une 4 fontes pra cobrir TODOS os consultores do aplicativo:
+         1. Leads do próprio funil
+         2. allConsultors (consultores do dashboard de turmas)
+         3. _npConsultores (consultores do Pipeline Comercial)
+         4. Consultores de clientes em turmas do _mapDados (turmas criadas)
+       Deduplicação case-insensitive + ordem alfabética. */
+    const consSet = new Map();
+    const addCons = (nome) => {
+      if(!nome) return;
+      const n = String(nome).trim();
+      if(!n) return;
+      const k = n.toUpperCase();
+      if(!consSet.has(k)) consSet.set(k, n);
+    };
+    _leads.forEach(l => addCons(l.consultor));
+    if(Array.isArray(window.allConsultors)) window.allConsultors.forEach(addCons);
+    if(Array.isArray(window._npConsultores)) window._npConsultores.forEach(addCons);
+    /* Varre clientes de todas as turmas do _mapDados pra coletar consultores */
+    (md.turmas || []).forEach(t => {
+      const cls = t.clientes || [];
+      const arr = Array.isArray(cls) ? cls : (typeof cls === 'object' ? Object.values(cls).filter(Boolean) : []);
+      arr.forEach(c => { if(c && c.consultor) addCons(c.consultor); });
+    });
+    /* Também busca em usuários do Firebase (perfil consultor) */
+    if(window._npUsuarios){
+      Object.values(window._npUsuarios).forEach(u => {
+        if(u && u.perfil === 'consultor' && u.nome) addCons(u.nome);
+      });
+    }
+    const consultores = Array.from(consSet.values()).sort((a,b) => a.localeCompare(b, 'pt-BR'));
     setOpts($('#fvFCons'), consultores);
-    const treinamentos = [...new Set(_leads.map(l=>l.treinamento).filter(Boolean))].sort();
+
+    /* ── TREINAMENTOS ──
+       Une leads + allTreinamentos + APP_CONST.TREINAMENTOS pra mostrar
+       todos os treinamentos do catálogo, mesmo os sem lead ainda. */
+    const treinSet = new Map();
+    const addTrein = (nome) => {
+      if(!nome) return;
+      const n = String(nome).trim();
+      if(!n) return;
+      const k = n.toUpperCase();
+      if(!treinSet.has(k)) treinSet.set(k, n);
+    };
+    _leads.forEach(l => addTrein(l.treinamento));
+    if(Array.isArray(window.allTreinamentos)) window.allTreinamentos.forEach(addTrein);
+    if(window.APP_CONST && Array.isArray(window.APP_CONST.TREINAMENTOS)){
+      window.APP_CONST.TREINAMENTOS.forEach(addTrein);
+    }
+    const treinamentos = Array.from(treinSet.values()).sort((a,b) => a.localeCompare(b, 'pt-BR'));
     setOpts($('#fvFTrein'), treinamentos);
+
+    /* ── TURMAS ── (já vinha de _mapDados.turmas — mantém) */
     const turmas = (md.turmas||[]).map(t => t.nome || t.titulo || t.id).filter(Boolean);
     setOpts($('#fvFTurma'), turmas);
   }
