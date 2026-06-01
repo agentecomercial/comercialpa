@@ -302,7 +302,115 @@
     _icFbRenderCompromissos();
     /* Renderiza dados do bloco Onboarding quando ativo */
     _icFbRenderOnboarding();
+    /* Renderiza dados do bloco Completo (diagnóstico + alvos) */
+    _icFbRenderDiagnosticoAlvos();
   }
+
+  /* ── BLOCO COMPLETO: Diagnóstico (forças/fracas) + Alvos sugeridos ── */
+  function _icFbRenderDiagnosticoAlvos(){
+    if(_fbModo !== 'completo') return;
+    if(!_doc) return;
+    if(!_doc.diagnostico) _doc.diagnostico = { fortes:'', fracas:'' };
+    if(!Array.isArray(_doc.alvosSugeridos)) _doc.alvosSugeridos = [];
+
+    var elFortes = document.getElementById('fbDiagFortes');
+    var elFracas = document.getElementById('fbDiagFracas');
+    if(elFortes) elFortes.value = _doc.diagnostico.fortes || '';
+    if(elFracas) elFracas.value = _doc.diagnostico.fracas || '';
+
+    /* Sugestão automática: 3 competências com nota mais baixa em _doc.comps */
+    var elAuto = document.getElementById('fbAlvosSugAuto');
+    if(elAuto){
+      var notas = COMPS_DEF.map(function(c){
+        return { key:c.key, label:c.label, ico:c.ico, v:_doc.comps && _doc.comps[c.key] };
+      }).filter(function(x){ return x.v != null; });
+      if(!notas.length){
+        elAuto.innerHTML = '<span style="font-size:11px;color:var(--muted);font-style:italic;">Avalie as 9 competências acima para o sistema sugerir os alvos do PDI.</span>';
+      } else {
+        notas.sort(function(a,b){ return a.v - b.v; });
+        var top3 = notas.slice(0,3);
+        elAuto.innerHTML = '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">3 competências com menor nota — clique para marcar como alvo do PDI:</div>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+          +top3.map(function(t){
+            var marcado = _doc.alvosSugeridos.indexOf(t.key) >= 0;
+            return '<button onclick="window._fbToggleAlvo(\''+t.key+'\')" '
+              +'style="padding:6px 12px;background:'+(marcado?'rgba(200,240,90,.18)':'var(--surface2)')+';'
+              +'color:'+(marcado?'var(--accent)':'var(--text)')+';'
+              +'border:'+(marcado?'2px solid var(--accent)':'1px solid var(--border)')+';'
+              +'border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;font-weight:'+(marcado?'700':'500')+';">'
+              +(marcado?'✓ ':'')+t.ico+' '+t.label+' <small style="opacity:.7;">('+t.v+'/10)</small>'
+              +'</button>';
+          }).join('')
+          +'</div>';
+      }
+    }
+
+    /* Estado do botão "Transformar em PDI" */
+    var btn = document.getElementById('fbBtnTransformarPDI');
+    if(btn){
+      btn.disabled = !_doc.alvosSugeridos.length;
+      btn.style.opacity = _doc.alvosSugeridos.length ? '1' : '0.5';
+      btn.style.cursor = _doc.alvosSugeridos.length ? 'pointer' : 'not-allowed';
+      btn.textContent = '🎯 Transformar em PDI ('+_doc.alvosSugeridos.length+' alvo'+(_doc.alvosSugeridos.length===1?'':'s')+')';
+    }
+  }
+  window._fbSetDiagFortes = function(v){ if(_doc){ _doc.diagnostico = _doc.diagnostico || {}; _doc.diagnostico.fortes = v; } };
+  window._fbSetDiagFracas = function(v){ if(_doc){ _doc.diagnostico = _doc.diagnostico || {}; _doc.diagnostico.fracas = v; } };
+  window._fbToggleAlvo = function(key){
+    if(!_doc) return;
+    if(!Array.isArray(_doc.alvosSugeridos)) _doc.alvosSugeridos = [];
+    var idx = _doc.alvosSugeridos.indexOf(key);
+    if(idx >= 0) _doc.alvosSugeridos.splice(idx, 1);
+    else {
+      if(_doc.alvosSugeridos.length >= 3){
+        if(typeof _showToast==='function') _showToast('⚠ PDI aceita até 3 alvos.', 'var(--amber)');
+        return;
+      }
+      _doc.alvosSugeridos.push(key);
+    }
+    _icFbRenderDiagnosticoAlvos();
+  };
+
+  /* ── Botão "Transformar em PDI" — salva feedback + abre PDI ── */
+  window._fbTransformarEmPDI = function(){
+    if(!_doc || !Array.isArray(_doc.alvosSugeridos) || !_doc.alvosSugeridos.length){
+      if(typeof _showToast==='function') _showToast('⚠ Marque ao menos 1 alvo antes.', 'var(--amber)');
+      return;
+    }
+    /* Salva o feedback antes de transferir os alvos */
+    _icFbColetaDoc();
+    _doc.atualizadoEm = _hoje();
+    _icFbPersistir(false);
+    /* Persiste num path conhecido pelo PDI ler quando montar */
+    if(typeof window._fbSave === 'function' && _consultorAtivo){
+      window._fbSave('icPdiHints/'+_consultorAtivo, {
+        alvosSugeridos: _doc.alvosSugeridos.slice(),
+        diagnostico: _doc.diagnostico || {},
+        compromissoGestor: '',
+        origem: 'feedback-completo',
+        em: new Date().toISOString(),
+        feedbackId: _cicloId(_ciclo, _doc.data)
+      }).then(function(){
+        if(typeof _showToast==='function') _showToast('✅ Alvos enviados ao PDI · abrindo aba…', 'var(--accent)');
+        /* Troca pra aba PDI e seleciona o consultor */
+        if(typeof window._icShowPane === 'function') window._icShowPane('pdi');
+        setTimeout(function(){
+          var sel = document.getElementById('pdiConsultor');
+          if(sel){
+            for(var i = 0; i < sel.options.length; i++){
+              if((sel.options[i].value||'').toUpperCase() === _consultorAtivo){
+                sel.value = sel.options[i].value;
+                sel.dispatchEvent(new Event('change'));
+                break;
+              }
+            }
+          }
+        }, 300);
+      }).catch(function(){
+        if(typeof _showToast==='function') _showToast('❌ Erro ao transferir alvos.', 'var(--red)');
+      });
+    }
+  };
 
   /* ── BLOCO ONBOARDING (1ª vez com o consultor) ─────────────── */
   function _icFbRenderOnboarding(){

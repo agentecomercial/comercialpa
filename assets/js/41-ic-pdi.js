@@ -370,9 +370,43 @@
     if(!_consultorAtivo){ _pdiResetDoc(); return; }
     if(typeof window._fbGet !== 'function'){ _pdiResetDoc(); return; }
     window._fbGet('icPDIs/'+_consultorAtivo+'/'+_periodoId()).then(function(d){
-      if(d){ _doc = d; _pdiAplicarDocNaUI(); }
-      else { _pdiResetDoc(); }
+      if(d){ _doc = d; _pdiAplicarDocNaUI(); _pdiAplicarHintsFeedback(); }
+      else { _pdiResetDoc(); _pdiAplicarHintsFeedback(); }
     }).catch(_pdiResetDoc);
+  }
+
+  /* ── Fase B Etapa 4: pré-popula PDI com alvos do feedback Completo ──
+     Quando o gestor clica "Transformar em PDI" no feedback, o sistema
+     salva icPdiHints/{consultor} com os alvos sugeridos. Aqui esses
+     hints são consumidos (uma vez) — não sobrescrevem alvos já existentes
+     no PDI vigente, só adicionam os que ainda não estão. */
+  function _pdiAplicarHintsFeedback(){
+    if(!_consultorAtivo || typeof window._fbGet !== 'function') return;
+    window._fbGet('icPdiHints/'+_consultorAtivo).then(function(hint){
+      if(!hint || !Array.isArray(hint.alvosSugeridos) || !hint.alvosSugeridos.length) return;
+      /* Evita reaplicar se já consumido recentemente */
+      if(_doc && _doc._hintsAplicadosEm === hint.em) return;
+      _doc.alvos = _doc.alvos || [];
+      var existentes = _doc.alvos.map(function(a){return a.key;});
+      var addiu = 0;
+      hint.alvosSugeridos.forEach(function(key){
+        if(existentes.indexOf(key) >= 0) return;
+        if(_doc.alvos.length >= 3) return;
+        if(typeof window._pdiAddAlvo === 'function'){
+          window._pdiAddAlvo(key);
+          addiu++;
+        }
+      });
+      /* Diagnóstico do feedback vira sugestão pro compromissoGestor (se vazio) */
+      if(hint.diagnostico && hint.diagnostico.fracas && (!_doc.compromissoGestor || !_doc.compromissoGestor.trim())){
+        _doc.compromissoGestor = '[Vindo do feedback] Pontos a destravar: '+hint.diagnostico.fracas;
+        _pdiRenderCompromisso();
+      }
+      _doc._hintsAplicadosEm = hint.em;
+      if(addiu && typeof _showToast==='function'){
+        _showToast('💡 '+addiu+' alvo(s) importados do último feedback completo.', 'var(--accent)');
+      }
+    }).catch(function(){});
   }
   function _pdiResetDoc(){
     var sug = _pdiSugerirFramework();
