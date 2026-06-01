@@ -103,8 +103,10 @@
         var cor=COR[i%COR.length];
         var hl=focoConsultor&&focoConsultor===nome;
         var temMeta=!!(g.metaBasica||g.metaMinima||g.metaMaster);
-        return '<div class="np-meta-row" style="border-bottom:1px solid var(--border);padding:12px 0;'+(hl?'background:rgba(200,240,90,.03);border-radius:8px;padding:12px;margin:-2px;':'')+'">'
+        var posAtual = i+1;
+        return '<div class="np-meta-row" data-pos="'+posAtual+'" data-cons-row="'+_esc2(nome)+'" style="border-bottom:1px solid var(--border);padding:12px 0;'+(hl?'background:rgba(200,240,90,.03);border-radius:8px;padding:12px;margin:-2px;':'')+'">'
           +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+          +'<input type="number" min="1" max="'+_cons.length+'" class="np-meta-pos" data-cons-pos="'+_esc2(nome)+'" value="'+posAtual+'" onchange="window.npSetOrdem&&window.npSetOrdem(this.dataset.consPos, +this.value)" title="Digite a posição desejada e dê Tab — a lista reordena" style="width:38px;height:28px;text-align:center;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:12px;font-weight:800;font-family:inherit;flex-shrink:0;">'
           +'<input type="checkbox" class="np-meta-chk" data-cons-chk="'+_esc2(nome)+'" onchange="npUpdateSelCounter()" onclick="npChkClick(event,this)" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;">'
           +'<div style="width:32px;height:32px;border-radius:50%;background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;">'+nome.charAt(0).toUpperCase()+'</div>'
           +'<span style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;">'+_esc2(nome)+'</span>'
@@ -152,6 +154,72 @@
     body.querySelectorAll('.np-meta-chk').forEach(function(cb){cb.checked=selAllCb.checked;});
     npUpdateSelCounter();
   };
+
+  /* ── Reordenação por numeração editável (opção 5) ──
+     Digita um número novo num row → reorganiza a lista local +
+     re-renderiza + salva ordem em _npGoals[nome].metaOrdem.
+     A persistência efetiva acontece quando o gestor clicar em
+     "Salvar metas" (junto com os valores das metas). */
+  window.npSetOrdem = function(nome, novaPos){
+    var lista = window._npConsultores || [];
+    if(!lista.length) return;
+    novaPos = Math.max(1, Math.min(lista.length, parseInt(novaPos,10)||1));
+    var posAtual = lista.indexOf(nome);
+    if(posAtual < 0){
+      /* tenta achar case-insensitive */
+      posAtual = lista.findIndex(function(n){ return String(n).toUpperCase() === String(nome).toUpperCase(); });
+      if(posAtual < 0) return;
+      nome = lista[posAtual];
+    }
+    if(posAtual === novaPos - 1) return;  /* mesma posição, nada a fazer */
+
+    /* Coleta os VALORES de todos os inputs atuais (pra preservar
+       edições não salvas durante o reordenamento) */
+    var body = document.getElementById('npModalMetaBody');
+    var rascunho = {};
+    if(body){
+      body.querySelectorAll('.np-form-input[data-cons]').forEach(function(inp){
+        var n = inp.getAttribute('data-cons');
+        var t = inp.getAttribute('data-tipo');
+        if(!n || !t) return;
+        rascunho[n] = rascunho[n] || {};
+        var v = npParseMoney(inp.value);
+        if(v != null) rascunho[n][t] = v;
+      });
+    }
+
+    /* Move o item da posição atual pra nova */
+    lista.splice(posAtual, 1);
+    lista.splice(novaPos - 1, 0, nome);
+
+    /* Atualiza _npGoals com metaOrdem sequencial (1, 2, 3, ...) +
+       preserva o rascunho coletado dos inputs */
+    var goals = window._npGoals || {};
+    lista.forEach(function(n, i){
+      goals[n] = goals[n] || {};
+      goals[n].metaOrdem = i + 1;
+      if(rascunho[n]){
+        if(rascunho[n].metaMinima != null) goals[n].metaMinima = rascunho[n].metaMinima;
+        if(rascunho[n].metaBasica != null) goals[n].metaBasica = rascunho[n].metaBasica;
+        if(rascunho[n].metaMaster != null) goals[n].metaMaster = rascunho[n].metaMaster;
+      }
+    });
+    window._npConsultores = lista;
+    window._npGoals = goals;
+
+    /* Re-renderiza o modal mantendo foco no item movido */
+    window.npAbrirModalMeta(nome);
+    if(typeof _showToast === 'function') _showToast('🔢 '+nome+' movido pra posição '+novaPos+' · clique "Salvar metas" pra confirmar', 'var(--accent)');
+  };
+
+  /* Helper: parser de input monetário do modal (já existe em outro lugar
+     mas pode não estar exposto — fallback seguro) */
+  function npParseMoney(v){
+    if(v == null || v === '') return null;
+    var s = String(v).replace(/\./g,'').replace(',','.').replace(/[^\d.-]/g,'');
+    var n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  }
 
   window.npUpdateSelCounter=function(){
     var body=document.getElementById('npModalMetaBody');
@@ -260,6 +328,14 @@
           if(tipo==='metaBasica') updates[nome].metaValor=num;
         }
       });
+    });
+    /* metaOrdem (opção 5 · numeração editável) — persiste a posição
+       de cada consultor na lista. Lê _npConsultores que reflete a
+       ordem atual da UI (atualizada por npSetOrdem). */
+    var cons = window._npConsultores || [];
+    cons.forEach(function(nome, i){
+      if(!updates[nome]) updates[nome] = {};
+      updates[nome].metaOrdem = i + 1;
     });
     var promises=Object.entries(updates).map(function(e){
       return window._fbSave('pipelineGoals/'+mk+'/'+e[0],e[1]);

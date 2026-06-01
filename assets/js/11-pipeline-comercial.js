@@ -105,7 +105,17 @@
       var nome=(v.consultor||'').trim();
       if(nome) set[nome.toUpperCase()]=nome;
     });
-    _npConsultores=Object.values(set).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+    /* Ordena: prioriza metaOrdem customizado (salvo em _npGoals[nome].metaOrdem),
+       fallback alfabético. metaOrdem 0/undefined cai pro final do bloco custom. */
+    var goals = window._npGoals || {};
+    _npConsultores = Object.values(set).sort(function(a, b){
+      var oa = goals[a] && +(goals[a].metaOrdem) || 0;
+      var ob = goals[b] && +(goals[b].metaOrdem) || 0;
+      if(oa && ob) return oa - ob;     /* ambos com ordem custom */
+      if(oa) return -1;                /* só A tem ordem → A vem antes */
+      if(ob) return 1;                 /* só B tem ordem → B vem antes */
+      return a.localeCompare(b, 'pt-BR');
+    });
     return _npConsultores;
   }
 
