@@ -759,13 +759,16 @@
       });
     });
 
-    /* 2) Avulsas */
+    /* 2) Avulsas — vendas da aba Vendas do Pipeline Comercial.
+       BUG-FIX: o Pipeline salva o cliente como v.clienteNome (não v.cliente
+       nem v.nome). Sem o fallback abaixo, todas as vendas avulsas ficavam
+       de fora do modal Importar. */
     const ps = await window._fbGet('pipelineSales').catch(()=>({}));
     Object.keys(ps||{}).forEach(ymKey => {
       const bucket = ps[ymKey]; if(!bucket || typeof bucket !== 'object') return;
       Object.values(bucket).forEach(v => {
         if(!v) return;
-        const nome = v.cliente || v.nome; if(!nome) return;
+        const nome = v.clienteNome || v.cliente || v.nome; if(!nome) return;
         const cod = (v.produto || v.treinamento || '').toString().toUpperCase().trim();
         const val = +(v.valor||0);
         const etapa = _statusParaEtapa(v.status);
