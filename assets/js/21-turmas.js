@@ -12,6 +12,10 @@ var _tturmasView=localStorage.getItem('_tturmasLayout')||'cards';
 var _tturmasAnoAtual=new Date().getFullYear();
 var _tturmasAnosExtra=[];
 var _tturmasCache=[];
+/* Ordem das turmas no Swimlane (opção 5 · switch on/off):
+   'desc' = mais recente no topo (default · meses maiores primeiro)
+   'asc'  = mais antiga no topo (meses menores primeiro) */
+var _tturmasOrdem=localStorage.getItem('_tturmasOrdem')||'desc';
 
 var _SWIM_MESES = APP_CONST.MESES_CURTO;
 var _SWIM_CORES = APP_CONST.PALETTE_SWIM;
@@ -123,12 +127,37 @@ function _renderTurmasYearBar(turmas){
         'background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:14px;'+
         'box-shadow:0 8px 28px rgba(0,0,0,.5);min-width:280px;">'+
       '</div>'+
+    '</div>'+
+    /* Switch on/off de ordem (opção 5 · asc ↔ desc) */
+    '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-left:14px;">Ordem</span>'+
+    '<div id="turmasOrdemWrap" style="display:inline-flex;align-items:center;gap:8px;">'+
+      '<span id="turmasOrdemLblAsc" style="font-size:11px;font-weight:700;color:'+(_tturmasOrdem==='asc'?'var(--accent)':'var(--muted)')+';transition:color .15s;">↑ Antiga</span>'+
+      '<div id="turmasOrdemSwitch" role="button" tabindex="0" aria-pressed="'+(_tturmasOrdem==='desc')+'" '+
+        'title="Click pra alternar entre crescente e decrescente" '+
+        'style="position:relative;width:46px;height:24px;background:'+(_tturmasOrdem==='desc'?'rgba(200,240,90,.15)':'var(--surface)')+';'+
+        'border:1px solid '+(_tturmasOrdem==='desc'?'rgba(200,240,90,.4)':'var(--border2)')+';border-radius:14px;cursor:pointer;transition:all .15s;">'+
+        '<span id="turmasOrdemDot" style="position:absolute;top:2px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--accent);transition:transform .2s;transform:translateX('+(_tturmasOrdem==='desc'?'20px':'0')+');"></span>'+
+      '</div>'+
+      '<span id="turmasOrdemLblDesc" style="font-size:11px;font-weight:700;color:'+(_tturmasOrdem==='desc'?'var(--accent)':'var(--muted)')+';transition:color .15s;">↓ Recente</span>'+
     '</div>';
 
   document.getElementById('turmasAnoTrigger').addEventListener('click', function(e){
     e.stopPropagation();
     _turmasAnoPopAbrir();
   });
+  var sw=document.getElementById('turmasOrdemSwitch');
+  if(sw){
+    sw.addEventListener('click', _turmasToggleOrdem);
+    sw.addEventListener('keydown', function(e){
+      if(e.key==='Enter'||e.key===' '){ e.preventDefault(); _turmasToggleOrdem(); }
+    });
+  }
+}
+
+function _turmasToggleOrdem(){
+  _tturmasOrdem = (_tturmasOrdem === 'desc') ? 'asc' : 'desc';
+  try{ localStorage.setItem('_tturmasOrdem', _tturmasOrdem); }catch(e){}
+  _renderTurmasSwim(_tturmasCache);
 }
 
 function _turmasAnoPopAbrir(){
@@ -380,10 +409,12 @@ function _renderTurmasSwim(turmas){
       tiposMesRecente[tipo]=mes;
     }
   });
-  // Ordena por mês mais recente DESC (turma mais nova no topo); empate = alfabético
+  // Ordena por mês, respeitando _tturmasOrdem ('desc' = recente no topo,
+  // 'asc' = antiga no topo). Empate = alfabético.
+  var asc = _tturmasOrdem === 'asc';
   var tipos=Object.keys(tiposMesRecente).sort(function(a,b){
     var ma=tiposMesRecente[a], mb=tiposMesRecente[b];
-    if(mb !== ma) return mb - ma;
+    if(mb !== ma) return asc ? (ma - mb) : (mb - ma);
     return a.localeCompare(b,'pt-BR');
   });
   var cols='110px repeat(12,1fr)';
