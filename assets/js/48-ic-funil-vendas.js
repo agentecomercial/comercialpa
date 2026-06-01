@@ -1964,6 +1964,12 @@
             <div class="fv-novo-field"><span class="fv-novo-l req">Consultor</span><select class="fv-novo-s" data-k="consultor">${consultores.length?consultores.map(c=>`<option>${esc(c)}</option>`).join(''):'<option>Eu</option>'}</select></div>
             <div class="fv-novo-field"><span class="fv-novo-l req">Origem</span><select class="fv-novo-s" data-k="origem"><option value="">Selecione…</option>${allOrigens.map(o=>`<option>${esc(o)}</option>`).join('')}</select></div>
           </div>
+          <div class="fv-novo-grid c1">
+            <div class="fv-novo-field">
+              <span class="fv-novo-l">📝 Observações <small style="color:var(--txt-3,#6b7280);font-weight:400;">· notas iniciais (opcional)</small></span>
+              <textarea class="fv-novo-ta" data-k="notas" placeholder="Contexto, dor do cliente, urgência, instruções pro consultor..." style="min-height:60px;"></textarea>
+            </div>
+          </div>
           <div style="margin-top:12px;padding:10px 12px;background:rgba(96,165,250,.06);border-left:3px solid var(--blue);border-radius:6px;font-size:11px;color:var(--text);line-height:1.55;">
             💡 O lead será criado em <b>Prospecção</b> com probabilidade 10%. Após criar, abre o detalhe pra você completar treinamento, valor e outros campos se quiser.
           </div>
@@ -1988,11 +1994,14 @@
       const wpp = get('wpp').trim() || '[whatsapp]';
       const origem = get('origem') || '[origem]';
       const cons = get('consultor');
-      return `🆕 NOVO LEAD pra você${cons?', '+cons:''}:\n\n`
+      const notas = (get('notas') || '').trim();
+      let msg = `🆕 NOVO LEAD pra você${cons?', '+cons:''}:\n\n`
         + `👤 ${nome}\n`
         + `📱 ${wpp}\n`
-        + `📡 Origem: ${origem}\n\n`
-        + `Por favor, faça contato em até 24h. Boa venda! 🚀`;
+        + `📡 Origem: ${origem}\n`;
+      if(notas) msg += `📝 Obs: ${notas}\n`;
+      msg += `\nPor favor, faça contato em até 24h. Boa venda! 🚀`;
+      return msg;
     }
 
     /* Botão Copiar */
@@ -2039,7 +2048,7 @@
         temp: 'm',                /* Morno default */
         wpp: get('wpp').trim(),
         email: '',
-        notas: '',
+        notas: (get('notas') || '').trim(),
         criadoEm: _hoje(),
         atividade: [{quando:_hoje(), txt:'Fast Lead criado · '+origem+' · atribuído a '+consultor}]
       };
