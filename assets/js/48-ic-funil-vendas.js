@@ -29,6 +29,9 @@
   let _maxCards = 5;
   /* Cards colapsados (click simples toggleia). Sessão-only, sem persistência. */
   const _cardsCollapsed = new Set();
+  /* Colunas com toggle invertido (sessão-only). Se está no Set, o default vazia/cheia
+     é invertido: vazia vira coluna expandida e cheia vira mini-vertical retraída. */
+  const _colsToggleadas = new Set();
   let _booted = false;
   let _origensCustom = [];         // origens adicionadas pelo admin
   let _zerado = false;             // true = usuário fez reset, não auto-importa
@@ -1625,17 +1628,24 @@
       const soma = leadsEt.reduce((s,l)=>s+ +(l.valor||0),0);
       const cards = leadsEt.map(l => _cardHtml(l, et.cor)).join('');
       const mais = leadsEt.length > _maxCards ? `<div class="fv-col-mais">↓ Ver mais ${leadsEt.length - _maxCards} lead${leadsEt.length - _maxCards>1?'s':''}</div>` : '';
-      /* OPÇÃO 8: colunas vazias viram mini-colunas iconizadas com nome em vertical.
-         Mantém drag&drop funcionando (data-et). Click no botão "+" interno cria lead. */
-      if(vazia){
-        return `<div class="fv-col fv-col-vazia" data-et="${i}" style="--col-cor:${et.cor};" title="${esc(et.nome)} · 0 leads · clique no + pra criar">
-          <div class="fv-col-vazia-icone" style="background:${et.cor}22;border-color:${et.cor}55;color:${et.cor};">${et.ico||'•'}</div>
+      /* OPÇÃO 8: colunas vazias viram mini-colunas verticais (default). Click na mini
+         expande; click no header de coluna cheia retrai. Estado em _colsToggleadas. */
+      const invertida = _colsToggleadas.has(i);
+      const mini = invertida ? !vazia : vazia;
+      if(mini){
+        const badge = vazia
+          ? `<div class="fv-col-vazia-icone" style="background:${et.cor}22;border-color:${et.cor}55;color:${et.cor};">${et.ico||'•'}</div>`
+          : `<div class="fv-col-vazia-icone" style="background:${et.cor}22;border-color:${et.cor}55;color:${et.cor};font-weight:800;font-size:14px;" title="${leadsEt.length} lead${leadsEt.length>1?'s':''} · ${moedaCurta(soma)}">${leadsEt.length}</div>`;
+        return `<div class="fv-col fv-col-vazia" data-et="${i}" data-mini="1" style="--col-cor:${et.cor};" title="${esc(et.nome)} · ${leadsEt.length} lead${leadsEt.length===1?'':'s'} · clique para ${vazia?'expandir':'expandir e ver os cards'}">
+          ${badge}
           <div class="fv-col-vazia-nome" style="color:${et.cor};">${et.nome}</div>
           <button class="fv-col-vazia-add" data-et="${i}" title="Adicionar lead em ${esc(et.nome)}">+</button>
         </div>`;
       }
+      /* Coluna cheia/expandida. Header (.fv-col-h) é clicável pra retrair em mini-vertical. */
+      const acaoTitle = vazia ? 'Clique para retrair' : 'Clique para retrair em mini-coluna';
       return `<div class="fv-col" data-et="${i}" style="--col-cor:${et.cor};">
-        <div class="fv-col-h"><span class="fv-col-tit">${et.nome}</span><span class="fv-col-qtd">${leadsEt.length}</span></div>
+        <div class="fv-col-h" data-toggle-col="${i}" style="cursor:pointer;" title="${acaoTitle}"><span class="fv-col-tit">${et.nome}</span><span class="fv-col-qtd">${leadsEt.length}</span></div>
         <div class="fv-col-soma">💰 <b>${moedaCurta(soma)}</b></div>
         <button class="fv-col-add" data-et="${i}">+ Adicionar lead em ${et.nome}</button>
         ${cards}
@@ -1819,6 +1829,21 @@
     $$('.fv-col-add').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); _abrirNovoLead(+b.dataset.et); }));
     /* Botão + dentro das colunas vazias iconizadas (Opção 8) */
     $$('.fv-col-vazia-add').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); _abrirNovoLead(+b.dataset.et); }));
+
+    /* Click na mini-coluna vertical (área fora do botão "+") → expande para coluna normal */
+    $$('.fv-col-vazia[data-mini="1"]').forEach(col => col.addEventListener('click', e => {
+      if(e.target.closest('.fv-col-vazia-add')) return;
+      const i = +col.dataset.et;
+      if(_colsToggleadas.has(i)) _colsToggleadas.delete(i); else _colsToggleadas.add(i);
+      _render();
+    }));
+    /* Click no header da coluna expandida (.fv-col-h) → retrai em mini-vertical */
+    $$('.fv-col-h[data-toggle-col]').forEach(h => h.addEventListener('click', e => {
+      if(e.target.closest('button')) return;
+      const i = +h.dataset.toggleCol;
+      if(_colsToggleadas.has(i)) _colsToggleadas.delete(i); else _colsToggleadas.add(i);
+      _render();
+    }));
   }
 
   /* ── F2 · Modal Detalhe (EDITÁVEL) ──
