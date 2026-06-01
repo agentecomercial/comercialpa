@@ -548,6 +548,59 @@
     return 'm';
   }
 
+  /* Mapeamento REVERSO: etapa do Funil → status no Pipeline.
+     Só 3 etapas espelham status no Pipeline; demais devolvem null (não mexe). */
+  function _etapaParaStatus(etapa){
+    if(etapa === 6) return 'pago';
+    if(etapa === 5) return 'aberto';
+    if(etapa === 3) return 'negociacao';
+    return null;
+  }
+
+  /* Atualiza o campo `status` da venda no Pipeline quando o lead muda de etapa.
+     Faz lookup por _pipelineMes (rápido) ou varredura em pipelineSales (fallback).
+     Silencioso em qualquer erro — não bloqueia o fluxo do Funil. */
+  function _atualizarStatusPipeline(lead){
+    if(!lead || !lead._pipelineVendaId) return;
+    if(typeof window._fbGet !== 'function' || typeof window._fbSave !== 'function') return;
+    const novoStatus = _etapaParaStatus(lead.etapa);
+    if(!novoStatus) return;
+    const vendaId = lead._pipelineVendaId;
+    const mesHint = lead._pipelineMes || '';
+
+    function _gravar(path){
+      window._fbSave(path + '/status', novoStatus).catch(function(e){
+        console.warn('[FV→Pipe] falha ao gravar status', e);
+      });
+    }
+
+    if(mesHint){
+      const path = 'pipelineSales/' + mesHint + '/' + vendaId;
+      window._fbGet(path).then(function(v){
+        if(v) _gravar(path);
+        else _varrer();
+      }).catch(_varrer);
+    } else {
+      _varrer();
+    }
+
+    function _varrer(){
+      window._fbGet('pipelineSales').then(function(sales){
+        if(!sales) return;
+        const meses = Object.keys(sales);
+        for(let i=0;i<meses.length;i++){
+          const m = meses[i];
+          if(sales[m] && sales[m][vendaId]){
+            lead._pipelineMes = m;
+            _gravar('pipelineSales/' + m + '/' + vendaId);
+            return;
+          }
+        }
+        console.log('[FV→Pipe] venda', vendaId, 'não encontrada em pipelineSales (foi excluída?)');
+      }).catch(function(e){ console.warn('[FV→Pipe] varredura falhou', e); });
+    }
+  }
+
   /* ═══════════════════════════════════════════════════════════════
      Importa AUTOMATICAMENTE uma venda criada/editada no Pipeline
      Comercial pro Funil de Vendas. Chamada por npSalvarVenda do
@@ -637,6 +690,7 @@
             ex.notas = venda.obs || ex.notas;
             ex.etapa = etapa;
             ex.temp = temp;
+            ex._pipelineMes = mes;
             ex.prob = ETAPAS[etapa] ? ETAPAS[etapa].prob : ex.prob;
             /* Atualiza criadoEm com a data real da venda (se disponível) —
                corrige leads antigos que tinham _hoje() em vez da data real */
@@ -652,6 +706,7 @@
             var novo = {
               id: _id(),
               _pipelineVendaId: vendaId,
+              _pipelineMes: mes,
               _src: 'pipeline',
               nome: venda.clienteNome || venda.cliente || 'Sem nome',
               empresa: '',
@@ -744,6 +799,7 @@
           existente.notas = venda.obs || existente.notas;
           existente.etapa = etapa;
           existente.temp = temp;
+          if(venda.mes) existente._pipelineMes = venda.mes;
           existente.prob = ETAPAS[etapa] ? ETAPAS[etapa].prob : existente.prob;
           /* Atualiza criadoEm com a data real da venda (corrige leads
              antigos com _hoje() em vez da data real do Pipeline) */
@@ -759,6 +815,7 @@
           var novo = {
             id: _id(),
             _pipelineVendaId: vendaId,
+            _pipelineMes: venda.mes || '',
             _src: 'pipeline',
             nome: venda.clienteNome || venda.cliente || 'Sem nome',
             empresa: '',
@@ -1823,6 +1880,7 @@
         l.atividade.push({quando:_hoje(), txt:`Movido ${antigo} → ${novo}`});
         _historico.unshift({leadId:l.id, nome:l.nome, txt:`${antigo} → ${novo}`, quando:new Date().toISOString(), autor:_papel(), tipo: novoEt===6?'sale':'move'});
         _salvar(); _render();
+        _atualizarStatusPipeline(l);
         _toast(`${l.nome} → ${novo}`);
       });
     });
@@ -1994,6 +2052,7 @@
       }
 
       _salvar();
+      if(etapaMudou) _atualizarStatusPipeline(l);
       _toast('✅ Lead atualizado');
       close();
       _render();
