@@ -472,6 +472,123 @@
      Dedupe por _pipelineVendaId — se já existe lead vinculado a
      essa venda, ATUALIZA (mantém id do funil); senão CRIA novo.
      ═══════════════════════════════════════════════════════════════ */
+  /* ═══════════════════════════════════════════════════════════════
+     Sync EM LOTE de TODAS as vendas do Pipeline → Funil de Vendas.
+     Usa 1 fetch + 1 save (não 1 por venda). Chamado pelo botão
+     "↻ Atualizar dados" via 30-sync-ferramentas.js.
+     ═══════════════════════════════════════════════════════════════ */
+  window._fvSincronizarTodasDoPipeline = function(){
+    if(typeof window._fbGet !== 'function' || typeof window._fbSave !== 'function'){
+      console.warn('[FV-sync-all] Firebase indisponível');
+      return Promise.resolve({ criados:0, atualizados:0, ignorados:0, total:0 });
+    }
+    console.log('[FV-sync-all] iniciando sincronização batch Pipeline→Funil');
+    /* Busca pipelineSales (todas as vendas de todos os meses) + doc do funil em paralelo */
+    return Promise.all([
+      window._fbGet('pipelineSales').catch(function(){return {};}),
+      window._fbGet(_fbPath()).catch(function(){return null;})
+    ]).then(function(res){
+      var sales = res[0] || {};
+      var doc = res[1] || {};
+      var leads = Array.isArray(doc.leads) ? doc.leads.slice() : (doc.leads ? Object.values(doc.leads) : []);
+      var historico = Array.isArray(doc.historico) ? doc.historico.slice() : (doc.historico ? Object.values(doc.historico) : []);
+      var origensCustom = Array.isArray(doc.origensCustom) ? doc.origensCustom : [];
+      var zerado = !!doc.zerado;
+
+      /* Index dos leads existentes por _pipelineVendaId */
+      var indexPorVendaId = {};
+      leads.forEach(function(l, i){
+        if(l && l._pipelineVendaId) indexPorVendaId[l._pipelineVendaId] = i;
+      });
+
+      var criados = 0, atualizados = 0, ignorados = 0, total = 0;
+
+      /* Itera todos os meses · todas as vendas */
+      Object.keys(sales).forEach(function(mes){
+        var bucket = sales[mes] || {};
+        Object.keys(bucket).forEach(function(vendaId){
+          var venda = bucket[vendaId];
+          if(!venda) return;
+          total++;
+          var statusV = String(venda.status || 'aberto').toLowerCase();
+          if(statusV === 'cancelado' || statusV === 'cancelada'){
+            ignorados++; return;
+          }
+          var etapa = _statusParaEtapa(statusV);
+          var temp = _tempPorStatus(statusV, etapa);
+          var nomeEtapa = ETAPAS[etapa] ? ETAPAS[etapa].nome : statusV;
+          var idx = indexPorVendaId[vendaId];
+
+          if(idx != null){
+            /* Atualiza existente */
+            var ex = leads[idx];
+            var mudouEtapa = ex.etapa !== etapa;
+            ex.nome = venda.clienteNome || venda.cliente || ex.nome;
+            ex.valor = +(venda.valor) || ex.valor;
+            ex.consultor = venda.consultorNome || venda.consultor || ex.consultor;
+            ex.treinamento = venda.produto || venda.treinamento || ex.treinamento;
+            ex.origem = venda.origemManual || venda.origem || ex.origem;
+            ex.notas = venda.obs || ex.notas;
+            ex.etapa = etapa;
+            ex.temp = temp;
+            ex.prob = ETAPAS[etapa] ? ETAPAS[etapa].prob : ex.prob;
+            ex.atividade = ex.atividade || [];
+            if(mudouEtapa){
+              ex.atividade.unshift({quando:_hoje(), txt:'Sync Pipeline → '+nomeEtapa});
+            }
+            atualizados++;
+          } else {
+            /* Cria novo */
+            var novo = {
+              id: _id(),
+              _pipelineVendaId: vendaId,
+              _src: 'pipeline',
+              nome: venda.clienteNome || venda.cliente || 'Sem nome',
+              empresa: '',
+              valor: +(venda.valor) || 0,
+              prob: ETAPAS[etapa] ? ETAPAS[etapa].prob : 30,
+              etapa: etapa,
+              treinamento: venda.produto || venda.treinamento || '',
+              origem: venda.origemManual || venda.origem || 'Pipeline',
+              consultor: venda.consultorNome || venda.consultor || '',
+              prazo: '',
+              temp: temp,
+              wpp: '',
+              email: '',
+              notas: venda.obs || '',
+              criadoEm: _hoje(),
+              atividade: [{quando:_hoje(), txt:'Sync do Pipeline · ' + nomeEtapa}]
+            };
+            leads.push(novo);
+            indexPorVendaId[vendaId] = leads.length - 1;
+            criados++;
+          }
+        });
+      });
+
+      if(criados > 0 || atualizados > 0){
+        historico.unshift({leadId:null, nome:'(Sync em lote)', txt:'Atualizar dados · '+criados+' criados, '+atualizados+' atualizados', quando:new Date().toISOString(), autor:_papel(), tipo:'sync'});
+      }
+
+      /* Salva tudo de uma vez */
+      var docNovo = { leads: leads, historico: historico.slice(0,200), origensCustom: origensCustom, zerado: zerado };
+      return window._fbSave(_fbPath(), docNovo).then(function(){
+        console.log('[FV-sync-all] concluído · '+criados+' criados, '+atualizados+' atualizados, '+ignorados+' ignorados (cancelados), '+total+' vendas totais');
+        if(_booted){
+          _leads = leads;
+          _historico = historico;
+          _origensCustom = origensCustom;
+          _zerado = zerado;
+          _render();
+        }
+        return { criados: criados, atualizados: atualizados, ignorados: ignorados, total: total };
+      });
+    }).catch(function(e){
+      console.error('[FV-sync-all] erro:', e);
+      return { criados:0, atualizados:0, ignorados:0, total:0, erro: e.message };
+    });
+  };
+
   window._fvAdicionarLeadDePipeline = function(venda, vendaId){
     if(!venda){ console.warn('[FV-sync] venda vazia'); return; }
     if(!vendaId) vendaId = venda.vendaId || venda.id || ('v_' + Date.now());

@@ -301,6 +301,21 @@ function _mapCarregar(forcar) {
     /* Expõe pro IC (43-ic-alertas, 47-ic-executivo) */
     window._mapDados = registros;
 
+    /* Sync EM LOTE Pipeline → Funil de Vendas (sempre que o botão
+       "↻ Atualizar dados" for clicado). Idempotente · dedupe por
+       _pipelineVendaId. */
+    if(forcar && typeof window._fvSincronizarTodasDoPipeline === 'function'){
+      window._fvSincronizarTodasDoPipeline().then(function(r){
+        if(!r) return;
+        var parts = [];
+        if(r.criados)     parts.push(r.criados+' criado'+(r.criados>1?'s':''));
+        if(r.atualizados) parts.push(r.atualizados+' atualizado'+(r.atualizados>1?'s':''));
+        if(parts.length && typeof _showToast === 'function'){
+          _showToast('🎯 Funil de Vendas: '+parts.join(', '), 'var(--accent)');
+        }
+      });
+    }
+
     /* Diagnóstico — conferência rápida com Turmas e Pipeline Comercial */
     var qTurma  = registros.filter(function(r){return r._src==='turma';}).length;
     var qAvulso = registros.filter(function(r){return r._src==='avulso';}).length;
