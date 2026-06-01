@@ -1478,7 +1478,25 @@
       ? window.allTreinamentos.slice().sort((a,b) => a.localeCompare(b,'pt-BR'))
       : (window._PRODUTOS_PROPOSTA && Object.keys(window._PRODUTOS_PROPOSTA))
         || ['IF','MASTER COACHING','CEOP','FGPC','BHP','FCIS','ML5','TAV','MAESTRIA','CIS_GLOBAL','CIS'];
-    const consultores = [...new Set([..._leads.map(l=>l.consultor).filter(Boolean), ...(window._mapDados?.consultores||[])])].sort();
+
+    /* CONSULTORES — agrega múltiplas fontes pra cobrir TODOS do app */
+    const consSet = new Map();
+    const addCons = (n) => {
+      if(!n) return;
+      const s = String(n).trim(); if(!s) return;
+      const k = s.toUpperCase();
+      if(!consSet.has(k)) consSet.set(k, s);
+    };
+    _leads.forEach(l => addCons(l.consultor));
+    if(Array.isArray(window.allConsultors)) window.allConsultors.forEach(addCons);
+    if(Array.isArray(window._npConsultores)) window._npConsultores.forEach(addCons);
+    if(window._npUsuarios){
+      Object.values(window._npUsuarios).forEach(u => {
+        if(u && u.perfil === 'consultor' && u.nome) addCons(u.nome);
+      });
+    }
+    const consultores = Array.from(consSet.values()).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+
     const allOrigens = [...ORIGENS_PADRAO, ..._origensCustom];
     const html = `<div class="fv-overlay show" id="fvNovoOv">
       <div class="fv-modal fv-novo">
@@ -1505,6 +1523,12 @@
           <div class="fv-novo-grid">
             <div class="fv-novo-field"><span class="fv-novo-l req">Etapa inicial</span><select class="fv-novo-s" data-k="etapa">${ETAPAS.map((e,i)=>`<option value="${i}" ${i===(etapaInicial||0)?'selected':''}>${e.nome}</option>`).join('')}</select></div>
             <div class="fv-novo-field"><span class="fv-novo-l req">Consultor</span><select class="fv-novo-s" data-k="consultor">${consultores.length?consultores.map(c=>`<option>${esc(c)}</option>`).join(''):'<option>Eu</option>'}</select></div>
+          </div>
+          <div class="fv-novo-grid c1">
+            <div class="fv-novo-field">
+              <span class="fv-novo-l">Turma <small style="color:var(--txt-3,#6b7280);font-weight:400;">· opcional · vincula o lead a uma turma existente</small></span>
+              <select class="fv-novo-s" data-k="turma" id="fvNovoTurma"><option value="">— Nenhuma (lead avulso) —</option></select>
+            </div>
           </div>
           <div class="fv-novo-section">📡 Origem & follow-up</div>
           <div class="fv-novo-grid">
@@ -1546,6 +1570,52 @@
     const ov = $('#fvNovoOv');
     const close = () => ov.remove();
     let tempSel = '';
+    /* Popular select de Turma direto do Firebase (async) +
+       adicionar consultores dos clientes dessas turmas no select de consultor */
+    if(typeof window._fbGet === 'function'){
+      window._fbGet('turmas').then(d => {
+        if(!d || typeof d !== 'object') return;
+        const turmasArr = Object.keys(d).map(id => Object.assign({id:id}, d[id])).filter(Boolean);
+        turmasArr.sort((a,b) => String(a.nome||a.titulo||a.id).localeCompare(String(b.nome||b.titulo||b.id), 'pt-BR'));
+        const turmaSel = $('#fvNovoTurma', ov);
+        if(turmaSel){
+          turmaSel.innerHTML = '<option value="">— Nenhuma (lead avulso) —</option>'
+            + turmasArr.map(t => `<option value="${esc(t.id)}">${esc(t.nome || t.titulo || t.id)}</option>`).join('');
+        }
+        /* Acrescenta consultores dos clientes ao select de Consultor */
+        const consSel = ov.querySelector('[data-k="consultor"]');
+        if(consSel){
+          const existentes = new Set(Array.from(consSel.options).map(o => (o.textContent||'').toUpperCase()));
+          const novos = [];
+          turmasArr.forEach(t => {
+            const cls = t.clientes || [];
+            const arr = Array.isArray(cls) ? cls : (typeof cls === 'object' ? Object.values(cls).filter(Boolean) : []);
+            arr.forEach(c => {
+              if(c && c.consultor){
+                const n = String(c.consultor).trim();
+                if(n && !existentes.has(n.toUpperCase())){
+                  existentes.add(n.toUpperCase());
+                  novos.push(n);
+                }
+              }
+            });
+          });
+          if(novos.length){
+            const valAtual = consSel.value;
+            novos.sort((a,b) => a.localeCompare(b, 'pt-BR')).forEach(n => {
+              const opt = document.createElement('option');
+              opt.textContent = n;
+              consSel.appendChild(opt);
+            });
+            /* Re-ordena tudo alfabético */
+            const opts = Array.from(consSel.options).sort((a,b) => (a.textContent||'').localeCompare(b.textContent||'', 'pt-BR'));
+            consSel.innerHTML = '';
+            opts.forEach(o => consSel.appendChild(o));
+            consSel.value = valAtual;
+          }
+        }
+      }).catch(() => {});
+    }
     ov.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
     ov.addEventListener('click', e => { if(e.target === ov) close(); });
     ov.querySelectorAll('.fv-novo-t').forEach(b => b.addEventListener('click', () => {
@@ -1567,6 +1637,14 @@
       if(isNaN(valor) || valor<=0){ _toast('Informe um valor válido'); return; }
       let origem = get('origem');
       if(origem === '__outro__') origem = origOut.value.trim() || 'Outro';
+      /* Turma (opcional): captura id + nome pra exibir depois */
+      const turmaId = get('turma');
+      let turmaNome = '';
+      if(turmaId){
+        const turmaSel = ov.querySelector('[data-k="turma"]');
+        const optSel = turmaSel && turmaSel.options[turmaSel.selectedIndex];
+        turmaNome = optSel ? (optSel.textContent || '') : '';
+      }
       const novo = {
         id: _id(),
         nome,
@@ -1577,13 +1655,15 @@
         treinamento: trein,
         origem,
         consultor: get('consultor'),
+        turmaId: turmaId || '',
+        turmaNome: turmaNome,
         prazo: get('prazo'),
         temp: tempSel,
         wpp: get('wpp'),
         email: get('email'),
         notas: get('notas'),
         criadoEm: _hoje(),
-        atividade: [{quando:_hoje(), txt:'Lead criado'}]
+        atividade: [{quando:_hoje(), txt:'Lead criado'+(turmaNome?' · turma: '+turmaNome:'')}]
       };
       _leads.push(novo);
       _historico.unshift({leadId:novo.id, nome:novo.nome, txt:`Novo lead em ${ETAPAS[novo.etapa].nome}`, quando:new Date().toISOString(), autor:_papel(), tipo:'nova'});
