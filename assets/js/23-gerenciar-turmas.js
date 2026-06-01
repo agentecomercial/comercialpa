@@ -84,39 +84,127 @@ function _gtExtrairTipo(t){
   return cod.slice(0,3)||'?';
 }
 
+/* Seletor de ano · POPOVER com grade visual + badges de qtd de turmas (opção 4) */
 function _gtRenderYearBar(){
   var bar=document.getElementById('gtYearBar');
   if(!bar) return;
-  // Coletar anos das turmas
-  var anosSet={};
-  (_gerenciarTurmasList||[]).forEach(function(t){anosSet[_gtExtrairAno(t)]=true;});
-  var anos=Object.keys(anosSet).map(Number).sort();
+  // Coletar anos das turmas + qtd por ano
+  var anosCount={};
+  (_gerenciarTurmasList||[]).forEach(function(t){
+    var a=_gtExtrairAno(t);
+    anosCount[a]=(anosCount[a]||0)+1;
+  });
+  var anos=Object.keys(anosCount).map(Number).sort();
   if(!anos.length) anos=[new Date().getFullYear()];
   // Garantir que _gtAnosDisponiveis tem esses anos
   anos.forEach(function(a){if(_gtAnosDisponiveis.indexOf(a)===-1) _gtAnosDisponiveis.push(a);});
   _gtAnosDisponiveis.sort();
   if(_gtAnosDisponiveis.indexOf(_gtAnoAtual)===-1) _gtAnoAtual=_gtAnosDisponiveis[0];
-  bar.innerHTML='<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-right:4px;">Ano</span>';
-  _gtAnosDisponiveis.forEach(function(a){
-    var btn=document.createElement('button');
-    btn.textContent=a;
-    btn.style.cssText='padding:4px 12px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--muted);font-family:"DM Sans",sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;';
-    if(a===_gtAnoAtual){btn.style.background='linear-gradient(180deg,#d4f565,#c8f05a)';btn.style.color='#0f0f0f';btn.style.borderColor='transparent';}
-    btn.addEventListener('click',function(){_gtAnoAtual=a;_renderGerenciarLista();});
-    bar.appendChild(btn);
+
+  // Botão trigger (mostra ano atual + ícone calendário) + popover ancorado
+  bar.innerHTML=
+    '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-right:4px;">Ano</span>'+
+    '<div id="gtAnoPopWrap" style="position:relative;display:inline-block;">'+
+      '<button id="gtAnoTrigger" type="button" '+
+        'style="padding:5px 14px;border-radius:20px;border:none;background:linear-gradient(180deg,#d4f565,#c8f05a);color:#0f0f0f;font-family:\'DM Sans\',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">'+
+        _gtAnoAtual+' <span style="font-size:10px;opacity:.7;">📅</span>'+
+      '</button>'+
+      '<div id="gtAnoPopover" style="display:none;position:absolute;top:calc(100% + 8px);left:0;z-index:1600;'+
+        'background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:14px;'+
+        'box-shadow:0 8px 28px rgba(0,0,0,.5);min-width:280px;">'+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('gtAnoTrigger').addEventListener('click', function(e){
+    e.stopPropagation();
+    _gtAnoPopAbrir();
   });
-  // Botão + Ano
-  var addBtn=document.createElement('button');
-  addBtn.textContent='+ Ano';
-  addBtn.style.cssText='padding:4px 12px;border-radius:20px;border:1px dashed rgba(200,240,90,.4);background:none;color:var(--accent);font-family:"DM Sans",sans-serif;font-size:11px;font-weight:700;cursor:pointer;';
-  addBtn.addEventListener('click',function(){
+}
+
+function _gtAnoPopAbrir(){
+  var pop=document.getElementById('gtAnoPopover');
+  if(!pop) return;
+  if(pop.style.display==='block'){ _gtAnoPopFechar(); return; }
+
+  // Recoletar contagem (pode ter mudado)
+  var anosCount={};
+  (_gerenciarTurmasList||[]).forEach(function(t){
+    var a=_gtExtrairAno(t);
+    anosCount[a]=(anosCount[a]||0)+1;
+  });
+  var totalTurmas=0;
+  _gtAnosDisponiveis.forEach(function(a){ totalTurmas+=(anosCount[a]||0); });
+
+  var html='<div style="font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">📅 Escolha o ano</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">';
+  _gtAnosDisponiveis.forEach(function(a){
+    var qtd=anosCount[a]||0;
+    var ativa=(a===_gtAnoAtual);
+    html+='<button class="gt-pop-ano" data-ano="'+a+'" '+
+      'style="position:relative;background:'+(ativa?'linear-gradient(180deg,#d4f565,#c8f05a)':'var(--surface2)')+';color:'+(ativa?'#0f0f0f':'var(--text)')+';padding:10px 0;text-align:center;font-weight:800;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid '+(ativa?'transparent':'var(--border)')+';font-family:inherit;transition:all .15s;">'+
+      a+
+      (qtd>0?'<span style="position:absolute;top:2px;right:4px;font-size:8px;background:'+(ativa?'#0a0e1a':'var(--blue)')+';color:'+(ativa?'#c8f05a':'#0a0e1a')+';padding:0 5px;border-radius:6px;font-weight:800;">'+qtd+'</span>':'')+
+    '</button>';
+  });
+  html+='</div>';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);">'+
+    '<span>Total · '+totalTurmas+' turma'+(totalTurmas!==1?'s':'')+' em '+_gtAnosDisponiveis.length+' ano'+(_gtAnosDisponiveis.length!==1?'s':'')+'</span>'+
+    '<button id="gtPopAddAno" type="button" style="background:transparent;border:none;color:var(--accent);font-weight:700;font-size:11px;cursor:pointer;font-family:inherit;">+ Adicionar ano</button>'+
+  '</div>';
+  pop.innerHTML=html;
+  pop.style.display='block';
+
+  // Bind eventos
+  pop.querySelectorAll('.gt-pop-ano').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var ano=parseInt(btn.getAttribute('data-ano'),10);
+      _gtAnoAtual=ano;
+      _gtAnoPopFechar();
+      _renderGerenciarLista();
+    });
+    btn.addEventListener('mouseenter', function(){
+      if(!btn.style.background.includes('linear-gradient')){
+        btn.style.borderColor='var(--accent)';
+        btn.style.color='var(--accent)';
+      }
+    });
+    btn.addEventListener('mouseleave', function(){
+      if(!btn.style.background.includes('linear-gradient')){
+        btn.style.borderColor='var(--border)';
+        btn.style.color='var(--text)';
+      }
+    });
+  });
+  document.getElementById('gtPopAddAno').addEventListener('click', function(){
     var max=Math.max.apply(null,_gtAnosDisponiveis);
     var novo=max+1;
     _gtAnosDisponiveis.push(novo);
+    _gtAnosDisponiveis.sort();
     _gtAnoAtual=novo;
+    _gtRenderYearBar();
     _renderGerenciarLista();
+    // Mantém popover aberto após adicionar
+    setTimeout(_gtAnoPopAbrir, 50);
   });
-  bar.appendChild(addBtn);
+
+  // Fechar com click fora
+  setTimeout(function(){
+    document.addEventListener('click', _gtAnoPopOnDocClick);
+  }, 0);
+}
+
+function _gtAnoPopFechar(){
+  var pop=document.getElementById('gtAnoPopover');
+  if(pop) pop.style.display='none';
+  document.removeEventListener('click', _gtAnoPopOnDocClick);
+}
+
+function _gtAnoPopOnDocClick(e){
+  var pop=document.getElementById('gtAnoPopover');
+  var trig=document.getElementById('gtAnoTrigger');
+  if(!pop || !trig) return;
+  if(pop.contains(e.target) || trig.contains(e.target)) return;
+  _gtAnoPopFechar();
 }
 
 var _gtLayout='lista';
