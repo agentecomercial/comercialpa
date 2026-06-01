@@ -1871,7 +1871,6 @@
     if(l.treinamento && !trainings.includes(l.treinamento)) trainings.unshift(l.treinamento);
 
     const et = ETAPAS[l.etapa];
-    const wppDigits = (l.wpp||'').replace(/\D/g,'');
 
     const html = `<div class="fv-overlay show" id="fvDetOv">
       <div class="fv-modal fv-det">
@@ -1941,7 +1940,6 @@
             <textarea class="fv-novo-ta" data-k="notas" placeholder="Contexto, dor do cliente, próximos passos..." style="min-height:120px;width:100%;">${esc(l.notas||'')}</textarea>
           </div>
           <div class="fv-det-actions">
-            ${wppDigits?`<a class="fv-btn" href="https://wa.me/${wppDigits}" target="_blank">📱 WhatsApp</a>`:''}
             ${l.email?`<a class="fv-btn" href="mailto:${esc(l.email)}">✉ E-mail</a>`:''}
             <button class="fv-btn fv-btn-primary" data-salvar>💾 Salvar alterações</button>
             ${_ehAdmin()?`<button class="fv-btn" style="color:#ef4444;border-color:rgba(239,68,68,0.3);margin-left:auto;" data-excluir>🗑 Excluir lead</button>`:''}
