@@ -301,8 +301,10 @@
   background:transparent; color:var(--txt-3,#6b7280);
   border:1px solid rgba(255,255,255,.08); border-radius:4px;
   font-size:9px; cursor:pointer; font-family:inherit; line-height:1;
+  display:inline-flex; align-items:center; justify-content:center;
   transition:all .15s;
 }
+.fv-card-copy svg{ display:block; }
 .fv-card-copy:hover{ color:var(--accent); border-color:var(--accent); background:rgba(212,165,116,.08); }
 /* Quando temp está ativo, o ícone do clima já ocupa o canto · sobe edição, copy e chevron */
 .fv-card-temp + .fv-card-edit{ right:30px; }
@@ -2033,7 +2035,7 @@
     return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};">
       ${tempIcon?`<span class="fv-card-temp">${tempIcon}</span>`:''}
       <button class="fv-card-edit" data-edit="${l.id}" title="Abrir detalhes do lead">✎</button>
-      <button class="fv-card-copy" data-copy="${l.id}" title="Copiar mensagem para WhatsApp">📋</button>
+      <button class="fv-card-copy" data-copy="${l.id}" title="Copiar mensagem para WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
       <span class="fv-card-chev" title="${colapsado?'expandir':'recolher'}">${colapsado?'▸':'▾'}</span>
       <div class="fv-card-nome">${esc(l.nome)}</div>
       ${l.empresa?`<div class="fv-card-emp">${esc(l.empresa)}</div>`:''}
