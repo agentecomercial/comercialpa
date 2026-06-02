@@ -1729,6 +1729,18 @@
 
   /* Configs dos KPIs · cada uma resolve {titulo, sub, body(leads,k)} */
   const _KPI_CFG = {
+    perdidos: {
+      titulo: '❌ Leads perdidos',
+      sub: 'Clientes que desistiram — abra o detalhe para reativar',
+      escopo: 'todos',  /* usa _leads (não respeita filtros — perdidos somem dos filtros normais) */
+      leads: arr => arr.filter(l => l.status === 'perdido')
+    },
+    reciclar: {
+      titulo: '♻ Leads para reciclar',
+      sub: 'Marcados para retomar mais tarde',
+      escopo: 'todos',
+      leads: arr => arr.filter(l => l.status === 'reciclar')
+    },
     negociacao: {
       titulo: '🤝 Em Negociação',
       sub: 'Leads na etapa Negociação',
@@ -1810,8 +1822,10 @@
 
   function _abrirModalKpi(kpi, ctx){
     const cfg = _KPI_CFG[kpi]; if(!cfg) return;
-    const arr = _filtrar(_leads); /* respeita filtros já aplicados na tela */
-    const k = ctx.k;
+    /* escopo 'todos' = ignora filtros e status (usado por Perdidos/Reciclar
+       que de propósito ficam fora dos filtros normais do funil) */
+    const arr = cfg.escopo === 'todos' ? _leads.slice() : _filtrar(_leads);
+    const k = (ctx && ctx.k) || _calcKpis(arr);
 
     let bodyHtml = '';
     if(cfg.leads){
@@ -1972,8 +1986,11 @@
     if(bar){
       bar.style.display = (perdidos || reciclar) ? '' : 'none';
       bar.innerHTML = ''
-        + (perdidos ? `<span title="Leads perdidos / desistiram" style="color:#fca5a5;">❌ ${perdidos} perdido${perdidos===1?'':'s'}</span>` : '')
-        + (reciclar ? `<span title="Leads marcados para reciclar mais tarde" style="color:#93c5fd;">♻ ${reciclar} reciclar</span>` : '');
+        + (perdidos ? `<button class="fv-fora-btn" data-fora="perdidos" title="Ver leads perdidos · clique pra abrir" style="background:transparent;border:none;color:#fca5a5;cursor:pointer;font-size:10px;font-family:inherit;padding:2px 4px;border-radius:4px;">❌ ${perdidos} perdido${perdidos===1?'':'s'}</button>` : '')
+        + (reciclar ? `<button class="fv-fora-btn" data-fora="reciclar" title="Ver leads para reciclar" style="background:transparent;border:none;color:#93c5fd;cursor:pointer;font-size:10px;font-family:inherit;padding:2px 4px;border-radius:4px;">♻ ${reciclar} reciclar</button>` : '');
+      bar.querySelectorAll('[data-fora]').forEach(btn => btn.addEventListener('click', () => {
+        _abrirModalKpi(btn.dataset.fora, {});
+      }));
     }
   }
 
@@ -2242,15 +2259,17 @@
 
   function _render(){
     const arr = _filtrar(_leads);
-    /* KPIs e Funil de Conversão consideram só leads ATIVOS (perdidos/reciclar
-       não entram em métricas). Já o Kanban e a Lista mostram TODOS — perdidos
-       ficam visíveis com badge na própria etapa onde estavam. */
+    /* KPIs e Funil de Conversão consideram só leads ATIVOS (sem perdido/reciclar).
+       Kanban e Lista escondem PERDIDOS (somem do funil de verdade) mas mantêm
+       RECICLAR (lead pode voltar). Para gerenciar perdidos, o usuário muda status
+       no modal Detalhe de volta para "ativo". */
     const arrAtivos = arr.filter(l => !l.status || l.status === 'ativo');
+    const arrKanban = arr.filter(l => l.status !== 'perdido');
     _renderKpis(arrAtivos);
     _renderFunilSide(arrAtivos, arr);
     _renderHistorico();
-    _renderKanban(arr);
-    _renderLista(arr);
+    _renderKanban(arrKanban);
+    _renderLista(arrKanban);
     _popularSelectsConsultoresEtc();
   }
 
