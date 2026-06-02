@@ -546,7 +546,7 @@
           <section class="fv-op modo-fit collapsed" id="fvOp">
             <div class="fv-op-inner" id="fvOpInner">
               <div class="fv-op-h" id="fvOpHeader" title="Clique para expandir/recolher">
-                <div class="fv-op-tit"><span class="fv-op-chev" id="fvOpChev">▾</span>📋 Operação · <span id="fvModoLabel">Kanban</span></div>
+                <div class="fv-op-tit"><span class="fv-op-chev" id="fvOpChev">▾</span>📋 Operação</div>
                 <div class="fv-op-actions">
                   <div class="fv-op-instr" id="fvInstr">💡 Arraste cards · Clique p/ detalhar</div>
                   <button class="fv-btn fv-btn-primary" id="fvBtnFast" style="background:var(--blue);color:#0a0e1a;" title="Lead rápido (Nome+WhatsApp+Consultor+Origem) — abre o detalhe completo depois">⚡ Fast Lead</button>
@@ -2856,7 +2856,6 @@
     _modoLista = (m === 'lista');
     const op = $('#fvOp'); if(!op) return;
     op.classList.toggle('modo-lista', _modoLista);
-    $('#fvModoLabel').textContent = _modoLista ? 'Lista' : 'Kanban';
     $('#fvInstr').textContent = _modoLista ? '💡 Clique nas colunas pra ordenar' : '💡 Arraste cards · Clique p/ detalhar';
     $$('.fv-vbtn').forEach(b => b.classList.toggle('active', b.dataset.view === m));
   }
