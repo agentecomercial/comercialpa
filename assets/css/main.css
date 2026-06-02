@@ -2174,6 +2174,65 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-meta-row{display:flex;justify-content:space-between;font-size:11px;margin-top:4px;}
 .np-meta-edit{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:5px;padding:3px 9px;font-size:10px;cursor:pointer;margin-top:10px;transition:color .12s,border-color .12s;}
 .np-meta-edit:hover{color:var(--accent);border-color:var(--accent);}
+/* ─── Card de meta v9 (gradient mesh + stepper + chip semanal + pace) ─── */
+.np-meta-card-v9{
+  background:
+    radial-gradient(60% 50% at 20% 0%, rgba(212,165,116,.14), transparent 60%),
+    radial-gradient(50% 50% at 100% 100%, rgba(168,85,247,.10), transparent 60%),
+    linear-gradient(135deg,#181d27 0%,#11151c 100%);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:16px; padding:16px;
+  box-shadow:0 20px 40px -15px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.03) inset;
+  display:flex; flex-direction:column; gap:10px;
+}
+.np-mc-h{display:flex;align-items:center;gap:12px;}
+.np-mc-av{
+  width:48px;height:48px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(135deg,#d4a574,#b88a5a);color:#0a0e1a;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:800;
+  box-shadow:0 4px 12px rgba(212,165,116,.3);
+}
+.np-mc-nome{font-size:15px;font-weight:800;color:#e6edf3;}
+.np-mc-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:3px;}
+.np-mc-chip{font-size:9px;padding:3px 9px;border-radius:6px;font-weight:700;letter-spacing:.04em;}
+.np-mc-stepper{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 0 2px;}
+.np-step-dot{
+  width:24px;height:24px;border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;
+  background:rgba(255,255,255,.06);color:#6b7280;
+  border:1px solid rgba(255,255,255,.08);
+  transition:all .15s;font-family:inherit;line-height:1;padding:0;
+}
+.np-step-dot:hover{transform:scale(1.10);border-color:#d4a574;color:#d4a574;}
+.np-step-dot.past{background:rgba(52,211,153,.15);color:#86efac;border-color:rgba(52,211,153,.30);}
+.np-step-dot.curr{
+  background:linear-gradient(135deg,#d4a574,#b88a5a);color:#0a0e1a;
+  border-color:#d4a574;transform:scale(1.18);
+  box-shadow:0 4px 12px rgba(212,165,116,.35);
+}
+.np-step-conn{flex:1;max-width:20px;height:2px;background:rgba(255,255,255,.06);align-self:center;}
+.np-mc-big{display:flex;justify-content:space-between;align-items:flex-end;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.np-mc-big-v{font-size:20px;font-weight:800;color:#e6edf3;line-height:1.1;}
+.np-mc-big-v small{font-size:10px;color:#6b7280;display:block;font-weight:400;margin-top:2px;}
+.np-mc-pct{font-size:20px;font-weight:800;color:#ef4444;}
+.np-mc-pct.s{font-size:14px;color:#f59e0b;}
+.np-mc-pct.ok{color:#34d399;}.np-mc-pct.warn{color:#f59e0b;}.np-mc-pct.bad{color:#ef4444;}
+.np-mc-tiers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.np-mc-t{padding:8px 6px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.04);border-radius:6px;text-align:center;}
+.np-mc-t .lbl{font-size:9px;color:#d4a574;font-weight:700;letter-spacing:.04em;}
+.np-mc-t .v{font-size:10px;color:#e6edf3;font-weight:700;margin-top:2px;}
+.np-mc-pace{font-size:10px;color:#9aa5b1;padding:8px 10px;background:rgba(245,158,11,.08);border-left:2px solid #f59e0b;border-radius:0 6px 6px 0;line-height:1.5;}
+.np-mc-pace b{color:#f59e0b;}
+.np-mc-foot{display:flex;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05);}
+.np-mc-btn{
+  font-size:10px;padding:6px 10px;border-radius:6px;cursor:pointer;font-family:inherit;
+  background:transparent;color:#9aa5b1;border:1px solid rgba(255,255,255,.08);font-weight:600;
+}
+.np-mc-btn:hover{color:#d4a574;border-color:#d4a574;}
+.np-mc-btn.sem{background:rgba(212,165,116,.08);border-color:rgba(212,165,116,.30);color:#d4a574;}
+.np-mc-btn.sem:hover{background:rgba(212,165,116,.18);}
 /* Modal nova venda + meta */
 .np-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
 .np-modal-overlay.open{display:flex;}

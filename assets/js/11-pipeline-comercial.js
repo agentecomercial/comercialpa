@@ -17,6 +17,7 @@
   var _npVendasTurma=[];   /* cache mensal — fonte A */
   var _npVendasAvulso={}; /* cache Firebase — fonte B */
   var _npGoals={};         /* cache Firebase — fonte C */
+  var _npGoalsSem={};      /* cache Firebase — metas semanais [consultor][semNum] = {min, bas, mas} */
   var _npConsultores=[];   /* lista unificada */
   var _npListeners=[];     /* funções de cleanup */
   var _npVendaEditId=null;
@@ -32,6 +33,133 @@
     var M=['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
            'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     return M[_npMes-1]+' / '+_npAno;
+  }
+
+  /* ── Semanas (regra A): seg-sex + sáb/dom ANEXOS pra semana anterior,
+        exceto sáb/dom que sejam dia 1 ou 2 do mês → vão pra semana POSTERIOR.
+     Retorna array de {num, iniDate, fimDate, iniLabel, fimLabel, dias, label}
+     Datas usam local time (não UTC) pra evitar bug de timezone. ──────── */
+  function _ymd(d){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function _dmShort(d){
+    return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+  }
+  function _semanasDoMes(ano, mes){
+    /* mes = 1-12 */
+    var primeiro = new Date(ano, mes-1, 1);
+    var ultimo = new Date(ano, mes, 0); // último dia do mês
+    var semanas = [];
+    /* Cursor começa na primeira segunda do mês — se dia 1 não for segunda, retrocede.
+       Mas: se dia 1 for sáb ou dom, ele inicia uma NOVA semana (exceção da regra A),
+       então não retrocedemos pra mês anterior. */
+    var dia1WD = primeiro.getDay(); // 0=dom, 1=seg... 6=sáb
+    var cursor;
+    if(dia1WD === 6 || dia1WD === 0){
+      /* sáb/dom dia 1 → inicia semana nova, segunda é dia 3 (se dia 1=sáb) ou 2 (se dia 1=dom) */
+      cursor = new Date(primeiro);
+    } else {
+      /* primeira semana começa na segunda da semana do dia 1 */
+      var diff = (dia1WD === 0 ? -6 : 1 - dia1WD); // distância da segunda
+      cursor = new Date(primeiro);
+      cursor.setDate(primeiro.getDate() + diff);
+      /* Se cursor caiu antes do dia 1 do mês, segura no dia 1 (semana parcial) */
+      if(cursor < primeiro) cursor = new Date(primeiro);
+    }
+    var n = 0;
+    while(cursor <= ultimo){
+      n++;
+      var ini = new Date(cursor);
+      /* fim = sexta dessa semana (seg+4) */
+      var fim = new Date(cursor); fim.setDate(cursor.getDate() + 4);
+      /* Anexa sáb/dom se NÃO forem dia 1 ou 2 do próximo mês */
+      var sab = new Date(fim); sab.setDate(fim.getDate()+1);
+      var dom = new Date(fim); dom.setDate(fim.getDate()+2);
+      var fimSemana = fim;
+      [sab, dom].forEach(function(d){
+        var ehProxMes = (d.getMonth() !== mes-1);
+        var diaNum = d.getDate();
+        if(ehProxMes && (diaNum === 1 || diaNum === 2)) return; // pula
+        fimSemana = d;
+      });
+      /* Se a sexta passou do último dia do mês, trava em ultimo */
+      if(fim > ultimo){
+        fimSemana = ultimo;
+        /* mas anexa sáb/dom se forem do próximo mês E NÃO forem dia 1 ou 2 */
+        var d = new Date(ultimo); d.setDate(ultimo.getDate()+1);
+        for(var k=0; k<2; k++){
+          if(d.getMonth() === mes-1){ fimSemana = new Date(d); }
+          else {
+            var diaN = d.getDate();
+            if(diaN !== 1 && diaN !== 2) fimSemana = new Date(d);
+            else break;
+          }
+          d.setDate(d.getDate()+1);
+        }
+      }
+      var dias = Math.round((fimSemana - ini) / 86400000) + 1;
+      semanas.push({
+        num: n,
+        iniDate: ini, fimDate: fimSemana,
+        ini: _ymd(ini), fim: _ymd(fimSemana),
+        iniLabel: _dmShort(ini), fimLabel: _dmShort(fimSemana),
+        dias: dias,
+        label: 'Semana '+String(n).padStart(2,'0')+' ('+_dmShort(ini)+' a '+_dmShort(fimSemana)+')'
+      });
+      /* Próximo cursor: segunda da próxima semana */
+      cursor = new Date(fim);
+      cursor.setDate(fim.getDate() + 3); // sex + 3 = seg
+    }
+    return semanas;
+  }
+  /* Retorna o número da semana (1..N) onde a data YMD se encaixa pelo mês ativo,
+     ou null se hoje não está no mês. */
+  function _semanaDoYMD(ymd, semanas){
+    if(!ymd || !semanas) return null;
+    for(var i=0;i<semanas.length;i++){
+      if(ymd >= semanas[i].ini && ymd <= semanas[i].fim) return semanas[i].num;
+    }
+    return null;
+  }
+  function _semanaAtual(){
+    var hoje = new Date();
+    var semanas = _semanasDoMes(_npAno, _npMes);
+    return _semanaDoYMD(_ymd(hoje), semanas);
+  }
+  /* Dias úteis (seg-sex) restantes na janela (a partir de hoje, inclusive) */
+  function _diasUteisRestantes(janela){
+    var hoje = new Date(); hoje.setHours(0,0,0,0);
+    var fim = new Date(janela.fimDate); fim.setHours(0,0,0,0);
+    if(hoje > fim) return 0;
+    var ini = hoje > janela.iniDate ? hoje : janela.iniDate;
+    ini = new Date(ini); ini.setHours(0,0,0,0);
+    var dias = 0;
+    var d = new Date(ini);
+    while(d <= fim){
+      var w = d.getDay();
+      if(w >= 1 && w <= 5) dias++;
+      d.setDate(d.getDate()+1);
+    }
+    return dias;
+  }
+  /* Faturado por consultor numa janela específica (ini/fim em YYYY-MM-DD).
+     Aceita array (todas) ou objeto (raw _npVendasAvulso). Considera só status 'pago'.
+     Bate com a regra do _npPorConsultor — fonte unificada das turmas + avulsas. */
+  function _faturadoNaSemana(vendas, consultor, janela){
+    if(!vendas || !janela) return 0;
+    var lista = Array.isArray(vendas) ? vendas : Object.values(vendas);
+    var soma = 0;
+    lista.forEach(function(v){
+      if(!v) return;
+      var st = String(v.status||'').toLowerCase();
+      if(st !== 'pago') return;
+      var nomeC = v.consultor || v.consultorNome || '';
+      if(nomeC !== consultor) return;
+      var data = (v.data || v.criadoEm || '').slice(0,10);
+      if(!data) return;
+      if(data >= janela.ini && data <= janela.fim) soma += +(v.valor||0);
+    });
+    return soma;
   }
   function _esc(s){ return window._esc(s); }
   function _avatar(nome,i){
@@ -216,6 +344,7 @@
   /* ── Listener Firebase para vendas avulsas ────────── */
   var _npListenerAvulso=null;
   var _npListenerGoals=null;
+  var _npListenerGoalsSem=null;
   var _npListenerUsuarios=null;
   var _npListenerMetaGeral=null;
   window._npMetaGeral=null;
@@ -235,6 +364,7 @@
     }
     _safeUnsub(_npListenerAvulso);     _npListenerAvulso=null;
     _safeUnsub(_npListenerGoals);      _npListenerGoals=null;
+    _safeUnsub(_npListenerGoalsSem);   _npListenerGoalsSem=null;
     _safeUnsub(_npListenerUsuarios);   _npListenerUsuarios=null;
     _safeUnsub(_npListenerMetaGeral);  _npListenerMetaGeral=null;
     window._npMetaGeral=null;
@@ -275,6 +405,24 @@
       }).catch(function(){
         if(_genLocal !== _npGen) return;
         _npGoals={};_npRenderTudo();
+      });
+    }
+
+    /* Goals SEMANAIS do mês */
+    if(typeof window._fbChange==='function'){
+      _npListenerGoalsSem=window._fbChange('pipelineGoalsSem/'+mk, function(data){
+        if(_genLocal !== _npGen) return;
+        _npGoalsSem=data||{};
+        _npRenderTudo();
+      });
+    } else {
+      window._fbGet('pipelineGoalsSem/'+mk).then(function(d){
+        if(_genLocal !== _npGen) return;
+        _npGoalsSem=d||{};
+        _npRenderTudo();
+      }).catch(function(){
+        if(_genLocal !== _npGen) return;
+        _npGoalsSem={};_npRenderTudo();
       });
     }
 
@@ -500,6 +648,7 @@
       var _t3=document.getElementById('npTop3');
       if(_t3)_t3.innerHTML='<div class="np-empty">Nenhum dado para este mes.</div>';
       var _cc=document.getElementById('npChartConsultores');if(_cc)_cc.innerHTML='';
+      var _ccs=document.getElementById('npChartConsultoresSem');if(_ccs)_ccs.innerHTML='';
       var _cm=document.getElementById('npChartMeta');if(_cm)_cm.innerHTML='';
       var _al=document.getElementById('npAlertaStrip');if(_al)_al.classList.remove('visible');
       var _ta=document.getElementById('npTurmasAtingimento');if(_ta)_ta.style.display='none';
@@ -617,6 +766,7 @@
       if(!ranking.length){
         top3.innerHTML='<div class="np-empty">Sem vendas neste mes.</div>';
         var _cc2=document.getElementById('npChartConsultores');if(_cc2)_cc2.innerHTML='';
+        var _ccs2=document.getElementById('npChartConsultoresSem');if(_ccs2)_ccs2.innerHTML='';
         var _cm2=document.getElementById('npChartMeta');if(_cm2)_cm2.innerHTML='';
         var _al2=document.getElementById('npAlertaStrip');if(_al2)_al2.classList.remove('visible');
         return;
@@ -747,6 +897,104 @@
 
         html += '</tbody></table>';
         chartCons.innerHTML = html;
+      }
+    }
+
+    /* ── Faturado por consultor — SEMANAL (semana atual) ──────────────
+       Mesma estrutura visual do mensal, mas filtrando vendas pela janela
+       da semana atual e usando metas semanais (_npGoalsSem). */
+    var chartConsSem = document.getElementById('npChartConsultoresSem');
+    var chartConsSemTit = document.getElementById('npChartConsultoresSemTit');
+    if(chartConsSem){
+      var semanasDash = _semanasDoMes(_npAno, _npMes);
+      var semAtualDash = _semanaAtual();
+      var jSemDash = semAtualDash ? semanasDash.find(function(s){return s.num===semAtualDash;}) : (semanasDash[semanasDash.length-1]||null);
+      if(chartConsSemTit && jSemDash){
+        chartConsSemTit.textContent = 'Faturado por consultor — Semanal · S'+jSemDash.num+' ('+jSemDash.iniLabel+'-'+jSemDash.fimLabel+')';
+      }
+      if(!jSemDash){
+        chartConsSem.innerHTML = '<div class="np-empty">Sem semana ativa no mês.</div>';
+      } else {
+        /* Calcula faturado por consultor na janela da semana atual */
+        var faturadoSemMap = {};
+        (_npConsultores||[]).forEach(function(nome){
+          faturadoSemMap[nome] = _faturadoNaSemana(todas, nome, jSemDash);
+        });
+        var rankingSem = (_npConsultores||[]).map(function(nome){
+          var g = (_npGoalsSem && _npGoalsSem[nome] && _npGoalsSem[nome][jSemDash.num]) || {};
+          return {
+            nome: nome,
+            pago: faturadoSemMap[nome] || 0,
+            metaMin: +(g.min||0),
+            metaBas: +(g.bas||0),
+            metaMas: +(g.mas||0)
+          };
+        }).filter(function(r){ return r.pago > 0 || r.metaMin > 0; })
+          .sort(function(a,b){ return b.pago - a.pago; });
+        var medalsSem = ['🥇','🥈','🥉'];
+        var dUteisSem = _diasUteisRestantes(jSemDash);
+        var hojeYMD = _ymd(new Date());
+        var encerradaSem = (hojeYMD > jSemDash.fim);
+
+        if(!rankingSem.length){
+          chartConsSem.innerHTML = '<div class="np-empty">Nenhum dado semanal. Configure metas via 📅 Semanal no card do consultor.</div>';
+        } else {
+          var htmlSem = '<table class="fpc-tbl">'
+            +'<thead><tr>'
+            +'<th class="c">#</th>'
+            +'<th class="c">Consultor</th>'
+            +'<th class="c">Progresso</th>'
+            +'<th class="c">Faturado</th>'
+            +'<th class="c">%</th>'
+            +'<th class="c">Meta min.</th>'
+            +'<th class="c">Falta</th>'
+            +'<th class="c">Ritmo</th>'
+            +'</tr></thead><tbody>';
+
+          rankingSem.forEach(function(r,i){
+            var medal = medalsSem[i] || '';
+            var temMeta = r.metaMin > 0;
+            var pct = temMeta ? Math.round(r.pago/r.metaMin*100) : null;
+            var pctClass = !temMeta ? 'muted' : pct >= 100 ? 'txt-green' : pct >= 60 ? 'txt-amber' : 'txt-red';
+            var pctDisp = !temMeta ? '—' : (pct + '%');
+            /* Barra simples (1 tier) */
+            var progHtml = '';
+            if(temMeta){
+              var pctBar = Math.min(100, pct);
+              var corBar = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--accent)' : 'var(--amber)';
+              progHtml = '<div class="fpc-bar"><div class="fpc-bar-fill" style="width:'+pctBar+'%;background:'+corBar+';"></div></div>';
+            } else {
+              progHtml = '<div class="fpc-bar"><div class="fpc-bar-fill" style="width:0%;background:var(--muted);"></div></div>';
+            }
+            /* Falta + ritmo */
+            var faltaCell = '<td class="fpc-falta muted">—</td>';
+            var ritmoCell = '<td class="fpc-falta muted">—</td>';
+            if(temMeta){
+              if(r.pago >= r.metaMin){
+                faltaCell = '<td class="fpc-falta txt-green">✓ bateu</td>';
+                ritmoCell = '<td class="fpc-falta txt-green">+'+_fmtR(r.pago-r.metaMin)+'</td>';
+              } else if(encerradaSem || dUteisSem === 0){
+                faltaCell = '<td class="fpc-falta txt-red">'+_fmtR(r.metaMin-r.pago)+'</td>';
+                ritmoCell = '<td class="fpc-falta txt-red">encerrada</td>';
+              } else {
+                var falta = r.metaMin - r.pago;
+                faltaCell = '<td class="fpc-falta txt-amber">'+_fmtR(falta)+'</td>';
+                ritmoCell = '<td class="fpc-falta txt-amber">'+_fmtR(Math.round(falta/dUteisSem))+'/dia × '+dUteisSem+'d</td>';
+              }
+            }
+            htmlSem += '<tr class="fpc-row">'
+              +'<td class="fpc-rk">'+(i+1)+'</td>'
+              +'<td class="fpc-nome">'+(medal?'<span class="fpc-medal">'+medal+'</span> ':'')+_esc(r.nome)+'</td>'
+              +'<td class="fpc-prog">'+progHtml+'</td>'
+              +'<td class="fpc-val txt-green">'+_fmtR(r.pago)+'</td>'
+              +'<td class="fpc-pct '+pctClass+'">'+pctDisp+'</td>'
+              +'<td class="fpc-meta">'+(temMeta?_fmtR(r.metaMin):'sem meta')+'</td>'
+              + faltaCell + ritmoCell
+              +'</tr>';
+          });
+          htmlSem += '</tbody></table>';
+          chartConsSem.innerHTML = htmlSem;
+        }
       }
     }
 
@@ -1211,30 +1459,118 @@
       }
     }
     var ranking=_npPorConsultor(todas,'','pago');
+    var semanas = _semanasDoMes(_npAno, _npMes);
+    var semAtualAuto = _semanaAtual();
+    _npSemSel = _npSemSel || {};
     grid.innerHTML=_consList.map(function(nome,i){
       var goal=_npGoals[nome]||{};
-      var meta=+(goal.metaValor||0);
-      var metaQ=+(goal.metaQtd||0);
+      var metaMin = +(goal.metaMinima || goal.metaValor || 0);
+      var metaBas = +(goal.metaBasica || metaMin);
+      var metaMas = +(goal.metaMaster || metaBas);
       var r=ranking.find(function(x){return x.nome===nome;})||{total:0,pago:0,qtd:0,qtdPago:0};
-      var pct=meta?Math.min(100,Math.round(r.pago/meta*100)):0;
-      var pctQ=metaQ?Math.min(100,Math.round(r.qtdPago/metaQ*100)):0;
-      var cor=COR[i%COR.length];
-      var barColor=pct>=100?'var(--green)':pct>=70?'var(--accent)':'var(--amber)';
-      return '<div class="np-meta-card">'
-        +'<div class="np-meta-header">'
-        +'<div class="np-meta-avatar" style="background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;">'+nome.charAt(0).toUpperCase()+'</div>'
-        +'<div><div class="np-meta-nome">'+_esc(nome)+'</div>'
-        +'<div class="np-meta-sub">'+(pct>=100?'✅ Meta batida!':'Falta '+_fmtR(Math.max(0,meta-r.pago)))+'</div>'
-        +'</div></div>'
-        +'<div class="np-meta-progress"><div class="np-meta-bar" style="width:'+pct+'%;background:'+barColor+';"></div></div>'
-        +'<div class="np-meta-row"><span style="color:var(--muted);">Pago (meta)</span><span style="color:'+barColor+';font-weight:700;">'+_fmtR(r.pago)+' ('+pct+'%)</span></div>'
-        +(r.total!==r.pago?'<div class="np-meta-row"><span style="color:var(--muted);font-size:10px;">Volume total</span><span style="font-size:10px;color:var(--muted);">'+_fmtR(r.total)+'</span></div>':'')
-        +(meta?'<div class="np-meta-row"><span style="color:var(--muted);">Meta R$</span><span>'+_fmtR(meta)+'</span></div>':'')
-        +(metaQ?'<div class="np-meta-row"><span style="color:var(--muted);">Qtd pagas</span><span>'+r.qtdPago+'/'+metaQ+' ('+pctQ+'%)</span></div>':'')
-        +'<button class="np-meta-edit" onclick="npAbrirModalMeta(\''+String(nome||'').replace(/\\/g,'\\\\').replace(/\x27/g,'\\\x27')+'\')">⚙ Configurar meta</button>'
+      var pctMin = metaMin ? Math.round(r.pago/metaMin*100) : 0;
+      /* Tier mensal atual */
+      var tierLbl, tierBg, tierColor;
+      if(metaMas && r.pago >= metaMas){ tierLbl='MASTER'; tierBg='linear-gradient(135deg,#d4a574,#b88a5a)'; tierColor='#0a0e1a'; }
+      else if(metaBas && r.pago >= metaBas){ tierLbl='BÁSICA'; tierBg='rgba(212,165,116,.18)'; tierColor='#f0c896'; }
+      else if(metaMin && r.pago >= metaMin){ tierLbl='MÍNIMA'; tierBg='rgba(52,211,153,.18)'; tierColor='#86efac'; }
+      else { tierLbl='CRÍTICO'; tierBg='linear-gradient(135deg,#ef4444,#b91c1c)'; tierColor='#fff'; }
+
+      /* Semana selecionada (default = atual) */
+      var semSel = _npSemSel[nome] || semAtualAuto || (semanas.length?semanas[semanas.length-1].num:1);
+      var janela = semanas.find(function(s){return s.num===semSel;}) || (semanas[0] || null);
+
+      /* Metas semanais salvas (override) */
+      var metasSemConsultor = (_npGoalsSem && _npGoalsSem[nome]) || {};
+      var mSem = metasSemConsultor[semSel] || {};
+      var metaSemMin = +(mSem.min || 0);
+
+      /* Faturado da semana selecionada */
+      var fatSem = janela ? _faturadoNaSemana(todas, nome, janela) : 0;
+      var pctSem = metaSemMin ? Math.round(fatSem/metaSemMin*100) : 0;
+
+      /* Chip semanal */
+      var semIco, semLbl, semChipBg, semChipColor, semChipBorder;
+      if(!metaSemMin){ semIco='—'; semLbl='SEM META'; semChipBg='rgba(255,255,255,.05)'; semChipColor='var(--muted)'; semChipBorder='var(--border)'; }
+      else if(pctSem >= 100){ semIco='✅'; semLbl='BATEU'; semChipBg='rgba(52,211,153,.18)'; semChipColor='#86efac'; semChipBorder='rgba(52,211,153,.35)'; }
+      else if(pctSem >= 60){ semIco='🔥'; semLbl='NO RITMO'; semChipBg='rgba(212,165,116,.18)'; semChipColor='#f0c896'; semChipBorder='rgba(212,165,116,.35)'; }
+      else { semIco='⚠'; semLbl='DEVAGAR'; semChipBg='rgba(245,158,11,.18)'; semChipColor='#fbbf24'; semChipBorder='rgba(245,158,11,.35)'; }
+
+      /* Stepper */
+      var stepperHtml = semanas.map(function(s){
+        var cls = 'np-step-dot';
+        if(s.num < (semAtualAuto||0)) cls += ' past';
+        if(s.num === semSel) cls += ' curr';
+        return '<button class="'+cls+'" data-step-n="'+s.num+'" title="Semana '+s.num+' ('+s.iniLabel+'-'+s.fimLabel+')">'+s.num+'</button>';
+      }).join('<span class="np-step-conn"></span>');
+
+      /* Pace text */
+      var paceHtml = '';
+      if(janela){
+        var dias = _diasUteisRestantes(janela);
+        var encerrada = (_ymd(new Date()) > janela.fim);
+        if(metaSemMin){
+          if(fatSem >= metaSemMin){
+            paceHtml = '📅 <b>Semana '+semSel+' ('+janela.iniLabel+'-'+janela.fimLabel+'):</b> Faturou '+_fmtR(fatSem)+' de <b>'+_fmtR(metaSemMin)+'</b> · <b>Bateu +'+_fmtR(fatSem-metaSemMin)+'</b> 🏆';
+          } else if(encerrada || dias===0){
+            paceHtml = '📅 <b>Semana '+semSel+' ('+janela.iniLabel+'-'+janela.fimLabel+'):</b> Faturou '+_fmtR(fatSem)+' de <b>'+_fmtR(metaSemMin)+'</b> · Encerrada';
+          } else {
+            var falta = Math.max(0, metaSemMin - fatSem);
+            var ritmo = dias>0 ? Math.round(falta/dias) : 0;
+            paceHtml = '📅 <b>Semana '+semSel+' ('+janela.iniLabel+'-'+janela.fimLabel+'):</b> Faltam <b>'+_fmtR(falta)+'</b> de <b>'+_fmtR(metaSemMin)+'</b> em <b>'+dias+' dias úteis</b> ('+_fmtR(ritmo)+'/dia)';
+          }
+        } else {
+          paceHtml = '📅 <b>Semana '+semSel+' ('+janela.iniLabel+'-'+janela.fimLabel+'):</b> sem meta semanal configurada · clique em <b>📅 Semanal</b> para definir';
+        }
+      }
+
+      var nomeEsc = String(nome||'').replace(/\\/g,'\\\\').replace(/\x27/g,'\\\x27');
+      return '<div class="np-meta-card np-meta-card-v9">'
+        +'<div class="np-mc-h">'
+        +  '<div class="np-mc-av">'+nome.charAt(0).toUpperCase()+'</div>'
+        +  '<div style="flex:1;min-width:0;">'
+        +    '<div class="np-mc-nome">'+_esc(nome)+'</div>'
+        +    '<div class="np-mc-chips">'
+        +      '<span class="np-mc-chip" style="background:'+tierBg+';color:'+tierColor+';">'+tierLbl+'</span>'
+        +      '<span class="np-mc-chip" style="background:'+semChipBg+';color:'+semChipColor+';border:1px solid '+semChipBorder+';">'+semIco+' '+pctSem+'% · S'+semSel+'</span>'
+        +    '</div>'
+        +  '</div>'
+        +'</div>'
+        +(semanas.length>1 ? '<div class="np-mc-stepper">'+stepperHtml+'</div>' : '')
+        +'<div class="np-mc-big">'
+        +  '<div class="np-mc-big-v">'+_fmtR(r.pago)+' <small>faturado total</small></div>'
+        +  '<div><span class="np-mc-pct'+(pctMin<70?' bad':pctMin>=100?' ok':' warn')+'">'+pctMin+'%</span> <span class="np-mc-pct s '+(pctSem<60?'bad':pctSem>=100?'ok':'warn')+'"> · '+pctSem+'%</span></div>'
+        +'</div>'
+        +'<div class="np-mc-tiers">'
+        +  '<div class="np-mc-t"><div class="lbl">MÍNIMA</div><div class="v">'+_fmtR(metaMin)+'</div></div>'
+        +  '<div class="np-mc-t"><div class="lbl">BÁSICA</div><div class="v">'+_fmtR(metaBas)+'</div></div>'
+        +  '<div class="np-mc-t"><div class="lbl">MASTER</div><div class="v">'+_fmtR(metaMas)+'</div></div>'
+        +'</div>'
+        +(paceHtml ? '<div class="np-mc-pace">'+paceHtml+'</div>' : '')
+        +'<div class="np-mc-foot">'
+        +  '<button class="np-mc-btn" onclick="npAbrirModalMeta(\''+nomeEsc+'\')">⚙ Configurar metas</button>'
+        +  '<button class="np-mc-btn sem" onclick="npAbrirModalSemanal(\''+nomeEsc+'\')">📅 Semanal</button>'
+        +'</div>'
         +'</div>';
     }).join('');
+
+    /* Wire stepper: muda a semana selecionada e re-render */
+    grid.querySelectorAll('[data-step-n]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var card = b.closest('.np-meta-card');
+        if(!card) return;
+        var btnConf = card.querySelector('.np-mc-btn');
+        if(!btnConf) return;
+        /* extrai nome do onclick do botão configurar */
+        var m = /npAbrirModalMeta\('([^']+)'\)/.exec(btnConf.getAttribute('onclick')||'');
+        if(!m) return;
+        var nome = m[1].replace(/\\\\/g,'\\').replace(/\\'/g,"'");
+        _npSemSel[nome] = +b.dataset.stepN;
+        _npRenderMetas(todas);
+      });
+    });
   }
+  var _npSemSel = {};   /* cache em sessão: { consultor: numSemana selecionada } */
 
   /* ── Ranking ─────────────────────────────────────── */
   /* Renderização sobrescrita pelo 12-pipeline-v2-patch.js — placeholder para evitar erro se v2 não carregar */
@@ -1667,6 +2003,183 @@
 
   window.npMoneyMask=function(v){
     return _npMoneyMask(v);
+  };
+
+  /* ── Modal META SEMANAL (preenchimento manual por semana) ─────── */
+  window.npAbrirModalSemanal = function(nome){
+    if(!nome) return;
+    var goal = _npGoals[nome] || {};
+    var metaMin = +(goal.metaMinima || goal.metaValor || 0);
+    var metaBas = +(goal.metaBasica || metaMin);
+    var metaMas = +(goal.metaMaster || metaBas);
+    var semanas = _semanasDoMes(_npAno, _npMes);
+    var semAtual = _semanaAtual();
+    var todasVendas = [].concat(_npVendasTurma||[], Object.values(_npVendasAvulso||{}));
+    var dadosSem = (_npGoalsSem && _npGoalsSem[nome]) || {};
+
+    /* Inject CSS one-shot */
+    if(!document.getElementById('npSemModalCss')){
+      var st = document.createElement('style'); st.id = 'npSemModalCss';
+      st.textContent = ''
+        + '.np-sem-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px);}'
+        + '.np-sem-modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:820px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 30px 60px -15px rgba(0,0,0,.7);}'
+        + '.np-sem-h{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px;border-bottom:1px solid var(--border2);}'
+        + '.np-sem-tit{font-size:15px;font-weight:700;color:var(--text);}'
+        + '.np-sem-sub{font-size:11px;color:var(--muted);margin-top:2px;}'
+        + '.np-sem-x{background:transparent;border:1px solid var(--border2);color:var(--muted);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;}'
+        + '.np-sem-x:hover{color:var(--accent);border-color:var(--accent);}'
+        + '.np-sem-b{padding:14px 16px;overflow-y:auto;flex:1;}'
+        + '.np-sem-pace{background:rgba(212,165,116,.08);border:1px dashed rgba(212,165,116,.25);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--muted);margin-bottom:14px;display:flex;gap:10px;align-items:center;}'
+        + '.np-sem-pace .lbl{background:var(--accent);color:#0a0e1a;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:800;flex-shrink:0;}'
+        + '.np-sem-pace b{color:var(--accent);}'
+        + '.np-sem-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11px;}'
+        + '.np-sem-tbl th{background:rgba(255,255,255,.04);color:var(--muted);padding:8px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;text-align:right;border-bottom:1px solid var(--border2);}'
+        + '.np-sem-tbl th:first-child{text-align:left;}'
+        + '.np-sem-tbl td{padding:7px 10px;border-bottom:1px solid var(--border2);}'
+        + '.np-sem-tbl tr.atual{background:rgba(212,165,116,.08);}'
+        + '.np-sem-tbl tr.atual td:first-child{color:var(--accent);font-weight:700;}'
+        + '.np-sem-tbl tr.ref td{color:var(--muted);}'
+        + '.np-sem-tbl tr.totals{background:rgba(255,255,255,.02);font-weight:700;}'
+        + '.np-sem-tbl tr.totals td{border-top:1px solid var(--border2);padding-top:9px;}'
+        + '.np-sem-tbl .lbl{color:var(--text);font-weight:600;}'
+        + '.np-sem-tbl .lbl small{color:var(--muted);font-weight:400;font-size:10px;display:block;margin-top:1px;}'
+        + '.np-sem-tbl input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border2);color:var(--text);padding:5px 8px;border-radius:5px;font-size:11px;font-family:inherit;text-align:right;}'
+        + '.np-sem-tbl input:focus{outline:none;border-color:var(--accent);}'
+        + '.np-sem-tbl .ro{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;}'
+        + '.np-sem-tbl .v{color:var(--accent);font-weight:700;text-align:right;font-variant-numeric:tabular-nums;}'
+        + '.np-sem-f{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border2);gap:10px;}'
+        + '.np-sem-f .info{font-size:10px;color:var(--muted);}'
+        + '.np-sem-f .actions{display:flex;gap:8px;}'
+        + '.np-sem-btn{font-size:11px;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:inherit;border:1px solid var(--border2);background:transparent;color:var(--text);font-weight:600;}'
+        + '.np-sem-btn:hover{border-color:var(--accent);color:var(--accent);}'
+        + '.np-sem-btn.primary{background:var(--accent);color:#0a0e1a;border-color:var(--accent);}'
+        + '.np-sem-btn.primary:hover{background:#f0c896;}';
+      document.head.appendChild(st);
+    }
+
+    /* Pace da semana atual */
+    var paceHtml = '';
+    if(semAtual){
+      var jAtual = semanas.find(function(s){return s.num===semAtual;});
+      if(jAtual){
+        var mAtual = +(((dadosSem[semAtual])||{}).min || 0);
+        var fAtual = _faturadoNaSemana(todasVendas, nome, jAtual);
+        var dias = _diasUteisRestantes(jAtual);
+        if(mAtual){
+          var falta = Math.max(0, mAtual - fAtual);
+          var ritmo = dias>0 ? Math.round(falta/dias) : 0;
+          if(fAtual >= mAtual){
+            paceHtml = '<div class="np-sem-pace"><span class="lbl">S'+semAtual+'</span><div>Faturou <b>'+_fmtR(fAtual)+'</b> de <b>'+_fmtR(mAtual)+'</b> · <b>Bateu +'+_fmtR(fAtual-mAtual)+'</b> 🏆</div></div>';
+          } else if(dias===0){
+            paceHtml = '<div class="np-sem-pace"><span class="lbl">S'+semAtual+'</span><div>Faturou <b>'+_fmtR(fAtual)+'</b> de <b>'+_fmtR(mAtual)+'</b> · Semana encerrada</div></div>';
+          } else {
+            paceHtml = '<div class="np-sem-pace"><span class="lbl">S'+semAtual+'</span><div>Faturou <b>'+_fmtR(fAtual)+'</b> de <b>'+_fmtR(mAtual)+'</b> · Faltam <b>'+_fmtR(falta)+'</b> em <b>'+dias+' dias úteis</b> ('+_fmtR(ritmo)+'/dia)</div></div>';
+          }
+        } else {
+          paceHtml = '<div class="np-sem-pace"><span class="lbl">S'+semAtual+'</span><div>Sem meta semanal configurada — preencha abaixo para ativar o indicador.</div></div>';
+        }
+      }
+    }
+
+    /* Linhas da tabela */
+    var refRow = '<tr class="ref">'
+      + '<td class="lbl">Por mês <small>referência (vem das metas mensais)</small></td>'
+      + '<td class="ro">'+_fmtR(metaMin)+'</td>'
+      + '<td class="ro">'+_fmtR(metaBas)+'</td>'
+      + '<td class="ro">'+_fmtR(metaMas)+'</td>'
+      + '<td class="v">'+_fmtR(_npPorConsultor(todasVendas,'','pago').find(function(x){return x.nome===nome;})?.pago || 0)+'</td>'
+      + '</tr>';
+
+    var totMin=0, totBas=0, totMas=0, totFat=0;
+    var rowsSem = semanas.map(function(s){
+      var ms = dadosSem[s.num] || {};
+      var fat = _faturadoNaSemana(todasVendas, nome, s);
+      var atual = (s.num === semAtual) ? ' atual' : '';
+      var marker = (s.num === semAtual) ? '▶ ' : '';
+      totMin += +(ms.min||0); totBas += +(ms.bas||0); totMas += +(ms.mas||0); totFat += fat;
+      return '<tr class="'+atual.trim()+'">'
+        + '<td class="lbl">'+marker+'Semana '+String(s.num).padStart(2,'0')+' <small>'+s.iniLabel+' a '+s.fimLabel+(s.num===semAtual?' · ATUAL':'')+'</small></td>'
+        + '<td><input data-sem-n="'+s.num+'" data-sem-k="min" value="'+(ms.min?_npMoneyMask(String((+ms.min).toFixed(2)).replace('.','')):'')+'" oninput="this.value=npMoneyMask(this.value)"></td>'
+        + '<td><input data-sem-n="'+s.num+'" data-sem-k="bas" value="'+(ms.bas?_npMoneyMask(String((+ms.bas).toFixed(2)).replace('.','')):'')+'" oninput="this.value=npMoneyMask(this.value)"></td>'
+        + '<td><input data-sem-n="'+s.num+'" data-sem-k="mas" value="'+(ms.mas?_npMoneyMask(String((+ms.mas).toFixed(2)).replace('.','')):'')+'" oninput="this.value=npMoneyMask(this.value)"></td>'
+        + '<td class="v">'+_fmtR(fat)+'</td>'
+        + '</tr>';
+    }).join('');
+
+    var totalsRow = '<tr class="totals">'
+      + '<td>Σ Soma das semanas</td>'
+      + '<td class="ro">'+_fmtR(totMin)+'</td>'
+      + '<td class="ro">'+_fmtR(totBas)+'</td>'
+      + '<td class="ro">'+_fmtR(totMas)+'</td>'
+      + '<td class="v">'+_fmtR(totFat)+'</td>'
+      + '</tr>';
+
+    var nomeEsc = String(nome||'').replace(/'/g, "\\'");
+    var html = '<div class="np-sem-ov" id="npSemOv">'
+      + '<div class="np-sem-modal">'
+      +   '<div class="np-sem-h">'
+      +     '<div>'
+      +       '<div class="np-sem-tit">📅 Meta semanal · '+_esc(nome)+' · '+_mesLabel()+'</div>'
+      +       '<div class="np-sem-sub">Preenchimento independente da meta mensal. Cada venda conta para semanal E mensal.</div>'
+      +     '</div>'
+      +     '<button class="np-sem-x" onclick="npFecharModalSemanal()">✕</button>'
+      +   '</div>'
+      +   '<div class="np-sem-b">'
+      +     paceHtml
+      +     '<table class="np-sem-tbl">'
+      +       '<thead><tr>'
+      +         '<th>SEMANA</th><th>MÍNIMA</th><th>BÁSICA</th><th>MASTER</th><th>FATURADO</th>'
+      +       '</tr></thead>'
+      +       '<tbody>'+refRow+rowsSem+totalsRow+'</tbody>'
+      +     '</table>'
+      +   '</div>'
+      +   '<div class="np-sem-f">'
+      +     '<div class="info">💡 Metas semanais são <b>independentes</b> da mensal. Vendas contam para ambas.</div>'
+      +     '<div class="actions">'
+      +       '<button class="np-sem-btn" onclick="npFecharModalSemanal()">Cancelar</button>'
+      +       '<button class="np-sem-btn primary" onclick="npSalvarMetasSem(\''+nomeEsc+'\')">💾 Salvar semanais</button>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+    var wrap = document.createElement('div'); wrap.innerHTML = html; document.body.appendChild(wrap.firstChild);
+    var ov = document.getElementById('npSemOv');
+    ov.addEventListener('click', function(e){ if(e.target === ov) window.npFecharModalSemanal(); });
+  };
+  window.npFecharModalSemanal = function(){
+    var ov = document.getElementById('npSemOv');
+    if(ov) ov.remove();
+  };
+  window.npSalvarMetasSem = function(nome){
+    if(!nome) return;
+    var ov = document.getElementById('npSemOv'); if(!ov) return;
+    function _parseM(v){
+      var s=String(v==null?'':v).replace(/[^\d,.]/g,'');
+      if(!s) return 0;
+      if(s.indexOf(',')>=0) s=s.replace(/\./g,'').replace(',','.'); else s=s.replace(/\./g,'');
+      var n=parseFloat(s); return isFinite(n)?n:0;
+    }
+    var obj = {};
+    ov.querySelectorAll('[data-sem-n]').forEach(function(inp){
+      var n = inp.dataset.semN, k = inp.dataset.semK;
+      if(!obj[n]) obj[n] = {};
+      obj[n][k] = _parseM(inp.value);
+    });
+    /* Remove semanas vazias (todas 0) — fica null no Firebase */
+    Object.keys(obj).forEach(function(n){
+      if(!obj[n].min && !obj[n].bas && !obj[n].mas) obj[n] = null;
+    });
+    var mk = _mesKey();
+    window._fbSave('pipelineGoalsSem/'+mk+'/'+nome, obj).then(function(){
+      if(typeof _showToast==='function') _showToast('✅ Metas semanais salvas!','var(--accent)');
+      window.npFecharModalSemanal();
+      window._fbGet('pipelineGoalsSem/'+mk).then(function(d){
+        _npGoalsSem = d || {};
+        _npRenderTudo();
+      }).catch(function(){});
+    }).catch(function(){
+      if(typeof _showToast==='function') _showToast('❌ Erro ao salvar.','var(--red)');
+    });
   };
 
   /* ── Tabs ────────────────────────────────────────── */
@@ -2267,9 +2780,10 @@
     if(el) el.classList.remove('active');
     if(_npListenerAvulso) _npListenerAvulso();
     if(_npListenerGoals) _npListenerGoals();
+    if(_npListenerGoalsSem) _npListenerGoalsSem();
     if(_npListenerUsuarios) _npListenerUsuarios();
     if(_npListenerMetaGeral) _npListenerMetaGeral();
-    _npListenerAvulso=null;_npListenerGoals=null;_npListenerUsuarios=null;_npListenerMetaGeral=null;
+    _npListenerAvulso=null;_npListenerGoals=null;_npListenerGoalsSem=null;_npListenerUsuarios=null;_npListenerMetaGeral=null;
     window._npMetaGeral=null;
     _mostrarTela('turmasScreen');
   };
