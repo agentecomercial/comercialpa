@@ -306,6 +306,21 @@
 }
 .fv-card-copy svg{ display:block; }
 .fv-card-copy:hover{ color:var(--accent); border-color:var(--accent); background:rgba(212,165,116,.08); }
+/* Status visual quando lead NÃO é "ativo" — opacidade + faixa diagonal no canto */
+.fv-card.st-perdido{ opacity:.55; }
+.fv-card.st-perdido::after{
+  content:'❌ PERDIDO'; position:absolute; top:18px; right:-30px;
+  background:#ef4444; color:#fff; font-size:8px; font-weight:800; letter-spacing:.08em;
+  padding:2px 32px; transform:rotate(35deg); pointer-events:none;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+}
+.fv-card.st-reciclar{ opacity:.78; }
+.fv-card.st-reciclar::after{
+  content:'♻ RECICLAR'; position:absolute; top:18px; right:-30px;
+  background:#3b82f6; color:#0a0e1a; font-size:8px; font-weight:800; letter-spacing:.08em;
+  padding:2px 32px; transform:rotate(35deg); pointer-events:none;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+}
 /* Quando temp está ativo, o ícone do clima já ocupa o canto · sobe edição, copy e chevron */
 .fv-card-temp + .fv-card-edit{ right:30px; }
 .fv-card-temp + .fv-card-edit + .fv-card-copy{ right:53px; }
@@ -1904,7 +1919,7 @@
     }));
   }
 
-  function _renderFunilSide(arr){
+  function _renderFunilSide(arr, arrCompleto){
     const stats = _statsEtapas(arr);
     const wrap = $('#fvFunilEtapas'); if(!wrap) return;
     /* Todas as etapas com a mesma largura */
@@ -1939,6 +1954,27 @@
     const total = arr.length, vendidos = stats[6].qtd;
     $('#fvTaxa').textContent = total ? (vendidos/total*100).toFixed(1).replace('.',',')+'%' : '—';
     $('#fvReceita').textContent = moedaCurta(stats[6].soma);
+
+    /* Indicador de leads NÃO-ativos (perdidos / reciclar) — visibilidade sem ocupar etapa */
+    const fora = (arrCompleto || arr).filter(l => l.status && l.status !== 'ativo');
+    const perdidos = fora.filter(l => l.status === 'perdido').length;
+    const reciclar = fora.filter(l => l.status === 'reciclar').length;
+    let bar = $('#fvFunilFora');
+    if(!bar){
+      const taxaWrap = $('#fvTaxa') && $('#fvTaxa').closest('.fv-funil-meta');
+      if(taxaWrap){
+        bar = document.createElement('div');
+        bar.id = 'fvFunilFora';
+        bar.style.cssText = 'display:flex;gap:10px;justify-content:center;font-size:10px;color:var(--txt-3,#6b7280);margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);';
+        taxaWrap.parentNode.insertBefore(bar, taxaWrap.nextSibling);
+      }
+    }
+    if(bar){
+      bar.style.display = (perdidos || reciclar) ? '' : 'none';
+      bar.innerHTML = ''
+        + (perdidos ? `<span title="Leads perdidos / desistiram" style="color:#fca5a5;">❌ ${perdidos} perdido${perdidos===1?'':'s'}</span>` : '')
+        + (reciclar ? `<span title="Leads marcados para reciclar mais tarde" style="color:#93c5fd;">♻ ${reciclar} reciclar</span>` : '');
+    }
   }
 
   function _renderHistorico(){
@@ -2032,7 +2068,8 @@
       criadoTitle = `Criado em ${criadoFmt}`;
     }
     const colapsado = _cardsCollapsed.has(l.id);
-    return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};">
+    const statusCls = (l.status && l.status !== 'ativo') ? ' st-'+l.status : '';
+    return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}${statusCls}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};overflow:hidden;">
       ${tempIcon?`<span class="fv-card-temp">${tempIcon}</span>`:''}
       <button class="fv-card-edit" data-edit="${l.id}" title="Abrir detalhes do lead">✎</button>
       <button class="fv-card-copy" data-copy="${l.id}" title="Copiar mensagem para WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
@@ -2205,8 +2242,12 @@
 
   function _render(){
     const arr = _filtrar(_leads);
-    _renderKpis(arr);
-    _renderFunilSide(arr);
+    /* KPIs e Funil de Conversão consideram só leads ATIVOS (perdidos/reciclar
+       não entram em métricas). Já o Kanban e a Lista mostram TODOS — perdidos
+       ficam visíveis com badge na própria etapa onde estavam. */
+    const arrAtivos = arr.filter(l => !l.status || l.status === 'ativo');
+    _renderKpis(arrAtivos);
+    _renderFunilSide(arrAtivos, arr);
     _renderHistorico();
     _renderKanban(arr);
     _renderLista(arr);
@@ -2369,6 +2410,15 @@
             <div class="fv-novo-field"><span class="fv-novo-l">WhatsApp</span><input class="fv-novo-i" data-k="wpp" value="${esc(l.wpp||'')}" placeholder="+55 91 9XXXX-XXXX"></div>
             <div class="fv-novo-field"><span class="fv-novo-l">E-mail</span><input class="fv-novo-i" data-k="email" type="email" value="${esc(l.email||'')}"></div>
           </div>
+          <div class="fv-novo-grid c1">
+            <div class="fv-novo-field"><span class="fv-novo-l">Status do lead</span>
+              <select class="fv-novo-s" data-k="status">
+                <option value="ativo" ${(!l.status || l.status==='ativo')?'selected':''}>✅ Ativo (no funil)</option>
+                <option value="perdido" ${l.status==='perdido'?'selected':''}>❌ Perdido / Desistiu</option>
+                <option value="reciclar" ${l.status==='reciclar'?'selected':''}>♻ Reciclar mais tarde</option>
+              </select>
+            </div>
+          </div>
           <div class="fv-det-tabs">
             <div class="fv-det-tab active" data-tab="hist">Histórico</div>
             <div class="fv-det-tab" data-tab="notas">📝 Notas</div>
@@ -2423,7 +2473,14 @@
       l.wpp         = get('wpp').trim();
       l.email       = get('email').trim();
       l.notas       = get('notas');
+      const novoStatus = get('status') || 'ativo';
+      const statusMudou = (l.status || 'ativo') !== novoStatus;
+      l.status      = novoStatus;
       l.atividade   = l.atividade || [];
+      if(statusMudou){
+        const lbl = novoStatus==='perdido' ? 'Perdido' : novoStatus==='reciclar' ? 'Reciclar mais tarde' : 'Ativo';
+        l.atividade.push({quando:_hoje(), txt:`Status → ${lbl}`});
+      }
 
       if(etapaMudou){
         const novaNome = ETAPAS[l.etapa].nome;
