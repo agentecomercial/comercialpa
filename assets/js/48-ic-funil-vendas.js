@@ -2874,14 +2874,25 @@
 
   /* Toggle do painel Operação · Kanban (header clicável).
      Ignora clicks em botões/toggle de visão dentro do header.
-     Também anexa o spotlight follow-mouse no card interno. */
+     Também anexa o spotlight follow-mouse no card interno.
+     Ao EXPANDIR, força todas as colunas (vazias e cheias) a iniciarem
+     mini-verticais — usuário expande individualmente o que quiser ver. */
   function _attachOpToggle(){
     const header = $('#fvOpHeader'); const op = $('#fvOp'); const inner = $('#fvOpInner');
     if(!header || !op) return;
     header.addEventListener('click', e => {
       if(e.target.closest('button, .fv-vtoggle, .fv-vbtn')) return;
+      const expandindo = _opCollapsed; /* estava colapsado, vai abrir */
       _opCollapsed = !_opCollapsed;
       op.classList.toggle('collapsed', _opCollapsed);
+      if(expandindo){
+        _colsToggleadas.clear();
+        ETAPAS.forEach((_, i) => {
+          const tem = _leads.some(l => l.etapa === i);
+          if(tem) _colsToggleadas.add(i); /* inverte default → fica mini */
+        });
+        _render();
+      }
     });
     if(inner){
       inner.addEventListener('mousemove', e => {
