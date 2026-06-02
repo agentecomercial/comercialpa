@@ -173,27 +173,56 @@
 .fv-hist-cd{ color:var(--txt-3,#6b7280); margin-top:1px; }
 .fv-hist-t{ color:var(--txt-3,#6b7280); font-size:9px; white-space:nowrap; }
 
-/* Opção 4 · Gradient mesh elevado: 2 luminosidades (dourado + roxo) + sombra cinematográfica */
-.fv-op{
-  background:
-    radial-gradient(60% 70% at 20% 0%, rgba(212,165,116,.10), transparent 60%),
-    radial-gradient(50% 50% at 100% 100%, rgba(168,85,247,.08), transparent 60%),
-    linear-gradient(135deg, #181d27 0%, #11151c 100%);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:18px;
-  padding:14px;
-  position:relative;
-  box-shadow:
-    0 30px 60px -20px rgba(0,0,0,.8),
-    0 8px 16px rgba(0,0,0,.4),
-    0 0 0 1px rgba(255,255,255,.03) inset;
+/* Combo 11+15+18+19 · Dual frame dourado pulsante + hex pattern + spotlight follow-mouse */
+@keyframes fvOpPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(212,165,116,.30),
+      0 0 18px -2px rgba(212,165,116,.18),
+      0 0 35px -8px rgba(212,165,116,.10),
+      0 25px 50px -15px rgba(0,0,0,.75);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(212,165,116,.55),
+      0 0 28px 0px rgba(212,165,116,.32),
+      0 0 60px 0px rgba(212,165,116,.18),
+      0 25px 50px -15px rgba(0,0,0,.75);
+  }
 }
+.fv-op{
+  background:linear-gradient(180deg, #1a1f2a, #11151e);
+  border:1px solid rgba(212,165,116,.32);
+  border-radius:18px;
+  padding:6px;
+  position:relative;
+  animation:fvOpPulse 4s ease-in-out infinite;
+}
+.fv-op-inner{
+  position:relative;
+  background:
+    radial-gradient(80% 50% at 50% -20%, rgba(212,165,116,.16), transparent 70%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32'><polygon points='14,1 27,8.5 27,23.5 14,31 1,23.5 1,8.5' fill='none' stroke='rgba(212,165,116,0.06)' stroke-width='1'/></svg>"),
+    linear-gradient(180deg, #131820, #0c1017);
+  border:1px solid rgba(255,255,255,.05);
+  border-radius:14px;
+  padding:14px;
+  overflow:hidden;
+}
+/* Spotlight que segue o mouse (camada decorativa) */
+.fv-op-inner::before{
+  content:''; position:absolute; inset:0; pointer-events:none; border-radius:inherit;
+  background:radial-gradient(600px circle at var(--mx,50%) var(--my,50%),
+    rgba(212,165,116,.18), transparent 40%);
+  transition:background .15s ease-out;
+  z-index:1;
+}
+.fv-op-inner > *{ position:relative; z-index:2; }
 .fv-op-h{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 2px; flex-wrap:wrap; gap:8px; cursor:pointer; }
 .fv-op-h:hover .fv-op-tit{ color:var(--accent); }
 .fv-op-tit{ font-size:13px; font-weight:600; color:var(--txt-2); text-transform:uppercase; letter-spacing:0.06em; display:flex; align-items:center; gap:6px; }
 .fv-op-chev{ display:inline-block; transition:transform .15s; font-size:11px; color:var(--txt-3,#6b7280); }
 .fv-op.collapsed .fv-op-chev{ transform:rotate(-90deg); }
-.fv-op.collapsed{ padding-bottom:14px; }
 .fv-op.collapsed .fv-op-h{ margin-bottom:0; }
 .fv-op.collapsed .fv-kanban,
 .fv-op.collapsed .fv-lista-wrap,
@@ -515,32 +544,34 @@
           </aside>
 
           <section class="fv-op modo-fit collapsed" id="fvOp">
-            <div class="fv-op-h" id="fvOpHeader" title="Clique para expandir/recolher">
-              <div class="fv-op-tit"><span class="fv-op-chev" id="fvOpChev">▾</span>📋 Operação · <span id="fvModoLabel">Kanban</span></div>
-              <div class="fv-op-actions">
-                <div class="fv-op-instr" id="fvInstr">💡 Arraste cards · Clique p/ detalhar</div>
-                <button class="fv-btn fv-btn-primary" id="fvBtnFast" style="background:var(--blue);color:#0a0e1a;" title="Lead rápido (Nome+WhatsApp+Consultor+Origem) — abre o detalhe completo depois">⚡ Fast Lead</button>
-                <button class="fv-btn fv-btn-primary" id="fvBtnNovo">+ Novo</button>
-                <div class="fv-vtoggle">
-                  <button class="fv-vbtn active" data-view="kanban">▦ Kanban</button>
-                  <button class="fv-vbtn" data-view="lista">≡ Lista</button>
+            <div class="fv-op-inner" id="fvOpInner">
+              <div class="fv-op-h" id="fvOpHeader" title="Clique para expandir/recolher">
+                <div class="fv-op-tit"><span class="fv-op-chev" id="fvOpChev">▾</span>📋 Operação · <span id="fvModoLabel">Kanban</span></div>
+                <div class="fv-op-actions">
+                  <div class="fv-op-instr" id="fvInstr">💡 Arraste cards · Clique p/ detalhar</div>
+                  <button class="fv-btn fv-btn-primary" id="fvBtnFast" style="background:var(--blue);color:#0a0e1a;" title="Lead rápido (Nome+WhatsApp+Consultor+Origem) — abre o detalhe completo depois">⚡ Fast Lead</button>
+                  <button class="fv-btn fv-btn-primary" id="fvBtnNovo">+ Novo</button>
+                  <div class="fv-vtoggle">
+                    <button class="fv-vbtn active" data-view="kanban">▦ Kanban</button>
+                    <button class="fv-vbtn" data-view="lista">≡ Lista</button>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="fv-kanban" id="fvKanban"></div>
-            <div class="fv-lista-wrap" id="fvListaWrap">
-              <div class="fv-lista-bar" id="fvListaBar">
-                <div class="fv-lista-info">📊 Filtrado: <b id="fvListaNome">—</b> · <span id="fvListaQtd">0</span> leads</div>
-                <button class="fv-lista-clear" id="fvListaClear">✕ Limpar filtro</button>
+              <div class="fv-kanban" id="fvKanban"></div>
+              <div class="fv-lista-wrap" id="fvListaWrap">
+                <div class="fv-lista-bar" id="fvListaBar">
+                  <div class="fv-lista-info">📊 Filtrado: <b id="fvListaNome">—</b> · <span id="fvListaQtd">0</span> leads</div>
+                  <button class="fv-lista-clear" id="fvListaClear">✕ Limpar filtro</button>
+                </div>
+                <table class="fv-lista-tbl">
+                  <thead><tr>
+                    <th style="width:24px;"></th><th>Cliente</th><th>Valor</th><th>Prob.</th>
+                    <th>Etapa</th><th>Treinam.</th><th>Origem</th><th>Consultor</th>
+                    <th>Prazo</th><th>Última atividade</th>
+                  </tr></thead>
+                  <tbody id="fvListaTbody"></tbody>
+                </table>
               </div>
-              <table class="fv-lista-tbl">
-                <thead><tr>
-                  <th style="width:24px;"></th><th>Cliente</th><th>Valor</th><th>Prob.</th>
-                  <th>Etapa</th><th>Treinam.</th><th>Origem</th><th>Consultor</th>
-                  <th>Prazo</th><th>Última atividade</th>
-                </tr></thead>
-                <tbody id="fvListaTbody"></tbody>
-              </table>
             </div>
           </section>
         </div>
@@ -2842,15 +2873,27 @@
   }
 
   /* Toggle do painel Operação · Kanban (header clicável).
-     Ignora clicks em botões/toggle de visão dentro do header. */
+     Ignora clicks em botões/toggle de visão dentro do header.
+     Também anexa o spotlight follow-mouse no card interno. */
   function _attachOpToggle(){
-    const header = $('#fvOpHeader'); const op = $('#fvOp');
+    const header = $('#fvOpHeader'); const op = $('#fvOp'); const inner = $('#fvOpInner');
     if(!header || !op) return;
     header.addEventListener('click', e => {
       if(e.target.closest('button, .fv-vtoggle, .fv-vbtn')) return;
       _opCollapsed = !_opCollapsed;
       op.classList.toggle('collapsed', _opCollapsed);
     });
+    if(inner){
+      inner.addEventListener('mousemove', e => {
+        const r = inner.getBoundingClientRect();
+        inner.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        inner.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+      inner.addEventListener('mouseleave', () => {
+        inner.style.setProperty('--mx', '50%');
+        inner.style.setProperty('--my', '50%');
+      });
+    }
   }
 
   /* ── Init ── */
