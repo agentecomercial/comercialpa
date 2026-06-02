@@ -295,9 +295,22 @@
   transition:all .15s;
 }
 .fv-card-edit:hover{ color:var(--accent); border-color:var(--accent); background:rgba(200,240,90,.06); }
-/* Quando temp está ativo, o ícone do clima já ocupa o canto · sobe a edição e chevron */
+.fv-card-copy{
+  position:absolute; top:5px; right:30px;
+  width:18px; height:18px; padding:0;
+  background:transparent; color:var(--txt-3,#6b7280);
+  border:1px solid rgba(255,255,255,.08); border-radius:4px;
+  font-size:9px; cursor:pointer; font-family:inherit; line-height:1;
+  transition:all .15s;
+}
+.fv-card-copy:hover{ color:var(--accent); border-color:var(--accent); background:rgba(212,165,116,.08); }
+/* Quando temp está ativo, o ícone do clima já ocupa o canto · sobe edição, copy e chevron */
 .fv-card-temp + .fv-card-edit{ right:30px; }
-.fv-card-temp + .fv-card-edit + .fv-card-chev{ right:50px; }
+.fv-card-temp + .fv-card-edit + .fv-card-copy{ right:53px; }
+.fv-card-temp + .fv-card-edit + .fv-card-copy + .fv-card-chev{ right:76px; }
+/* Sem temp · só edit/copy/chev */
+.fv-card-edit + .fv-card-copy{ right:30px; }
+.fv-card-edit + .fv-card-copy + .fv-card-chev{ right:52px; }
 
 /* Estado colapsado: esconde tudo menos cabeçalho compacto */
 .fv-card.collapsed{ padding-bottom:8px; cursor:pointer; }
@@ -1942,6 +1955,45 @@
     }).join('');
   }
 
+  /* Mensagem WhatsApp padrão de novo lead — usada pelo Fast Lead e pelo botão
+     copiar do card. Aceita objeto com {nome, wpp, origem, consultor, notas}. */
+  function _msgLead(d){
+    const nome   = (d.nome || '').trim() || '[nome]';
+    const wpp    = (d.wpp || '').trim() || '[whatsapp]';
+    const origem = (d.origem || '').trim() || '[origem]';
+    const cons   = (d.consultor || '').trim();
+    const notas  = (d.notas || '').trim();
+    let msg = `🆕 NOVO LEAD pra você${cons ? ', ' + cons : ''}:\n\n`
+            + `👤 ${nome}\n`
+            + `📱 ${wpp}\n`
+            + `📡 Origem: ${origem}\n`;
+    if(notas) msg += `📝 Obs: ${notas}\n`;
+    msg += `\nPor favor, faça contato em até 24h. Boa venda! 🚀`;
+    return msg;
+  }
+
+  /* Copia texto pra área de transferência com fallback execCommand.
+     Exibe toast de sucesso (okMsg) ou erro. */
+  function _copiar(texto, okMsg){
+    okMsg = okMsg || '📋 Copiado';
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.cssText = 'position:fixed;top:-9999px;';
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch(e){}
+    document.body.removeChild(ta);
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(texto).then(
+        () => _toast(okMsg),
+        () => { if(ok) _toast(okMsg); else _toast('⚠ Falha ao copiar'); }
+      );
+    } else {
+      _toast(ok ? okMsg : '⚠ Falha ao copiar');
+    }
+  }
+
   /* Formata YYYY-MM-DD em DD/MM (local, defensivo contra timezone) */
   function _fmtData(iso){
     if(!iso) return '';
@@ -1981,6 +2033,7 @@
     return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};">
       ${tempIcon?`<span class="fv-card-temp">${tempIcon}</span>`:''}
       <button class="fv-card-edit" data-edit="${l.id}" title="Abrir detalhes do lead">✎</button>
+      <button class="fv-card-copy" data-copy="${l.id}" title="Copiar mensagem para WhatsApp">📋</button>
       <span class="fv-card-chev" title="${colapsado?'expandir':'recolher'}">${colapsado?'▸':'▾'}</span>
       <div class="fv-card-nome">${esc(l.nome)}</div>
       ${l.empresa?`<div class="fv-card-emp">${esc(l.empresa)}</div>`:''}
@@ -2183,6 +2236,12 @@
     $$('.fv-card-edit').forEach(b => b.addEventListener('click', e => {
       e.stopPropagation();
       _abrirDetalhe(b.dataset.edit);
+    }));
+    /* Botão 📋 — copia mensagem de novo lead (mesmo template do Fast Lead) */
+    $$('.fv-card-copy').forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation();
+      const l = _leads.find(x => x.id === b.dataset.copy); if(!l) return;
+      _copiar(_msgLead(l), '📋 Mensagem copiada · cole no WhatsApp');
     }));
     $$('.fv-col').forEach(col => {
       col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('dragover'); });
@@ -2593,40 +2652,15 @@
     ov.addEventListener('click', e => { if(e.target === ov) close(); });
 
     const get = k => ov.querySelector(`[data-k="${k}"]`)?.value || '';
-    function _msgTemplate(){
-      const nome = get('nome').trim() || '[nome]';
-      const wpp = get('wpp').trim() || '[whatsapp]';
-      const origem = get('origem') || '[origem]';
-      const cons = get('consultor');
-      const notas = (get('notas') || '').trim();
-      let msg = `🆕 NOVO LEAD pra você${cons?', '+cons:''}:\n\n`
-        + `👤 ${nome}\n`
-        + `📱 ${wpp}\n`
-        + `📡 Origem: ${origem}\n`;
-      if(notas) msg += `📝 Obs: ${notas}\n`;
-      msg += `\nPor favor, faça contato em até 24h. Boa venda! 🚀`;
-      return msg;
-    }
 
-    /* Botão Copiar */
+    /* Botão Copiar — usa helper _msgLead (mesmo template do botão copiar do card) */
     ov.querySelector('#fvFastCopiar').addEventListener('click', () => {
-      const msg = _msgTemplate();
-      const ta = document.createElement('textarea');
-      ta.value = msg;
-      ta.style.cssText = 'position:fixed;top:-9999px;';
-      document.body.appendChild(ta);
-      ta.select();
-      let ok = false;
-      try { ok = document.execCommand('copy'); } catch(e){}
-      document.body.removeChild(ta);
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(msg).then(
-          () => _toast('📋 Mensagem copiada · cole no WhatsApp do consultor'),
-          () => { if(ok) _toast('📋 Mensagem copiada'); else _toast('⚠ Falha ao copiar'); }
-        );
-      } else {
-        _toast(ok ? '📋 Mensagem copiada' : '⚠ Falha ao copiar');
-      }
+      const msg = _msgLead({
+        nome: get('nome'), wpp: get('wpp'),
+        origem: get('origem'), consultor: get('consultor'),
+        notas: get('notas')
+      });
+      _copiar(msg, '📋 Mensagem copiada · cole no WhatsApp do consultor');
     });
 
     /* Botão Criar lead */
