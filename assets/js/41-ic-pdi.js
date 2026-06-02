@@ -892,12 +892,112 @@
   window._pdiSetAcaoTxt = function(i,ai,v){_doc.alvos[i].acoes[ai].texto = v;};
 
   window._pdiAddManual = function(){
+    if(!_doc) _pdiResetDoc();
     var opts = COMPS_DEF.filter(function(c){return !(_doc.alvos||[]).some(function(a){return a.key===c.key;});});
     if(!opts.length){ if(typeof _showToast==='function') _showToast('Todas as competências já foram adicionadas','var(--muted)'); return; }
-    var lista = opts.map(function(c,i){return (i+1)+'. '+c.ico+' '+c.label;}).join('\n');
-    var n = prompt('Escolha o número da competência:\n\n'+lista);
-    var idx = parseInt(n)-1;
-    if(opts[idx]) window._pdiAddAlvo(opts[idx].key);
+    var jaTem = (_doc.alvos||[]).length;
+    var restantes = 3 - jaTem;
+
+    /* CSS one-shot */
+    if(!document.getElementById('pdiAddModalCss')){
+      var st = document.createElement('style'); st.id = 'pdiAddModalCss';
+      st.textContent = ''
+        + '.pdi-am-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px);}'
+        + '.pdi-am-modal{background:var(--bg-2,#161b22);border:1px solid var(--border,rgba(255,255,255,.08));border-radius:14px;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 30px 60px -15px rgba(0,0,0,.7);}'
+        + '.pdi-am-h{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border,rgba(255,255,255,.08));}'
+        + '.pdi-am-tit{font-size:14px;font-weight:700;color:var(--txt,#e6edf3);}'
+        + '.pdi-am-sub{font-size:11px;color:var(--txt-3,#6b7280);margin-top:3px;}'
+        + '.pdi-am-x{background:transparent;border:1px solid var(--border,rgba(255,255,255,.08));color:var(--txt-2,#9aa5b1);padding:4px 8px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1;font-family:inherit;}'
+        + '.pdi-am-x:hover{color:var(--accent,#d4a574);border-color:var(--accent,#d4a574);}'
+        + '.pdi-am-b{padding:10px 16px;overflow-y:auto;flex:1;}'
+        + '.pdi-am-cnt{font-size:11px;color:var(--accent,#d4a574);font-weight:600;text-align:right;margin:0 0 10px;}'
+        + '.pdi-am-opt{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--border,rgba(255,255,255,.08));border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all .12s;background:var(--bg-3,#1c2128);font-size:12px;color:var(--txt,#e6edf3);}'
+        + '.pdi-am-opt:hover{border-color:var(--accent,#d4a574);background:rgba(212,165,116,.06);}'
+        + '.pdi-am-opt.checked{border-color:var(--accent,#d4a574);background:rgba(212,165,116,.10);}'
+        + '.pdi-am-opt.disabled{opacity:.4;cursor:not-allowed;}'
+        + '.pdi-am-opt input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent,#d4a574);cursor:pointer;flex-shrink:0;}'
+        + '.pdi-am-opt .pdi-am-ico{font-size:16px;}'
+        + '.pdi-am-opt .pdi-am-lbl{flex:1;font-weight:600;}'
+        + '.pdi-am-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid var(--border,rgba(255,255,255,.08));}'
+        + '.pdi-am-btn{font-size:12px;font-weight:600;padding:8px 14px;border-radius:6px;cursor:pointer;font-family:inherit;border:1px solid var(--border,rgba(255,255,255,.08));background:transparent;color:var(--txt,#e6edf3);}'
+        + '.pdi-am-btn:hover{border-color:var(--accent,#d4a574);color:var(--accent,#d4a574);}'
+        + '.pdi-am-btn.primary{background:var(--accent,#d4a574);color:#0a0e1a;border-color:var(--accent,#d4a574);}'
+        + '.pdi-am-btn.primary:hover{background:var(--accent-2,#f0c896);color:#0a0e1a;}'
+        + '.pdi-am-btn.primary:disabled{opacity:.5;cursor:not-allowed;}';
+      document.head.appendChild(st);
+    }
+
+    var opcoesHtml = opts.map(function(c){
+      return '<label class="pdi-am-opt" data-key="'+c.key+'">'
+        + '<input type="checkbox" value="'+c.key+'">'
+        + '<span class="pdi-am-ico">'+c.ico+'</span>'
+        + '<span class="pdi-am-lbl">'+c.label+'</span>'
+        + '</label>';
+    }).join('');
+
+    var html = '<div class="pdi-am-ov" id="pdiAmOv">'
+      + '<div class="pdi-am-modal">'
+      +   '<div class="pdi-am-h">'
+      +     '<div>'
+      +       '<div class="pdi-am-tit">🎯 Adicionar competências-alvo</div>'
+      +       '<div class="pdi-am-sub">Marque até '+restantes+' competência'+(restantes===1?'':'s')+' (limite de 3 por PDI)</div>'
+      +     '</div>'
+      +     '<button class="pdi-am-x" data-close>✕</button>'
+      +   '</div>'
+      +   '<div class="pdi-am-b">'
+      +     '<div class="pdi-am-cnt" id="pdiAmCnt">0 / '+restantes+' selecionada(s)</div>'
+      +     opcoesHtml
+      +   '</div>'
+      +   '<div class="pdi-am-f">'
+      +     '<button class="pdi-am-btn" data-close>Cancelar</button>'
+      +     '<button class="pdi-am-btn primary" id="pdiAmConfirm" disabled>Adicionar</button>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+    var wrap = document.createElement('div'); wrap.innerHTML = html; document.body.appendChild(wrap.firstChild);
+    var ov = document.getElementById('pdiAmOv');
+    var close = function(){ ov.remove(); };
+    ov.querySelectorAll('[data-close]').forEach(function(b){ b.addEventListener('click', close); });
+    ov.addEventListener('click', function(e){ if(e.target === ov) close(); });
+    document.addEventListener('keydown', function esc(e){ if(e.key === 'Escape'){ close(); document.removeEventListener('keydown', esc); } });
+
+    var cks = ov.querySelectorAll('.pdi-am-opt input[type=checkbox]');
+    var cntEl = ov.querySelector('#pdiAmCnt');
+    var confirmBtn = ov.querySelector('#pdiAmConfirm');
+
+    function atualizar(){
+      var marcados = Array.prototype.filter.call(cks, function(c){ return c.checked; });
+      var n = marcados.length;
+      cntEl.textContent = n + ' / ' + restantes + ' selecionada(s)';
+      confirmBtn.disabled = (n === 0);
+      cks.forEach(function(c){
+        var label = c.closest('.pdi-am-opt');
+        var atingiu = (n >= restantes);
+        if(atingiu && !c.checked){
+          c.disabled = true; label.classList.add('disabled');
+        } else {
+          c.disabled = false; label.classList.remove('disabled');
+        }
+        label.classList.toggle('checked', c.checked);
+      });
+    }
+    cks.forEach(function(c){ c.addEventListener('change', atualizar); });
+
+    /* Click no row toggla o checkbox */
+    ov.querySelectorAll('.pdi-am-opt').forEach(function(row){
+      row.addEventListener('click', function(e){
+        if(e.target.tagName === 'INPUT') return;
+        var ck = row.querySelector('input[type=checkbox]');
+        if(ck && !ck.disabled){ ck.checked = !ck.checked; atualizar(); }
+      });
+    });
+
+    confirmBtn.addEventListener('click', function(){
+      Array.prototype.forEach.call(cks, function(c){
+        if(c.checked) window._pdiAddAlvo(c.value);
+      });
+      close();
+    });
   };
 
   function _pdiAtualizarFooter(){
