@@ -1942,20 +1942,41 @@
     }).join('');
   }
 
+  /* Formata YYYY-MM-DD em DD/MM (local, defensivo contra timezone) */
+  function _fmtData(iso){
+    if(!iso) return '';
+    const s = String(iso).slice(0,10);
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if(m) return m[3]+'/'+m[2];
+    const d = new Date(iso); if(isNaN(d.getTime())) return '';
+    return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+  }
+
   function _cardHtml(l, etCor){
     const probCls = l.prob>=70?'':(l.prob>=40?'m':'l');
     const tempIcon = l.temp==='q'?'🔥':(l.temp==='m'?'🌤':(l.temp==='f'?'❄':''));
     const cardCls = (l.temp==='q'?'hot':(l.temp==='f'?'cold':''));
-    let prazoTxt = '—', prazoCls = '';
+    /* PRAZO de follow-up — ícone 📅 deixa claro que é uma data futura */
+    let prazoTxt = '—', prazoCls = '', prazoTitle = 'Sem follow-up agendado';
     const dias = _diasAteHoje(l.prazo);
     if(l.prazo){
-      if(dias < 0){ prazoTxt = dias+'d ⚠'; prazoCls='atr'; }
-      else if(dias === 0){ prazoTxt='Hoje'; prazoCls='ok'; }
-      else if(dias === 1){ prazoTxt='Amanhã'; prazoCls='ok'; }
-      else { prazoTxt = dias+' dias'; }
+      const dataFmt = _fmtData(l.prazo);
+      if(dias < 0){ prazoTxt = `${dias}d ⚠`; prazoCls='atr'; prazoTitle = `Follow-up vencido em ${dataFmt}`; }
+      else if(dias === 0){ prazoTxt='Hoje'; prazoCls='ok'; prazoTitle = `Follow-up hoje (${dataFmt})`; }
+      else if(dias === 1){ prazoTxt='Amanhã'; prazoCls='ok'; prazoTitle = `Follow-up amanhã (${dataFmt})`; }
+      else { prazoTxt = `${dias}d`; prazoTitle = `Follow-up em ${dataFmt}`; }
     }
-    const ult = l.atividade && l.atividade[l.atividade.length-1];
-    const ultTxt = ult ? `${_difDias(ult.quando)}d atrás` : '—';
+    /* CRIADO — usa criadoEm (não a última atividade) pra mostrar quando o lead entrou */
+    const criadoDias = _difDias(l.criadoEm);
+    const criadoFmt = _fmtData(l.criadoEm);
+    let criadoTxt = '—', criadoTitle = '';
+    if(criadoDias != null){
+      if(criadoDias === 0)       { criadoTxt = `Hoje (${criadoFmt})`; }
+      else if(criadoDias === 1)  { criadoTxt = `Ontem (${criadoFmt})`; }
+      else if(criadoDias < 30)   { criadoTxt = `${criadoDias}d atrás (${criadoFmt})`; }
+      else                       { criadoTxt = criadoFmt; }
+      criadoTitle = `Criado em ${criadoFmt}`;
+    }
     const colapsado = _cardsCollapsed.has(l.id);
     return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};">
       ${tempIcon?`<span class="fv-card-temp">${tempIcon}</span>`:''}
@@ -1970,9 +1991,9 @@
       </div>
       <div class="fv-card-foot">
         <div class="fv-card-cons"><span class="fv-av">${_inic(l.consultor)}</span>${esc((l.consultor||'').split(' ')[0])}</div>
-        <div class="fv-card-prazo ${prazoCls}">${prazoTxt}</div>
+        <div class="fv-card-prazo ${prazoCls}" title="${prazoTitle}">📅 ${prazoTxt}</div>
       </div>
-      <div class="fv-card-act">Última: ${ultTxt}</div>
+      <div class="fv-card-act" title="${criadoTitle}">Criado: ${criadoTxt}</div>
       <div class="fv-card-foot-valor">💰 <b>${moedaCurta(l.valor)}</b></div>
     </div>`;
   }
