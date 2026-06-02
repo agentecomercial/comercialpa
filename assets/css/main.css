@@ -429,6 +429,8 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 ═══════════════════════════════════════════════ */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;align-items:center;justify-content:center;}
 .modal-overlay.open{display:flex;}
+/* Caixa central dos modais — sem background ficava transparente sobre o overlay */
+.modal-content{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);box-shadow:0 30px 60px -15px rgba(0,0,0,.7);overflow:hidden;}
 #novoUsuarioOverlay{z-index:1100;}
 #alterarSenhaOverlay{z-index:1100;}
 #permsModalOverlay{z-index:1200;}
