@@ -14,9 +14,13 @@
   var _sessoesAbertas = new Set(['escopo','status','periodo','executivos']);
   /* Escopo de dados — controla DE ONDE vem a lista de consultores e clientes:
      'atual'  = só da turma atualmente aberta (default · sugestão A)
-     'mes'    = todas as turmas do mês vigente
+     'mes'    = todas as turmas do mês selecionado (default = atual)
      'todas'  = todas as turmas cadastradas (consolidado) */
   var _escopo = 'atual';
+  var _mesFiltro = ''; /* YYYY-MM — atualizado on-demand para o mês atual */
+  function _mesFiltroAtivo(){
+    return _mesFiltro || _mesAtualYM();
+  }
   /* Pré-seleção sugerida — marcas com ⭐ e marcadas por default na 1ª abertura. */
   var PRE_SELECT = ['esc_todos','st_pago','st_aberto','pe_curso_atual','ex_resumo'];
   var _primeiraAbertura = true;
@@ -87,6 +91,11 @@
       '.icv-escopo .seg button:hover:not(.on){color:#d4a574;}',
       '.icv-escopo .info{margin-left:auto;font-size:10px;color:#6b7280;}',
       '.icv-escopo .info b{color:#d4a574;}',
+      /* Input de mês (aparece quando escopo=Por mês) */
+      '.icv-mes-picker{background:rgba(0,0,0,.3);border:1px solid rgba(212,165,116,.35);color:#d4a574;padding:4px 8px;border-radius:5px;font-size:11px;font-family:inherit;font-weight:600;cursor:pointer;color-scheme:dark;}',
+      '.icv-mes-picker:focus{outline:none;border-color:#d4a574;box-shadow:0 0 0 2px rgba(212,165,116,.15);}',
+      '.icv-mes-hoje{background:transparent;border:1px solid rgba(255,255,255,.10);color:#9aa5b1;padding:4px 9px;border-radius:5px;font-size:10px;font-family:inherit;font-weight:600;cursor:pointer;}',
+      '.icv-mes-hoje:hover{color:#d4a574;border-color:#d4a574;}',
       '.icv-toolbar a{color:#d4a574;cursor:pointer;font-weight:600;margin-right:10px;}',
       '.icv-toolbar a:hover{text-decoration:underline;}',
       '.icv-toolbar .cnt b{color:#d4a574;font-weight:700;}',
@@ -243,9 +252,13 @@
       +     '<span class="lbl">Escopo dos dados:</span>'
       +     '<div class="seg">'
       +       '<button data-esc="atual" class="'+(_escopo==='atual'?'on':'')+'">📚 Esta turma</button>'
-      +       '<button data-esc="mes" class="'+(_escopo==='mes'?'on':'')+'">📅 Mês vigente</button>'
+      +       '<button data-esc="mes" class="'+(_escopo==='mes'?'on':'')+'">📅 Por mês</button>'
       +       '<button data-esc="todas" class="'+(_escopo==='todas'?'on':'')+'">🗂 Todas as turmas</button>'
       +     '</div>'
+      +     (_escopo==='mes'
+        ? '<input type="month" id="icvMesPicker" class="icv-mes-picker" value="'+_escSafe(_mesFiltroAtivo())+'" title="Escolha qualquer mês — default é o vigente">'
+          + '<button class="icv-mes-hoje" id="icvMesHoje" title="Voltar para o mês atual">Hoje</button>'
+        : '')
       +     '<div class="info" id="icvEscInfo"></div>'
       +   '</div>'
       +   '<div class="icv-toolbar">'
@@ -316,9 +329,27 @@
     ov.querySelectorAll('[data-esc]').forEach(function(b){
       b.addEventListener('click', function(){
         _escopo = b.dataset.esc;
+        /* Ao entrar no escopo 'mes', inicializa filtro com mês atual */
+        if(_escopo === 'mes' && !_mesFiltro) _mesFiltro = _mesAtualYM();
         _rerender();
       });
     });
+    /* Picker de mês (só existe quando escopo='mes') */
+    var mp = ov.querySelector('#icvMesPicker');
+    if(mp){
+      mp.addEventListener('change', function(){
+        _mesFiltro = mp.value || _mesAtualYM();
+        _atualizarPreview(ov);
+      });
+    }
+    var btnHoje = ov.querySelector('#icvMesHoje');
+    if(btnHoje){
+      btnHoje.addEventListener('click', function(){
+        _mesFiltro = _mesAtualYM();
+        if(mp) mp.value = _mesFiltro;
+        _atualizarPreview(ov);
+      });
+    }
 
     /* Selecionar todas / limpar */
     ov.querySelector('#icvSelTudo').addEventListener('click', function(){
@@ -379,10 +410,11 @@
     var qConsGlobal = _listaConsultores().length;
     var todasT = _listarTodasTurmas();
     var qTurmas = todasT.length;
-    var qTurmasMes = _turmasDoMesVigente().length;
+    var ymHoje = _mesAtualYM();
+    var ym = (_escopo==='mes' ? _mesFiltroAtivo() : ymHoje);
+    var qTurmasMes = _turmasDoMesVigente(ym).length;
     var qGoals = Object.keys(window._npGoals||{}).length;
     var turmaAtiva = (window._turmaAtiva && (window._turmaAtiva.nome||window._turmaAtiva.codigo)) || '—';
-    var ym = _mesAtualYM();
     /* Lista resumida de turmas encontradas + suas datas */
     var listaT = todasT.slice(0, 6).map(function(t){
       var dt = t.periodStart || t.criadoEm || '—';
@@ -397,7 +429,7 @@
       + '• Turma ativa: <b>'+_esc(turmaAtiva)+'</b> · clientes nela: <b>'+qData+'</b><br>'
       + '• Clientes consolidados (todas turmas): <b>'+qTodas+'</b><br>'
       + '• Consultores no escopo atual: <b>'+qCons+'</b> · global: <b>'+qConsGlobal+'</b><br>'
-      + '• Turmas encontradas: <b>'+qTurmas+'</b> · no mês vigente ('+ym+'): <b>'+qTurmasMes+'</b><br>'
+      + '• Turmas encontradas: <b>'+qTurmas+'</b> · no mês '+ym+(ym===ymHoje?' (vigente)':'')+': <b>'+qTurmasMes+'</b><br>'
       + '• Metas mensais (npGoals): <b>'+qGoals+'</b>'
       + (qTurmas ? '<br><br><b style="color:#d4a574;">📋 Turmas detectadas</b><ul style="margin:4px 0 0;padding-left:16px;font-size:9px;">'+listaT+'</ul>' : '<br><br><span style="color:#fbbf24;">⚠ Aguarde o Firebase responder ou verifique sua conexão.</span>')
       + '</div>';
@@ -443,8 +475,8 @@
       return _coletarClientes();
     }
     if(_escopo === 'mes'){
-      /* Todas as turmas do mês vigente */
-      var turmas = _turmasDoMesVigente();
+      /* Todas as turmas do mês selecionado (default = vigente) */
+      var turmas = _turmasDoMesVigente(_mesFiltroAtivo());
       var todos = [];
       var seen = {};
       turmas.forEach(function(t){
@@ -480,7 +512,10 @@
       var t = window._turmaAtiva;
       return 'desta turma' + (t && (t.nome||t.codigo) ? ' · '+(t.nome||t.codigo) : '');
     }
-    if(_escopo === 'mes') return 'do mês vigente ('+_mesAtualYM()+')';
+    if(_escopo === 'mes'){
+      var ym = _mesFiltroAtivo();
+      return 'do mês '+ym + (ym === _mesAtualYM() ? ' (vigente)' : '');
+    }
     return 'consolidado (todas as turmas)';
   }
 
@@ -837,8 +872,8 @@
       if(onDone) onDone();
     });
   }
-  function _turmasDoMesVigente(){
-    var ym = _mesAtualYM();
+  function _turmasDoMesVigente(ymOverride){
+    var ym = ymOverride || _mesFiltroAtivo();
     var todas = _listarTodasTurmas();
     var doMes = todas.filter(function(t){
       if(!t) return false;
@@ -900,13 +935,14 @@
     return { html:html, txt:txt };
   }
   function _sec_peMesTodas(){
-    var turmas = _turmasDoMesVigente();
-    var ym = _mesAtualYM();
+    var ym = _mesFiltroAtivo();
+    var turmas = _turmasDoMesVigente(ym);
+    var sufixo = (ym === _mesAtualYM()) ? ' (vigente)' : '';
     if(!turmas.length){
-      return { titulo:'🗂 Todas as turmas do mês', html:'<h2>🗂 Todas as turmas do mês vigente</h2><p style="color:#fbbf24;">Nenhuma turma encontrada para '+ym+'.</p>', txt:'(sem turmas no mês '+ym+')\n' };
+      return { titulo:'🗂 Todas as turmas do mês', html:'<h2>🗂 Todas as turmas do mês '+ym+sufixo+'</h2><p style="color:#fbbf24;">Nenhuma turma encontrada para '+ym+'.</p>', txt:'(sem turmas no mês '+ym+')\n' };
     }
-    var html = '<h2>🗂 Todas as turmas do mês vigente · '+ym+' ('+turmas.length+' turma'+(turmas.length>1?'s':'')+')</h2>';
-    var txt = '🗂 TODAS AS TURMAS DO MÊS · '+ym+'\n';
+    var html = '<h2>🗂 Todas as turmas do mês '+ym+sufixo+' · '+turmas.length+' turma'+(turmas.length>1?'s':'')+'</h2>';
+    var txt = '🗂 TODAS AS TURMAS DO MÊS · '+ym+sufixo+'\n';
     turmas.forEach(function(t){
       var lst = _clientesDeTurma(t.id);
       var block = _renderTurmaBlock(t, lst);
