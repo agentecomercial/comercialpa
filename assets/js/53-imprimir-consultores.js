@@ -42,12 +42,17 @@
 
   /* ─────────── Definição das opções (20 ao todo) ─────────── */
   var SESSOES = [
+    { id:'periodo', ic:'📅', nome:'Por período', opts:[
+      { id:'pe_curso_atual', ic:'📚', t:'Somente a turma atual', d:'Foca no curso atualmente aberto · header com nome e código' },
+      { id:'pe_mes',         ic:'📅', t:'Mês atual completo (consolidado)', d:'Estatísticas agregadas do mês corrente' },
+      { id:'pe_outro',       ic:'🗓', t:'Escolher outro período', d:'Escolha mês + turma específica (ou todas as turmas do mês)', extra:'periodo' }
+    ]},
     { id:'escopo', ic:'📊', nome:'Por escopo (quem entra no relatório)', opts:[
       { id:'esc_parent', ic:'👥', t:'Todos os consultores', d:'Marque as variações abaixo:', isParent:true, subs:[
         { id:'esc_todos', ic:'👥', t:'Todos os consultores' },
         { id:'esc_top3',  ic:'🥇', t:'Top 3 consultores' },
         { id:'esc_bateu', ic:'🎯', t:'Quem bateu meta' },
-        { id:'esc_sel',   ic:'☑', t:'Consultores específicos (dropdown)', hasMultiSelect:true }
+        { id:'esc_sel',   ic:'☑', t:'Consultor Individual', hasMultiSelect:true }
       ]}
     ]},
     { id:'status', ic:'💰', nome:'Por status de venda', opts:[
@@ -63,11 +68,6 @@
       { id:'tr_agrup', ic:'📚', t:'Agrupado por TREINAMENTO', d:'Cada treinamento com seus clientes e consultores' },
       { id:'tr_top5',  ic:'💎', t:'Top 5 maiores vendas', d:'As maiores vendas do período' },
       { id:'tr_hight', ic:'🏆', t:'Top Vendas High Ticket', d:'Somente vendas a partir de R$ 30.000,00' }
-    ]},
-    { id:'periodo', ic:'📅', nome:'Por período', opts:[
-      { id:'pe_curso_atual', ic:'📚', t:'Somente a turma atual', d:'Foca no curso atualmente aberto · header com nome e código' },
-      { id:'pe_mes',         ic:'📅', t:'Mês atual completo (consolidado)', d:'Estatísticas agregadas do mês corrente' },
-      { id:'pe_outro',       ic:'🗓', t:'Escolher outro período', d:'Escolha mês + turma específica (ou todas as turmas do mês)', extra:'periodo' }
     ]},
     { id:'executivos', ic:'⭐', nome:'Executivos', opts:[
       { id:'ex_resumo', ic:'📊', t:'Resumo executivo (1 página)', d:'Marque as seções que devem aparecer:', isParent:true, subs:[
@@ -236,10 +236,15 @@
       '.icv-multi-cons-h{display:flex;align-items:center;gap:8px;font-size:calc(10px * var(--icv-scale,1));color:#93c5fd;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;}',
       '.icv-multi-cons-h button{background:transparent;border:1px solid rgba(59,130,246,.40);color:#93c5fd;padding:2px 8px;border-radius:4px;font-size:calc(9px * var(--icv-scale,1));font-family:inherit;cursor:pointer;font-weight:700;}',
       '.icv-multi-cons-h button:hover{background:rgba(59,130,246,.15);}',
-      '.icv-multi-cons-chips{display:flex;flex-wrap:wrap;gap:5px;}',
-      '.icv-cons-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);padding:3px 9px;border-radius:14px;font-size:calc(10px * var(--icv-scale,1));color:#9aa5b1;cursor:pointer;font-weight:600;}',
-      '.icv-cons-chip input{width:calc(11px * var(--icv-scale,1));height:calc(11px * var(--icv-scale,1));accent-color:#3b82f6;}',
-      '.icv-cons-chip.on{background:rgba(59,130,246,.18);border-color:#3b82f6;color:#93c5fd;}',
+      /* Lista em ÁRVORE com guias verticais conectoras (estilo file explorer) */
+      '.icv-multi-cons-chips{display:flex;flex-direction:column;gap:0;padding-left:6px;}',
+      '.icv-cons-chip{display:flex;align-items:center;gap:8px;background:transparent;border:none;padding:5px 8px 5px 30px;border-radius:4px;font-size:calc(10.5px * var(--icv-scale,1));color:#9aa5b1;cursor:pointer;font-weight:500;position:relative;}',
+      '.icv-cons-chip::before{content:"";position:absolute;left:8px;top:0;bottom:0;width:1px;background:rgba(59,130,246,.35);}',
+      '.icv-cons-chip::after{content:"";position:absolute;left:8px;top:50%;width:14px;height:1px;background:rgba(59,130,246,.35);}',
+      '.icv-cons-chip:last-child::before{height:50%;top:0;}',
+      '.icv-cons-chip input{width:calc(12px * var(--icv-scale,1));height:calc(12px * var(--icv-scale,1));accent-color:#3b82f6;flex-shrink:0;}',
+      '.icv-cons-chip:hover{background:rgba(59,130,246,.06);color:#cbd5e0;}',
+      '.icv-cons-chip.on{background:rgba(59,130,246,.10);color:#93c5fd;font-weight:600;}',
       '.icv-star{color:#fbbf24;font-size:calc(10px * var(--icv-scale,1));margin-left:auto;flex-shrink:0;}',
       '.icv-star-tag{font-size:calc(8px * var(--icv-scale,1));background:rgba(251,191,36,.12);color:#fbbf24;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}',
       '.icv-extra{margin-top:5px;font-size:calc(10px * var(--icv-scale,1));color:#9aa5b1;display:none;align-items:center;gap:6px;}',
