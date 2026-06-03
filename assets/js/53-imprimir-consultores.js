@@ -10,6 +10,7 @@
   /* Estado do modal (sessão-only) */
   var _selecionadas = new Set();
   var _consultorEscolhido = '';
+  var _turmaMesEscolhida = '';   /* id da turma escolhida na opção "Turma do mês vigente" */
   var _sessoesAbertas = new Set(['escopo','status','periodo','executivos']);
   /* Pré-seleção sugerida — marcas com ⭐ e marcadas por default na 1ª abertura. */
   var PRE_SELECT = ['esc_todos','st_pago','st_aberto','pe_curso_atual','ex_resumo'];
@@ -39,10 +40,12 @@
       { id:'tr_novos',    ic:'✨', t:'Clientes NOVOS do mês', d:'Primeira compra — foco em aquisição' }
     ]},
     { id:'periodo',      ic:'📅', nome:'Por período', opts:[
-      { id:'pe_curso_atual', ic:'📚', t:'Curso/turma atual (foco)', d:'Foca no curso atualmente aberto · header com nome e código' },
-      { id:'pe_mes',         ic:'📅', t:'Mês atual completo', d:'Tudo do mês corrente' },
-      { id:'pe_comp',        ic:'📈', t:'Comparativo mês × anterior', d:'Lado a lado' },
-      { id:'pe_sem',         ic:'🗓', t:'Semanal (semana atual)', d:'Recorte da semana corrente' }
+      { id:'pe_curso_atual',  ic:'📚', t:'Somente a turma atual', d:'Foca no curso atualmente aberto · header com nome e código' },
+      { id:'pe_mes_todas',    ic:'🗂', t:'Todas as turmas do mês vigente', d:'Lista todas as turmas que iniciam no mês corrente + clientes' },
+      { id:'pe_mes_sel',      ic:'🎯', t:'Turma escolhida do mês vigente', d:'Escolha 1 turma do mês para focar', extra:'turma_mes' },
+      { id:'pe_mes',          ic:'📅', t:'Mês atual completo (consolidado)', d:'Estatísticas agregadas do mês' },
+      { id:'pe_comp',         ic:'📈', t:'Comparativo mês × anterior', d:'Lado a lado' },
+      { id:'pe_sem',          ic:'🗓', t:'Semanal (semana atual)', d:'Recorte da semana corrente' }
     ]},
     { id:'executivos',   ic:'⭐', nome:'Executivos', opts:[
       { id:'ex_resumo',   ic:'📊', t:'Resumo executivo (1 página)', d:'KPIs principais + ranking + alertas' },
@@ -118,12 +121,12 @@
       '.icv-btn.primary{background:#d4a574;color:#0a0e1a;border-color:#d4a574;font-weight:800;}',
       '.icv-btn.primary:hover{background:#f0c896;}',
       '.icv-btn.primary:disabled{opacity:.5;cursor:not-allowed;}',
-      /* Split button na barra da aba Consultor — borda gradient animada */
-      '@keyframes icv-grad { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }',
-      '.icv-split{display:inline-flex;padding:1.5px;border-radius:7px;background:linear-gradient(110deg, #d4a574, #a855f7, #3b82f6, #34d399, #d4a574);background-size:300% 100%;animation:icv-grad 6s ease-in-out infinite;cursor:pointer;}',
-      '.icv-split .add-btn{border:none;border-radius:5px 0 0 5px;background:#161b22;color:#d4a574;font-weight:700;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit;}',
+      /* Split button — borda Holographic (opção 10): iridescente rosa·dourado·roxo·azul·verde·amarelo */
+      '@keyframes icv-holo { 0% { background-position:0% 50%; } 100% { background-position:400% 50%; } }',
+      '.icv-split{display:inline-flex;padding:2px;border-radius:8px;background:linear-gradient(110deg, #ff006e, #d4a574, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #ff006e);background-size:400% 100%;animation:icv-holo 8s linear infinite;box-shadow:0 0 22px -5px rgba(212,165,116,.35);cursor:pointer;}',
+      '.icv-split .add-btn{border:none;border-radius:6px 0 0 6px;background:#161b22;color:#d4a574;font-weight:700;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit;}',
       '.icv-split .add-btn:hover{background:rgba(212,165,116,.10);}',
-      '.icv-split .icv-split-drop{border:none;border-radius:0 5px 5px 0;border-left:1px solid rgba(212,165,116,.30);padding:5px 9px;background:#161b22;color:#d4a574;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;}',
+      '.icv-split .icv-split-drop{border:none;border-radius:0 6px 6px 0;border-left:1px solid rgba(212,165,116,.30);padding:5px 9px;background:#161b22;color:#d4a574;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;}',
       '.icv-split .icv-split-drop:hover{background:rgba(212,165,116,.10);}'
     ].join('\n');
     document.head.appendChild(st);
@@ -163,6 +166,16 @@
             + '<option value="">— escolha —</option>'
             + consultores.map(function(c){
                 return '<option value="'+_esc(c)+'"'+(c===_consultorEscolhido?' selected':'')+'>'+_esc(c)+'</option>';
+              }).join('')
+            + '</select></div>';
+        }
+        if(o.extra === 'turma_mes'){
+          var tmes = _turmasDoMesVigente();
+          extra = '<div class="icv-extra"><span>Turma do mês:</span><select data-extra-turma>'
+            + '<option value="">— escolha —</option>'
+            + tmes.map(function(t){
+                var nome = (t.nome||t.codigo||t.id);
+                return '<option value="'+_esc(t.id)+'"'+(t.id===_turmaMesEscolhida?' selected':'')+'>'+_esc(nome)+(t.codigo&&t.codigo!==nome?' · '+_esc(t.codigo):'')+'</option>';
               }).join('')
             + '</select></div>';
         }
@@ -252,9 +265,13 @@
       });
       var sel = label.querySelector('[data-extra-cons]');
       if(sel){
-        sel.addEventListener('change', function(){ _consultorEscolhido = sel.value; });
-        /* Click no select não toggle o checkbox */
+        sel.addEventListener('change', function(){ _consultorEscolhido = sel.value; _atualizarPreview(ov); });
         sel.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
+      }
+      var selT = label.querySelector('[data-extra-turma]');
+      if(selT){
+        selT.addEventListener('change', function(){ _turmaMesEscolhida = selT.value; _atualizarPreview(ov); });
+        selT.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
       }
     });
 
@@ -364,6 +381,8 @@
       case 'tr_top5':     return _sec_trTop5();
       case 'tr_novos':    return _sec_trNovos();
       case 'pe_curso_atual': return _sec_peCursoAtual();
+      case 'pe_mes_todas':   return _sec_peMesTodas();
+      case 'pe_mes_sel':     return _sec_peMesSel();
       case 'pe_mes':      return _sec_peMes();
       case 'pe_comp':     return _sec_peComp();
       case 'pe_sem':      return _sec_peSem();
@@ -573,6 +592,87 @@
   }
 
   /* ── PERÍODO ── */
+  /* Helpers de turmas (lê localStorage via funções globais do 02-main.js) */
+  function _mesAtualYM(){
+    var d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  }
+  function _turmasDoMesVigente(){
+    if(typeof _getTurmas !== 'function') return [];
+    var ym = _mesAtualYM();
+    var todas = _getTurmas() || [];
+    return todas.filter(function(t){
+      if(!t) return false;
+      var ini = (t.periodStart||'').slice(0,7);
+      var fim = (t.periodEnd||'').slice(0,7);
+      /* Inclui turmas que iniciam, terminam OU contêm o mês corrente */
+      if(ini === ym || fim === ym) return true;
+      if(ini && fim && ini <= ym && fim >= ym) return true;
+      return false;
+    }).sort(function(a,b){
+      return String(a.nome||a.codigo||a.id).localeCompare(String(b.nome||b.codigo||b.id), 'pt-BR');
+    });
+  }
+  function _clientesDeTurma(id){
+    if(typeof _getTurmaData !== 'function') return [];
+    var td = _getTurmaData(id);
+    if(!td) return [];
+    var clientes = td.data || td.clientes || [];
+    if(clientes && !Array.isArray(clientes) && typeof clientes === 'object'){
+      clientes = Object.values(clientes);
+    }
+    return (clientes || []).filter(function(c){ return c && c.cliente; });
+  }
+  function _renderTurmaBlock(turma, lst){
+    var nome = turma.nome || turma.codigo || turma.id;
+    var codigo = turma.codigo || '';
+    var s = _statsConsultor(lst);
+    var html = '<h3 style="margin-top:14px;color:#b88a5a;">'+_esc(nome)+(codigo?' · '+_esc(codigo):'')+' · '+s.qtd+' cliente(s) · '+_fmtR(s.total)+'</h3>'
+      + '<p style="font-size:10px;color:#9aa5b1;margin:2px 0 6px;">Pago: <b style="color:#34d399;">'+_fmtR(s.pago)+'</b> · Aberto: <b style="color:#f59e0b;">'+_fmtR(s.aberto)+'</b> · Negociação: <b style="color:#a855f7;">'+_fmtR(s.negociacao)+'</b></p>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;color:#9aa5b1;"><th style="padding:4px 8px;text-align:left;">Cliente</th><th style="padding:4px 8px;text-align:left;">Consultor</th><th style="padding:4px 8px;text-align:left;">Treinamento</th><th style="padding:4px 8px;text-align:right;">Valor</th><th style="padding:4px 8px;">Status</th></tr></thead><tbody>';
+    lst.forEach(function(c){
+      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:3px 8px;">'+_esc(c.cliente)+'</td><td style="padding:3px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:3px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:3px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:3px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
+    });
+    html += '</tbody></table>';
+    var txt = '\n▼ '+nome+(codigo?' · '+codigo:'')+' · '+s.qtd+' cliente(s) · '+_fmtR(s.total)+'\n';
+    txt += '   Pago: '+_fmtR(s.pago)+' · Aberto: '+_fmtR(s.aberto)+' · Negoc: '+_fmtR(s.negociacao)+'\n';
+    lst.forEach(function(c){
+      txt += '   • '+c.cliente+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
+    });
+    return { html:html, txt:txt };
+  }
+  function _sec_peMesTodas(){
+    var turmas = _turmasDoMesVigente();
+    var ym = _mesAtualYM();
+    if(!turmas.length){
+      return { titulo:'🗂 Todas as turmas do mês', html:'<h2>🗂 Todas as turmas do mês vigente</h2><p style="color:#fbbf24;">Nenhuma turma encontrada para '+ym+'.</p>', txt:'(sem turmas no mês '+ym+')\n' };
+    }
+    var html = '<h2>🗂 Todas as turmas do mês vigente · '+ym+' ('+turmas.length+' turma'+(turmas.length>1?'s':'')+')</h2>';
+    var txt = '🗂 TODAS AS TURMAS DO MÊS · '+ym+'\n';
+    turmas.forEach(function(t){
+      var lst = _clientesDeTurma(t.id);
+      var block = _renderTurmaBlock(t, lst);
+      html += block.html; txt += block.txt;
+    });
+    return { titulo:'🗂 Todas as turmas do mês', html:html, txt:txt };
+  }
+  function _sec_peMesSel(){
+    if(!_turmaMesEscolhida){
+      return { titulo:'🎯 Turma do mês escolhida', html:'<h2>🎯 Turma do mês escolhida</h2><p style="color:#fbbf24;">Nenhuma turma escolhida no dropdown.</p>', txt:'(escolha uma turma do mês no dropdown)\n' };
+    }
+    var turmas = _turmasDoMesVigente();
+    var t = turmas.find(function(x){ return x.id === _turmaMesEscolhida; });
+    if(!t){
+      return { titulo:'🎯 Turma do mês escolhida', html:'<h2>🎯 Turma do mês escolhida</h2><p style="color:#fbbf24;">Turma não encontrada para o mês corrente. Escolha outra no dropdown.</p>', txt:'(turma não encontrada no mês)\n' };
+    }
+    var lst = _clientesDeTurma(t.id);
+    var html = '<h2>🎯 Turma do mês: '+_esc(t.nome||t.codigo||t.id)+'</h2>';
+    var txt = '🎯 TURMA DO MÊS: '+(t.nome||t.codigo||t.id)+'\n';
+    var block = _renderTurmaBlock(t, lst);
+    html += block.html; txt += block.txt;
+    return { titulo:'🎯 Turma do mês escolhida', html:html, txt:txt };
+  }
+
   function _sec_peCursoAtual(){
     var t = window._turmaAtiva || {};
     var nome = t.nome || t.codigo || '(curso atual)';
