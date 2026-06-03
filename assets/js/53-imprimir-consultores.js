@@ -64,7 +64,8 @@
     ]},
     { id:'periodo', ic:'📅', nome:'Por período', opts:[
       { id:'pe_curso_atual', ic:'📚', t:'Somente a turma atual', d:'Foca no curso atualmente aberto · header com nome e código' },
-      { id:'pe_mes',         ic:'📅', t:'Mês atual completo (consolidado)', d:'Estatísticas agregadas do mês' }
+      { id:'pe_mes',         ic:'📅', t:'Mês atual completo (consolidado)', d:'Estatísticas agregadas do mês corrente' },
+      { id:'pe_outro',       ic:'🗓', t:'Escolher outro período', d:'Escolha mês + turma específica (ou todas as turmas do mês)', extra:'periodo' }
     ]},
     { id:'executivos', ic:'⭐', nome:'Executivos', opts:[
       { id:'ex_resumo', ic:'📊', t:'Resumo executivo (1 página)', d:'Marque as seções que devem aparecer:', isParent:true, subs:[
@@ -209,6 +210,15 @@
       '.icv-opt .opt-d{font-size:calc(9px * var(--icv-scale,1));color:#6b7280;margin-top:2px;line-height:1.4;}',
       '.icv-opt.sel .opt-t{color:#d4a574;}',
       '.icv-opt.parent{font-weight:700;}',
+      /* Extras embutidos da opção pe_outro (mês picker + select de turma) */
+      '.icv-extra-periodo{margin-top:8px;padding:8px 10px;background:rgba(245,158,11,.06);border:1px dashed rgba(245,158,11,.25);border-radius:6px;display:none;flex-direction:column;gap:6px;}',
+      '.icv-opt.sel .icv-extra-periodo{display:flex;}',
+      '.icv-extra-row{display:flex;align-items:center;gap:8px;font-size:calc(10px * var(--icv-scale,1));}',
+      '.icv-extra-row .lbl{color:#fbbf24;font-weight:700;min-width:50px;font-size:calc(10px * var(--icv-scale,1));}',
+      '.icv-extra-row input[type=month]{background:rgba(0,0,0,.3);border:1px solid rgba(245,158,11,.30);color:#fbbf24;padding:4px 8px;border-radius:5px;font-size:calc(10px * var(--icv-scale,1));font-family:inherit;color-scheme:dark;}',
+      '.icv-extra-row select{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(245,158,11,.30);color:#e6edf3;padding:4px 7px;border-radius:5px;font-size:calc(10px * var(--icv-scale,1));font-family:inherit;}',
+      '.icv-extra-row button{background:transparent;border:1px solid rgba(255,255,255,.10);color:#9aa5b1;padding:4px 9px;border-radius:5px;font-size:calc(9px * var(--icv-scale,1));font-family:inherit;cursor:pointer;}',
+      '.icv-extra-row button:hover{color:#fbbf24;border-color:#fbbf24;}',
       /* Sub-opções (estilo V9 com contador numérico) */
       '.icv-sub-opts{padding:6px 0 8px 50px;border-left:1px dashed rgba(212,165,116,.30);margin-left:38px;}',
       '.icv-sub-opt{display:flex;align-items:center;gap:7px;padding:calc(5px * var(--icv-scale,1)) calc(12px * var(--icv-scale,1));cursor:pointer;border-left:3px solid transparent;font-size:calc(10.5px * var(--icv-scale,1));color:#9aa5b1;}',
@@ -280,11 +290,28 @@
       var optsHtml = sec.opts.map(function(o){
         var sel = _selecionadas.has(o.id);
         var sugerida = PRE_SELECT.indexOf(o.id) >= 0;
+        /* Extras embutidos (mês + turma) para a opção pe_outro */
+        var extraHtml = '';
+        if(o.extra === 'periodo'){
+          var ymSel = _mesFiltroAtivo();
+          var tmes = _turmasDoMesVigente(ymSel);
+          extraHtml = '<div class="icv-extra-periodo">'
+            + '<div class="icv-extra-row"><span class="lbl">Mês:</span><input type="month" id="icvMesPicker" value="'+_escSafe(ymSel)+'"><button id="icvMesHoje" type="button">Hoje</button></div>'
+            + '<div class="icv-extra-row"><span class="lbl">Turma:</span><select id="icvTurmaSel">'
+            +   '<option value="">— todas as turmas do mês ('+tmes.length+') —</option>'
+            +   tmes.map(function(t){
+                  var nome = t.nome||t.codigo||t.id;
+                  return '<option value="'+_esc(t.id)+'"'+(t.id===_turmaMesEscolhida?' selected':'')+'>'+_esc(nome)+(t.codigo&&t.codigo!==nome?' · '+_esc(t.codigo):'')+'</option>';
+                }).join('')
+            + '</select></div>'
+            + '</div>';
+        }
         var optHtml = '<label class="icv-opt'+(sel?' sel':'')+(o.isParent?' parent':'')+'" data-opt-id="'+o.id+'">'
           + '<input type="checkbox" '+(sel?'checked':'')+'>'
           + '<div class="opt-c">'
           +   '<div class="opt-t"><span>'+o.ic+'</span>'+_esc(o.t)+(sugerida?'<span class="icv-star-tag" title="Pré-selecionada · sugerida">⭐ sugerida</span>':'')+'</div>'
           +   (o.d ? '<div class="opt-d">'+_esc(o.d)+'</div>' : '')
+          +   extraHtml
           + '</div>'
           + '</label>';
         /* Sub-opções (parents que têm subs) — render com contador */
@@ -409,8 +436,25 @@
     ov.querySelectorAll('.icv-opt').forEach(_bindCheckbox);
     ov.querySelectorAll('.icv-sub-opt').forEach(_bindCheckbox);
 
-    /* Seletor de escopo + picker de mês foram REMOVIDOS na reorganização.
-       O escopo agora vem implícito das opções selecionadas (turma atual ou mês). */
+    /* Mês picker + select de turma (extras embutidos na opção pe_outro) */
+    var mp = ov.querySelector('#icvMesPicker');
+    if(mp){
+      mp.addEventListener('change', function(){ _mesFiltro = mp.value || _mesAtualYM(); _rerender(); });
+      mp.addEventListener('click', function(e){ e.stopPropagation(); });
+    }
+    var btnHoje = ov.querySelector('#icvMesHoje');
+    if(btnHoje){
+      btnHoje.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        _mesFiltro = _mesAtualYM();
+        _rerender();
+      });
+    }
+    var tsel = ov.querySelector('#icvTurmaSel');
+    if(tsel){
+      tsel.addEventListener('change', function(){ _turmaMesEscolhida = tsel.value; _atualizarPreview(ov); });
+      tsel.addEventListener('click', function(e){ e.stopPropagation(); });
+    }
 
     /* Selecionar todas / limpar (inclui sub-opções) */
     ov.querySelector('#icvSelTudo').addEventListener('click', function(){
@@ -641,6 +685,7 @@
       case 'tr_hight':    return _sec_trHightTicket();
       case 'pe_curso_atual': return _sec_peCursoAtual();
       case 'pe_mes':      return _sec_peMes();
+      case 'pe_outro':    return _sec_peOutroPeriodo();
       /* Parents: não geram seção própria (são só agrupadores visuais) */
       case 'esc_parent':
       case 'st_parent':
@@ -1196,6 +1241,37 @@
   }
   function _sec_peComp(){
     return { titulo:'📈 Comparativo mês × anterior', html:'<h2>📈 Comparativo</h2><p style="color:#9aa5b1;">Compara mês corrente com anterior. (Dados consolidados nas próximas iterações.)</p>', txt:'📈 COMPARATIVO MÊS × ANTERIOR\n(em desenvolvimento)\n' };
+  }
+  /* Outro período — usa _mesFiltro + _turmaMesEscolhida (extras embutidos na opção) */
+  function _sec_peOutroPeriodo(){
+    var ym = _mesFiltroAtivo();
+    var turmas = _turmasDoMesVigente(ym);
+    /* Caso 1: turma específica escolhida */
+    if(_turmaMesEscolhida){
+      var t = turmas.find(function(x){ return x.id === _turmaMesEscolhida; });
+      if(!t){
+        return { titulo:'🗓 Outro período', html:'<h2>🗓 Outro período</h2><p style="color:#fbbf24;">Turma escolhida não encontrada no mês '+ym+'. Escolha outra no dropdown.</p>', txt:'(turma não encontrada)\n' };
+      }
+      var lst = _clientesDeTurma(t.id);
+      var block = _renderTurmaBlock(t, lst);
+      return {
+        titulo:'🗓 Outro período · '+(t.nome||t.codigo||t.id),
+        html:'<h2>🗓 Outro período · mês '+ym+'</h2>' + block.html,
+        txt:'🗓 OUTRO PERÍODO · MÊS '+ym+'\n' + block.txt
+      };
+    }
+    /* Caso 2: todas as turmas do mês */
+    if(!turmas.length){
+      return { titulo:'🗓 Outro período', html:'<h2>🗓 Outro período · '+ym+'</h2><p style="color:#fbbf24;">Nenhuma turma encontrada para '+ym+'.</p>', txt:'(sem turmas no mês '+ym+')\n' };
+    }
+    var html = '<h2>🗓 Outro período · mês '+ym+' · '+turmas.length+' turma'+(turmas.length>1?'s':'')+'</h2>';
+    var txt = '🗓 OUTRO PERÍODO · MÊS '+ym+' · '+turmas.length+' turma(s)\n';
+    turmas.forEach(function(tt){
+      var lstT = _clientesDeTurma(tt.id);
+      var blockT = _renderTurmaBlock(tt, lstT);
+      html += blockT.html; txt += blockT.txt;
+    });
+    return { titulo:'🗓 Outro período', html:html, txt:txt };
   }
   function _sec_peSem(){
     return { titulo:'🗓 Semanal', html:'<h2>🗓 Semana atual</h2><p style="color:#9aa5b1;">Recorte da semana corrente. (Integração com módulo semanal nas próximas iterações.)</p>', txt:'🗓 SEMANA ATUAL\n(em desenvolvimento)\n' };
