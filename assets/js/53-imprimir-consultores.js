@@ -22,7 +22,7 @@
     return _mesFiltro || _mesAtualYM();
   }
   /* Pré-seleção sugerida — marcas com ⭐ e marcadas por default na 1ª abertura. */
-  var PRE_SELECT = ['esc_todos','st_pago','st_aberto','pe_curso_atual','ex_resumo'];
+  var PRE_SELECT = ['esc_todos','st_pago','st_aberto','pe_curso_atual','ex_fin','ex_trein_pg','ex_entradas','ex_negoc'];
   var _primeiraAbertura = true;
   /* Cache de turmas vindas do Firebase (assíncrono — preenchido após o load) */
   var _fbTurmasCache = {};
@@ -41,40 +41,73 @@
 
   /* ─────────── Definição das opções (20 ao todo) ─────────── */
   var SESSOES = [
-    { id:'escopo',       ic:'📊', nome:'Por escopo (quem entra no relatório)', opts:[
-      { id:'esc_todos',   ic:'👥', t:'Todos os consultores', d:'Cada consultor + clientes vinculados, ordenados alfabeticamente' },
-      { id:'esc_sel',     ic:'👤', t:'Consultor selecionado', d:'Escolha 1 consultor específico', extra:'consultor' },
-      { id:'esc_top3',    ic:'🥇', t:'Top 3 consultores', d:'Os 3 com maior faturamento no mês' },
-      { id:'esc_bateu',   ic:'🎯', t:'Quem bateu meta', d:'Filtra só consultores que atingiram alguma meta' },
-      { id:'esc_abaixo',  ic:'⚠', t:'Abaixo da meta', d:'Foco em quem precisa de atenção' },
-      { id:'esc_multi',   ic:'☑', t:'Múltipla seleção', d:'Sub-modal com checkboxes para escolher quais (futuro)' }
+    { id:'escopo', ic:'📊', nome:'Por escopo (quem entra no relatório)', opts:[
+      { id:'esc_parent', ic:'👥', t:'Todos os consultores', d:'Marque as variações abaixo:', isParent:true, subs:[
+        { id:'esc_todos', ic:'👥', t:'Todos os consultores' },
+        { id:'esc_top3',  ic:'🥇', t:'Top 3 consultores' },
+        { id:'esc_bateu', ic:'🎯', t:'Quem bateu meta' }
+      ]}
     ]},
-    { id:'status',       ic:'💰', nome:'Por status de venda', opts:[
-      { id:'st_todos',    ic:'📋', t:'Todos os clientes (todos os status)', d:'Lista completa sem filtro' },
-      { id:'st_pago',     ic:'💚', t:'Só clientes PAGOS', d:'Quem já fechou e pagou — conferir entrega' },
-      { id:'st_aberto',   ic:'🟠', t:'Só EM ABERTO', d:'Quem fechou mas não pagou — lista de cobrança' },
-      { id:'st_negoc',    ic:'🤝', t:'Em NEGOCIAÇÃO', d:'Pipeline em andamento' },
-      { id:'st_entrada',  ic:'💵', t:'Só com ENTRADA recebida', d:'Pagou entrada mas restante em aberto' },
-      { id:'st_desist',   ic:'❌', t:'DESISTÊNCIAS / cancelados', d:'Análise de churn' }
+    { id:'status', ic:'💰', nome:'Por status de venda', opts:[
+      { id:'st_parent', ic:'📋', t:'Todos os clientes', d:'Marque os status que devem aparecer:', isParent:true, subs:[
+        { id:'st_pago',    ic:'💚', t:'Só PAGOS' },
+        { id:'st_aberto',  ic:'🟠', t:'Só EM ABERTO' },
+        { id:'st_negoc',   ic:'🤝', t:'Em NEGOCIAÇÃO' },
+        { id:'st_entrada', ic:'💵', t:'Com ENTRADA recebida' },
+        { id:'st_desist',  ic:'❌', t:'Desistências / cancelados' }
+      ]}
     ]},
-    { id:'treinamento',  ic:'🎓', nome:'Por treinamento / produto', opts:[
-      { id:'tr_agrup',    ic:'📚', t:'Agrupado por TREINAMENTO', d:'Cada treinamento com seus clientes e consultores' },
-      { id:'tr_top5',     ic:'💎', t:'Top 5 maiores vendas', d:'As maiores vendas do mês' },
-      { id:'tr_novos',    ic:'✨', t:'Clientes NOVOS do mês', d:'Primeira compra — foco em aquisição' }
+    { id:'treinamento', ic:'🎓', nome:'Por treinamento / produto', opts:[
+      { id:'tr_agrup', ic:'📚', t:'Agrupado por TREINAMENTO', d:'Cada treinamento com seus clientes e consultores' },
+      { id:'tr_top5',  ic:'💎', t:'Top 5 maiores vendas', d:'As maiores vendas do período' },
+      { id:'tr_hight', ic:'🏆', t:'Top Vendas High Ticket', d:'Somente vendas a partir de R$ 30.000,00' }
     ]},
-    { id:'periodo',      ic:'📅', nome:'Por período', opts:[
-      { id:'pe_curso_atual',  ic:'📚', t:'Somente a turma atual', d:'Foca no curso atualmente aberto · header com nome e código' },
-      { id:'pe_mes_todas',    ic:'🗂', t:'Todas as turmas do mês vigente', d:'Lista todas as turmas que iniciam no mês corrente + clientes' },
-      { id:'pe_mes_sel',      ic:'🎯', t:'Turma escolhida do mês vigente', d:'Escolha 1 turma do mês para focar', extra:'turma_mes' },
-      { id:'pe_mes',          ic:'📅', t:'Mês atual completo (consolidado)', d:'Estatísticas agregadas do mês' },
-      { id:'pe_comp',         ic:'📈', t:'Comparativo mês × anterior', d:'Lado a lado' },
-      { id:'pe_sem',          ic:'🗓', t:'Semanal (semana atual)', d:'Recorte da semana corrente' }
+    { id:'periodo', ic:'📅', nome:'Por período', opts:[
+      { id:'pe_curso_atual', ic:'📚', t:'Somente a turma atual', d:'Foca no curso atualmente aberto · header com nome e código' },
+      { id:'pe_mes',         ic:'📅', t:'Mês atual completo (consolidado)', d:'Estatísticas agregadas do mês' }
     ]},
-    { id:'executivos',   ic:'⭐', nome:'Executivos', opts:[
-      { id:'ex_resumo',   ic:'📊', t:'Resumo executivo (1 página)', d:'KPIs principais + ranking + alertas' },
-      { id:'ex_detalh',   ic:'📄', t:'Detalhado · 1 página por consultor', d:'PDF paginado para entrega individual' }
+    { id:'executivos', ic:'⭐', nome:'Executivos', opts:[
+      { id:'ex_resumo', ic:'📊', t:'Resumo executivo (1 página)', d:'Marque as seções que devem aparecer:', isParent:true, subs:[
+        { id:'ex_fin',       ic:'📊', t:'Resumo financeiro' },
+        { id:'ex_trein_pg',  ic:'📚', t:'Treinamentos pagos' },
+        { id:'ex_entradas',  ic:'💵', t:'Entradas' },
+        { id:'ex_negoc',     ic:'🤝', t:'Em negociação' },
+        { id:'ex_aberto',    ic:'⏳', t:'Em aberto' },
+        { id:'ex_rk_cons',   ic:'🏅', t:'Ranking consultores' },
+        { id:'ex_rk_trein',  ic:'🎓', t:'Ranking treinadores' },
+        { id:'ex_top_trein', ic:'🏆', t:'Top treinamentos' },
+        { id:'ex_meta',      ic:'📈', t:'Meta vs realizado' },
+        { id:'ex_assin',     ic:'✍', t:'Assinatura / gerador' }
+      ]},
+      { id:'ex_detalh', ic:'📄', t:'Detalhado · 1 página por consultor', d:'PDF paginado para entrega individual' }
     ]}
   ];
+
+  /* Contador numérico das sub-opções (estilo V9). Retorna número ou null (mostra ✓ no badge). */
+  function _contadorSub(id){
+    try {
+      switch(id){
+        /* Escopo */
+        case 'esc_todos': return Object.keys(_porConsultor()).length;
+        case 'esc_top3':  return Math.min(3, Object.keys(_porConsultor()).length);
+        case 'esc_bateu':
+          var g = window._npGoals || {}; var n = 0;
+          Object.keys(_porConsultor()).forEach(function(nome){
+            var meta = +(g[nome] && (g[nome].metaMinima || g[nome].metaValor) || 0);
+            var pago = _statsConsultor(_porConsultor()[nome]).pago;
+            if(meta>0 && pago>=meta) n++;
+          });
+          return n;
+        /* Status */
+        case 'st_pago':    return _clientesDoEscopo().filter(function(c){return String(c.status||'').toLowerCase()==='pago';}).length;
+        case 'st_aberto':  return _clientesDoEscopo().filter(function(c){return String(c.status||'').toLowerCase()==='aberto';}).length;
+        case 'st_negoc':   return _clientesDoEscopo().filter(function(c){return String(c.status||'').toLowerCase()==='negociacao';}).length;
+        case 'st_entrada': return _clientesDoEscopo().filter(function(c){return +(c.entrada||0)>0;}).length;
+        case 'st_desist':  return _clientesDoEscopo().filter(function(c){var s=String(c.status||'').toLowerCase();return s==='desistiu'||s==='cancelado'||s==='cancelada';}).length;
+      }
+    } catch(e){}
+    return null;
+  }
 
   function _esc(s){ return (window._esc ? window._esc(s) : String(s||'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})); }
   function _escSafe(s){ return String(s||'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
@@ -175,6 +208,16 @@
       '.icv-opt .opt-t{font-size:calc(11px * var(--icv-scale,1));font-weight:600;color:#e6edf3;display:flex;gap:6px;align-items:center;}',
       '.icv-opt .opt-d{font-size:calc(9px * var(--icv-scale,1));color:#6b7280;margin-top:2px;line-height:1.4;}',
       '.icv-opt.sel .opt-t{color:#d4a574;}',
+      '.icv-opt.parent{font-weight:700;}',
+      /* Sub-opções (estilo V9 com contador numérico) */
+      '.icv-sub-opts{padding:6px 0 8px 50px;border-left:1px dashed rgba(212,165,116,.30);margin-left:38px;}',
+      '.icv-sub-opt{display:flex;align-items:center;gap:7px;padding:calc(5px * var(--icv-scale,1)) calc(12px * var(--icv-scale,1));cursor:pointer;border-left:3px solid transparent;font-size:calc(10.5px * var(--icv-scale,1));color:#9aa5b1;}',
+      '.icv-sub-opt input{width:calc(12px * var(--icv-scale,1));height:calc(12px * var(--icv-scale,1));accent-color:#d4a574;flex-shrink:0;}',
+      '.icv-sub-opt .ic{font-size:calc(12px * var(--icv-scale,1));flex-shrink:0;}',
+      '.icv-sub-opt .lbl{flex:1;}',
+      '.icv-sub-opt .cnt{background:rgba(212,165,116,.15);color:#d4a574;padding:1px 7px;border-radius:8px;font-size:calc(9px * var(--icv-scale,1));font-weight:800;min-width:24px;text-align:center;font-variant-numeric:tabular-nums;}',
+      '.icv-sub-opt.sel{color:#e6edf3;font-weight:600;background:rgba(212,165,116,.05);}',
+      '.icv-sub-opt.sel .cnt{background:#d4a574;color:#0a0e1a;}',
       '.icv-star{color:#fbbf24;font-size:calc(10px * var(--icv-scale,1));margin-left:auto;flex-shrink:0;}',
       '.icv-star-tag{font-size:calc(8px * var(--icv-scale,1));background:rgba(251,191,36,.12);color:#fbbf24;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}',
       '.icv-extra{margin-top:5px;font-size:calc(10px * var(--icv-scale,1));color:#9aa5b1;display:none;align-items:center;gap:6px;}',
@@ -237,48 +280,57 @@
       var optsHtml = sec.opts.map(function(o){
         var sel = _selecionadas.has(o.id);
         var sugerida = PRE_SELECT.indexOf(o.id) >= 0;
-        var extra = '';
-        if(o.extra === 'consultor'){
-          extra = '<div class="icv-extra"><span>Consultor:</span><select data-extra-cons>'
-            + '<option value="">— escolha —</option>'
-            + consultores.map(function(c){
-                return '<option value="'+_esc(c)+'"'+(c===_consultorEscolhido?' selected':'')+'>'+_esc(c)+'</option>';
-              }).join('')
-            + '</select></div>';
-        }
-        if(o.extra === 'turma_mes'){
-          var tmes = _turmasDoMesVigente();
-          extra = '<div class="icv-extra"><span>Turma do mês:</span><select data-extra-turma>'
-            + '<option value="">— escolha —</option>'
-            + tmes.map(function(t){
-                var nome = (t.nome||t.codigo||t.id);
-                return '<option value="'+_esc(t.id)+'"'+(t.id===_turmaMesEscolhida?' selected':'')+'>'+_esc(nome)+(t.codigo&&t.codigo!==nome?' · '+_esc(t.codigo):'')+'</option>';
-              }).join('')
-            + '</select></div>';
-        }
-        return '<label class="icv-opt'+(sel?' sel':'')+'" data-opt-id="'+o.id+'">'
+        var optHtml = '<label class="icv-opt'+(sel?' sel':'')+(o.isParent?' parent':'')+'" data-opt-id="'+o.id+'">'
           + '<input type="checkbox" '+(sel?'checked':'')+'>'
           + '<div class="opt-c">'
           +   '<div class="opt-t"><span>'+o.ic+'</span>'+_esc(o.t)+(sugerida?'<span class="icv-star-tag" title="Pré-selecionada · sugerida">⭐ sugerida</span>':'')+'</div>'
-          +   '<div class="opt-d">'+_esc(o.d)+'</div>'
-          +   extra
+          +   (o.d ? '<div class="opt-d">'+_esc(o.d)+'</div>' : '')
           + '</div>'
           + '</label>';
+        /* Sub-opções (parents que têm subs) — render com contador */
+        if(o.subs && o.subs.length){
+          var subsHtml = o.subs.map(function(s){
+            var ssel = _selecionadas.has(s.id);
+            var ssug = PRE_SELECT.indexOf(s.id) >= 0;
+            var cnt = _contadorSub(s.id);
+            var cntHtml = '<span class="cnt">'+(cnt==null?'✓':cnt)+'</span>';
+            return '<label class="icv-sub-opt'+(ssel?' sel':'')+'" data-opt-id="'+s.id+'">'
+              + '<input type="checkbox" '+(ssel?'checked':'')+'>'
+              + '<span class="ic">'+s.ic+'</span>'
+              + '<span class="lbl">'+_esc(s.t)+(ssug?' <span class="icv-star-tag" style="margin-left:4px;">⭐</span>':'')+'</span>'
+              + cntHtml
+              + '</label>';
+          }).join('');
+          optHtml += '<div class="icv-sub-opts">'+subsHtml+'</div>';
+        }
+        return optHtml;
       }).join('');
-      var n = sec.opts.filter(function(o){ return _selecionadas.has(o.id); }).length;
+      /* Conta opções + subs selecionadas pra badge da sessão */
+      var n = 0, totalOptsSec = 0;
+      sec.opts.forEach(function(o){
+        if(_selecionadas.has(o.id)) n++;
+        if(!o.isParent) totalOptsSec++;
+        if(o.subs){ o.subs.forEach(function(s){ totalOptsSec++; if(_selecionadas.has(s.id)) n++; }); }
+      });
       var aberto = _sessoesAbertas.has(sec.id);
       return '<div class="icv-cat'+(aberto?' open':'')+'" data-sec-id="'+sec.id+'">'
         + '<div class="icv-cat-h">'
         +   '<span class="icv-arrow">▸</span>'
         +   '<span class="ic">'+sec.ic+'</span>'
         +   '<span class="nome">'+_esc(sec.nome)+'</span>'
-        +   '<span class="info">'+sec.opts.length+' opções <span class="icv-badge" style="'+(n?'':'display:none;')+'">'+n+'</span></span>'
+        +   '<span class="info">'+totalOptsSec+' opções <span class="icv-badge" style="'+(n?'':'display:none;')+'">'+n+'</span></span>'
         + '</div>'
         + '<div class="icv-cat-b">'+optsHtml+'</div>'
         + '</div>';
     }).join('');
     var total = _selecionadas.size;
-    var totalOpts = SESSOES.reduce(function(s,sec){ return s+sec.opts.length; },0);
+    var totalOpts = 0;
+    SESSOES.forEach(function(sec){
+      sec.opts.forEach(function(o){
+        if(!o.isParent) totalOpts++;
+        if(o.subs) totalOpts += o.subs.length;
+      });
+    });
     var html = '<div class="icv-ov" id="icvOv">'
       + '<div class="icv-modal">'
       +   '<div class="icv-h">'
@@ -294,19 +346,6 @@
       +       '</div>'
       +       '<button class="x" id="icvFechar">✕</button>'
       +     '</div>'
-      +   '</div>'
-      +   '<div class="icv-escopo">'
-      +     '<span class="lbl">Escopo dos dados:</span>'
-      +     '<div class="seg">'
-      +       '<button data-esc="atual" class="'+(_escopo==='atual'?'on':'')+'">📚 Esta turma</button>'
-      +       '<button data-esc="mes" class="'+(_escopo==='mes'?'on':'')+'">📅 Por mês</button>'
-      +       '<button data-esc="todas" class="'+(_escopo==='todas'?'on':'')+'">🗂 Todas as turmas</button>'
-      +     '</div>'
-      +     (_escopo==='mes'
-        ? '<input type="month" id="icvMesPicker" class="icv-mes-picker" value="'+_escSafe(_mesFiltroAtivo())+'" title="Escolha qualquer mês — default é o vigente">'
-          + '<button class="icv-mes-hoje" id="icvMesHoje" title="Voltar para o mês atual">Hoje</button>'
-        : '')
-      +     '<div class="info" id="icvEscInfo"></div>'
       +   '</div>'
       +   '<div class="icv-toolbar">'
       +     '<div><a id="icvSelTudo">☑ Selecionar todas</a><a id="icvLimpar">☐ Limpar seleção</a></div>'
@@ -357,56 +396,30 @@
       });
     });
 
-    /* Checkboxes */
-    ov.querySelectorAll('.icv-opt').forEach(function(label){
-      var id = label.dataset.optId;
-      var cb = label.querySelector('input[type=checkbox]');
+    /* Checkboxes (opções principais E sub-opções) */
+    function _bindCheckbox(label){
+      var id = label.dataset.optId; if(!id) return;
+      var cb = label.querySelector('input[type=checkbox]'); if(!cb) return;
       cb.addEventListener('change', function(){
         if(cb.checked) _selecionadas.add(id); else _selecionadas.delete(id);
         label.classList.toggle('sel', cb.checked);
         _atualizarContadores(ov);
       });
-      var sel = label.querySelector('[data-extra-cons]');
-      if(sel){
-        sel.addEventListener('change', function(){ _consultorEscolhido = sel.value; _atualizarPreview(ov); });
-        sel.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
-      }
-      var selT = label.querySelector('[data-extra-turma]');
-      if(selT){
-        selT.addEventListener('change', function(){ _turmaMesEscolhida = selT.value; _atualizarPreview(ov); });
-        selT.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
-      }
-    });
-
-    /* Seletor de escopo */
-    ov.querySelectorAll('[data-esc]').forEach(function(b){
-      b.addEventListener('click', function(){
-        _escopo = b.dataset.esc;
-        /* Ao entrar no escopo 'mes', inicializa filtro com mês atual */
-        if(_escopo === 'mes' && !_mesFiltro) _mesFiltro = _mesAtualYM();
-        _rerender();
-      });
-    });
-    /* Picker de mês (só existe quando escopo='mes') */
-    var mp = ov.querySelector('#icvMesPicker');
-    if(mp){
-      mp.addEventListener('change', function(){
-        _mesFiltro = mp.value || _mesAtualYM();
-        _atualizarPreview(ov);
-      });
     }
-    var btnHoje = ov.querySelector('#icvMesHoje');
-    if(btnHoje){
-      btnHoje.addEventListener('click', function(){
-        _mesFiltro = _mesAtualYM();
-        if(mp) mp.value = _mesFiltro;
-        _atualizarPreview(ov);
-      });
-    }
+    ov.querySelectorAll('.icv-opt').forEach(_bindCheckbox);
+    ov.querySelectorAll('.icv-sub-opt').forEach(_bindCheckbox);
 
-    /* Selecionar todas / limpar */
+    /* Seletor de escopo + picker de mês foram REMOVIDOS na reorganização.
+       O escopo agora vem implícito das opções selecionadas (turma atual ou mês). */
+
+    /* Selecionar todas / limpar (inclui sub-opções) */
     ov.querySelector('#icvSelTudo').addEventListener('click', function(){
-      SESSOES.forEach(function(sec){ sec.opts.forEach(function(o){ _selecionadas.add(o.id); }); });
+      SESSOES.forEach(function(sec){
+        sec.opts.forEach(function(o){
+          _selecionadas.add(o.id);
+          if(o.subs) o.subs.forEach(function(s){ _selecionadas.add(s.id); });
+        });
+      });
       _rerender();
     });
     ov.querySelector('#icvLimpar').addEventListener('click', function(){
@@ -423,7 +436,11 @@
 
   function _atualizarContadores(ov){
     SESSOES.forEach(function(sec){
-      var n = sec.opts.filter(function(o){ return _selecionadas.has(o.id); }).length;
+      var n = 0;
+      sec.opts.forEach(function(o){
+        if(_selecionadas.has(o.id)) n++;
+        if(o.subs) o.subs.forEach(function(s){ if(_selecionadas.has(s.id)) n++; });
+      });
       var cat = ov.querySelector('[data-sec-id="'+sec.id+'"]'); if(!cat) return;
       var b = cat.querySelector('.icv-badge');
       if(b){ b.textContent = n; b.style.display = n>0 ? '' : 'none'; }
@@ -436,12 +453,6 @@
     var pvM = ov.querySelector('#icvPvMeta');
     if(!pvC) return;
     /* Atualiza info do escopo (qtd de clientes + consultores no escopo atual) */
-    var info = ov.querySelector('#icvEscInfo');
-    if(info){
-      var ce = _clientesDoEscopo().length;
-      var cs = _consultoresDoEscopo().length;
-      info.innerHTML = '<b>'+ce+'</b> cliente(s) · <b>'+cs+'</b> consultor(es) · '+_escSafe(_escopoLabel());
-    }
     if(!_selecionadas.size){
       pvC.innerHTML = '<div class="pv-empty"><span class="ic">📄</span>Marque uma ou mais opções nas sessões à esquerda para visualizar o relatório aqui.</div>'+_diagBoxHtml();
       if(pvM) pvM.textContent = '—';
@@ -627,15 +638,25 @@
       case 'st_desist':   return _sec_stFiltro('desistiu', '❌ DESISTÊNCIAS / cancelados', 'DESISTIU');
       case 'tr_agrup':    return _sec_trAgrupado();
       case 'tr_top5':     return _sec_trTop5();
-      case 'tr_novos':    return _sec_trNovos();
+      case 'tr_hight':    return _sec_trHightTicket();
       case 'pe_curso_atual': return _sec_peCursoAtual();
-      case 'pe_mes_todas':   return _sec_peMesTodas();
-      case 'pe_mes_sel':     return _sec_peMesSel();
       case 'pe_mes':      return _sec_peMes();
-      case 'pe_comp':     return _sec_peComp();
-      case 'pe_sem':      return _sec_peSem();
-      case 'ex_resumo':   return _sec_exResumo();
-      case 'ex_detalh':   return _sec_exDetalh();
+      /* Parents: não geram seção própria (são só agrupadores visuais) */
+      case 'esc_parent':
+      case 'st_parent':
+      case 'ex_resumo':   return null;
+      /* Resumo executivo — sub-opções (geram blocos próprios) */
+      case 'ex_fin':       return _sec_exFinanceiro();
+      case 'ex_trein_pg':  return _sec_exTreinPagos();
+      case 'ex_entradas':  return _sec_exEntradas();
+      case 'ex_negoc':     return _sec_exEmNegoc();
+      case 'ex_aberto':    return _sec_exEmAberto();
+      case 'ex_rk_cons':   return _sec_exRkConsultores();
+      case 'ex_rk_trein':  return _sec_exRkTreinadores();
+      case 'ex_top_trein': return _sec_exTopTreinamentos();
+      case 'ex_meta':      return _sec_exMetaRealizado();
+      case 'ex_assin':     return _sec_exAssinatura();
+      case 'ex_detalh':    return _sec_exDetalh();
     }
     return null;
   }
@@ -825,17 +846,131 @@
     html += '</table>';
     return { titulo:'💎 Top 5 vendas', html:html, txt:txt };
   }
-  function _sec_trNovos(){
-    var html = '<h2>✨ Clientes novos do mês</h2><p style="color:#9aa5b1;">Lista derivada das vendas adicionadas neste período.</p>';
-    var lst = _clientesDoEscopo().slice(0, 30);
-    html += '<ul style="font-size:11px;">';
-    var txt = '✨ NOVOS DO MÊS\n';
-    lst.forEach(function(c){
-      html += '<li>'+_esc(c.cliente)+' ('+_esc(c.consultor||'—')+') · '+_fmtR(c.valor)+'</li>';
-      txt += '• '+c.cliente+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+'\n';
+  /* Top Vendas High Ticket — só vendas ≥ R$ 30.000 */
+  function _sec_trHightTicket(){
+    var LIMITE = 30000;
+    var lst = _clientesDoEscopo()
+      .filter(function(c){ return +(c.valor||0) >= LIMITE; })
+      .sort(function(a,b){ return +(b.valor||0) - +(a.valor||0); });
+    var html = '<h2>🏆 Top Vendas High Ticket · ≥ R$ 30.000 ('+lst.length+')</h2>';
+    var txt = '🏆 TOP VENDAS HIGH TICKET (≥ R$ 30.000)\n';
+    if(!lst.length){
+      html += '<p style="color:#fbbf24;">Nenhuma venda acima do limite no escopo atual.</p>';
+      txt += '(nenhuma)\n';
+    } else {
+      html += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;"><th style="padding:5px 8px;text-align:left;">#</th><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;text-align:left;">Consultor</th><th style="padding:5px 8px;text-align:left;">Treinamento</th><th style="padding:5px 8px;text-align:right;">Valor</th><th style="padding:5px 8px;">Status</th></tr></thead><tbody>';
+      lst.forEach(function(c, i){
+        html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:4px 8px;color:#d4a574;font-weight:700;">'+(i+1)+'</td><td style="padding:4px 8px;">'+_esc(c.cliente)+'</td><td style="padding:4px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:4px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:4px 8px;text-align:right;color:#d4a574;font-weight:700;">'+_fmtR(c.valor)+'</td><td style="padding:4px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
+        txt += (i+1)+'. '+c.cliente+' · '+(c.consultor||'—')+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
+      });
+      html += '</tbody></table>';
+      var total = lst.reduce(function(s,c){ return s + +(c.valor||0); }, 0);
+      html += '<p style="margin-top:8px;color:#9aa5b1;">Total: <b style="color:#d4a574;">'+_fmtR(total)+'</b></p>';
+    }
+    return { titulo:'🏆 High Ticket', html:html, txt:txt };
+  }
+
+  /* ── EXECUTIVOS · 10 sub-seções do Resumo ── */
+  function _sec_exFinanceiro(){
+    var lst = _clientesDoEscopo();
+    var s = _statsConsultor(lst);
+    var html = '<h2>📊 Resumo financeiro</h2>'
+      + '<table style="width:100%;font-size:12px;border-collapse:collapse;">'
+      +   '<tr><td style="padding:5px;">Volume total</td><td style="padding:5px;text-align:right;font-weight:700;">'+_fmtR(s.total)+'</td></tr>'
+      +   '<tr><td style="padding:5px;">Faturado (pago)</td><td style="padding:5px;text-align:right;color:#34d399;font-weight:700;">'+_fmtR(s.pago)+'</td></tr>'
+      +   '<tr><td style="padding:5px;">Em aberto</td><td style="padding:5px;text-align:right;color:#f59e0b;font-weight:700;">'+_fmtR(s.aberto)+'</td></tr>'
+      +   '<tr><td style="padding:5px;">Em negociação</td><td style="padding:5px;text-align:right;color:#a855f7;font-weight:700;">'+_fmtR(s.negociacao)+'</td></tr>'
+      +   '<tr><td style="padding:5px;">Entradas recebidas</td><td style="padding:5px;text-align:right;color:#34d399;font-weight:700;">'+_fmtR(s.entrada)+'</td></tr>'
+      + '</table>';
+    var txt = '📊 RESUMO FINANCEIRO\n  Total: '+_fmtR(s.total)+'\n  Pago: '+_fmtR(s.pago)+'\n  Aberto: '+_fmtR(s.aberto)+'\n  Negoc: '+_fmtR(s.negociacao)+'\n  Entradas: '+_fmtR(s.entrada)+'\n';
+    return { titulo:'📊 Resumo financeiro', html:html, txt:txt };
+  }
+  function _sec_exTreinPagos(){
+    return _sec_stFiltro('pago', '📚 Treinamentos pagos', 'PAGO');
+  }
+  function _sec_exEntradas(){ return _sec_stEntrada(); }
+  function _sec_exEmNegoc(){ return _sec_stFiltro('negociacao', '🤝 Em negociação', 'NEGOCIAÇÃO'); }
+  function _sec_exEmAberto(){ return _sec_stFiltro('aberto', '⏳ Em aberto', 'ABERTO'); }
+  function _sec_exRkConsultores(){
+    var grupos = _porConsultor();
+    var ranking = Object.keys(grupos).map(function(n){
+      var s = _statsConsultor(grupos[n]);
+      return {nome:n, pago:s.pago, qtd:s.qtd};
+    }).sort(function(a,b){ return b.pago - a.pago; });
+    var medals=['🥇','🥈','🥉'];
+    var html = '<h2>🏅 Ranking de consultores</h2><table style="width:100%;font-size:12px;border-collapse:collapse;">';
+    var txt = '🏅 RANKING DE CONSULTORES\n';
+    ranking.forEach(function(r,i){
+      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:5px;font-size:14px;">'+(medals[i]||(i+1+'º'))+'</td><td style="padding:5px;font-weight:700;">'+_esc(r.nome)+'</td><td style="padding:5px;text-align:right;color:#34d399;">'+_fmtR(r.pago)+'</td><td style="padding:5px;text-align:right;color:#9aa5b1;font-size:10px;">'+r.qtd+' clientes</td></tr>';
+      txt += (medals[i]||(i+1+'.'))+' '+r.nome+' · '+_fmtR(r.pago)+' · '+r.qtd+' clientes\n';
+    });
+    html += '</table>';
+    return { titulo:'🏅 Ranking consultores', html:html, txt:txt };
+  }
+  function _sec_exRkTreinadores(){
+    /* Treinadores = quem ministra. Tenta extrair de window.allTrainers (via __getAllTrainers) */
+    var trainers = (typeof window.__getAllTrainers === 'function') ? window.__getAllTrainers() : (window.allTrainers || []);
+    if(!trainers || !trainers.length){
+      return { titulo:'🎓 Ranking treinadores', html:'<h2>🎓 Ranking de treinadores</h2><p style="color:#9aa5b1;">Sem dados de treinadores disponíveis no contexto atual.</p>', txt:'🎓 RANKING TREINADORES\n(sem dados)\n' };
+    }
+    var html = '<h2>🎓 Ranking de treinadores</h2><ul style="font-size:11px;">';
+    var txt = '🎓 RANKING TREINADORES\n';
+    trainers.forEach(function(t,i){
+      var nome = (typeof t === 'string') ? t : (t && (t.nome||t.name) || '—');
+      html += '<li>'+(i+1)+'º · '+_esc(nome)+'</li>';
+      txt += (i+1)+'. '+nome+'\n';
     });
     html += '</ul>';
-    return { titulo:'✨ Novos do mês', html:html, txt:txt };
+    return { titulo:'🎓 Ranking treinadores', html:html, txt:txt };
+  }
+  function _sec_exTopTreinamentos(){
+    var map = {};
+    _clientesDoEscopo().forEach(function(c){
+      if(String(c.status||'').toLowerCase() !== 'pago') return;
+      var k = c.treinamento || '(Sem treinamento)';
+      if(!map[k]) map[k] = { nome:k, qtd:0, total:0 };
+      map[k].qtd++; map[k].total += +(c.valor||0);
+    });
+    var lst = Object.values(map).sort(function(a,b){ return b.total - a.total; }).slice(0,10);
+    var html = '<h2>🏆 Top treinamentos (pagos)</h2><table style="width:100%;font-size:12px;border-collapse:collapse;">';
+    var txt = '🏆 TOP TREINAMENTOS\n';
+    lst.forEach(function(t,i){
+      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:5px;color:#d4a574;font-weight:700;">'+(i+1)+'</td><td style="padding:5px;">'+_esc(t.nome)+'</td><td style="padding:5px;text-align:right;color:#9aa5b1;">'+t.qtd+'×</td><td style="padding:5px;text-align:right;color:#34d399;font-weight:700;">'+_fmtR(t.total)+'</td></tr>';
+      txt += (i+1)+'. '+t.nome+' · '+t.qtd+'× · '+_fmtR(t.total)+'\n';
+    });
+    html += '</table>';
+    return { titulo:'🏆 Top treinamentos', html:html, txt:txt };
+  }
+  function _sec_exMetaRealizado(){
+    var goals = window._npGoals || {};
+    var grupos = _porConsultor();
+    var html = '<h2>📈 Meta vs Realizado</h2><table style="width:100%;font-size:12px;border-collapse:collapse;">'
+      + '<thead><tr style="background:#1c2128;color:#9aa5b1;"><th style="padding:5px 8px;text-align:left;">Consultor</th><th style="padding:5px 8px;text-align:right;">Meta</th><th style="padding:5px 8px;text-align:right;">Realizado</th><th style="padding:5px 8px;text-align:right;">%</th></tr></thead><tbody>';
+    var txt = '📈 META VS REALIZADO\n';
+    Object.keys(grupos).sort().forEach(function(n){
+      var s = _statsConsultor(grupos[n]);
+      var g = goals[n] || {};
+      var meta = +(g.metaMinima || g.metaValor || 0);
+      var pct = meta ? Math.round(s.pago/meta*100) : 0;
+      var cls = !meta ? '#6b7280' : (pct>=100 ? '#34d399' : pct>=70 ? '#f59e0b' : '#fca5a5');
+      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:5px 8px;font-weight:700;">'+_esc(n)+'</td><td style="padding:5px 8px;text-align:right;">'+(meta?_fmtR(meta):'sem meta')+'</td><td style="padding:5px 8px;text-align:right;color:#34d399;">'+_fmtR(s.pago)+'</td><td style="padding:5px 8px;text-align:right;color:'+cls+';font-weight:700;">'+(meta?pct+'%':'—')+'</td></tr>';
+      txt += n+' · meta '+(meta?_fmtR(meta):'—')+' · real '+_fmtR(s.pago)+' · '+(meta?pct+'%':'—')+'\n';
+    });
+    html += '</tbody></table>';
+    return { titulo:'📈 Meta vs Realizado', html:html, txt:txt };
+  }
+  function _sec_exAssinatura(){
+    var hoje = _hojeStr();
+    var html = '<h2>✍ Assinatura</h2>'
+      + '<p style="color:#9aa5b1;font-size:11px;">Gerado em '+hoje+'</p>'
+      + '<div style="margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,.1);">'
+      +   '<div style="display:flex;justify-content:space-between;gap:40px;">'
+      +     '<div style="flex:1;text-align:center;"><div style="border-top:1px solid #6b7280;padding-top:6px;font-size:11px;color:#9aa5b1;">Coordenador comercial</div></div>'
+      +     '<div style="flex:1;text-align:center;"><div style="border-top:1px solid #6b7280;padding-top:6px;font-size:11px;color:#9aa5b1;">Diretor</div></div>'
+      +   '</div>'
+      + '</div>';
+    var txt = '✍ ASSINATURA · Gerado em '+hoje+'\n_________________________   _________________________\nCoordenador comercial         Diretor\n';
+    return { titulo:'✍ Assinatura', html:html, txt:txt };
   }
 
   /* ── PERÍODO ── */
