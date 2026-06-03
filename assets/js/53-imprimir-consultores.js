@@ -151,14 +151,12 @@
     /* Fonte 3: campo consultor nos clientes da turma atual */
     _coletarClientes().forEach(function(c){ _add(c.consultor); });
     /* Fonte 4: campo consultor nos clientes de TODAS as turmas (varredura) */
-    if(typeof _getTurmas === 'function'){
-      try {
-        _getTurmas().forEach(function(t){
-          if(!t || !t.id) return;
-          _clientesDeTurma(t.id).forEach(function(c){ _add(c.consultor); });
-        });
-      } catch(e){}
-    }
+    try {
+      _listarTodasTurmas().forEach(function(t){
+        if(!t || !t.id) return;
+        _clientesDeTurma(t.id).forEach(function(c){ _add(c.consultor); });
+      });
+    } catch(e){}
     return Array.from(set.values()).sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
   }
 
@@ -338,17 +336,25 @@
     var qData = _coletarClientes().length;
     var qTodas = _coletarClientesTodasTurmas().length;
     var qCons = _listaConsultores().length;
-    var qTurmas = (typeof _getTurmas === 'function') ? (_getTurmas()||[]).length : 0;
+    var todasT = _listarTodasTurmas();
+    var qTurmas = todasT.length;
     var qTurmasMes = _turmasDoMesVigente().length;
     var qGoals = Object.keys(window._npGoals||{}).length;
     var turmaAtiva = (window._turmaAtiva && (window._turmaAtiva.nome||window._turmaAtiva.codigo)) || '—';
+    var ym = _mesAtualYM();
+    /* Lista resumida de turmas encontradas + suas datas */
+    var listaT = todasT.slice(0, 6).map(function(t){
+      var dt = t.periodStart || t.criadoEm || '—';
+      return '<li>'+_esc(t.nome||t.codigo||t.id)+' · <span style="color:#6b7280;">'+_esc(dt)+'</span></li>';
+    }).join('') + (todasT.length > 6 ? '<li style="opacity:.6;">… (+'+(todasT.length-6)+' outras)</li>' : '');
     return '<div style="margin-top:18px;padding:10px;background:rgba(255,255,255,.03);border:1px dashed rgba(212,165,116,.20);border-radius:6px;font-size:10px;color:#9aa5b1;line-height:1.6;">'
       + '<b style="color:#d4a574;">🔍 Fontes de dados disponíveis</b><br>'
       + '• Turma ativa: <b>'+_esc(turmaAtiva)+'</b> · clientes nela: <b>'+qData+'</b><br>'
       + '• Clientes consolidados (todas as turmas): <b>'+qTodas+'</b><br>'
       + '• Consultores identificados: <b>'+qCons+'</b><br>'
-      + '• Turmas cadastradas: <b>'+qTurmas+'</b> · no mês vigente: <b>'+qTurmasMes+'</b><br>'
+      + '• Turmas encontradas: <b>'+qTurmas+'</b> · no mês vigente ('+ym+'): <b>'+qTurmasMes+'</b><br>'
       + '• Metas mensais (npGoals): <b>'+qGoals+'</b>'
+      + (qTurmas ? '<br><br><b style="color:#d4a574;">📋 Turmas detectadas</b><ul style="margin:4px 0 0;padding-left:16px;font-size:9px;">'+listaT+'</ul>' : '<br><br><span style="color:#fbbf24;">⚠ Nenhuma turma encontrada no localStorage. Verifique se você abriu alguma turma no app recentemente.</span>')
       + '</div>';
   }
   function _dataStrPt(){
@@ -396,15 +402,13 @@
     /* Primeiro: clientes da turma ativa (data atual) */
     _add(_coletarClientes(), window._turmaAtiva && window._turmaAtiva.nome || '');
     /* Depois: clientes de TODAS as outras turmas (varredura) */
-    if(typeof _getTurmas === 'function'){
-      try {
-        _getTurmas().forEach(function(t){
-          if(!t || !t.id) return;
-          if(window._turmaAtiva && t.id === window._turmaAtiva.id) return;
-          _add(_clientesDeTurma(t.id), t.nome || t.codigo || t.id);
-        });
-      } catch(e){}
-    }
+    try {
+      _listarTodasTurmas().forEach(function(t){
+        if(!t || !t.id) return;
+        if(window._turmaAtiva && t.id === window._turmaAtiva.id) return;
+        _add(_clientesDeTurma(t.id), t.nome || t.codigo || t.id);
+      });
+    } catch(e){}
     return map;
   }
   function _coletarClientesTodasTurmas(){
@@ -422,15 +426,13 @@
       });
     }
     _addLista(_coletarClientes(), window._turmaAtiva && window._turmaAtiva.nome || '');
-    if(typeof _getTurmas === 'function'){
-      try {
-        _getTurmas().forEach(function(t){
-          if(!t || !t.id) return;
-          if(window._turmaAtiva && t.id === window._turmaAtiva.id) return;
-          _addLista(_clientesDeTurma(t.id), t.nome || t.codigo || t.id);
-        });
-      } catch(e){}
-    }
+    try {
+      _listarTodasTurmas().forEach(function(t){
+        if(!t || !t.id) return;
+        if(window._turmaAtiva && t.id === window._turmaAtiva.id) return;
+        _addLista(_clientesDeTurma(t.id), t.nome || t.codigo || t.id);
+      });
+    } catch(e){}
     return todos;
   }
   var _add_seen = {};
@@ -677,30 +679,85 @@
   }
 
   /* ── PERÍODO ── */
-  /* Helpers de turmas (lê localStorage via funções globais do 02-main.js) */
+  /* Helpers de turmas — múltiplas fontes pra evitar dependência do
+     localStorage `ci_turmas_index` (que pode estar vazio em browsers
+     que sincronizam apenas via Firebase). */
   function _mesAtualYM(){
     var d = new Date();
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
   }
+  function _listarTodasTurmas(){
+    var map = {};
+    /* Fonte 1: _getTurmas (localStorage ci_turmas_index) */
+    if(typeof _getTurmas === 'function'){
+      try {
+        (_getTurmas() || []).forEach(function(t){
+          if(t && t.id) map[t.id] = Object.assign({}, t);
+        });
+      } catch(e){}
+    }
+    /* Fonte 2: varrer localStorage por chaves ci_turma_* — pega
+       turmas mesmo sem index, lendo metadata do próprio doc. */
+    try {
+      for(var i=0; i<localStorage.length; i++){
+        var k = localStorage.key(i);
+        if(!k || k.indexOf('ci_turma_') !== 0) continue;
+        var id = k.replace(/^ci_turma_/,'');
+        if(map[id]) continue;
+        try {
+          var td = JSON.parse(localStorage.getItem(k)) || {};
+          map[id] = {
+            id: id,
+            nome: td.nome || td.titulo || id,
+            codigo: td.codigo || id,
+            periodStart: td.periodStart || '',
+            periodEnd: td.periodEnd || '',
+            criadoEm: td.criadoEm || ''
+          };
+        } catch(e){}
+      }
+    } catch(e){}
+    /* Fonte 3: window._npVendasTurma tem `_turmaId`/`_turmaNome` por venda — fallback */
+    if(window._npVendasTurma && Array.isArray(window._npVendasTurma)){
+      window._npVendasTurma.forEach(function(v){
+        if(v && v._turmaId && !map[v._turmaId]){
+          map[v._turmaId] = { id:v._turmaId, nome:v._turmaNome||v._turmaId, codigo:'', periodStart:'', periodEnd:'' };
+        }
+      });
+    }
+    return Object.values(map);
+  }
   function _turmasDoMesVigente(){
-    if(typeof _getTurmas !== 'function') return [];
     var ym = _mesAtualYM();
-    var todas = _getTurmas() || [];
-    return todas.filter(function(t){
+    var todas = _listarTodasTurmas();
+    var doMes = todas.filter(function(t){
       if(!t) return false;
-      var ini = (t.periodStart||'').slice(0,7);
-      var fim = (t.periodEnd||'').slice(0,7);
-      /* Inclui turmas que iniciam, terminam OU contêm o mês corrente */
-      if(ini === ym || fim === ym) return true;
-      if(ini && fim && ini <= ym && fim >= ym) return true;
+      var iniMS = (t.periodStart||'').slice(0,7);
+      var fimMS = (t.periodEnd||'').slice(0,7);
+      if(iniMS === ym || fimMS === ym) return true;
+      if(iniMS && fimMS && iniMS <= ym && fimMS >= ym) return true;
+      /* Fallback: usa criadoEm se as datas do periodo não estiverem setadas */
+      var cri = (t.criadoEm||'').slice(0,7);
+      if(cri === ym) return true;
       return false;
-    }).sort(function(a,b){
+    });
+    /* Se NENHUMA turma do mês foi encontrada, devolve todas as turmas
+       (melhor mostrar a lista completa do que dropdown vazio). */
+    var lista = doMes.length ? doMes : todas;
+    return lista.sort(function(a,b){
       return String(a.nome||a.codigo||a.id).localeCompare(String(b.nome||b.codigo||b.id), 'pt-BR');
     });
   }
   function _clientesDeTurma(id){
-    if(typeof _getTurmaData !== 'function') return [];
-    var td = _getTurmaData(id);
+    if(!id) return [];
+    /* Tenta _getTurmaData primeiro (rota oficial), depois localStorage direto */
+    var td = null;
+    if(typeof _getTurmaData === 'function'){
+      try { td = _getTurmaData(id); } catch(e){}
+    }
+    if(!td){
+      try { td = JSON.parse(localStorage.getItem('ci_turma_'+id)) || null; } catch(e){}
+    }
     if(!td) return [];
     var clientes = td.data || td.clientes || [];
     if(clientes && !Array.isArray(clientes) && typeof clientes === 'object'){
