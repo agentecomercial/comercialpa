@@ -456,6 +456,9 @@
       });
     });
 
+    /* IDs que ao mudar precisam RE-RENDERIZAR o modal (porque expandem UI extra
+       como multi-select de consultores, picker de mês, etc). */
+    var IDS_RERENDER = ['esc_sel','pe_outro','pe_mes','pe_curso_atual'];
     /* Checkboxes (opções principais E sub-opções) */
     function _bindCheckbox(label){
       var id = label.dataset.optId; if(!id) return;
@@ -463,7 +466,11 @@
       cb.addEventListener('change', function(){
         if(cb.checked) _selecionadas.add(id); else _selecionadas.delete(id);
         label.classList.toggle('sel', cb.checked);
-        _atualizarContadores(ov);
+        if(IDS_RERENDER.indexOf(id) >= 0){
+          _rerender();
+        } else {
+          _atualizarContadores(ov);
+        }
       });
     }
     ov.querySelectorAll('.icv-opt').forEach(_bindCheckbox);
