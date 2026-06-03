@@ -18,6 +18,7 @@
   var _npVendasAvulso={}; /* cache Firebase — fonte B */
   var _npGoals={};         /* cache Firebase — fonte C */
   var _npGoalsSem={};      /* cache Firebase — metas semanais [consultor][semNum] = {min, bas, mas} */
+  var _npSemConfig={};     /* cache Firebase — config manual de janelas [mk] = [{ini,fim}, ...] */
   var _npConsultores=[];   /* lista unificada */
   var _npListeners=[];     /* funções de cleanup */
   var _npVendaEditId=null;
@@ -46,7 +47,31 @@
     return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
   }
   function _semanasDoMes(ano, mes){
-    /* mes = 1-12 */
+    /* mes = 1-12. Se houver config manual salva pra este mês, usa ela. */
+    var mk = ano+'-'+String(mes).padStart(2,'0');
+    var cfg = _npSemConfig[mk];
+    if(Array.isArray(cfg) && cfg.length){
+      return cfg.map(function(j, idx){
+        var iniM = /^(\d{4})-(\d{2})-(\d{2})$/.exec(j.ini||'');
+        var fimM = /^(\d{4})-(\d{2})-(\d{2})$/.exec(j.fim||'');
+        if(!iniM || !fimM) return null;
+        var ini = new Date(+iniM[1], +iniM[2]-1, +iniM[3]);
+        var fim = new Date(+fimM[1], +fimM[2]-1, +fimM[3]);
+        if(isNaN(ini) || isNaN(fim) || fim < ini) return null;
+        var dias = Math.round((fim - ini) / 86400000) + 1;
+        return {
+          num: idx+1,
+          iniDate: ini, fimDate: fim,
+          ini: j.ini, fim: j.fim,
+          iniLabel: _dmShort(ini), fimLabel: _dmShort(fim),
+          dias: dias,
+          label: 'Semana '+String(idx+1).padStart(2,'0')+' ('+_dmShort(ini)+' a '+_dmShort(fim)+')'
+        };
+      }).filter(Boolean);
+    }
+    return _semanasAutomaticas(ano, mes);
+  }
+  function _semanasAutomaticas(ano, mes){
     var primeiro = new Date(ano, mes-1, 1);
     var ultimo = new Date(ano, mes, 0); // último dia do mês
     var semanas = [];
@@ -356,6 +381,7 @@
   var _npListenerAvulso=null;
   var _npListenerGoals=null;
   var _npListenerGoalsSem=null;
+  var _npListenerSemConfig=null;
   var _npListenerUsuarios=null;
   var _npListenerMetaGeral=null;
   window._npMetaGeral=null;
@@ -376,6 +402,7 @@
     _safeUnsub(_npListenerAvulso);     _npListenerAvulso=null;
     _safeUnsub(_npListenerGoals);      _npListenerGoals=null;
     _safeUnsub(_npListenerGoalsSem);   _npListenerGoalsSem=null;
+    _safeUnsub(_npListenerSemConfig);  _npListenerSemConfig=null;
     _safeUnsub(_npListenerUsuarios);   _npListenerUsuarios=null;
     _safeUnsub(_npListenerMetaGeral);  _npListenerMetaGeral=null;
     window._npMetaGeral=null;
@@ -434,6 +461,24 @@
       }).catch(function(){
         if(_genLocal !== _npGen) return;
         _npGoalsSem={};_npRenderTudo();
+      });
+    }
+
+    /* Config manual de janelas de semanas */
+    if(typeof window._fbChange==='function'){
+      _npListenerSemConfig=window._fbChange('pipelineSemConfig/'+mk, function(data){
+        if(_genLocal !== _npGen) return;
+        _npSemConfig[mk] = Array.isArray(data) ? data : (data ? Object.values(data) : null);
+        _npRenderTudo();
+      });
+    } else {
+      window._fbGet('pipelineSemConfig/'+mk).then(function(d){
+        if(_genLocal !== _npGen) return;
+        _npSemConfig[mk] = Array.isArray(d) ? d : (d ? Object.values(d) : null);
+        _npRenderTudo();
+      }).catch(function(){
+        if(_genLocal !== _npGen) return;
+        _npSemConfig[mk] = null; _npRenderTudo();
       });
     }
 
@@ -2062,12 +2107,63 @@
         + '.np-sem-x:hover{color:var(--accent);border-color:var(--accent);}'
         + '.np-sem-b{padding:14px 16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px;}'
         /* Stepper */
-        + '.np-sem-stepper{display:flex;gap:5px;flex-wrap:wrap;}'
+        + '.np-sem-stepper-wrap{display:flex;gap:8px;align-items:stretch;}'
+        + '.np-sem-stepper{flex:1;display:flex;gap:5px;flex-wrap:wrap;}'
+        + '.np-sem-cfg-btn{padding:0 12px;background:rgba(212,165,116,.08);border:1px solid rgba(212,165,116,.30);border-radius:7px;color:var(--accent);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;}'
+        + '.np-sem-cfg-btn:hover{background:rgba(212,165,116,.18);border-color:var(--accent);}'
+        + '.np-sem-cfg-btn.on{background:var(--accent);color:#0a0e1a;border-color:var(--accent);}'
         + '.np-sem-step{flex:1;min-width:90px;padding:8px 6px;border:1px solid var(--border2);border-radius:7px;cursor:pointer;background:rgba(255,255,255,.02);text-align:center;font-size:10px;font-weight:600;color:var(--muted);font-family:inherit;transition:all .12s;line-height:1.3;}'
         + '.np-sem-step:hover{border-color:var(--accent);color:var(--accent);}'
         + '.np-sem-step.curr{background:linear-gradient(135deg,#d4a574,#b88a5a);color:#0a0e1a;border-color:#d4a574;box-shadow:0 3px 10px rgba(212,165,116,.30);}'
         + '.np-sem-step.atual::after{content:" · ATUAL";font-size:8px;display:block;opacity:.8;}'
         + '.np-sem-step small{display:block;font-size:9px;font-weight:500;opacity:.75;margin-top:2px;}'
+        /* Config panel (janelas manuais) */
+        + '.np-sem-cfg-panel{background:rgba(212,165,116,.04);border:1px dashed rgba(212,165,116,.25);border-radius:10px;padding:14px;}'
+        + '.np-sem-cfg-tit{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}'
+        + '.np-sem-cfg-sub{font-size:10px;color:var(--muted);margin-bottom:12px;}'
+        + '.np-sem-cfg-toggle{display:inline-flex;background:rgba(0,0,0,.3);border-radius:6px;padding:2px;gap:2px;margin-bottom:14px;}'
+        + '.np-sem-cfg-toggle button{padding:6px 14px;border:none;background:transparent;color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;border-radius:4px;font-family:inherit;}'
+        + '.np-sem-cfg-toggle button.on{background:var(--accent);color:#0a0e1a;}'
+        + '.np-sem-cfg-dual{display:grid;grid-template-columns:220px 1fr;gap:16px;}'
+        + '@media(max-width:680px){.np-sem-cfg-dual{grid-template-columns:1fr;}}'
+        /* Calendário */
+        + '.np-sem-cfg-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}'
+        + '.np-sem-cfg-wd{font-size:9px;color:var(--muted);text-align:center;padding:3px 0;font-weight:700;text-transform:uppercase;}'
+        + '.np-sem-cfg-d{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border-radius:5px;background:rgba(255,255,255,.03);border:1px solid var(--border2);}'
+        + '.np-sem-cfg-d.off{opacity:.25;}'
+        + '.np-sem-cfg-d.weekend{color:var(--muted);}'
+        + '.np-sem-cfg-d.s1{background:rgba(212,165,116,.25);border-color:rgba(212,165,116,.50);color:#d4a574;}'
+        + '.np-sem-cfg-d.s2{background:rgba(168,85,247,.25);border-color:rgba(168,85,247,.50);color:#c4b5fd;}'
+        + '.np-sem-cfg-d.s3{background:rgba(59,130,246,.25);border-color:rgba(59,130,246,.50);color:#93c5fd;}'
+        + '.np-sem-cfg-d.s4{background:rgba(52,211,153,.25);border-color:rgba(52,211,153,.50);color:#86efac;}'
+        + '.np-sem-cfg-d.s5{background:rgba(245,158,11,.25);border-color:rgba(245,158,11,.50);color:#fbbf24;}'
+        + '.np-sem-cfg-d.s6{background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.50);color:#fca5a5;}'
+        /* Lista */
+        + '.np-sem-cfg-list{display:flex;flex-direction:column;gap:6px;}'
+        + '.np-sem-cfg-row{display:grid;grid-template-columns:42px 1fr 16px 1fr 70px 30px;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--border2);border-radius:7px;background:rgba(255,255,255,.02);}'
+        + '.np-sem-cfg-row.s1{border-left:3px solid #d4a574;} .np-sem-cfg-row.s2{border-left:3px solid #a855f7;}'
+        + '.np-sem-cfg-row.s3{border-left:3px solid #3b82f6;} .np-sem-cfg-row.s4{border-left:3px solid #34d399;}'
+        + '.np-sem-cfg-row.s5{border-left:3px solid #f59e0b;} .np-sem-cfg-row.s6{border-left:3px solid #ef4444;}'
+        + '.np-sem-cfg-row .lbl{font-size:11px;font-weight:700;color:var(--accent);}'
+        + '.np-sem-cfg-row .seta{color:var(--muted);text-align:center;font-size:13px;}'
+        + '.np-sem-cfg-row input[type=date]{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border2);color:var(--text);padding:5px 7px;border-radius:5px;font-size:11px;font-family:inherit;}'
+        + '.np-sem-cfg-row input:focus{outline:none;border-color:var(--accent);}'
+        + '.np-sem-cfg-dias{font-size:11px;font-weight:700;color:var(--accent);text-align:center;background:rgba(212,165,116,.08);padding:5px 7px;border-radius:5px;font-variant-numeric:tabular-nums;}'
+        + '.np-sem-cfg-dias small{display:block;font-size:8px;color:var(--muted);font-weight:600;}'
+        + '.np-sem-cfg-row .rm{background:transparent;border:1px solid var(--border2);color:var(--muted);width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:14px;font-weight:700;font-family:inherit;line-height:1;}'
+        + '.np-sem-cfg-row .rm:hover{color:#fca5a5;border-color:rgba(239,68,68,.30);background:rgba(239,68,68,.06);}'
+        + '.np-sem-cfg-list-h{display:grid;grid-template-columns:42px 1fr 16px 1fr 70px 30px;gap:8px;padding:0 10px 5px;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}'
+        + '.np-sem-cfg-list-h > div{text-align:center;}'
+        + '.np-sem-cfg-list-h > div:nth-child(2),.np-sem-cfg-list-h > div:nth-child(4){text-align:left;padding-left:6px;}'
+        + '.np-sem-cfg-sumario{display:flex;gap:14px;font-size:10px;color:var(--muted);padding:8px 10px;background:rgba(0,0,0,.2);border-radius:6px;margin-top:10px;}'
+        + '.np-sem-cfg-sumario b{color:var(--accent);font-weight:700;}'
+        + '.np-sem-cfg-acts{display:flex;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);}'
+        + '.np-sem-cfg-acts .left{display:flex;gap:6px;}'
+        + '.np-sem-cfg-acts button{font-size:10px;padding:6px 12px;border-radius:5px;cursor:pointer;font-family:inherit;border:1px solid var(--border2);background:transparent;color:var(--text);font-weight:600;}'
+        + '.np-sem-cfg-acts button:hover{border-color:var(--accent);color:var(--accent);}'
+        + '.np-sem-cfg-acts .add{color:var(--accent);border-color:rgba(212,165,116,.40);background:rgba(212,165,116,.06);}'
+        + '.np-sem-cfg-acts .primary{background:var(--accent);color:#0a0e1a;border-color:var(--accent);}'
+        + '.np-sem-cfg-acts .primary:hover{background:#f0c896;}'
         /* Batch panel */
         + '.np-sem-batch{background:rgba(212,165,116,.05);border:1px solid rgba(212,165,116,.18);border-radius:10px;padding:12px;}'
         + '.np-sem-batch-h{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);margin-bottom:10px;}'
@@ -2147,7 +2243,11 @@
       +     '<button class="np-sem-x" onclick="npFecharModalSemanal()">✕</button>'
       +   '</div>'
       +   '<div class="np-sem-b">'
-      +     '<div class="np-sem-stepper" id="npSemStepper">'+stepperHtml+'</div>'
+      +     '<div class="np-sem-stepper-wrap">'
+      +       '<div class="np-sem-stepper" id="npSemStepper">'+stepperHtml+'</div>'
+      +       '<button class="np-sem-cfg-btn" id="npSemCfgBtn" title="Configurar janelas das semanas manualmente">⚙ Janelas</button>'
+      +     '</div>'
+      +     '<div class="np-sem-cfg-panel" id="npSemCfgPanel" style="display:none;"></div>'
       +     '<div class="np-sem-batch">'
       +       '<div class="np-sem-batch-h">'
       +         '<label><input type="checkbox" id="npSemAllCk"> Selecionar todos</label>'
@@ -2293,6 +2393,196 @@
       ov.querySelector('#npSemBatchBas').value = _fmt(mBas/nS);
       ov.querySelector('#npSemBatchMas').value = _fmt(mMas/nS);
       if(typeof _showToast==='function') _showToast('📋 Meta mensal de '+refNome+' dividida em '+nS+' semanas — clique Aplicar.','var(--accent)');
+    });
+
+    /* ── Configurar janelas das semanas (modo manual) ── */
+    var cfgPanel = ov.querySelector('#npSemCfgPanel');
+    var cfgBtn = ov.querySelector('#npSemCfgBtn');
+    var mk = _mesKey();
+    /* Estado local do painel (não persiste até clicar Salvar) */
+    var cfgEditando = Array.isArray(_npSemConfig[mk]) && _npSemConfig[mk].length;
+    var cfgLocal = cfgEditando
+      ? _npSemConfig[mk].map(function(j){ return { ini:j.ini, fim:j.fim }; })
+      : semanas.map(function(s){ return { ini:s.ini, fim:s.fim }; });
+
+    function _diff(iniYmd, fimYmd){
+      var iniM = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iniYmd||'');
+      var fimM = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fimYmd||'');
+      if(!iniM || !fimM) return 0;
+      var a = new Date(+iniM[1], +iniM[2]-1, +iniM[3]);
+      var b = new Date(+fimM[1], +fimM[2]-1, +fimM[3]);
+      if(b < a) return 0;
+      return Math.round((b - a) / 86400000) + 1;
+    }
+    function _renderCfgPanel(){
+      var modo = cfgEditando ? 'manual' : 'auto';
+      /* Calendário visual: pinta cada dia do mês com cor da semana correspondente */
+      var primeiroDS = new Date(_npAno, _npMes-1, 1).getDay(); // 0=dom
+      var ultimoDia = new Date(_npAno, _npMes, 0).getDate();
+      var calCells = [];
+      for(var p=0; p<primeiroDS; p++) calCells.push({off:true});
+      for(var d=1; d<=ultimoDia; d++){
+        var ymd = _npAno+'-'+String(_npMes).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        var semIdx = -1;
+        cfgLocal.forEach(function(j, i){ if(ymd >= j.ini && ymd <= j.fim) semIdx = i; });
+        var dt = new Date(_npAno, _npMes-1, d);
+        var wd = dt.getDay();
+        calCells.push({ d:d, sem: semIdx>=0 ? semIdx+1 : 0, weekend:(wd===0||wd===6) });
+      }
+      var calHtml = '<div class="np-sem-cfg-wd">D</div><div class="np-sem-cfg-wd">S</div><div class="np-sem-cfg-wd">T</div><div class="np-sem-cfg-wd">Q</div><div class="np-sem-cfg-wd">Q</div><div class="np-sem-cfg-wd">S</div><div class="np-sem-cfg-wd">S</div>';
+      calCells.forEach(function(c){
+        if(c.off){ calHtml += '<div class="np-sem-cfg-d off"></div>'; }
+        else {
+          var cls = 'np-sem-cfg-d' + (c.weekend?' weekend':'') + (c.sem?' s'+Math.min(6,c.sem):'');
+          calHtml += '<div class="'+cls+'">'+c.d+'</div>';
+        }
+      });
+      /* Lista de linhas */
+      var listaHtml = cfgLocal.map(function(j, i){
+        var dias = _diff(j.ini, j.fim);
+        return '<div class="np-sem-cfg-row s'+Math.min(6,i+1)+'" data-cfg-i="'+i+'">'
+          + '<span class="lbl">S'+String(i+1).padStart(2,'0')+'</span>'
+          + '<input type="date" data-cfg-k="ini" value="'+(j.ini||'')+'">'
+          + '<span class="seta">→</span>'
+          + '<input type="date" data-cfg-k="fim" value="'+(j.fim||'')+'">'
+          + '<div class="np-sem-cfg-dias">'+dias+'<small>dias</small></div>'
+          + '<button class="rm" data-cfg-rm="'+i+'" title="Remover esta semana">−</button>'
+          + '</div>';
+      }).join('');
+      /* Sumário */
+      var totalDias = cfgLocal.reduce(function(s,j){ return s + _diff(j.ini, j.fim); }, 0);
+      cfgPanel.innerHTML = ''
+        + '<div class="np-sem-cfg-tit">⚙ Configurar janelas das semanas · '+_mesLabel()+'</div>'
+        + '<div class="np-sem-cfg-sub">Use o modo manual para definir datas customizadas. Sistema usa essa configuração no lugar da automática.</div>'
+        + '<div class="np-sem-cfg-toggle">'
+        +   '<button data-cfg-modo="auto" class="'+(modo==='auto'?'on':'')+'">🤖 Automático</button>'
+        +   '<button data-cfg-modo="manual" class="'+(modo==='manual'?'on':'')+'">✏ Manual</button>'
+        + '</div>'
+        + (modo==='manual'
+          ? '<div class="np-sem-cfg-dual">'
+            + '<div><div class="np-sem-cfg-cal">'+calHtml+'</div></div>'
+            + '<div>'
+            +   '<div class="np-sem-cfg-list-h"><div>Sem.</div><div>Início</div><div></div><div>Fim</div><div>Dias</div><div></div></div>'
+            +   '<div class="np-sem-cfg-list">'+listaHtml+'</div>'
+            +   '<div class="np-sem-cfg-sumario">'
+            +     '<span>Total: <b>'+cfgLocal.length+'</b> semanas</span>'
+            +     '<span>Dias atribuídos: <b>'+totalDias+'</b></span>'
+            +   '</div>'
+            +   '<div class="np-sem-cfg-acts">'
+            +     '<div class="left"><button class="add" id="npSemCfgAdd">+ Adicionar semana</button></div>'
+            +     '<div>'
+            +       '<button id="npSemCfgCancel">Cancelar</button>'
+            +       '<button class="primary" id="npSemCfgSave">💾 Salvar definição</button>'
+            +     '</div>'
+            +   '</div>'
+            + '</div>'
+            + '</div>'
+          : '<div style="font-size:11px;color:var(--muted);padding:10px;background:rgba(0,0,0,.2);border-radius:6px;">'
+            + '🤖 Modo automático ativo. As janelas seguem a regra: seg-sex + sáb/dom anexos à semana anterior (exceto dias 1-2 do mês).'
+            + '</div>')
+        ;
+      _wireCfgPanel();
+    }
+    function _wireCfgPanel(){
+      cfgPanel.querySelectorAll('[data-cfg-modo]').forEach(function(b){
+        b.addEventListener('click', function(){
+          var modo = b.dataset.cfgModo;
+          if(modo === 'manual' && !cfgEditando){
+            cfgEditando = true;
+            cfgLocal = semanas.map(function(s){ return { ini:s.ini, fim:s.fim }; });
+          } else if(modo === 'auto' && cfgEditando){
+            if(!confirm('Voltar pro modo automático apaga a configuração manual salva. Continuar?')) return;
+            cfgEditando = false;
+            window._fbSave('pipelineSemConfig/'+mk, null).then(function(){
+              _npSemConfig[mk] = null;
+              cfgLocal = _semanasAutomaticas(_npAno, _npMes).map(function(s){ return { ini:s.ini, fim:s.fim }; });
+              if(typeof _showToast==='function') _showToast('✅ Modo automático restaurado.','var(--accent)');
+              _renderCfgPanel();
+              _npRenderTudo();
+            }).catch(function(){
+              if(typeof _showToast==='function') _showToast('❌ Erro ao restaurar.','var(--red)');
+            });
+            return;
+          }
+          _renderCfgPanel();
+        });
+      });
+      cfgPanel.querySelectorAll('[data-cfg-i]').forEach(function(row){
+        var i = +row.dataset.cfgI;
+        row.querySelectorAll('input[data-cfg-k]').forEach(function(inp){
+          inp.addEventListener('change', function(){
+            cfgLocal[i][inp.dataset.cfgK] = inp.value;
+            _renderCfgPanel();
+          });
+        });
+      });
+      cfgPanel.querySelectorAll('[data-cfg-rm]').forEach(function(b){
+        b.addEventListener('click', function(){
+          if(cfgLocal.length <= 1){
+            if(typeof _showToast==='function') _showToast('Mantenha ao menos 1 semana.','var(--amber)');
+            return;
+          }
+          cfgLocal.splice(+b.dataset.cfgRm, 1);
+          _renderCfgPanel();
+        });
+      });
+      var addBtn = cfgPanel.querySelector('#npSemCfgAdd');
+      if(addBtn) addBtn.addEventListener('click', function(){
+        var last = cfgLocal[cfgLocal.length-1];
+        var iniN, fimN;
+        if(last && last.fim){
+          var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(last.fim);
+          if(m){
+            var ini = new Date(+m[1], +m[2]-1, +m[3]+1);
+            var fim = new Date(+m[1], +m[2]-1, +m[3]+7);
+            iniN = _ymd(ini); fimN = _ymd(fim);
+          }
+        }
+        cfgLocal.push({ ini: iniN || '', fim: fimN || '' });
+        _renderCfgPanel();
+      });
+      var cancelBtn = cfgPanel.querySelector('#npSemCfgCancel');
+      if(cancelBtn) cancelBtn.addEventListener('click', function(){
+        cfgPanel.style.display = 'none';
+        cfgBtn.classList.remove('on');
+      });
+      var saveBtn = cfgPanel.querySelector('#npSemCfgSave');
+      if(saveBtn) saveBtn.addEventListener('click', function(){
+        /* Validação básica: cada linha tem ini e fim, e fim >= ini */
+        for(var i=0;i<cfgLocal.length;i++){
+          if(!cfgLocal[i].ini || !cfgLocal[i].fim){
+            if(typeof _showToast==='function') _showToast('Preencha ini e fim da Semana '+(i+1)+'.','var(--amber)');
+            return;
+          }
+          if(cfgLocal[i].fim < cfgLocal[i].ini){
+            if(typeof _showToast==='function') _showToast('Fim < Início na Semana '+(i+1)+'.','var(--amber)');
+            return;
+          }
+        }
+        var payload = cfgLocal.map(function(j){ return { ini:j.ini, fim:j.fim }; });
+        window._fbSave('pipelineSemConfig/'+mk, payload).then(function(){
+          _npSemConfig[mk] = payload;
+          if(typeof _showToast==='function') _showToast('✅ Janelas das semanas salvas.','var(--accent)');
+          cfgPanel.style.display = 'none';
+          cfgBtn.classList.remove('on');
+          window.npFecharModalSemanal();
+          window.npAbrirModalSemanal(_npSemModalPre); /* re-abre com nova config */
+          _npRenderTudo();
+        }).catch(function(){
+          if(typeof _showToast==='function') _showToast('❌ Erro ao salvar.','var(--red)');
+        });
+      });
+    }
+    cfgBtn.addEventListener('click', function(){
+      var aberto = cfgPanel.style.display !== 'none';
+      if(aberto){
+        cfgPanel.style.display = 'none';
+        cfgBtn.classList.remove('on');
+      } else {
+        _renderCfgPanel();
+        cfgPanel.style.display = 'block';
+        cfgBtn.classList.add('on');
+      }
     });
   };
   window.npFecharModalSemanal = function(){
