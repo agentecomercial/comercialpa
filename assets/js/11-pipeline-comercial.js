@@ -2140,7 +2140,7 @@
         + '.np-sem-cfg-d.s6{background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.50);color:#fca5a5;}'
         /* Lista */
         + '.np-sem-cfg-list{display:flex;flex-direction:column;gap:6px;}'
-        + '.np-sem-cfg-row{display:grid;grid-template-columns:42px 1fr 16px 1fr 70px 30px;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--border2);border-radius:7px;background:rgba(255,255,255,.02);}'
+        + '.np-sem-cfg-row{display:grid;grid-template-columns:42px 1fr 16px 1fr 90px 90px 30px;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--border2);border-radius:7px;background:rgba(255,255,255,.02);}'
         + '.np-sem-cfg-row.s1{border-left:3px solid #d4a574;} .np-sem-cfg-row.s2{border-left:3px solid #a855f7;}'
         + '.np-sem-cfg-row.s3{border-left:3px solid #3b82f6;} .np-sem-cfg-row.s4{border-left:3px solid #34d399;}'
         + '.np-sem-cfg-row.s5{border-left:3px solid #f59e0b;} .np-sem-cfg-row.s6{border-left:3px solid #ef4444;}'
@@ -2150,9 +2150,17 @@
         + '.np-sem-cfg-row input:focus{outline:none;border-color:var(--accent);}'
         + '.np-sem-cfg-dias{font-size:11px;font-weight:700;color:var(--accent);text-align:center;background:rgba(212,165,116,.08);padding:5px 7px;border-radius:5px;font-variant-numeric:tabular-nums;}'
         + '.np-sem-cfg-dias small{display:block;font-size:8px;color:var(--muted);font-weight:600;}'
+        + '.np-sem-cfg-dias-grp{display:flex;align-items:center;gap:5px;}'
+        + '.np-sem-cfg-dias-grp input[type=number]{width:42px;text-align:right;background:rgba(0,0,0,.3);border:1px solid var(--border2);color:var(--accent);padding:5px 6px;border-radius:4px;font-size:11px;font-family:inherit;font-weight:700;font-variant-numeric:tabular-nums;}'
+        + '.np-sem-cfg-dias-grp input:focus{outline:none;border-color:var(--accent);}'
+        + '.np-sem-cfg-dias-grp .lbl-d{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em;}'
+        + '.np-sem-cfg-dias-grp .lbl-d.uteis{color:#86efac;}'
+        + '.np-sem-cfg-tipo{font-size:9px;padding:5px 8px;border-radius:12px;font-weight:700;background:rgba(212,165,116,.12);color:var(--accent);border:1px solid rgba(212,165,116,.30);cursor:pointer;user-select:none;text-align:center;font-family:inherit;line-height:1;white-space:nowrap;}'
+        + '.np-sem-cfg-tipo:hover{filter:brightness(1.15);}'
+        + '.np-sem-cfg-tipo.uteis{background:rgba(52,211,153,.12);color:#86efac;border-color:rgba(52,211,153,.30);}'
         + '.np-sem-cfg-row .rm{background:transparent;border:1px solid var(--border2);color:var(--muted);width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:14px;font-weight:700;font-family:inherit;line-height:1;}'
         + '.np-sem-cfg-row .rm:hover{color:#fca5a5;border-color:rgba(239,68,68,.30);background:rgba(239,68,68,.06);}'
-        + '.np-sem-cfg-list-h{display:grid;grid-template-columns:42px 1fr 16px 1fr 70px 30px;gap:8px;padding:0 10px 5px;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}'
+        + '.np-sem-cfg-list-h{display:grid;grid-template-columns:42px 1fr 16px 1fr 90px 90px 30px;gap:8px;padding:0 10px 5px;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}'
         + '.np-sem-cfg-list-h > div{text-align:center;}'
         + '.np-sem-cfg-list-h > div:nth-child(2),.np-sem-cfg-list-h > div:nth-child(4){text-align:left;padding-left:6px;}'
         + '.np-sem-cfg-sumario{display:flex;gap:14px;font-size:10px;color:var(--muted);padding:8px 10px;background:rgba(0,0,0,.2);border-radius:6px;margin-top:10px;}'
@@ -2402,17 +2410,49 @@
     /* Estado local do painel (não persiste até clicar Salvar) */
     var cfgEditando = Array.isArray(_npSemConfig[mk]) && _npSemConfig[mk].length;
     var cfgLocal = cfgEditando
-      ? _npSemConfig[mk].map(function(j){ return { ini:j.ini, fim:j.fim }; })
-      : semanas.map(function(s){ return { ini:s.ini, fim:s.fim }; });
+      ? _npSemConfig[mk].map(function(j){ return { ini:j.ini, fim:j.fim, tipo: j.tipo || 'corridos' }; })
+      : semanas.map(function(s){ return { ini:s.ini, fim:s.fim, tipo: 'corridos' }; });
 
+    function _parseYmd(s){
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');
+      return m ? new Date(+m[1], +m[2]-1, +m[3]) : null;
+    }
     function _diff(iniYmd, fimYmd){
-      var iniM = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iniYmd||'');
-      var fimM = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fimYmd||'');
-      if(!iniM || !fimM) return 0;
-      var a = new Date(+iniM[1], +iniM[2]-1, +iniM[3]);
-      var b = new Date(+fimM[1], +fimM[2]-1, +fimM[3]);
-      if(b < a) return 0;
+      var a = _parseYmd(iniYmd), b = _parseYmd(fimYmd);
+      if(!a || !b || b < a) return 0;
       return Math.round((b - a) / 86400000) + 1;
+    }
+    function _diffUteis(iniYmd, fimYmd){
+      var a = _parseYmd(iniYmd), b = _parseYmd(fimYmd);
+      if(!a || !b || b < a) return 0;
+      var n = 0;
+      var d = new Date(a);
+      while(d <= b){
+        var w = d.getDay();
+        if(w >= 1 && w <= 5) n++;
+        d.setDate(d.getDate()+1);
+      }
+      return n;
+    }
+    /* Soma N dias (corridos ou úteis) a partir de uma data e retorna data Fim em YMD.
+       N inclusivo: somar 1 corrido a partir de hoje = hoje. */
+    function _somaDias(iniYmd, n, tipo){
+      var a = _parseYmd(iniYmd); if(!a || !n || n < 1) return iniYmd;
+      if(tipo === 'uteis'){
+        var count = 0;
+        var d = new Date(a);
+        while(count < n){
+          var w = d.getDay();
+          if(w >= 1 && w <= 5){
+            count++;
+            if(count === n) return _ymd(d);
+          }
+          d.setDate(d.getDate()+1);
+        }
+        return _ymd(d);
+      }
+      var fim = new Date(a); fim.setDate(a.getDate() + n - 1);
+      return _ymd(fim);
     }
     function _renderCfgPanel(){
       var modo = cfgEditando ? 'manual' : 'auto';
@@ -2439,13 +2479,20 @@
       });
       /* Lista de linhas */
       var listaHtml = cfgLocal.map(function(j, i){
-        var dias = _diff(j.ini, j.fim);
+        var dias = j.tipo === 'uteis' ? _diffUteis(j.ini, j.fim) : _diff(j.ini, j.fim);
+        var tipoLbl = j.tipo === 'uteis' ? 'ÚTEIS' : 'DIAS';
+        var pillCls = j.tipo === 'uteis' ? ' uteis' : '';
+        var pillTxt = j.tipo === 'uteis' ? '💼 Úteis' : '📅 Corridos';
         return '<div class="np-sem-cfg-row s'+Math.min(6,i+1)+'" data-cfg-i="'+i+'">'
           + '<span class="lbl">S'+String(i+1).padStart(2,'0')+'</span>'
           + '<input type="date" data-cfg-k="ini" value="'+(j.ini||'')+'">'
           + '<span class="seta">→</span>'
           + '<input type="date" data-cfg-k="fim" value="'+(j.fim||'')+'">'
-          + '<div class="np-sem-cfg-dias">'+dias+'<small>dias</small></div>'
+          + '<div class="np-sem-cfg-dias-grp">'
+          +   '<input type="number" data-cfg-k="dias" value="'+dias+'" min="1" max="31">'
+          +   '<span class="lbl-d'+(j.tipo==='uteis'?' uteis':'')+'">'+tipoLbl+'</span>'
+          + '</div>'
+          + '<button class="np-sem-cfg-tipo'+pillCls+'" data-cfg-tipo="'+i+'" title="Click pra alternar entre dias corridos e úteis">'+pillTxt+'</button>'
           + '<button class="rm" data-cfg-rm="'+i+'" title="Remover esta semana">−</button>'
           + '</div>';
       }).join('');
@@ -2462,7 +2509,7 @@
           ? '<div class="np-sem-cfg-dual">'
             + '<div><div class="np-sem-cfg-cal">'+calHtml+'</div></div>'
             + '<div>'
-            +   '<div class="np-sem-cfg-list-h"><div>Sem.</div><div>Início</div><div></div><div>Fim</div><div>Dias</div><div></div></div>'
+            +   '<div class="np-sem-cfg-list-h"><div>Sem.</div><div>Início</div><div></div><div>Fim</div><div>Dias</div><div>Modo</div><div></div></div>'
             +   '<div class="np-sem-cfg-list">'+listaHtml+'</div>'
             +   '<div class="np-sem-cfg-sumario">'
             +     '<span>Total: <b>'+cfgLocal.length+'</b> semanas</span>'
@@ -2511,9 +2558,41 @@
         var i = +row.dataset.cfgI;
         row.querySelectorAll('input[data-cfg-k]').forEach(function(inp){
           inp.addEventListener('change', function(){
-            cfgLocal[i][inp.dataset.cfgK] = inp.value;
+            var k = inp.dataset.cfgK;
+            var j = cfgLocal[i];
+            if(k === 'ini'){
+              j.ini = inp.value;
+              /* Mantém o número de dias atual e recalcula Fim */
+              var diasAtual = j.tipo === 'uteis' ? _diffUteis(j.ini, j.fim) : _diff(j.ini, j.fim);
+              if(diasAtual > 0 && j.ini){
+                j.fim = _somaDias(j.ini, diasAtual, j.tipo);
+              }
+            } else if(k === 'fim'){
+              j.fim = inp.value;
+              /* Dias passa a ser o novo diff */
+            } else if(k === 'dias'){
+              var n = parseInt(inp.value, 10) || 1;
+              if(n < 1) n = 1;
+              if(j.ini){
+                j.fim = _somaDias(j.ini, n, j.tipo);
+              }
+            }
             _renderCfgPanel();
           });
+        });
+      });
+      cfgPanel.querySelectorAll('[data-cfg-tipo]').forEach(function(b){
+        b.addEventListener('click', function(){
+          var i = +b.dataset.cfgTipo;
+          var j = cfgLocal[i];
+          /* Alterna entre corridos e úteis; mantém data Início e o NÚMERO de dias */
+          var diasAtual = j.tipo === 'uteis' ? _diffUteis(j.ini, j.fim) : _diff(j.ini, j.fim);
+          j.tipo = (j.tipo === 'uteis') ? 'corridos' : 'uteis';
+          /* Recalcula Fim mantendo o mesmo N de dias mas no novo modo */
+          if(j.ini && diasAtual > 0){
+            j.fim = _somaDias(j.ini, diasAtual, j.tipo);
+          }
+          _renderCfgPanel();
         });
       });
       cfgPanel.querySelectorAll('[data-cfg-rm]').forEach(function(b){
@@ -2529,16 +2608,17 @@
       var addBtn = cfgPanel.querySelector('#npSemCfgAdd');
       if(addBtn) addBtn.addEventListener('click', function(){
         var last = cfgLocal[cfgLocal.length-1];
-        var iniN, fimN;
+        var tipoN = (last && last.tipo) || 'corridos';
+        var iniN = '', fimN = '';
         if(last && last.fim){
           var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(last.fim);
           if(m){
             var ini = new Date(+m[1], +m[2]-1, +m[3]+1);
-            var fim = new Date(+m[1], +m[2]-1, +m[3]+7);
-            iniN = _ymd(ini); fimN = _ymd(fim);
+            iniN = _ymd(ini);
+            fimN = _somaDias(iniN, 7, tipoN);
           }
         }
-        cfgLocal.push({ ini: iniN || '', fim: fimN || '' });
+        cfgLocal.push({ ini: iniN, fim: fimN, tipo: tipoN });
         _renderCfgPanel();
       });
       var cancelBtn = cfgPanel.querySelector('#npSemCfgCancel');
@@ -2559,7 +2639,7 @@
             return;
           }
         }
-        var payload = cfgLocal.map(function(j){ return { ini:j.ini, fim:j.fim }; });
+        var payload = cfgLocal.map(function(j){ return { ini:j.ini, fim:j.fim, tipo:(j.tipo||'corridos') }; });
         window._fbSave('pipelineSemConfig/'+mk, payload).then(function(){
           _npSemConfig[mk] = payload;
           if(typeof _showToast==='function') _showToast('✅ Janelas das semanas salvas.','var(--accent)');
