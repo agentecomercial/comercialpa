@@ -161,6 +161,17 @@
     });
     return soma;
   }
+
+  /* Expõe helpers de semana pra outros módulos (ex.: 12-pipeline-v2-patch.js) */
+  window._npSemUtil = {
+    semanas: function(ano, mes){ return _semanasDoMes(ano||_npAno, mes||_npMes); },
+    semanaAtual: function(){ return _semanaAtual(); },
+    diasUteisRestantes: function(j){ return _diasUteisRestantes(j); },
+    faturado: function(vendas, consultor, janela){ return _faturadoNaSemana(vendas, consultor, janela); },
+    goals: function(){ return _npGoalsSem || {}; },
+    fmtR: function(v){ return _fmtR(v); },
+    ymd: function(d){ return _ymd(d||new Date()); }
+  };
   function _esc(s){ return window._esc(s); }
   function _avatar(nome,i){
     var cor=COR[i%COR.length];
@@ -920,17 +931,31 @@
         (_npConsultores||[]).forEach(function(nome){
           faturadoSemMap[nome] = _faturadoNaSemana(todas, nome, jSemDash);
         });
-        var rankingSem = (_npConsultores||[]).map(function(nome){
+        /* Fonte de consultores: mesma que a aba Metas (usuários cadastrados em GU)
+           pra todos aparecerem mesmo sem meta semanal nem faturamento. */
+        var _usuariosGUSem = (window._npUsuarios && typeof window._npUsuarios==='object') ? window._npUsuarios : {};
+        var consSemList = [];
+        Object.values(_usuariosGUSem).forEach(function(u){
+          if(u && u.perfil==='consultor' && u.nome) consSemList.push(u.nome);
+        });
+        if(!consSemList.length) consSemList = (_npConsultores||[]).slice();
+        consSemList.sort(function(a,b){ return String(a).localeCompare(String(b),'pt-BR'); });
+        var rankingSem = consSemList.map(function(nome){
           var g = (_npGoalsSem && _npGoalsSem[nome] && _npGoalsSem[nome][jSemDash.num]) || {};
           return {
             nome: nome,
-            pago: faturadoSemMap[nome] || 0,
+            pago: _faturadoNaSemana(todas, nome, jSemDash),
             metaMin: +(g.min||0),
             metaBas: +(g.bas||0),
             metaMas: +(g.mas||0)
           };
-        }).filter(function(r){ return r.pago > 0 || r.metaMin > 0; })
-          .sort(function(a,b){ return b.pago - a.pago; });
+        }).sort(function(a,b){
+          /* Quem tem meta sobe; depois quem tem faturado; depois alfabético */
+          var aHas = a.metaMin>0?1:0, bHas = b.metaMin>0?1:0;
+          if(aHas !== bHas) return bHas - aHas;
+          if(a.pago !== b.pago) return b.pago - a.pago;
+          return String(a.nome).localeCompare(String(b.nome),'pt-BR');
+        });
         var medalsSem = ['🥇','🥈','🥉'];
         var dUteisSem = _diasUteisRestantes(jSemDash);
         var hojeYMD = _ymd(new Date());

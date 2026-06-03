@@ -2174,6 +2174,18 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-meta-row{display:flex;justify-content:space-between;font-size:11px;margin-top:4px;}
 .np-meta-edit{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:5px;padding:3px 9px;font-size:10px;cursor:pointer;margin-top:10px;transition:color .12s,border-color .12s;}
 .np-meta-edit:hover{color:var(--accent);border-color:var(--accent);}
+/* Footer com 2 botões (mensal + semanal) no card v2 */
+.np-meta-foot-v2{display:flex;justify-content:space-between;gap:6px;margin-top:10px;}
+.np-meta-foot-v2 .np-meta-edit{margin-top:0;flex:1;}
+.np-meta-edit-sem{background:rgba(212,165,116,.10);border-color:rgba(212,165,116,.30);color:#d4a574;}
+.np-meta-edit-sem:hover{background:rgba(212,165,116,.20);border-color:#d4a574;color:#f0c896;}
+/* Linha pace semanal mini (mostra ritmo/falta da semana atual no card) */
+.np-mc-pace-mini{
+  font-size:10px;color:#9aa5b1;padding:7px 9px;margin-top:8px;
+  background:rgba(245,158,11,.06);border-left:2px solid #f59e0b;border-radius:0 4px 4px 0;
+  line-height:1.5;
+}
+.np-mc-pace-mini b{color:#f59e0b;}
 /* ─── Card de meta v9 (gradient mesh + stepper + chip semanal + pace) ─── */
 .np-meta-card-v9{
   background:

@@ -461,6 +461,11 @@
     }
     var COR=window._npCOR||['#c8f05a','#60a5fa','#34d399','#f59e0b','#a78bfa','#f472b6','#fb923c','#38bdf8'];
     var ranking=typeof window._npPorConsultor==='function'?window._npPorConsultor(todas,'','pago'):[];
+    /* Helpers de semana (expostos por 11-pipeline-comercial.js) */
+    var SEMU = window._npSemUtil || null;
+    var semanas = SEMU ? SEMU.semanas() : [];
+    var semAtual = SEMU ? SEMU.semanaAtual() : null;
+    window._npSemSelV2 = window._npSemSelV2 || {};
     grid.innerHTML=_cons.map(function(nome,i){
       var g=window._npGoals[nome]||{};
       var r=ranking.find(function(x){return x.nome===nome;})||{total:0,pago:0,qtd:0,qtdPago:0};
@@ -477,6 +482,41 @@
       var pctM=m?Math.min(200,Math.round(real/m*100)):0;
       var pctMas=M?Math.min(200,Math.round(real/M*100)):0;
       var nomeJS=String(nome||'').replace(/\\/g,'\\\\').replace(/\x27/g,'\\\x27');
+
+      /* ── Indicador semanal (chip + pace) ── */
+      var semChipHtml = '', pacelineHtml = '';
+      if(SEMU && semanas.length){
+        var semSel = window._npSemSelV2[nome] || semAtual || (semanas[semanas.length-1].num);
+        var jSel = semanas.find(function(s){return s.num===semSel;}) || semanas[0];
+        var goalsSem = SEMU.goals();
+        var mSem = +(((goalsSem[nome])||{})[semSel]||{}).min || 0;
+        var fSem = SEMU.faturado(todas, nome, jSel);
+        var pctSem = mSem ? Math.round(fSem/mSem*100) : 0;
+        var semIco, semLbl, semColor, semBg, semBorder;
+        if(!mSem){ semIco='—'; semLbl='SEM META SEM'; semColor='#888'; semBg='rgba(255,255,255,.04)'; semBorder='rgba(255,255,255,.10)'; }
+        else if(pctSem >= 100){ semIco='✅'; semLbl='BATEU'; semColor='#86efac'; semBg='rgba(52,211,153,.15)'; semBorder='rgba(52,211,153,.30)'; }
+        else if(pctSem >= 60){ semIco='🔥'; semLbl='NO RITMO'; semColor='#f0c896'; semBg='rgba(212,165,116,.15)'; semBorder='rgba(212,165,116,.30)'; }
+        else { semIco='⚠'; semLbl='DEVAGAR'; semColor='#fbbf24'; semBg='rgba(245,158,11,.15)'; semBorder='rgba(245,158,11,.30)'; }
+        semChipHtml = '<span class="np-status-badge" title="Semana '+semSel+' ('+jSel.iniLabel+'-'+jSel.fimLabel+')" style="background:'+semBg+';color:'+semColor+';border:1px solid '+semBorder+';margin-left:4px;">'+semIco+' '+pctSem+'% S'+semSel+'</span>';
+        /* Pace line — usa hoje pra calcular dias úteis restantes; só renderiza se for a semana atual ou se houver meta */
+        var dias = SEMU.diasUteisRestantes(jSel);
+        var hojeYMD = SEMU.ymd();
+        var encerrada = (hojeYMD > jSel.fim);
+        if(mSem){
+          var paceTxt;
+          if(fSem >= mSem){
+            paceTxt = '📅 <b>S'+semSel+' ('+jSel.iniLabel+'-'+jSel.fimLabel+'):</b> '+SEMU.fmtR(fSem)+' de <b>'+SEMU.fmtR(mSem)+'</b> · <b>Bateu +'+SEMU.fmtR(fSem-mSem)+'</b> 🏆';
+          } else if(encerrada || dias===0){
+            paceTxt = '📅 <b>S'+semSel+' ('+jSel.iniLabel+'-'+jSel.fimLabel+'):</b> '+SEMU.fmtR(fSem)+' de <b>'+SEMU.fmtR(mSem)+'</b> · Encerrada';
+          } else {
+            var falta = Math.max(0, mSem - fSem);
+            var ritmo = dias>0 ? Math.round(falta/dias) : 0;
+            paceTxt = '📅 <b>S'+semSel+' ('+jSel.iniLabel+'-'+jSel.fimLabel+'):</b> Faltam <b>'+SEMU.fmtR(falta)+'</b> de <b>'+SEMU.fmtR(mSem)+'</b> em <b>'+dias+' dias úteis</b> ('+SEMU.fmtR(ritmo)+'/dia)';
+          }
+          pacelineHtml = '<div class="np-mc-pace-mini">'+paceTxt+'</div>';
+        }
+      }
+
       return '<div class="np-meta-card clickable'+(isSuperMeta?' np-super-meta':'')+'" role="button" tabindex="0"'
         +' onclick="npAbrirConsultorDetalhe(\''+nomeJS+'\')"'
         +' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();npAbrirConsultorDetalhe(\''+nomeJS+'\');}"'
@@ -486,7 +526,10 @@
         +'<div class="np-meta-avatar" style="background:'+cor+'22;color:'+cor+';border:1.5px solid '+cor+'55;">'+nome.charAt(0).toUpperCase()+'</div>'
         +'<div style="flex:1;min-width:0;">'
         +'<div class="np-meta-nome">'+_esc2(nome)+'</div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px;">'
         +'<span class="np-status-badge" style="background:'+col.bg+';color:'+col.text+';border:1px solid '+col.border+';">'+col.badge+'</span>'
+        + semChipHtml
+        +'</div>'
         +'</div>'
         +(isSuperMeta?'<div style="font-size:18px;" title="Super Meta!">🚀</div>':'')
         +'</div>'
@@ -518,8 +561,13 @@
             +'</div>':'<div class="np-tier np-tier--master" style="opacity:.3;"><div class="np-tier-label">🥇 Master</div><div class="np-tier-val">—</div></div>')
           +'</div>'
         :'<div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center;">Sem metas configuradas</div>')
-        /* Botão */
-        +'<button class="np-meta-edit" onclick="event.stopPropagation();npAbrirModalMeta(\''+_escJS2(nome)+'\')" style="margin-top:10px;">⚙ Configurar metas</button>'
+        /* Pace semanal (linha discreta) */
+        + pacelineHtml
+        /* Botões */
+        +'<div class="np-meta-foot-v2">'
+        +'<button class="np-meta-edit" onclick="event.stopPropagation();npAbrirModalMeta(\''+_escJS2(nome)+'\')">⚙ Configurar metas</button>'
+        +'<button class="np-meta-edit np-meta-edit-sem" onclick="event.stopPropagation();npAbrirModalSemanal(\''+_escJS2(nome)+'\')" title="Configurar metas semanais">📅 Semanal</button>'
+        +'</div>'
         +'</div>';
     }).join('');
   }
