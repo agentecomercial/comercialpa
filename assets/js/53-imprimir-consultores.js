@@ -27,6 +27,17 @@
   /* Cache de turmas vindas do Firebase (assíncrono — preenchido após o load) */
   var _fbTurmasCache = {};
   var _fbTurmasLoaded = false;
+  /* Escala de fonte do modal (zoom A−/A+) — persiste em localStorage */
+  var _icvScale = parseFloat(localStorage.getItem('icv_scale')||'1.30') || 1.30;
+  function _icvSetScale(v){
+    v = Math.max(0.80, Math.min(2.00, +v || 1.30));
+    _icvScale = v;
+    try { localStorage.setItem('icv_scale', String(v)); } catch(e){}
+    var modal = document.querySelector('.icv-modal');
+    if(modal) modal.style.setProperty('--icv-scale', v);
+    var lbl = document.getElementById('icvZoomLbl');
+    if(lbl) lbl.textContent = Math.round(v*100)+'%';
+  }
 
   /* ─────────── Definição das opções (20 ao todo) ─────────── */
   var SESSOES = [
@@ -75,18 +86,26 @@
     var st = document.createElement('style'); st.id = 'imprConsCss';
     st.textContent = [
       '.icv-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}',
-      '.icv-modal{background:#161b22;border:1px solid rgba(255,255,255,.08);border-radius:14px;width:100%;max-width:1100px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 30px 60px -15px rgba(0,0,0,.7);}',
+      /* Escala global do modal — multiplica todos os tamanhos via var(--icv-scale).
+         Inicializada via JS (a partir de _icvScale) ao abrir; default fallback = 1.30.
+         Botões A−/A+ no header ajustam ao vivo e salvam em localStorage. */
+      '.icv-modal{--icv-scale:1.30;background:#161b22;border:1px solid rgba(255,255,255,.08);border-radius:14px;width:100%;max-width:1100px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 30px 60px -15px rgba(0,0,0,.7);}',
       '.icv-h{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);}',
-      '.icv-h .ttl{font-size:14px;font-weight:700;color:#e6edf3;}',
-      '.icv-h .sub{font-size:10px;color:#6b7280;margin-top:2px;}',
+      '.icv-h .ttl{font-size:calc(14px * var(--icv-scale,1));font-weight:700;color:#e6edf3;}',
+      '.icv-h .sub{font-size:calc(10px * var(--icv-scale,1));color:#6b7280;margin-top:2px;}',
       '.icv-h .x{background:transparent;border:1px solid rgba(255,255,255,.08);color:#9aa5b1;padding:4px 9px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;}',
+      /* Controles de zoom A−/A+ no header */
+      '.icv-zoom{display:inline-flex;align-items:center;gap:0;margin-right:8px;border:1px solid rgba(212,165,116,.30);border-radius:6px;overflow:hidden;background:rgba(212,165,116,.06);}',
+      '.icv-zoom button{background:transparent;border:none;color:#d4a574;padding:4px 9px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1;}',
+      '.icv-zoom button:hover{background:rgba(212,165,116,.15);}',
+      '.icv-zoom .lbl{font-size:10px;color:#d4a574;font-weight:700;padding:0 6px;min-width:36px;text-align:center;font-variant-numeric:tabular-nums;}',
       '.icv-h .x:hover{color:#d4a574;border-color:#d4a574;}',
-      '.icv-toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(212,165,116,.04);border-bottom:1px solid rgba(255,255,255,.08);font-size:11px;}',
+      '.icv-toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(212,165,116,.04);border-bottom:1px solid rgba(255,255,255,.08);font-size:calc(11px * var(--icv-scale,1));}',
       /* Seletor de escopo (sugestão B) */
-      '.icv-escopo{display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(212,165,116,.06);border-bottom:1px solid rgba(255,255,255,.08);font-size:11px;flex-wrap:wrap;}',
-      '.icv-escopo .lbl{font-size:10px;color:#9aa5b1;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}',
+      '.icv-escopo{display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(212,165,116,.06);border-bottom:1px solid rgba(255,255,255,.08);font-size:calc(11px * var(--icv-scale,1));flex-wrap:wrap;}',
+      '.icv-escopo .lbl{font-size:calc(10px * var(--icv-scale,1));color:#9aa5b1;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}',
       '.icv-escopo .seg{display:inline-flex;background:rgba(0,0,0,.3);border-radius:6px;padding:3px;gap:2px;}',
-      '.icv-escopo .seg button{padding:5px 11px;border:none;background:transparent;color:#9aa5b1;font-size:10px;font-weight:700;cursor:pointer;border-radius:4px;font-family:inherit;}',
+      '.icv-escopo .seg button{padding:5px 11px;border:none;background:transparent;color:#9aa5b1;font-size:calc(10px * var(--icv-scale,1));font-weight:700;cursor:pointer;border-radius:4px;font-family:inherit;}',
       '.icv-escopo .seg button.on{background:#d4a574;color:#0a0e1a;}',
       '.icv-escopo .seg button:hover:not(.on){color:#d4a574;}',
       '.icv-escopo .info{margin-left:auto;font-size:10px;color:#6b7280;}',
@@ -142,10 +161,10 @@
       '.icv-cat-h:hover{background:rgba(255,255,255,.03);}',
       '.icv-arrow{font-size:11px;color:#d4a574;width:14px;text-align:center;transition:transform .2s ease;display:inline-block;}',
       '.icv-cat.open .icv-arrow{transform:rotate(90deg);}',
-      '.icv-cat-h .ic{font-size:15px;}',
-      '.icv-cat-h .nome{flex:1;font-size:12px;font-weight:700;color:#e6edf3;}',
-      '.icv-cat-h .info{font-size:9px;color:#6b7280;font-weight:600;display:flex;align-items:center;gap:5px;}',
-      '.icv-badge{background:#d4a574;color:#0a0e1a;padding:2px 7px;border-radius:9px;font-size:9px;font-weight:800;}',
+      '.icv-cat-h .ic{font-size:calc(15px * var(--icv-scale,1));}',
+      '.icv-cat-h .nome{flex:1;font-size:calc(12px * var(--icv-scale,1));font-weight:700;color:#e6edf3;}',
+      '.icv-cat-h .info{font-size:calc(9px * var(--icv-scale,1));color:#6b7280;font-weight:600;display:flex;align-items:center;gap:5px;}',
+      '.icv-badge{background:#d4a574;color:#0a0e1a;padding:2px 7px;border-radius:9px;font-size:calc(9px * var(--icv-scale,1));font-weight:800;}',
       '.icv-cat-b{border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.15);padding:8px 0;display:none;}',
       '.icv-cat.open .icv-cat-b{display:block;}',
       '.icv-opt{display:flex;align-items:flex-start;gap:9px;padding:8px 14px 8px 38px;cursor:pointer;border-left:3px solid transparent;}',
@@ -153,18 +172,18 @@
       '.icv-opt.sel{background:rgba(212,165,116,.07);border-left-color:#d4a574;}',
       '.icv-opt input[type=checkbox]{width:14px;height:14px;accent-color:#d4a574;cursor:pointer;flex-shrink:0;margin-top:1px;}',
       '.icv-opt .opt-c{flex:1;min-width:0;}',
-      '.icv-opt .opt-t{font-size:11px;font-weight:600;color:#e6edf3;display:flex;gap:6px;align-items:center;}',
-      '.icv-opt .opt-d{font-size:9px;color:#6b7280;margin-top:2px;line-height:1.4;}',
+      '.icv-opt .opt-t{font-size:calc(11px * var(--icv-scale,1));font-weight:600;color:#e6edf3;display:flex;gap:6px;align-items:center;}',
+      '.icv-opt .opt-d{font-size:calc(9px * var(--icv-scale,1));color:#6b7280;margin-top:2px;line-height:1.4;}',
       '.icv-opt.sel .opt-t{color:#d4a574;}',
-      '.icv-star{color:#fbbf24;font-size:10px;margin-left:auto;flex-shrink:0;}',
-      '.icv-star-tag{font-size:8px;background:rgba(251,191,36,.12);color:#fbbf24;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}',
-      '.icv-extra{margin-top:5px;font-size:10px;color:#9aa5b1;display:none;align-items:center;gap:6px;}',
+      '.icv-star{color:#fbbf24;font-size:calc(10px * var(--icv-scale,1));margin-left:auto;flex-shrink:0;}',
+      '.icv-star-tag{font-size:calc(8px * var(--icv-scale,1));background:rgba(251,191,36,.12);color:#fbbf24;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}',
+      '.icv-extra{margin-top:5px;font-size:calc(10px * var(--icv-scale,1));color:#9aa5b1;display:none;align-items:center;gap:6px;}',
       '.icv-opt.sel .icv-extra{display:flex;}',
       '.icv-extra select{flex:1;max-width:220px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);color:#e6edf3;padding:4px 7px;border-radius:4px;font-size:10px;font-family:inherit;}',
       '.icv-f{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}',
-      '.icv-f .info{font-size:10px;color:#6b7280;}',
+      '.icv-f .info{font-size:calc(10px * var(--icv-scale,1));color:#6b7280;}',
       '.icv-f .actions{display:flex;gap:6px;flex-wrap:wrap;}',
-      '.icv-btn{font-size:11px;padding:7px 12px;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.08);background:transparent;color:#e6edf3;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:5px;}',
+      '.icv-btn{font-size:calc(11px * var(--icv-scale,1));padding:7px 12px;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.08);background:transparent;color:#e6edf3;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:5px;}',
       '.icv-btn:hover{border-color:#d4a574;color:#d4a574;}',
       '.icv-btn.primary{background:#d4a574;color:#0a0e1a;border-color:#d4a574;font-weight:800;}',
       '.icv-btn.primary:hover{background:#f0c896;}',
@@ -267,7 +286,14 @@
       +       '<div class="ttl">🖨 Imprimir relatório de consultores</div>'
       +       '<div class="sub">'+(window._turmaAtiva && window._turmaAtiva.nome ? '📚 Curso atual: <b style="color:#d4a574;">'+_esc(window._turmaAtiva.nome)+(window._turmaAtiva.codigo?' · '+_esc(window._turmaAtiva.codigo):'')+'</b> · ' : '')+'Marque as opções desejadas em uma ou mais sessões.</div>'
       +     '</div>'
-      +     '<button class="x" id="icvFechar">✕</button>'
+      +     '<div style="display:flex;align-items:center;gap:6px;">'
+      +       '<div class="icv-zoom" title="Ajustar tamanho da fonte">'
+      +         '<button id="icvZoomDown" title="Diminuir fonte (A−)">A−</button>'
+      +         '<span class="lbl" id="icvZoomLbl">'+Math.round(_icvScale*100)+'%</span>'
+      +         '<button id="icvZoomUp" title="Aumentar fonte (A+)">A+</button>'
+      +       '</div>'
+      +       '<button class="x" id="icvFechar">✕</button>'
+      +     '</div>'
       +   '</div>'
       +   '<div class="icv-escopo">'
       +     '<span class="lbl">Escopo dos dados:</span>'
@@ -313,6 +339,12 @@
     ov.querySelector('#icvFechar').addEventListener('click', _fechar);
     ov.querySelector('#icvCancel').addEventListener('click', _fechar);
     ov.addEventListener('click', function(e){ if(e.target === ov) _fechar(); });
+
+    /* Zoom A−/A+ (passo de 5%; intervalo 80%-200%) */
+    var btnDown = ov.querySelector('#icvZoomDown');
+    var btnUp = ov.querySelector('#icvZoomUp');
+    if(btnDown) btnDown.addEventListener('click', function(){ _icvSetScale(_icvScale - 0.05); });
+    if(btnUp)   btnUp.addEventListener('click',   function(){ _icvSetScale(_icvScale + 0.05); });
 
     /* Toggle de sessões */
     ov.querySelectorAll('.icv-cat-h').forEach(function(h){
@@ -1168,6 +1200,9 @@
     var wrap = document.createElement('div'); wrap.innerHTML = _renderModal();
     document.body.appendChild(wrap.firstChild);
     var ov = document.getElementById('icvOv');
+    /* Aplica escala salva (default 1.30) no modal recém criado */
+    var modalEl = ov.querySelector('.icv-modal');
+    if(modalEl) modalEl.style.setProperty('--icv-scale', _icvScale);
     _wire(ov);
     _atualizarPreview(ov);
     /* Carrega turmas do Firebase async (modal já está aberto) e re-renderiza */
