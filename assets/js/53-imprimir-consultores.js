@@ -10,7 +10,10 @@
   /* Estado do modal (sessão-only) */
   var _selecionadas = new Set();
   var _consultorEscolhido = '';
-  var _sessoesAbertas = new Set(['escopo','status']); /* abertas no boot */
+  var _sessoesAbertas = new Set(['escopo','status','periodo','executivos']);
+  /* Pré-seleção sugerida — marcas com ⭐ e marcadas por default na 1ª abertura. */
+  var PRE_SELECT = ['esc_todos','st_pago','st_aberto','pe_curso_atual','ex_resumo'];
+  var _primeiraAbertura = true;
 
   /* ─────────── Definição das opções (20 ao todo) ─────────── */
   var SESSOES = [
@@ -36,9 +39,10 @@
       { id:'tr_novos',    ic:'✨', t:'Clientes NOVOS do mês', d:'Primeira compra — foco em aquisição' }
     ]},
     { id:'periodo',      ic:'📅', nome:'Por período', opts:[
-      { id:'pe_mes',      ic:'📅', t:'Mês atual completo', d:'Tudo do mês corrente' },
-      { id:'pe_comp',     ic:'📈', t:'Comparativo mês × anterior', d:'Lado a lado' },
-      { id:'pe_sem',      ic:'🗓', t:'Semanal (semana atual)', d:'Recorte da semana corrente' }
+      { id:'pe_curso_atual', ic:'📚', t:'Curso/turma atual (foco)', d:'Foca no curso atualmente aberto · header com nome e código' },
+      { id:'pe_mes',         ic:'📅', t:'Mês atual completo', d:'Tudo do mês corrente' },
+      { id:'pe_comp',        ic:'📈', t:'Comparativo mês × anterior', d:'Lado a lado' },
+      { id:'pe_sem',         ic:'🗓', t:'Semanal (semana atual)', d:'Recorte da semana corrente' }
     ]},
     { id:'executivos',   ic:'⭐', nome:'Executivos', opts:[
       { id:'ex_resumo',   ic:'📊', t:'Resumo executivo (1 página)', d:'KPIs principais + ranking + alertas' },
@@ -55,7 +59,7 @@
     var st = document.createElement('style'); st.id = 'imprConsCss';
     st.textContent = [
       '.icv-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}',
-      '.icv-modal{background:#161b22;border:1px solid rgba(255,255,255,.08);border-radius:14px;width:100%;max-width:720px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 30px 60px -15px rgba(0,0,0,.7);}',
+      '.icv-modal{background:#161b22;border:1px solid rgba(255,255,255,.08);border-radius:14px;width:100%;max-width:1100px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 30px 60px -15px rgba(0,0,0,.7);}',
       '.icv-h{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);}',
       '.icv-h .ttl{font-size:14px;font-weight:700;color:#e6edf3;}',
       '.icv-h .sub{font-size:10px;color:#6b7280;margin-top:2px;}',
@@ -65,7 +69,22 @@
       '.icv-toolbar a{color:#d4a574;cursor:pointer;font-weight:600;margin-right:10px;}',
       '.icv-toolbar a:hover{text-decoration:underline;}',
       '.icv-toolbar .cnt b{color:#d4a574;font-weight:700;}',
-      '.icv-b{flex:1;overflow-y:auto;padding:8px 16px;}',
+      '.icv-b{flex:1;overflow:hidden;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:0;}',
+      '@media(max-width:820px){.icv-b{grid-template-columns:1fr;}}',
+      '.icv-opts{overflow-y:auto;padding:8px 14px 14px;border-right:1px solid rgba(255,255,255,.06);}',
+      '.icv-preview{overflow-y:auto;padding:14px;background:#0a0e13;}',
+      '.icv-preview .pv-h{display:flex;justify-content:space-between;align-items:center;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#d4a574;font-weight:700;padding-bottom:8px;margin-bottom:10px;border-bottom:1px dashed rgba(212,165,116,.25);}',
+      '.icv-preview .pv-h .meta{color:#6b7280;font-weight:600;font-size:9px;}',
+      '.icv-preview .pv-c{font-size:11px;color:#cbd5e0;line-height:1.5;}',
+      '.icv-preview .pv-c h2{font-size:13px;color:#f0c896;margin:14px 0 4px;padding-bottom:3px;border-bottom:1px solid rgba(212,165,116,.25);}',
+      '.icv-preview .pv-c h2:first-child{margin-top:0;}',
+      '.icv-preview .pv-c h3{font-size:11px;color:#b88a5a;margin:8px 0 4px;}',
+      '.icv-preview .pv-c table{width:100%;border-collapse:collapse;font-size:10px;margin-top:4px;}',
+      '.icv-preview .pv-c table th{background:rgba(255,255,255,.04)!important;color:#9aa5b1!important;padding:4px 6px!important;text-align:left;}',
+      '.icv-preview .pv-c table td{padding:3px 6px!important;border-bottom:1px solid rgba(255,255,255,.04)!important;}',
+      '.icv-preview .pv-c p{margin:4px 0;font-size:10px;}',
+      '.icv-preview .pv-empty{text-align:center;padding:32px 14px;color:#6b7280;font-size:11px;font-style:italic;}',
+      '.icv-preview .pv-empty .ic{font-size:32px;display:block;margin-bottom:6px;opacity:.5;}',
       '.icv-cat{border:1px solid rgba(255,255,255,.08);border-radius:8px;margin:8px 0;background:rgba(255,255,255,.02);overflow:hidden;}',
       '.icv-cat.open{border-color:rgba(212,165,116,.30);background:rgba(212,165,116,.03);}',
       '.icv-cat-h{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;user-select:none;}',
@@ -86,6 +105,8 @@
       '.icv-opt .opt-t{font-size:11px;font-weight:600;color:#e6edf3;display:flex;gap:6px;align-items:center;}',
       '.icv-opt .opt-d{font-size:9px;color:#6b7280;margin-top:2px;line-height:1.4;}',
       '.icv-opt.sel .opt-t{color:#d4a574;}',
+      '.icv-star{color:#fbbf24;font-size:10px;margin-left:auto;flex-shrink:0;}',
+      '.icv-star-tag{font-size:8px;background:rgba(251,191,36,.12);color:#fbbf24;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}',
       '.icv-extra{margin-top:5px;font-size:10px;color:#9aa5b1;display:none;align-items:center;gap:6px;}',
       '.icv-opt.sel .icv-extra{display:flex;}',
       '.icv-extra select{flex:1;max-width:220px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);color:#e6edf3;padding:4px 7px;border-radius:4px;font-size:10px;font-family:inherit;}',
@@ -97,11 +118,13 @@
       '.icv-btn.primary{background:#d4a574;color:#0a0e1a;border-color:#d4a574;font-weight:800;}',
       '.icv-btn.primary:hover{background:#f0c896;}',
       '.icv-btn.primary:disabled{opacity:.5;cursor:not-allowed;}',
-      /* Split button na barra da aba Consultor */
-      '.icv-split{display:inline-flex;}',
-      '.icv-split .add-btn{border-radius:6px 0 0 6px;}',
-      '.icv-split .icv-split-drop{border-radius:0 6px 6px 0;border-left:none;padding:6px 8px;background:rgba(212,165,116,.12);border:1px solid rgba(212,165,116,.35);color:#d4a574;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;}',
-      '.icv-split .icv-split-drop:hover{background:rgba(212,165,116,.22);}'
+      /* Split button na barra da aba Consultor — borda gradient animada */
+      '@keyframes icv-grad { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }',
+      '.icv-split{display:inline-flex;padding:1.5px;border-radius:7px;background:linear-gradient(110deg, #d4a574, #a855f7, #3b82f6, #34d399, #d4a574);background-size:300% 100%;animation:icv-grad 6s ease-in-out infinite;cursor:pointer;}',
+      '.icv-split .add-btn{border:none;border-radius:5px 0 0 5px;background:#161b22;color:#d4a574;font-weight:700;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit;}',
+      '.icv-split .add-btn:hover{background:rgba(212,165,116,.10);}',
+      '.icv-split .icv-split-drop{border:none;border-radius:0 5px 5px 0;border-left:1px solid rgba(212,165,116,.30);padding:5px 9px;background:#161b22;color:#d4a574;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;}',
+      '.icv-split .icv-split-drop:hover{background:rgba(212,165,116,.10);}'
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -124,10 +147,16 @@
 
   /* ──────────── Render do modal ──────────── */
   function _renderModal(){
+    /* 1ª abertura: aplica pré-seleção sugerida */
+    if(_primeiraAbertura){
+      PRE_SELECT.forEach(function(id){ _selecionadas.add(id); });
+      _primeiraAbertura = false;
+    }
     var consultores = _listaConsultores();
     var sessoesHtml = SESSOES.map(function(sec){
       var optsHtml = sec.opts.map(function(o){
         var sel = _selecionadas.has(o.id);
+        var sugerida = PRE_SELECT.indexOf(o.id) >= 0;
         var extra = '';
         if(o.extra === 'consultor'){
           extra = '<div class="icv-extra"><span>Consultor:</span><select data-extra-cons>'
@@ -140,7 +169,7 @@
         return '<label class="icv-opt'+(sel?' sel':'')+'" data-opt-id="'+o.id+'">'
           + '<input type="checkbox" '+(sel?'checked':'')+'>'
           + '<div class="opt-c">'
-          +   '<div class="opt-t"><span>'+o.ic+'</span>'+_esc(o.t)+'</div>'
+          +   '<div class="opt-t"><span>'+o.ic+'</span>'+_esc(o.t)+(sugerida?'<span class="icv-star-tag" title="Pré-selecionada · sugerida">⭐ sugerida</span>':'')+'</div>'
           +   '<div class="opt-d">'+_esc(o.d)+'</div>'
           +   extra
           + '</div>'
@@ -165,7 +194,7 @@
       +   '<div class="icv-h">'
       +     '<div>'
       +       '<div class="ttl">🖨 Imprimir relatório de consultores</div>'
-      +       '<div class="sub">Marque as opções desejadas em uma ou mais sessões abaixo.</div>'
+      +       '<div class="sub">'+(window._turmaAtiva && window._turmaAtiva.nome ? '📚 Curso atual: <b style="color:#d4a574;">'+_esc(window._turmaAtiva.nome)+(window._turmaAtiva.codigo?' · '+_esc(window._turmaAtiva.codigo):'')+'</b> · ' : '')+'Marque as opções desejadas em uma ou mais sessões.</div>'
       +     '</div>'
       +     '<button class="x" id="icvFechar">✕</button>'
       +   '</div>'
@@ -173,7 +202,13 @@
       +     '<div><a id="icvSelTudo">☑ Selecionar todas</a><a id="icvLimpar">☐ Limpar seleção</a></div>'
       +     '<div class="cnt"><b id="icvTotal">'+total+'</b> de '+totalOpts+' opções selecionadas</div>'
       +   '</div>'
-      +   '<div class="icv-b">'+sessoesHtml+'</div>'
+      +   '<div class="icv-b">'
+      +     '<div class="icv-opts">'+sessoesHtml+'</div>'
+      +     '<div class="icv-preview">'
+      +       '<div class="pv-h"><span>👁 Preview do relatório</span><span class="meta" id="icvPvMeta">—</span></div>'
+      +       '<div class="pv-c" id="icvPvC"></div>'
+      +     '</div>'
+      +   '</div>'
       +   '<div class="icv-f">'
       +     '<div class="info">💡 As seleções viram seções no relatório final.</div>'
       +     '<div class="actions">'
@@ -248,6 +283,28 @@
       if(b){ b.textContent = n; b.style.display = n>0 ? '' : 'none'; }
     });
     var t = ov.querySelector('#icvTotal'); if(t) t.textContent = _selecionadas.size;
+    _atualizarPreview(ov);
+  }
+  function _atualizarPreview(ov){
+    var pvC = ov.querySelector('#icvPvC');
+    var pvM = ov.querySelector('#icvPvMeta');
+    if(!pvC) return;
+    if(!_selecionadas.size){
+      pvC.innerHTML = '<div class="pv-empty"><span class="ic">📄</span>Marque uma ou mais opções nas sessões à esquerda para visualizar o relatório aqui.</div>';
+      if(pvM) pvM.textContent = '—';
+      return;
+    }
+    var partes = [];
+    _selecionadas.forEach(function(id){
+      var sec = _buildSection(id);
+      if(sec){ partes.push('<section>'+sec.html+'</section>'); }
+    });
+    pvC.innerHTML = partes.join('');
+    if(pvM) pvM.textContent = _selecionadas.size+' seção(ões) · '+_dataStrPt();
+  }
+  function _dataStrPt(){
+    var d = new Date();
+    return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
   }
   function _rerender(){
     var ov = document.getElementById('icvOv'); if(!ov) return;
@@ -306,6 +363,7 @@
       case 'tr_agrup':    return _sec_trAgrupado();
       case 'tr_top5':     return _sec_trTop5();
       case 'tr_novos':    return _sec_trNovos();
+      case 'pe_curso_atual': return _sec_peCursoAtual();
       case 'pe_mes':      return _sec_peMes();
       case 'pe_comp':     return _sec_peComp();
       case 'pe_sem':      return _sec_peSem();
@@ -515,6 +573,26 @@
   }
 
   /* ── PERÍODO ── */
+  function _sec_peCursoAtual(){
+    var t = window._turmaAtiva || {};
+    var nome = t.nome || t.codigo || '(curso atual)';
+    var codigo = t.codigo || '';
+    var lst = _coletarClientes();
+    var s = _statsConsultor(lst);
+    var html = '<h2>📚 Curso/turma atual: '+_esc(nome)+(codigo?' · '+_esc(codigo):'')+'</h2>'
+      + '<p style="color:#9aa5b1;">Total: <b>'+s.qtd+' cliente(s)</b> · Faturado: <b style="color:#34d399;">'+_fmtR(s.pago)+'</b> · Aberto: <b style="color:#f59e0b;">'+_fmtR(s.aberto)+'</b> · Negociação: <b style="color:#a855f7;">'+_fmtR(s.negociacao)+'</b></p>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;color:#9aa5b1;"><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;text-align:left;">Consultor</th><th style="padding:5px 8px;text-align:left;">Treinamento</th><th style="padding:5px 8px;text-align:right;">Valor</th><th style="padding:5px 8px;">Status</th></tr></thead><tbody>';
+    lst.forEach(function(c){
+      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:4px 8px;">'+_esc(c.cliente)+'</td><td style="padding:4px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:4px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:4px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:4px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
+    });
+    html += '</tbody></table>';
+    var txt = '📚 CURSO/TURMA: '+nome+(codigo?' · '+codigo:'')+'\n'
+      + s.qtd+' cliente(s) · Pago '+_fmtR(s.pago)+' · Aberto '+_fmtR(s.aberto)+'\n';
+    lst.forEach(function(c){
+      txt += '• '+c.cliente+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
+    });
+    return { titulo:'📚 Curso atual', html:html, txt:txt };
+  }
   function _sec_peMes(){
     var lst = _coletarClientes();
     var s = _statsConsultor(lst);
@@ -674,7 +752,9 @@
     _fechar();
     var wrap = document.createElement('div'); wrap.innerHTML = _renderModal();
     document.body.appendChild(wrap.firstChild);
-    _wire(document.getElementById('icvOv'));
+    var ov = document.getElementById('icvOv');
+    _wire(ov);
+    _atualizarPreview(ov);
   };
   function _fechar(){
     var ov = document.getElementById('icvOv');
