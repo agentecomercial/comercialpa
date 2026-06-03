@@ -121,31 +121,45 @@
       '.icv-btn.primary{background:#d4a574;color:#0a0e1a;border-color:#d4a574;font-weight:800;}',
       '.icv-btn.primary:hover{background:#f0c896;}',
       '.icv-btn.primary:disabled{opacity:.5;cursor:not-allowed;}',
-      /* Split button — borda Holographic (opção 10): iridescente rosa·dourado·roxo·azul·verde·amarelo */
-      '@keyframes icv-holo { 0% { background-position:0% 50%; } 100% { background-position:400% 50%; } }',
-      '.icv-split{display:inline-flex;padding:2px;border-radius:8px;background:linear-gradient(110deg, #ff006e, #d4a574, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #ff006e);background-size:400% 100%;animation:icv-holo 8s linear infinite;box-shadow:0 0 22px -5px rgba(212,165,116,.35);cursor:pointer;}',
-      '.icv-split .add-btn{border:none;border-radius:6px 0 0 6px;background:#161b22;color:#d4a574;font-weight:700;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit;}',
+      /* Split button — borda Neon outline estático (opção 04): linha dourada fixa + halo sutil */
+      '.icv-split{display:inline-flex;border:1.5px solid #d4a574;border-radius:7px;box-shadow:0 0 0 1px rgba(212,165,116,.18), 0 0 12px -2px rgba(212,165,116,.35);cursor:pointer;background:#161b22;}',
+      '.icv-split .add-btn{border:none;border-radius:5px 0 0 5px;background:#161b22;color:#d4a574;font-weight:700;padding:5.5px 14px;font-size:11px;cursor:pointer;font-family:inherit;}',
       '.icv-split .add-btn:hover{background:rgba(212,165,116,.10);}',
-      '.icv-split .icv-split-drop{border:none;border-radius:0 6px 6px 0;border-left:1px solid rgba(212,165,116,.30);padding:5px 9px;background:#161b22;color:#d4a574;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;}',
+      '.icv-split .icv-split-drop{border:none;border-radius:0 5px 5px 0;border-left:1px solid rgba(212,165,116,.30);padding:5.5px 9px;background:#161b22;color:#d4a574;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;}',
       '.icv-split .icv-split-drop:hover{background:rgba(212,165,116,.10);}'
     ].join('\n');
     document.head.appendChild(st);
   }
 
-  /* ──────────── Lista de consultores ──────────── */
+  /* ──────────── Lista de consultores (consolidada de 4 fontes) ──────────── */
   function _listaConsultores(){
-    var u = window._npUsuarios || {};
-    var arr = [];
-    Object.values(u).forEach(function(x){
-      if(x && x.perfil==='consultor' && x.nome) arr.push(String(x.nome));
-    });
-    if(!arr.length){
-      var data = window.data || [];
-      var set = new Set();
-      data.forEach(function(d){ if(d && d.consultor) set.add(String(d.consultor)); });
-      arr = Array.from(set);
+    var set = new Map(); /* nome_upper → nome original */
+    function _add(n){
+      if(!n) return;
+      var s = String(n).trim(); if(!s) return;
+      var k = s.toUpperCase();
+      if(!set.has(k)) set.set(k, s);
     }
-    return arr.sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
+    /* Fonte 1: gestão de usuários (Pipeline Comercial / IC) */
+    var u = window._npUsuarios || {};
+    Object.values(u).forEach(function(x){
+      if(x && x.perfil==='consultor' && x.nome) _add(x.nome);
+    });
+    /* Fonte 2: allConsultors global (via getter dinâmico) */
+    var allC = (typeof window.__getAllConsultors === 'function') ? window.__getAllConsultors() : (window.allConsultors || []);
+    if(Array.isArray(allC)) allC.forEach(_add);
+    /* Fonte 3: campo consultor nos clientes da turma atual */
+    _coletarClientes().forEach(function(c){ _add(c.consultor); });
+    /* Fonte 4: campo consultor nos clientes de TODAS as turmas (varredura) */
+    if(typeof _getTurmas === 'function'){
+      try {
+        _getTurmas().forEach(function(t){
+          if(!t || !t.id) return;
+          _clientesDeTurma(t.id).forEach(function(c){ _add(c.consultor); });
+        });
+      } catch(e){}
+    }
+    return Array.from(set.values()).sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
   }
 
   /* ──────────── Render do modal ──────────── */
@@ -307,7 +321,7 @@
     var pvM = ov.querySelector('#icvPvMeta');
     if(!pvC) return;
     if(!_selecionadas.size){
-      pvC.innerHTML = '<div class="pv-empty"><span class="ic">📄</span>Marque uma ou mais opções nas sessões à esquerda para visualizar o relatório aqui.</div>';
+      pvC.innerHTML = '<div class="pv-empty"><span class="ic">📄</span>Marque uma ou mais opções nas sessões à esquerda para visualizar o relatório aqui.</div>'+_diagBoxHtml();
       if(pvM) pvM.textContent = '—';
       return;
     }
@@ -316,8 +330,26 @@
       var sec = _buildSection(id);
       if(sec){ partes.push('<section>'+sec.html+'</section>'); }
     });
-    pvC.innerHTML = partes.join('');
+    pvC.innerHTML = partes.join('') + _diagBoxHtml();
     if(pvM) pvM.textContent = _selecionadas.size+' seção(ões) · '+_dataStrPt();
+  }
+  /* Diagnóstico das fontes de dados — sempre visível no fim do preview */
+  function _diagBoxHtml(){
+    var qData = _coletarClientes().length;
+    var qTodas = _coletarClientesTodasTurmas().length;
+    var qCons = _listaConsultores().length;
+    var qTurmas = (typeof _getTurmas === 'function') ? (_getTurmas()||[]).length : 0;
+    var qTurmasMes = _turmasDoMesVigente().length;
+    var qGoals = Object.keys(window._npGoals||{}).length;
+    var turmaAtiva = (window._turmaAtiva && (window._turmaAtiva.nome||window._turmaAtiva.codigo)) || '—';
+    return '<div style="margin-top:18px;padding:10px;background:rgba(255,255,255,.03);border:1px dashed rgba(212,165,116,.20);border-radius:6px;font-size:10px;color:#9aa5b1;line-height:1.6;">'
+      + '<b style="color:#d4a574;">🔍 Fontes de dados disponíveis</b><br>'
+      + '• Turma ativa: <b>'+_esc(turmaAtiva)+'</b> · clientes nela: <b>'+qData+'</b><br>'
+      + '• Clientes consolidados (todas as turmas): <b>'+qTodas+'</b><br>'
+      + '• Consultores identificados: <b>'+qCons+'</b><br>'
+      + '• Turmas cadastradas: <b>'+qTurmas+'</b> · no mês vigente: <b>'+qTurmasMes+'</b><br>'
+      + '• Metas mensais (npGoals): <b>'+qGoals+'</b>'
+      + '</div>';
   }
   function _dataStrPt(){
     var d = new Date();
@@ -335,19 +367,73 @@
     return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
   }
   function _coletarClientes(){
-    var d = window.data || [];
+    /* IMPORTANTE: `data` é `let` no 02-main.js — NÃO está em window.data.
+       Usa o getter dinâmico exposto em window.__getData(). */
+    var d = (typeof window.__getData === 'function') ? window.__getData() : (window.data || []);
+    if(!Array.isArray(d)) d = [];
     return d.filter(function(x){ return x && x.cliente; });
   }
+  /* Agrupa por consultor — varre TODAS as turmas (não só a ativa).
+     Marca cada cliente com a turma de origem (_turmaNome) pra rastreio. */
   function _porConsultor(){
-    var clientes = _coletarClientes();
     var map = {};
-    clientes.forEach(function(c){
-      var k = c.consultor || '(Sem consultor)';
-      if(!map[k]) map[k] = [];
-      map[k].push(c);
-    });
+    function _add(lista, turmaNome){
+      lista.forEach(function(c){
+        if(!c || !c.cliente) return;
+        var k = c.consultor || '(Sem consultor)';
+        if(!map[k]) map[k] = [];
+        /* Evita duplicar se mesmo cliente já está (mesmo nome+treinamento+valor) */
+        var jaTem = map[k].some(function(x){
+          return x.cliente === c.cliente && (x.treinamento||'') === (c.treinamento||'') && +(x.valor||0) === +(c.valor||0);
+        });
+        if(!jaTem){
+          var copia = Object.assign({}, c);
+          if(turmaNome && !copia._turmaNome) copia._turmaNome = turmaNome;
+          map[k].push(copia);
+        }
+      });
+    }
+    /* Primeiro: clientes da turma ativa (data atual) */
+    _add(_coletarClientes(), window._turmaAtiva && window._turmaAtiva.nome || '');
+    /* Depois: clientes de TODAS as outras turmas (varredura) */
+    if(typeof _getTurmas === 'function'){
+      try {
+        _getTurmas().forEach(function(t){
+          if(!t || !t.id) return;
+          if(window._turmaAtiva && t.id === window._turmaAtiva.id) return;
+          _add(_clientesDeTurma(t.id), t.nome || t.codigo || t.id);
+        });
+      } catch(e){}
+    }
     return map;
   }
+  function _coletarClientesTodasTurmas(){
+    var todos = [];
+    _add_seen = {}; /* dedup local */
+    function _addLista(lst, tNome){
+      (lst||[]).forEach(function(c){
+        if(!c || !c.cliente) return;
+        var k = (c.cliente||'')+'|'+(c.consultor||'')+'|'+(c.treinamento||'')+'|'+(+c.valor||0);
+        if(_add_seen[k]) return;
+        _add_seen[k] = 1;
+        var copia = Object.assign({}, c);
+        if(tNome && !copia._turmaNome) copia._turmaNome = tNome;
+        todos.push(copia);
+      });
+    }
+    _addLista(_coletarClientes(), window._turmaAtiva && window._turmaAtiva.nome || '');
+    if(typeof _getTurmas === 'function'){
+      try {
+        _getTurmas().forEach(function(t){
+          if(!t || !t.id) return;
+          if(window._turmaAtiva && t.id === window._turmaAtiva.id) return;
+          _addLista(_clientesDeTurma(t.id), t.nome || t.codigo || t.id);
+        });
+      } catch(e){}
+    }
+    return todos;
+  }
+  var _add_seen = {};
   function _statsConsultor(clientes){
     var pago = 0, aberto = 0, entrada = 0, neg = 0, total = 0;
     clientes.forEach(function(c){
@@ -500,9 +586,9 @@
     return { titulo:'⚠ Abaixo da meta', html:html, txt:txt };
   }
 
-  /* ── STATUS ── */
+  /* ── STATUS ── (consolida TODAS as turmas, não só a atual) */
   function _sec_stTodos(){
-    var lst = _coletarClientes();
+    var lst = _coletarClientesTodasTurmas();
     var html = '<h2>📋 Todos os clientes ('+lst.length+')</h2>'
       + '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;"><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;text-align:left;">Consultor</th><th style="padding:5px 8px;text-align:left;">Treinamento</th><th style="padding:5px 8px;text-align:right;">Valor</th><th style="padding:5px 8px;">Status</th></tr></thead><tbody>';
     var txt = '📋 TODOS OS CLIENTES ('+lst.length+')\n';
@@ -514,7 +600,7 @@
     return { titulo:'📋 Todos os clientes', html:html, txt:txt };
   }
   function _sec_stFiltro(status, titulo, lblTxt){
-    var lst = _coletarClientes().filter(function(c){ return String(c.status||'').toLowerCase() === status; });
+    var lst = _coletarClientesTodasTurmas().filter(function(c){ return String(c.status||'').toLowerCase() === status; });
     var sum = lst.reduce(function(a,c){ return a + +(c.valor||0); }, 0);
     var html = '<h2>'+_esc(titulo)+' ('+lst.length+')</h2>'
       + '<p style="color:#9aa5b1;">Total: <b style="color:#d4a574;">'+_fmtR(sum)+'</b></p>'
@@ -528,7 +614,7 @@
     return { titulo:titulo, html:html, txt:txt };
   }
   function _sec_stEntrada(){
-    var lst = _coletarClientes().filter(function(c){ return +(c.entrada||0) > 0; });
+    var lst = _coletarClientesTodasTurmas().filter(function(c){ return +(c.entrada||0) > 0; });
     var sum = lst.reduce(function(a,c){ return a + +(c.entrada||0); }, 0);
     var html = '<h2>💵 Clientes com ENTRADA ('+lst.length+')</h2>'
       + '<p style="color:#9aa5b1;">Total entradas: <b style="color:#34d399;">'+_fmtR(sum)+'</b></p>'
@@ -542,10 +628,10 @@
     return { titulo:'💵 Com entrada', html:html, txt:txt };
   }
 
-  /* ── TREINAMENTO ── */
+  /* ── TREINAMENTO ── (consolida TODAS as turmas) */
   function _sec_trAgrupado(){
     var grupos = {};
-    _coletarClientes().forEach(function(c){
+    _coletarClientesTodasTurmas().forEach(function(c){
       var k = c.treinamento || '(Sem treinamento)';
       if(!grupos[k]) grupos[k] = [];
       grupos[k].push(c);
@@ -567,7 +653,7 @@
     return { titulo:'📚 Por treinamento', html:html, txt:txt };
   }
   function _sec_trTop5(){
-    var top = _coletarClientes().slice().sort(function(a,b){ return +(b.valor||0) - +(a.valor||0); }).slice(0,5);
+    var top = _coletarClientesTodasTurmas().slice().sort(function(a,b){ return +(b.valor||0) - +(a.valor||0); }).slice(0,5);
     var html = '<h2>💎 Top 5 maiores vendas</h2><table style="width:100%;font-size:12px;">';
     var txt = '💎 TOP 5 MAIORES VENDAS\n';
     top.forEach(function(c,i){
@@ -578,9 +664,8 @@
     return { titulo:'💎 Top 5 vendas', html:html, txt:txt };
   }
   function _sec_trNovos(){
-    /* Sem campo "criadoEm" claro pra todos, mostro só os do mês atual baseado em algum hint */
     var html = '<h2>✨ Clientes novos do mês</h2><p style="color:#9aa5b1;">Lista derivada das vendas adicionadas neste período.</p>';
-    var lst = _coletarClientes().slice(0, 30);
+    var lst = _coletarClientesTodasTurmas().slice(0, 30);
     html += '<ul style="font-size:11px;">';
     var txt = '✨ NOVOS DO MÊS\n';
     lst.forEach(function(c){
@@ -694,7 +779,7 @@
     return { titulo:'📚 Curso atual', html:html, txt:txt };
   }
   function _sec_peMes(){
-    var lst = _coletarClientes();
+    var lst = _coletarClientesTodasTurmas();
     var s = _statsConsultor(lst);
     var html = '<h2>📅 Mês atual completo</h2>'
       + '<table style="width:100%;font-size:12px;">'
