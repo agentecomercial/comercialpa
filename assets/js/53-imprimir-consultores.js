@@ -12,6 +12,11 @@
   var _consultorEscolhido = '';
   var _turmaMesEscolhida = '';   /* id da turma escolhida na opção "Turma do mês vigente" */
   var _sessoesAbertas = new Set(['escopo','status','periodo','executivos']);
+  /* Escopo de dados — controla DE ONDE vem a lista de consultores e clientes:
+     'atual'  = só da turma atualmente aberta (default · sugestão A)
+     'mes'    = todas as turmas do mês vigente
+     'todas'  = todas as turmas cadastradas (consolidado) */
+  var _escopo = 'atual';
   /* Pré-seleção sugerida — marcas com ⭐ e marcadas por default na 1ª abertura. */
   var PRE_SELECT = ['esc_todos','st_pago','st_aberto','pe_curso_atual','ex_resumo'];
   var _primeiraAbertura = true;
@@ -57,6 +62,7 @@
   ];
 
   function _esc(s){ return (window._esc ? window._esc(s) : String(s||'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})); }
+  function _escSafe(s){ return String(s||'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function _fmtR(v){ return (typeof formatVal==='function') ? formatVal(v) : ('R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})); }
 
   /* ──────────── CSS inline (one-shot) ──────────── */
@@ -72,6 +78,15 @@
       '.icv-h .x{background:transparent;border:1px solid rgba(255,255,255,.08);color:#9aa5b1;padding:4px 9px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;}',
       '.icv-h .x:hover{color:#d4a574;border-color:#d4a574;}',
       '.icv-toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(212,165,116,.04);border-bottom:1px solid rgba(255,255,255,.08);font-size:11px;}',
+      /* Seletor de escopo (sugestão B) */
+      '.icv-escopo{display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(212,165,116,.06);border-bottom:1px solid rgba(255,255,255,.08);font-size:11px;flex-wrap:wrap;}',
+      '.icv-escopo .lbl{font-size:10px;color:#9aa5b1;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}',
+      '.icv-escopo .seg{display:inline-flex;background:rgba(0,0,0,.3);border-radius:6px;padding:3px;gap:2px;}',
+      '.icv-escopo .seg button{padding:5px 11px;border:none;background:transparent;color:#9aa5b1;font-size:10px;font-weight:700;cursor:pointer;border-radius:4px;font-family:inherit;}',
+      '.icv-escopo .seg button.on{background:#d4a574;color:#0a0e1a;}',
+      '.icv-escopo .seg button:hover:not(.on){color:#d4a574;}',
+      '.icv-escopo .info{margin-left:auto;font-size:10px;color:#6b7280;}',
+      '.icv-escopo .info b{color:#d4a574;}',
       '.icv-toolbar a{color:#d4a574;cursor:pointer;font-weight:600;margin-right:10px;}',
       '.icv-toolbar a:hover{text-decoration:underline;}',
       '.icv-toolbar .cnt b{color:#d4a574;font-weight:700;}',
@@ -124,12 +139,9 @@
       '.icv-btn.primary{background:#d4a574;color:#0a0e1a;border-color:#d4a574;font-weight:800;}',
       '.icv-btn.primary:hover{background:#f0c896;}',
       '.icv-btn.primary:disabled{opacity:.5;cursor:not-allowed;}',
-      /* Split button — borda Neon outline estático (opção 04): linha dourada fixa + halo sutil */
-      '.icv-split{display:inline-flex;border:1.5px solid #d4a574;border-radius:7px;box-shadow:0 0 0 1px rgba(212,165,116,.18), 0 0 12px -2px rgba(212,165,116,.35);cursor:pointer;background:#161b22;}',
-      '.icv-split .add-btn{border:none;border-radius:5px 0 0 5px;background:#161b22;color:#d4a574;font-weight:700;padding:5.5px 14px;font-size:11px;cursor:pointer;font-family:inherit;}',
-      '.icv-split .add-btn:hover{background:rgba(212,165,116,.10);}',
-      '.icv-split .icv-split-drop{border:none;border-radius:0 5px 5px 0;border-left:1px solid rgba(212,165,116,.30);padding:5.5px 9px;background:#161b22;color:#d4a574;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;}',
-      '.icv-split .icv-split-drop:hover{background:rgba(212,165,116,.10);}'
+      /* Botão Imprimir — borda Neon outline estático (opção 04): linha dourada + halo sutil. */
+      '.icv-split{display:inline-flex;align-items:center;gap:5px;border:1.5px solid #d4a574;border-radius:7px;box-shadow:0 0 0 1px rgba(212,165,116,.18), 0 0 12px -2px rgba(212,165,116,.35);background:#161b22;color:#d4a574;font-weight:700;padding:5.5px 14px;font-size:11px;cursor:pointer;font-family:inherit;transition:background .12s, box-shadow .12s;}',
+      '.icv-split:hover{background:rgba(212,165,116,.10);box-shadow:0 0 0 1px rgba(212,165,116,.30), 0 0 18px -2px rgba(212,165,116,.50);}'
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -170,7 +182,8 @@
       PRE_SELECT.forEach(function(id){ _selecionadas.add(id); });
       _primeiraAbertura = false;
     }
-    var consultores = _listaConsultores();
+    /* Dropdown "Consultor selecionado" usa lista DO ESCOPO atual (sugestão A+B) */
+    var consultores = _consultoresDoEscopo();
     var sessoesHtml = SESSOES.map(function(sec){
       var optsHtml = sec.opts.map(function(o){
         var sel = _selecionadas.has(o.id);
@@ -225,6 +238,15 @@
       +       '<div class="sub">'+(window._turmaAtiva && window._turmaAtiva.nome ? '📚 Curso atual: <b style="color:#d4a574;">'+_esc(window._turmaAtiva.nome)+(window._turmaAtiva.codigo?' · '+_esc(window._turmaAtiva.codigo):'')+'</b> · ' : '')+'Marque as opções desejadas em uma ou mais sessões.</div>'
       +     '</div>'
       +     '<button class="x" id="icvFechar">✕</button>'
+      +   '</div>'
+      +   '<div class="icv-escopo">'
+      +     '<span class="lbl">Escopo dos dados:</span>'
+      +     '<div class="seg">'
+      +       '<button data-esc="atual" class="'+(_escopo==='atual'?'on':'')+'">📚 Esta turma</button>'
+      +       '<button data-esc="mes" class="'+(_escopo==='mes'?'on':'')+'">📅 Mês vigente</button>'
+      +       '<button data-esc="todas" class="'+(_escopo==='todas'?'on':'')+'">🗂 Todas as turmas</button>'
+      +     '</div>'
+      +     '<div class="info" id="icvEscInfo"></div>'
       +   '</div>'
       +   '<div class="icv-toolbar">'
       +     '<div><a id="icvSelTudo">☑ Selecionar todas</a><a id="icvLimpar">☐ Limpar seleção</a></div>'
@@ -290,6 +312,14 @@
       }
     });
 
+    /* Seletor de escopo */
+    ov.querySelectorAll('[data-esc]').forEach(function(b){
+      b.addEventListener('click', function(){
+        _escopo = b.dataset.esc;
+        _rerender();
+      });
+    });
+
     /* Selecionar todas / limpar */
     ov.querySelector('#icvSelTudo').addEventListener('click', function(){
       SESSOES.forEach(function(sec){ sec.opts.forEach(function(o){ _selecionadas.add(o.id); }); });
@@ -321,6 +351,13 @@
     var pvC = ov.querySelector('#icvPvC');
     var pvM = ov.querySelector('#icvPvMeta');
     if(!pvC) return;
+    /* Atualiza info do escopo (qtd de clientes + consultores no escopo atual) */
+    var info = ov.querySelector('#icvEscInfo');
+    if(info){
+      var ce = _clientesDoEscopo().length;
+      var cs = _consultoresDoEscopo().length;
+      info.innerHTML = '<b>'+ce+'</b> cliente(s) · <b>'+cs+'</b> consultor(es) · '+_escSafe(_escopoLabel());
+    }
     if(!_selecionadas.size){
       pvC.innerHTML = '<div class="pv-empty"><span class="ic">📄</span>Marque uma ou mais opções nas sessões à esquerda para visualizar o relatório aqui.</div>'+_diagBoxHtml();
       if(pvM) pvM.textContent = '—';
@@ -337,8 +374,9 @@
   /* Diagnóstico das fontes de dados — sempre visível no fim do preview */
   function _diagBoxHtml(){
     var qData = _coletarClientes().length;
-    var qTodas = _coletarClientesTodasTurmas().length;
-    var qCons = _listaConsultores().length;
+    var qTodas = _clientesDoEscopo().length;
+    var qCons = _consultoresDoEscopo().length;
+    var qConsGlobal = _listaConsultores().length;
     var todasT = _listarTodasTurmas();
     var qTurmas = todasT.length;
     var qTurmasMes = _turmasDoMesVigente().length;
@@ -358,7 +396,7 @@
       + '• Firebase (turmas): '+fbStatus+'<br>'
       + '• Turma ativa: <b>'+_esc(turmaAtiva)+'</b> · clientes nela: <b>'+qData+'</b><br>'
       + '• Clientes consolidados (todas turmas): <b>'+qTodas+'</b><br>'
-      + '• Consultores identificados: <b>'+qCons+'</b><br>'
+      + '• Consultores no escopo atual: <b>'+qCons+'</b> · global: <b>'+qConsGlobal+'</b><br>'
       + '• Turmas encontradas: <b>'+qTurmas+'</b> · no mês vigente ('+ym+'): <b>'+qTurmasMes+'</b><br>'
       + '• Metas mensais (npGoals): <b>'+qGoals+'</b>'
       + (qTurmas ? '<br><br><b style="color:#d4a574;">📋 Turmas detectadas</b><ul style="margin:4px 0 0;padding-left:16px;font-size:9px;">'+listaT+'</ul>' : '<br><br><span style="color:#fbbf24;">⚠ Aguarde o Firebase responder ou verifique sua conexão.</span>')
@@ -386,47 +424,75 @@
     if(!Array.isArray(d)) d = [];
     return d.filter(function(x){ return x && x.cliente; });
   }
-  /* Agrupa por consultor — varre TODAS as turmas (não só a ativa).
+  /* Agrupa por consultor — respeita o escopo selecionado (atual/mês/todas).
      Marca cada cliente com a turma de origem (_turmaNome) pra rastreio. */
   function _porConsultor(){
     var map = {};
-    function _add(lista, turmaNome){
-      lista.forEach(function(c){
-        if(!c || !c.cliente) return;
-        var k = c.consultor || '(Sem consultor)';
-        if(!map[k]) map[k] = [];
-        /* Evita duplicar se mesmo cliente já está (mesmo nome+treinamento+valor) */
-        var jaTem = map[k].some(function(x){
-          return x.cliente === c.cliente && (x.treinamento||'') === (c.treinamento||'') && +(x.valor||0) === +(c.valor||0);
-        });
-        if(!jaTem){
-          var copia = Object.assign({}, c);
-          if(turmaNome && !copia._turmaNome) copia._turmaNome = turmaNome;
-          map[k].push(copia);
-        }
-      });
-    }
-    /* Primeiro: clientes da turma ativa (data atual) */
-    _add(_coletarClientes(), window._turmaAtiva && window._turmaAtiva.nome || '');
-    /* Depois: clientes de TODAS as outras turmas (varredura) */
-    try {
-      _listarTodasTurmas().forEach(function(t){
-        if(!t || !t.id) return;
-        if(window._turmaAtiva && t.id === window._turmaAtiva.id) return;
-        _add(_clientesDeTurma(t.id), t.nome || t.codigo || t.id);
-      });
-    } catch(e){}
+    _clientesDoEscopo().forEach(function(c){
+      if(!c || !c.cliente) return;
+      var k = c.consultor || '(Sem consultor)';
+      if(!map[k]) map[k] = [];
+      map[k].push(c);
+    });
     return map;
   }
-  function _coletarClientesTodasTurmas(){
+  /* Fonte de clientes baseada no escopo selecionado pelo usuário. */
+  function _clientesDoEscopo(){
+    if(_escopo === 'atual'){
+      /* Só clientes da turma ativa */
+      return _coletarClientes();
+    }
+    if(_escopo === 'mes'){
+      /* Todas as turmas do mês vigente */
+      var turmas = _turmasDoMesVigente();
+      var todos = [];
+      var seen = {};
+      turmas.forEach(function(t){
+        if(!t || !t.id) return;
+        var nome = t.nome || t.codigo || t.id;
+        _clientesDeTurma(t.id).forEach(function(c){
+          if(!c || !c.cliente) return;
+          var k = (c.cliente||'')+'|'+(c.consultor||'')+'|'+(c.treinamento||'')+'|'+(+c.valor||0);
+          if(seen[k]) return; seen[k] = 1;
+          var cp = Object.assign({}, c);
+          if(!cp._turmaNome) cp._turmaNome = nome;
+          todos.push(cp);
+        });
+      });
+      return todos;
+    }
+    /* 'todas' */
+    return _consolidarTodasTurmasClientes();
+  }
+  /* Lista de consultores baseada no escopo (deduz a partir dos clientes) */
+  function _consultoresDoEscopo(){
+    var set = new Map();
+    _clientesDoEscopo().forEach(function(c){
+      if(!c || !c.consultor) return;
+      var s = String(c.consultor).trim(); if(!s) return;
+      var k = s.toUpperCase();
+      if(!set.has(k)) set.set(k, s);
+    });
+    return Array.from(set.values()).sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
+  }
+  function _escopoLabel(){
+    if(_escopo === 'atual'){
+      var t = window._turmaAtiva;
+      return 'desta turma' + (t && (t.nome||t.codigo) ? ' · '+(t.nome||t.codigo) : '');
+    }
+    if(_escopo === 'mes') return 'do mês vigente ('+_mesAtualYM()+')';
+    return 'consolidado (todas as turmas)';
+  }
+
+  function _consolidarTodasTurmasClientes(){
     var todos = [];
-    _add_seen = {}; /* dedup local */
+    var seen = {};
     function _addLista(lst, tNome){
       (lst||[]).forEach(function(c){
         if(!c || !c.cliente) return;
         var k = (c.cliente||'')+'|'+(c.consultor||'')+'|'+(c.treinamento||'')+'|'+(+c.valor||0);
-        if(_add_seen[k]) return;
-        _add_seen[k] = 1;
+        if(seen[k]) return;
+        seen[k] = 1;
         var copia = Object.assign({}, c);
         if(tNome && !copia._turmaNome) copia._turmaNome = tNome;
         todos.push(copia);
@@ -442,7 +508,6 @@
     } catch(e){}
     return todos;
   }
-  var _add_seen = {};
   function _statsConsultor(clientes){
     var pago = 0, aberto = 0, entrada = 0, neg = 0, total = 0;
     clientes.forEach(function(c){
@@ -572,7 +637,7 @@
   }
   function _sec_escAbaixo(){
     var goals = window._npGoals || {};
-    var consultores = _listaConsultores();
+    var consultores = _consultoresDoEscopo();
     var abaixo = [];
     consultores.forEach(function(n){
       var grupos = _porConsultor();
@@ -597,7 +662,7 @@
 
   /* ── STATUS ── (consolida TODAS as turmas, não só a atual) */
   function _sec_stTodos(){
-    var lst = _coletarClientesTodasTurmas();
+    var lst = _clientesDoEscopo();
     var html = '<h2>📋 Todos os clientes ('+lst.length+')</h2>'
       + '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;"><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;text-align:left;">Consultor</th><th style="padding:5px 8px;text-align:left;">Treinamento</th><th style="padding:5px 8px;text-align:right;">Valor</th><th style="padding:5px 8px;">Status</th></tr></thead><tbody>';
     var txt = '📋 TODOS OS CLIENTES ('+lst.length+')\n';
@@ -609,7 +674,7 @@
     return { titulo:'📋 Todos os clientes', html:html, txt:txt };
   }
   function _sec_stFiltro(status, titulo, lblTxt){
-    var lst = _coletarClientesTodasTurmas().filter(function(c){ return String(c.status||'').toLowerCase() === status; });
+    var lst = _clientesDoEscopo().filter(function(c){ return String(c.status||'').toLowerCase() === status; });
     var sum = lst.reduce(function(a,c){ return a + +(c.valor||0); }, 0);
     var html = '<h2>'+_esc(titulo)+' ('+lst.length+')</h2>'
       + '<p style="color:#9aa5b1;">Total: <b style="color:#d4a574;">'+_fmtR(sum)+'</b></p>'
@@ -623,7 +688,7 @@
     return { titulo:titulo, html:html, txt:txt };
   }
   function _sec_stEntrada(){
-    var lst = _coletarClientesTodasTurmas().filter(function(c){ return +(c.entrada||0) > 0; });
+    var lst = _clientesDoEscopo().filter(function(c){ return +(c.entrada||0) > 0; });
     var sum = lst.reduce(function(a,c){ return a + +(c.entrada||0); }, 0);
     var html = '<h2>💵 Clientes com ENTRADA ('+lst.length+')</h2>'
       + '<p style="color:#9aa5b1;">Total entradas: <b style="color:#34d399;">'+_fmtR(sum)+'</b></p>'
@@ -640,7 +705,7 @@
   /* ── TREINAMENTO ── (consolida TODAS as turmas) */
   function _sec_trAgrupado(){
     var grupos = {};
-    _coletarClientesTodasTurmas().forEach(function(c){
+    _clientesDoEscopo().forEach(function(c){
       var k = c.treinamento || '(Sem treinamento)';
       if(!grupos[k]) grupos[k] = [];
       grupos[k].push(c);
@@ -662,7 +727,7 @@
     return { titulo:'📚 Por treinamento', html:html, txt:txt };
   }
   function _sec_trTop5(){
-    var top = _coletarClientesTodasTurmas().slice().sort(function(a,b){ return +(b.valor||0) - +(a.valor||0); }).slice(0,5);
+    var top = _clientesDoEscopo().slice().sort(function(a,b){ return +(b.valor||0) - +(a.valor||0); }).slice(0,5);
     var html = '<h2>💎 Top 5 maiores vendas</h2><table style="width:100%;font-size:12px;">';
     var txt = '💎 TOP 5 MAIORES VENDAS\n';
     top.forEach(function(c,i){
@@ -674,7 +739,7 @@
   }
   function _sec_trNovos(){
     var html = '<h2>✨ Clientes novos do mês</h2><p style="color:#9aa5b1;">Lista derivada das vendas adicionadas neste período.</p>';
-    var lst = _coletarClientesTodasTurmas().slice(0, 30);
+    var lst = _clientesDoEscopo().slice(0, 30);
     html += '<ul style="font-size:11px;">';
     var txt = '✨ NOVOS DO MÊS\n';
     lst.forEach(function(c){
@@ -887,7 +952,7 @@
     return { titulo:'📚 Curso atual', html:html, txt:txt };
   }
   function _sec_peMes(){
-    var lst = _coletarClientesTodasTurmas();
+    var lst = _clientesDoEscopo();
     var s = _statsConsultor(lst);
     var html = '<h2>📅 Mês atual completo</h2>'
       + '<table style="width:100%;font-size:12px;">'
