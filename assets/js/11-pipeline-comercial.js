@@ -1009,6 +1009,16 @@
         if(!rankingSem.length){
           chartConsSem.innerHTML = '<div class="np-empty">Nenhum dado semanal. Configure metas via 📅 Semanal no card do consultor.</div>';
         } else {
+          /* Estrutura IDÊNTICA ao card Mensal: barra segmentada 3 tiers,
+             coluna % com tier ativo, 3 colunas Falta (Min/Bas/Mas). */
+          function _faltaCellSem(meta, pago){
+            if(!meta || meta<=0) return '<td class="fpc-falta muted">—</td>';
+            var diff = meta - pago;
+            if(diff<=0) return '<td class="fpc-falta txt-green">✓ batida</td>';
+            return '<td class="fpc-falta txt-amber">'+_fmtR(diff)+'</td>';
+          }
+          var maxVSem = Math.max.apply(null, rankingSem.map(function(r){return r.pago;}));
+          if(!maxVSem) maxVSem = 1;
           var htmlSem = '<table class="fpc-tbl">'
             +'<thead><tr>'
             +'<th class="c">#</th>'
@@ -1016,50 +1026,59 @@
             +'<th class="c">Progresso</th>'
             +'<th class="c">Faturado</th>'
             +'<th class="c">%</th>'
-            +'<th class="c">Meta min.</th>'
-            +'<th class="c">Falta</th>'
-            +'<th class="c">Ritmo</th>'
+            +'<th class="c">Meta</th>'
+            +'<th class="c">Falta Mínima</th>'
+            +'<th class="c">Falta Básica</th>'
+            +'<th class="c">Falta Master</th>'
             +'</tr></thead><tbody>';
 
           rankingSem.forEach(function(r,i){
+            var cor = COR[i % COR.length];
             var medal = medalsSem[i] || '';
-            var temMeta = r.metaMin > 0;
-            var pct = temMeta ? Math.round(r.pago/r.metaMin*100) : null;
-            var pctClass = !temMeta ? 'muted' : pct >= 100 ? 'txt-green' : pct >= 60 ? 'txt-amber' : 'txt-red';
-            var pctDisp = !temMeta ? '—' : (pct + '%');
-            /* Barra simples (1 tier) */
-            var progHtml = '';
+            var metaMin = r.metaMin, metaBas = r.metaBas, metaMas = r.metaMas;
+            /* Próximo tier (alvo dinâmico) — usa o helper já existente */
+            var goalSem = { metaMinima:metaMin, metaBasica:metaBas, metaMaster:metaMas };
+            var px = (typeof _npProxTier === 'function') ? _npProxTier(goalSem, r.pago) : null;
+            var metaRef = (px && px.meta) || 0;
+            var tierLbl = px ? String(px.label||'').replace(/^[^A-Za-zÀ-ú]+/,'').trim() : '';
+            var temMeta = metaRef > 0;
+            var pctMeta = temMeta ? Math.round((r.pago / metaRef) * 100) : null;
+            var pctClass = !temMeta ? 'muted' : pctMeta >= 100 ? 'txt-green' : pctMeta >= 70 ? 'txt-amber' : 'txt-red';
+            var pctDisp = !temMeta ? '—' : (pctMeta + '%');
+
+            /* Barra segmentada igual ao mensal */
+            var fMin = metaMin > 0 ? Math.min(100, Math.round(r.pago/metaMin*100)) : 0;
+            var fBas = (metaBas > 0 && metaBas > metaMin) ? Math.max(0, Math.min(100, Math.round((r.pago-metaMin)/(metaBas-metaMin)*100))) : 0;
+            var fMas = (metaMas > 0 && metaMas > metaBas) ? Math.max(0, Math.min(100, Math.round((r.pago-metaBas)/(metaMas-metaBas)*100))) : 0;
+            var hasMin = metaMin > 0, hasBas = metaBas > 0, hasMas = metaMas > 0;
+
+            var progHtml;
             if(temMeta){
-              var pctBar = Math.min(100, pct);
-              var corBar = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--accent)' : 'var(--amber)';
-              progHtml = '<div class="fpc-bar"><div class="fpc-bar-fill" style="width:'+pctBar+'%;background:'+corBar+';"></div></div>';
+              progHtml = '<div class="fpc-bar-tiers">'
+                + '<div class="fpc-seg minima"><div class="fpc-seg-fill" style="width:'+(hasMin?fMin:0)+'%"></div></div>'
+                + '<div class="fpc-seg basica"><div class="fpc-seg-fill" style="width:'+(hasBas?fBas:0)+'%"></div></div>'
+                + '<div class="fpc-seg master"><div class="fpc-seg-fill" style="width:'+(hasMas?fMas:0)+'%"></div></div>'
+              + '</div>'
+              + '<div class="fpc-seg-labels">'
+                + '<div class="fpc-seg-l'+(fMin>=100?' batida':'')+'">Mín</div>'
+                + '<div class="fpc-seg-l'+(fBas>=100?' batida':'')+'">Bás</div>'
+                + '<div class="fpc-seg-l'+(fMas>=100?' batida':'')+'">Mas</div>'
+              + '</div>';
             } else {
-              progHtml = '<div class="fpc-bar"><div class="fpc-bar-fill" style="width:0%;background:var(--muted);"></div></div>';
+              var barPct = Math.round(r.pago/maxVSem*100);
+              progHtml = '<div class="fpc-bar"><div class="fpc-bar-fill" style="width:'+barPct+'%;background:'+cor+';"></div></div>';
             }
-            /* Falta + ritmo */
-            var faltaCell = '<td class="fpc-falta muted">—</td>';
-            var ritmoCell = '<td class="fpc-falta muted">—</td>';
-            if(temMeta){
-              if(r.pago >= r.metaMin){
-                faltaCell = '<td class="fpc-falta txt-green">✓ bateu</td>';
-                ritmoCell = '<td class="fpc-falta txt-green">+'+_fmtR(r.pago-r.metaMin)+'</td>';
-              } else if(encerradaSem || dUteisSem === 0){
-                faltaCell = '<td class="fpc-falta txt-red">'+_fmtR(r.metaMin-r.pago)+'</td>';
-                ritmoCell = '<td class="fpc-falta txt-red">encerrada</td>';
-              } else {
-                var falta = r.metaMin - r.pago;
-                faltaCell = '<td class="fpc-falta txt-amber">'+_fmtR(falta)+'</td>';
-                ritmoCell = '<td class="fpc-falta txt-amber">'+_fmtR(Math.round(falta/dUteisSem))+'/dia × '+dUteisSem+'d</td>';
-              }
-            }
+
             htmlSem += '<tr class="fpc-row">'
               +'<td class="fpc-rk">'+(i+1)+'</td>'
               +'<td class="fpc-nome">'+(medal?'<span class="fpc-medal">'+medal+'</span> ':'')+_esc(r.nome)+'</td>'
               +'<td class="fpc-prog">'+progHtml+'</td>'
               +'<td class="fpc-val txt-green">'+_fmtR(r.pago)+'</td>'
-              +'<td class="fpc-pct '+pctClass+'">'+pctDisp+'</td>'
-              +'<td class="fpc-meta">'+(temMeta?_fmtR(r.metaMin):'sem meta')+'</td>'
-              + faltaCell + ritmoCell
+              +'<td class="fpc-pct '+pctClass+'">'+pctDisp+(tierLbl?'<div class="fpc-tier">'+tierLbl+'</div>':'')+'</td>'
+              +'<td class="fpc-meta">'+(temMeta?_fmtR(metaRef):'sem meta')+'</td>'
+              + _faltaCellSem(metaMin, r.pago)
+              + _faltaCellSem(metaBas, r.pago)
+              + _faltaCellSem(metaMas, r.pago)
               +'</tr>';
           });
           htmlSem += '</tbody></table>';
