@@ -2030,139 +2030,146 @@
     return _npMoneyMask(v);
   };
 
-  /* ── Modal META SEMANAL (preenchimento manual por semana) ─────── */
+  /* ── Modal META SEMANAL (batch · padrão "Configurar metas" mensal) ──── */
+  var _npSemModalSel = 1;   /* semana selecionada no modal (1..N) */
+  var _npSemModalPre = '';  /* consultor pré-marcado ao abrir */
   window.npAbrirModalSemanal = function(nome){
-    if(!nome) return;
-    var goal = _npGoals[nome] || {};
-    var metaMin = +(goal.metaMinima || goal.metaValor || 0);
-    var metaBas = +(goal.metaBasica || metaMin);
-    var metaMas = +(goal.metaMaster || metaBas);
+    _npSemModalPre = nome || '';
     var semanas = _semanasDoMes(_npAno, _npMes);
+    if(!semanas.length) return;
     var semAtual = _semanaAtual();
-    var todasVendas = [].concat(_npVendasTurma||[], Object.values(_npVendasAvulso||{}));
-    var dadosSem = (_npGoalsSem && _npGoalsSem[nome]) || {};
+    _npSemModalSel = semAtual || semanas[0].num;
+
+    /* Fonte de consultores: usuarios cadastrados em GU (mesma do _npRenderMetasV2) */
+    var _usuariosGU = (window._npUsuarios && typeof window._npUsuarios==='object') ? window._npUsuarios : {};
+    var consList = [];
+    Object.values(_usuariosGU).forEach(function(u){
+      if(u && u.perfil==='consultor' && u.nome) consList.push(u.nome);
+    });
+    if(!consList.length) consList = (_npConsultores||[]).slice();
+    consList.sort(function(a,b){ return String(a).localeCompare(String(b),'pt-BR'); });
 
     /* Inject CSS one-shot */
     if(!document.getElementById('npSemModalCss')){
       var st = document.createElement('style'); st.id = 'npSemModalCss';
       st.textContent = ''
         + '.np-sem-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px);}'
-        + '.np-sem-modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:820px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 30px 60px -15px rgba(0,0,0,.7);}'
+        + '.np-sem-modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:780px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 30px 60px -15px rgba(0,0,0,.7);}'
         + '.np-sem-h{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px;border-bottom:1px solid var(--border2);}'
         + '.np-sem-tit{font-size:15px;font-weight:700;color:var(--text);}'
         + '.np-sem-sub{font-size:11px;color:var(--muted);margin-top:2px;}'
         + '.np-sem-x{background:transparent;border:1px solid var(--border2);color:var(--muted);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;}'
         + '.np-sem-x:hover{color:var(--accent);border-color:var(--accent);}'
-        + '.np-sem-b{padding:14px 16px;overflow-y:auto;flex:1;}'
-        + '.np-sem-pace{background:rgba(212,165,116,.08);border:1px dashed rgba(212,165,116,.25);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--muted);margin-bottom:14px;display:flex;gap:10px;align-items:center;}'
-        + '.np-sem-pace .lbl{background:var(--accent);color:#0a0e1a;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:800;flex-shrink:0;}'
-        + '.np-sem-pace b{color:var(--accent);}'
-        + '.np-sem-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11px;}'
-        + '.np-sem-tbl th{background:rgba(255,255,255,.04);color:var(--muted);padding:8px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;text-align:right;border-bottom:1px solid var(--border2);}'
-        + '.np-sem-tbl th:first-child{text-align:left;}'
-        + '.np-sem-tbl td{padding:7px 10px;border-bottom:1px solid var(--border2);}'
-        + '.np-sem-tbl tr.atual{background:rgba(212,165,116,.08);}'
-        + '.np-sem-tbl tr.atual td:first-child{color:var(--accent);font-weight:700;}'
-        + '.np-sem-tbl tr.ref td{color:var(--muted);}'
-        + '.np-sem-tbl tr.totals{background:rgba(255,255,255,.02);font-weight:700;}'
-        + '.np-sem-tbl tr.totals td{border-top:1px solid var(--border2);padding-top:9px;}'
-        + '.np-sem-tbl .lbl{color:var(--text);font-weight:600;}'
-        + '.np-sem-tbl .lbl small{color:var(--muted);font-weight:400;font-size:10px;display:block;margin-top:1px;}'
-        + '.np-sem-tbl input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border2);color:var(--text);padding:5px 8px;border-radius:5px;font-size:11px;font-family:inherit;text-align:right;}'
-        + '.np-sem-tbl input:focus{outline:none;border-color:var(--accent);}'
-        + '.np-sem-tbl .ro{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;}'
-        + '.np-sem-tbl .v{color:var(--accent);font-weight:700;text-align:right;font-variant-numeric:tabular-nums;}'
+        + '.np-sem-b{padding:14px 16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px;}'
+        /* Stepper */
+        + '.np-sem-stepper{display:flex;gap:5px;flex-wrap:wrap;}'
+        + '.np-sem-step{flex:1;min-width:90px;padding:8px 6px;border:1px solid var(--border2);border-radius:7px;cursor:pointer;background:rgba(255,255,255,.02);text-align:center;font-size:10px;font-weight:600;color:var(--muted);font-family:inherit;transition:all .12s;line-height:1.3;}'
+        + '.np-sem-step:hover{border-color:var(--accent);color:var(--accent);}'
+        + '.np-sem-step.curr{background:linear-gradient(135deg,#d4a574,#b88a5a);color:#0a0e1a;border-color:#d4a574;box-shadow:0 3px 10px rgba(212,165,116,.30);}'
+        + '.np-sem-step.atual::after{content:" · ATUAL";font-size:8px;display:block;opacity:.8;}'
+        + '.np-sem-step small{display:block;font-size:9px;font-weight:500;opacity:.75;margin-top:2px;}'
+        /* Batch panel */
+        + '.np-sem-batch{background:rgba(212,165,116,.05);border:1px solid rgba(212,165,116,.18);border-radius:10px;padding:12px;}'
+        + '.np-sem-batch-h{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);margin-bottom:10px;}'
+        + '.np-sem-batch-h label{display:flex;align-items:center;gap:7px;cursor:pointer;font-weight:600;color:var(--text);}'
+        + '.np-sem-batch-h label input{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;}'
+        + '.np-sem-batch-h .cnt{color:var(--accent);font-weight:700;}'
+        + '.np-sem-batch-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}'
+        + '.np-sem-batch-row .fld{display:flex;flex-direction:column;gap:4px;}'
+        + '.np-sem-batch-row .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;gap:4px;align-items:center;}'
+        + '.np-sem-batch-row .lbl.min{color:#ffe000;} .np-sem-batch-row .lbl.bas{color:#ff5252;} .np-sem-batch-row .lbl.mas{color:#c8f05a;}'
+        + '.np-sem-batch-row input{background:rgba(0,0,0,.3);border:1px solid var(--border2);color:var(--text);padding:6px 9px;border-radius:5px;font-size:11px;font-family:inherit;text-align:left;}'
+        + '.np-sem-batch-row input:focus{outline:none;border-color:var(--accent);}'
+        + '.np-sem-batch-acts{display:flex;gap:6px;}'
+        + '.np-sem-batch-btn{font-size:10px;padding:7px 12px;border-radius:5px;cursor:pointer;font-family:inherit;border:1px solid var(--border2);background:transparent;color:var(--text);font-weight:600;}'
+        + '.np-sem-batch-btn:hover{border-color:var(--accent);color:var(--accent);}'
+        + '.np-sem-batch-btn.primary{background:var(--accent);color:#0a0e1a;border-color:var(--accent);}'
+        + '.np-sem-batch-btn.primary:hover{background:#f0c896;}'
+        + '.np-sem-batch-btn.primary:disabled{opacity:.5;cursor:not-allowed;}'
+        /* Lista de consultores */
+        + '.np-sem-list{display:flex;flex-direction:column;gap:5px;}'
+        + '.np-sem-cons-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border2);border-radius:7px;background:rgba(255,255,255,.02);font-size:11px;}'
+        + '.np-sem-cons-row:hover{background:rgba(212,165,116,.04);border-color:rgba(212,165,116,.20);}'
+        + '.np-sem-cons-row.has{border-color:rgba(255,224,0,.30);}'
+        + '.np-sem-cons-row.pre{background:rgba(212,165,116,.10);border-color:rgba(212,165,116,.35);}'
+        + '.np-sem-cons-num{width:18px;text-align:center;font-size:10px;color:var(--muted);font-weight:700;}'
+        + '.np-sem-cons-row input[type=checkbox]{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}'
+        + '.np-sem-cons-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}'
+        + '.np-sem-cons-nome{flex:1;font-weight:600;color:var(--text);}'
+        + '.np-sem-cons-tag{font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,224,0,.15);color:#ffe000;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}'
+        + '.np-sem-cons-vals{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;min-width:160px;}'
+        + '.np-sem-cons-vals b{color:var(--accent);}'
+        /* Footer */
         + '.np-sem-f{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border2);gap:10px;}'
         + '.np-sem-f .info{font-size:10px;color:var(--muted);}'
         + '.np-sem-f .actions{display:flex;gap:8px;}'
         + '.np-sem-btn{font-size:11px;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:inherit;border:1px solid var(--border2);background:transparent;color:var(--text);font-weight:600;}'
-        + '.np-sem-btn:hover{border-color:var(--accent);color:var(--accent);}'
-        + '.np-sem-btn.primary{background:var(--accent);color:#0a0e1a;border-color:var(--accent);}'
-        + '.np-sem-btn.primary:hover{background:#f0c896;}';
+        + '.np-sem-btn:hover{border-color:var(--accent);color:var(--accent);}';
       document.head.appendChild(st);
     }
 
-    /* Pace da semana atual */
-    var paceHtml = '';
-    if(semAtual){
-      var jAtual = semanas.find(function(s){return s.num===semAtual;});
-      if(jAtual){
-        var mAtual = +(((dadosSem[semAtual])||{}).min || 0);
-        var fAtual = _faturadoNaSemana(todasVendas, nome, jAtual);
-        var dias = _diasUteisRestantes(jAtual);
-        if(mAtual){
-          var falta = Math.max(0, mAtual - fAtual);
-          var ritmo = dias>0 ? Math.round(falta/dias) : 0;
-          if(fAtual >= mAtual){
-            paceHtml = '<div class="np-sem-pace"><span class="lbl">S'+semAtual+'</span><div>Faturou <b>'+_fmtR(fAtual)+'</b> de <b>'+_fmtR(mAtual)+'</b> · <b>Bateu +'+_fmtR(fAtual-mAtual)+'</b> 🏆</div></div>';
-          } else if(dias===0){
-            paceHtml = '<div class="np-sem-pace"><span class="lbl">S'+semAtual+'</span><div>Faturou <b>'+_fmtR(fAtual)+'</b> de <b>'+_fmtR(mAtual)+'</b> · Semana encerrada</div></div>';
-          } else {
-            paceHtml = '<div class="np-sem-pace"><span class="lbl">S'+semAtual+'</span><div>Faturou <b>'+_fmtR(fAtual)+'</b> de <b>'+_fmtR(mAtual)+'</b> · Faltam <b>'+_fmtR(falta)+'</b> em <b>'+dias+' dias úteis</b> ('+_fmtR(ritmo)+'/dia)</div></div>';
-          }
-        } else {
-          paceHtml = '<div class="np-sem-pace"><span class="lbl">S'+semAtual+'</span><div>Sem meta semanal configurada — preencha abaixo para ativar o indicador.</div></div>';
-        }
-      }
-    }
-
-    /* Linhas da tabela */
-    var refRow = '<tr class="ref">'
-      + '<td class="lbl">Por mês <small>referência (vem das metas mensais)</small></td>'
-      + '<td class="ro">'+_fmtR(metaMin)+'</td>'
-      + '<td class="ro">'+_fmtR(metaBas)+'</td>'
-      + '<td class="ro">'+_fmtR(metaMas)+'</td>'
-      + '<td class="v">'+_fmtR(_npPorConsultor(todasVendas,'','pago').find(function(x){return x.nome===nome;})?.pago || 0)+'</td>'
-      + '</tr>';
-
-    var totMin=0, totBas=0, totMas=0, totFat=0;
-    var rowsSem = semanas.map(function(s){
-      var ms = dadosSem[s.num] || {};
-      var fat = _faturadoNaSemana(todasVendas, nome, s);
-      var atual = (s.num === semAtual) ? ' atual' : '';
-      var marker = (s.num === semAtual) ? '▶ ' : '';
-      totMin += +(ms.min||0); totBas += +(ms.bas||0); totMas += +(ms.mas||0); totFat += fat;
-      return '<tr class="'+atual.trim()+'">'
-        + '<td class="lbl">'+marker+'Semana '+String(s.num).padStart(2,'0')+' <small>'+s.iniLabel+' a '+s.fimLabel+(s.num===semAtual?' · ATUAL':'')+'</small></td>'
-        + '<td><input data-sem-n="'+s.num+'" data-sem-k="min" value="'+(ms.min?_npMoneyMask(String((+ms.min).toFixed(2)).replace('.','')):'')+'" oninput="this.value=npMoneyMask(this.value)"></td>'
-        + '<td><input data-sem-n="'+s.num+'" data-sem-k="bas" value="'+(ms.bas?_npMoneyMask(String((+ms.bas).toFixed(2)).replace('.','')):'')+'" oninput="this.value=npMoneyMask(this.value)"></td>'
-        + '<td><input data-sem-n="'+s.num+'" data-sem-k="mas" value="'+(ms.mas?_npMoneyMask(String((+ms.mas).toFixed(2)).replace('.','')):'')+'" oninput="this.value=npMoneyMask(this.value)"></td>'
-        + '<td class="v">'+_fmtR(fat)+'</td>'
-        + '</tr>';
+    /* Stepper */
+    var stepperHtml = semanas.map(function(s){
+      return '<button class="np-sem-step'+(s.num===_npSemModalSel?' curr':'')+(s.num===semAtual?' atual':'')+'" data-step-n="'+s.num+'">'
+        +'S'+String(s.num).padStart(2,'0')
+        +'<small>'+s.iniLabel+' a '+s.fimLabel+'</small>'
+        +'</button>';
     }).join('');
 
-    var totalsRow = '<tr class="totals">'
-      + '<td>Σ Soma das semanas</td>'
-      + '<td class="ro">'+_fmtR(totMin)+'</td>'
-      + '<td class="ro">'+_fmtR(totBas)+'</td>'
-      + '<td class="ro">'+_fmtR(totMas)+'</td>'
-      + '<td class="v">'+_fmtR(totFat)+'</td>'
-      + '</tr>';
+    /* Lista de consultores — mostra valores da semana selecionada se já configurados */
+    function _consRowHtml(nome, i){
+      var ms = (((_npGoalsSem && _npGoalsSem[nome])||{})[_npSemModalSel]) || {};
+      var has = !!(ms.min || ms.bas || ms.mas);
+      var corC = COR[i % COR.length];
+      var ini = String(nome||'?').charAt(0).toUpperCase();
+      var vals = has ? '<b>Mín:</b> '+_fmtR(ms.min||0)+' · <b>Bás:</b> '+_fmtR(ms.bas||0)+' · <b>Mas:</b> '+_fmtR(ms.mas||0) : '<span style="opacity:.5;">—</span>';
+      var preMark = (_npSemModalPre && String(_npSemModalPre).toUpperCase().trim() === String(nome).toUpperCase().trim());
+      var rowCls = (has?'has':'') + (preMark?' pre':'');
+      var nomeEsc = nome.replace(/"/g,'&quot;');
+      return '<label class="np-sem-cons-row '+rowCls+'" data-cons="'+nomeEsc+'">'
+        + '<span class="np-sem-cons-num">'+(i+1)+'</span>'
+        + '<input type="checkbox" data-sem-ck="'+nomeEsc+'" '+(preMark?'checked':'')+'>'
+        + '<span class="np-sem-cons-av" style="background:'+corC+'22;color:'+corC+';border:1.5px solid '+corC+'55;">'+ini+'</span>'
+        + '<span class="np-sem-cons-nome">'+_esc(nome)+'</span>'
+        + (has?'<span class="np-sem-cons-tag">meta definida</span>':'')
+        + '<span class="np-sem-cons-vals">'+vals+'</span>'
+        + '</label>';
+    }
+    var listaHtml = consList.map(_consRowHtml).join('');
 
-    var nomeEsc = String(nome||'').replace(/'/g, "\\'");
     var html = '<div class="np-sem-ov" id="npSemOv">'
       + '<div class="np-sem-modal">'
       +   '<div class="np-sem-h">'
       +     '<div>'
-      +       '<div class="np-sem-tit">📅 Meta semanal · '+_esc(nome)+' · '+_mesLabel()+'</div>'
-      +       '<div class="np-sem-sub">Preenchimento independente da meta mensal. Cada venda conta para semanal E mensal.</div>'
+      +       '<div class="np-sem-tit">📅 Meta semanal · '+_mesLabel()+'</div>'
+      +       '<div class="np-sem-sub">Selecione consultores, defina os valores e clique <b>Aplicar aos selecionados</b>. Vazio = mantém atual.</div>'
       +     '</div>'
       +     '<button class="np-sem-x" onclick="npFecharModalSemanal()">✕</button>'
       +   '</div>'
       +   '<div class="np-sem-b">'
-      +     paceHtml
-      +     '<table class="np-sem-tbl">'
-      +       '<thead><tr>'
-      +         '<th>SEMANA</th><th>MÍNIMA</th><th>BÁSICA</th><th>MASTER</th><th>FATURADO</th>'
-      +       '</tr></thead>'
-      +       '<tbody>'+refRow+rowsSem+totalsRow+'</tbody>'
-      +     '</table>'
+      +     '<div class="np-sem-stepper" id="npSemStepper">'+stepperHtml+'</div>'
+      +     '<div class="np-sem-batch">'
+      +       '<div class="np-sem-batch-h">'
+      +         '<label><input type="checkbox" id="npSemAllCk"> Selecionar todos</label>'
+      +         '<span class="cnt"><span id="npSemSelN">0</span> de '+consList.length+' selecionados</span>'
+      +       '</div>'
+      +       '<div class="np-sem-batch-row">'
+      +         '<div class="fld"><span class="lbl min">🥈 MÍNIMA</span><input id="npSemBatchMin" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)"></div>'
+      +         '<div class="fld"><span class="lbl bas">🥉 BÁSICA</span><input id="npSemBatchBas" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)"></div>'
+      +         '<div class="fld"><span class="lbl mas">🥇 MASTER</span><input id="npSemBatchMas" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)"></div>'
+      +       '</div>'
+      +       '<div class="np-sem-batch-acts">'
+      +         '<button class="np-sem-batch-btn primary" id="npSemAplicar" disabled>Aplicar aos selecionados</button>'
+      +         '<button class="np-sem-batch-btn" id="npSemCopiarAnt">↺ Copiar semana anterior</button>'
+      +         '<button class="np-sem-batch-btn" id="npSemCopiarMensal" title="Divide a meta mensal proporcionalmente">⥥ Da meta mensal (÷'+semanas.length+')</button>'
+      +       '</div>'
+      +     '</div>'
+      +     '<div class="np-sem-list" id="npSemList">'+listaHtml+'</div>'
       +   '</div>'
       +   '<div class="np-sem-f">'
-      +     '<div class="info">💡 Metas semanais são <b>independentes</b> da mensal. Vendas contam para ambas.</div>'
+      +     '<div class="info">💡 Mudou no Firebase ao clicar <b>Aplicar</b>. Cada venda conta para semanal E mensal.</div>'
       +     '<div class="actions">'
-      +       '<button class="np-sem-btn" onclick="npFecharModalSemanal()">Cancelar</button>'
-      +       '<button class="np-sem-btn primary" onclick="npSalvarMetasSem(\''+nomeEsc+'\')">💾 Salvar semanais</button>'
+      +       '<button class="np-sem-btn" onclick="npFecharModalSemanal()">Fechar</button>'
       +     '</div>'
       +   '</div>'
       + '</div>'
@@ -2170,41 +2177,127 @@
     var wrap = document.createElement('div'); wrap.innerHTML = html; document.body.appendChild(wrap.firstChild);
     var ov = document.getElementById('npSemOv');
     ov.addEventListener('click', function(e){ if(e.target === ov) window.npFecharModalSemanal(); });
+
+    /* Handlers */
+    function _atualizarContador(){
+      var n = ov.querySelectorAll('[data-sem-ck]:checked').length;
+      ov.querySelector('#npSemSelN').textContent = n;
+      ov.querySelector('#npSemAplicar').disabled = (n === 0);
+      ov.querySelector('#npSemAllCk').checked = (n === consList.length && n>0);
+    }
+    function _rerender(){
+      var lst = ov.querySelector('#npSemList');
+      lst.innerHTML = consList.map(_consRowHtml).join('');
+      _atualizarContador();
+    }
+    /* Click stepper */
+    ov.querySelectorAll('[data-step-n]').forEach(function(b){
+      b.addEventListener('click', function(){
+        _npSemModalSel = +b.dataset.stepN;
+        ov.querySelectorAll('[data-step-n]').forEach(function(x){ x.classList.toggle('curr', +x.dataset.stepN === _npSemModalSel); });
+        _rerender();
+      });
+    });
+    /* Select all */
+    ov.querySelector('#npSemAllCk').addEventListener('change', function(e){
+      ov.querySelectorAll('[data-sem-ck]').forEach(function(c){ c.checked = e.target.checked; });
+      _atualizarContador();
+    });
+    /* Click checkbox individual */
+    ov.addEventListener('change', function(e){
+      if(e.target.dataset && e.target.dataset.semCk) _atualizarContador();
+    });
+    _atualizarContador();
+    /* Aplicar aos selecionados */
+    ov.querySelector('#npSemAplicar').addEventListener('click', function(){
+      var sel = Array.prototype.map.call(ov.querySelectorAll('[data-sem-ck]:checked'), function(c){ return c.dataset.semCk; });
+      if(!sel.length) return;
+      function _parseM(v){
+        var s=String(v==null?'':v).replace(/[^\d,.]/g,'');
+        if(!s) return null; /* null = manter atual */
+        if(s.indexOf(',')>=0) s=s.replace(/\./g,'').replace(',','.'); else s=s.replace(/\./g,'');
+        var n=parseFloat(s); return isFinite(n)?n:null;
+      }
+      var vMin = _parseM(ov.querySelector('#npSemBatchMin').value);
+      var vBas = _parseM(ov.querySelector('#npSemBatchBas').value);
+      var vMas = _parseM(ov.querySelector('#npSemBatchMas').value);
+      if(vMin===null && vBas===null && vMas===null){
+        if(typeof _showToast==='function') _showToast('Preencha ao menos um tier (Mínima/Básica/Master)','var(--amber)');
+        return;
+      }
+      var mk = _mesKey();
+      var promises = sel.map(function(nome){
+        var atual = (((_npGoalsSem||{})[nome])||{})[_npSemModalSel] || {};
+        var novo = {
+          min: vMin !== null ? vMin : +(atual.min||0),
+          bas: vBas !== null ? vBas : +(atual.bas||0),
+          mas: vMas !== null ? vMas : +(atual.mas||0)
+        };
+        return window._fbSave('pipelineGoalsSem/'+mk+'/'+nome+'/'+_npSemModalSel, novo);
+      });
+      Promise.all(promises).then(function(){
+        if(typeof _showToast==='function') _showToast('✅ Metas aplicadas a '+sel.length+' consultor(es) na Semana '+_npSemModalSel,'var(--accent)');
+        /* Atualiza cache local */
+        sel.forEach(function(nome){
+          if(!_npGoalsSem[nome]) _npGoalsSem[nome] = {};
+          _npGoalsSem[nome][_npSemModalSel] = {
+            min: vMin !== null ? vMin : +((_npGoalsSem[nome][_npSemModalSel]||{}).min||0),
+            bas: vBas !== null ? vBas : +((_npGoalsSem[nome][_npSemModalSel]||{}).bas||0),
+            mas: vMas !== null ? vMas : +((_npGoalsSem[nome][_npSemModalSel]||{}).mas||0)
+          };
+        });
+        ov.querySelector('#npSemBatchMin').value='';
+        ov.querySelector('#npSemBatchBas').value='';
+        ov.querySelector('#npSemBatchMas').value='';
+        _rerender();
+        _npRenderTudo();
+      }).catch(function(){
+        if(typeof _showToast==='function') _showToast('❌ Erro ao salvar.','var(--red)');
+      });
+    });
+    /* Copiar semana anterior (preenche os 3 inputs com valores da semana anterior — mas só do PRIMEIRO consultor selecionado) */
+    ov.querySelector('#npSemCopiarAnt').addEventListener('click', function(){
+      var semAnt = _npSemModalSel - 1;
+      if(semAnt < 1){
+        if(typeof _showToast==='function') _showToast('Não há semana anterior.','var(--amber)');
+        return;
+      }
+      var sel = Array.prototype.map.call(ov.querySelectorAll('[data-sem-ck]:checked'), function(c){ return c.dataset.semCk; });
+      var refNome = sel[0] || consList[0];
+      var ref = (((_npGoalsSem||{})[refNome])||{})[semAnt] || {};
+      if(!ref.min && !ref.bas && !ref.mas){
+        if(typeof _showToast==='function') _showToast('Semana '+semAnt+' do '+refNome+' está sem meta — nada pra copiar.','var(--amber)');
+        return;
+      }
+      function _fmt(v){ if(!v) return ''; return _npMoneyMask(String((+v).toFixed(2)).replace('.','')); }
+      ov.querySelector('#npSemBatchMin').value = _fmt(ref.min);
+      ov.querySelector('#npSemBatchBas').value = _fmt(ref.bas);
+      ov.querySelector('#npSemBatchMas').value = _fmt(ref.mas);
+      if(typeof _showToast==='function') _showToast('📋 Valores da Semana '+semAnt+' ('+refNome+') copiados — clique Aplicar.','var(--accent)');
+    });
+    /* Copiar da meta mensal — divide ÷ nº semanas */
+    ov.querySelector('#npSemCopiarMensal').addEventListener('click', function(){
+      var sel = Array.prototype.map.call(ov.querySelectorAll('[data-sem-ck]:checked'), function(c){ return c.dataset.semCk; });
+      var refNome = sel[0] || consList[0];
+      var g = _npGoals[refNome] || {};
+      var mMin = +(g.metaMinima || g.metaValor || 0);
+      var mBas = +(g.metaBasica || mMin);
+      var mMas = +(g.metaMaster || mBas);
+      if(!mMin && !mBas && !mMas){
+        if(typeof _showToast==='function') _showToast('Sem meta mensal pra '+refNome+'.','var(--amber)');
+        return;
+      }
+      var nS = semanas.length;
+      function _fmt(v){ if(!v) return ''; return _npMoneyMask(String((+v).toFixed(2)).replace('.','')); }
+      ov.querySelector('#npSemBatchMin').value = _fmt(mMin/nS);
+      ov.querySelector('#npSemBatchBas').value = _fmt(mBas/nS);
+      ov.querySelector('#npSemBatchMas').value = _fmt(mMas/nS);
+      if(typeof _showToast==='function') _showToast('📋 Meta mensal de '+refNome+' dividida em '+nS+' semanas — clique Aplicar.','var(--accent)');
+    });
   };
   window.npFecharModalSemanal = function(){
     var ov = document.getElementById('npSemOv');
     if(ov) ov.remove();
-  };
-  window.npSalvarMetasSem = function(nome){
-    if(!nome) return;
-    var ov = document.getElementById('npSemOv'); if(!ov) return;
-    function _parseM(v){
-      var s=String(v==null?'':v).replace(/[^\d,.]/g,'');
-      if(!s) return 0;
-      if(s.indexOf(',')>=0) s=s.replace(/\./g,'').replace(',','.'); else s=s.replace(/\./g,'');
-      var n=parseFloat(s); return isFinite(n)?n:0;
-    }
-    var obj = {};
-    ov.querySelectorAll('[data-sem-n]').forEach(function(inp){
-      var n = inp.dataset.semN, k = inp.dataset.semK;
-      if(!obj[n]) obj[n] = {};
-      obj[n][k] = _parseM(inp.value);
-    });
-    /* Remove semanas vazias (todas 0) — fica null no Firebase */
-    Object.keys(obj).forEach(function(n){
-      if(!obj[n].min && !obj[n].bas && !obj[n].mas) obj[n] = null;
-    });
-    var mk = _mesKey();
-    window._fbSave('pipelineGoalsSem/'+mk+'/'+nome, obj).then(function(){
-      if(typeof _showToast==='function') _showToast('✅ Metas semanais salvas!','var(--accent)');
-      window.npFecharModalSemanal();
-      window._fbGet('pipelineGoalsSem/'+mk).then(function(d){
-        _npGoalsSem = d || {};
-        _npRenderTudo();
-      }).catch(function(){});
-    }).catch(function(){
-      if(typeof _showToast==='function') _showToast('❌ Erro ao salvar.','var(--red)');
-    });
   };
 
   /* ── Tabs ────────────────────────────────────────── */
