@@ -761,4 +761,13 @@
     if(ov) ov.remove();
   }
   window.fecharImprimirConsultores = _fechar;
+
+  /* Injeta CSS na carga do script — garante que o botão split na barra
+     (que existe no DOM desde o load) ja tenha o estilo gradient
+     antes do modal ser aberto pela primeira vez. */
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', _injetarCss);
+  } else {
+    _injetarCss();
+  }
 })();
