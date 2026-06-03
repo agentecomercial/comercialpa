@@ -15,6 +15,9 @@
   /* Pré-seleção sugerida — marcas com ⭐ e marcadas por default na 1ª abertura. */
   var PRE_SELECT = ['esc_todos','st_pago','st_aberto','pe_curso_atual','ex_resumo'];
   var _primeiraAbertura = true;
+  /* Cache de turmas vindas do Firebase (assíncrono — preenchido após o load) */
+  var _fbTurmasCache = {};
+  var _fbTurmasLoaded = false;
 
   /* ─────────── Definição das opções (20 ao todo) ─────────── */
   var SESSOES = [
@@ -347,14 +350,18 @@
       var dt = t.periodStart || t.criadoEm || '—';
       return '<li>'+_esc(t.nome||t.codigo||t.id)+' · <span style="color:#6b7280;">'+_esc(dt)+'</span></li>';
     }).join('') + (todasT.length > 6 ? '<li style="opacity:.6;">… (+'+(todasT.length-6)+' outras)</li>' : '');
+    var fbStatus = _fbTurmasLoaded
+      ? '<span style="color:#86efac;">✓ '+Object.keys(_fbTurmasCache).length+' turmas</span>'
+      : '<span style="color:#fbbf24;">⏳ carregando...</span>';
     return '<div style="margin-top:18px;padding:10px;background:rgba(255,255,255,.03);border:1px dashed rgba(212,165,116,.20);border-radius:6px;font-size:10px;color:#9aa5b1;line-height:1.6;">'
-      + '<b style="color:#d4a574;">🔍 Fontes de dados disponíveis</b><br>'
+      + '<b style="color:#d4a574;">🔍 Fontes de dados</b><br>'
+      + '• Firebase (turmas): '+fbStatus+'<br>'
       + '• Turma ativa: <b>'+_esc(turmaAtiva)+'</b> · clientes nela: <b>'+qData+'</b><br>'
-      + '• Clientes consolidados (todas as turmas): <b>'+qTodas+'</b><br>'
+      + '• Clientes consolidados (todas turmas): <b>'+qTodas+'</b><br>'
       + '• Consultores identificados: <b>'+qCons+'</b><br>'
       + '• Turmas encontradas: <b>'+qTurmas+'</b> · no mês vigente ('+ym+'): <b>'+qTurmasMes+'</b><br>'
       + '• Metas mensais (npGoals): <b>'+qGoals+'</b>'
-      + (qTurmas ? '<br><br><b style="color:#d4a574;">📋 Turmas detectadas</b><ul style="margin:4px 0 0;padding-left:16px;font-size:9px;">'+listaT+'</ul>' : '<br><br><span style="color:#fbbf24;">⚠ Nenhuma turma encontrada no localStorage. Verifique se você abriu alguma turma no app recentemente.</span>')
+      + (qTurmas ? '<br><br><b style="color:#d4a574;">📋 Turmas detectadas</b><ul style="margin:4px 0 0;padding-left:16px;font-size:9px;">'+listaT+'</ul>' : '<br><br><span style="color:#fbbf24;">⚠ Aguarde o Firebase responder ou verifique sua conexão.</span>')
       + '</div>';
   }
   function _dataStrPt(){
@@ -688,16 +695,19 @@
   }
   function _listarTodasTurmas(){
     var map = {};
-    /* Fonte 1: _getTurmas (localStorage ci_turmas_index) */
+    /* Fonte 1: cache do Firebase (carregado em _loadTurmasDoFirebase) */
+    Object.keys(_fbTurmasCache).forEach(function(id){
+      map[id] = Object.assign({}, _fbTurmasCache[id]);
+    });
+    /* Fonte 2: _getTurmas (localStorage ci_turmas_index) */
     if(typeof _getTurmas === 'function'){
       try {
         (_getTurmas() || []).forEach(function(t){
-          if(t && t.id) map[t.id] = Object.assign({}, t);
+          if(t && t.id && !map[t.id]) map[t.id] = Object.assign({}, t);
         });
       } catch(e){}
     }
-    /* Fonte 2: varrer localStorage por chaves ci_turma_* — pega
-       turmas mesmo sem index, lendo metadata do próprio doc. */
+    /* Fonte 3: varrer localStorage por chaves ci_turma_* (turmas abertas localmente) */
     try {
       for(var i=0; i<localStorage.length; i++){
         var k = localStorage.key(i);
@@ -717,7 +727,7 @@
         } catch(e){}
       }
     } catch(e){}
-    /* Fonte 3: window._npVendasTurma tem `_turmaId`/`_turmaNome` por venda — fallback */
+    /* Fonte 4: window._npVendasTurma (Pipeline Comercial) */
     if(window._npVendasTurma && Array.isArray(window._npVendasTurma)){
       window._npVendasTurma.forEach(function(v){
         if(v && v._turmaId && !map[v._turmaId]){
@@ -726,6 +736,41 @@
       });
     }
     return Object.values(map);
+  }
+  /* Carrega turmas do Firebase de forma assíncrona. Quando completa,
+     re-renderiza o modal (se aberto) pra refletir os dados novos. */
+  function _loadTurmasDoFirebase(onDone){
+    if(typeof window._fbGet !== 'function'){
+      _fbTurmasLoaded = true;
+      if(onDone) onDone();
+      return;
+    }
+    window._fbGet('turmas').then(function(data){
+      if(data && typeof data === 'object'){
+        Object.keys(data).forEach(function(id){
+          var t = data[id]; if(!t) return;
+          var clientes = t.clientes;
+          if(clientes && !Array.isArray(clientes) && typeof clientes === 'object'){
+            clientes = Object.values(clientes).filter(Boolean);
+          }
+          _fbTurmasCache[id] = {
+            id: id,
+            nome: t.nome || t.titulo || id,
+            codigo: t.codigo || id,
+            periodStart: t.periodStart || '',
+            periodEnd: t.periodEnd || '',
+            criadoEm: t.criadoEm || '',
+            _clientesFb: clientes || []
+          };
+        });
+      }
+      _fbTurmasLoaded = true;
+      if(onDone) onDone();
+    }).catch(function(e){
+      console.warn('[Imprimir] Falha ao carregar turmas do Firebase:', e);
+      _fbTurmasLoaded = true;
+      if(onDone) onDone();
+    });
   }
   function _turmasDoMesVigente(){
     var ym = _mesAtualYM();
@@ -750,11 +795,17 @@
   }
   function _clientesDeTurma(id){
     if(!id) return [];
-    /* Tenta _getTurmaData primeiro (rota oficial), depois localStorage direto */
+    /* Fonte 1: cache do Firebase já carregado (online) */
+    var fbT = _fbTurmasCache[id];
+    if(fbT && Array.isArray(fbT._clientesFb) && fbT._clientesFb.length){
+      return fbT._clientesFb.filter(function(c){ return c && c.cliente; });
+    }
+    /* Fonte 2: _getTurmaData (rota oficial do app) */
     var td = null;
     if(typeof _getTurmaData === 'function'){
       try { td = _getTurmaData(id); } catch(e){}
     }
+    /* Fonte 3: localStorage direto */
     if(!td){
       try { td = JSON.parse(localStorage.getItem('ci_turma_'+id)) || null; } catch(e){}
     }
@@ -997,6 +1048,12 @@
     var ov = document.getElementById('icvOv');
     _wire(ov);
     _atualizarPreview(ov);
+    /* Carrega turmas do Firebase async (modal já está aberto) e re-renderiza */
+    _loadTurmasDoFirebase(function(){
+      var ovOpen = document.getElementById('icvOv');
+      if(!ovOpen) return; /* usuário fechou enquanto carregava */
+      _rerender();
+    });
   };
   function _fechar(){
     var ov = document.getElementById('icvOv');
