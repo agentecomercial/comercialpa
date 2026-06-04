@@ -1465,18 +1465,73 @@
     return { titulo:'📄 Detalhado', html:html, txt:txt };
   }
 
+  /* ──────────── Hierarquia das seções (estilo Relatório Supremo) ────────────
+     Define a ORDEM em que cada seção sai no documento impresso, independente da
+     ordem em que o usuário clicou nos checkboxes. Agrupada em blocos lógicos:
+       10-19 → Resumo executivo / financeiro
+       20-49 → Detalhamento por status
+       50-69 → Ranking / escopo de consultores
+       70-79 → Treinamentos / produtos
+       80-89 → Período (notas de contexto)
+       95-99 → Detalhado paginado / assinatura (final do documento) */
+  var ORDEM_HIERARQUICA = {
+    /* 10-19 · Resumo executivo */
+    'ex_fin':       10,
+    'ex_meta':      15,
+    /* 20-49 · Status financeiro */
+    'st_pago':      20,
+    'ex_trein_pg':  21,
+    'st_entrada':   25,
+    'ex_entradas':  26,
+    'st_negoc':     30,
+    'ex_negoc':     31,
+    'st_aberto':    35,
+    'ex_aberto':    36,
+    'st_desist':    40,
+    'st_todos':     45,
+    /* 50-69 · Consultores / escopo / ranking */
+    'esc_todos':    50,
+    'esc_top3':     52,
+    'esc_bateu':    54,
+    'esc_sel':      56,
+    'ex_rk_cons':   60,
+    'ex_rk_trein':  62,
+    /* 70-79 · Treinamentos / produtos */
+    'tr_agrup':     70,
+    'tr_top5':      75,
+    'tr_hight':     76,
+    'ex_top_trein': 78,
+    /* 80-89 · Período (info de contexto) */
+    'pe_curso_atual': 80,
+    'pe_mes':         82,
+    'pe_outro':       84,
+    /* 95-99 · Fechamento */
+    'ex_detalh':    95,
+    'ex_assin':     99
+  };
+  function _ordemDe(id){
+    return (id in ORDEM_HIERARQUICA) ? ORDEM_HIERARQUICA[id] : 999;
+  }
+
   /* ──────────── Exportação ──────────── */
   function _gerarConteudo(){
     if(!_selecionadas.size){
       return { html:'', txt:'(nenhuma seção selecionada)' };
     }
+    /* Ordena as seções pela ORDEM_HIERARQUICA (não pela ordem que o usuário marcou) */
+    var idsOrdenados = Array.from(_selecionadas).sort(function(a,b){
+      var oa = _ordemDe(a), ob = _ordemDe(b);
+      if(oa !== ob) return oa - ob;
+      return a.localeCompare(b);
+    });
     var allHtml = [], allTxt = [];
-    _selecionadas.forEach(function(id){
+    idsOrdenados.forEach(function(id, idx){
       var sec = _buildSection(id);
-      if(sec){
-        allHtml.push('<section style="margin-bottom:24px;">'+sec.html+'</section>');
-        allTxt.push(sec.txt);
-      }
+      if(!sec) return;
+      /* page-break entre seções principais (exceto antes da primeira) */
+      var brk = idx > 0 ? ' rs-break' : '';
+      allHtml.push('<section class="rs-section'+brk+'">'+sec.html+'</section>');
+      allTxt.push(sec.txt);
     });
     return { html:allHtml.join('\n'), txt:allTxt.join('\n────────────────────────────\n') };
   }
@@ -1520,23 +1575,91 @@
   }
   function _abrirPrint(htmlBody){
     var data = _hojeStr();
-    var doc = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório de Consultores</title><style>'
+    var ctxLabel = (typeof _escopoLabel === 'function') ? _escopoLabel() : '';
+    var turma = window._turmaAtiva || {};
+    var turmaNome = turma.nome || turma.codigo || '';
+    var qtdSec = _selecionadas.size;
+    /* Paleta corporativa do Relatório Supremo (PDF) traduzida para CSS:
+       PRETO    = #111111
+       OCRE     = #c9a14a (linha hairline mais clara)
+       CINZA    = #666666 (textos secundários)
+       HAIRLINE = #e6e6e6 (linhas finas) */
+    var css = ''
+      + '@page{size:A4;margin:18mm 16mm 22mm;}'
       + '*{box-sizing:border-box;}'
-      + 'body{font-family:-apple-system,sans-serif;background:#fff;color:#1f2937;padding:24px;margin:0;}'
-      + 'h1{font-size:18px;margin:0 0 4px;color:#111827;}'
-      + 'h2{font-size:14px;margin:18px 0 8px;color:#b88a5a;border-bottom:1px solid #d4a574;padding-bottom:4px;}'
-      + 'h3{font-size:12px;margin:10px 0 6px;color:#374151;}'
-      + 'table{border-collapse:collapse;}'
-      + 'p{margin:6px 0;font-size:11px;}'
-      + 'ul{margin:6px 0;}'
-      + '.header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #d4a574;padding-bottom:8px;margin-bottom:18px;}'
-      + '.header .date{font-size:10px;color:#6b7280;}'
-      + '@media print { body{padding:12mm;} }'
-      + '</style></head><body>'
-      + '<div class="header"><h1>📋 Relatório de Consultores</h1><div class="date">Gerado em '+data+'</div></div>'
+      + 'html,body{margin:0;padding:0;}'
+      + 'body{font-family:"Times New Roman",Times,Georgia,serif;background:#fff;color:#111;font-size:11pt;line-height:1.45;}'
+      /* CAPA */
+      + '.rs-capa{min-height:calc(100vh - 40mm);display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0 4mm;page-break-after:always;}'
+      + '.rs-capa .brand{font-family:Helvetica,Arial,sans-serif;font-size:9pt;letter-spacing:.32em;text-transform:uppercase;color:#c9a14a;font-weight:700;margin-bottom:18mm;border-bottom:1px solid #c9a14a;padding-bottom:6mm;width:100%;}'
+      + '.rs-capa h1{font-family:"Times New Roman",Times,serif;font-size:34pt;line-height:1.08;margin:0 0 6mm;color:#111;font-weight:400;letter-spacing:-.01em;}'
+      + '.rs-capa h1 em{font-style:italic;color:#c9a14a;}'
+      + '.rs-capa .sub{font-family:Helvetica,Arial,sans-serif;font-size:10pt;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:14mm;}'
+      + '.rs-capa .meta{display:flex;flex-direction:column;gap:3mm;font-family:Helvetica,Arial,sans-serif;font-size:9pt;color:#111;border-top:1px solid #e6e6e6;padding-top:6mm;width:100%;}'
+      + '.rs-capa .meta .row{display:flex;justify-content:space-between;align-items:baseline;}'
+      + '.rs-capa .meta .lbl{color:#666;text-transform:uppercase;letter-spacing:.14em;font-size:7.5pt;}'
+      + '.rs-capa .meta .val{color:#111;font-weight:600;font-size:10pt;}'
+      /* HEADER que aparece em todas as páginas (exceto capa) */
+      + '.rs-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid #c9a14a;padding-bottom:3mm;margin-bottom:8mm;font-family:Helvetica,Arial,sans-serif;}'
+      + '.rs-head .ttl{font-size:8.5pt;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:.18em;}'
+      + '.rs-head .ttl em{font-style:italic;color:#c9a14a;font-weight:400;}'
+      + '.rs-head .date{font-size:7.5pt;color:#666;}'
+      /* SEÇÕES */
+      + '.rs-section{margin:0 0 10mm;}'
+      + '.rs-break{page-break-before:always;}'
+      + '.rs-section h2{font-family:Helvetica,Arial,sans-serif;font-size:9.5pt;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:.16em;margin:0 0 4mm;padding-bottom:2mm;border-bottom:1px solid #111;}'
+      + '.rs-section h3{font-family:"Times New Roman",Times,serif;font-size:13pt;font-weight:400;color:#c9a14a;margin:6mm 0 2mm;font-style:italic;}'
+      + '.rs-section p{margin:1.5mm 0;font-size:10.5pt;color:#111;}'
+      + '.rs-section ul{margin:2mm 0 2mm 6mm;padding:0;font-size:10pt;}'
+      + '.rs-section ul li{margin:.8mm 0;color:#111;}'
+      + '.rs-section b{color:#111;font-weight:700;}'
+      + '.rs-section em{font-style:italic;color:#666;}'
+      /* TABELAS estilo Supremo: hairlines finas, header preto, tipografia Helvetica */
+      + '.rs-section table{width:100%;border-collapse:collapse;margin:3mm 0;font-family:Helvetica,Arial,sans-serif;font-size:8.5pt;page-break-inside:avoid;}'
+      + '.rs-section table thead{background:#111;}'
+      + '.rs-section table th{padding:2.2mm 2.5mm;text-align:left;color:#c9a14a;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:7.5pt;border:none;}'
+      + '.rs-section table td{padding:2mm 2.5mm;border-bottom:.4pt solid #e6e6e6;color:#111;vertical-align:top;}'
+      + '.rs-section table tr:last-child td{border-bottom:none;}'
+      + '.rs-section table tr:nth-child(even) td{background:#fafafa;}'
+      /* Caixas de destaque (resumo financeiro etc.) */
+      + '.rs-section .box{border:.5pt solid #e6e6e6;border-left:2pt solid #c9a14a;padding:4mm 5mm;margin:3mm 0;background:#fafafa;}'
+      /* Cores semânticas (sem confiar em inline-style das seções) */
+      + '.rs-section [style*="color:#34d399"]{color:#0a7a44 !important;font-weight:700;}'
+      + '.rs-section [style*="color:#f59e0b"]{color:#a86b00 !important;font-weight:700;}'
+      + '.rs-section [style*="color:#b88a5a"]{color:#c9a14a !important;}'
+      /* Footer com paginação */
+      + '.rs-foot{position:fixed;bottom:6mm;left:16mm;right:16mm;display:flex;justify-content:space-between;align-items:center;font-family:Helvetica,Arial,sans-serif;font-size:7pt;color:#666;border-top:.4pt solid #e6e6e6;padding-top:2mm;letter-spacing:.08em;text-transform:uppercase;}'
+      + '.rs-foot .pg{font-variant-numeric:tabular-nums;}'
+      /* Suprime emojis no impresso (mantém limpeza) */
+      + '.rs-section h2 .emoji,.rs-section h3 .emoji{display:none;}'
+      + '@media screen{body{max-width:210mm;margin:0 auto;padding:18mm 16mm;background:#f4f3f0;}.rs-section,.rs-capa{background:#fff;}.rs-section,.rs-capa{padding:0;}body{box-shadow:none;}}'
+      + '@media print{.rs-foot{display:flex;}}';
+
+    var doc = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
+      + '<title>Relatório de Consultores · '+_escSafe(turmaNome||'Febracis')+'</title>'
+      + '<style>'+css+'</style></head><body>'
+      /* CAPA */
+      + '<div class="rs-capa">'
+        + '<div class="brand">Febracis · Relatório de Consultores</div>'
+        + '<h1>Análise <em>consultiva</em><br>de desempenho.</h1>'
+        + '<div class="sub">'+_escSafe(ctxLabel||'Relatório gerencial')+'</div>'
+        + '<div class="meta">'
+          + (turmaNome ? '<div class="row"><span class="lbl">Turma</span><span class="val">'+_escSafe(turmaNome)+'</span></div>' : '')
+          + '<div class="row"><span class="lbl">Contexto</span><span class="val">'+_escSafe(ctxLabel||'—')+'</span></div>'
+          + '<div class="row"><span class="lbl">Seções</span><span class="val">'+qtdSec+'</span></div>'
+          + '<div class="row"><span class="lbl">Emissão</span><span class="val">'+_escSafe(data)+'</span></div>'
+        + '</div>'
+      + '</div>'
+      /* HEADER recorrente + conteúdo */
+      + '<div class="rs-head">'
+        + '<div class="ttl">Relatório <em>de consultores</em></div>'
+        + '<div class="date">'+_escSafe(data)+(turmaNome?(' · '+_escSafe(turmaNome)):'')+'</div>'
+      + '</div>'
       + htmlBody
-      + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
+      + '<div class="rs-foot"><span>Febracis · Gestão Comercial</span><span class="pg">'+_escSafe(data)+'</span></div>'
+      + '<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
       + '</body></html>';
+
     var w = window.open('', '_blank', 'width=900,height=700');
     if(!w){ if(typeof _showToast==='function') _showToast('⚠ Bloqueado por pop-up. Permita pop-ups e tente de novo.','var(--amber)'); return; }
     w.document.open(); w.document.write(doc); w.document.close();

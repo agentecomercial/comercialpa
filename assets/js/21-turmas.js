@@ -16,6 +16,15 @@ var _tturmasCache=[];
    'desc' = mais recente no topo (default · meses maiores primeiro)
    'asc'  = mais antiga no topo (meses menores primeiro) */
 var _tturmasOrdem=localStorage.getItem('_tturmasOrdem')||'desc';
+/* Filtro de período aplicado à lista de turmas (sobrescreve o filtro só-por-ano).
+   tipo: 'ano' | 'mes' | 'dia' | 'periodo'
+   Persiste em localStorage pra manter a escolha do usuário entre sessões. */
+var _tturmasFiltro = (function(){
+  try { var x = JSON.parse(localStorage.getItem('_tturmasFiltro')||'null'); if(x && x.tipo) return x; } catch(e){}
+  return { tipo:'ano' };
+})();
+/* Estado temporário do picker (antes do APLICAR) */
+var _tturmasPick = null;
 
 var _SWIM_MESES = APP_CONST.MESES_CURTO;
 var _SWIM_CORES = APP_CONST.PALETTE_SWIM;
@@ -135,16 +144,19 @@ function _renderTurmasYearBar(turmas){
   bar._turmasAnosCache = anos;
   bar._turmasAnosCount = anosCount;
 
+  /* Label de cada tipo de filtro pro micro-tag ao lado do botão */
+  var tipoLbl = {ano:'ANO', mes:'MÊS', dia:'DIA', periodo:'PERÍODO'};
+  var lblTipo = tipoLbl[_tturmasFiltro.tipo] || 'ANO';
   bar.innerHTML=
-    '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-right:4px;">Ano</span>'+
+    '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-right:4px;">'+lblTipo+'</span>'+
     '<div id="turmasAnoPopWrap" style="position:relative;display:inline-block;">'+
       '<button id="turmasAnoTrigger" type="button" '+
         'style="padding:5px 14px;border-radius:20px;border:none;background:linear-gradient(180deg,#d4f565,#c8f05a);color:#0f0f0f;font-family:\'DM Sans\',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">'+
-        _tturmasAnoAtual+' <span style="font-size:10px;opacity:.7;">📅</span>'+
+        _filtroLabel()+' <span style="font-size:10px;opacity:.7;">📅</span>'+
       '</button>'+
       '<div id="turmasAnoPopover" style="display:none;position:absolute;top:calc(100% + 8px);left:0;z-index:1600;'+
-        'background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:14px;'+
-        'box-shadow:0 8px 28px rgba(0,0,0,.5);min-width:280px;">'+
+        'background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:0;'+
+        'box-shadow:0 8px 28px rgba(0,0,0,.5);width:320px;">'+
       '</div>'+
     '</div>'+
     /* Switch on/off de ordem (opção 5 · asc ↔ desc) */
@@ -179,73 +191,412 @@ function _turmasToggleOrdem(){
   _renderTurmasSwim(_tturmasCache);
 }
 
+/* ─────── Helpers do filtro (ANO · MÊS · DIA · PERÍODO) ─────── */
+function _fmtBR(iso){
+  var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? (m[3]+'/'+m[2]+'/'+m[1]) : '';
+}
+function _fmtBRcurto(iso){
+  var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? (m[3]+'/'+m[2]) : '';
+}
+function _isoHoje(){
+  var d=new Date(); var p=function(n){return String(n).padStart(2,'0');};
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+function _isoComporA(a,m,d){
+  var p=function(n){return String(n).padStart(2,'0');};
+  return a+'-'+p(m)+'-'+p(d);
+}
+function _diasDoMes(ano,mes){ /* mes 1..12 */
+  return new Date(ano, mes, 0).getDate();
+}
+function _filtroLabel(){
+  var f=_tturmasFiltro;
+  if(f.tipo==='mes')     return (_SWIM_MESES[f.mes-1]||'?')+'/'+f.ano;
+  if(f.tipo==='dia')     return _fmtBR(f.dia);
+  if(f.tipo==='periodo') return _fmtBRcurto(f.ini)+' → '+_fmtBR(f.fim);
+  return String(_tturmasAnoAtual);
+}
+/* Filtra a lista de turmas pelo filtro vigente. Cruzamento de período usa
+   periodStart/periodEnd; fallback para periodStart se faltar end. */
+function _turmasDoFiltro(turmas){
+  var f=_tturmasFiltro;
+  if(f.tipo==='mes'){
+    return turmas.filter(function(t){
+      return _swimExtrairAno(t)===f.ano && _swimExtrairMes(t)===f.mes;
+    });
+  }
+  if(f.tipo==='dia'){
+    var diaMs=new Date(f.dia+'T12:00:00').getTime();
+    return turmas.filter(function(t){
+      var ini=_swimExtrairDataInicioMs(t);
+      var fim=_swimExtrairDataFimMs(t);
+      return ini<=diaMs && diaMs<=fim;
+    });
+  }
+  if(f.tipo==='periodo'){
+    var iniMs=new Date(f.ini+'T00:00:00').getTime();
+    var fimMs=new Date(f.fim+'T23:59:59').getTime();
+    return turmas.filter(function(t){
+      var tIni=_swimExtrairDataInicioMs(t);
+      var tFim=_swimExtrairDataFimMs(t);
+      return tIni<=fimMs && tFim>=iniMs;
+    });
+  }
+  /* default: tipo='ano' — usa _tturmasAnoAtual */
+  return turmas.filter(function(t){return _swimExtrairAno(t)===_tturmasAnoAtual;});
+}
+function _salvarFiltro(){
+  try { localStorage.setItem('_tturmasFiltro', JSON.stringify(_tturmasFiltro)); }catch(e){}
+}
+
 function _turmasAnoPopAbrir(){
   var pop=document.getElementById('turmasAnoPopover');
-  var bar=document.getElementById('turmasYearBar');
-  if(!pop || !bar) return;
+  if(!pop) return;
   if(pop.style.display==='block'){ _turmasAnoPopFechar(); return; }
 
-  // Recoleta contagem do cache salvo no bar
-  var anos=bar._turmasAnosCache||[];
-  var anosCount=bar._turmasAnosCount||{};
-  var totalTurmas=0;
-  anos.forEach(function(a){ totalTurmas+=(anosCount[a]||0); });
+  /* Inicializa o estado temporário do picker a partir do filtro vigente */
+  var f=_tturmasFiltro;
+  _tturmasPick = {
+    tab: f.tipo,
+    ano: f.ano || _tturmasAnoAtual,
+    mes: f.mes || (new Date().getMonth()+1),
+    dia: f.dia || _isoHoje(),
+    ini: f.ini || _isoHoje(),
+    fim: f.fim || _isoHoje(),
+    selPer: 'ini' /* qual data do período está sendo escolhida no calendário */
+  };
 
-  var html='<div style="font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">📅 Escolha o ano</div>';
-  html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">';
-  anos.forEach(function(a){
-    var qtd=anosCount[a]||0;
-    var ativa=(a===_tturmasAnoAtual);
-    html+='<button class="turmas-pop-ano" data-ano="'+a+'" '+
-      'style="position:relative;background:'+(ativa?'linear-gradient(180deg,#d4f565,#c8f05a)':'var(--surface2)')+';color:'+(ativa?'#0f0f0f':'var(--text)')+';padding:10px 0;text-align:center;font-weight:800;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid '+(ativa?'transparent':'var(--border)')+';font-family:inherit;transition:all .15s;">'+
-      a+
-      (qtd>0?'<span style="position:absolute;top:2px;right:4px;font-size:8px;background:'+(ativa?'#0a0e1a':'var(--blue)')+';color:'+(ativa?'#c8f05a':'#0a0e1a')+';padding:0 5px;border-radius:6px;font-weight:800;">'+qtd+'</span>':'')+
-    '</button>';
+  _turmasPickRender();
+  pop.style.display='block';
+  setTimeout(function(){ document.addEventListener('click', _turmasAnoPopOnDocClick); }, 0);
+}
+
+function _turmasPickRender(){
+  var pop=document.getElementById('turmasAnoPopover');
+  if(!pop) return;
+  var p=_tturmasPick;
+  var tabs=['ano','mes','dia','periodo'];
+  var lblTabs={ano:'ANO',mes:'MÊS',dia:'DIA',periodo:'PERÍODO'};
+  var html='<div class="tp-pick">';
+
+  /* Tabs */
+  html+='<div class="tp-tabs">';
+  tabs.forEach(function(k){
+    html+='<button type="button" class="tp-tab'+(p.tab===k?' on':'')+'" data-tab="'+k+'">'+lblTabs[k]+'</button>';
   });
   html+='</div>';
-  html+='<div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);">'+
-    '<span>Total · '+totalTurmas+' turma'+(totalTurmas!==1?'s':'')+' em '+anos.length+' ano'+(anos.length!==1?'s':'')+'</span>'+
-    '<button id="turmasPopAddAno" type="button" style="background:transparent;border:none;color:var(--accent);font-weight:700;font-size:11px;cursor:pointer;font-family:inherit;">+ Adicionar ano</button>'+
-  '</div>';
-  pop.innerHTML=html;
-  pop.style.display='block';
 
-  // Click em cada ano
-  pop.querySelectorAll('.turmas-pop-ano').forEach(function(btn){
+  /* Navegação de ano (sempre presente, exceto na tab PERÍODO que usa o próprio) */
+  if(p.tab !== 'periodo'){
+    html+='<div class="tp-nav">'
+      + '<button type="button" class="tp-navbtn" data-nav="prev">‹</button>'
+      + '<span class="tp-navlbl">'+p.ano+'</span>'
+      + '<button type="button" class="tp-navbtn" data-nav="next">›</button>'
+      + '</div>';
+  }
+
+  html+='<div class="tp-body">';
+
+  if(p.tab === 'ano'){
+    /* Grid 3×N de anos: cache (com turmas) + extras + ano de hoje + botão "+".
+       Anos REMOVÍVEIS (extras sem turmas) podem ser excluídos com long-press
+       de 2 segundos, que dispara um modal de confirmação. */
+    var bar=document.getElementById('turmasYearBar');
+    var anosCache=(bar && bar._turmasAnosCache) ? bar._turmasAnosCache.slice() : [];
+    var anosCount=(bar && bar._turmasAnosCount) ? bar._turmasAnosCount : {};
+    var anos=anosCache.slice();
+    var hoje=new Date().getFullYear();
+    if(anos.indexOf(hoje)===-1) anos.push(hoje);
+    _tturmasAnosExtra.forEach(function(a){ if(anos.indexOf(a)===-1) anos.push(a); });
+    anos.sort();
+    html+='<div class="tp-grid">';
+    anos.forEach(function(a){
+      var temTurmas=(anosCount[a]||0)>0;
+      var ehExtra=(_tturmasAnosExtra.indexOf(a)!==-1);
+      var removivel = ehExtra && !temTurmas;
+      var attrs = 'data-ano="'+a+'"';
+      if(removivel) attrs += ' data-rm="1" title="Segure 2s pra excluir"';
+      html+='<button type="button" class="tp-cell'+(a===p.ano?' on':'')+(removivel?' tp-cell-rm':'')+'" '+attrs+'>'+a
+        + (removivel?'<span class="tp-cell-press"></span>':'')
+        + '</button>';
+    });
+    /* Botão "+" que adiciona o próximo ano (maior+1) */
+    html+='<button type="button" class="tp-cell tp-cell-add" data-add-ano="1" title="Adicionar próximo ano">+</button>';
+    html+='</div>';
+  } else if(p.tab === 'mes'){
+    /* Grid 3×4 de meses — só meses COM TURMAS no ano são clicáveis */
+    var cntMes={};
+    (_tturmasCache||[]).forEach(function(t){
+      if(_swimExtrairAno(t) !== p.ano) return;
+      var mm=_swimExtrairMes(t); if(mm>=1 && mm<=12) cntMes[mm]=(cntMes[mm]||0)+1;
+    });
+    html+='<div class="tp-grid tp-grid-mes">';
+    for(var m=1;m<=12;m++){
+      var nome=(APP_CONST.MESES_CURTO[m-1]||'').toUpperCase();
+      var qtd=cntMes[m]||0;
+      var off = qtd ? '' : ' off';
+      var ativo = (p.mes===m && qtd) ? ' on' : '';
+      var attrs = qtd ? ('data-mes="'+m+'"') : 'disabled';
+      html+='<button type="button" class="tp-cell'+ativo+off+'" '+attrs+' title="'+(qtd?qtd+' turma'+(qtd>1?'s':''):'sem turmas')+'">'+nome
+        + (qtd?'<span class="tp-cell-cnt">'+qtd+'</span>':'')
+        + '</button>';
+    }
+    html+='</div>';
+  } else if(p.tab === 'dia'){
+    /* Mini-calendário do mês atual de p.ano/p.mes */
+    html+=_calendarioHTML(p.ano, p.mes, p.dia, 'dia');
+    /* Mini-seletor de mês (opcional, abaixo do calendário) */
+    html+='<div class="tp-mini-mes">';
+    for(var mm=1;mm<=12;mm++){
+      var nm=(APP_CONST.MESES_CURTO[mm-1]||'').toUpperCase();
+      html+='<button type="button" class="tp-mini'+(p.mes===mm?' on':'')+'" data-pickmes="'+mm+'">'+nm+'</button>';
+    }
+    html+='</div>';
+  } else if(p.tab === 'periodo'){
+    /* Dois inputs date + calendário interativo do mês p.ano/p.mes */
+    html+='<div class="tp-per">'
+      + '<label class="tp-perlbl'+(p.selPer==='ini'?' on':'')+'" data-selper="ini">'
+      +   '<span>Início</span><b>'+_fmtBR(p.ini)+'</b>'
+      + '</label>'
+      + '<label class="tp-perlbl'+(p.selPer==='fim'?' on':'')+'" data-selper="fim">'
+      +   '<span>Fim</span><b>'+_fmtBR(p.fim)+'</b>'
+      + '</label>'
+      + '</div>';
+    html+='<div class="tp-nav tp-nav-per">'
+      + '<button type="button" class="tp-navbtn" data-nav="prev-mes">‹</button>'
+      + '<span class="tp-navlbl">'+(APP_CONST.MESES_FULL[p.mes-1]||'')+' '+p.ano+'</span>'
+      + '<button type="button" class="tp-navbtn" data-nav="next-mes">›</button>'
+      + '</div>';
+    html+=_calendarioHTML(p.ano, p.mes, p[p.selPer], 'periodo');
+  }
+
+  html+='</div>'; /* /tp-body */
+
+  /* Rodapé com label + ações */
+  var sel='';
+  if(p.tab==='ano')     sel=String(p.ano);
+  if(p.tab==='mes')     sel=(APP_CONST.MESES_CURTO[p.mes-1]||'')+'/'+p.ano;
+  if(p.tab==='dia')     sel=_fmtBR(p.dia);
+  if(p.tab==='periodo') sel=_fmtBR(p.ini)+' → '+_fmtBR(p.fim);
+  html+='<div class="tp-foot">'
+    + '<span class="tp-sel" title="'+sel+'">Selecionado: <b>'+sel+'</b></span>'
+    + '<div class="tp-actions">'
+    +   '<button type="button" class="tp-btn" data-act="cancel">CANCELAR</button>'
+    +   '<button type="button" class="tp-btn tp-btn-on" data-act="apply">APLICAR</button>'
+    + '</div>'
+    + '</div>';
+
+  html+='</div>'; /* /tp-pick */
+  pop.innerHTML=html;
+  _turmasPickWire(pop);
+}
+
+function _calendarioHTML(ano, mes, isoSel, modo){
+  var dias=_diasDoMes(ano,mes);
+  /* getDay(): 0=Dom..6=Sáb. Vamos começar a semana no domingo. */
+  var primeiroDow = new Date(ano, mes-1, 1).getDay();
+  var sigla=['D','S','T','Q','Q','S','S'];
+  var html='<div class="tp-cal">';
+  /* Cabeçalho dos dias da semana */
+  html+='<div class="tp-cal-h">';
+  sigla.forEach(function(s){ html+='<span>'+s+'</span>'; });
+  html+='</div>';
+  /* Dias */
+  html+='<div class="tp-cal-g">';
+  for(var i=0;i<primeiroDow;i++) html+='<span></span>';
+  var hoje=_isoHoje();
+  for(var d=1; d<=dias; d++){
+    var iso=_isoComporA(ano,mes,d);
+    var cls='tp-day';
+    if(iso===isoSel) cls+=' on';
+    if(iso===hoje)   cls+=' today';
+    html+='<button type="button" class="'+cls+'" data-dia="'+iso+'">'+d+'</button>';
+  }
+  html+='</div></div>';
+  return html;
+}
+
+/* Modal de confirmação para excluir ano extra (disparado por long-press 2s) */
+function _turmasConfirmExcluirAno(ano){
+  /* Sobrepõe o picker com um modal de confirmação compacto */
+  var pop=document.getElementById('turmasAnoPopover');
+  if(!pop) return;
+  var ov=document.createElement('div');
+  ov.className='tp-confirm-ov';
+  ov.innerHTML='<div class="tp-confirm">'
+    + '<div class="tp-confirm-ttl">Excluir ano '+ano+'?</div>'
+    + '<div class="tp-confirm-sub">O ano será removido da lista. Você pode adicioná-lo de novo com o botão +.</div>'
+    + '<div class="tp-confirm-acts">'
+    +   '<button type="button" class="tp-btn" data-conf="no">CANCELAR</button>'
+    +   '<button type="button" class="tp-btn tp-btn-warn" data-conf="yes">EXCLUIR</button>'
+    + '</div>'
+    + '</div>';
+  pop.appendChild(ov);
+  ov.addEventListener('click', function(e){ e.stopPropagation(); });
+  ov.querySelector('[data-conf="no"]').addEventListener('click', function(){
+    ov.remove();
+  });
+  ov.querySelector('[data-conf="yes"]').addEventListener('click', function(){
+    var idx=_tturmasAnosExtra.indexOf(ano);
+    if(idx>=0) _tturmasAnosExtra.splice(idx,1);
+    var p=_tturmasPick;
+    if(p && p.ano===ano){
+      var bar=document.getElementById('turmasYearBar');
+      var anosCache=(bar && bar._turmasAnosCache) ? bar._turmasAnosCache : [];
+      p.ano = anosCache[0] || (new Date().getFullYear());
+    }
+    ov.remove();
+    _turmasPickRender();
+  });
+}
+
+function _turmasPickWire(pop){
+  var p=_tturmasPick;
+  /* Stop-propagation no popover inteiro: qualquer click interno NÃO escapa pro
+     document, evitando que _turmasAnoPopOnDocClick feche o popover por engano
+     quando o re-render destrói o elemento clicado (e contains() vira false). */
+  pop.addEventListener('click', function(e){ e.stopPropagation(); });
+  /* Tabs */
+  pop.querySelectorAll('.tp-tab').forEach(function(btn){
     btn.addEventListener('click', function(){
-      var ano=parseInt(btn.getAttribute('data-ano'),10);
-      _tturmasAnoAtual=ano;
+      p.tab = btn.getAttribute('data-tab');
+      _turmasPickRender();
+    });
+  });
+  /* Setas de ano (ANO/MÊS/DIA) e mês (PERÍODO) */
+  pop.querySelectorAll('.tp-navbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var n=btn.getAttribute('data-nav');
+      if(n==='prev') p.ano--;
+      else if(n==='next') p.ano++;
+      else if(n==='prev-mes'){
+        if(p.mes===1){ p.mes=12; p.ano--; } else p.mes--;
+      } else if(n==='next-mes'){
+        if(p.mes===12){ p.mes=1; p.ano++; } else p.mes++;
+      }
+      _turmasPickRender();
+    });
+  });
+  /* Grid de anos — click curto seleciona; long-press de 2s em anos removíveis
+     dispara modal de confirmação pra excluir. */
+  pop.querySelectorAll('[data-ano]').forEach(function(btn){
+    var ano = parseInt(btn.getAttribute('data-ano'),10);
+    var removivel = btn.getAttribute('data-rm') === '1';
+    var timer = null;
+    var pressed = false;
+    var holdFired = false;
+    function _start(e){
+      if(!removivel) return;
+      pressed = true; holdFired = false;
+      btn.classList.add('tp-pressing');
+      timer = setTimeout(function(){
+        holdFired = true;
+        btn.classList.remove('tp-pressing');
+        _turmasConfirmExcluirAno(ano);
+      }, 2000);
+    }
+    function _cancel(){
+      if(timer){ clearTimeout(timer); timer=null; }
+      btn.classList.remove('tp-pressing');
+      pressed = false;
+    }
+    btn.addEventListener('mousedown', _start);
+    btn.addEventListener('touchstart', _start, {passive:true});
+    btn.addEventListener('mouseup', _cancel);
+    btn.addEventListener('mouseleave', _cancel);
+    btn.addEventListener('touchend', _cancel);
+    btn.addEventListener('touchcancel', _cancel);
+    btn.addEventListener('click', function(e){
+      if(holdFired){ e.preventDefault(); e.stopPropagation(); holdFired=false; return; }
+      p.ano = ano;
+      _turmasPickRender();
+    });
+  });
+  /* Botão "+" para gerar próximo ano (maior atual + 1) */
+  pop.querySelectorAll('[data-add-ano]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var bar=document.getElementById('turmasYearBar');
+      var anos=(bar && bar._turmasAnosCache) ? bar._turmasAnosCache.slice() : [];
+      _tturmasAnosExtra.forEach(function(a){ if(anos.indexOf(a)===-1) anos.push(a); });
+      var maxA = anos.length ? Math.max.apply(null, anos) : new Date().getFullYear();
+      var novo = maxA + 1;
+      if(_tturmasAnosExtra.indexOf(novo)===-1) _tturmasAnosExtra.push(novo);
+      p.ano = novo;
+      _turmasPickRender();
+    });
+  });
+  /* Grid de meses */
+  pop.querySelectorAll('[data-mes]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      p.mes = parseInt(btn.getAttribute('data-mes'),10);
+      _turmasPickRender();
+    });
+  });
+  /* Mini-seletor de mês na aba DIA */
+  pop.querySelectorAll('[data-pickmes]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      p.mes = parseInt(btn.getAttribute('data-pickmes'),10);
+      _turmasPickRender();
+    });
+  });
+  /* Dias do calendário */
+  pop.querySelectorAll('[data-dia]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var iso = btn.getAttribute('data-dia');
+      if(p.tab==='dia') p.dia = iso;
+      else if(p.tab==='periodo'){
+        if(p.selPer==='ini'){
+          p.ini = iso;
+          /* Se fim < ini, reseta fim para o mesmo dia */
+          if(p.fim < p.ini) p.fim = iso;
+          p.selPer='fim';
+        } else {
+          /* selPer === 'fim' */
+          if(iso < p.ini){ p.ini=iso; p.fim=iso; p.selPer='fim'; }
+          else { p.fim=iso; p.selPer='ini'; }
+        }
+      }
+      _turmasPickRender();
+    });
+  });
+  /* Toggle entre início/fim na aba PERÍODO */
+  pop.querySelectorAll('[data-selper]').forEach(function(el){
+    el.addEventListener('click', function(){
+      p.selPer = el.getAttribute('data-selper');
+      _turmasPickRender();
+    });
+  });
+  /* Ações */
+  pop.querySelectorAll('[data-act]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var act=btn.getAttribute('data-act');
+      if(act==='cancel'){
+        _turmasAnoPopFechar();
+        return;
+      }
+      /* apply */
+      var novo={ tipo:p.tab };
+      if(p.tab==='ano'){
+        _tturmasAnoAtual = p.ano;
+      } else if(p.tab==='mes'){
+        novo.ano = p.ano; novo.mes = p.mes;
+        _tturmasAnoAtual = p.ano;
+      } else if(p.tab==='dia'){
+        novo.dia = p.dia;
+        _tturmasAnoAtual = parseInt(p.dia.slice(0,4),10);
+      } else if(p.tab==='periodo'){
+        novo.ini = p.ini; novo.fim = p.fim;
+        _tturmasAnoAtual = parseInt(p.ini.slice(0,4),10);
+      }
+      _tturmasFiltro = novo;
+      _salvarFiltro();
       _turmasAnoPopFechar();
+      _renderTurmasYearBar(_tturmasCache);
       _renderTurmasSwim(_tturmasCache);
     });
-    btn.addEventListener('mouseenter', function(){
-      if(!btn.style.background.includes('linear-gradient')){
-        btn.style.borderColor='var(--accent)';
-        btn.style.color='var(--accent)';
-      }
-    });
-    btn.addEventListener('mouseleave', function(){
-      if(!btn.style.background.includes('linear-gradient')){
-        btn.style.borderColor='var(--border)';
-        btn.style.color='var(--text)';
-      }
-    });
   });
-  // Adicionar ano
-  document.getElementById('turmasPopAddAno').addEventListener('click', function(){
-    var maxY=anos.length?Math.max.apply(null,anos):new Date().getFullYear();
-    var novo=maxY+1;
-    _tturmasAnosExtra.push(novo);
-    _tturmasAnoAtual=novo;
-    _renderTurmasYearBar(_tturmasCache);
-    _renderTurmasSwim(_tturmasCache);
-    setTimeout(_turmasAnoPopAbrir, 50);
-  });
-
-  // Fechar com click fora
-  setTimeout(function(){
-    document.addEventListener('click', _turmasAnoPopOnDocClick);
-  }, 0);
 }
 
 function _turmasAnoPopFechar(){
@@ -405,71 +756,92 @@ function _renderTurmasG(turmas){
   el.innerHTML=html;
 }
 
+/* Mapa tipo → cor estável (sem depender da posição na lista — o mesmo tipo
+   tem a mesma cor mesmo se outros tipos somem/aparecerem). */
+function _swimCorDoTipo(tipo){
+  var TIPOS = ['MASTER','MAESTRIA','FCIS','FGPC','CIS-GL','CIS','BHP','TAV','ML','CI','IF','CEOP','TOUR','MCIS'];
+  var i = TIPOS.indexOf(tipo);
+  if(i < 0){
+    /* tipo desconhecido — hash simples pra manter cor estável */
+    i = 0;
+    for(var k=0;k<tipo.length;k++) i = (i*31 + tipo.charCodeAt(k)) >>> 0;
+  }
+  return {
+    cor: _SWIM_CORES[i % _SWIM_CORES.length],
+    bg:  _SWIM_BGS[i % _SWIM_BGS.length]
+  };
+}
+
 function _renderTurmasSwim(turmas){
   _tturmasCache=turmas;
   _renderTurmasYearBar(turmas);
   var el=document.getElementById('turmasSwimGrid');
   if(!el) return;
-  var turmasAno=turmas.filter(function(t){return _swimExtrairAno(t)===_tturmasAnoAtual;});
+  var turmasAno=_turmasDoFiltro(turmas);
   if(!turmasAno.length){
-    el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0;">Nenhuma turma em '+_tturmasAnoAtual+'.</div>';
+    el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0;">Nenhuma turma em '+_filtroLabel()+'.</div>';
     return;
   }
-  // Montar mapa mes → turmas
-  var mesMap={};
-  for(var m=1;m<=12;m++) mesMap[m]=[];
-  turmasAno.forEach(function(t){var m=_swimExtrairMes(t);if(m>=1&&m<=12) mesMap[m].push(t);else mesMap[1].push(t);});
-  /* Pra cada tipo de treinamento, calcula:
-     - menorMs = data de INÍCIO da turma MAIS ANTIGA do tipo (pra ordem asc)
-     - maiorMs = data de INÍCIO da turma MAIS RECENTE do tipo (pra ordem desc)
-     A ordenação considera DIA, MÊS e ANO (não só o mês). */
+  /* Lista cronológica por MÊS — uma seção por mês com turmas listadas
+     em ordem da data de INÍCIO (periodStart). O toggle (asc/desc) inverte
+     a direção dentro de cada mês, mas os meses sempre seguem Jan→Dez. */
   var asc = _tturmasOrdem === 'asc';
-  var tiposData = {};   /* tipo -> { menorMs, maiorMs } */
+  var mesMap = {};
+  for(var m=1;m<=12;m++) mesMap[m] = [];
   turmasAno.forEach(function(t){
-    var tipo = _swimExtrairTipo(t);
-    var ms = _swimExtrairDataInicioMs(t);
-    if(!tiposData[tipo]){
-      tiposData[tipo] = { menorMs: ms, maiorMs: ms };
-    } else {
-      if(ms < tiposData[tipo].menorMs) tiposData[tipo].menorMs = ms;
-      if(ms > tiposData[tipo].maiorMs) tiposData[tipo].maiorMs = ms;
-    }
+    var m = _swimExtrairMes(t);
+    if(m>=1 && m<=12) mesMap[m].push(t);
+    else mesMap[1].push(t);
   });
-  /* Ordena tipos:
-       asc  → pela data MAIS ANTIGA de cada tipo (qual aconteceu primeiro?)
-       desc → pela data MAIS RECENTE de cada tipo (qual aconteceu por último?)
-     Empate cai pra alfabético. */
-  var tipos = Object.keys(tiposData).sort(function(a, b){
-    var ta = asc ? tiposData[a].menorMs : tiposData[a].maiorMs;
-    var tb = asc ? tiposData[b].menorMs : tiposData[b].maiorMs;
-    if(ta !== tb) return asc ? (ta - tb) : (tb - ta);
-    return a.localeCompare(b, 'pt-BR');
-  });
-  var cols='110px repeat(12,1fr)';
-  var html='<div class="swim-wrapper"><div style="display:grid;grid-template-columns:'+cols+';gap:3px;min-width:680px;">';
-  // Cabeçalho
-  html+='<div></div>';
-  _SWIM_MESES.forEach(function(m){html+='<div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center;padding:4px 0;text-transform:uppercase;letter-spacing:.04em;">'+m+'</div>';});
-  // Linhas
-  tipos.forEach(function(tipo,ti){
-    var cor=_SWIM_CORES[ti%_SWIM_CORES.length];
-    var corBg=_SWIM_BGS[ti%_SWIM_BGS.length];
-    html+='<div style="font-size:11px;font-weight:700;color:'+cor+';display:flex;align-items:center;padding:3px 6px 3px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+tipo+'</div>';
-    for(var m=1;m<=12;m++){
-      var lista=mesMap[m].filter(function(t){return _swimExtrairTipo(t)===tipo;});
-      if(!lista.length){
-        html+='<div class="swim-cell-empty"></div>';
-      } else {
-        lista.forEach(function(t){
-          var cod=t.codigo||t.id||'?';
-          var tip=t.nome+(t.periodText?' · '+t.periodText:'');
-          html+='<div class="swim-cell-filled" onclick="entrarTurma(\''+t.id+'\')" title="'+tip+'" style="background:'+corBg+';border:1px solid '+cor+'55;color:'+cor+';font-size:10px;'+(_turmaGlobalAtiva===t.id?'outline:2px solid var(--accent);outline-offset:2px;box-shadow:0 0 8px rgba(200,240,90,.35);':'')+'">'+cod+'</div>';
-        });
-      }
-    }
-  });
-  html+='</div></div>';
-  el.innerHTML=html;
+
+  function _fmtDiaMes(iso){
+    var s=String(iso||''); var mt=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(!mt) return '';
+    return mt[3]+'/'+mt[2];
+  }
+  function _periodoCurto(t){
+    var s = _fmtDiaMes(t.periodStart||'');
+    var e = _fmtDiaMes(t.periodEnd||'');
+    if(s && e) return s+' → '+e;
+    if(s) return s;
+    if(t.periodText) return t.periodText;
+    return '—';
+  }
+
+  var html = '<div class="tlc-list">';
+  for(var mm=1; mm<=12; mm++){
+    var lista = mesMap[mm];
+    if(!lista.length) continue;
+    /* Ordena turmas do mês pela data de INÍCIO (asc/desc). Empate → código alfa. */
+    lista.sort(function(a,b){
+      var da=_swimExtrairDataInicioMs(a), db=_swimExtrairDataInicioMs(b);
+      if(da !== db) return asc ? (da - db) : (db - da);
+      return String(a.codigo||a.id||'').localeCompare(String(b.codigo||b.id||''),'pt-BR');
+    });
+    html += '<div class="tlc-mes">'
+      + '<div class="tlc-mes-h"><span class="tlc-mes-nome">'+(_SWIM_MESES_FULL[mm-1]||_SWIM_MESES[mm-1])+'</span>'
+      + '<span class="tlc-mes-cnt">'+lista.length+' turma'+(lista.length>1?'s':'')+'</span></div>'
+      + '<div class="tlc-mes-items">';
+    lista.forEach(function(t){
+      var tipo = _swimExtrairTipo(t);
+      var paleta = _swimCorDoTipo(tipo);
+      var cor = paleta.cor, corBg = paleta.bg;
+      var cod = t.codigo||t.id||'?';
+      var per = _periodoCurto(t);
+      var ativo = _turmaGlobalAtiva === t.id;
+      html += '<div class="tlc-item'+(ativo?' tlc-item--ativa':'')+'" onclick="entrarTurma(\''+t.id+'\')" '
+        + 'title="'+(t.nome||'').replace(/"/g,'&quot;')+' · '+per+'" '
+        + 'style="--tlc-cor:'+cor+';--tlc-bg:'+corBg+';">'
+        + '<span class="tlc-data">'+per+'</span>'
+        + '<span class="tlc-cod">'+cod+'</span>'
+        + '<span class="tlc-nome">'+(t.nome||'')+'</span>'
+        + '<span class="tlc-tipo">'+tipo+'</span>'
+        + '</div>';
+    });
+    html += '</div></div>';
+  }
+  html += '</div>';
+  el.innerHTML = html;
 }
 
 function renderTurmasGrid(){
