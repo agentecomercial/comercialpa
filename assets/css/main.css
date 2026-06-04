@@ -1,6 +1,6 @@
 :root{--bg:#0f0f0f;--surface:#1a1a1a;--surface2:#222;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);--text:#f0f0f0;--muted:#888;--accent:#c8f05a;--accent-dim:rgba(200,240,90,.12);--red:#ff5f57;--red-bg:rgba(255,95,87,.12);--amber:#ffb740;--amber-bg:rgba(255,183,64,.12);--green:#34d399;--green-bg:rgba(52,211,153,.12);--blue:#60a5fa;--blue-bg:rgba(96,165,250,.1);--pago:#39ff14;--pago-bg:rgba(57,255,20,.12);--radius:10px;--radius-sm:6px;}
 /* ── Sistema de telas: todas ocupam 100% da viewport ── */
-#loginScreen,#turmasScreen,#telaTurmasScreen,#mapeamentoScreen,#dashboard,#propostaComercialScreen,#turmaInativaScreen{position:fixed;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;display:none;z-index:1;}
+#loginScreen,#turmasScreen,#telaTurmasScreen,#mapeamentoScreen,#dashboard,#propostaComercialScreen,#turmaInativaScreen{position:fixed;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;display:none;z-index:1;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
 /* loginScreen: display controlado 100% via JS (_mostrarTela) */
 #loginScreen{align-items:center;justify-content:center;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -146,7 +146,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 /* TOPBAR */
 /* dashboard display controlado pelo JS */
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:8px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top)) 20px 12px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:8px;}
 .topbar-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .topbar-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
 .topbar-title{font-size:14px;font-weight:600;cursor:pointer;}
@@ -1018,8 +1018,10 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   .bottom-grid{grid-template-columns:1fr;}
   .legend-grid{grid-template-columns:repeat(2,1fr);}
 
-  /* Topbar do dashboard — empilhar em 2 linhas */
-  .topbar{padding:10px 14px;gap:6px;flex-wrap:nowrap;}
+  /* Topbar do dashboard — empilhar em 2 linhas
+     Respeita safe-area-inset-top (notch + status bar do iOS) pra não ficar
+     grudada no topo do device e atrapalhar gestos do sistema. */
+  .topbar{padding:calc(10px + env(safe-area-inset-top)) 14px 10px;gap:6px;flex-wrap:nowrap;}
   .topbar-left{flex:1;min-width:0;}
   .topbar-right{width:auto;justify-content:flex-end;flex-wrap:nowrap;flex-shrink:0;}
   .title-edit-btn{font-size:10px;padding:4px 8px;}
