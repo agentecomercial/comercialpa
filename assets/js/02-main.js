@@ -1393,6 +1393,9 @@ function clearAll(){
     var el=document.getElementById(id);
     if(el){el.value='';el.classList.remove('ativo');}
   });
+  /* Limpa também o campo de busca (× desktop e "Limpar" mobile) */
+  var _si=document.getElementById('searchInput');
+  if(_si) _si.value='';
   renderAll();
 }
 function toggleCliente(nome){
@@ -1883,7 +1886,39 @@ function renderAll(){
           return '<span class="mob-trein-pill '+cls+'">'+String(t.cod||'—').toUpperCase()+'</span>';
         }).join('');
         const presencaHtml = window._presencaBadgeHtml ? window._presencaBadgeHtml(g.anchorRi) : '<span style="color:var(--muted);font-size:10px;">—</span>';
+        /* Select de consultor — mesmo handler do desktop (cardCellChange).
+           Usa anchorRi (primeiro sub do cliente); se houver mais de 1 sub com
+           consultores diferentes, mostra o do primeiro e marca com ⚠. */
+        var consAtual = '';
+        g.consultores.forEach(function(c){ if(!consAtual) consAtual = c; });
+        var consDivergentes = g.consultores.size > 1;
+        var consOpts = '<option value=""'+(!consAtual?' selected':'')+'>— Atribuir consultor —</option>'
+          + allConsultors.map(function(c){
+              return '<option value="'+c+'"'+(consAtual===c?' selected':'')+'>'+c.toUpperCase()+'</option>';
+            }).join('');
+        /* Banner do consultor no TOPO do card (Opção 10): faixa colorida com
+           gradiente. Cor personalizada por consultor (1º nome em lower-case
+           vira a classe cons-<nome>); fallback azul (com consultor) ou laranja
+           (sem). O <select> nativo fica sobreposto e abre o picker no tap. */
+        var consSlug = consAtual
+          ? consAtual.trim().split(/\s+/)[0].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+          : '';
+        var consBannerHtml = '<div class="mob-cons-banner'+(consAtual?' has':' empty')+(consSlug?' cons-'+consSlug:'')+'">'
+          + '<span class="bub bub-a"></span>'
+          + '<span class="bub bub-b"></span>'
+          + '<span class="bub bub-c"></span>'
+          + '<span class="bub bub-d"></span>'
+          + '<span class="mob-cons-banner-txt">'
+          +   (consDivergentes ? '⚠ ' : '')
+          +   (consAtual ? consAtual : '— Atribuir consultor —')
+          + '</span>'
+          + '<span class="mob-cons-banner-caret">▾</span>'
+          + '<select class="mob-cons-banner-sel" data-ri="'+g.anchorRi+'" data-campo="consultor" onchange="cardCellChange(this)" onclick="event.stopPropagation();" aria-label="Atribuir consultor">'
+          +   consOpts
+          + '</select>'
+          + '</div>';
         return '<div class="mob-card mob-card-agg '+stCls+'" id="mobcard_'+g.anchorRi+'">'
+          + consBannerHtml
           + '<div class="mob-header">'
           +   '<div class="mob-info">'
           +     '<div class="mob-name-row">'

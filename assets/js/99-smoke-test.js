@@ -368,12 +368,14 @@
     relatorio: function(){ return window._lastSmoke; }
   };
 
-  /* AUTO 1: roda 3s após cada data:applied, silencioso (apenas toast em falha) */
+  /* AUTO 1: roda 3s após cada data:applied. Sem log no console e SEM toast
+     vermelho na tela — falhas ficam só em window._lastSmoke pra inspeção
+     manual via _smoke.relatorio(). */
   var _autoRunPending = null;
   document.addEventListener('data:applied', function(){
     clearTimeout(_autoRunPending);
     _autoRunPending = setTimeout(function(){
-      _run({silent:true});  /* só toast se falhar */
+      _run({silent:true, suppressToast:true});
     }, 3000);
   });
 

@@ -159,24 +159,24 @@ function _renderTurmasYearBar(turmas){
         'box-shadow:0 8px 28px rgba(0,0,0,.5);width:320px;">'+
       '</div>'+
     '</div>'+
-    /* Switch on/off de ordem (opção 5 · asc ↔ desc) */
-    '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-left:14px;">Ordem</span>'+
-    '<div id="turmasOrdemWrap" style="display:inline-flex;align-items:center;gap:8px;">'+
-      '<span id="turmasOrdemLblAsc" style="font-size:11px;font-weight:700;color:'+(_tturmasOrdem==='asc'?'var(--accent)':'var(--muted)')+';transition:color .15s;">↑ Antiga</span>'+
-      '<div id="turmasOrdemSwitch" role="button" tabindex="0" aria-pressed="'+(_tturmasOrdem==='desc')+'" '+
-        'title="Click pra alternar entre crescente e decrescente" '+
-        'style="position:relative;width:46px;height:24px;background:'+(_tturmasOrdem==='desc'?'rgba(200,240,90,.15)':'var(--surface)')+';'+
-        'border:1px solid '+(_tturmasOrdem==='desc'?'rgba(200,240,90,.4)':'var(--border2)')+';border-radius:14px;cursor:pointer;transition:all .15s;">'+
-        '<span id="turmasOrdemDot" style="position:absolute;top:2px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--accent);transition:transform .2s;transform:translateX('+(_tturmasOrdem==='desc'?'20px':'0')+');"></span>'+
-      '</div>'+
-      '<span id="turmasOrdemLblDesc" style="font-size:11px;font-weight:700;color:'+(_tturmasOrdem==='desc'?'var(--accent)':'var(--muted)')+';transition:color .15s;">↓ Recente</span>'+
-    '</div>';
+    /* Botão único alternante (Opção 2): mostra a opção ATIVA com as setas
+       empilhadas (a inativa em opacity .25). Tap inverte a ordem. */
+    '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-left:14px;margin-right:8px;">Ordem</span>'+
+    '<button id="turmasOrdemBtn" type="button" aria-pressed="'+(_tturmasOrdem==='desc')+'" '+
+      'title="Toque pra alternar a ordem (antiga ↔ recente)" '+
+      'style="background:rgba(200,240,90,.10);border:1px solid rgba(200,240,90,.35);color:var(--accent);padding:7px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.04em;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;line-height:1;">'+
+      '<span style="display:inline-flex;flex-direction:column;font-size:9px;line-height:1;gap:1px;">'+
+        '<span style="opacity:'+(_tturmasOrdem==='asc'?'1':'.25')+';">↑</span>'+
+        '<span style="opacity:'+(_tturmasOrdem==='desc'?'1':'.25')+';">↓</span>'+
+      '</span>'+
+      (_tturmasOrdem==='desc'?'Recente primeiro':'Antiga primeiro')+
+    '</button>';
 
   document.getElementById('turmasAnoTrigger').addEventListener('click', function(e){
     e.stopPropagation();
     _turmasAnoPopAbrir();
   });
-  var sw=document.getElementById('turmasOrdemSwitch');
+  var sw=document.getElementById('turmasOrdemBtn');
   if(sw){
     sw.addEventListener('click', _turmasToggleOrdem);
     sw.addEventListener('keydown', function(e){
