@@ -166,7 +166,7 @@
 /* === Home mobile · Configuração via tuner === */
 @media (max-width: 768px) {
   /* Topbar */
-  .topbar { padding: calc(25px + env(safe-area-inset-top)) 14px 12px !important; gap: 6px !important; }
+  .topbar { padding: calc(32px + env(safe-area-inset-top)) 14px 12px !important; gap: 6px !important; }
   .topbar-title { font-size: 14px !important; }
   .topbar-right > * { font-size: 11px !important; }
   /* Grid */
