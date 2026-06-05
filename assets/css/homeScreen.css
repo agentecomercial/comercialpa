@@ -19,7 +19,7 @@
   .home-card-footer,.ic-footer{font-size:12.5px;}
 }
 .home-card:hover{transform:translateY(-4px) scale(1.01);box-shadow:0 16px 40px rgba(var(--card-shadow-rgb),.22),inset 0 1px 0 rgba(255,255,255,.16);border-color:rgba(var(--card-shadow-rgb),.4)!important;}
-.home-card:active{transform:translateY(-2px) scale(.99);transition-duration:.08s;}
+/* :active removido — sem efeito "pressed" no card */
 .home-card:focus-visible{outline:2px solid rgba(var(--card-shadow-rgb),.85);outline-offset:3px;box-shadow:0 0 0 4px rgba(var(--card-shadow-rgb),.18),0 16px 40px rgba(var(--card-shadow-rgb),.22);}
 
 /* ──────────────────────────────────────────────────────────────
