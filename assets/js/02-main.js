@@ -1868,9 +1868,12 @@ function renderAll(){
         if(it.consultor) g.consultores.add(it.consultor);
         g.treinos.push({cod:it.treinamento||'—', status:it.status||'aberto', valor:it.valor||0, ri:it._ri});
         g.qtdTotal++;
+        const _stBaixo=String(it.status||'').toLowerCase();
+        const _desist=(_stBaixo==='desistiu' || _stBaixo==='desistencia' || _stBaixo==='cancelado' || _stBaixo==='cancelada');
         if(it.status==='pago'){ g.totalPago+=(it.valor||0); g.qtdPagos++; }
         else if(it.status==='aberto'){ g.totalAberto+=(it.valor||0); g.qtdAbertos++; }
-        g.totalGeral+=(it.valor||0);
+        /* Desistencias/cancelados NAO entram no total geral do cliente */
+        if(!_desist) g.totalGeral+=(it.valor||0);
       });
       const _escAttr=function(s){return String(s||'').replace(/'/g,"\\'");};
       // === Card mobile · Opção 05 — compacto com chips de treinamento ===
