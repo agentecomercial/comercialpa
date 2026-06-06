@@ -517,10 +517,11 @@ function _propostaPreview(){
     var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
     selecionados.push({nome:nome, val:inp?parseVal(inp.value):0, qty:qty});
   });
-  /* No total integral aplicamos o multiplicador de parcelas (12x quando
-     a forma de pagamento eh parcelada) para refletir o valor cheio. */
+  /* Em formas parceladas (12x), INVESTIMENTO FINAL exibe a SOMA DAS
+     PARCELAS (ou seja, o valor de 1 mes). Em integral/a vista, mantem
+     o valor cheio normalmente (parcelasMul fica em 1). */
   var parcelasMul = (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? 12 : 1;
-  var total = selecionados.reduce(function(a,s){return a + s.val * s.qty * parcelasMul;},0);
+  var total = selecionados.reduce(function(a,s){return a + s.val * s.qty;},0);
   var consultor = _propostaConsultorAtual();
   var fonteUser = parseInt(document.getElementById('propFonte').value)||10;
   var paddingUser = parseInt(document.getElementById('propPadding').value)||4;
@@ -545,9 +546,10 @@ function _propostaPreview(){
   var _dataStr = String(_dt.getDate()).padStart(2,'0')+' · '+String(_dt.getMonth()+1).padStart(2,'0')+' · '+_dt.getFullYear();
 
   var rows = selecionados.map(function(s, i){
-    /* "VALOR TOTAL (R$)" da linha = qty × parcela × parcelas (cheio).
-       Em formas a vista/integral, parcelasMul = 1 (ja eh o cheio). */
-    var subtotal = s.val * s.qty * parcelasMul;
+    /* "VALOR TOTAL (R$)" da linha = qty × valor unitario (parcela quando
+       a forma de pagamento eh em 12x). NAO multiplica por parcelas, para
+       manter coerencia com o INVESTIMENTO FINAL (soma das parcelas). */
+    var subtotal = s.val * s.qty;
     var nomeFmt = (s.qty > 1 ? s.qty + '× ' : '') + s.nome;
     return '<tr>'
       +'<td style="padding:'+padding+'px 10px;font-size:'+fonte+'pt;color:#666;">L'+String(i+1).padStart(2,'0')+'</td>'
