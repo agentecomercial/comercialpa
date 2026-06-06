@@ -545,7 +545,9 @@ function _propostaPreview(){
   var _dataStr = String(_dt.getDate()).padStart(2,'0')+' · '+String(_dt.getMonth()+1).padStart(2,'0')+' · '+_dt.getFullYear();
 
   var rows = selecionados.map(function(s, i){
-    var subtotal = s.val * s.qty;
+    /* "VALOR TOTAL (R$)" da linha = qty × parcela × parcelas (cheio).
+       Em formas a vista/integral, parcelasMul = 1 (ja eh o cheio). */
+    var subtotal = s.val * s.qty * parcelasMul;
     var nomeFmt = (s.qty > 1 ? s.qty + '× ' : '') + s.nome;
     return '<tr>'
       +'<td style="padding:'+padding+'px 10px;font-size:'+fonte+'pt;color:#666;">L'+String(i+1).padStart(2,'0')+'</td>'
