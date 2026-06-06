@@ -19,6 +19,7 @@
   var _npGoals={};         /* cache Firebase — fonte C */
   var _npGoalsSem={};      /* cache Firebase — metas semanais [consultor][semNum] = {min, bas, mas} */
   var _npSemConfig={};     /* cache Firebase — config manual de janelas [mk] = [{ini,fim}, ...] */
+  var _npFpcSemSel=null;   /* num da semana selecionada no carrossel FPC (null = auto/atual) */
   var _npConsultores=[];   /* lista unificada */
   var _npListeners=[];     /* funções de cleanup */
   var _npVendaEditId=null;
@@ -178,6 +179,81 @@
     });
     return melhor || semanas[semanas.length-1];
   }
+  /* Status agregado da semana (faturado time vs meta minima time):
+       'futuro'  -> semana ainda nao comecou
+       'batida'  -> faturado >= soma metaMin (>= 100%)
+       'parcial' -> faturado > 0 e meta > 0
+       'zero'    -> nada faturado */
+  function _statusSemanaFPC(s, todasVendas){
+    if(!s) return 'futuro';
+    var hojeYMD = _ymd(new Date());
+    var futuro = (s.ini > hojeYMD);
+    var usu = (window._npUsuarios && typeof window._npUsuarios==='object') ? window._npUsuarios : {};
+    var fat = 0, mMin = 0;
+    Object.values(usu).forEach(function(u){
+      if(u && u.perfil==='consultor' && u.nome){
+        fat += _faturadoNaSemana(todasVendas, u.nome, s);
+        var g = (_npGoalsSem && _npGoalsSem[u.nome] && _npGoalsSem[u.nome][s.num]) || {};
+        mMin += +(g.min||0);
+      }
+    });
+    if(futuro && fat===0) return 'futuro';
+    if(mMin>0 && fat>=mMin) return 'batida';
+    if(fat>0) return 'parcial';
+    return 'zero';
+  }
+  function _statusLabelFPC(st){
+    return st==='batida' ? '✓ BATIDA'
+         : st==='parcial' ? '⏳ PARCIAL'
+         : st==='zero' ? '— ZERO'
+         : 'FUTURO';
+  }
+  /* Renderiza o carrossel de navegacao entre semanas no header do card
+     "Faturado por consultor — Semanal". Mostra a semana SELECIONADA em
+     destaque no centro + as adjacentes (anterior e proxima) em preview. */
+  function _renderFpcCarousel(semanas, atual, semAtualNum, todasVendas){
+    if(!atual || !semanas || !semanas.length){
+      return '<span style="color:var(--muted);">Sem semana ativa</span>';
+    }
+    var idx = semanas.findIndex(function(s){return s.num===atual.num;});
+    var prev = idx>0 ? semanas[idx-1] : null;
+    var next = idx<semanas.length-1 ? semanas[idx+1] : null;
+    function _statusOf(s){ return _statusSemanaFPC(s, todasVendas); }
+    function _miniCard(s, role){
+      if(!s) return '<div class="fpc-carr-card fpc-carr-empty"></div>';
+      var st = _statusOf(s);
+      var ehAtualMes = (semAtualNum===s.num);
+      return '<div class="fpc-carr-card fpc-carr-'+role+' st-'+st+'" '
+        + (role==='aux'?'onclick="window._npFpcSemGo('+s.num+')" title="Ir para S'+s.num+'"':'')
+        +'>'
+        + '<div class="fpc-carr-num">S'+s.num+(ehAtualMes?' · ATUAL':'')+'</div>'
+        + '<div class="fpc-carr-data">'+s.iniLabel+' – '+s.fimLabel+'</div>'
+        + '<div class="fpc-carr-st">'+_statusLabelFPC(st)+'</div>'
+        + '</div>';
+    }
+    var hasPrev = !!prev;
+    var hasNext = !!next;
+    return '<div class="fpc-carr">'
+      + '<div class="fpc-carr-strip">'
+      +   _miniCard(prev,'aux')
+      +   _miniCard(atual,'main')
+      +   _miniCard(next,'aux')
+      + '</div>'
+      + '<div class="fpc-carr-side">'
+      +   '<button type="button" class="fpc-carr-btn'+(hasPrev?'':' disabled')+'" '
+      +     (hasPrev?'onclick="window._npFpcSemGo('+prev.num+')"':'')+'>‹</button>'
+      +   '<span class="fpc-carr-hint">Navegue entre as semanas</span>'
+      +   '<button type="button" class="fpc-carr-btn'+(hasNext?'':' disabled')+'" '
+      +     (hasNext?'onclick="window._npFpcSemGo('+next.num+')"':'')+'>›</button>'
+      + '</div>'
+      + '</div>';
+  }
+  window._npFpcSemGo = function(num){
+    _npFpcSemSel = +num || null;
+    /* re-render do dashboard pra atualizar o card inteiro */
+    if(typeof window._npRenderTudo==='function') window._npRenderTudo();
+  };
+
   /* Dias úteis (seg-sex) restantes na janela (a partir de hoje, inclusive) */
   function _diasUteisRestantes(janela){
     var hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -991,14 +1067,20 @@
     if(chartConsSem){
       var semanasDash = _semanasDoMes(_npAno, _npMes);
       var semAtualDash = _semanaAtual();
-      /* Fallback: quando hoje nao cai em nenhuma janela configurada,
-         escolhe a semana mais PROXIMA da data de hoje (em vez de pegar
-         a ultima do mes, que dava sensacao de "semana errada"). */
-      var jSemDash = semAtualDash
-        ? semanasDash.find(function(s){return s.num===semAtualDash;})
-        : _semanaMaisProxima(_ymd(new Date()), semanasDash);
-      if(chartConsSemTit && jSemDash){
-        chartConsSemTit.textContent = 'Faturado por consultor — Semanal · S'+jSemDash.num+' ('+jSemDash.iniLabel+'-'+jSemDash.fimLabel+')';
+      /* Resolucao da semana exibida:
+         1) Se ha selecao manual via carrossel (_npFpcSemSel) -> usa
+         2) Caso contrario: semana de hoje, se nao, a mais proxima */
+      var jSemDash;
+      if(_npFpcSemSel){
+        jSemDash = semanasDash.find(function(s){return s.num===_npFpcSemSel;}) || null;
+      }
+      if(!jSemDash){
+        jSemDash = semAtualDash
+          ? semanasDash.find(function(s){return s.num===semAtualDash;})
+          : _semanaMaisProxima(_ymd(new Date()), semanasDash);
+      }
+      if(chartConsSemTit){
+        chartConsSemTit.innerHTML = _renderFpcCarousel(semanasDash, jSemDash, semAtualDash, todas);
       }
       if(!jSemDash){
         chartConsSem.innerHTML = '<div class="np-empty">Sem semana ativa no mês.</div>';

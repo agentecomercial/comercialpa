@@ -3901,6 +3901,89 @@ textarea.pb-input{resize:vertical;font-family:inherit;line-height:1.5;}
 .np-cons-meta b{color:var(--text);font-weight:700;}
 
 /* ══════════════════════════════════════════════════════════════
+   .fpc-carr — Carrossel de navegacao entre semanas
+   (Opcao 10 do preview: semana atual no centro grande, adjacentes
+    como cards menores opacos em segundo plano)
+   ══════════════════════════════════════════════════════════════ */
+.fpc-carr{
+  background:rgba(0,0,0,.20);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:8px;
+  padding:8px;
+  font-family:'DM Sans',sans-serif;
+}
+.fpc-carr-strip{
+  display:flex;align-items:center;justify-content:center;
+  gap:8px;
+}
+.fpc-carr-card{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:8px;
+  padding:8px 10px;
+  text-align:center;
+  transition:all .2s;
+  min-width:80px;
+}
+.fpc-carr-aux{
+  transform:scale(.78);opacity:.50;
+  cursor:pointer;
+}
+.fpc-carr-aux:hover{opacity:.85;transform:scale(.82);}
+.fpc-carr-main{
+  background:rgba(200,240,90,.10);
+  border:1px solid rgba(200,240,90,.40);
+  box-shadow:0 0 20px rgba(200,240,90,.18);
+  transform:scale(1.05);
+  min-width:200px;
+  padding:12px 16px;
+}
+.fpc-carr-empty{visibility:hidden;}
+.fpc-carr-num{
+  font-size:11px;font-weight:800;color:var(--accent);
+  font-family:'DM Mono','DM Sans',monospace;
+  letter-spacing:.04em;
+}
+.fpc-carr-aux .fpc-carr-num{color:var(--muted);font-size:9px;}
+.fpc-carr-data{
+  font-size:9px;color:#9aa5b1;margin-top:2px;
+  font-family:'DM Mono','DM Sans',monospace;
+}
+.fpc-carr-main .fpc-carr-data{font-size:11px;color:#c8d4dc;margin-top:4px;}
+.fpc-carr-st{
+  font-size:9px;margin-top:4px;color:var(--muted);font-weight:700;letter-spacing:.05em;
+}
+.fpc-carr-card.st-batida  .fpc-carr-st{color:#22c55e;}
+.fpc-carr-card.st-parcial .fpc-carr-st{color:#fbbf24;}
+.fpc-carr-card.st-zero    .fpc-carr-st{color:#ef4444;}
+.fpc-carr-card.st-futuro  .fpc-carr-st{color:#6b7280;}
+.fpc-carr-main.st-batida{box-shadow:0 0 20px rgba(34,197,94,.30);border-color:rgba(34,197,94,.50);background:rgba(34,197,94,.10);}
+.fpc-carr-main.st-batida .fpc-carr-num{color:#22c55e;}
+.fpc-carr-main.st-parcial{box-shadow:0 0 20px rgba(251,191,36,.30);border-color:rgba(251,191,36,.50);background:rgba(251,191,36,.10);}
+.fpc-carr-main.st-parcial .fpc-carr-num{color:#fbbf24;}
+.fpc-carr-side{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:8px;padding:0 4px;
+}
+.fpc-carr-btn{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.10);
+  color:#9aa5b1;
+  width:24px;height:24px;border-radius:50%;
+  cursor:pointer;font-size:13px;line-height:1;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-family:inherit;
+  transition:all .12s;
+}
+.fpc-carr-btn:hover{color:var(--accent);border-color:var(--accent);}
+.fpc-carr-btn.disabled{opacity:.25;cursor:not-allowed;}
+.fpc-carr-btn.disabled:hover{color:#9aa5b1;border-color:rgba(255,255,255,.10);}
+.fpc-carr-hint{
+  font-size:9px;color:var(--muted);
+  letter-spacing:.04em;text-transform:uppercase;font-weight:600;
+}
+
+/* ══════════════════════════════════════════════════════════════
    .fpc-tbl — Tabela compacta · alta densidade
    (Faturamento por Consultor — variante "Tabela compacta")
    ══════════════════════════════════════════════════════════════ */
