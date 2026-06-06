@@ -212,7 +212,7 @@ function _propostaRenderTreinamentos(){
     var indisponivel = preco === null;
 
     var row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);cursor:pointer;transition:all .15s;min-width:0;';
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);cursor:pointer;transition:all .15s;min-width:0;flex-wrap:nowrap;overflow:hidden;';
     /* Quando o treinamento nao tem preco-tabela para essa forma de pagamento,
        mantemos a row visualmente atenuada PORÉM editavel — o usuario pode
        preencher o valor manualmente e marcar o checkbox normalmente. */
@@ -227,7 +227,7 @@ function _propostaRenderTreinamentos(){
 
     var label = document.createElement('label');
     label.htmlFor = 'prop_' + nome;
-    label.style.cssText = 'flex:1;min-width:0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:6px;';
+    label.style.cssText = 'flex:1;min-width:0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:5px;flex-wrap:nowrap;overflow:hidden;';
 
     var nomeSpan = document.createElement('span');
     nomeSpan.style.cssText = 'font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
@@ -240,7 +240,7 @@ function _propostaRenderTreinamentos(){
     qtyInput.min = '1';
     qtyInput.value = '1';
     qtyInput.title = 'Quantidade';
-    qtyInput.style.cssText = 'width:44px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 4px;color:var(--text);font-size:12px;font-weight:700;text-align:center;font-family:DM Mono,monospace;';
+    qtyInput.style.cssText = 'width:34px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 3px;color:var(--text);font-size:11px;font-weight:700;text-align:center;font-family:DM Mono,monospace;';
     qtyInput.addEventListener('change', function(){
       if(parseInt(this.value)<1 || isNaN(parseInt(this.value))) this.value='1';
       _propostaRecalcular();
@@ -255,7 +255,7 @@ function _propostaRenderTreinamentos(){
     precoInput.value = indisponivel ? formatVal(0) : formatVal(preco);
     precoInput.placeholder = '0,00';
     precoInput.title = indisponivel ? 'Sem preco de tabela — digite manualmente' : 'Edite para sobrescrever o preco unitario';
-    precoInput.style.cssText = 'width:88px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:DM Mono,monospace;';
+    precoInput.style.cssText = 'width:76px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 6px;color:var(--accent);font-size:11px;font-weight:700;text-align:right;font-family:DM Mono,monospace;';
     precoInput.addEventListener('change', function(){_propostaRecalcular();});
     precoInput.addEventListener('focus', function(){this.select();});
     /* Marca como editado pelo usuario para nao ser sobrescrito ao trocar
@@ -273,7 +273,7 @@ function _propostaRenderTreinamentos(){
     restoreBtn.type = 'button';
     restoreBtn.title = 'Restaurar preco de tabela';
     restoreBtn.textContent = '↺';
-    restoreBtn.style.cssText = 'display:none;width:24px;height:24px;flex-shrink:0;background:transparent;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0;font-family:DM Sans,sans-serif;transition:all .15s;';
+    restoreBtn.style.cssText = 'display:none;width:20px;height:20px;flex-shrink:0;background:transparent;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--muted);cursor:pointer;font-size:12px;line-height:1;padding:0;font-family:DM Sans,sans-serif;transition:all .15s;';
     restoreBtn.addEventListener('mouseover', function(){this.style.color='var(--accent)';this.style.borderColor='var(--accent)';});
     restoreBtn.addEventListener('mouseout', function(){this.style.color='var(--muted)';this.style.borderColor='var(--border2)';});
     restoreBtn.addEventListener('click', function(e){
@@ -292,7 +292,7 @@ function _propostaRenderTreinamentos(){
     subtotalSpan.id = 'propsubtotal_' + nome;
     subtotalSpan.title = 'Subtotal (quantidade × preco)';
     subtotalSpan.textContent = formatVal(indisponivel ? 0 : preco);
-    subtotalSpan.style.cssText = 'width:96px;flex-shrink:0;background:rgba(200,240,90,.08);border:1px solid rgba(200,240,90,.35);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:800;text-align:right;font-family:DM Mono,monospace;line-height:1.4;';
+    subtotalSpan.style.cssText = 'width:82px;flex-shrink:0;background:rgba(200,240,90,.08);border:1px solid rgba(200,240,90,.35);border-radius:var(--radius-sm);padding:4px 6px;color:var(--accent);font-size:11px;font-weight:800;text-align:right;font-family:DM Mono,monospace;line-height:1.4;white-space:nowrap;';
 
     label.appendChild(nomeSpan);
     label.appendChild(qtyInput);
