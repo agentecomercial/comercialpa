@@ -253,6 +253,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 /* TABLE */
 .tpanel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+/* Remover efeito :active (scale/transform) dos elementos clicaveis dentro do
+   card "Clientes" — identificado via :has(#cliBarUnica). Outros paineis
+   mantem seus feedbacks visuais. */
+.tpanel:has(#cliBarUnica) button:active,
+.tpanel:has(#cliBarUnica) .add-btn:active,
+.tpanel:has(#cliBarUnica) .btn-secondary:active,
+.tpanel:has(#cliBarUnica) .cli-action-btn:active,
+.tpanel:has(#cliBarUnica) .fbtn:active,
+.tpanel:has(#cliBarUnica) tr:active,
+.tpanel:has(#cliBarUnica) td:active{
+  transform:none !important;
+  box-shadow:none !important;
+}
 .tpanel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;}
 .fbtn{font-size:11px;padding:6px 15px;border-radius:20px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;box-shadow:0 2px 4px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.06) inset;}
 .fbtn:hover{border-color:var(--accent);color:var(--accent);}
