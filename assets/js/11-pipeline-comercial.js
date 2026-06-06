@@ -151,6 +151,33 @@
     var semanas = _semanasDoMes(_npAno, _npMes);
     return _semanaDoYMD(_ymd(hoje), semanas);
   }
+  /* Retorna a janela de semana MAIS PROXIMA de uma data YMD.
+     - Se hoje cai dentro de alguma semana, retorna essa
+     - Se hoje < ini da primeira (semanas comecam depois): retorna a 1a
+     - Se hoje > fim da ultima (semanas ja passaram): retorna a ultima
+     - Se hoje cai num gap entre semanas: retorna a mais proxima (pela
+       menor distancia em dias entre hoje e ini/fim) */
+  function _semanaMaisProxima(ymd, semanas){
+    if(!semanas || !semanas.length) return null;
+    /* 1) caiu dentro? */
+    for(var i=0;i<semanas.length;i++){
+      if(ymd >= semanas[i].ini && ymd <= semanas[i].fim) return semanas[i];
+    }
+    /* 2) antes de todas → 1a futura */
+    if(ymd < semanas[0].ini) return semanas[0];
+    /* 3) depois de todas → ultima */
+    if(ymd > semanas[semanas.length-1].fim) return semanas[semanas.length-1];
+    /* 4) gap entre semanas → escolhe a mais perto por dias */
+    var hojeMs = new Date(ymd+'T12:00:00').getTime();
+    var melhor = null, menorDist = Infinity;
+    semanas.forEach(function(s){
+      var iniMs = new Date(s.ini+'T12:00:00').getTime();
+      var fimMs = new Date(s.fim+'T12:00:00').getTime();
+      var dist = Math.min(Math.abs(hojeMs-iniMs), Math.abs(hojeMs-fimMs));
+      if(dist < menorDist){ menorDist = dist; melhor = s; }
+    });
+    return melhor || semanas[semanas.length-1];
+  }
   /* Dias úteis (seg-sex) restantes na janela (a partir de hoje, inclusive) */
   function _diasUteisRestantes(janela){
     var hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -964,7 +991,12 @@
     if(chartConsSem){
       var semanasDash = _semanasDoMes(_npAno, _npMes);
       var semAtualDash = _semanaAtual();
-      var jSemDash = semAtualDash ? semanasDash.find(function(s){return s.num===semAtualDash;}) : (semanasDash[semanasDash.length-1]||null);
+      /* Fallback: quando hoje nao cai em nenhuma janela configurada,
+         escolhe a semana mais PROXIMA da data de hoje (em vez de pegar
+         a ultima do mes, que dava sensacao de "semana errada"). */
+      var jSemDash = semAtualDash
+        ? semanasDash.find(function(s){return s.num===semAtualDash;})
+        : _semanaMaisProxima(_ymd(new Date()), semanasDash);
       if(chartConsSemTit && jSemDash){
         chartConsSemTit.textContent = 'Faturado por consultor — Semanal · S'+jSemDash.num+' ('+jSemDash.iniLabel+'-'+jSemDash.fimLabel+')';
       }
