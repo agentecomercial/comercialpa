@@ -2115,10 +2115,11 @@
       const soma = leadsEt.reduce((s,l)=>s+ +(l.valor||0),0);
       const cards = leadsEt.map(l => _cardHtml(l, et.cor)).join('');
       const mais = leadsEt.length > _maxCards ? `<div class="fv-col-mais">↓ Ver mais ${leadsEt.length - _maxCards} lead${leadsEt.length - _maxCards>1?'s':''}</div>` : '';
-      /* OPÇÃO 8: colunas vazias viram mini-colunas verticais (default). Click na mini
-         expande; click no header de coluna cheia retrai. Estado em _colsToggleadas. */
+      /* Comportamento "Opcao 8" (mini-colunas verticais para vazias) DESATIVADO
+         a pedido do usuario — todas as colunas ficam expandidas em largura igual.
+         Manter o invertida ainda permite retrair manualmente pelo header. */
       const invertida = _colsToggleadas.has(i);
-      const mini = invertida ? !vazia : vazia;
+      const mini = invertida ? !vazia : false;
       if(mini){
         const badge = vazia
           ? `<div class="fv-col-vazia-icone" style="background:${et.cor}22;border-color:${et.cor}55;color:${et.cor};">${et.ico||'•'}</div>`
