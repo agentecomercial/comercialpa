@@ -450,7 +450,13 @@ function abrirClienteDetalhe(ri){
     _cdLista.innerHTML='';
     // Usa array real se existir (mesmo vazio); só usa fallback legado se treinamentos for null/undefined
     var _treinsEdit=Array.isArray(d.treinamentos)?d.treinamentos:(d.treinamento&&d.treinamento!=='-'?[{cod:d.treinamento,valor:d.valor||0}]:[]);
-    _treinsEdit.forEach(function(t){_addTreinRow('cdTreinamentosLista',t.cod,t.valor);});
+    /* Treinador/status por sub: usa o do proprio sub se ja salvo,
+       senao herda do scalar do cliente (compat com dados antigos). */
+    _treinsEdit.forEach(function(t){
+      var _trn=t.treinador || (d.treinador && d.treinador!=='-' ? d.treinador : '');
+      var _st=t.status || d.status || 'aberto';
+      _addTreinRow('cdTreinamentosLista',t.cod,t.valor,_trn,_st);
+    });
     _calcTotalTrein('cdTreinamentosLista');
     // Bloquear edição de linhas existentes se não for modo edição
     if(!_modoEdit){
@@ -507,8 +513,20 @@ function salvarClienteDetalhe(){
   var _treinRows=_getTreinRows('cdTreinamentosLista');
   var _valorTotal=_treinRows.reduce(function(a,t){return a+t.valor;},0);
   var _hasCI=_treinRows.some(function(t){return t.cod==='CI';});
+  /* Status global do cliente: deriva dos subs.
+     - Se todos os subs tem o MESMO status -> usa ele
+     - Caso contrario -> usa o do primeiro sub (status mais "antigo" do array)
+     - Fallback (sem subs): mantem o select global do modal. */
   var novoStatus=document.getElementById('clienteDetalheStatusEdit').value||'aberto';
   var novoTreinador=(document.getElementById('clienteDetalheTreinadorEdit')||{}).value||'-';
+  if(_treinRows.length){
+    var _stats=_treinRows.map(function(t){return t.status||'aberto';});
+    var _uniSt=_stats.every(function(s){return s===_stats[0];});
+    novoStatus=_uniSt?_stats[0]:_stats[0];
+    /* Treinador global: primeiro nao-vazio entre os subs (preserva o legado de CI) */
+    var _trnFromSub=_treinRows.map(function(t){return t.treinador||'';}).filter(Boolean)[0]||'';
+    if(_trnFromSub) novoTreinador=_trnFromSub;
+  }
 
   d.treinamentos=_treinRows;
   d.treinamento=_treinRows.length?_treinRows[0].cod:'-';

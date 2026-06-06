@@ -124,7 +124,7 @@ function _updateRemoveBtns(listId){
   });
 }
 
-function _addTreinRow(listId,cod,val){
+function _addTreinRow(listId,cod,val,treinador,status){
   var container=document.getElementById(listId);
   if(!container)return;
   var opts='<option value="-">—</option>';
@@ -139,13 +139,37 @@ function _addTreinRow(listId,cod,val){
     if(!jaTemCaseInsensitive) _tl.push(codStr);
   }
   _tl.forEach(function(t){opts+='<option value="'+t+'"'+(cod===t?' selected':'')+'>'+t+'</option>';});
+  /* Treinador (lista global allTrainers) */
+  var _trnLst=(typeof allTrainers!=='undefined'&&Array.isArray(allTrainers))?allTrainers:[];
+  var _trnSel=String(treinador||'-');
+  var trnOpts='<option value="-">— TREINADOR —</option>'
+    +_trnLst.map(function(t){return '<option value="'+t+'"'+(_trnSel===t?' selected':'')+'>'+t.toUpperCase()+'</option>';}).join('');
+  /* Status fixo (5 opções) */
+  var STATUS_OPTS=[
+    {v:'aberto',l:'ABERTO'},
+    {v:'pago',l:'PAGO'},
+    {v:'negociacao',l:'NEGOCIAÇÃO'},
+    {v:'desistiu',l:'DESISTIU'},
+    {v:'estorno',l:'ESTORNO'}
+  ];
+  var _stSel=String(status||'aberto');
+  var stOpts=STATUS_OPTS.map(function(s){return '<option value="'+s.v+'"'+(_stSel===s.v?' selected':'')+'>'+s.l+'</option>';}).join('');
   var valStr=val?Number(val).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
   var row=document.createElement('div');
   row.className='trein-row';
-  row.style.cssText='display:flex;gap:6px;align-items:center;';
-  row.innerHTML='<select class="modal-select trein-cod" style="flex:1;min-width:0;font-size:12px;padding:6px 8px;" onchange="_calcTotalTrein(\''+listId+'\');_checkCITreinador(\''+listId+'\')">'+opts+'</select>'
-    +'<input type="text" inputmode="numeric" class="modal-input trein-valor" style="width:110px;flex-shrink:0;font-size:12px;padding:6px 8px;text-align:right;margin:0;" placeholder="0,00" value="'+valStr+'" oninput="this.value=lcMoneyMask(this.value);_calcTotalTrein(\''+listId+'\')">'
-    +'<button type="button" class="trein-remove-btn" onclick="this.closest(\'.trein-row\').remove();_calcTotalTrein(\''+listId+'\');_checkCITreinador(\''+listId+'\');_updateRemoveBtns(\''+listId+'\')" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;font-family:monospace;">×</button>';
+  row.style.cssText='display:flex;flex-direction:column;gap:5px;padding:8px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:6px;margin-bottom:6px;';
+  row.innerHTML=
+    /* Linha 1: treinamento + valor + remover */
+    '<div style="display:flex;gap:6px;align-items:center;">'
+      +'<select class="modal-select trein-cod" style="flex:1;min-width:0;font-size:12px;padding:6px 8px;" onchange="_calcTotalTrein(\''+listId+'\');_checkCITreinador(\''+listId+'\')">'+opts+'</select>'
+      +'<input type="text" inputmode="numeric" class="modal-input trein-valor" style="width:110px;flex-shrink:0;font-size:12px;padding:6px 8px;text-align:right;margin:0;" placeholder="0,00" value="'+valStr+'" oninput="this.value=lcMoneyMask(this.value);_calcTotalTrein(\''+listId+'\')">'
+      +'<button type="button" class="trein-remove-btn" onclick="this.closest(\'.trein-row\').remove();_calcTotalTrein(\''+listId+'\');_checkCITreinador(\''+listId+'\');_updateRemoveBtns(\''+listId+'\')" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;font-family:monospace;">×</button>'
+    +'</div>'
+    /* Linha 2: treinador + status (vinculados a este sub) */
+    +'<div style="display:flex;gap:6px;">'
+      +'<select class="modal-select trein-treinador" style="flex:1;min-width:0;font-size:11px;padding:6px 8px;">'+trnOpts+'</select>'
+      +'<select class="modal-select trein-status" style="flex:1;min-width:0;font-size:11px;padding:6px 8px;">'+stOpts+'</select>'
+    +'</div>';
   container.appendChild(row);
   _calcTotalTrein(listId);
   _checkCITreinador(listId);
@@ -171,7 +195,12 @@ function _getTreinRows(listId){
     if(!sel||!inp)return;
     var cod=sel.value;
     if(!cod||cod==='-')return;
-    rows.push({cod:cod,valor:parseVal(inp.value)||0});
+    var trnEl=row.querySelector('.trein-treinador');
+    var stEl=row.querySelector('.trein-status');
+    var item={cod:cod,valor:parseVal(inp.value)||0};
+    if(trnEl) item.treinador=(trnEl.value==='-'?'':trnEl.value);
+    if(stEl)  item.status=stEl.value||'aberto';
+    rows.push(item);
   });
   return rows;
 }
