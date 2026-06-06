@@ -509,10 +509,20 @@ function _propostaPreview(){
     var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
     selecionados.push({nome:nome, val:inp?parseVal(inp.value):0, qty:qty});
   });
-  var total = selecionados.reduce(function(a,s){return a + s.val * s.qty;},0);
+  /* No total integral aplicamos o multiplicador de parcelas (12x quando
+     a forma de pagamento eh parcelada) para refletir o valor cheio. */
+  var parcelasMul = (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? 12 : 1;
+  var total = selecionados.reduce(function(a,s){return a + s.val * s.qty * parcelasMul;},0);
   var consultor = _propostaConsultorAtual();
-  var fonte = parseInt(document.getElementById('propFonte').value)||10;
-  var padding = parseInt(document.getElementById('propPadding').value)||4;
+  var fonteUser = parseInt(document.getElementById('propFonte').value)||10;
+  var paddingUser = parseInt(document.getElementById('propPadding').value)||4;
+  /* AUTO-FIT em A4 unica folha:
+     reduz fonte/padding proporcionalmente quando ha muitos treinamentos
+     selecionados, evitando quebra de pagina. Limites min: fonte 6.5pt, pad 1. */
+  var qtdItens = selecionados.length;
+  var fator = qtdItens > 8 ? Math.max(0.55, 8 / qtdItens) : 1;
+  var fonte = qtdItens > 8 ? Math.max(6.5, Math.round(fonteUser * fator * 10) / 10) : fonteUser;
+  var padding = qtdItens > 8 ? Math.max(1, Math.round(paddingUser * fator)) : paddingUser;
   var corH = document.getElementById('propCorHeader').value||'#0f0f0f';
   var corA = document.getElementById('propCorAccent').value||'#c8f05a';
   var validade = document.getElementById('propValidade').value||'30';
@@ -542,9 +552,13 @@ function _propostaPreview(){
 
   var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
     +'<style>'
+    +'@page{size:A4 portrait;margin:0;}'
     +'*{box-sizing:border-box;margin:0;padding:0;}'
-    +'body{font-family:"Helvetica Neue",Arial,sans-serif;background:#e8eaef;padding:18px;color:#1a1a1a;}'
-    +'.doc{background:#fff;max-width:760px;margin:auto;box-shadow:0 4px 18px rgba(10,31,61,.2);position:relative;}'
+    +'body{font-family:"Helvetica Neue",Arial,sans-serif;background:#e8eaef;color:#1a1a1a;}'
+    /* .doc com dimensoes fixas A4 (210x297mm). overflow:hidden garante
+       que o conteudo nao estoure pra uma segunda pagina. */
+    +'.doc{background:#fff;width:210mm;height:297mm;margin:18px auto;box-shadow:0 4px 18px rgba(10,31,61,.2);position:relative;display:flex;flex-direction:column;overflow:hidden;}'
+    +'@media print{body{background:#fff;}.doc{margin:0;width:210mm;height:297mm;box-shadow:none;page-break-after:avoid;page-break-inside:avoid;}}'
     +'.faixa-ouro{height:4px;background:linear-gradient(90deg,#f5b400 0%,#fbcf3b 50%,#f5b400 100%);}'
     +'.header{padding:24px 36px 14px;border-bottom:1.5px solid #0a1f3d;}'
     +'.brand-row{display:flex;justify-content:space-between;align-items:flex-start;font-size:8pt;letter-spacing:.25em;font-weight:700;}'
@@ -556,7 +570,7 @@ function _propostaPreview(){
     +'h1 b{font-weight:700;color:#f5b400;}'
     +'.doc-ref{text-align:right;font-size:8pt;color:#666;letter-spacing:.15em;font-weight:600;}'
     +'.doc-ref b{display:block;color:#0a1f3d;font-size:10pt;letter-spacing:.04em;font-family:Georgia,serif;font-weight:700;margin-top:2px;}'
-    +'.body{padding:20px 36px 24px;}'
+    +'.body{padding:20px 36px 24px;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;}'
     +'.dados-row{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #0a1f3d;margin-bottom:18px;}'
     +'.dado{padding:10px 14px;border-right:1px solid #0a1f3d;}'
     +'.dado:last-child{border-right:none;}'
