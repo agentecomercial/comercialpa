@@ -257,12 +257,16 @@ mark.fnl-hl{background:rgba(200,240,90,.28);color:var(--accent);border-radius:2p
 @media(max-width:640px){.np-turmas-atg-grid{grid-template-columns:1fr;}.np-turma-atg-mgrid{grid-template-columns:repeat(2,1fr);}}
 
 /* ── Modal Turma v2 (combo A+B compacto, KPIs clicáveis) ── */
-.ntm-grid{display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,2.4fr);gap:10px;margin-bottom:14px;align-items:stretch;}
+/* Hero "% meta turma" recebe mais largura horizontal pra que o texto
+   "Meta turma R$ XXX · falta R$ YYY" caiba inteiro sem ellipsis. */
+.ntm-grid{display:grid;grid-template-columns:minmax(300px,1.3fr) minmax(0,2fr);gap:10px;margin-bottom:14px;align-items:stretch;}
 .ntm-hero{background:linear-gradient(135deg,rgba(200,240,90,.06),transparent);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;min-width:0;}
 .ntm-hero-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
 .ntm-hero-pct{font-size:28px;font-weight:700;color:#ffe000;line-height:1.1;margin-top:2px;}
 .ntm-hero-pct.c100{color:var(--green);}.ntm-hero-pct.c75{color:#00f0ff;}.ntm-hero-pct.c50{color:#ffe000;}.ntm-hero-pct.c25{color:#ff5500;}.ntm-hero-pct.c0{color:var(--red);}
-.ntm-hero-meta{font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* Texto da meta agora pode quebrar em 2 linhas (fallback) e nao usa
+   text-overflow:ellipsis — assim nada fica cortado. */
+.ntm-hero-meta{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4;word-break:break-word;}
 .ntm-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;min-width:0;}
 .ntm-kpi{padding:8px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);cursor:pointer;text-align:left;font-family:inherit;color:inherit;transition:all .15s;min-width:0;}
 .ntm-kpi:hover{transform:translateY(-1px);}
