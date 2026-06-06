@@ -178,9 +178,11 @@ function abrirPropostaModal(){
   }
   clientes.forEach(function(c){
     var opt = document.createElement('option');
-    opt.value = c; opt.textContent = c;
+    opt.value = c; opt.textContent = String(c||'').toUpperCase();
     sel.appendChild(opt);
   });
+  /* Garante que o select tambem exiba o nome selecionado em caixa alta */
+  sel.style.textTransform = 'uppercase';
   /* Reseta input manual */
   var inpMan = document.getElementById('propostaClienteManual');
   if(inpMan){ inpMan.value = ''; inpMan.style.display = 'none'; }
@@ -347,13 +349,14 @@ function _propostaAtualizar(){
   else if(sub) sub.textContent = 'Selecione o cliente e os treinamentos';
 }
 
-/* Helper canônico — usar onde quer que se leia o cliente da proposta */
+/* Helper canônico — usar onde quer que se leia o cliente da proposta.
+   Sempre retorna em CAIXA ALTA para uniformidade em preview/PDF/header. */
 function _propostaClienteAtual(){
   var sel = document.getElementById('propostaCliente');
   var inpMan = document.getElementById('propostaClienteManual');
   var v = sel ? sel.value : '';
   if(v === '__manual__') return inpMan ? inpMan.value.trim().toUpperCase() : '';
-  return v || '';
+  return v ? String(v).toUpperCase() : '';
 }
 window._propostaClienteAtual = _propostaClienteAtual;
 
