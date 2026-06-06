@@ -254,8 +254,8 @@ function _propostaRenderTreinamentos(){
     /* Quando indisponivel, mostra 0,00 (editavel) em vez de "—" */
     precoInput.value = indisponivel ? formatVal(0) : formatVal(preco);
     precoInput.placeholder = '0,00';
-    precoInput.title = indisponivel ? 'Sem preco de tabela — digite manualmente' : 'Edite para sobrescrever o preco';
-    precoInput.style.cssText = 'width:110px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:DM Mono,monospace;';
+    precoInput.title = indisponivel ? 'Sem preco de tabela — digite manualmente' : 'Edite para sobrescrever o preco unitario';
+    precoInput.style.cssText = 'width:88px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:DM Mono,monospace;';
     precoInput.addEventListener('change', function(){_propostaRecalcular();});
     precoInput.addEventListener('focus', function(){this.select();});
     /* Marca como editado pelo usuario para nao ser sobrescrito ao trocar
@@ -286,9 +286,18 @@ function _propostaRenderTreinamentos(){
       _propostaRecalcular();
     });
 
+    /* Subtotal = qty × preco unitario (somente leitura, atualizado por
+       _propostaRecalcular). Caixa em destaque na cor accent. */
+    var subtotalSpan = document.createElement('span');
+    subtotalSpan.id = 'propsubtotal_' + nome;
+    subtotalSpan.title = 'Subtotal (quantidade × preco)';
+    subtotalSpan.textContent = formatVal(indisponivel ? 0 : preco);
+    subtotalSpan.style.cssText = 'width:96px;flex-shrink:0;background:rgba(200,240,90,.08);border:1px solid rgba(200,240,90,.35);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:800;text-align:right;font-family:DM Mono,monospace;line-height:1.4;';
+
     label.appendChild(nomeSpan);
     label.appendChild(qtyInput);
     label.appendChild(precoInput);
+    label.appendChild(subtotalSpan);
     label.appendChild(restoreBtn);
     row.appendChild(chk);
     row.appendChild(label);
@@ -406,6 +415,17 @@ function _propostaRecalcular(){
       /* sem preco de tabela e usuario ainda nao digitou — mantem 0,00 */
       if(!inp.value || inp.value === '—') inp.value = formatVal(0);
     }
+  });
+
+  // Atualizar subtotais de TODOS os treinamentos (visivel mesmo desmarcado)
+  _PROPOSTA_TREINAMENTOS.forEach(function(nome){
+    var inp = document.getElementById('propval_' + nome);
+    var qtyInp = document.getElementById('propqty_' + nome);
+    var sub = document.getElementById('propsubtotal_' + nome);
+    if(!sub) return;
+    var val = inp ? parseVal(inp.value) : 0;
+    var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
+    sub.textContent = formatVal(val * qty);
   });
 
   // Calcular total = soma(val × qty) dos selecionados
