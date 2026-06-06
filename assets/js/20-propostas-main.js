@@ -418,8 +418,16 @@ function _propostaConsultorAtual(){
 }
 window._propostaConsultorAtual = _propostaConsultorAtual;
 
+/* Quando a forma de pagamento eh parcelada (12x), o preco unitario exibido
+   ja eh a parcela. Para mostrar o valor CHEIO (subtotal integral) e somar
+   no total geral, multiplicamos pelo numero de parcelas. */
+function _propostaParcelas(pagamento){
+  return (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? 12 : 1;
+}
+
 function _propostaRecalcular(){
   var pagamento = document.getElementById('propostaPagamento').value;
+  var parcelas = _propostaParcelas(pagamento);
   // Atualizar precos nos inputs respeitando edicoes manuais.
   // - Se o usuario ja editou (chk.dataset.edited), nunca sobrescreve.
   // - Se ha preco de tabela, atualiza para o novo valor da forma de pagamento.
@@ -439,7 +447,8 @@ function _propostaRecalcular(){
     }
   });
 
-  // Atualizar subtotais de TODOS os treinamentos (visivel mesmo desmarcado)
+  // Atualizar subtotais de TODOS os treinamentos (valor CHEIO integral).
+  // Subtotal = qty × preco × parcelas (12 em parcelado, 1 nas demais formas).
   _PROPOSTA_TREINAMENTOS.forEach(function(nome){
     var inp = document.getElementById('propval_' + nome);
     var qtyInp = document.getElementById('propqty_' + nome);
@@ -447,10 +456,10 @@ function _propostaRecalcular(){
     if(!sub) return;
     var val = inp ? parseVal(inp.value) : 0;
     var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
-    sub.textContent = formatVal(val * qty);
+    sub.textContent = formatVal(val * qty * parcelas);
   });
 
-  // Calcular total = soma(val × qty) dos selecionados
+  // Calcular total geral = soma(val × qty × parcelas) dos selecionados
   var total = 0;
   var totalQty = 0;
   var selecionados = [];
@@ -463,7 +472,7 @@ function _propostaRecalcular(){
     var qtyInp = document.getElementById('propqty_' + nome);
     var val = inp ? parseVal(inp.value) : 0;
     var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
-    total += val * qty;
+    total += val * qty * parcelas;
     totalQty += qty;
     selecionados.push({nome: nome, val: val, qty: qty});
   });
