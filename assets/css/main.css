@@ -2734,19 +2734,18 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .mob-cons-banner{
   position:relative;
   margin:-1px -1px 0;
-  padding:10px 14px;
+  padding:12px 14px 14px;
   border-radius:9px 9px 0 0;
-  /* Cinzel — Art Deco / Gatsby. Tipografia romana caps com letter-spacing largo */
-  font-family:'Cinzel','Italiana','Playfair Display',serif;
-  font-size:13px;font-weight:700;
-  letter-spacing:.22em;
-  text-transform:uppercase;
+  /* Opcao 9 Champagne — Italiana serif elegante de luxo */
+  font-family:'Italiana','Playfair Display',serif;
+  font-size:18px;font-weight:400;
+  letter-spacing:.06em;
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   border-bottom:1px solid transparent;
   cursor:pointer;
   overflow:hidden;
-  text-shadow:0 1px 3px rgba(0,0,0,.5);
-  line-height:1.2;
+  text-shadow:0 1px 3px rgba(0,0,0,.55),0 0 14px rgba(212,165,116,.18);
+  line-height:1.15;
 }
 .mob-cons-banner.has{
   background:linear-gradient(180deg,#0a2f6b 0%,#031033 100%);
@@ -2779,22 +2778,39 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   color:#fef3c7;
   border-bottom-color:#fbbf24;
 }
-/* Bolhas douradas subindo */
+/* Bolhas douradas subindo (efeito champagne completo).
+   Cada bolha tem cintilação interna + halo dourado. */
 .mob-cons-banner .bub{
   position:absolute;border-radius:50%;pointer-events:none;
-  background:radial-gradient(circle at 30% 30%,rgba(255,220,150,.85),rgba(212,165,116,.4) 40%,transparent 70%);
+  background:radial-gradient(circle at 30% 30%,rgba(255,235,180,.95),rgba(212,165,116,.55) 35%,transparent 75%);
+  box-shadow:0 0 6px rgba(255,220,150,.45),inset 0 0 3px rgba(255,255,255,.30);
   animation:rise-bub 4s linear infinite;
-  bottom:6px;opacity:0;
+  bottom:4px;opacity:0;
+  filter:blur(.2px);
 }
-.mob-cons-banner .bub-a{width:8px;height:8px;left:18%;animation-duration:4s;animation-delay:0s;}
-.mob-cons-banner .bub-b{width:5px;height:5px;left:42%;animation-duration:3s;animation-delay:.8s;}
-.mob-cons-banner .bub-c{width:6px;height:6px;left:68%;animation-duration:5s;animation-delay:1.5s;}
-.mob-cons-banner .bub-d{width:4px;height:4px;left:88%;animation-duration:3.5s;animation-delay:.3s;}
+.mob-cons-banner .bub-a{width:9px;height:9px;left:14%;animation-duration:4.2s;animation-delay:0s;}
+.mob-cons-banner .bub-b{width:5px;height:5px;left:32%;animation-duration:3s;animation-delay:.8s;}
+.mob-cons-banner .bub-c{width:7px;height:7px;left:54%;animation-duration:5s;animation-delay:1.5s;}
+.mob-cons-banner .bub-d{width:4px;height:4px;left:72%;animation-duration:3.5s;animation-delay:.3s;}
+/* Pseudo-elementos pra adicionar mais 2 bolhas sem precisar de novos spans */
+.mob-cons-banner::before{
+  content:'';position:absolute;width:6px;height:6px;left:88%;bottom:4px;
+  border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 30% 30%,rgba(255,235,180,.95),rgba(212,165,116,.55) 35%,transparent 75%);
+  box-shadow:0 0 6px rgba(255,220,150,.45);
+  animation:rise-bub 4.6s linear infinite 1.2s;opacity:0;
+}
+.mob-cons-banner::after{
+  content:'';position:absolute;width:3px;height:3px;left:22%;bottom:4px;
+  border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 30% 30%,rgba(255,235,180,.95),rgba(212,165,116,.55) 35%,transparent 75%);
+  animation:rise-bub 3.2s linear infinite 2.1s;opacity:0;
+}
 @keyframes rise-bub{
   0%{transform:translateY(0);opacity:0;}
-  20%{opacity:1;}
-  80%{opacity:1;}
-  100%{transform:translateY(-32px);opacity:0;}
+  15%{opacity:1;}
+  85%{opacity:1;}
+  100%{transform:translateY(-42px);opacity:0;}
 }
 .mob-cons-banner-txt{
   display:inline-flex;align-items:center;gap:6px;
