@@ -208,44 +208,25 @@
          : st==='zero' ? '— ZERO'
          : 'FUTURO';
   }
-  /* Renderiza o carrossel de navegacao entre semanas no header do card
-     "Faturado por consultor — Semanal". Mostra a semana SELECIONADA em
-     destaque no centro + as adjacentes (anterior e proxima) em preview. */
+  /* Renderiza linha de pills (S1·S2·S3·S4…) com cor de status no header
+     do card "Faturado por consultor — Semanal". Opcao 02 do preview:
+     todas as semanas visiveis, cor por status, 1 clique para trocar. */
   function _renderFpcCarousel(semanas, atual, semAtualNum, todasVendas){
     if(!atual || !semanas || !semanas.length){
       return '<span style="color:var(--muted);">Sem semana ativa</span>';
     }
-    var idx = semanas.findIndex(function(s){return s.num===atual.num;});
-    var prev = idx>0 ? semanas[idx-1] : null;
-    var next = idx<semanas.length-1 ? semanas[idx+1] : null;
-    function _statusOf(s){ return _statusSemanaFPC(s, todasVendas); }
-    function _miniCard(s, role){
-      if(!s) return '<div class="fpc-carr-card fpc-carr-empty"></div>';
-      var st = _statusOf(s);
-      var ehAtualMes = (semAtualNum===s.num);
-      return '<div class="fpc-carr-card fpc-carr-'+role+' st-'+st+'" '
-        + (role==='aux'?'onclick="window._npFpcSemGo('+s.num+')" title="Ir para S'+s.num+'"':'')
-        +'>'
-        + '<div class="fpc-carr-num">S'+s.num+(ehAtualMes?' · ATUAL':'')+'</div>'
-        + '<div class="fpc-carr-data">'+s.iniLabel+' – '+s.fimLabel+'</div>'
-        + '<div class="fpc-carr-st">'+_statusLabelFPC(st)+'</div>'
-        + '</div>';
-    }
-    var hasPrev = !!prev;
-    var hasNext = !!next;
-    return '<div class="fpc-carr">'
-      + '<div class="fpc-carr-strip">'
-      +   _miniCard(prev,'aux')
-      +   _miniCard(atual,'main')
-      +   _miniCard(next,'aux')
-      + '</div>'
-      + '<div class="fpc-carr-side">'
-      +   '<button type="button" class="fpc-carr-btn'+(hasPrev?'':' disabled')+'" '
-      +     (hasPrev?'onclick="window._npFpcSemGo('+prev.num+')"':'')+'>‹</button>'
-      +   '<span class="fpc-carr-hint">Navegue entre as semanas</span>'
-      +   '<button type="button" class="fpc-carr-btn'+(hasNext?'':' disabled')+'" '
-      +     (hasNext?'onclick="window._npFpcSemGo('+next.num+')"':'')+'>›</button>'
-      + '</div>'
+    var atualNum = atual.num;
+    var titulo = 'Semanal · S'+atual.num+' ('+atual.iniLabel+'–'+atual.fimLabel+')';
+    var pills = semanas.map(function(s){
+      var st = _statusSemanaFPC(s, todasVendas);
+      var sel = (s.num===atualNum) ? ' on' : '';
+      var aria = 'S'+s.num+' · '+s.iniLabel+' a '+s.fimLabel+' · '+_statusLabelFPC(st);
+      return '<button type="button" class="fpc-pill st-'+st+sel+'" '
+        + 'onclick="window._npFpcSemGo('+s.num+')" title="'+aria+'">S'+s.num+'</button>';
+    }).join('');
+    return '<div class="fpc-pills-row">'
+      + '<span class="fpc-pills-ttl">'+titulo+'</span>'
+      + '<span class="fpc-pills">'+pills+'</span>'
       + '</div>';
   }
   window._npFpcSemGo = function(num){
