@@ -144,11 +144,12 @@ function _addTreinRow(listId,cod,val,treinador,status){
   var _trnSel=String(treinador||'-');
   var trnOpts='<option value="-">— TREINADOR —</option>'
     +_trnLst.map(function(t){return '<option value="'+t+'"'+(_trnSel===t?' selected':'')+'>'+t.toUpperCase()+'</option>';}).join('');
-  /* Status fixo (5 opções) */
+  /* Status fixo (6 opções) — mesma ordem usada na tabela desktop */
   var STATUS_OPTS=[
     {v:'aberto',l:'ABERTO'},
     {v:'pago',l:'PAGO'},
     {v:'negociacao',l:'NEGOCIAÇÃO'},
+    {v:'entrada',l:'ENTRADA'},
     {v:'desistiu',l:'DESISTIU'},
     {v:'estorno',l:'ESTORNO'}
   ];
