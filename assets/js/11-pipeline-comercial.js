@@ -216,7 +216,7 @@
       return '<span style="color:var(--muted);">Sem semana ativa</span>';
     }
     var atualNum = atual.num;
-    var titulo = 'Semanal · S'+atual.num+' ('+atual.iniLabel+'–'+atual.fimLabel+')';
+    var titulo = 'Faturado por consultor — Semanal · S'+atual.num+' ('+atual.iniLabel+'–'+atual.fimLabel+')';
     var pills = semanas.map(function(s){
       var st = _statusSemanaFPC(s, todasVendas);
       var sel = (s.num===atualNum) ? ' on' : '';
