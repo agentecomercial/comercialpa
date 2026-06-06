@@ -2007,8 +2007,11 @@ function renderAll(){
     var _attrC=_rankClicavel?`onclick="abrirClientesVinculados('${c.nome}')" style="cursor:pointer;opacity:${opC};transition:opacity .15s;" title="Ver clientes de ${c.nome}"`:`style="cursor:default;opacity:${opC};transition:opacity .15s;"`;
     return `<div class="rank-row" ${_attrC}><div class="rank-num ${medals[i]||''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div><div class="rank-info"><div class="rank-name">${c.nome.toUpperCase()}</div><div class="rank-detail">${c.clientes} clientes · ${formatVal(c.entrada)} entrada</div></div><div class="rank-val">${formatVal(c.pago)}</div></div>`;
   }).join('');
-  const ce2=data.filter(d=>d&&d.cliente&&d.entrada>0);
-  document.getElementById('entradaRows').innerHTML=ce2.length===0?'<div style="font-size:12px;color:var(--muted);padding:8px 0;">Nenhuma entrada registrada.</div>':ce2.map(d=>`<div class="srow" onclick="toggleCliente('${d.cliente}')" style="cursor:pointer;opacity:${activeCliente&&activeCliente!==d.cliente?0.3:1};transition:opacity .15s;" title="Filtrar por ${d.cliente}"><div><div class="srow-name">${d.cliente}</div><div class="srow-sub">${d.consultor.toUpperCase()} · ${d.treinamento||'—'}</div></div><span class="srow-val" style="color:var(--green);">${formatVal(d.entrada)}</span></div>`).join('');
+  /* Considera o schema hibrido: entrada pode estar no scalar (d.entrada)
+     OU dentro de d.treinamentos[i].entrada. _entradaPendenteDoCliente
+     ja consolida ambos. */
+  const ce2=data.filter(d=>d&&d.cliente&&_entradaPendenteDoCliente(d)>0);
+  document.getElementById('entradaRows').innerHTML=ce2.length===0?'<div style="font-size:12px;color:var(--muted);padding:8px 0;">Nenhuma entrada registrada.</div>':ce2.map(d=>{var _ent=_entradaPendenteDoCliente(d);return `<div class="srow" onclick="toggleCliente('${d.cliente}')" style="cursor:pointer;opacity:${activeCliente&&activeCliente!==d.cliente?0.3:1};transition:opacity .15s;" title="Filtrar por ${d.cliente}"><div><div class="srow-name">${d.cliente}</div><div class="srow-sub">${(d.consultor||'').toUpperCase()} · ${d.treinamento||'—'}</div></div><span class="srow-val" style="color:var(--green);">${formatVal(_ent)}</span></div>`;}).join('');
 
   // Sync abas abertas
   if(window._consultorAtivo&&document.getElementById('consultorDetail').style.display!=='none')_renderConsultorDetail(window._consultorAtivo);
