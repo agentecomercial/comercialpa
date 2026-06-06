@@ -15,7 +15,7 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Italiana&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260606-104327">
+<link rel="stylesheet" href="assets/css/main.css?v=20260606-111800">
 <link rel="stylesheet" href="assets/css/themes.css?v=20260603-151115">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
@@ -1328,13 +1328,15 @@
             <button id="btnNovoClienteConsultor" class="btn-novo-consultor" onclick="openAddModalConsultor()">+ Novo cliente</button>
           </div>
           <div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-              <button class="fbtn active" id="fcAll" onclick="setConsultorStatus(null)">Todos</button>
-              <button class="fbtn" id="fcAberto" onclick="setConsultorStatus('aberto')">Aberto</button>
-              <button class="fbtn" id="fcPago" onclick="setConsultorStatus('pago')">Pago</button>
-              <button class="fbtn" id="fcEntrada" onclick="setConsultorStatus('entrada')">Entrada</button>
-              <button class="fbtn" id="fcNegociacao" onclick="setConsultorStatus('negociacao')">Negociação</button>
-              <button class="clear-link" onclick="setConsultorStatus(null)">Limpar</button>
+            <!-- STATUS: sem quebra de linha (nowrap), com scroll horizontal se estourar -->
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;">
+              <span style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;">Status</span>
+              <button class="fbtn active" id="fcAll" onclick="setConsultorStatus(null)" style="flex-shrink:0;">Todos <span class="fbtn-num"></span></button>
+              <button class="fbtn fbtn-aberto" id="fcAberto" onclick="setConsultorStatus('aberto')" style="flex-shrink:0;">Aberto <span class="fbtn-num"></span></button>
+              <button class="fbtn fbtn-pago" id="fcPago" onclick="setConsultorStatus('pago')" style="flex-shrink:0;">Pago <span class="fbtn-num"></span></button>
+              <button class="fbtn fbtn-entrada" id="fcEntrada" onclick="setConsultorStatus('entrada')" style="flex-shrink:0;">Entrada <span class="fbtn-num"></span></button>
+              <button class="fbtn fbtn-negoc" id="fcNegociacao" onclick="setConsultorStatus('negociacao')" style="flex-shrink:0;">Negociação <span class="fbtn-num"></span></button>
+              <button class="clear-link" onclick="setConsultorStatus(null)" style="flex-shrink:0;margin-left:auto;">× Limpar</button>
             </div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
               <span style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;">Presença</span>
@@ -3659,7 +3661,7 @@ try{
 <script defer src="assets/js/22-pdf-consultor.js?v=20260603-151115"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
 <script defer src="assets/js/24-aba-produto.js?v=20260603-151115"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260605-213637"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260606-111800"></script>
 <script defer src="assets/js/26-aba-treinador.js?v=20260606-105342"></script>
 <script defer src="assets/js/27-novos-membros.js?v=20260603-151115"></script>
 <script defer src="assets/js/28-modais-cliente.js?v=20260605-222750"></script>

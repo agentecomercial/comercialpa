@@ -272,6 +272,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .tpanel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;}
 .fbtn{font-size:11px;padding:6px 15px;border-radius:20px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;box-shadow:0 2px 4px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.06) inset;}
 .fbtn:hover{border-color:var(--accent);color:var(--accent);}
+/* Opcao 03 do preview "Cores no contador": numero pre-colorido por status,
+   borda neutra. Quando o botao esta ativo, recebe a cor cheia (background). */
+.fbtn-num{font-weight:800;opacity:.8;margin-left:2px;}
+.fbtn.fbtn-aberto  .fbtn-num{color:#fbbf24;}
+.fbtn.fbtn-pago    .fbtn-num{color:#22c55e;}
+.fbtn.fbtn-entrada .fbtn-num{color:#3b82f6;}
+.fbtn.fbtn-negoc   .fbtn-num{color:#a855f7;}
+.fbtn.fbtn-aberto.active{background:#fbbf24;color:#2a1a02;border-color:#d97706;}
+.fbtn.fbtn-pago.active{background:#22c55e;color:#042713;border-color:#16a34a;}
+.fbtn.fbtn-entrada.active{background:#3b82f6;color:#fff;border-color:#2563eb;}
+.fbtn.fbtn-negoc.active{background:#a855f7;color:#fff;border-color:#9333ea;}
+.fbtn.fbtn-aberto.active  .fbtn-num,
+.fbtn.fbtn-pago.active    .fbtn-num,
+.fbtn.fbtn-entrada.active .fbtn-num,
+.fbtn.fbtn-negoc.active   .fbtn-num{color:inherit;opacity:1;}
+/* Sem decoracao quando vazio */
+.fbtn-num:empty{display:none;}
 .fbtn.active{background:linear-gradient(180deg,#d4f565,#c8f05a);color:#0f0f0f;border-color:var(--accent);font-weight:700;box-shadow:0 2px 6px rgba(200,240,90,.5);}
 .clear-link{font-size:11px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;}
 .clear-link:hover{color:var(--accent);}

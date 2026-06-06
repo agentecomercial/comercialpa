@@ -254,12 +254,15 @@ function _renderConsultorDetail(c){
     // Subtítulo original compacto
     +'<span style="font-size:12px;color:var(--muted);">Potencial: '+formatVal(total)+' · Faturado: <span style="color:'+_colDetail.text+';font-weight:700;">'+formatVal(pago)+'</span>'+(entrada>0?' · Entradas: '+formatVal(entrada):'')+fl+'</span>';
 
-  // ── Botões de filtro: atualizar contagem ──
-  const _fcMap={fcAll:nTodos,fcAberto:nAberto,fcPago:nPago,fcEntrada:nEntrada};
-  const _fcLabel={fcAll:'Todos',fcAberto:'Aberto',fcPago:'Pago',fcEntrada:'Entrada'};
+  // ── Botões de filtro: atualizar contagem em cada .fbtn-num (sem
+  //    destruir os spans coloridos da Opcao 3) ──
+  const nNegoc=cdA.filter(d=>d.status==='negociacao').length;
+  const _fcMap={fcAll:nTodos,fcAberto:nAberto,fcPago:nPago,fcEntrada:nEntrada,fcNegociacao:nNegoc};
   Object.keys(_fcMap).forEach(function(id){
     var el=document.getElementById(id);
-    if(el) el.textContent=_fcLabel[id]+(_fcMap[id]>0?' ('+_fcMap[id]+')':'');
+    if(!el) return;
+    var span=el.querySelector('.fbtn-num');
+    if(span) span.textContent=_fcMap[id]>0?'('+_fcMap[id]+')':'';
   });
 
   // Ocultar layout wrap e mostrar detail (sem alteração)
