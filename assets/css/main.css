@@ -2736,14 +2736,16 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   margin:-1px -1px 0;
   padding:10px 14px;
   border-radius:9px 9px 0 0;
-  font-family:'Italiana','Playfair Display',serif;
-  font-size:15px;font-weight:400;
-  letter-spacing:.08em;
+  /* Caligrafia manuscrita estilo assinatura para o nome do consultor */
+  font-family:'Petit Formal Script','Italiana','Playfair Display',cursive;
+  font-size:22px;font-weight:400;
+  letter-spacing:.02em;
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   border-bottom:1px solid transparent;
   cursor:pointer;
   overflow:hidden;
   text-shadow:0 1px 3px rgba(0,0,0,.5);
+  line-height:1.15;
 }
 .mob-cons-banner.has{
   background:linear-gradient(180deg,#0a2f6b 0%,#031033 100%);
