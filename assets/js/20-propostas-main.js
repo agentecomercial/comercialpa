@@ -260,7 +260,7 @@ function _propostaRenderTreinamentos(){
     precoInput.value = indisponivel ? formatVal(0) : formatVal(preco);
     precoInput.placeholder = '0,00';
     precoInput.title = indisponivel ? 'Sem preco de tabela — digite manualmente' : 'Edite para sobrescrever o preco unitario';
-    precoInput.style.cssText = 'width:92px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 7px;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:DM Mono,monospace;';
+    precoInput.style.cssText = 'width:112px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:DM Mono,monospace;white-space:nowrap;';
     precoInput.addEventListener('change', function(){_propostaRecalcular();});
     precoInput.addEventListener('focus', function(){this.select();});
     /* Marca como editado pelo usuario para nao ser sobrescrito ao trocar
@@ -297,7 +297,7 @@ function _propostaRenderTreinamentos(){
     subtotalSpan.id = 'propsubtotal_' + nome;
     subtotalSpan.title = 'Subtotal (quantidade × preco)';
     subtotalSpan.textContent = formatVal(indisponivel ? 0 : preco);
-    subtotalSpan.style.cssText = 'width:108px;flex-shrink:0;background:rgba(200,240,90,.08);border:1px solid rgba(200,240,90,.35);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:800;text-align:right;font-family:DM Mono,monospace;line-height:1.4;white-space:nowrap;overflow:visible;';
+    subtotalSpan.style.cssText = 'width:122px;flex-shrink:0;background:rgba(200,240,90,.08);border:1px solid rgba(200,240,90,.35);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:800;text-align:right;font-family:DM Mono,monospace;line-height:1.4;white-space:nowrap;overflow:visible;';
 
     label.appendChild(nomeSpan);
     label.appendChild(qtyInput);
