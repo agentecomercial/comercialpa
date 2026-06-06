@@ -263,11 +263,33 @@ function _propostaRenderTreinamentos(){
     precoInput.addEventListener('input', function(){
       chk.dataset.edited = '1';
       this.value = (typeof lcMoneyMask==='function') ? lcMoneyMask(this.value) : this.value;
+      /* Mostra o botao de restaurar quando ha edicao manual */
+      if(restoreBtn) restoreBtn.style.display = 'inline-flex';
+    });
+
+    /* Botao restaurar preco de tabela — fica oculto enquanto nao houve
+       edicao manual e aparece quando o usuario digita algo. */
+    var restoreBtn = document.createElement('button');
+    restoreBtn.type = 'button';
+    restoreBtn.title = 'Restaurar preco de tabela';
+    restoreBtn.textContent = '↺';
+    restoreBtn.style.cssText = 'display:none;width:24px;height:24px;flex-shrink:0;background:transparent;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0;font-family:DM Sans,sans-serif;transition:all .15s;';
+    restoreBtn.addEventListener('mouseover', function(){this.style.color='var(--accent)';this.style.borderColor='var(--accent)';});
+    restoreBtn.addEventListener('mouseout', function(){this.style.color='var(--muted)';this.style.borderColor='var(--border2)';});
+    restoreBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      delete chk.dataset.edited;
+      var pgtoAtual = document.getElementById('propostaPagamento').value;
+      var precoAtual = _PROPOSTA_PRECOS[nome][pgtoAtual];
+      precoInput.value = (precoAtual !== null) ? formatVal(precoAtual) : formatVal(0);
+      restoreBtn.style.display = 'none';
+      _propostaRecalcular();
     });
 
     label.appendChild(nomeSpan);
     label.appendChild(qtyInput);
     label.appendChild(precoInput);
+    label.appendChild(restoreBtn);
     row.appendChild(chk);
     row.appendChild(label);
     row.addEventListener('click', function(e){
