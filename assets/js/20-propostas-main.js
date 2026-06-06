@@ -480,9 +480,17 @@ function _propostaRecalcular(){
   document.getElementById('propostaTotal').textContent = formatVal(total);
   var detalhe = document.getElementById('propostaTotalDetalhe');
   if(detalhe){
-    detalhe.textContent = selecionados.length
-      ? totalQty + ' treinamento' + (totalQty > 1 ? 's' : '') + ' · ' + _PROPOSTA_LABELS[pagamento]
-      : 'Nenhum treinamento selecionado';
+    if(!selecionados.length){
+      detalhe.textContent = 'Nenhum treinamento selecionado';
+    } else {
+      var base = totalQty + ' treinamento' + (totalQty > 1 ? 's' : '') + ' · ' + _PROPOSTA_LABELS[pagamento];
+      /* Quando a forma de pagamento eh em 12x, exibe ao lado o valor da
+         parcela mensal (total cheio / 12). */
+      if(parcelas > 1){
+        base += ' · 12× ' + formatVal(total / parcelas);
+      }
+      detalhe.textContent = base;
+    }
   }
 
   // PREVIEW EM TEMPO REAL — se já está aberto, re-renderiza com debounce
