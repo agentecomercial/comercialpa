@@ -2736,16 +2736,17 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   margin:-1px -1px 0;
   padding:10px 14px;
   border-radius:9px 9px 0 0;
-  /* Caligrafia manuscrita estilo assinatura para o nome do consultor */
-  font-family:'Petit Formal Script','Italiana','Playfair Display',cursive;
-  font-size:22px;font-weight:400;
-  letter-spacing:.02em;
+  /* Cinzel — Art Deco / Gatsby. Tipografia romana caps com letter-spacing largo */
+  font-family:'Cinzel','Italiana','Playfair Display',serif;
+  font-size:13px;font-weight:700;
+  letter-spacing:.22em;
+  text-transform:uppercase;
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   border-bottom:1px solid transparent;
   cursor:pointer;
   overflow:hidden;
   text-shadow:0 1px 3px rgba(0,0,0,.5);
-  line-height:1.15;
+  line-height:1.2;
 }
 .mob-cons-banner.has{
   background:linear-gradient(180deg,#0a2f6b 0%,#031033 100%);
