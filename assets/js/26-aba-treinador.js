@@ -72,7 +72,9 @@ function renderTreinador(){
       :_allTrainersSorted;
   document.getElementById('treinadorCards').innerHTML=_listaT.map(t=>{
     const tdA=data.filter(d=>d&&d.cliente&&d.treinador===t);
-    const td=activeTreinadorStatus===null?tdA:activeTreinadorStatus==='entrada'?tdA.filter(d=>d.entrada>0):tdA.filter(d=>d.status===activeTreinadorStatus);
+    /* Schema hibrido: entrada pode estar no scalar OU nos subs */
+    const _entOfRT=d=>(typeof window._entradaPendenteDoCliente==='function')?window._entradaPendenteDoCliente(d):(d&&d.entrada||0);
+    const td=activeTreinadorStatus===null?tdA:activeTreinadorStatus==='entrada'?tdA.filter(d=>_entOfRT(d)>0):tdA.filter(d=>d.status===activeTreinadorStatus);
     const total=td.reduce((a,d)=>a+d.valor,0),pago=td.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0),aberto=td.filter(d=>d.status==='aberto').reduce((a,d)=>a+d.valor,0);
     const pct=Math.round((pago/META)*100),col=getCol(pct),cor=tBorder[t]||'#888',bg=tBg[t]||'rgba(136,136,136,0.1)',ini=t.split(' ').map(w=>w[0]).join('').slice(0,2);
     const isMinistrante=_ministrante===t;
@@ -139,17 +141,20 @@ function renderTreinador(){
 function openTreinadorDetail(t){window._treinadorAtivo=t;_renderTreinadorDetail(t);}
 function _renderTreinadorDetail(t){
   const tdA=data.filter(d=>d&&d.cliente&&d.treinador===t).sort((a,b)=>a.cliente.localeCompare(b.cliente,'pt-BR'));
-  const td=activeTreinadorStatus===null?tdA:activeTreinadorStatus==='entrada'?tdA.filter(d=>d.entrada>0):tdA.filter(d=>d.status===activeTreinadorStatus);
+  /* Schema hibrido: entrada pode estar no scalar (d.entrada) ou nos subs
+     (d.treinamentos[i].entrada). _entradaPendenteDoCliente consolida ambos. */
+  const _entOf=d=>(typeof window._entradaPendenteDoCliente==='function')?window._entradaPendenteDoCliente(d):(d&&d.entrada||0);
+  const td=activeTreinadorStatus===null?tdA:activeTreinadorStatus==='entrada'?tdA.filter(d=>_entOf(d)>0):tdA.filter(d=>d.status===activeTreinadorStatus);
 
   // Métricas
   const total=tdA.reduce((a,d)=>a+d.valor,0);
   const pago=tdA.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
   const aberto=tdA.filter(d=>d.status==='aberto').reduce((a,d)=>a+d.valor,0);
-  const entrada=tdA.reduce((a,d)=>a+d.entrada,0);
+  const entrada=tdA.reduce((a,d)=>a+_entOf(d),0);
   const nTodos=tdA.length;
   const nPago=tdA.filter(d=>d.status==='pago').length;
   const nAberto=tdA.filter(d=>d.status==='aberto').length;
-  const nEntrada=tdA.filter(d=>d.entrada>0).length;
+  const nEntrada=tdA.filter(d=>_entOf(d)>0).length;
 
   const fl=activeTreinadorStatus?' · Filtro: '+activeTreinadorStatus.toUpperCase():'';
   const pct=META>0?Math.round((pago/META)*100):0;
@@ -226,7 +231,7 @@ function _renderTreinadorDetail(t){
       <td style="color:var(--muted);">${d.consultor.toUpperCase()}</td>
       <td style="${ip?'font-weight:600;':''}">${formatVal(d.valor)}</td>
       <td style="text-align:center;"><span style="font-size:10px;font-weight:500;padding:2px 8px;border-radius:4px;" class="badge badge-${d.status}">${sl(d.status)}</span></td>
-      <td style="text-align:center;" class="${d.entrada>0?'entrada-green':''}">${d.entrada>0?formatVal(d.entrada):'—'}</td>
+      <td style="text-align:center;" class="${_entOf(d)>0?'entrada-green':''}">${_entOf(d)>0?formatVal(_entOf(d)):'—'}</td>
       <td style="text-align:center;"><div style="display:inline-flex;gap:5px;"><button class="edit-btn" onclick="openModal(${ri})" title="Editar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button><button class="edit-btn del" onclick="openConfirm(${ri})" title="Excluir"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></td>
     </tr>`;}).join('');
 }
