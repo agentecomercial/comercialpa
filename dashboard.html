@@ -680,7 +680,10 @@
         <div style="flex:1;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
             <label class="modal-label" style="margin:0;">Treinamentos</label>
-            <button onclick="_propostaSelecionarTodos()" style="background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:3px 10px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'" id="btnPropostaSelecionarTodos">Selecionar todos</button>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button onclick="_propostaSelecionarGGB()" style="background:rgba(80,140,255,.10);border:1px solid rgba(80,140,255,.35);border-radius:var(--radius-sm);padding:3px 10px;font-size:11px;font-weight:700;color:#93c5fd;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;letter-spacing:.05em;" onmouseover="this.style.borderColor='#5096ff';this.style.color='#bcd5ff';this.style.background='rgba(80,140,255,.18)'" onmouseout="this.style.borderColor='rgba(80,140,255,.35)';this.style.color='#93c5fd';this.style.background='rgba(80,140,255,.10)'" id="btnPropostaSelecionarGGB" title="Seleciona exclusivamente IF, MASTER, CEOP, FGPC, BHP, FCIS, ML5, TAV">Selecionar GGB</button>
+              <button onclick="_propostaSelecionarTodos()" style="background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:3px 10px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'" id="btnPropostaSelecionarTodos">Selecionar todos</button>
+            </div>
           </div>
           <div id="propostaTreinamentos" style="display:flex;flex-direction:column;gap:4px;"></div>
         </div>
@@ -3662,7 +3665,7 @@ try{
 <script defer src="assets/js/28-modais-cliente.js?v=20260605-222750"></script>
 <script defer src="assets/js/18-usuarios.js?v=20260603-151115"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260606-082408"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260606-083336"></script>
 <script defer src="assets/js/17-presenca.js?v=20260603-151115"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">

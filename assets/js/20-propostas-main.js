@@ -68,6 +68,9 @@ var _PROPOSTA_LABELS = {
 // Treinamentos disponíveis para proposta (tabela de preços)
 var _PROPOSTA_TREINAMENTOS = Object.keys(_PROPOSTA_PRECOS);
 
+// Combo GGB — pacote de 8 treinamentos selecionado pelo botao "Selecionar GGB"
+var _PROPOSTA_GGB = ['IF','MASTER','CEOP','FGPC','BHP','FCIS','ML5','TAV'];
+
 var _PRODUTOS_PROPOSTA={
 'IF':{customRenderer:true,nome:'Inteligência Financeira',codigo:'IF',img:'assets/img/propostas/IF.jpg',texto:'\u00c9 uma imensa honra convidá-lo(a) para o Inteligência Financeira.\n\n[TEXTO_DO_PRODUTO — substitua com base no PDF do treinamento]\n\nNão deixe essa oportunidade passar!',preco:'R$ [VALOR]',validade:'30 dias'},
 'MASTER':{customRenderer:true,nome:'Master Coaching',codigo:'MASTER',img:'assets/img/propostas/MASTER.jpg',texto:'\u00c9 uma imensa honra convidá-lo(a) para o Master Coaching.\n\n[TEXTO_DO_PRODUTO — substitua com base no PDF do treinamento]\n\nNão deixe essa oportunidade passar!',preco:'R$ [VALOR]',validade:'30 dias'},
@@ -323,6 +326,22 @@ function _propostaSelecionarTodos(){
   if(btn) btn.textContent = todos ? 'Selecionar todos' : 'Desmarcar todos';
   _propostaRecalcular();
 }
+
+/* Seleciona EXCLUSIVAMENTE os 8 treinamentos do pacote GGB.
+   Desmarca todo o resto. */
+function _propostaSelecionarGGB(){
+  var container = document.getElementById('propostaTreinamentos');
+  if(!container) return;
+  container.querySelectorAll('input[type=checkbox]').forEach(function(chk){
+    var nome = chk.id.replace('prop_','');
+    chk.checked = _PROPOSTA_GGB.indexOf(nome) !== -1;
+  });
+  /* Como nao estao todos marcados, reseta o texto do botao Selecionar Todos */
+  var btnAll = document.getElementById('btnPropostaSelecionarTodos');
+  if(btnAll) btnAll.textContent = 'Selecionar todos';
+  _propostaRecalcular();
+}
+window._propostaSelecionarGGB = _propostaSelecionarGGB;
 
 function _propostaAtualizar(){
   var sel = document.getElementById('propostaCliente');
