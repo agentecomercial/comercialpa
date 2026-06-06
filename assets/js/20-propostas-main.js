@@ -46,7 +46,7 @@ var _PROPOSTA_PRECOS = {
   'FCIS':      {integral:11796.49, parcelado:983.03,  parcelado_desc:899.75,   avista_credito:8997.00, avista:8997.00,  reciclagem:5398.25},
   'ML5':       {integral:11796.49, parcelado:983.03,  parcelado_desc:899.75,   avista_credito:5398.25, avista:5398.25,  reciclagem:5398.25},
   'TAV':       {integral:3997.00,  parcelado:333.08,  parcelado_desc:249.75,   avista_credito:2497.00, avista:1997.00,  reciclagem:1498.50},
-  'MAESTRIA':  {integral:85000.00, parcelado:9925.48, parcelado_desc:9925.48,  avista_credito:85000.00,avista:85000.00, reciclagem:850000.00},
+  'MAESTRIA':  {integral:85000.00, parcelado:9925.48, parcelado_desc:9925.48,  avista_credito:85000.00,avista:85000.00, reciclagem:85000.00},
   'CIS_GLOBAL':{integral:1997.00,  parcelado:199.70,  parcelado_desc:199.70,   avista_credito:1997.00, avista:1997.00,  reciclagem:998.50},
   /* Placeholders adicionados — preços virão da hidratação do Firebase (appConfig/treinamentosMeta) */
   'JE':        {integral:0, parcelado:0, parcelado_desc:0, avista_credito:0, avista:0, reciclagem:0},
