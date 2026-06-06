@@ -213,12 +213,15 @@ function _propostaRenderTreinamentos(){
 
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);cursor:pointer;transition:all .15s;min-width:0;';
-    if(indisponivel) row.style.opacity = '0.4';
+    /* Quando o treinamento nao tem preco-tabela para essa forma de pagamento,
+       mantemos a row visualmente atenuada PORÉM editavel — o usuario pode
+       preencher o valor manualmente e marcar o checkbox normalmente. */
+    if(indisponivel) row.style.opacity = '0.7';
 
     var chk = document.createElement('input');
     chk.type = 'checkbox';
     chk.id = 'prop_' + nome;
-    chk.disabled = indisponivel;
+    /* disabled removido: permite marcar mesmo sem preco de tabela */
     chk.style.cssText = 'accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;cursor:pointer;';
     chk.addEventListener('change', _propostaRecalcular);
 
@@ -230,13 +233,12 @@ function _propostaRenderTreinamentos(){
     nomeSpan.style.cssText = 'font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
     nomeSpan.textContent = nome;
 
-    // Quantidade — padrão 1, mínimo 1
+    // Quantidade — padrão 1, mínimo 1 (sempre editavel)
     var qtyInput = document.createElement('input');
     qtyInput.type = 'number';
     qtyInput.id = 'propqty_' + nome;
     qtyInput.min = '1';
     qtyInput.value = '1';
-    qtyInput.disabled = indisponivel;
     qtyInput.title = 'Quantidade';
     qtyInput.style.cssText = 'width:44px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 4px;color:var(--text);font-size:12px;font-weight:700;text-align:center;font-family:DM Mono,monospace;';
     qtyInput.addEventListener('change', function(){
@@ -249,11 +251,19 @@ function _propostaRenderTreinamentos(){
     var precoInput = document.createElement('input');
     precoInput.type = 'text';
     precoInput.id = 'propval_' + nome;
-    precoInput.value = indisponivel ? '—' : formatVal(preco);
-    precoInput.disabled = indisponivel;
+    /* Quando indisponivel, mostra 0,00 (editavel) em vez de "—" */
+    precoInput.value = indisponivel ? formatVal(0) : formatVal(preco);
+    precoInput.placeholder = '0,00';
+    precoInput.title = indisponivel ? 'Sem preco de tabela — digite manualmente' : 'Edite para sobrescrever o preco';
     precoInput.style.cssText = 'width:110px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:DM Mono,monospace;';
     precoInput.addEventListener('change', function(){_propostaRecalcular();});
     precoInput.addEventListener('focus', function(){this.select();});
+    /* Marca como editado pelo usuario para nao ser sobrescrito ao trocar
+       a forma de pagamento (entrada manual prevalece) */
+    precoInput.addEventListener('input', function(){
+      chk.dataset.edited = '1';
+      this.value = (typeof lcMoneyMask==='function') ? lcMoneyMask(this.value) : this.value;
+    });
 
     label.appendChild(nomeSpan);
     label.appendChild(qtyInput);
@@ -357,14 +367,22 @@ window._propostaConsultorAtual = _propostaConsultorAtual;
 
 function _propostaRecalcular(){
   var pagamento = document.getElementById('propostaPagamento').value;
-  // Atualizar preços nos inputs (sem divisão — valor armazenado é exibido direto)
+  // Atualizar precos nos inputs respeitando edicoes manuais.
+  // - Se o usuario ja editou (chk.dataset.edited), nunca sobrescreve.
+  // - Se ha preco de tabela, atualiza para o novo valor da forma de pagamento.
+  // - Se nao ha preco de tabela, deixa o input editavel em 0,00 (ou o que o
+  //   usuario tiver digitado).
   _PROPOSTA_TREINAMENTOS.forEach(function(nome){
     var inp = document.getElementById('propval_' + nome);
     var chk = document.getElementById('prop_' + nome);
     if(!inp || !chk) return;
+    if(chk.dataset.edited) return;
     var preco = _PROPOSTA_PRECOS[nome][pagamento];
-    if(preco !== null && !chk.dataset.edited){
+    if(preco !== null){
       inp.value = formatVal(preco);
+    } else {
+      /* sem preco de tabela e usuario ainda nao digitou — mantem 0,00 */
+      if(!inp.value || inp.value === '—') inp.value = formatVal(0);
     }
   });
 
