@@ -253,18 +253,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 /* TABLE */
 .tpanel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-/* Remover efeito :active (scale/transform) dos elementos clicaveis dentro do
-   card "Clientes" — identificado via :has(#cliBarUnica). Outros paineis
-   mantem seus feedbacks visuais. */
-.tpanel:has(#cliBarUnica) button:active,
-.tpanel:has(#cliBarUnica) .add-btn:active,
-.tpanel:has(#cliBarUnica) .btn-secondary:active,
-.tpanel:has(#cliBarUnica) .cli-action-btn:active,
-.tpanel:has(#cliBarUnica) .fbtn:active,
-.tpanel:has(#cliBarUnica) tr:active,
-.tpanel:has(#cliBarUnica) td:active{
+/* Remover efeitos de "balanco" (transform translateY/scale) e o pressed
+   dentro do card "Clientes" — identificado via :has(#cliBarUnica).
+   Outros paineis mantem seus feedbacks visuais. */
+.tpanel:has(#cliBarUnica),
+.tpanel:has(#cliBarUnica) *,
+.tpanel:has(#cliBarUnica) *::before,
+.tpanel:has(#cliBarUnica) *::after{
   transform:none !important;
-  box-shadow:none !important;
+  animation:none !important;
+}
+.tpanel:has(#cliBarUnica):hover,
+.tpanel:has(#cliBarUnica) *:hover,
+.tpanel:has(#cliBarUnica) *:active,
+.tpanel:has(#cliBarUnica) *:focus{
+  transform:none !important;
 }
 .tpanel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;}
 .fbtn{font-size:11px;padding:6px 15px;border-radius:20px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;box-shadow:0 2px 4px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.06) inset;}
@@ -2946,8 +2949,8 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .btn-secondary:active,.modal-save:active,.modal-cancel:active{transform:scale(.97);}
 .consultor-list-item{transition:background .15s,border-color .15s,transform .1s;}
 .consultor-list-item:active{transform:scale(.99);}
-.mcard{transition:box-shadow .2s;}
-.mcard:hover{box-shadow:0 8px 24px rgba(0,0,0,.3);}
+.mcard{transition:box-shadow .2s,transform .15s;}
+.mcard:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3);}
 
 /* ── Inputs e selects: evitar zoom iOS em todos os contextos ── */
 @media(max-width:768px){
