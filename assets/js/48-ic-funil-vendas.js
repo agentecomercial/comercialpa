@@ -317,12 +317,24 @@
 }
 .fv-card-foot-valor b{ font-weight:800; }
 
-/* ─── Toggle colapsado/expandido do card ─── */
+/* ─── Toggle colapsado/expandido do card (clicavel) ─── */
 .fv-card-chev{
-  position:absolute; top:7px; right:26px;
-  font-size:10px; color:var(--txt-3,#6b7280);
-  pointer-events:none; user-select:none;
-  transition:transform .15s;
+  position:absolute; top:5px; right:26px;
+  width:18px; height:18px;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:11px; color:var(--txt-3,#6b7280);
+  background:transparent;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:4px;
+  cursor:pointer;
+  user-select:none;
+  transition:all .15s;
+  z-index:5;
+}
+.fv-card-chev:hover{
+  color:var(--accent);
+  border-color:var(--accent);
+  background:rgba(200,240,90,.06);
 }
 .fv-card-edit{
   position:absolute; top:5px; right:7px;
@@ -369,15 +381,15 @@
 .fv-card-edit + .fv-card-copy{ right:30px; }
 .fv-card-edit + .fv-card-copy + .fv-card-chev{ right:52px; }
 
-/* Estado colapsado: esconde tudo menos cabeçalho compacto */
-.fv-card.collapsed{ padding-bottom:8px; cursor:pointer; }
+/* Estado colapsado: mostra APENAS nome e preço (R$ valor) */
+.fv-card.collapsed{ padding-bottom:8px; }
 .fv-card.collapsed .fv-card-emp,
 .fv-card.collapsed .fv-card-row,
 .fv-card.collapsed .fv-card-foot,
 .fv-card.collapsed .fv-card-act,
-.fv-card.collapsed .fv-card-foot-valor{ display:none; }
+.fv-card.collapsed .fv-card-foot-valor{ display:none !important; }
 .fv-card.collapsed .fv-card-nome{ margin-bottom:3px; }
-.fv-card.collapsed .fv-card-val{ font-size:10px; }
+.fv-card.collapsed .fv-card-val{ font-size:11px; display:flex !important; }
 
 /* ─── OPÇÃO 8 · Colunas vazias iconizadas com nome em vertical ─── */
 .fv-col.fv-col-vazia{
@@ -2124,14 +2136,15 @@
       else                       { criadoTxt = criadoFmt; }
       criadoTitle = `Criado em ${criadoFmt}`;
     }
-    /* Pos-Venda (etapa 6) NUNCA exibe cards colapsados — sempre formato completo */
-    const colapsado = (l.etapa === 6) ? false : _cardsCollapsed.has(l.id);
+    /* Estado colapsado controlado pelo Set global. Em todas as etapas
+       o usuario alterna via clique na seta ▷ (chevron) do card. */
+    const colapsado = _cardsCollapsed.has(l.id);
     const statusCls = (l.status && l.status !== 'ativo') ? ' st-'+l.status : '';
     return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}${statusCls}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};overflow:hidden;">
       ${tempIcon?`<span class="fv-card-temp">${tempIcon}</span>`:''}
       <button class="fv-card-edit" data-edit="${l.id}" title="Abrir detalhes do lead">✎</button>
       <button class="fv-card-copy" data-copy="${l.id}" title="Copiar mensagem para WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-      <span class="fv-card-chev" title="${colapsado?'expandir':'recolher'}">${colapsado?'▸':'▾'}</span>
+      <span class="fv-card-chev" data-toggle="${l.id}" title="${colapsado?'Expandir card':'Recolher (mostrar so nome e preco)'}">${colapsado?'▷':'▽'}</span>
       <div class="fv-card-nome">${esc(l.nome)}</div>
       ${l.empresa?`<div class="fv-card-emp">${esc(l.empresa)}</div>`:''}
       <div class="fv-card-val">${moedaCurta(l.valor)} <span class="fv-card-prob ${probCls}">${l.prob||0}%</span></div>
@@ -2345,14 +2358,9 @@
     $$('.fv-card').forEach(c => {
       c.addEventListener('dragstart', e => { _dragId = c.dataset.id; c.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
       c.addEventListener('dragend', () => { c.classList.remove('dragging'); _dragId = null; });
-      c.addEventListener('click', e => {
-        if(e.target.closest('button')) return;
-        /* Click no card alterna colapsado/expandido. Pra abrir detalhe, use o botão ✎ */
-        const id = c.dataset.id;
-        if(_cardsCollapsed.has(id)) _cardsCollapsed.delete(id);
-        else _cardsCollapsed.add(id);
-        _render();
-      });
+      /* Click no corpo do card NAO toggleia mais — o usuario deve clicar
+         especificamente na seta ▷/▽ (chevron) para colapsar/expandir.
+         Isso evita toggles acidentais ao tentar arrastar o card. */
       /* Duplo click abre detalhe (atalho extra) */
       c.addEventListener('dblclick', e => {
         if(e.target.closest('button')) return;
@@ -2371,6 +2379,16 @@
       const l = _leads.find(x => x.id === b.dataset.copy); if(!l) return;
       _copiar(_msgLead(l), '📋 Mensagem copiada · cole no WhatsApp');
     }));
+    /* Seta ▷/▽ (chevron) — alterna colapsado/expandido do card individual */
+    $$('.fv-card-chev').forEach(ch => {
+      ch.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = ch.dataset.toggle;
+        if(_cardsCollapsed.has(id)) _cardsCollapsed.delete(id);
+        else _cardsCollapsed.add(id);
+        _render();
+      });
+    });
     /* Event delegation no wrapper do kanban como REDE DE SEGURANCA:
        caso algum click no SVG ou elemento interno do botao copy/edit
        nao chegue ao handler direto (por causa de overlap, z-index,
@@ -2391,6 +2409,15 @@
         if(bEdit){
           e.stopPropagation();
           _abrirDetalhe(bEdit.dataset.edit);
+          return;
+        }
+        const chev = e.target.closest('.fv-card-chev');
+        if(chev){
+          e.stopPropagation();
+          const id = chev.dataset.toggle;
+          if(_cardsCollapsed.has(id)) _cardsCollapsed.delete(id);
+          else _cardsCollapsed.add(id);
+          _render();
           return;
         }
       });
