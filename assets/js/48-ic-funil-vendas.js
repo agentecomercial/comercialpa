@@ -271,26 +271,10 @@
    completos (gabarito visual: igual ao card Mariana C Oliveira mostrado
    pelo usuario). Forca todos os elementos a renderizar SEMPRE, mesmo
    se a flag .collapsed estiver ativa por sessoes anteriores. */
-/* SOLUCAO DEFINITIVA para Pos-Venda — cards SEMPRE com altura completa
-   e todos os elementos visiveis, anulando qualquer interferencia de
-   .collapsed ou .cold remanescente. */
-.fv-col[data-et="6"] .fv-card{
-  opacity:1 !important;
-  min-height:92px !important;
-  padding:8px 10px !important;
-  display:block !important;
-}
-.fv-col[data-et="6"] .fv-card .fv-card-nome,
-.fv-col[data-et="6"] .fv-card .fv-card-emp,
-.fv-col[data-et="6"] .fv-card .fv-card-act,
-.fv-col[data-et="6"] .fv-card .fv-card-foot-valor{
-  display:block !important;
-}
-.fv-col[data-et="6"] .fv-card .fv-card-val,
-.fv-col[data-et="6"] .fv-card .fv-card-foot,
-.fv-col[data-et="6"] .fv-card .fv-card-row{
-  display:flex !important;
-}
+/* Pos-Venda (etapa 6) — apenas opacidade total (cards la sao auto-marcados
+   como "cold" por terem fechado a venda). Tudo o mais segue o comportamento
+   padrao das demais colunas, incluindo o colapso pela seta ▷/▽. */
+.fv-col[data-et="6"] .fv-card{ opacity:1 !important; }
 /* "Ver mais X leads" → hover mais visivel pra indicar clique */
 .fv-col-mais:hover{ background:linear-gradient(to top, rgba(200,240,90,.10) 60%, transparent) !important; }
 .fv-card-temp{ position:absolute; top:7px; right:8px; font-size:11px; }
