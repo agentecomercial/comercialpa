@@ -255,6 +255,11 @@
 .fv-card.dragging{ opacity:0.5; }
 .fv-card.hot{ box-shadow:0 0 0 1px rgba(239,68,68,0.4); }
 .fv-card.cold{ opacity:0.7; }
+/* Cards na coluna Pos-Venda (etapa 6) sao auto-marcados como "cold"
+   por ja terem fechado a venda — mas la nao faz sentido ficarem opacos.
+   Forca opacidade total nessa coluna pra os nomes saiam legiveis. */
+.fv-col[data-et="6"] .fv-card.cold,
+.fv-col[data-et="6"] .fv-card{ opacity:1 !important; }
 .fv-card-temp{ position:absolute; top:7px; right:8px; font-size:11px; }
 .fv-card-nome{ font-weight:600; font-size:11px; padding-right:18px; line-height:1.2; margin-bottom:2px; }
 .fv-card-emp{ font-size:10px; color:var(--txt-2); margin-bottom:5px; }
@@ -2115,11 +2120,10 @@
       const soma = leadsEt.reduce((s,l)=>s+ +(l.valor||0),0);
       const cards = leadsEt.map(l => _cardHtml(l, et.cor)).join('');
       const mais = leadsEt.length > _maxCards ? `<div class="fv-col-mais">↓ Ver mais ${leadsEt.length - _maxCards} lead${leadsEt.length - _maxCards>1?'s':''}</div>` : '';
-      /* Comportamento "Opcao 8" (mini-colunas verticais para vazias) DESATIVADO
-         a pedido do usuario — TODAS as colunas ficam expandidas em largura igual,
-         independente de estarem vazias, cheias ou de estado de toggle manual.
-         (Antes: const mini = invertida ? !vazia : vazia) */
-      const mini = false;
+      /* OPÇÃO 8: colunas vazias viram mini-colunas verticais (default). Click na mini
+         expande; click no header de coluna cheia retrai. Estado em _colsToggleadas. */
+      const invertida = _colsToggleadas.has(i);
+      const mini = invertida ? !vazia : vazia;
       if(mini){
         const badge = vazia
           ? `<div class="fv-col-vazia-icone" style="background:${et.cor}22;border-color:${et.cor}55;color:${et.cor};">${et.ico||'•'}</div>`
