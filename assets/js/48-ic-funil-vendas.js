@@ -256,22 +256,24 @@
 .fv-card.hot{ box-shadow:0 0 0 1px rgba(239,68,68,0.4); }
 .fv-card.cold{ opacity:0.7; }
 /* Cards na coluna Pos-Venda (etapa 6) sao auto-marcados como "cold"
-   por ja terem fechado a venda — mas la nao faz sentido ficarem opacos
-   nem colapsados (mostrando so o nome). Forca opacidade total e
-   garante que todos os elementos internos fiquem visiveis. */
-.fv-col[data-et="6"] .fv-card.cold,
+   por ja terem fechado a venda — opacidade total e mostra detalhes
+   completos (gabarito visual: igual ao card Mariana C Oliveira mostrado
+   pelo usuario). Forca todos os elementos a renderizar SEMPRE, mesmo
+   se a flag .collapsed estiver ativa por sessoes anteriores. */
 .fv-col[data-et="6"] .fv-card{ opacity:1 !important; }
-.fv-col[data-et="6"] .fv-card.collapsed .fv-card-emp,
-.fv-col[data-et="6"] .fv-card.collapsed .fv-card-row,
-.fv-col[data-et="6"] .fv-card.collapsed .fv-card-foot,
-.fv-col[data-et="6"] .fv-card.collapsed .fv-card-act,
-.fv-col[data-et="6"] .fv-card.collapsed .fv-card-foot-valor{
+.fv-col[data-et="6"] .fv-card .fv-card-emp,
+.fv-col[data-et="6"] .fv-card .fv-card-act,
+.fv-col[data-et="6"] .fv-card .fv-card-foot-valor,
+.fv-col[data-et="6"] .fv-card .fv-card-val{
   display:block !important;
 }
-.fv-col[data-et="6"] .fv-card.collapsed .fv-card-foot,
-.fv-col[data-et="6"] .fv-card.collapsed .fv-card-row{
+.fv-col[data-et="6"] .fv-card .fv-card-foot,
+.fv-col[data-et="6"] .fv-card .fv-card-row{
   display:flex !important;
 }
+/* Anti-collapsed: anula as regras de .collapsed para Pos-Venda */
+.fv-col[data-et="6"] .fv-card.collapsed{ padding:8px 10px !important; }
+.fv-col[data-et="6"] .fv-card.collapsed .fv-card-val{ font-size:11px !important; }
 .fv-card-temp{ position:absolute; top:7px; right:8px; font-size:11px; }
 .fv-card-nome{ font-weight:600; font-size:11px; padding-right:18px; line-height:1.2; margin-bottom:2px; }
 .fv-card-emp{ font-size:10px; color:var(--txt-2); margin-bottom:5px; }
@@ -2101,7 +2103,8 @@
       else                       { criadoTxt = criadoFmt; }
       criadoTitle = `Criado em ${criadoFmt}`;
     }
-    const colapsado = _cardsCollapsed.has(l.id);
+    /* Pos-Venda (etapa 6) NUNCA exibe cards colapsados — sempre formato completo */
+    const colapsado = (l.etapa === 6) ? false : _cardsCollapsed.has(l.id);
     const statusCls = (l.status && l.status !== 'ativo') ? ' st-'+l.status : '';
     return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}${statusCls}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};overflow:hidden;">
       ${tempIcon?`<span class="fv-card-temp">${tempIcon}</span>`:''}
