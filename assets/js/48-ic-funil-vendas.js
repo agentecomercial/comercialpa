@@ -342,7 +342,9 @@
   display:inline-flex; align-items:center; justify-content:center;
   transition:all .15s;
 }
-.fv-card-copy svg{ display:block; }
+.fv-card-copy svg{ display:block; pointer-events:none; }
+.fv-card-copy *{ pointer-events:none; }
+.fv-card-edit, .fv-card-copy{ z-index:5; }
 .fv-card-copy:hover{ color:var(--accent); border-color:var(--accent); background:rgba(212,165,116,.08); }
 /* Status visual quando lead NÃO é "ativo" — opacidade + faixa diagonal no canto */
 .fv-card.st-perdido{ opacity:.55; }
@@ -2369,6 +2371,30 @@
       const l = _leads.find(x => x.id === b.dataset.copy); if(!l) return;
       _copiar(_msgLead(l), '📋 Mensagem copiada · cole no WhatsApp');
     }));
+    /* Event delegation no wrapper do kanban como REDE DE SEGURANCA:
+       caso algum click no SVG ou elemento interno do botao copy/edit
+       nao chegue ao handler direto (por causa de overlap, z-index,
+       ou stopPropagation acidental), o delegate pega. */
+    const _kanbanWrap = $('#fvKanban');
+    if(_kanbanWrap && !_kanbanWrap.dataset.delegated){
+      _kanbanWrap.dataset.delegated = '1';
+      _kanbanWrap.addEventListener('click', e => {
+        const bCopy = e.target.closest('.fv-card-copy');
+        if(bCopy){
+          e.stopPropagation();
+          const id = bCopy.dataset.copy;
+          const l = _leads.find(x => x.id === id);
+          if(l) _copiar(_msgLead(l), '📋 Mensagem copiada · cole no WhatsApp');
+          return;
+        }
+        const bEdit = e.target.closest('.fv-card-edit');
+        if(bEdit){
+          e.stopPropagation();
+          _abrirDetalhe(bEdit.dataset.edit);
+          return;
+        }
+      });
+    }
     $$('.fv-col').forEach(col => {
       col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('dragover'); });
       col.addEventListener('dragleave', () => col.classList.remove('dragover'));
