@@ -271,8 +271,16 @@
    completos (gabarito visual: igual ao card Mariana C Oliveira mostrado
    pelo usuario). Forca todos os elementos a renderizar SEMPRE, mesmo
    se a flag .collapsed estiver ativa por sessoes anteriores. */
-.fv-col[data-et="6"] .fv-card{ opacity:1 !important; }
-/* Cada elemento volta ao display correto (block ou flex) sem quebrar layout */
+/* SOLUCAO DEFINITIVA para Pos-Venda — cards SEMPRE com altura completa
+   e todos os elementos visiveis, anulando qualquer interferencia de
+   .collapsed ou .cold remanescente. */
+.fv-col[data-et="6"] .fv-card{
+  opacity:1 !important;
+  min-height:92px !important;
+  padding:8px 10px !important;
+  display:block !important;
+}
+.fv-col[data-et="6"] .fv-card .fv-card-nome,
 .fv-col[data-et="6"] .fv-card .fv-card-emp,
 .fv-col[data-et="6"] .fv-card .fv-card-act,
 .fv-col[data-et="6"] .fv-card .fv-card-foot-valor{
@@ -283,9 +291,6 @@
 .fv-col[data-et="6"] .fv-card .fv-card-row{
   display:flex !important;
 }
-/* Anti-collapsed: anula as regras de .collapsed para Pos-Venda */
-.fv-col[data-et="6"] .fv-card.collapsed{ padding:8px 10px !important; }
-.fv-col[data-et="6"] .fv-card.collapsed .fv-card-val{ font-size:11px !important; }
 /* "Ver mais X leads" → hover mais visivel pra indicar clique */
 .fv-col-mais:hover{ background:linear-gradient(to top, rgba(200,240,90,.10) 60%, transparent) !important; }
 .fv-card-temp{ position:absolute; top:7px; right:8px; font-size:11px; }
@@ -2297,6 +2302,9 @@
   }
 
   function _render(){
+    /* Garantia: _maxCards sempre 4 (grid fixo) e --fv-max sincronizado */
+    _maxCards = 4;
+    document.documentElement.style.setProperty('--fv-max', '4');
     const arr = _filtrar(_leads);
     /* KPIs e Funil de Conversão consideram só leads ATIVOS (sem perdido/reciclar).
        Kanban e Lista escondem PERDIDOS (somem do funil de verdade) mas mantêm
@@ -3101,7 +3109,9 @@
     _buildShell();
     _attachFiltros();
     _attachOpToggle();
-    document.documentElement.style.setProperty('--fv-max', _maxCards);
+    /* Forca _maxCards a sempre ser 4 — grid fixo, scroll para excedente */
+    _maxCards = 4;
+    document.documentElement.style.setProperty('--fv-max', '4');
     await _carregar();
     // Permissão visual
     const u = window._currentUser || {};
