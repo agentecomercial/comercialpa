@@ -26,7 +26,12 @@
   let _filtroEtapa = null;
   let _filtros = { cons:'', trein:'', turma:'', per:'mes', perDe:'', perAte:'', origem:'', busca:'', temp:'', atraso:false };
   let _modoLista = false;
-  let _maxCards = 5;
+  /* Maximo de cards visiveis por coluna sem precisar rolar.
+     Acima disso, mostra "Ver mais X leads" no fundo. */
+  let _maxCards = 4;
+  /* Colunas em que o usuario clicou "Ver mais": passam a permitir
+     scrollar livremente dentro da altura fixa (4 cards). */
+  const _colsExpandidas = new Set();
   /* Cards colapsados (click simples toggleia). Sessão-only, sem persistência. */
   const _cardsCollapsed = new Set();
   /* Colunas com toggle invertido (sessão-only). Se está no Set, o default vazia/cheia
@@ -238,7 +243,13 @@
 .fv-kanban{ display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; }
 .fv-kanban::-webkit-scrollbar{ height:6px; }
 .fv-kanban::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.14); border-radius:3px; }
-.fv-col{ background:var(--bg,#0d1117); border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px; max-height:calc(var(--fv-max,5) * 92px + 100px); overflow-y:auto; min-width:0; flex:1; }
+.fv-col{ background:var(--bg,#0d1117); border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px; max-height:calc(var(--fv-max,4) * 92px + 100px); overflow-y:auto; min-width:0; flex:1; }
+/* Scrollbar mais visivel quando o usuario abriu "Ver mais" e a coluna
+   passou a ter scroll interno */
+.fv-col::-webkit-scrollbar{ width:6px; }
+.fv-col::-webkit-scrollbar-track{ background:rgba(255,255,255,.03); border-radius:3px; }
+.fv-col::-webkit-scrollbar-thumb{ background:rgba(200,240,90,.20); border-radius:3px; }
+.fv-col::-webkit-scrollbar-thumb:hover{ background:rgba(200,240,90,.40); }
 .fv-col::-webkit-scrollbar{ width:4px; }
 .fv-col::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.14); border-radius:2px; }
 .fv-col.dragover{ background:rgba(212,165,116,0.06); border-color:var(--accent); }
@@ -2137,7 +2148,12 @@
       const vazia = leadsEt.length === 0;
       const soma = leadsEt.reduce((s,l)=>s+ +(l.valor||0),0);
       const cards = leadsEt.map(l => _cardHtml(l, et.cor)).join('');
-      const mais = leadsEt.length > _maxCards ? `<div class="fv-col-mais">↓ Ver mais ${leadsEt.length - _maxCards} lead${leadsEt.length - _maxCards>1?'s':''}</div>` : '';
+      /* "Ver mais X leads" desaparece quando o usuario ja expandiu essa
+         coluna (passa a usar scroll dentro da altura fixa de 4 cards). */
+      const expandida = _colsExpandidas.has(i);
+      const mais = (leadsEt.length > _maxCards && !expandida)
+        ? `<div class="fv-col-mais" data-et="${i}">↓ Ver mais ${leadsEt.length - _maxCards} lead${leadsEt.length - _maxCards>1?'s':''}</div>`
+        : '';
       /* OPÇÃO 8: colunas vazias viram mini-colunas verticais (default). Click na mini
          expande; click no header de coluna cheia retrai. Estado em _colsToggleadas. */
       const invertida = _colsToggleadas.has(i);
@@ -2299,20 +2315,21 @@
   /* ── F2 · Drag & drop ── */
   let _dragId = null;
   function _attachKanbanEvents(){
-    /* Handler do botao "Ver mais X leads" — aumenta a capacidade da
-       coluna para mostrar TODOS os leads, e rola ate o final. */
+    /* Handler do botao "Ver mais X leads" — marca a coluna como
+       expandida. A coluna mantem altura fixa (4 cards) e ganha scroll
+       livre para acessar os demais. O botao "Ver mais" desaparece. */
     $$('.fv-col-mais').forEach(el => {
       el.addEventListener('click', e => {
         e.stopPropagation();
-        _maxCards = Math.max(_maxCards, 999);
-        document.documentElement.style.setProperty('--fv-max', 999);
-        const col = el.closest('.fv-col');
+        const et = +el.dataset.et;
+        _colsExpandidas.add(et);
         _render();
-        /* Apos re-render, rola coluna ate o fim */
-        if(col){
-          const colEl = document.querySelector('.fv-col[data-et="'+col.dataset.et+'"]');
-          if(colEl) setTimeout(()=>{ colEl.scrollTop = colEl.scrollHeight; }, 50);
-        }
+        /* Apos o re-render, rola um pouco pra dentro pra mostrar
+           que ha mais conteudo scrollavel logo abaixo. */
+        setTimeout(()=>{
+          const colEl = document.querySelector('.fv-col[data-et="'+et+'"]');
+          if(colEl) colEl.scrollTop = (_maxCards - 1) * 92;
+        }, 50);
       });
     });
     $$('.fv-card').forEach(c => {
