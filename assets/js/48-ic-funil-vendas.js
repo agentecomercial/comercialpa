@@ -2155,10 +2155,12 @@
       const leadsEt = arr.filter(l => l.etapa === i);
       const vazia = leadsEt.length === 0;
       const soma = leadsEt.reduce((s,l)=>s+ +(l.valor||0),0);
-      const cards = leadsEt.map(l => _cardHtml(l, et.cor)).join('');
-      /* "Ver mais X leads" desaparece quando o usuario ja expandiu essa
-         coluna (passa a usar scroll dentro da altura fixa de 4 cards). */
+      /* Grid rigido: corta no _maxCards (5). Os demais so aparecem apos
+         clicar em "Ver mais" — que marca a coluna como expandida e
+         renderiza TODOS os cards (acessiveis via scroll vertical). */
       const expandida = _colsExpandidas.has(i);
+      const leadsVisiveis = expandida ? leadsEt : leadsEt.slice(0, _maxCards);
+      const cards = leadsVisiveis.map(l => _cardHtml(l, et.cor)).join('');
       const mais = (leadsEt.length > _maxCards && !expandida)
         ? `<div class="fv-col-mais" data-et="${i}">↓ Ver mais ${leadsEt.length - _maxCards} lead${leadsEt.length - _maxCards>1?'s':''}</div>`
         : '';
