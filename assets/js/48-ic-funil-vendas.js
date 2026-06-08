@@ -28,7 +28,7 @@
   let _modoLista = false;
   /* Maximo de cards visiveis por coluna sem precisar rolar.
      Acima disso, mostra "Ver mais X leads" no fundo. */
-  let _maxCards = 4;
+  let _maxCards = 5;
   /* Colunas em que o usuario clicou "Ver mais": passam a permitir
      scrollar livremente dentro da altura fixa (4 cards). */
   const _colsExpandidas = new Set();
@@ -246,7 +246,7 @@
 .fv-kanban{ display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; }
 .fv-kanban::-webkit-scrollbar{ height:6px; }
 .fv-kanban::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.14); border-radius:3px; }
-.fv-col{ background:var(--bg,#0d1117); border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px; max-height:calc(var(--fv-max,4) * 92px + 100px); overflow-y:auto; min-width:0; flex:1; }
+.fv-col{ background:var(--bg,#0d1117); border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px; max-height:calc(var(--fv-max,5) * 92px + 100px); overflow-y:auto; min-width:0; flex:1; }
 /* Scrollbar mais visivel quando o usuario abriu "Ver mais" e a coluna
    passou a ter scroll interno */
 .fv-col::-webkit-scrollbar{ width:6px; }
@@ -2305,9 +2305,9 @@
   }
 
   function _render(){
-    /* Garantia: _maxCards sempre 4 (grid fixo) e --fv-max sincronizado */
-    _maxCards = 4;
-    document.documentElement.style.setProperty('--fv-max', '4');
+    /* Garantia: _maxCards sempre 5 (grid fixo) e --fv-max sincronizado */
+    _maxCards = 5;
+    document.documentElement.style.setProperty('--fv-max', '5');
     const arr = _filtrar(_leads);
     /* KPIs e Funil de Conversão consideram só leads ATIVOS (sem perdido/reciclar).
        Kanban e Lista escondem PERDIDOS (somem do funil de verdade) mas mantêm
@@ -3153,9 +3153,9 @@
     _buildShell();
     _attachFiltros();
     _attachOpToggle();
-    /* Forca _maxCards a sempre ser 4 — grid fixo, scroll para excedente */
-    _maxCards = 4;
-    document.documentElement.style.setProperty('--fv-max', '4');
+    /* Forca _maxCards a sempre ser 5 — grid fixo, scroll para excedente */
+    _maxCards = 5;
+    document.documentElement.style.setProperty('--fv-max', '5');
     await _carregar();
     // Permissão visual
     const u = window._currentUser || {};
