@@ -32,14 +32,11 @@
   /* Colunas em que o usuario clicou "Ver mais": passam a permitir
      scrollar livremente dentro da altura fixa (4 cards). */
   const _colsExpandidas = new Set();
-  /* Cards EXPANDIDOS manualmente pelo user (Set sessao-only).
-     Default: TODOS os cards iniciam COLAPSADOS (▷). User clica no
-     chevron ▷ pra expandir.
-     ACCORDION: apenas UMA etapa pode ter cards expandidos por vez —
-     quando user expande um card de outra etapa, _etapaAtivaExpansao
-     muda e _cardsExpandidos eh limpo. */
-  const _cardsExpandidos = new Set();
-  let _etapaAtivaExpansao = null;
+  /* Cards COLAPSADOS manualmente pelo user (Set sessao-only).
+     Default: TODOS os cards iniciam EXPANDIDOS (▽) — mostram tudo:
+     nome, R$, badges, consultor, prazo, "criado em", footer.
+     Click na seta ▽ adiciona ao Set (colapsa pra ▷). */
+  const _cardsCollapsed = new Set();
   /* Colunas com toggle invertido (sessão-only). Se está no Set, o default vazia/cheia
      é invertido: vazia vira coluna expandida e cheia vira mini-vertical retraída. */
   const _colsToggleadas = new Set();
@@ -2137,23 +2134,11 @@
     return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
   }
 
-  /* Accordion: ao clicar no chevron de um card de etapa X:
-     - Se X for diferente da etapa atualmente ativa: limpa o Set,
-       seta nova etapa ativa, expande o card clicado
-     - Se X for igual: toggleia o card no Set normalmente */
+  /* Toggle simples: clicar no chevron alterna estado individual.
+     Sem accordion entre etapas (cada card eh independente). */
   function _toggleChevron(id){
-    const lead = _leads.find(x => x.id === id);
-    if(!lead) return;
-    const etCard = lead.etapa;
-    if(_etapaAtivaExpansao !== etCard){
-      _cardsExpandidos.clear();
-      _etapaAtivaExpansao = etCard;
-      _cardsExpandidos.add(id);
-    } else {
-      if(_cardsExpandidos.has(id)) _cardsExpandidos.delete(id);
-      else _cardsExpandidos.add(id);
-      if(_cardsExpandidos.size === 0) _etapaAtivaExpansao = null;
-    }
+    if(_cardsCollapsed.has(id)) _cardsCollapsed.delete(id);
+    else _cardsCollapsed.add(id);
     _render();
   }
 
@@ -2182,9 +2167,9 @@
       else                       { criadoTxt = criadoFmt; }
       criadoTitle = `Criado em ${criadoFmt}`;
     }
-    /* Default = COLAPSADO (▷) em TODAS as etapas. Accordion: apenas
-       a etapa em _etapaAtivaExpansao tem cards expandidos via Set. */
-    const colapsado = !_cardsExpandidos.has(l.id);
+    /* Default = EXPANDIDO em todas as etapas (mostra tudo). Click
+       na seta ▽ colapsa individualmente. Presenca no Set = colapsado. */
+    const colapsado = _cardsCollapsed.has(l.id);
     const statusCls = (l.status && l.status !== 'ativo') ? ' st-'+l.status : '';
     return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}${statusCls}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};overflow:hidden;">
       ${tempIcon?`<span class="fv-card-temp">${tempIcon}</span>`:''}
