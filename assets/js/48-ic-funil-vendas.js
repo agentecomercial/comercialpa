@@ -32,10 +32,14 @@
   /* Colunas em que o usuario clicou "Ver mais": passam a permitir
      scrollar livremente dentro da altura fixa (4 cards). */
   const _colsExpandidas = new Set();
-  /* Cards colapsados manualmente pelo user. Sessao-only, sem persistencia.
-     Default: TODOS os cards (em todas as etapas, inclusive Pos-Venda)
-     iniciam EXPANDIDOS. Click na seta ▽ adiciona ao Set (colapsa). */
-  const _cardsCollapsed = new Set();
+  /* Cards EXPANDIDOS manualmente pelo user (Set sessao-only).
+     Default: TODOS os cards iniciam COLAPSADOS (▷). User clica no
+     chevron ▷ pra expandir.
+     ACCORDION: apenas UMA etapa pode ter cards expandidos por vez —
+     quando user expande um card de outra etapa, _etapaAtivaExpansao
+     muda e _cardsExpandidos eh limpo. */
+  const _cardsExpandidos = new Set();
+  let _etapaAtivaExpansao = null;
   /* Colunas com toggle invertido (sessão-only). Se está no Set, o default vazia/cheia
      é invertido: vazia vira coluna expandida e cheia vira mini-vertical retraída. */
   const _colsToggleadas = new Set();
@@ -263,7 +267,7 @@
 .fv-col-soma b{ color:var(--accent); }
 .fv-col-add{ background:transparent; border:1px dashed rgba(255,255,255,0.14); color:var(--txt-3,#6b7280); padding:4px; border-radius:6px; font-size:10px; cursor:pointer; font-family:inherit; margin-top:2px; font-weight:600; transition:all 0.15s; }
 .fv-col-add:hover{ color:var(--accent); border-color:var(--accent); }
-.fv-card{ background:var(--bg-3,#1c2128); border:1px solid var(--border); border-left:3px solid var(--col-cor,var(--accent)); border-radius:8px; padding:8px 10px; cursor:grab; transition:all 0.15s; position:relative; font-size:11px; min-height:130px; }
+.fv-card{ background:var(--bg-3,#1c2128); border:1px solid var(--border); border-left:3px solid var(--col-cor,var(--accent)); border-radius:8px; padding:8px 10px; cursor:grab; transition:all 0.15s; position:relative; font-size:11px; }
 .fv-card:hover{ transform:translateY(-1px); border-color:rgba(255,255,255,0.14); box-shadow:0 4px 12px rgba(0,0,0,0.3); }
 .fv-card:active{ cursor:grabbing; }
 .fv-card.dragging{ opacity:0.5; }
@@ -391,26 +395,22 @@
 .fv-card:not(.collapsed) .fv-card-foot{ display:flex; }
 .fv-card:not(.collapsed) .fv-card-foot-valor{ display:block; }
 
-/* MICROBARRA de progresso (% de probabilidade) — bonus visual que
-   aproveita o espaco vazio do estado colapsado ▷. Escondida no
-   expandido ▽ pra nao duplicar com o badge .fv-card-prob. */
+/* MICROBARRA de progresso (% de probabilidade) — aparece LOGO ABAIXO
+   do .fv-card-val no estado colapsado ▷. Escondida no expandido ▽
+   pra nao duplicar com o badge .fv-card-prob. */
 .fv-card-progress{
   display:none;
-  position:absolute; left:12px; right:12px; bottom:10px;
+  position:relative;
   height:4px; border-radius:2px;
-  background:rgba(255,255,255,.05);
-  overflow:hidden;
+  background:rgba(255,255,255,.06);
+  margin-top:6px;
+  overflow:visible;
 }
 .fv-card-progress .bar{
   height:100%;
   background:linear-gradient(90deg, var(--col-cor,var(--accent)), var(--accent));
   border-radius:2px;
   transition:width .3s;
-}
-.fv-card-progress .lbl{
-  position:absolute; right:0; bottom:6px;
-  font-size:8px; font-weight:700;
-  color:var(--txt-3); letter-spacing:.04em;
 }
 .fv-card.collapsed .fv-card-progress{ display:block; }
 
@@ -2137,6 +2137,26 @@
     return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
   }
 
+  /* Accordion: ao clicar no chevron de um card de etapa X:
+     - Se X for diferente da etapa atualmente ativa: limpa o Set,
+       seta nova etapa ativa, expande o card clicado
+     - Se X for igual: toggleia o card no Set normalmente */
+  function _toggleChevron(id){
+    const lead = _leads.find(x => x.id === id);
+    if(!lead) return;
+    const etCard = lead.etapa;
+    if(_etapaAtivaExpansao !== etCard){
+      _cardsExpandidos.clear();
+      _etapaAtivaExpansao = etCard;
+      _cardsExpandidos.add(id);
+    } else {
+      if(_cardsExpandidos.has(id)) _cardsExpandidos.delete(id);
+      else _cardsExpandidos.add(id);
+      if(_cardsExpandidos.size === 0) _etapaAtivaExpansao = null;
+    }
+    _render();
+  }
+
   function _cardHtml(l, etCor){
     const probCls = l.prob>=70?'':(l.prob>=40?'m':'l');
     const tempIcon = l.temp==='q'?'🔥':(l.temp==='m'?'🌤':(l.temp==='f'?'❄':''));
@@ -2162,9 +2182,9 @@
       else                       { criadoTxt = criadoFmt; }
       criadoTitle = `Criado em ${criadoFmt}`;
     }
-    /* Default = EXPANDIDO em TODAS as etapas (Pos-Venda igual as outras).
-       User clica na seta ▽ pra colapsar; ID vai para o Set. */
-    const colapsado = _cardsCollapsed.has(l.id);
+    /* Default = COLAPSADO (▷) em TODAS as etapas. Accordion: apenas
+       a etapa em _etapaAtivaExpansao tem cards expandidos via Set. */
+    const colapsado = !_cardsExpandidos.has(l.id);
     const statusCls = (l.status && l.status !== 'ativo') ? ' st-'+l.status : '';
     return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}${statusCls}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};overflow:hidden;">
       ${tempIcon?`<span class="fv-card-temp">${tempIcon}</span>`:''}
@@ -2174,6 +2194,9 @@
       <div class="fv-card-nome">${esc(l.nome)}</div>
       ${l.empresa?`<div class="fv-card-emp">${esc(l.empresa)}</div>`:''}
       <div class="fv-card-val">${moedaCurta(l.valor)} <span class="fv-card-prob ${probCls}">${l.prob||0}%</span></div>
+      <div class="fv-card-progress" title="Probabilidade: ${l.prob||0}%">
+        <div class="bar" style="width:${l.prob||0}%"></div>
+      </div>
       <div class="fv-card-row">
         ${l.treinamento?`<span class="fv-card-tag tr">${esc(l.treinamento)}</span>`:''}
         ${l.origem?`<span class="fv-card-tag or">${esc(l.origem)}</span>`:''}
@@ -2184,10 +2207,6 @@
       </div>
       <div class="fv-card-act" title="${criadoTitle}">Criado: ${criadoTxt}</div>
       <div class="fv-card-foot-valor">💰 <b>${moedaCurta(l.valor)}</b></div>
-      <div class="fv-card-progress" title="Probabilidade: ${l.prob||0}%">
-        <div class="bar" style="width:${l.prob||0}%"></div>
-        <span class="lbl">${l.prob||0}%</span>
-      </div>
     </div>`;
   }
 
@@ -2392,16 +2411,13 @@
       const l = _leads.find(x => x.id === b.dataset.copy); if(!l) return;
       _copiar(_msgLead(l), '📋 Mensagem copiada · cole no WhatsApp');
     }));
-    /* Seta ▷/▽ (chevron) — alterna colapsado/expandido do card individual.
-       Default eh EXPANDIDO em todas as etapas: presenca no Set = colapsado. */
+    /* Seta ▷/▽ (chevron) — alterna colapsado/expandido com ACCORDION.
+       Apenas uma etapa pode ter cards expandidos por vez. */
     $$('.fv-card-chev').forEach(ch => {
       ch.addEventListener('click', e => {
         e.stopPropagation();
         e.preventDefault();
-        const id = ch.dataset.toggle;
-        if(_cardsCollapsed.has(id)) _cardsCollapsed.delete(id);
-        else _cardsCollapsed.add(id);
-        _render();
+        _toggleChevron(ch.dataset.toggle);
       });
     });
     /* Event delegation no wrapper do kanban como REDE DE SEGURANCA:
@@ -2430,10 +2446,7 @@
         if(chev){
           e.stopPropagation();
           e.preventDefault();
-          const id = chev.dataset.toggle;
-          if(_cardsCollapsed.has(id)) _cardsCollapsed.delete(id);
-          else _cardsCollapsed.add(id);
-          _render();
+          _toggleChevron(chev.dataset.toggle);
           return;
         }
       });
