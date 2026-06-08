@@ -32,8 +32,9 @@
   /* Colunas em que o usuario clicou "Ver mais": passam a permitir
      scrollar livremente dentro da altura fixa (4 cards). */
   const _colsExpandidas = new Set();
-  /* Cards colapsados (click simples toggleia). Sessão-only, sem persistência. */
-  const _cardsCollapsed = new Set();
+  /* Cards EXPANDIDOS (default = colapsado ▷). User clica na seta pra expandir.
+     Sessao-only, sem persistencia. */
+  const _cardsExpandidos = new Set();
   /* Colunas com toggle invertido (sessão-only). Se está no Set, o default vazia/cheia
      é invertido: vazia vira coluna expandida e cheia vira mini-vertical retraída. */
   const _colsToggleadas = new Set();
@@ -92,9 +93,10 @@
   }
   const _ehAdmin = ()=> ['admin','master','gestor'].includes(_papel());
 
-  /* ── CSS (injeta uma vez) ── */
+  /* ── CSS (injeta sempre, substituindo versao antiga se existir) ── */
   function _injectCss(){
-    if(document.getElementById('fvCss')) return;
+    const old = document.getElementById('fvCss');
+    if(old) old.remove();
     const css = `
 :root{ --fv-p1:#ff8fa8;--fv-p2:#ff6b8a;--fv-p3:#e94f74;--fv-p4:#d63960;--fv-p5:#b82550;--fv-p6:#9a1740;--fv-p7:#7a0d30; }
 .fv-app{ font-family:'DM Sans','Inter',sans-serif; color:var(--txt); }
@@ -365,15 +367,16 @@
 .fv-card-edit + .fv-card-copy{ right:30px; }
 .fv-card-edit + .fv-card-copy + .fv-card-chev{ right:52px; }
 
-/* Estado colapsado: mostra APENAS nome e preço (R$ valor) */
-.fv-card.collapsed{ padding-bottom:8px; }
-.fv-card.collapsed .fv-card-emp,
-.fv-card.collapsed .fv-card-row,
-.fv-card.collapsed .fv-card-foot,
-.fv-card.collapsed .fv-card-act,
-.fv-card.collapsed .fv-card-foot-valor{ display:none !important; }
+/* Estado colapsado: mostra APENAS nome e preço (R$ valor).
+   Especificidade reforcada com .fv-col pra vencer regras de [data-et]. */
+.fv-card.collapsed{ padding-bottom:8px; min-height:auto !important; }
+.fv-col .fv-card.collapsed .fv-card-emp,
+.fv-col .fv-card.collapsed .fv-card-row,
+.fv-col .fv-card.collapsed .fv-card-foot,
+.fv-col .fv-card.collapsed .fv-card-act,
+.fv-col .fv-card.collapsed .fv-card-foot-valor{ display:none !important; }
 .fv-card.collapsed .fv-card-nome{ margin-bottom:3px; }
-.fv-card.collapsed .fv-card-val{ font-size:11px; display:flex !important; }
+.fv-col .fv-card.collapsed .fv-card-val{ font-size:11px; display:flex !important; }
 
 /* ─── OPÇÃO 8 · Colunas vazias iconizadas com nome em vertical ─── */
 .fv-col.fv-col-vazia{
@@ -2120,9 +2123,9 @@
       else                       { criadoTxt = criadoFmt; }
       criadoTitle = `Criado em ${criadoFmt}`;
     }
-    /* Estado colapsado controlado pelo Set global. Em todas as etapas
-       o usuario alterna via clique na seta ▷ (chevron) do card. */
-    const colapsado = _cardsCollapsed.has(l.id);
+    /* Estado padrao = COLAPSADO (▷). User clica na seta pra expandir.
+       O Set guarda quem foi expandido manualmente nesta sessao. */
+    const colapsado = !_cardsExpandidos.has(l.id);
     const statusCls = (l.status && l.status !== 'ativo') ? ' st-'+l.status : '';
     return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}${statusCls}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};overflow:hidden;">
       ${tempIcon?`<span class="fv-card-temp">${tempIcon}</span>`:''}
@@ -2363,13 +2366,15 @@
       const l = _leads.find(x => x.id === b.dataset.copy); if(!l) return;
       _copiar(_msgLead(l), '📋 Mensagem copiada · cole no WhatsApp');
     }));
-    /* Seta ▷/▽ (chevron) — alterna colapsado/expandido do card individual */
+    /* Seta ▷/▽ (chevron) — alterna colapsado/expandido do card individual.
+       Default eh colapsado: presenca no Set = expandido. */
     $$('.fv-card-chev').forEach(ch => {
       ch.addEventListener('click', e => {
         e.stopPropagation();
+        e.preventDefault();
         const id = ch.dataset.toggle;
-        if(_cardsCollapsed.has(id)) _cardsCollapsed.delete(id);
-        else _cardsCollapsed.add(id);
+        if(_cardsExpandidos.has(id)) _cardsExpandidos.delete(id);
+        else _cardsExpandidos.add(id);
         _render();
       });
     });
@@ -2398,9 +2403,10 @@
         const chev = e.target.closest('.fv-card-chev');
         if(chev){
           e.stopPropagation();
+          e.preventDefault();
           const id = chev.dataset.toggle;
-          if(_cardsCollapsed.has(id)) _cardsCollapsed.delete(id);
-          else _cardsCollapsed.add(id);
+          if(_cardsExpandidos.has(id)) _cardsExpandidos.delete(id);
+          else _cardsExpandidos.add(id);
           _render();
           return;
         }
