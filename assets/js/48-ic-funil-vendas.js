@@ -368,8 +368,10 @@
 .fv-card-edit + .fv-card-copy{ right:30px; }
 .fv-card-edit + .fv-card-copy + .fv-card-chev{ right:52px; }
 
-/* Estado colapsado: mostra APENAS nome e preço (R$ valor).
-   Especificidade reforcada com .fv-col pra vencer regras de [data-et]. */
+/* Estado colapsado ▷: mostra nome + valor R$ (com badge % ao lado).
+   Esconde empresa, tags treinamento/origem, consultor, prazo,
+   "Criado em" e footer R$ duplicado. Especificidade .fv-col pra
+   vencer regras de [data-et]. */
 .fv-card.collapsed{ padding-bottom:8px; min-height:auto !important; }
 .fv-col .fv-card.collapsed .fv-card-emp,
 .fv-col .fv-card.collapsed .fv-card-row,
@@ -378,6 +380,16 @@
 .fv-col .fv-card.collapsed .fv-card-foot-valor{ display:none !important; }
 .fv-card.collapsed .fv-card-nome{ margin-bottom:3px; }
 .fv-col .fv-card.collapsed .fv-card-val{ font-size:11px; display:flex !important; }
+
+/* Estado expandido ▽: TODOS os elementos visiveis em layout completo,
+   independente da quantidade de leads na coluna. Ordem garantida. */
+.fv-card:not(.collapsed) .fv-card-nome,
+.fv-card:not(.collapsed) .fv-card-emp,
+.fv-card:not(.collapsed) .fv-card-act{ display:block; }
+.fv-card:not(.collapsed) .fv-card-val,
+.fv-card:not(.collapsed) .fv-card-row,
+.fv-card:not(.collapsed) .fv-card-foot{ display:flex; }
+.fv-card:not(.collapsed) .fv-card-foot-valor{ display:block; }
 
 /* ─── OPÇÃO 8 · Colunas vazias iconizadas com nome em vertical ─── */
 .fv-col.fv-col-vazia{
