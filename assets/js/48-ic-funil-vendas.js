@@ -281,7 +281,7 @@
 /* "Ver mais X leads" → hover mais visivel pra indicar clique */
 .fv-col-mais:hover{ background:linear-gradient(to top, rgba(200,240,90,.10) 60%, transparent) !important; }
 .fv-card-temp{ position:absolute; top:7px; right:8px; font-size:11px; }
-.fv-card-nome{ font-weight:600; font-size:11px; padding-right:18px; line-height:1.2; margin-bottom:2px; }
+.fv-card-nome{ font-weight:600; font-size:11px; padding-right:80px; line-height:1.2; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fv-card-emp{ font-size:10px; color:var(--txt-2); margin-bottom:5px; }
 .fv-card-val{ font-size:11px; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; display:flex; align-items:center; justify-content:space-between; }
 .fv-card-prob{ font-size:9px; color:#34d399; background:rgba(52,211,153,0.1); padding:1px 5px; border-radius:3px; font-weight:600; }
@@ -416,6 +416,9 @@
 }
 .fv-col-mais{ position:sticky; bottom:0; background:linear-gradient(to top, var(--bg,#0d1117) 60%, transparent); text-align:center; font-size:10px; color:var(--accent); padding:8px 4px 4px; font-weight:700; letter-spacing:0.04em; cursor:pointer; margin:0 -10px -10px; }
 .fv-col-mais:hover{ color:var(--accent-2,#f0c896); }
+/* "Ver menos" — mesma estrutura visual, tom mais sutil (cinza claro) */
+.fv-col-menos{ position:sticky; bottom:0; background:linear-gradient(to top, var(--bg,#0d1117) 60%, transparent); text-align:center; font-size:10px; color:var(--txt-3,#6b7280); padding:8px 4px 4px; font-weight:700; letter-spacing:0.04em; cursor:pointer; margin:0 -10px -10px; }
+.fv-col-menos:hover{ color:var(--accent); background:linear-gradient(to top, rgba(200,240,90,.10) 60%, transparent); }
 
 /* LISTA */
 .fv-op.modo-lista .fv-kanban{ display:none; }
@@ -2157,13 +2160,17 @@
       const soma = leadsEt.reduce((s,l)=>s+ +(l.valor||0),0);
       /* Grid rigido: corta no _maxCards (5). Os demais so aparecem apos
          clicar em "Ver mais" — que marca a coluna como expandida e
-         renderiza TODOS os cards (acessiveis via scroll vertical). */
+         renderiza TODOS os cards (acessiveis via scroll vertical).
+         "Ver menos" volta ao estado original (so 5 visiveis). */
       const expandida = _colsExpandidas.has(i);
       const leadsVisiveis = expandida ? leadsEt : leadsEt.slice(0, _maxCards);
       const cards = leadsVisiveis.map(l => _cardHtml(l, et.cor)).join('');
-      const mais = (leadsEt.length > _maxCards && !expandida)
-        ? `<div class="fv-col-mais" data-et="${i}">↓ Ver mais ${leadsEt.length - _maxCards} lead${leadsEt.length - _maxCards>1?'s':''}</div>`
-        : '';
+      let mais = '';
+      if(leadsEt.length > _maxCards){
+        mais = expandida
+          ? `<div class="fv-col-menos" data-et="${i}">↑ Ver menos (mostrar so ${_maxCards})</div>`
+          : `<div class="fv-col-mais" data-et="${i}">↓ Ver mais ${leadsEt.length - _maxCards} lead${leadsEt.length - _maxCards>1?'s':''}</div>`;
+      }
       /* OPÇÃO 8: colunas vazias viram mini-colunas verticais (default). Click na mini
          expande; click no header de coluna cheia retrai. Estado em _colsToggleadas. */
       const invertida = _colsToggleadas.has(i);
@@ -2329,8 +2336,9 @@
   let _dragId = null;
   function _attachKanbanEvents(){
     /* Handler do botao "Ver mais X leads" — marca a coluna como
-       expandida. A coluna mantem altura fixa (4 cards) e ganha scroll
-       livre para acessar os demais. O botao "Ver mais" desaparece. */
+       expandida. A coluna mantem altura fixa (5 cards) e ganha scroll
+       livre para acessar os demais. O botao "Ver mais" desaparece e
+       da lugar a "Ver menos". */
     $$('.fv-col-mais').forEach(el => {
       el.addEventListener('click', e => {
         e.stopPropagation();
@@ -2342,6 +2350,20 @@
         setTimeout(()=>{
           const colEl = document.querySelector('.fv-col[data-et="'+et+'"]');
           if(colEl) colEl.scrollTop = (_maxCards - 1) * 92;
+        }, 50);
+      });
+    });
+    /* Handler do botao "Ver menos" — reverte para o estado padrao
+       (so 5 cards). Rola a coluna para o topo. */
+    $$('.fv-col-menos').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        const et = +el.dataset.et;
+        _colsExpandidas.delete(et);
+        _render();
+        setTimeout(()=>{
+          const colEl = document.querySelector('.fv-col[data-et="'+et+'"]');
+          if(colEl) colEl.scrollTop = 0;
         }, 50);
       });
     });
