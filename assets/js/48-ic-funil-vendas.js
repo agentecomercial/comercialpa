@@ -263,7 +263,7 @@
 .fv-col-soma b{ color:var(--accent); }
 .fv-col-add{ background:transparent; border:1px dashed rgba(255,255,255,0.14); color:var(--txt-3,#6b7280); padding:4px; border-radius:6px; font-size:10px; cursor:pointer; font-family:inherit; margin-top:2px; font-weight:600; transition:all 0.15s; }
 .fv-col-add:hover{ color:var(--accent); border-color:var(--accent); }
-.fv-card{ background:var(--bg-3,#1c2128); border:1px solid var(--border); border-left:3px solid var(--col-cor,var(--accent)); border-radius:8px; padding:8px 10px; cursor:grab; transition:all 0.15s; position:relative; font-size:11px; }
+.fv-card{ background:var(--bg-3,#1c2128); border:1px solid var(--border); border-left:3px solid var(--col-cor,var(--accent)); border-radius:8px; padding:8px 10px; cursor:grab; transition:all 0.15s; position:relative; font-size:11px; min-height:130px; }
 .fv-card:hover{ transform:translateY(-1px); border-color:rgba(255,255,255,0.14); box-shadow:0 4px 12px rgba(0,0,0,0.3); }
 .fv-card:active{ cursor:grabbing; }
 .fv-card.dragging{ opacity:0.5; }
@@ -372,7 +372,7 @@
    Esconde empresa, tags treinamento/origem, consultor, prazo,
    "Criado em" e footer R$ duplicado. Especificidade .fv-col pra
    vencer regras de [data-et]. */
-.fv-card.collapsed{ padding-bottom:8px; min-height:auto !important; }
+.fv-card.collapsed{ padding-bottom:8px; }
 .fv-col .fv-card.collapsed .fv-card-emp,
 .fv-col .fv-card.collapsed .fv-card-row,
 .fv-col .fv-card.collapsed .fv-card-foot,
@@ -390,6 +390,29 @@
 .fv-card:not(.collapsed) .fv-card-row,
 .fv-card:not(.collapsed) .fv-card-foot{ display:flex; }
 .fv-card:not(.collapsed) .fv-card-foot-valor{ display:block; }
+
+/* MICROBARRA de progresso (% de probabilidade) — bonus visual que
+   aproveita o espaco vazio do estado colapsado ▷. Escondida no
+   expandido ▽ pra nao duplicar com o badge .fv-card-prob. */
+.fv-card-progress{
+  display:none;
+  position:absolute; left:12px; right:12px; bottom:10px;
+  height:4px; border-radius:2px;
+  background:rgba(255,255,255,.05);
+  overflow:hidden;
+}
+.fv-card-progress .bar{
+  height:100%;
+  background:linear-gradient(90deg, var(--col-cor,var(--accent)), var(--accent));
+  border-radius:2px;
+  transition:width .3s;
+}
+.fv-card-progress .lbl{
+  position:absolute; right:0; bottom:6px;
+  font-size:8px; font-weight:700;
+  color:var(--txt-3); letter-spacing:.04em;
+}
+.fv-card.collapsed .fv-card-progress{ display:block; }
 
 /* ─── OPÇÃO 8 · Colunas vazias iconizadas com nome em vertical ─── */
 .fv-col.fv-col-vazia{
@@ -2161,6 +2184,10 @@
       </div>
       <div class="fv-card-act" title="${criadoTitle}">Criado: ${criadoTxt}</div>
       <div class="fv-card-foot-valor">💰 <b>${moedaCurta(l.valor)}</b></div>
+      <div class="fv-card-progress" title="Probabilidade: ${l.prob||0}%">
+        <div class="bar" style="width:${l.prob||0}%"></div>
+        <span class="lbl">${l.prob||0}%</span>
+      </div>
     </div>`;
   }
 
@@ -2170,19 +2197,11 @@
       const leadsEt = arr.filter(l => l.etapa === i);
       const vazia = leadsEt.length === 0;
       const soma = leadsEt.reduce((s,l)=>s+ +(l.valor||0),0);
-      /* Grid rigido: corta no _maxCards (5). Os demais so aparecem apos
-         clicar em "Ver mais" — que marca a coluna como expandida e
-         renderiza TODOS os cards (acessiveis via scroll vertical).
-         "Ver menos" volta ao estado original (so 5 visiveis). */
-      const expandida = _colsExpandidas.has(i);
-      const leadsVisiveis = expandida ? leadsEt : leadsEt.slice(0, _maxCards);
-      const cards = leadsVisiveis.map(l => _cardHtml(l, et.cor)).join('');
-      let mais = '';
-      if(leadsEt.length > _maxCards){
-        mais = expandida
-          ? `<div class="fv-col-menos" data-et="${i}">↑ Ver menos (mostrar so ${_maxCards})</div>`
-          : `<div class="fv-col-mais" data-et="${i}">↓ Ver mais ${leadsEt.length - _maxCards} lead${leadsEt.length - _maxCards>1?'s':''}</div>`;
-      }
+      /* Renderiza TODOS os leads da coluna. A coluna tem max-height fixa
+         + overflow-y:auto — quando excede, aparece scrollbar vertical
+         naturalmente. Sem botoes "Ver mais"/"Ver menos". */
+      const cards = leadsEt.map(l => _cardHtml(l, et.cor)).join('');
+      const mais = '';
       /* OPÇÃO 8: colunas vazias viram mini-colunas verticais (default). Click na mini
          expande; click no header de coluna cheia retrai. Estado em _colsToggleadas. */
       const invertida = _colsToggleadas.has(i);
@@ -2347,38 +2366,8 @@
   /* ── F2 · Drag & drop ── */
   let _dragId = null;
   function _attachKanbanEvents(){
-    /* Handler do botao "Ver mais X leads" — marca a coluna como
-       expandida. A coluna mantem altura fixa (5 cards) e ganha scroll
-       livre para acessar os demais. O botao "Ver mais" desaparece e
-       da lugar a "Ver menos". */
-    $$('.fv-col-mais').forEach(el => {
-      el.addEventListener('click', e => {
-        e.stopPropagation();
-        const et = +el.dataset.et;
-        _colsExpandidas.add(et);
-        _render();
-        /* Apos o re-render, rola um pouco pra dentro pra mostrar
-           que ha mais conteudo scrollavel logo abaixo. */
-        setTimeout(()=>{
-          const colEl = document.querySelector('.fv-col[data-et="'+et+'"]');
-          if(colEl) colEl.scrollTop = (_maxCards - 1) * 92;
-        }, 50);
-      });
-    });
-    /* Handler do botao "Ver menos" — reverte para o estado padrao
-       (so 5 cards). Rola a coluna para o topo. */
-    $$('.fv-col-menos').forEach(el => {
-      el.addEventListener('click', e => {
-        e.stopPropagation();
-        const et = +el.dataset.et;
-        _colsExpandidas.delete(et);
-        _render();
-        setTimeout(()=>{
-          const colEl = document.querySelector('.fv-col[data-et="'+et+'"]');
-          if(colEl) colEl.scrollTop = 0;
-        }, 50);
-      });
-    });
+    /* Removido: handlers "Ver mais"/"Ver menos". A coluna agora renderiza
+       todos os leads e usa scroll vertical natural via overflow-y:auto. */
     $$('.fv-card').forEach(c => {
       c.addEventListener('dragstart', e => { _dragId = c.dataset.id; c.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
       c.addEventListener('dragend', () => { c.classList.remove('dragging'); _dragId = null; });
