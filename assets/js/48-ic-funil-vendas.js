@@ -32,9 +32,10 @@
   /* Colunas em que o usuario clicou "Ver mais": passam a permitir
      scrollar livremente dentro da altura fixa (4 cards). */
   const _colsExpandidas = new Set();
-  /* Cards EXPANDIDOS (default = colapsado ▷). User clica na seta pra expandir.
-     Sessao-only, sem persistencia. */
-  const _cardsExpandidos = new Set();
+  /* Cards colapsados manualmente pelo user. Sessao-only, sem persistencia.
+     Default: TODOS os cards (em todas as etapas, inclusive Pos-Venda)
+     iniciam EXPANDIDOS. Click na seta ▽ adiciona ao Set (colapsa). */
+  const _cardsCollapsed = new Set();
   /* Colunas com toggle invertido (sessão-only). Se está no Set, o default vazia/cheia
      é invertido: vazia vira coluna expandida e cheia vira mini-vertical retraída. */
   const _colsToggleadas = new Set();
@@ -2123,9 +2124,9 @@
       else                       { criadoTxt = criadoFmt; }
       criadoTitle = `Criado em ${criadoFmt}`;
     }
-    /* Estado padrao = COLAPSADO (▷). User clica na seta pra expandir.
-       O Set guarda quem foi expandido manualmente nesta sessao. */
-    const colapsado = !_cardsExpandidos.has(l.id);
+    /* Default = EXPANDIDO em TODAS as etapas (Pos-Venda igual as outras).
+       User clica na seta ▽ pra colapsar; ID vai para o Set. */
+    const colapsado = _cardsCollapsed.has(l.id);
     const statusCls = (l.status && l.status !== 'ativo') ? ' st-'+l.status : '';
     return `<div class="fv-card ${cardCls} ${colapsado?'collapsed':''}${statusCls}" draggable="true" data-id="${l.id}" style="--col-cor:${etCor};overflow:hidden;">
       ${tempIcon?`<span class="fv-card-temp">${tempIcon}</span>`:''}
@@ -2367,14 +2368,14 @@
       _copiar(_msgLead(l), '📋 Mensagem copiada · cole no WhatsApp');
     }));
     /* Seta ▷/▽ (chevron) — alterna colapsado/expandido do card individual.
-       Default eh colapsado: presenca no Set = expandido. */
+       Default eh EXPANDIDO em todas as etapas: presenca no Set = colapsado. */
     $$('.fv-card-chev').forEach(ch => {
       ch.addEventListener('click', e => {
         e.stopPropagation();
         e.preventDefault();
         const id = ch.dataset.toggle;
-        if(_cardsExpandidos.has(id)) _cardsExpandidos.delete(id);
-        else _cardsExpandidos.add(id);
+        if(_cardsCollapsed.has(id)) _cardsCollapsed.delete(id);
+        else _cardsCollapsed.add(id);
         _render();
       });
     });
@@ -2405,8 +2406,8 @@
           e.stopPropagation();
           e.preventDefault();
           const id = chev.dataset.toggle;
-          if(_cardsExpandidos.has(id)) _cardsExpandidos.delete(id);
-          else _cardsExpandidos.add(id);
+          if(_cardsCollapsed.has(id)) _cardsCollapsed.delete(id);
+          else _cardsCollapsed.add(id);
           _render();
           return;
         }
