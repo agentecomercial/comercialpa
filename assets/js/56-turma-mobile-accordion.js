@@ -169,16 +169,15 @@
     card.dataset.tmaCard = '1';
 
     /* Extrai nome do consultor/treinador via onclick original.
-       Padrão: onclick="openConsultorDetail('NOME')" ou similar. */
+       Padrão: onclick="openConsultorDetail('NOME')" ou similar.
+       IMPORTANTE: NÃO remover o onclick — clique no corpo do card
+       ainda precisa abrir o modal de clientes (openConsultorDetail).
+       Só interceptamos o clique na seta (stopPropagation evita
+       que o evento chegue ao onclick do card). */
     var orig = card.getAttribute('onclick') || '';
     var match = orig.match(/['"]([^'"]+)['"]/);
     var nome = match ? match[1] : ('item-' + Math.random().toString(36).slice(2,7));
 
-    /* Guarda onclick original e remove (será restaurado se voltar pra desktop) */
-    if(orig){
-      card.dataset.tmaOrigOnclick = orig;
-      card.removeAttribute('onclick');
-    }
     card.dataset.tmaNome = nome;
 
     /* Marca o div do contador de clientes pra esconder via CSS quando colapsado.
@@ -200,22 +199,23 @@
       }
     });
 
-    /* Cria a seta */
+    /* Cria a seta — único elemento que alterna o accordion.
+       Clique no corpo do card continua disparando openConsultorDetail
+       (o onclick original do card permanece intacto). */
     var arrow = document.createElement('button');
     arrow.type = 'button';
     arrow.className = 'tma-card-arrow';
     arrow.innerHTML = '▸';
-    arrow.title = 'Expandir / recolher detalhes';
+    arrow.title = 'Expandir / recolher detalhes inline';
     arrow.setAttribute('aria-label', 'Expandir');
     arrow.addEventListener('click', function(e){
+      /* stopPropagation evita que o evento chegue ao onclick do card
+         (que abriria o modal de clientes). */
       e.stopPropagation();
       e.preventDefault();
       _toggleCard(card, tipo, nome);
     });
     card.appendChild(arrow);
-
-    /* Click em qualquer ponto do card (que não seja a seta) também alterna */
-    card.addEventListener('click', _onCardClick);
 
     /* Restaura estado salvo (default: colapsado) */
     var aberto = _loadStateCard(tipo, nome);
@@ -224,20 +224,6 @@
       arrow.classList.add('tma-arrow-rot');
       arrow.setAttribute('aria-label', 'Recolher');
     }
-  }
-
-  function _onCardClick(e){
-    if(e.target.closest('.tma-card-arrow')) return; /* seta tem handler próprio */
-    e.stopPropagation();
-    e.preventDefault();
-    var card = e.currentTarget;
-    _toggleCard(card, card.dataset.tmaTipo || _detectaTipo(card), card.dataset.tmaNome);
-  }
-
-  function _detectaTipo(card){
-    if(card.closest('#consultorCards')) return 'consultor';
-    if(card.closest('#treinadorCards')) return 'treinador';
-    return 'card';
   }
 
   function _toggleCard(card, tipo, nome){
@@ -263,13 +249,11 @@
     } catch(e){ return false; }
   }
 
-  /* Desfaz cards individuais (volta pra desktop) */
+  /* Desfaz cards individuais (volta pra desktop).
+     Como nunca removemos o onclick original, basta limpar o que
+     adicionamos: a seta, as classes e os data-attrs. */
   function _desfazerCardsIndividuais(){
     document.querySelectorAll('.person-card[data-tma-card="1"]').forEach(function(card){
-      if(card.dataset.tmaOrigOnclick){
-        card.setAttribute('onclick', card.dataset.tmaOrigOnclick);
-      }
-      card.removeEventListener('click', _onCardClick);
       var arrow = card.querySelector('.tma-card-arrow');
       if(arrow && arrow.parentNode) arrow.parentNode.removeChild(arrow);
       card.classList.remove('tma-card-expanded');
@@ -278,7 +262,6 @@
       });
       delete card.dataset.tmaCard;
       delete card.dataset.tmaNome;
-      delete card.dataset.tmaOrigOnclick;
     });
   }
 

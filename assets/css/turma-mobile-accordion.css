@@ -180,7 +180,9 @@
     display: none !important;
   }
 
-  /* Card colapsado: layout horizontal compacto (avatar + nome) */
+  /* Card colapsado: layout horizontal compacto (avatar + nome).
+     cursor:pointer indica que clicar no corpo abre o modal de clientes
+     (o onclick original do card foi preservado — só a seta alterna o accordion). */
   #consultorCards .person-card:not(.tma-card-expanded),
   #treinadorCards .person-card:not(.tma-card-expanded) {
     padding: 12px 56px 12px 14px !important;
