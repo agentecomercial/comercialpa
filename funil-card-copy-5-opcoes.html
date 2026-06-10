@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Botão Copiar · 5 opções</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg-2:#161b22; --bg-3:#1c2128;
+    --border:rgba(255,255,255,.08); --txt:#e6edf3; --txt-2:#9aa5b1; --txt-3:#6b7280;
+    --accent:#d4a574; --accent-2:#f0c896;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:var(--txt); margin:0; padding:32px 24px 64px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .sub{ font-size:12px; color:var(--txt-3); margin-bottom:28px; }
+  .row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px; max-width:1400px; margin:0 auto; }
+
+  .item{ display:flex; flex-direction:column; gap:8px; }
+  .item-h{ display:flex; align-items:baseline; gap:8px; }
+  .item-h .n{ font-size:10px; color:var(--accent); font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .item-h .nome{ font-size:13px; font-weight:700; }
+  .item-d{ font-size:11px; color:var(--txt-3); line-height:1.4; margin-bottom:4px; }
+
+  /* ─── Card padrão (igual ao do dashboard) ─── */
+  .card{
+    background:var(--bg-2,#161b22);
+    border:1px solid var(--border);
+    border-left:4px solid #ff8fa8;
+    border-radius:10px; padding:14px 14px 12px;
+    font-size:11px; position:relative; cursor:default;
+    transition:border-color .15s, transform .1s;
+  }
+  .card-nome{ font-size:13px; font-weight:700; color:var(--txt); }
+  .card-val{ font-size:11px; color:var(--accent); font-weight:700; margin-top:2px; display:flex; align-items:center; gap:6px; }
+  .card-val .prob{ font-size:9px; color:#34d399; background:rgba(52,211,153,.12); padding:1px 6px; border-radius:4px; }
+  .card-row{ margin-top:7px; display:flex; gap:5px; flex-wrap:wrap; }
+  .tag{ font-size:9px; padding:2px 7px; border-radius:4px; background:rgba(255,255,255,.05); color:var(--txt-2); border:1px solid rgba(255,255,255,.05); }
+  .tag.or{ background:rgba(59,130,246,.10); color:#3b82f6; border-color:rgba(59,130,246,.20); }
+  .card-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:9px; padding-top:8px; border-top:1px dashed rgba(255,255,255,.05); font-size:10px; color:var(--txt-2); }
+  .av{ display:inline-flex; width:18px; height:18px; border-radius:50%; background:rgba(255,143,168,.18); color:#ff8fa8; align-items:center; justify-content:center; font-size:9px; font-weight:700; margin-right:4px; border:1px solid rgba(255,143,168,.32); }
+  .crd{ font-size:9px; color:var(--txt-3); margin-top:2px; }
+
+  /* Ícones de canto compartilhados */
+  .edit{
+    position:absolute; top:5px; right:7px;
+    width:18px; height:18px; padding:0; line-height:1; cursor:pointer;
+    background:transparent; color:var(--txt-3); border:1px solid rgba(255,255,255,.08);
+    border-radius:4px; font-size:10px; font-family:inherit;
+    transition:all .15s;
+  }
+  .edit:hover{ color:var(--accent); border-color:var(--accent); background:rgba(212,165,116,.06); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO A · Atual com hover dourado (refinamento mínimo)
+     ═══════════════════════════════════════════════════════════════ */
+  .opA .copy{
+    position:absolute; top:5px; right:30px;
+    width:18px; height:18px; padding:0; line-height:1; cursor:pointer;
+    background:transparent; color:var(--txt-3); border:1px solid rgba(255,255,255,.08);
+    border-radius:4px; font-size:9px; font-family:inherit;
+    transition:all .15s;
+  }
+  .opA .copy:hover{
+    color:var(--accent); border-color:var(--accent);
+    background:rgba(212,165,116,.08);
+    box-shadow:0 0 8px -2px rgba(212,165,116,.4);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO B · Círculo dourado com glow (premium)
+     ═══════════════════════════════════════════════════════════════ */
+  .opB .copy{
+    position:absolute; top:5px; right:30px;
+    width:22px; height:22px; padding:0; line-height:1; cursor:pointer;
+    background:linear-gradient(135deg, rgba(212,165,116,.20), rgba(212,165,116,.05));
+    color:var(--accent); border:1px solid rgba(212,165,116,.35);
+    border-radius:50%; font-size:10px; font-family:inherit;
+    box-shadow:0 0 10px -3px rgba(212,165,116,.25), 0 1px 2px rgba(0,0,0,.3);
+    transition:all .15s;
+  }
+  .opB .copy:hover{
+    background:linear-gradient(135deg, rgba(212,165,116,.40), rgba(212,165,116,.15));
+    box-shadow:0 0 14px 0 rgba(212,165,116,.5), 0 2px 4px rgba(0,0,0,.4);
+    transform:scale(1.08);
+  }
+  /* edita ajustada pra acomodar copy maior */
+  .opB .edit{ top:6px; right:7px; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO C · Pílula com texto "Copiar" (sempre visível)
+     ═══════════════════════════════════════════════════════════════ */
+  .opC .copy{
+    position:absolute; top:5px; right:30px; line-height:1; cursor:pointer;
+    background:rgba(212,165,116,.10); color:var(--accent);
+    border:1px solid rgba(212,165,116,.30);
+    border-radius:10px; font-size:9px; font-weight:700;
+    padding:3px 8px 3px 7px; font-family:inherit;
+    letter-spacing:.04em;
+    display:inline-flex; align-items:center; gap:3px;
+    transition:all .15s;
+  }
+  .opC .copy:hover{
+    background:rgba(212,165,116,.20);
+    border-color:var(--accent);
+    color:#fff;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO D · Outlined que expande no hover (mostra label)
+     ═══════════════════════════════════════════════════════════════ */
+  .opD .copy{
+    position:absolute; top:5px; right:30px;
+    height:18px; padding:0 4px; line-height:1; cursor:pointer;
+    background:transparent; color:var(--accent);
+    border:1px solid rgba(212,165,116,.35);
+    border-radius:4px; font-size:9px; font-family:inherit;
+    display:inline-flex; align-items:center; gap:0;
+    overflow:hidden;
+    transition:all .25s ease;
+  }
+  .opD .copy .lbl{
+    max-width:0; opacity:0;
+    transition:max-width .25s ease, opacity .15s ease, margin-left .25s ease;
+    font-weight:700; white-space:nowrap; letter-spacing:.04em;
+    margin-left:0;
+  }
+  .opD .copy:hover{
+    background:rgba(212,165,116,.12);
+    border-color:var(--accent);
+    padding:0 8px;
+  }
+  .opD .copy:hover .lbl{
+    max-width:50px; opacity:1; margin-left:4px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO E · CTA grande no rodapé do card (linha inteira)
+     ═══════════════════════════════════════════════════════════════ */
+  .opE .copy{
+    width:100%; margin-top:8px;
+    padding:6px 10px; line-height:1; cursor:pointer;
+    background:linear-gradient(180deg, rgba(212,165,116,.10), rgba(212,165,116,.04));
+    color:var(--accent);
+    border:1px dashed rgba(212,165,116,.35);
+    border-radius:6px;
+    font-size:10px; font-weight:700; font-family:inherit;
+    letter-spacing:.05em; text-transform:uppercase;
+    display:flex; align-items:center; justify-content:center; gap:5px;
+    transition:all .15s;
+  }
+  .opE .copy:hover{
+    background:linear-gradient(180deg, rgba(212,165,116,.20), rgba(212,165,116,.08));
+    border-style:solid; border-color:var(--accent);
+    color:#fff;
+  }
+</style>
+</head>
+<body>
+
+<h1>Botão Copiar mensagem · 5 opções</h1>
+<div class="sub">Mesmo card do funil, 5 estilos diferentes pro botão 📋. Passe o mouse pra ver o hover.</div>
+
+<div class="row">
+
+  <!-- OPÇÃO A -->
+  <div class="item">
+    <div class="item-h"><span class="n">A</span><span class="nome">Atual + glow dourado</span></div>
+    <div class="item-d">Mesmo botão de hoje, ganha brilho dourado sutil no hover. Mais discreto.</div>
+    <div class="card opA">
+      <button class="edit" title="Editar">✎</button>
+      <button class="copy" title="Copiar mensagem">📋</button>
+      <div class="card-nome">LEIDIANA</div>
+      <div class="card-val">R$ 3,6k <span class="prob">10%</span></div>
+      <div class="card-row"><span class="tag">IF</span><span class="tag or">Lead</span></div>
+      <div class="card-foot">
+        <span><span class="av">DM</span>DANIEL</span>
+        <span style="color:#34d399;">📅 Hoje</span>
+      </div>
+      <div class="crd">Criado: Ontem (01/06)</div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO B -->
+  <div class="item">
+    <div class="item-h"><span class="n">B</span><span class="nome">Círculo dourado premium</span></div>
+    <div class="item-d">Botão redondo dourado com glow + leve crescimento no hover. Destaque elegante.</div>
+    <div class="card opB">
+      <button class="edit" title="Editar">✎</button>
+      <button class="copy" title="Copiar mensagem">📋</button>
+      <div class="card-nome">LEIDIANA</div>
+      <div class="card-val">R$ 3,6k <span class="prob">10%</span></div>
+      <div class="card-row"><span class="tag">IF</span><span class="tag or">Lead</span></div>
+      <div class="card-foot">
+        <span><span class="av">DM</span>DANIEL</span>
+        <span style="color:#34d399;">📅 Hoje</span>
+      </div>
+      <div class="crd">Criado: Ontem (01/06)</div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO C -->
+  <div class="item">
+    <div class="item-h"><span class="n">C</span><span class="nome">Pílula com label "Copy"</span></div>
+    <div class="item-d">Sempre visível com texto + ícone. Mais óbvio que é botão, mas ocupa espaço.</div>
+    <div class="card opC">
+      <button class="edit" title="Editar">✎</button>
+      <button class="copy" title="Copiar mensagem">📋 COPY</button>
+      <div class="card-nome">LEIDIANA</div>
+      <div class="card-val">R$ 3,6k <span class="prob">10%</span></div>
+      <div class="card-row"><span class="tag">IF</span><span class="tag or">Lead</span></div>
+      <div class="card-foot">
+        <span><span class="av">DM</span>DANIEL</span>
+        <span style="color:#34d399;">📅 Hoje</span>
+      </div>
+      <div class="crd">Criado: Ontem (01/06)</div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO D -->
+  <div class="item">
+    <div class="item-h"><span class="n">D</span><span class="nome">Expande no hover (label sai)</span></div>
+    <div class="item-d">Compacto por padrão. No hover cresce e revela "Copy" suavemente. Smart.</div>
+    <div class="card opD">
+      <button class="edit" title="Editar">✎</button>
+      <button class="copy" title="Copiar mensagem">📋<span class="lbl">Copy</span></button>
+      <div class="card-nome">LEIDIANA</div>
+      <div class="card-val">R$ 3,6k <span class="prob">10%</span></div>
+      <div class="card-row"><span class="tag">IF</span><span class="tag or">Lead</span></div>
+      <div class="card-foot">
+        <span><span class="av">DM</span>DANIEL</span>
+        <span style="color:#34d399;">📅 Hoje</span>
+      </div>
+      <div class="crd">Criado: Ontem (01/06)</div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO E -->
+  <div class="item">
+    <div class="item-h"><span class="n">E</span><span class="nome">CTA no rodapé (linha inteira)</span></div>
+    <div class="item-d">Botão grande no fim do card, ação principal visualmente. Pra quem copia muito.</div>
+    <div class="card opE">
+      <button class="edit" title="Editar">✎</button>
+      <div class="card-nome">LEIDIANA</div>
+      <div class="card-val">R$ 3,6k <span class="prob">10%</span></div>
+      <div class="card-row"><span class="tag">IF</span><span class="tag or">Lead</span></div>
+      <div class="card-foot">
+        <span><span class="av">DM</span>DANIEL</span>
+        <span style="color:#34d399;">📅 Hoje</span>
+      </div>
+      <div class="crd">Criado: Ontem (01/06)</div>
+      <button class="copy" title="Copiar mensagem">📋 Copiar mensagem WhatsApp</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

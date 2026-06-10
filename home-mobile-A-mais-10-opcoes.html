@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home mobile — A + 10 alternativas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Italiana&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 30px 24px;
+    background:
+      radial-gradient(ellipse at 20% 0%, #0e1a2a 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, #1a0e2a 0%, transparent 50%),
+      #0a0e13;
+    color: #e6edf3;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: 'Italiana', serif;
+    font-size: 32px;
+    margin: 0 0 4px;
+    color: #f0c896;
+    letter-spacing: .01em;
+  }
+  .sub { font-size: 12px; color: #6b7280; margin-bottom: 36px; letter-spacing: .03em; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 28px;
+  }
+  .opt {
+    background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.20);
+  }
+  .opt-h {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 8px; padding-bottom: 8px;
+    border-bottom: 1px dashed rgba(255,255,255,.10);
+  }
+  .opt-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px; font-weight: 700;
+    color: #d4a574;
+    background: rgba(212,165,116,.08);
+    border: 1px solid rgba(212,165,116,.30);
+    padding: 2px 9px;
+    border-radius: 100px;
+    min-width: 36px; text-align: center;
+  }
+  .opt-num.featured {
+    background: #c8f05a;
+    color: #0a0e1a;
+    border-color: #c8f05a;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 800;
+  }
+  .opt-ttl {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px; font-weight: 500;
+    color: #f0c896;
+  }
+  .opt-desc { font-size: 10.5px; color: #9aa5b1; line-height: 1.5; margin-top: 2px; }
+
+  /* === Phone frame === */
+  .phone {
+    background: #0a0e13;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 9 / 16;
+    max-width: 270px;
+    margin: 0 auto;
+  }
+  .phone-screen { padding: 12px; height: 100%; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+
+  /* === Topbar mobile compacta (comum a todas as opções) === */
+  .tb {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 4px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    margin-bottom: 4px;
+  }
+  .tb-brand {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 700; color: #c8f05a;
+    flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tb-brand::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%;
+    background: #c8f05a; flex-shrink: 0;
+  }
+  .tb-actions { display: flex; gap: 3px; }
+  .tb-ic {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; position: relative;
+  }
+  .tb-ic .dot { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; border: 1px solid #0a0e13; }
+
+  .welcome-ttl {
+    font-size: 13px; font-weight: 700; color: #e6edf3;
+    margin: 4px 2px 2px;
+  }
+  .welcome-sub {
+    font-size: 9px; color: #6b7280;
+    margin: 0 2px 6px;
+  }
+
+  /* === Card data common === */
+  /* Áreas:
+       TURMAS  → azul  #3b82f6
+       IC      → ocre  #d4a574
+       PIPELINE → roxo #a855f7
+  */
+  .area-turmas { --c: #3b82f6; --cbg: rgba(59,130,246,.10); --cbg2: rgba(59,130,246,.20); }
+  .area-ic     { --c: #d4a574; --cbg: rgba(212,165,116,.10); --cbg2: rgba(212,165,116,.20); }
+  .area-pip    { --c: #a855f7; --cbg: rgba(168,85,247,.10); --cbg2: rgba(168,85,247,.20); }
+
+  /* ============ A — Tiles compactos 2×N (RECOMENDADA) ============ */
+  .a-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .a-tile {
+    background: linear-gradient(160deg, var(--cbg), transparent 80%), rgba(255,255,255,.02);
+    border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+    border-radius: 12px;
+    padding: 10px 9px;
+    aspect-ratio: 1 / 1.05;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  }
+  .a-tile .ic-box {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--cbg2);
+    border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .a-tile .badge {
+    position: absolute; top: 7px; right: 7px;
+    font-size: 7px; font-weight: 800;
+    color: var(--c); letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .a-tile .ttl {
+    font-size: 11px; font-weight: 800; color: #e6edf3;
+    line-height: 1.2;
+  }
+  .a-tile .ctt {
+    font-size: 8px; color: var(--c); font-weight: 700;
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+
+  /* ============ 01 — Lista horizontal full-width baixa ============ */
+  .o01-list { display: flex; flex-direction: column; gap: 7px; }
+  .o01-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 11px;
+    background: linear-gradient(90deg, var(--cbg), transparent 70%), rgba(255,255,255,.02);
+    border: 1px solid color-mix(in srgb, var(--c) 22%, transparent);
+    border-radius: 10px;
+    border-left: 3px solid var(--c);
+  }
+  .o01-row .ic {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--cbg2);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .o01-row .info { flex: 1; min-width: 0; }
+  .o01-row .ttl { font-size: 11px; font-weight: 700; color: #e6edf3; }
+  .o01-row .sub { font-size: 8px; color: var(--c); letter-spacing: .08em; text-transform: uppercase; font-weight: 700; }
+  .o01-row .arr { color: var(--c); font-size: 14px; opacity: .7; }
+
+  /* ============ 02 — Micro-tiles 3×N (ultra-compacto) ============ */
+  .o02-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .o02-tile {
+    background: var(--cbg);
+    border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+    border-radius: 10px;
+    padding: 7px 4px;
+    aspect-ratio: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px;
+  }
+  .o02-tile .ic { font-size: 16px; }
+  .o02-tile .ttl { font-size: 8.5px; font-weight: 700; color: #e6edf3; text-align: center; line-height: 1.1; }
+
+  /* ============ 03 — Cards com hero gradiente ============ */
+  .o03-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .o03-card {
+    border: 1px solid color-mix(in srgb, var(--c) 25%, transparent);
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255,255,255,.02);
+  }
+  .o03-card .hero {
+    height: 38px;
+    background:
+      radial-gradient(ellipse at 30% 30%, color-mix(in srgb, var(--c) 60%, transparent), transparent 70%),
+      var(--cbg);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 9px;
+  }
+  .o03-card .ic { font-size: 16px; }
+  .o03-card .badge { font-size: 7px; font-weight: 800; color: var(--c); letter-spacing: .10em; }
+  .o03-card .body { padding: 7px 9px 9px; }
+  .o03-card .ttl { font-size: 11px; font-weight: 800; color: #e6edf3; line-height: 1.2; }
+
+  /* ============ 04 — Dock cards (iOS dock style) ============ */
+  .o04-dock {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 18px;
+    padding: 8px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 6px 20px rgba(0,0,0,.4);
+  }
+  .o04-app {
+    background: linear-gradient(135deg, var(--c) 0%, color-mix(in srgb, var(--c) 60%, #000) 100%);
+    border-radius: 12px;
+    aspect-ratio: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--c) 35%, transparent);
+  }
+  .o04-app .ic { font-size: 20px; }
+  .o04-app .ttl { font-size: 8px; font-weight: 800; color: #fff; text-align: center; padding: 0 2px; line-height: 1.1; }
+
+  /* ============ 05 — Lista Settings iOS ============ */
+  .o05-section { background: rgba(255,255,255,.03); border-radius: 12px; overflow: hidden; }
+  .o05-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .o05-row:last-child { border-bottom: none; }
+  .o05-row .ic {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: var(--c);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #fff;
+    flex-shrink: 0;
+  }
+  .o05-row .ttl { flex: 1; font-size: 11px; font-weight: 600; color: #e6edf3; }
+  .o05-row .arr { color: #6b7280; font-size: 12px; }
+
+  /* ============ 06 — Cards com pattern de categoria ============ */
+  .o06-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .o06-card {
+    background:
+      repeating-linear-gradient(45deg, transparent 0 8px, color-mix(in srgb, var(--c) 8%, transparent) 8px 9px),
+      linear-gradient(160deg, var(--cbg), transparent 80%);
+    border: 1px solid color-mix(in srgb, var(--c) 28%, transparent);
+    border-radius: 12px;
+    padding: 10px 9px;
+    aspect-ratio: 1 / 1.05;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .o06-card .ic-box {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--c);
+    color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--c) 50%, transparent);
+  }
+  .o06-card .ttl { font-size: 11px; font-weight: 800; color: #e6edf3; line-height: 1.2; }
+
+  /* ============ 07 — Mini-banners horizontais ============ */
+  .o07-list { display: flex; flex-direction: column; gap: 6px; }
+  .o07-row {
+    position: relative;
+    padding: 11px 12px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--c) 25%, transparent), transparent 80%);
+    border: 1px solid color-mix(in srgb, var(--c) 25%, transparent);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .o07-row .ic-wm {
+    position: absolute; right: -4px; top: 50%; transform: translateY(-50%);
+    font-size: 38px; opacity: .12; color: var(--c);
+  }
+  .o07-row .ttl { font-size: 11px; font-weight: 800; color: #e6edf3; }
+  .o07-row .sub { font-size: 8px; color: var(--c); letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+
+  /* ============ 08 — Carousel horizontal swipe ============ */
+  .o08-wrap { overflow: hidden; }
+  .o08-strip {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .o08-strip::-webkit-scrollbar { display: none; }
+  .o08-card {
+    flex: 0 0 78px;
+    background: linear-gradient(160deg, var(--cbg2), transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+    border-radius: 12px;
+    padding: 9px 8px;
+    height: 100px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .o08-card .ic { font-size: 18px; }
+  .o08-card .ttl { font-size: 9px; font-weight: 800; color: #e6edf3; line-height: 1.1; }
+  .o08-card .badge { font-size: 7px; color: var(--c); font-weight: 800; letter-spacing: .08em; }
+  .o08-hint { font-size: 8px; color: #6b7280; text-align: center; margin-top: 4px; }
+
+  /* ============ 09 — Magazine assimétrico ============ */
+  .o09-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; }
+  .o09-big {
+    grid-row: span 2;
+    background: linear-gradient(180deg, var(--cbg2), transparent), rgba(255,255,255,.02);
+    border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+    border-radius: 14px;
+    padding: 12px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .o09-big .ic { font-size: 22px; }
+  .o09-big .ttl { font-size: 13px; font-weight: 800; color: #e6edf3; }
+  .o09-big .badge { font-size: 8px; color: var(--c); letter-spacing: .12em; font-weight: 800; }
+  .o09-small {
+    background: rgba(255,255,255,.03);
+    border: 1px solid color-mix(in srgb, var(--c) 25%, transparent);
+    border-left: 3px solid var(--c);
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .o09-small .ic { font-size: 14px; color: var(--c); }
+  .o09-small .ttl { font-size: 10px; font-weight: 700; color: #e6edf3; margin-top: 2px; }
+
+  /* ============ 10 — Glassmorphism premium ============ */
+  .o10-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .o10-card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+    border-radius: 14px;
+    padding: 11px 10px;
+    aspect-ratio: 1 / 1.05;
+    backdrop-filter: blur(14px);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.10),
+      0 0 0 0 color-mix(in srgb, var(--c) 50%, transparent),
+      0 6px 20px rgba(0,0,0,.4);
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden;
+  }
+  .o10-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 80% 0%, color-mix(in srgb, var(--c) 40%, transparent), transparent 60%);
+    pointer-events: none;
+  }
+  .o10-card .ic-box {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: var(--c);
+    color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    box-shadow: 0 0 16px color-mix(in srgb, var(--c) 60%, transparent);
+    position: relative; z-index: 1;
+  }
+  .o10-card .badge {
+    font-size: 7px; font-weight: 800; letter-spacing: .14em;
+    color: var(--c); position: relative; z-index: 1;
+  }
+  .o10-card .ttl { font-size: 11px; font-weight: 800; color: #fff; position: relative; z-index: 1; line-height: 1.2; }
+</style>
+</head>
+<body>
+
+<h1>Home mobile — A (recomendada) + 10 alternativas</h1>
+<p class="sub">Cada preview simula o viewport mobile com topbar compacto + 3 áreas (Turmas / IC / Pipeline)</p>
+
+<div class="grid">
+
+  <!-- === A — Recomendada === -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">A · Tiles compactos 2×N</div>
+        <div class="opt-desc"><b style="color:#c8f05a;">Recomendada.</b> 2 colunas, cards quadrados, badge no canto. Premium e funcional.</div>
+      </div>
+      <span class="opt-num featured">A</span>
+    </div>
+    <div class="phone"><div class="phone-screen">
+      <div class="tb">
+        <div class="tb-brand">Febracis · ADM</div>
+        <div class="tb-actions">
+          <span class="tb-ic">👥</span>
+          <span class="tb-ic">🎨</span>
+          <span class="tb-ic">🔔<span class="dot"></span></span>
+          <span class="tb-ic">⏻</span>
+        </div>
+      </div>
+      <div class="welcome-ttl">Bem-vindo ao sistema</div>
+      <div class="welcome-sub">Selecione uma área pra continuar</div>
+      <div class="a-grid">
+        <div class="a-tile area-turmas">
+          <span class="badge">Turmas</span>
+          <span class="ic-box">🎓</span>
+          <div>
+            <div class="ttl">Gerenciar<br>Turmas</div>
+            <div class="ctt">Acessar →</div>
+          </div>
+        </div>
+        <div class="a-tile area-ic">
+          <span class="badge">Estratégico</span>
+          <span class="ic-box">📊</span>
+          <div>
+            <div class="ttl">Inteligência<br>Comercial</div>
+            <div class="ctt">Abrir →</div>
+          </div>
+        </div>
+        <div class="a-tile area-pip" style="grid-column:span 2;aspect-ratio:auto;flex-direction:row;align-items:center;gap:10px;">
+          <span class="ic-box">💲</span>
+          <div style="flex:1;">
+            <div class="ttl">Pipeline Comercial</div>
+            <div class="ctt">Acessar →</div>
+          </div>
+          <span class="badge" style="position:static;">Pipeline</span>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- === 01 === -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">Lista horizontal full-width</div><div class="opt-desc">1 linha por área, ~58px de altura. Ícone à esquerda, texto + chevron à direita. Familiar tipo iOS.</div></div><span class="opt-num">01</span></div>
+    <div class="phone"><div class="phone-screen">
+      <div class="tb"><div class="tb-brand">Febracis · ADM</div><div class="tb-actions"><span class="tb-ic">👥</span><span class="tb-ic">🎨</span><span class="tb-ic">🔔<span class="dot"></span></span><span class="tb-ic">⏻</span></div></div>
+      <div class="welcome-ttl">Bem-vindo ao sistema</div>
+      <div class="welcome-sub">Selecione uma área</div>
+      <div class="o01-list">
+        <div class="o01-row area-turmas"><span class="ic">🎓</span><div class="info"><div class="sub">Turmas</div><div class="ttl">Gerenciar Turmas</div></div><span class="arr">›</span></div>
+        <div class="o01-row area-ic"><span class="ic">📊</span><div class="info"><div class="sub">Estratégico</div><div class="ttl">Inteligência Comercial</div></div><span class="arr">›</span></div>
+        <div class="o01-row area-pip"><span class="ic">💲</span><div class="info"><div class="sub">Pipeline</div><div class="ttl">Pipeline Comercial</div></div><span class="arr">›</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- === 02 === -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">Micro-tiles 3×N ultra-compacto</div><div class="opt-desc">Tudo em 1 viewport sem rolagem. Só ícone grande + título curto. Eficiente.</div></div><span class="opt-num">02</span></div>
+    <div class="phone"><div class="phone-screen">
+      <div class="tb"><div class="tb-brand">Febracis · ADM</div><div class="tb-actions"><span class="tb-ic">👥</span><span class="tb-ic">🎨</span><span class="tb-ic">🔔<span class="dot"></span></span><span class="tb-ic">⏻</span></div></div>
+      <div class="welcome-ttl">Bem-vindo</div>
+      <div class="welcome-sub">Selecione uma área</div>
+      <div class="o02-grid">
+        <div class="o02-tile area-turmas"><span class="ic">🎓</span><span class="ttl">Turmas</span></div>
+        <div class="o02-tile area-ic"><span class="ic">📊</span><span class="ttl">IC</span></div>
+        <div class="o02-tile area-pip"><span class="ic">💲</span><span class="ttl">Pipeline</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- === 03 === -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">Cards com hero gradiente</div><div class="opt-desc">Mini-cards 2×N. Hero gradiente colorido no topo de cada card + título embaixo.</div></div><span class="opt-num">03</span></div>
+    <div class="phone"><div class="phone-screen">
+      <div class="tb"><div class="tb-brand">Febracis · ADM</div><div class="tb-actions"><span class="tb-ic">👥</span><span class="tb-ic">🎨</span><span class="tb-ic">🔔<span class="dot"></span></span><span class="tb-ic">⏻</span></div></div>
+      <div class="welcome-ttl">Bem-vindo ao sistema</div>
+      <div class="welcome-sub">Selecione uma área</div>
+      <div class="o03-grid">
+        <div class="o03-card area-turmas"><div class="hero"><span class="ic">🎓</span><span class="badge">Turmas</span></div><div class="body"><div class="ttl">Gerenciar<br>Turmas</div></div></div>
+        <div class="o03-card area-ic"><div class="hero"><span class="ic">📊</span><span class="badge">Estrat.</span></div><div class="body"><div class="ttl">Inteligência<br>Comercial</div></div></div>
+        <div class="o03-card area-pip" style="grid-column:span 2;"><div class="hero"><span class="ic">💲</span><span class="badge">Pipeline</span></div><div class="body"><div class="ttl">Pipeline Comercial</div></div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- === 04 === -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">Dock iOS (apps grandes)</div><div class="opt-desc">Caixa flutuante "dock" com 3 apps quadrados coloridos. Cada um é uma cor sólida.</div></div><span class="opt-num">04</span></div>
+    <div class="phone"><div class="phone-screen">
+      <div class="tb"><div class="tb-brand">Febracis · ADM</div><div class="tb-actions"><span class="tb-ic">👥</span><span class="tb-ic">🎨</span><span class="tb-ic">🔔<span class="dot"></span></span><span class="tb-ic">⏻</span></div></div>
+      <div class="welcome-ttl">Bem-vindo ao sistema</div>
+      <div class="welcome-sub">Selecione uma área</div>
+      <div class="o04-dock">
+        <div class="o04-app area-turmas"><span class="ic">🎓</span><span class="ttl">Turmas</span></div>
+        <div class="o04-app area-ic"><span class="ic">📊</span><span class="ttl">IC</span></div>
+        <div class="o04-app area-pip"><span class="ic">💲</span><span class="ttl">Pipeline</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- === 05 === -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">Settings iOS (lista pura)</div><div class="opt-desc">Estilo Configurações do iOS — ícones quadrados coloridos + nome + chevron. Densidade alta.</div></div><span class="opt-num">05</span></div>
+    <div class="phone"><div class="phone-screen">
+      <div class="tb"><div class="tb-brand">Febracis · ADM</div><div class="tb-actions"><span class="tb-ic">👥</span><span class="tb-ic">🎨</span><span class="tb-ic">🔔<span class="dot"></span></span><span class="tb-ic">⏻</span></div></div>
+      <div class="welcome-ttl">Bem-vindo</div>
+      <div class="welcome-sub">Áreas disponíveis</div>
+      <div class="o05-section">
+        <div class="o05-row area-turmas"><span class="ic">🎓</span><span class="ttl">Gerenciar Turmas</span><span class="arr">›</span></div>
+        <div class="o05-row area-ic"><span class="ic">📊</span><span class="ttl">Inteligência Comercial</span><span class="arr">›</span></div>
+        <div class="o05-row area-pip"><span class="ic">💲</span><span class="ttl">Pipeline Comercial</span><span class="arr">›</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- === 06 === -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">Pattern diagonais</div><div class="opt-desc">Cards 2×N com textura de linhas diagonais sutis na cor da categoria. Premium tátil.</div></div><span class="opt-num">06</span></div>
+    <div class="phone"><div class="phone-screen">
+      <div class="tb"><div class="tb-brand">Febracis · ADM</div><div class="tb-actions"><span class="tb-ic">👥</span><span class="tb-ic">🎨</span><span class="tb-ic">🔔<span class="dot"></span></span><span class="tb-ic">⏻</span></div></div>
+      <div class="welcome-ttl">Bem-vindo ao sistema</div>
+      <div class="welcome-sub">Selecione uma área</div>
+      <div class="o06-grid">
+        <div class="o06-card area-turmas"><span class="ic-box">🎓</span><div class="ttl">Gerenciar<br>Turmas</div></div>
+        <div class="o06-card area-ic"><span class="ic-box">📊</span><div class="ttl">Inteligência<br>Comercial</div></div>
+        <div class="o06-card area-pip" style="grid-column:span 2;aspect-ratio:auto;height:74px;flex-direction:row;align-items:center;gap:10px;">
+          <span class="ic-box">💲</span>
+          <div class="ttl" style="flex:1;">Pipeline Comercial</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- === 07 === -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">Mini-banners horizontais</div><div class="opt-desc">3 banners finos (45px) com ícone gigante watermark à direita + título à esquerda.</div></div><span class="opt-num">07</span></div>
+    <div class="phone"><div class="phone-screen">
+      <div class="tb"><div class="tb-brand">Febracis · ADM</div><div class="tb-actions"><span class="tb-ic">👥</span><span class="tb-ic">🎨</span><span class="tb-ic">🔔<span class="dot"></span></span><span class="tb-ic">⏻</span></div></div>
+      <div class="welcome-ttl">Bem-vindo ao sistema</div>
+      <div class="welcome-sub">Selecione uma área</div>
+      <div class="o07-list">
+        <div class="o07-row area-turmas"><div class="sub">Turmas</div><div class="ttl">Gerenciar Turmas</div><span class="ic-wm">🎓</span></div>
+        <div class="o07-row area-ic"><div class="sub">Estratégico</div><div class="ttl">Inteligência Comercial</div><span class="ic-wm">📊</span></div>
+        <div class="o07-row area-pip"><div class="sub">Pipeline</div><div class="ttl">Pipeline Comercial</div><span class="ic-wm">💲</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- === 08 === -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">Carousel horizontal swipe</div><div class="opt-desc">Cards lado a lado em strip horizontal. User desliza pra ver. Estilo Netflix.</div></div><span class="opt-num">08</span></div>
+    <div class="phone"><div class="phone-screen">
+      <div class="tb"><div class="tb-brand">Febracis · ADM</div><div class="tb-actions"><span class="tb-ic">👥</span><span class="tb-ic">🎨</span><span class="tb-ic">🔔<span class="dot"></span></span><span class="tb-ic">⏻</span></div></div>
+      <div class="welcome-ttl">Bem-vindo ao sistema</div>
+      <div class="welcome-sub">Deslize pra ver áreas</div>
+      <div class="o08-wrap">
+        <div class="o08-strip">
+          <div class="o08-card area-turmas"><span class="ic">🎓</span><div><div class="badge">Turmas</div><div class="ttl">Gerenciar</div></div></div>
+          <div class="o08-card area-ic"><span class="ic">📊</span><div><div class="badge">Estrat.</div><div class="ttl">Inteligência</div></div></div>
+          <div class="o08-card area-pip"><span class="ic">💲</span><div><div class="badge">Pipeline</div><div class="ttl">Comercial</div></div></div>
+          <div class="o08-card" style="--c:#22c55e;--cbg2:rgba(34,197,94,.20);"><span class="ic">🎯</span><div><div class="badge" style="color:#22c55e;">Soon</div><div class="ttl">Em breve</div></div></div>
+        </div>
+      </div>
+      <div class="o08-hint">‹ deslize pra ver mais ›</div>
+    </div></div>
+  </div>
+
+  <!-- === 09 === -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">Magazine assimétrico</div><div class="opt-desc">Um card grande "hero" + dois pequenos. Cria hierarquia visual. Estilo App Store.</div></div><span class="opt-num">09</span></div>
+    <div class="phone"><div class="phone-screen">
+      <div class="tb"><div class="tb-brand">Febracis · ADM</div><div class="tb-actions"><span class="tb-ic">👥</span><span class="tb-ic">🎨</span><span class="tb-ic">🔔<span class="dot"></span></span><span class="tb-ic">⏻</span></div></div>
+      <div class="welcome-ttl">Bem-vindo ao sistema</div>
+      <div class="welcome-sub">Selecione uma área</div>
+      <div class="o09-grid">
+        <div class="o09-big area-turmas">
+          <div><span class="ic">🎓</span><div class="badge">Turmas</div></div>
+          <div class="ttl">Gerenciar<br>Turmas</div>
+        </div>
+        <div class="o09-small area-ic"><span class="ic">📊</span><div class="ttl">Inteligência<br>Comercial</div></div>
+        <div class="o09-small area-pip"><span class="ic">💲</span><div class="ttl">Pipeline<br>Comercial</div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- === 10 === -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">Glassmorphism premium</div><div class="opt-desc">Cards translúcidos com blur + glow radial superior + sombra colorida. Sofisticado.</div></div><span class="opt-num">10</span></div>
+    <div class="phone"><div class="phone-screen">
+      <div class="tb"><div class="tb-brand">Febracis · ADM</div><div class="tb-actions"><span class="tb-ic">👥</span><span class="tb-ic">🎨</span><span class="tb-ic">🔔<span class="dot"></span></span><span class="tb-ic">⏻</span></div></div>
+      <div class="welcome-ttl">Bem-vindo ao sistema</div>
+      <div class="welcome-sub">Selecione uma área</div>
+      <div class="o10-grid">
+        <div class="o10-card area-turmas">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;"><span class="ic-box">🎓</span><span class="badge">Turmas</span></div>
+          <div class="ttl">Gerenciar<br>Turmas</div>
+        </div>
+        <div class="o10-card area-ic">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;"><span class="ic-box">📊</span><span class="badge">Estrat.</span></div>
+          <div class="ttl">Inteligência<br>Comercial</div>
+        </div>
+        <div class="o10-card area-pip" style="grid-column:span 2;aspect-ratio:auto;height:64px;flex-direction:row;align-items:center;">
+          <span class="ic-box">💲</span>
+          <div class="ttl" style="flex:1;margin-left:10px;">Pipeline Comercial</div>
+          <span class="badge">Pipeline</span>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+</div>
+
+</body>
+</html>

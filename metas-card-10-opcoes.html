@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Preview · Card de meta do consultor · 10 opções</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg-2:#161b22; --bg-3:#1c2128;
+    --border:rgba(255,255,255,.08); --txt:#e6edf3; --txt-2:#9aa5b1; --txt-3:#6b7280;
+    --accent:#d4a574; --accent-2:#f0c896;
+    --green:#34d399; --red:#ef4444; --amber:#f59e0b; --blue:#3b82f6; --purple:#a855f7;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:var(--txt); margin:0; padding:32px 24px 80px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .sub{ font-size:12px; color:var(--txt-3); margin-bottom:24px; }
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(420px, 1fr));
+    gap:24px; max-width:1400px; margin:0 auto;
+  }
+  .item{ display:flex; flex-direction:column; gap:10px; }
+  .item-h{ display:flex; align-items:baseline; gap:8px; }
+  .item-h .n{ font-size:11px; color:var(--accent); font-weight:700; letter-spacing:.08em; }
+  .item-h .nome{ font-size:13px; font-weight:700; }
+  .item-d{ font-size:11px; color:var(--txt-3); line-height:1.4; margin-bottom:4px; }
+
+  /* Botões compartilhados */
+  .btn{
+    font-size:10px; padding:6px 10px; border-radius:6px; cursor:pointer; font-family:inherit;
+    background:transparent; color:var(--txt-2); border:1px solid var(--border); font-weight:600;
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .btn:hover{ color:var(--accent); border-color:var(--accent); }
+  .btn.sem{ background:rgba(212,165,116,.08); border-color:rgba(212,165,116,.30); color:var(--accent); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 1 · Atual (baseline)
+     ═══════════════════════════════════════════════════════════════ */
+  .op1{ background:var(--bg-2); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:14px; }
+  .op1 .h{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .op1 .av{ width:38px; height:38px; border-radius:50%; background:rgba(212,165,116,.18); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; border:1.5px solid rgba(212,165,116,.32); }
+  .op1 .nome{ font-size:13px; font-weight:700; }
+  .op1 .chips{ display:flex; gap:5px; margin-top:2px; flex-wrap:wrap; }
+  .op1 .chip{ font-size:9px; padding:2px 8px; border-radius:5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+  .op1 .chip.cri{ background:rgba(239,68,68,.15); color:#fca5a5; }
+  .op1 .chip.warn{ background:rgba(245,158,11,.10); color:#fbbf24; border:1px dashed rgba(245,158,11,.25); }
+  .op1 .val{ font-size:11px; color:var(--txt-2); margin-bottom:4px; }
+  .op1 .prog{ height:6px; background:rgba(255,255,255,.05); border-radius:3px; overflow:hidden; margin-bottom:6px; }
+  .op1 .prog .f{ height:100%; background:#ef4444; }
+  .op1 .pct{ font-size:10px; color:var(--txt-3); display:flex; justify-content:space-between; margin-bottom:10px; }
+  .op1 .tiers{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; }
+  .op1 .t{ padding:8px 6px; border:1px solid rgba(255,255,255,.08); border-radius:6px; text-align:center; background:rgba(255,255,255,.02); }
+  .op1 .t .lbl{ font-size:9px; color:var(--accent); font-weight:700; }
+  .op1 .t .fl{ font-size:9px; color:var(--txt-3); margin:2px 0; }
+  .op1 .t .v{ font-size:10px; color:var(--txt); font-weight:700; }
+  .op1 .pace{ font-size:10px; color:var(--txt-3); margin-bottom:10px; padding:6px 8px; background:rgba(255,255,255,.02); border-left:2px solid var(--amber); border-radius:0 4px 4px 0; }
+  .op1 .pace b{ color:var(--amber); }
+  .op1 .foot{ display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid var(--border); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 2 · Dual progress (2 barras separadas)
+     ═══════════════════════════════════════════════════════════════ */
+  .op2{ background:var(--bg-2); border:1px solid var(--border); border-radius:12px; padding:14px; }
+  .op2 .h{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .op2 .av{ width:42px; height:42px; border-radius:50%; background:rgba(212,165,116,.18); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; border:1.5px solid rgba(212,165,116,.32); }
+  .op2 .nome{ font-size:13px; font-weight:700; }
+  .op2 .role{ font-size:10px; color:var(--txt-3); }
+  .op2 .col2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:12px; }
+  .op2 .seg{ padding:10px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,.02); }
+  .op2 .seg .ttl{ font-size:9px; color:var(--txt-3); text-transform:uppercase; letter-spacing:.06em; font-weight:700; margin-bottom:6px; display:flex; justify-content:space-between; }
+  .op2 .seg .val{ font-size:14px; font-weight:800; color:var(--txt); margin-bottom:4px; }
+  .op2 .seg .pct{ font-size:10px; color:#fca5a5; margin-bottom:6px; }
+  .op2 .seg.s .pct{ color:#fbbf24; }
+  .op2 .seg .bar{ height:5px; background:rgba(255,255,255,.05); border-radius:3px; overflow:hidden; }
+  .op2 .seg .bar .f{ height:100%; background:#ef4444; }
+  .op2 .seg.s .bar .f{ background:var(--amber); }
+  .op2 .tiers{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; }
+  .op2 .t{ padding:7px 6px; border:1px solid var(--border); border-radius:6px; text-align:center; background:var(--bg-3); }
+  .op2 .t .lbl{ font-size:9px; color:var(--accent); font-weight:700; }
+  .op2 .t .v{ font-size:10px; color:var(--txt); font-weight:700; margin-top:3px; }
+  .op2 .foot{ display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid var(--border); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 3 · Donut charts (anéis de progresso)
+     ═══════════════════════════════════════════════════════════════ */
+  .op3{ background:var(--bg-2); border:1px solid var(--border); border-radius:12px; padding:14px; }
+  .op3 .h{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .op3 .av{ width:38px; height:38px; border-radius:50%; background:rgba(212,165,116,.18); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; }
+  .op3 .nome{ font-size:13px; font-weight:700; }
+  .op3 .donuts{ display:flex; justify-content:space-around; margin-bottom:14px; }
+  .op3 .donut{ text-align:center; position:relative; }
+  .op3 .donut svg{ display:block; }
+  .op3 .donut .center{ position:absolute; top:50%; left:50%; transform:translate(-50%, calc(-50% - 8px)); font-size:14px; font-weight:800; }
+  .op3 .donut .center.s{ color:#fbbf24; } .op3 .donut .center.m{ color:#fca5a5; }
+  .op3 .donut .lbl{ font-size:9px; color:var(--txt-3); text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-top:6px; }
+  .op3 .pace{ font-size:10px; color:var(--txt-3); padding:6px 8px; background:rgba(255,255,255,.02); border-radius:6px; margin-bottom:10px; text-align:center; }
+  .op3 .pace b{ color:var(--accent); }
+  .op3 .foot{ display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid var(--border); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 4 · Foco SEMANAL grande, mensal de apoio
+     ═══════════════════════════════════════════════════════════════ */
+  .op4{ background:linear-gradient(180deg, var(--bg-2), var(--bg-3)); border:1px solid var(--border); border-radius:12px; padding:14px; }
+  .op4 .h{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .op4 .av{ width:38px; height:38px; border-radius:50%; background:rgba(245,158,11,.18); color:#fbbf24; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; border:1.5px solid rgba(245,158,11,.32); }
+  .op4 .nome{ font-size:13px; font-weight:700; }
+  .op4 .role{ font-size:9px; color:var(--txt-3); text-transform:uppercase; letter-spacing:.05em; }
+  .op4 .hero{ padding:14px; background:linear-gradient(135deg, rgba(245,158,11,.10), rgba(212,165,116,.06)); border:1px solid rgba(245,158,11,.20); border-radius:10px; margin-bottom:10px; }
+  .op4 .hero .lbl{ font-size:10px; color:#fbbf24; text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+  .op4 .hero .val{ font-size:22px; font-weight:800; color:var(--txt); margin-top:3px; }
+  .op4 .hero .val small{ font-size:11px; color:var(--txt-3); font-weight:600; }
+  .op4 .hero .bar{ margin-top:8px; height:5px; background:rgba(0,0,0,.4); border-radius:3px; overflow:hidden; }
+  .op4 .hero .bar .f{ height:100%; background:var(--amber); }
+  .op4 .hero .pace{ font-size:10px; color:var(--txt-2); margin-top:6px; }
+  .op4 .mensal{ display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:rgba(255,255,255,.02); border-radius:6px; margin-bottom:10px; font-size:10px; color:var(--txt-3); }
+  .op4 .mensal b{ color:#fca5a5; }
+  .op4 .foot{ display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid var(--border); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 5 · Stat cards horizontais
+     ═══════════════════════════════════════════════════════════════ */
+  .op5{ background:var(--bg-2); border:1px solid var(--border); border-radius:12px; padding:14px; }
+  .op5 .h{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .op5 .av{ width:38px; height:38px; border-radius:50%; background:rgba(212,165,116,.18); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; }
+  .op5 .nome{ font-size:13px; font-weight:700; flex:1; }
+  .op5 .chip{ font-size:9px; padding:2px 7px; border-radius:5px; background:rgba(245,158,11,.12); color:#fbbf24; font-weight:700; }
+  .op5 .stats{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:10px; }
+  .op5 .st{ padding:8px 6px; background:rgba(255,255,255,.02); border:1px solid var(--border); border-radius:6px; text-align:center; }
+  .op5 .st .lbl{ font-size:8px; color:var(--txt-3); text-transform:uppercase; letter-spacing:.04em; }
+  .op5 .st .v{ font-size:11px; font-weight:800; margin-top:3px; color:var(--txt); }
+  .op5 .st.fat .v{ color:var(--green); }
+  .op5 .st.min .v{ color:#fca5a5; font-size:10px; }
+  .op5 .st.bas .v{ color:#fbbf24; font-size:10px; }
+  .op5 .st.mas .v{ color:var(--accent); font-size:10px; }
+  .op5 .pace{ font-size:10px; color:var(--txt-3); margin-bottom:10px; padding:6px 8px; background:rgba(245,158,11,.06); border-left:2px solid var(--amber); border-radius:0 4px 4px 0; }
+  .op5 .pace b{ color:var(--amber); }
+  .op5 .foot{ display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid var(--border); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 6 · Glassmorphism (vidro fosco)
+     ═══════════════════════════════════════════════════════════════ */
+  .op6{
+    background:rgba(22,27,34,.55);
+    backdrop-filter:blur(16px) saturate(150%); -webkit-backdrop-filter:blur(16px) saturate(150%);
+    border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:14px;
+    box-shadow:0 20px 40px -10px rgba(0,0,0,.5), 0 0 0 1px rgba(212,165,116,.10) inset;
+    position:relative; overflow:hidden;
+  }
+  .op6::before{ content:''; position:absolute; inset:0; background:radial-gradient(80% 50% at 30% 0%, rgba(212,165,116,.12), transparent 60%); pointer-events:none; }
+  .op6 > *{ position:relative; z-index:1; }
+  .op6 .h{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .op6 .av{ width:38px; height:38px; border-radius:50%; background:rgba(212,165,116,.22); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; border:1px solid rgba(212,165,116,.35); }
+  .op6 .nome{ font-size:13px; font-weight:700; }
+  .op6 .chips{ display:flex; gap:5px; margin-top:2px; }
+  .op6 .chip{ font-size:9px; padding:2px 8px; border-radius:5px; font-weight:700; }
+  .op6 .chip.cri{ background:rgba(239,68,68,.15); color:#fca5a5; }
+  .op6 .chip.warn{ background:rgba(245,158,11,.12); color:#fbbf24; }
+  .op6 .val{ font-size:11px; color:var(--txt-2); margin-bottom:6px; }
+  .op6 .prog{ height:6px; background:rgba(0,0,0,.4); border-radius:3px; overflow:hidden; margin-bottom:10px; }
+  .op6 .prog .f{ height:100%; background:#ef4444; }
+  .op6 .tiers{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; }
+  .op6 .t{ padding:8px 6px; background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.05); border-radius:6px; text-align:center; }
+  .op6 .t .lbl{ font-size:9px; color:var(--accent); font-weight:700; }
+  .op6 .t .v{ font-size:10px; color:var(--txt); font-weight:700; margin-top:2px; }
+  .op6 .foot{ display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid rgba(255,255,255,.08); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 7 · Minimalista (só o essencial)
+     ═══════════════════════════════════════════════════════════════ */
+  .op7{ background:var(--bg-2); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  .op7 .top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .op7 .who{ display:flex; align-items:center; gap:10px; }
+  .op7 .av{ width:34px; height:34px; border-radius:50%; background:rgba(212,165,116,.18); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; }
+  .op7 .nome{ font-size:13px; font-weight:700; }
+  .op7 .pcts{ display:flex; gap:14px; align-items:baseline; }
+  .op7 .p{ text-align:right; }
+  .op7 .p .num{ font-size:18px; font-weight:800; color:#fca5a5; }
+  .op7 .p.s .num{ color:#fbbf24; font-size:14px; }
+  .op7 .p .lbl{ font-size:8px; color:var(--txt-3); text-transform:uppercase; letter-spacing:.06em; }
+  .op7 .line{ display:flex; justify-content:space-between; font-size:11px; color:var(--txt-2); padding:5px 0; border-bottom:1px solid var(--border); }
+  .op7 .line:last-of-type{ border-bottom:none; }
+  .op7 .line b{ color:var(--accent); }
+  .op7 .foot{ display:flex; justify-content:space-between; padding-top:10px; margin-top:6px; border-top:1px solid var(--border); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 8 · Painel split (mensal | semanal)
+     ═══════════════════════════════════════════════════════════════ */
+  .op8{ background:var(--bg-2); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .op8 .h{ display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--border); }
+  .op8 .av{ width:34px; height:34px; border-radius:50%; background:rgba(212,165,116,.18); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; }
+  .op8 .nome{ font-size:13px; font-weight:700; }
+  .op8 .split{ display:grid; grid-template-columns:1fr 1fr; }
+  .op8 .pane{ padding:12px 14px; }
+  .op8 .pane.s{ background:rgba(245,158,11,.04); border-left:1px solid var(--border); }
+  .op8 .pane .lbl{ font-size:9px; text-transform:uppercase; letter-spacing:.06em; font-weight:700; color:var(--txt-3); display:flex; justify-content:space-between; margin-bottom:6px; }
+  .op8 .pane.s .lbl{ color:#fbbf24; }
+  .op8 .pane .val{ font-size:16px; font-weight:800; color:var(--txt); }
+  .op8 .pane .pct{ font-size:10px; color:#fca5a5; margin-top:2px; }
+  .op8 .pane.s .pct{ color:#fbbf24; }
+  .op8 .pane .bar{ margin-top:6px; height:4px; background:rgba(255,255,255,.05); border-radius:2px; overflow:hidden; }
+  .op8 .pane .bar .f{ height:100%; background:#ef4444; }
+  .op8 .pane.s .bar .f{ background:var(--amber); }
+  .op8 .pane .pace{ font-size:9px; color:var(--txt-3); margin-top:6px; line-height:1.4; }
+  .op8 .tiers-row{ padding:10px 14px; background:rgba(255,255,255,.015); border-top:1px solid var(--border); display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  .op8 .t{ padding:6px 4px; background:var(--bg-3); border:1px solid var(--border); border-radius:5px; text-align:center; }
+  .op8 .t .lbl{ font-size:9px; color:var(--accent); font-weight:700; }
+  .op8 .t .v{ font-size:10px; color:var(--txt); font-weight:700; margin-top:2px; }
+  .op8 .foot{ display:flex; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--border); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 9 · Hero card com gradient cinematográfico
+     ═══════════════════════════════════════════════════════════════ */
+  .op9{
+    background:
+      radial-gradient(60% 50% at 20% 0%, rgba(212,165,116,.14), transparent 60%),
+      radial-gradient(50% 50% at 100% 100%, rgba(168,85,247,.10), transparent 60%),
+      linear-gradient(135deg, #181d27 0%, #11151c 100%);
+    border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:16px;
+    box-shadow:0 20px 40px -15px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.03) inset;
+  }
+  .op9 .h{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .op9 .av{ width:48px; height:48px; border-radius:14px; background:linear-gradient(135deg, var(--accent), #b88a5a); color:#0a0e1a; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; box-shadow:0 4px 12px rgba(212,165,116,.3); }
+  .op9 .nome{ font-size:15px; font-weight:800; }
+  .op9 .chips{ display:flex; gap:5px; margin-top:3px; }
+  .op9 .chip{ font-size:9px; padding:3px 9px; border-radius:6px; font-weight:700; letter-spacing:.04em; }
+  .op9 .chip.cri{ background:linear-gradient(135deg, #ef4444, #b91c1c); color:#fff; }
+  .op9 .chip.warn{ background:rgba(245,158,11,.18); color:#fbbf24; border:1px solid rgba(245,158,11,.35); }
+  .op9 .big{ display:flex; justify-content:space-between; align-items:flex-end; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.05); margin-bottom:10px; }
+  .op9 .big .v{ font-size:24px; font-weight:800; color:var(--txt); }
+  .op9 .big .v small{ font-size:10px; color:var(--txt-3); display:block; }
+  .op9 .big .p{ font-size:22px; font-weight:800; color:#ef4444; }
+  .op9 .big .p.s{ color:var(--amber); font-size:14px; }
+  .op9 .tiers{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; }
+  .op9 .t{ padding:8px 6px; background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.04); border-radius:6px; text-align:center; }
+  .op9 .t .lbl{ font-size:9px; color:var(--accent); font-weight:700; }
+  .op9 .t .v{ font-size:10px; color:var(--txt); font-weight:700; margin-top:2px; }
+  .op9 .pace{ font-size:10px; color:var(--txt-2); padding:8px 10px; background:rgba(245,158,11,.08); border-left:2px solid var(--amber); border-radius:0 6px 6px 0; margin-bottom:10px; }
+  .op9 .foot{ display:flex; justify-content:space-between; padding-top:10px; border-top:1px solid rgba(255,255,255,.05); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 10 · Sparkline embaixo + KPIs
+     ═══════════════════════════════════════════════════════════════ */
+  .op10{ background:var(--bg-2); border:1px solid var(--border); border-radius:12px; padding:14px; }
+  .op10 .h{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .op10 .av{ width:36px; height:36px; border-radius:50%; background:rgba(212,165,116,.18); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; }
+  .op10 .nome{ font-size:13px; font-weight:700; flex:1; }
+  .op10 .chip{ font-size:9px; padding:3px 8px; border-radius:5px; background:rgba(245,158,11,.12); color:#fbbf24; font-weight:700; }
+  .op10 .stats{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:12px; }
+  .op10 .st{ padding:6px 4px; text-align:center; }
+  .op10 .st .lbl{ font-size:8px; color:var(--txt-3); text-transform:uppercase; letter-spacing:.05em; }
+  .op10 .st .v{ font-size:13px; font-weight:800; color:var(--txt); margin-top:3px; }
+  .op10 .st.fat .v{ color:var(--green); } .op10 .st.mes .v{ color:#fca5a5; } .op10 .st.sem .v{ color:#fbbf24; }
+  .op10 .spark{ height:50px; background:rgba(255,255,255,.02); border-radius:6px; padding:6px 10px; margin-bottom:10px; display:flex; align-items:flex-end; justify-content:space-between; position:relative; }
+  .op10 .spark::before{ content:'Últimas 4 semanas'; position:absolute; top:4px; left:8px; font-size:8px; color:var(--txt-3); text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+  .op10 .sb{ width:18%; background:linear-gradient(180deg, var(--accent), rgba(212,165,116,.3)); border-radius:2px 2px 0 0; }
+  .op10 .sb.cur{ background:linear-gradient(180deg, var(--amber), rgba(245,158,11,.3)); }
+  .op10 .tiers{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; }
+  .op10 .t{ padding:6px 4px; border:1px solid var(--border); border-radius:5px; text-align:center; background:rgba(255,255,255,.02); }
+  .op10 .t .lbl{ font-size:8px; color:var(--accent); font-weight:700; }
+  .op10 .t .v{ font-size:10px; color:var(--txt); font-weight:700; margin-top:2px; }
+  .op10 .foot{ display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid var(--border); }
+
+</style>
+</head>
+<body>
+
+<h1>Card de meta do consultor · 10 opções</h1>
+<div class="sub">Mesmo consultor (Daniel Moura · Junho/2026 · Crítico no mensal · ⚠ Devagar 22% na semana). Diga o número que vai pro dashboard.</div>
+
+<div class="grid">
+
+  <!-- OPÇÃO 1 -->
+  <div class="item">
+    <div class="item-h"><span class="n">1</span><span class="nome">Atual (baseline)</span></div>
+    <div class="item-d">Igual ao preview anterior. Chip semanal ao lado do tier mensal + pace.</div>
+    <div class="op1">
+      <div class="h">
+        <div class="av">D</div>
+        <div>
+          <div class="nome">DANIEL MOURA</div>
+          <div class="chips"><span class="chip cri">CRÍTICO</span><span class="chip warn">⚠ DEVAGAR · 22%</span></div>
+        </div>
+      </div>
+      <div class="val">R$ 0,00</div>
+      <div class="prog"><div class="f" style="width:0%;"></div></div>
+      <div class="pct"><span>0% mensal</span><span style="color:#fbbf24;">22% semanal</span></div>
+      <div class="tiers">
+        <div class="t"><div class="lbl">MÍNIMA</div><div class="fl">Falta</div><div class="v">R$ 134.333</div></div>
+        <div class="t"><div class="lbl">BÁSICA</div><div class="fl">Falta</div><div class="v">R$ 158.039</div></div>
+        <div class="t"><div class="lbl">MASTER</div><div class="fl">Falta</div><div class="v">R$ 175.599</div></div>
+      </div>
+      <div class="pace">📅 <b>Semana 3:</b> R$ 6.500 / 29.203 · Faltam <b>R$ 22.703</b> em <b>3 dias</b> (R$ 7.568/dia)</div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO 2 -->
+  <div class="item">
+    <div class="item-h"><span class="n">2</span><span class="nome">Dual progress (mensal | semanal lado a lado)</span></div>
+    <div class="item-d">2 boxes equivalentes — mensal e semanal têm o mesmo peso visual.</div>
+    <div class="op2">
+      <div class="h">
+        <div class="av">D</div>
+        <div><div class="nome">DANIEL MOURA</div><div class="role">Consultor</div></div>
+      </div>
+      <div class="col2">
+        <div class="seg">
+          <div class="ttl"><span>MENSAL</span><span>jun/26</span></div>
+          <div class="val">R$ 0</div>
+          <div class="pct">0% · faltam R$ 134k</div>
+          <div class="bar"><div class="f" style="width:0%;"></div></div>
+        </div>
+        <div class="seg s">
+          <div class="ttl"><span>SEMANAL</span><span>S3</span></div>
+          <div class="val">R$ 6.500</div>
+          <div class="pct">22% · faltam R$ 22.703</div>
+          <div class="bar"><div class="f" style="width:22%;"></div></div>
+        </div>
+      </div>
+      <div class="tiers">
+        <div class="t"><div class="lbl">MÍNIMA</div><div class="v">R$ 134.333</div></div>
+        <div class="t"><div class="lbl">BÁSICA</div><div class="v">R$ 158.039</div></div>
+        <div class="t"><div class="lbl">MASTER</div><div class="v">R$ 175.599</div></div>
+      </div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO 3 -->
+  <div class="item">
+    <div class="item-h"><span class="n">3</span><span class="nome">Donut charts (anéis)</span></div>
+    <div class="item-d">2 círculos de progresso (mensal/semanal) lado a lado. Visual moderno.</div>
+    <div class="op3">
+      <div class="h">
+        <div class="av">D</div>
+        <div class="nome">DANIEL MOURA</div>
+      </div>
+      <div class="donuts">
+        <div class="donut">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="8"/>
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#ef4444" stroke-width="8" stroke-dasharray="263.9" stroke-dashoffset="263.9" transform="rotate(-90 50 50)" stroke-linecap="round"/>
+          </svg>
+          <div class="center m">0%</div>
+          <div class="lbl">MENSAL</div>
+        </div>
+        <div class="donut">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="8"/>
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#f59e0b" stroke-width="8" stroke-dasharray="263.9" stroke-dashoffset="205.8" transform="rotate(-90 50 50)" stroke-linecap="round"/>
+          </svg>
+          <div class="center s">22%</div>
+          <div class="lbl">SEMANA 3</div>
+        </div>
+      </div>
+      <div class="pace">📅 Faturou <b>R$ 6.500</b> · Faltam <b>R$ 22.703</b> em 3 dias (R$ 7.568/dia)</div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO 4 -->
+  <div class="item">
+    <div class="item-h"><span class="n">4</span><span class="nome">Foco SEMANAL grande</span></div>
+    <div class="item-d">Hero card âmbar destacando a semana. Mensal vira linha de apoio embaixo.</div>
+    <div class="op4">
+      <div class="h">
+        <div class="av">D</div>
+        <div><div class="nome">DANIEL MOURA</div><div class="role">Junho 2026 · Semana 3</div></div>
+      </div>
+      <div class="hero">
+        <div class="lbl">📅 META SEMANAL</div>
+        <div class="val">R$ 6.500 <small>/ R$ 29.203</small></div>
+        <div class="bar"><div class="f" style="width:22%;"></div></div>
+        <div class="pace">⚠ Faltam <b style="color:#fbbf24;">R$ 22.703</b> em <b style="color:#fbbf24;">3 dias úteis</b> (R$ 7.568/dia)</div>
+      </div>
+      <div class="mensal">
+        <span>📊 Mês: <b>R$ 0</b> / R$ 134.333</span>
+        <span><b>0%</b> · Crítico</span>
+      </div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO 5 -->
+  <div class="item">
+    <div class="item-h"><span class="n">5</span><span class="nome">Stat cards horizontais (4 KPIs)</span></div>
+    <div class="item-d">4 mini-KPIs em linha: Faturado · Mínima · Básica · Master. Compacto.</div>
+    <div class="op5">
+      <div class="h">
+        <div class="av">D</div>
+        <div class="nome">DANIEL MOURA</div>
+        <span class="chip">⚠ 22%</span>
+      </div>
+      <div class="stats">
+        <div class="st fat"><div class="lbl">Faturado</div><div class="v">R$ 6,5k</div></div>
+        <div class="st min"><div class="lbl">Mínima</div><div class="v">134k</div></div>
+        <div class="st bas"><div class="lbl">Básica</div><div class="v">158k</div></div>
+        <div class="st mas"><div class="lbl">Master</div><div class="v">175k</div></div>
+      </div>
+      <div class="pace">📅 <b>Semana 3:</b> Faltam <b>R$ 22.703</b> em 3 dias úteis</div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO 6 -->
+  <div class="item">
+    <div class="item-h"><span class="n">6</span><span class="nome">Glassmorphism (vidro fosco)</span></div>
+    <div class="item-d">Vidro com glow dourado. Visual premium, mesmo conteúdo do baseline.</div>
+    <div class="op6">
+      <div class="h">
+        <div class="av">D</div>
+        <div>
+          <div class="nome">DANIEL MOURA</div>
+          <div class="chips"><span class="chip cri">CRÍTICO</span><span class="chip warn">⚠ 22%</span></div>
+        </div>
+      </div>
+      <div class="val">R$ 0,00</div>
+      <div class="prog"><div class="f" style="width:0%;"></div></div>
+      <div class="tiers">
+        <div class="t"><div class="lbl">MÍNIMA</div><div class="v">R$ 134.333</div></div>
+        <div class="t"><div class="lbl">BÁSICA</div><div class="v">R$ 158.039</div></div>
+        <div class="t"><div class="lbl">MASTER</div><div class="v">R$ 175.599</div></div>
+      </div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO 7 -->
+  <div class="item">
+    <div class="item-h"><span class="n">7</span><span class="nome">Minimalista (só essencial)</span></div>
+    <div class="item-d">Linhas de dados + 2 números grandes (% mensal e semanal). Mínimo de elementos.</div>
+    <div class="op7">
+      <div class="top">
+        <div class="who">
+          <div class="av">D</div>
+          <div class="nome">DANIEL MOURA</div>
+        </div>
+        <div class="pcts">
+          <div class="p"><div class="num">0%</div><div class="lbl">MENSAL</div></div>
+          <div class="p s"><div class="num">22%</div><div class="lbl">S3</div></div>
+        </div>
+      </div>
+      <div class="line"><span>Faturado</span><b>R$ 6.500</b></div>
+      <div class="line"><span>Mínima</span><b>R$ 134.333</b></div>
+      <div class="line"><span>Básica</span><b>R$ 158.039</b></div>
+      <div class="line"><span>Master</span><b>R$ 175.599</b></div>
+      <div class="line"><span>Pace semanal</span><b style="color:#fbbf24;">R$ 7.568/dia × 3 dias</b></div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO 8 -->
+  <div class="item">
+    <div class="item-h"><span class="n">8</span><span class="nome">Painel split (mensal | semanal)</span></div>
+    <div class="item-d">Card dividido ao meio. Esquerda = mensal · direita = semanal (fundo âmbar). Tiers embaixo.</div>
+    <div class="op8">
+      <div class="h">
+        <div class="av">D</div>
+        <div class="nome">DANIEL MOURA</div>
+      </div>
+      <div class="split">
+        <div class="pane">
+          <div class="lbl"><span>MENSAL</span><span>jun/26</span></div>
+          <div class="val">R$ 0</div>
+          <div class="pct">0% · Crítico</div>
+          <div class="bar"><div class="f" style="width:0%;"></div></div>
+          <div class="pace">Faltam R$ 134k no mês</div>
+        </div>
+        <div class="pane s">
+          <div class="lbl"><span>⚠ SEMANAL S3</span><span>15-21</span></div>
+          <div class="val">R$ 6.500</div>
+          <div class="pct">22% · Devagar</div>
+          <div class="bar"><div class="f" style="width:22%;"></div></div>
+          <div class="pace">R$ 7.568/dia × 3 dias úteis</div>
+        </div>
+      </div>
+      <div class="tiers-row">
+        <div class="t"><div class="lbl">MÍNIMA</div><div class="v">R$ 134.333</div></div>
+        <div class="t"><div class="lbl">BÁSICA</div><div class="v">R$ 158.039</div></div>
+        <div class="t"><div class="lbl">MASTER</div><div class="v">R$ 175.599</div></div>
+      </div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO 9 -->
+  <div class="item">
+    <div class="item-h"><span class="n">9</span><span class="nome">Hero cinematográfico (gradient mesh)</span></div>
+    <div class="item-d">Visual premium · avatar grande quadrado · 2 números enormes (mensal+semanal).</div>
+    <div class="op9">
+      <div class="h">
+        <div class="av">D</div>
+        <div>
+          <div class="nome">DANIEL MOURA</div>
+          <div class="chips"><span class="chip cri">CRÍTICO</span><span class="chip warn">⚠ 22% · S3</span></div>
+        </div>
+      </div>
+      <div class="big">
+        <div class="v">R$ 6.500 <small>faturado total</small></div>
+        <div><span class="p">0%</span> <span class="p s"> · 22%</span></div>
+      </div>
+      <div class="tiers">
+        <div class="t"><div class="lbl">MÍNIMA</div><div class="v">R$ 134.333</div></div>
+        <div class="t"><div class="lbl">BÁSICA</div><div class="v">R$ 158.039</div></div>
+        <div class="t"><div class="lbl">MASTER</div><div class="v">R$ 175.599</div></div>
+      </div>
+      <div class="pace">📅 <b style="color:#fbbf24;">Semana 3:</b> Faltam <b style="color:#fbbf24;">R$ 22.703</b> em 3 dias (R$ 7.568/dia)</div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPÇÃO 10 -->
+  <div class="item">
+    <div class="item-h"><span class="n">10</span><span class="nome">Sparkline 4 semanas + KPIs</span></div>
+    <div class="item-d">Histórico visual das 4 últimas semanas. Mostra evolução, não só ponto atual.</div>
+    <div class="op10">
+      <div class="h">
+        <div class="av">D</div>
+        <div class="nome">DANIEL MOURA</div>
+        <span class="chip">⚠ S3 · 22%</span>
+      </div>
+      <div class="stats">
+        <div class="st fat"><div class="lbl">Faturado</div><div class="v">R$ 6,5k</div></div>
+        <div class="st mes"><div class="lbl">Mês 0%</div><div class="v">R$ 134k</div></div>
+        <div class="st sem"><div class="lbl">Sem 22%</div><div class="v">R$ 22,7k</div></div>
+      </div>
+      <div class="spark">
+        <div class="sb" style="height:35%;"></div>
+        <div class="sb" style="height:55%;"></div>
+        <div class="sb" style="height:70%;"></div>
+        <div class="sb cur" style="height:22%;"></div>
+      </div>
+      <div class="tiers">
+        <div class="t"><div class="lbl">MÍNIMA</div><div class="v">R$ 134.333</div></div>
+        <div class="t"><div class="lbl">BÁSICA</div><div class="v">R$ 158.039</div></div>
+        <div class="t"><div class="lbl">MASTER</div><div class="v">R$ 175.599</div></div>
+      </div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kanban · Cards fixos — Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500;700&family=Italiana&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --bg: #0d1117;
+    --bg-2: #161b22;
+    --bg-3: #1c2128;
+    --border: rgba(255,255,255,.08);
+    --border2: rgba(255,255,255,.14);
+    --txt: #e6edf3;
+    --txt-2: #9aa5b1;
+    --txt-3: #6b7280;
+    --accent: #c8f05a;
+    --pago: #34d399;
+    --amber: #fbbf24;
+  }
+  body {
+    margin: 0;
+    padding: 28px 24px 80px;
+    background: radial-gradient(ellipse at top, #15191f, #0a0e13);
+    color: var(--txt);
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: 'Italiana', serif;
+    font-size: 32px; margin: 0 0 4px; color: #f0c896;
+  }
+  .sub { font-size: 12px; color: var(--txt-3); margin-bottom: 30px; }
+
+  .section {
+    margin-bottom: 36px;
+    padding: 18px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .sec-h {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed rgba(255,255,255,.08);
+  }
+  .sec-tag {
+    background: linear-gradient(180deg, #d4f565, #c8f05a);
+    color: #0a0e1a;
+    font-size: 10px; font-weight: 800;
+    padding: 3px 10px; border-radius: 100px;
+    letter-spacing: .08em;
+  }
+  .sec-tag.dim {
+    background: rgba(255,255,255,.05);
+    color: var(--txt-3);
+    border: 1px solid var(--border);
+  }
+  .sec-ttl {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; color: #f0c896;
+  }
+  .sec-desc { font-size: 12px; color: var(--txt-2); line-height: 1.5; }
+
+  /* ════ KANBAN ════ */
+  .fv-kanban {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 8px;
+  }
+  .fv-kanban::-webkit-scrollbar { height: 8px; }
+  .fv-kanban::-webkit-scrollbar-thumb { background: rgba(200,240,90,.30); border-radius: 4px; }
+
+  /* Coluna FIXA 260px */
+  .fv-col {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex; flex-direction: column;
+    gap: 8px;
+    min-width: 260px;
+    max-width: 260px;
+    max-height: 560px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .fv-col::-webkit-scrollbar { width: 6px; }
+  .fv-col::-webkit-scrollbar-thumb { background: rgba(200,240,90,.20); border-radius: 3px; }
+
+  .fv-col-h {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 2px 8px;
+    border-bottom: 2px solid var(--col-cor, var(--accent));
+    position: sticky; top: 0;
+    background: var(--bg);
+    z-index: 1;
+  }
+  .fv-col-tit {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--col-cor, var(--accent));
+  }
+  .fv-col-qtd {
+    font-size: 10px;
+    background: var(--bg-3);
+    padding: 2px 7px;
+    border-radius: 8px;
+    color: var(--txt-2);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  .fv-col-soma {
+    font-size: 9px; color: var(--txt-3); padding: 0 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .fv-col-soma b { color: var(--accent); }
+  .fv-col-add {
+    background: transparent;
+    border: 1px dashed rgba(255,255,255,.14);
+    color: var(--txt-3);
+    padding: 4px;
+    border-radius: 6px;
+    font-size: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 2px;
+    font-weight: 600;
+  }
+
+  /* ════ CARD FIXO ════ */
+  .fv-card {
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--col-cor, var(--accent));
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: grab;
+    position: relative;
+    font-size: 11px;
+    /* DIMENSÕES FIXAS */
+    min-height: 130px;
+    overflow: hidden;
+    transition: box-shadow .15s, border-color .15s;
+  }
+  .fv-card:hover {
+    border-color: rgba(255,255,255,.14);
+    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  }
+
+  /* Botões superiores */
+  .fv-card-edit, .fv-card-copy {
+    position: absolute; top: 5px;
+    width: 18px; height: 18px;
+    background: transparent;
+    color: var(--txt-3);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 4px;
+    font-size: 9px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    z-index: 5;
+  }
+  .fv-card-edit { right: 7px; font-size: 10px; }
+  .fv-card-copy { right: 30px; font-size: 9px; }
+  .fv-card-chev {
+    position: absolute; top: 5px; right: 52px;
+    width: 18px; height: 18px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--txt-3);
+    cursor: pointer;
+    font-size: 11px;
+    display: inline-flex; align-items: center; justify-content: center;
+    z-index: 5;
+  }
+  .fv-card-chev:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(200,240,90,.06);
+  }
+
+  .fv-card-nome {
+    font-weight: 600; font-size: 11px;
+    padding-right: 80px;
+    line-height: 1.2; margin-bottom: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .fv-card-val {
+    font-size: 11px; font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .fv-card-prob {
+    font-size: 9px; color: #34d399;
+    background: rgba(52,211,153,.10);
+    padding: 1px 5px; border-radius: 3px; font-weight: 600;
+  }
+  .fv-card-prob.m { color: #f59e0b; background: rgba(245,158,11,.10); }
+  .fv-card-row {
+    display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap;
+  }
+  .fv-card-tag {
+    background: rgba(255,255,255,.06);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 9px; color: var(--txt-2);
+  }
+  .fv-card-tag.tr { background: rgba(212,165,116,.12); color: #d4a574; }
+  .fv-card-tag.or { background: rgba(59,130,246,.12); color: #3b82f6; }
+
+  .fv-card-foot {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 6px; padding-top: 6px;
+    border-top: 1px dashed var(--border);
+  }
+  .fv-card-cons {
+    font-size: 9px; color: var(--txt-3);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .fv-av {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--accent);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700; color: var(--bg);
+  }
+  .fv-card-prazo {
+    font-size: 9px; color: #ef4444; font-weight: 600;
+  }
+  .fv-card-act {
+    font-size: 9px; color: var(--txt-3); margin-top: 3px;
+  }
+  .fv-card-foot-valor {
+    margin-top: 6px; padding-top: 6px;
+    border-top: 1px dashed rgba(255,255,255,.08);
+    text-align: right; font-size: 11px; color: var(--accent); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .fv-card-foot-valor b { font-weight: 800; }
+
+  /* Estado colapsado: esconde tudo menos nome + val */
+  .fv-card.collapsed .fv-card-row,
+  .fv-card.collapsed .fv-card-foot,
+  .fv-card.collapsed .fv-card-act,
+  .fv-card.collapsed .fv-card-foot-valor { display: none; }
+
+  /* MICROBARRA DE PROGRESSO no estado colapsado (bonus) */
+  .fv-card-progress {
+    display: none;
+    position: absolute;
+    left: 12px; right: 12px; bottom: 10px;
+    height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,.05);
+    overflow: hidden;
+  }
+  .fv-card-progress .bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--col-cor, var(--accent)), var(--accent));
+    border-radius: 2px;
+  }
+  .fv-card-progress .lbl {
+    position: absolute;
+    right: 0; bottom: 6px;
+    font-size: 8px; font-weight: 700;
+    color: var(--txt-3); letter-spacing: .04em;
+  }
+  .fv-card.collapsed .fv-card-progress { display: block; }
+
+  /* CALLOUT comparativo */
+  .compare {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+  .compare-side {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    position: relative;
+  }
+  .compare-side h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px; margin: 0 0 12px;
+  }
+  .compare-side.before h3 { color: #ef4444; }
+  .compare-side.after h3 { color: #34d399; }
+  .compare-side .ribbon {
+    position: absolute; top: 0; right: 0;
+    background: rgba(255,255,255,.04);
+    padding: 4px 12px;
+    border-radius: 0 12px 0 12px;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .compare-side.before .ribbon { background: rgba(239,68,68,.10); color: #ef4444; }
+  .compare-side.after .ribbon { background: rgba(52,211,153,.10); color: #34d399; }
+
+  /* Kanban "antigo" (flex:1) — pra comparação */
+  .kanban-flex {
+    display: flex; gap: 8px;
+  }
+  .kanban-flex .col-mini {
+    flex: 1; min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 6px;
+    min-height: 80px;
+    display: flex; flex-direction: column; gap: 4px;
+    border-left: 3px solid var(--col-cor);
+  }
+  .kanban-flex .col-mini .tit {
+    font-size: 7px; font-weight: 700;
+    color: var(--col-cor); letter-spacing: .04em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 3px;
+  }
+  .kanban-flex .col-mini .card-mini {
+    background: var(--bg-3); border: 1px solid var(--border);
+    border-radius: 4px; padding: 4px 6px; font-size: 8px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* Kanban "novo" (cards fixos) — pra comparação */
+  .kanban-fixed {
+    display: flex; gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+  .kanban-fixed::-webkit-scrollbar { height: 6px; }
+  .kanban-fixed::-webkit-scrollbar-thumb { background: rgba(200,240,90,.3); border-radius: 3px; }
+  .kanban-fixed .col-mini {
+    min-width: 92px; max-width: 92px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 6px;
+    min-height: 80px;
+    display: flex; flex-direction: column; gap: 4px;
+    border-left: 3px solid var(--col-cor);
+    flex-shrink: 0;
+  }
+  .kanban-fixed .col-mini .tit {
+    font-size: 7px; font-weight: 700;
+    color: var(--col-cor); letter-spacing: .04em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 3px;
+  }
+  .kanban-fixed .col-mini .card-mini {
+    background: var(--bg-3); border: 1px solid var(--border);
+    border-radius: 4px; padding: 4px 6px; font-size: 8px;
+    min-height: 44px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* Tabela de tradeoffs */
+  .specs {
+    margin-top: 18px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .spec {
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .spec-h {
+    font-size: 10px; font-weight: 800;
+    color: #d4a574;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    margin-bottom: 6px;
+  }
+  .spec-val {
+    font-family: 'DM Mono', monospace;
+    color: var(--accent);
+    font-size: 13px; font-weight: 700;
+  }
+  .spec-note { font-size: 10px; color: var(--txt-3); margin-top: 3px; }
+
+  .footer {
+    margin-top: 36px;
+    padding: 18px 22px;
+    background: rgba(10,14,19,.94);
+    border: 1px solid rgba(212,165,116,.30);
+    border-radius: 10px;
+    text-align: center;
+    font-family: 'Italiana', serif;
+    font-size: 14px;
+    color: #f0c896;
+  }
+  .footer b { color: #d4a574; }
+</style>
+</head>
+<body>
+
+<h1>Kanban com cards de dimensão fixa</h1>
+<p class="sub">Proposta: largura fixa 260px / altura mínima 130px / scroll horizontal automático no kanban</p>
+
+<!-- ════ COMPARATIVO ANTES vs DEPOIS ════ -->
+<div class="compare">
+  <div class="compare-side before">
+    <span class="ribbon">Antes</span>
+    <h3>flex:1 (variável)</h3>
+    <div class="kanban-flex">
+      <div class="col-mini" style="--col-cor:#ff8fa8;"><div class="tit">Prospec</div><div class="card-mini">Lead 1</div></div>
+      <div class="col-mini" style="--col-cor:#ff6b8a;"><div class="tit">Qualif</div></div>
+      <div class="col-mini" style="--col-cor:#e94f74;"><div class="tit">Apres</div></div>
+      <div class="col-mini" style="--col-cor:#d63960;"><div class="tit">Negoc</div></div>
+      <div class="col-mini" style="--col-cor:#b82550;"><div class="tit">Prop</div></div>
+      <div class="col-mini" style="--col-cor:#9a1740;"><div class="tit">Fech</div></div>
+      <div class="col-mini" style="--col-cor:#7a0d30;"><div class="tit">Pós-V</div><div class="card-mini">Cliente A</div><div class="card-mini">Cliente B</div></div>
+    </div>
+    <p style="font-size:10px;color:var(--txt-3);margin:10px 0 0;line-height:1.5;">
+      Larguras variam conforme conteúdo · cards apertados ou esparramados · grid instável quando expande/colapsa.
+    </p>
+  </div>
+  <div class="compare-side after">
+    <span class="ribbon">Depois</span>
+    <h3>min-width / max-width fixos</h3>
+    <div class="kanban-fixed">
+      <div class="col-mini" style="--col-cor:#ff8fa8;"><div class="tit">Prospec</div><div class="card-mini">Lead 1</div></div>
+      <div class="col-mini" style="--col-cor:#ff6b8a;"><div class="tit">Qualif</div></div>
+      <div class="col-mini" style="--col-cor:#e94f74;"><div class="tit">Apres</div></div>
+      <div class="col-mini" style="--col-cor:#d63960;"><div class="tit">Negoc</div></div>
+      <div class="col-mini" style="--col-cor:#b82550;"><div class="tit">Prop</div></div>
+      <div class="col-mini" style="--col-cor:#9a1740;"><div class="tit">Fech</div></div>
+      <div class="col-mini" style="--col-cor:#7a0d30;"><div class="tit">Pós-V</div><div class="card-mini">A</div><div class="card-mini">B</div></div>
+    </div>
+    <p style="font-size:10px;color:var(--txt-3);margin:10px 0 0;line-height:1.5;">
+      Largura consistente · cards sempre legíveis · scroll horizontal natural · padrão Trello/Linear.
+    </p>
+  </div>
+</div>
+
+<!-- ════ KANBAN COMPLETO COM CARDS REAIS ════ -->
+<div class="section">
+  <div class="sec-h">
+    <span class="sec-tag">Live</span>
+    <div>
+      <div class="sec-ttl">Kanban completo · 260px por coluna</div>
+      <div class="sec-desc">Mistura de cards ▽ expandidos e ▷ colapsados — altura sempre fixa em 130px independente do estado.</div>
+    </div>
+  </div>
+
+  <div class="fv-kanban">
+    <!-- Coluna 1 — Prospecção -->
+    <div class="fv-col" style="--col-cor:#ff8fa8;">
+      <div class="fv-col-h">
+        <span class="fv-col-tit">Prospecção</span>
+        <span class="fv-col-qtd">2</span>
+      </div>
+      <div class="fv-col-soma">💰 <b>R$ 8,5k</b></div>
+      <button class="fv-col-add">+ Adicionar lead</button>
+
+      <div class="fv-card collapsed">
+        <button class="fv-card-edit">✎</button>
+        <button class="fv-card-copy">📋</button>
+        <span class="fv-card-chev">▷</span>
+        <div class="fv-card-nome">JOAQUIM ARNALDO FEITOSA JUNIOR</div>
+        <div class="fv-card-val">R$ 4,5k <span class="fv-card-prob">10%</span></div>
+        <div class="fv-card-progress">
+          <div class="bar" style="width:10%"></div>
+          <span class="lbl">10%</span>
+        </div>
+      </div>
+
+      <div class="fv-card">
+        <button class="fv-card-edit">✎</button>
+        <button class="fv-card-copy">📋</button>
+        <span class="fv-card-chev">▽</span>
+        <div class="fv-card-nome">Vitoria Souza</div>
+        <div class="fv-card-val">R$ 4,0k <span class="fv-card-prob">10%</span></div>
+        <div class="fv-card-row">
+          <span class="fv-card-tag tr">CI</span>
+          <span class="fv-card-tag or">Indicação</span>
+        </div>
+        <div class="fv-card-foot">
+          <div class="fv-card-cons"><span class="fv-av">DS</span>DARLEY</div>
+          <div class="fv-card-prazo">📅 -3d</div>
+        </div>
+        <div class="fv-card-act">Criado: 5d atrás (03/06)</div>
+        <div class="fv-card-foot-valor">💰 <b>R$ 4,0k</b></div>
+      </div>
+    </div>
+
+    <!-- Coluna 2 — Qualificação -->
+    <div class="fv-col" style="--col-cor:#ff6b8a;">
+      <div class="fv-col-h">
+        <span class="fv-col-tit">Qualificação</span>
+        <span class="fv-col-qtd">1</span>
+      </div>
+      <div class="fv-col-soma">💰 <b>R$ 5,0k</b></div>
+      <button class="fv-col-add">+ Adicionar lead</button>
+
+      <div class="fv-card collapsed">
+        <button class="fv-card-edit">✎</button>
+        <button class="fv-card-copy">📋</button>
+        <span class="fv-card-chev">▷</span>
+        <div class="fv-card-nome">Ana Priscila Ferreira</div>
+        <div class="fv-card-val">R$ 5,0k <span class="fv-card-prob m">30%</span></div>
+        <div class="fv-card-progress">
+          <div class="bar" style="width:30%"></div>
+          <span class="lbl">30%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coluna 3 — Apresentação (gabarito Mariana) -->
+    <div class="fv-col" style="--col-cor:#e94f74;">
+      <div class="fv-col-h">
+        <span class="fv-col-tit">Apresentação</span>
+        <span class="fv-col-qtd">1</span>
+      </div>
+      <div class="fv-col-soma">💰 <b>R$ 2,0k</b></div>
+      <button class="fv-col-add">+ Adicionar lead</button>
+
+      <div class="fv-card">
+        <button class="fv-card-edit">✎</button>
+        <button class="fv-card-copy">📋</button>
+        <span class="fv-card-chev">▽</span>
+        <div class="fv-card-nome">Mariana C Oliveira</div>
+        <div class="fv-card-val">R$ 2,0k <span class="fv-card-prob">50%</span></div>
+        <div class="fv-card-row">
+          <span class="fv-card-tag tr">CI</span>
+          <span class="fv-card-tag or">Indicação de Carteira</span>
+        </div>
+        <div class="fv-card-foot">
+          <div class="fv-card-cons"><span class="fv-av">CB</span>CARLOS</div>
+          <div class="fv-card-prazo">📅 -6d</div>
+        </div>
+        <div class="fv-card-act">Criado: 6d atrás (02/06)</div>
+        <div class="fv-card-foot-valor">💰 <b>R$ 2,0k</b></div>
+      </div>
+    </div>
+
+    <!-- Coluna 4 — Negociação -->
+    <div class="fv-col" style="--col-cor:#d63960;">
+      <div class="fv-col-h">
+        <span class="fv-col-tit">Negociação</span>
+        <span class="fv-col-qtd">0</span>
+      </div>
+      <div class="fv-col-soma">💰 <b>R$ 0,0k</b></div>
+      <button class="fv-col-add">+ Adicionar lead</button>
+    </div>
+
+    <!-- Coluna 5 — Proposta -->
+    <div class="fv-col" style="--col-cor:#b82550;">
+      <div class="fv-col-h">
+        <span class="fv-col-tit">Proposta</span>
+        <span class="fv-col-qtd">0</span>
+      </div>
+      <div class="fv-col-soma">💰 <b>R$ 0,0k</b></div>
+      <button class="fv-col-add">+ Adicionar lead</button>
+    </div>
+
+    <!-- Coluna 6 — Fechamento -->
+    <div class="fv-col" style="--col-cor:#9a1740;">
+      <div class="fv-col-h">
+        <span class="fv-col-tit">Fechamento</span>
+        <span class="fv-col-qtd">0</span>
+      </div>
+      <div class="fv-col-soma">💰 <b>R$ 0,0k</b></div>
+      <button class="fv-col-add">+ Adicionar lead</button>
+    </div>
+
+    <!-- Coluna 7 — Pós-Venda -->
+    <div class="fv-col" style="--col-cor:#7a0d30;">
+      <div class="fv-col-h">
+        <span class="fv-col-tit">Pós-Venda</span>
+        <span class="fv-col-qtd">18</span>
+      </div>
+      <div class="fv-col-soma">💰 <b>R$ 85,2k</b></div>
+      <button class="fv-col-add">+ Adicionar lead</button>
+
+      <div class="fv-card collapsed">
+        <button class="fv-card-edit">✎</button>
+        <button class="fv-card-copy">📋</button>
+        <span class="fv-card-chev">▷</span>
+        <div class="fv-card-nome">ADELAIDE DO SOCORRO GOMES</div>
+        <div class="fv-card-val">R$ 40,0k <span class="fv-card-prob">100%</span></div>
+        <div class="fv-card-progress">
+          <div class="bar" style="width:100%"></div>
+          <span class="lbl">100%</span>
+        </div>
+      </div>
+
+      <div class="fv-card collapsed">
+        <button class="fv-card-edit">✎</button>
+        <button class="fv-card-copy">📋</button>
+        <span class="fv-card-chev">▷</span>
+        <div class="fv-card-nome">CAMILA SANTOS</div>
+        <div class="fv-card-val">R$ 4,5k <span class="fv-card-prob">100%</span></div>
+        <div class="fv-card-progress">
+          <div class="bar" style="width:100%"></div>
+          <span class="lbl">100%</span>
+        </div>
+      </div>
+
+      <div class="fv-card">
+        <button class="fv-card-edit">✎</button>
+        <button class="fv-card-copy">📋</button>
+        <span class="fv-card-chev">▽</span>
+        <div class="fv-card-nome">LEONARDO DA SILVA</div>
+        <div class="fv-card-val">R$ 10,5k <span class="fv-card-prob">100%</span></div>
+        <div class="fv-card-row">
+          <span class="fv-card-tag tr">MASTER</span>
+          <span class="fv-card-tag or">Carteira</span>
+        </div>
+        <div class="fv-card-foot">
+          <div class="fv-card-cons"><span class="fv-av">DM</span>DANIEL</div>
+          <div class="fv-card-prazo" style="color:#34d399;">✓ Vendido</div>
+        </div>
+        <div class="fv-card-act">Criado: 30d atrás</div>
+        <div class="fv-card-foot-valor">💰 <b>R$ 10,5k</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="specs">
+    <div class="spec">
+      <div class="spec-h">Largura por coluna</div>
+      <div class="spec-val">min/max: 260px (fixo)</div>
+      <div class="spec-note">Card sempre cabe nome longo + 3 botões sem comprimir</div>
+    </div>
+    <div class="spec">
+      <div class="spec-h">Altura mínima do card</div>
+      <div class="spec-val">min-height: 130px</div>
+      <div class="spec-note">Igual no ▷ e ▽ — sem saltos ao alternar estado</div>
+    </div>
+    <div class="spec">
+      <div class="spec-h">Scroll horizontal</div>
+      <div class="spec-val">overflow-x: auto</div>
+      <div class="spec-note">Aparece quando 7×260 = 1820px excede a viewport</div>
+    </div>
+    <div class="spec">
+      <div class="spec-h">Bonus: microbarra de progresso</div>
+      <div class="spec-val">% no estado colapsado</div>
+      <div class="spec-note">Usa o espaço vazio pra contexto extra (probabilidade)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ DEMO DA MICROBARRA ════ -->
+<div class="section">
+  <div class="sec-h">
+    <span class="sec-tag dim">Bônus</span>
+    <div>
+      <div class="sec-ttl">Microbarra de progresso no colapsado</div>
+      <div class="sec-desc">Aproveita o espaço vazio do estado ▷ pra mostrar a probabilidade do lead em barra colorida.</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,260px);gap:10px;">
+    <div class="fv-card collapsed" style="--col-cor:#ff8fa8;">
+      <button class="fv-card-edit">✎</button>
+      <button class="fv-card-copy">📋</button>
+      <span class="fv-card-chev">▷</span>
+      <div class="fv-card-nome">Lead em Prospecção</div>
+      <div class="fv-card-val">R$ 4,5k <span class="fv-card-prob">10%</span></div>
+      <div class="fv-card-progress">
+        <div class="bar" style="width:10%"></div>
+        <span class="lbl">10%</span>
+      </div>
+    </div>
+    <div class="fv-card collapsed" style="--col-cor:#ff6b8a;">
+      <button class="fv-card-edit">✎</button>
+      <button class="fv-card-copy">📋</button>
+      <span class="fv-card-chev">▷</span>
+      <div class="fv-card-nome">Lead em Qualificação</div>
+      <div class="fv-card-val">R$ 5,0k <span class="fv-card-prob m">30%</span></div>
+      <div class="fv-card-progress">
+        <div class="bar" style="width:30%"></div>
+        <span class="lbl">30%</span>
+      </div>
+    </div>
+    <div class="fv-card collapsed" style="--col-cor:#d63960;">
+      <button class="fv-card-edit">✎</button>
+      <button class="fv-card-copy">📋</button>
+      <span class="fv-card-chev">▷</span>
+      <div class="fv-card-nome">Lead em Negociação</div>
+      <div class="fv-card-val">R$ 12,0k <span class="fv-card-prob">70%</span></div>
+      <div class="fv-card-progress">
+        <div class="bar" style="width:70%"></div>
+        <span class="lbl">70%</span>
+      </div>
+    </div>
+    <div class="fv-card collapsed" style="--col-cor:#7a0d30;">
+      <button class="fv-card-edit">✎</button>
+      <button class="fv-card-copy">📋</button>
+      <span class="fv-card-chev">▷</span>
+      <div class="fv-card-nome">Lead em Pós-Venda</div>
+      <div class="fv-card-val">R$ 40,0k <span class="fv-card-prob">100%</span></div>
+      <div class="fv-card-progress">
+        <div class="bar" style="width:100%"></div>
+        <span class="lbl">100%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Se aprovar este preview, eu aplico direto no kanban real: <b>260px largura, 130px altura, scroll horizontal + microbarra</b>.
+</div>
+
+</body>
+</html>

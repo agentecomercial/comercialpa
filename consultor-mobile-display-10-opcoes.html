@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Consultor no card mobile — 10 estilos</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #0a0e13;
+    color: #e6edf3;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 0 0 6px;
+    color: #c8f05a;
+    letter-spacing: .02em;
+  }
+  .sub {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 28px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 22px;
+  }
+  .opt {
+    background: #161b22;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .opt-h {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    border-bottom: 1px dashed rgba(255,255,255,.10);
+    padding-bottom: 10px;
+  }
+  .opt-num {
+    font-size: 10px;
+    font-weight: 800;
+    color: #c8f05a;
+    background: rgba(200,240,90,.08);
+    border: 1px solid rgba(200,240,90,.25);
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: .08em;
+  }
+  .opt-ttl {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e6edf3;
+    margin-bottom: 2px;
+  }
+  .opt-desc {
+    font-size: 10.5px;
+    color: #9aa5b1;
+    line-height: 1.45;
+  }
+  .opt-pros {
+    font-size: 9.5px;
+    color: #6b7280;
+    line-height: 1.4;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(255,255,255,.08);
+  }
+  .opt-pros b { color: #b88a5a; }
+
+  /* ===== Card mobile base (replica do dashboard) ===== */
+  .mob-card {
+    background: #0c1117;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    padding: 10px 12px;
+    border-left: 3px solid #6b7280;
+  }
+  .mob-header { display: flex; align-items: center; }
+  .mob-info { flex: 1; min-width: 0; }
+  .mob-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .mob-name {
+    font-size: 12px;
+    font-weight: 800;
+    color: #e6edf3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+  .mob-presenca {
+    background: rgba(57,255,20,.12);
+    color: #39ff14;
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .mob-plus-btn {
+    background: rgba(200,240,90,.10);
+    border: 1px solid rgba(200,240,90,.35);
+    color: #c8f05a;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mob-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 10px;
+  }
+  .mob-st { color: #6b7280; font-weight: 600; }
+  .mob-val { color: #e6edf3; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* === Estilo atual (referência) === */
+  .cons-row-atual {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,.08);
+  }
+  .cons-row-atual .lbl {
+    font-size: 9px; font-weight: 700; color: #6b7280;
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+  .cons-row-atual .sel {
+    flex: 1;
+    background: rgba(80,140,255,.10);
+    border: 1px solid rgba(80,140,255,.30);
+    color: #93c5fd;
+    padding: 6px 8px; border-radius: 5px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .04em; text-transform: uppercase;
+  }
+
+  /* === Opção 1: linha tipográfica simples === */
+  .cons-01 {
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    font-size: 11px; color: #9aa5b1;
+  }
+  .cons-01 b { color: #93c5fd; font-weight: 700; letter-spacing: .02em; }
+  .cons-01 .ic { color: #6b7280; margin-right: 4px; }
+
+  /* === Opção 2: avatar circular + nome === */
+  .cons-02 {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px; padding: 6px 8px;
+    background: rgba(80,140,255,.06);
+    border-radius: 6px;
+  }
+  .cons-02 .av {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg, #5096ff, #3d80e6);
+    color: #fff; font-size: 9.5px; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .cons-02 .info { flex: 1; min-width: 0; }
+  .cons-02 .lbl {
+    font-size: 8px; color: #6b7280; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    margin-bottom: 1px;
+  }
+  .cons-02 .nome {
+    font-size: 11px; color: #93c5fd; font-weight: 700;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .cons-02 .caret { color: #93c5fd; opacity: .5; font-size: 10px; }
+
+  /* === Opção 3: chip pill simples === */
+  .cons-03 {
+    margin-top: 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  }
+  .cons-03 .lbl {
+    font-size: 8.5px; color: #6b7280; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+  .cons-03 .pill {
+    background: rgba(80,140,255,.18);
+    color: #bcd5ff;
+    border: 1px solid rgba(80,140,255,.40);
+    font-size: 10px; font-weight: 800;
+    padding: 4px 10px; border-radius: 12px;
+    letter-spacing: .04em;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .cons-03 .pill::before { content: '👤'; font-size: 10px; }
+
+  /* === Opção 4: linha label/valor tipo formulário === */
+  .cons-04 {
+    margin-top: 8px; padding: 6px 0;
+    border-top: 1px dashed rgba(255,255,255,.08);
+    display: grid; grid-template-columns: 70px 1fr auto; gap: 8px; align-items: center;
+  }
+  .cons-04 .k { font-size: 9px; color: #6b7280; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .cons-04 .v { font-size: 11px; color: #93c5fd; font-weight: 700; }
+  .cons-04 .ed {
+    font-size: 11px; color: #6b7280; background: transparent;
+    border: 1px solid rgba(255,255,255,.10); border-radius: 4px;
+    width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+
+  /* === Opção 5: integrado ao header (subtexto do nome) === */
+  .mob-card-05 .mob-info { padding-left: 0; }
+  .mob-card-05 .name-stack {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;
+  }
+  .mob-card-05 .sub-cons {
+    font-size: 10px; color: #93c5fd; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 4px;
+    letter-spacing: .02em;
+  }
+  .mob-card-05 .sub-cons::before { content: '👤'; font-size: 9px; opacity: .7; }
+
+  /* === Opção 6: card lateral com stripe azul === */
+  .cons-06 {
+    margin-top: 8px;
+    background: linear-gradient(to right, rgba(80,140,255,.20) 0, rgba(80,140,255,.04) 100%);
+    border-left: 3px solid #5096ff;
+    border-radius: 0 6px 6px 0;
+    padding: 6px 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .cons-06 .left { display: flex; flex-direction: column; }
+  .cons-06 .lbl {
+    font-size: 8px; color: #6b7280; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .10em;
+  }
+  .cons-06 .nome {
+    font-size: 11.5px; font-weight: 800; color: #bcd5ff;
+    letter-spacing: .03em;
+  }
+  .cons-06 .ed {
+    color: #93c5fd; font-size: 12px; opacity: .65;
+  }
+
+  /* === Opção 7: avatar grande + nome do cliente + consultor === */
+  .mob-card-07 .mob-header { gap: 10px; }
+  .mob-card-07 .big-av {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, #5096ff, #3d80e6);
+    color: #fff; font-size: 12px; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    border: 2px solid rgba(80,140,255,.30);
+  }
+  .mob-card-07 .name-stack { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+  .mob-card-07 .consultor-line {
+    font-size: 9.5px; color: #93c5fd; font-weight: 700;
+    letter-spacing: .04em;
+  }
+
+  /* === Opção 8: layout em duas colunas (treinador + consultor) === */
+  .cons-08 {
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  }
+  .cons-08 .col {
+    background: rgba(255,255,255,.02);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 5px; padding: 5px 8px;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .cons-08 .lbl {
+    font-size: 7.5px; color: #6b7280; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .10em;
+  }
+  .cons-08 .val { font-size: 10px; font-weight: 700; letter-spacing: .02em; }
+  .cons-08 .col.t .val { color: #a78bfa; }
+  .cons-08 .col.c .val { color: #93c5fd; }
+  .cons-08 .col.empty .val { color: #6b7280; font-style: italic; font-weight: 500; }
+
+  /* === Opção 9: badge inline no header (compacto) === */
+  .cons-09 {
+    background: rgba(80,140,255,.12);
+    color: #93c5fd;
+    border: 1px solid rgba(80,140,255,.28);
+    font-size: 9px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cons-09::before { content: '👤'; font-size: 9px; }
+
+  /* === Opção 10: cabeçalho com bandeira do consultor === */
+  .mob-card-10 .cons-banner {
+    margin: -10px -12px 8px;
+    padding: 5px 12px;
+    background: linear-gradient(90deg, rgba(80,140,255,.22), rgba(80,140,255,.06));
+    color: #bcd5ff;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(80,140,255,.25);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .mob-card-10 .cons-banner .ic { opacity: .7; }
+</style>
+</head>
+<body>
+
+<h1>10 estilos para exibir o CONSULTOR no card mobile</h1>
+<p class="sub">Base: card "ALBERTO SILVA DOS SANTOS" · Presente · Sem status · Juliana Fabricia</p>
+
+<div class="grid">
+
+  <!-- ============ OPÇÃO 1 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Linha tipográfica simples</div>
+        <div class="opt-desc">Sem caixa, sem moldura — só "👤 Consultor: <b>NOME</b>". Limpo e leve.</div>
+      </div>
+      <span class="opt-num">01</span>
+    </div>
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">ALBERTO SILVA DOS SANTOS</span>
+            <span class="mob-presenca">✅ Presente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+      <div class="cons-01"><span class="ic">👤</span>Consultor: <b>JULIANA FABRICIA</b></div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> ocupa menos espaço · <b>Contra:</b> menos óbvio que é clicável</div>
+  </div>
+
+  <!-- ============ OPÇÃO 2 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Avatar + nome em painel azul</div>
+        <div class="opt-desc">Círculo com iniciais "JF" + label pequena "CONSULTOR" + nome em destaque + caret.</div>
+      </div>
+      <span class="opt-num">02</span>
+    </div>
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">ALBERTO SILVA DOS SANTOS</span>
+            <span class="mob-presenca">✅ Presente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+      <div class="cons-02">
+        <span class="av">JF</span>
+        <div class="info">
+          <div class="lbl">Consultor</div>
+          <div class="nome">JULIANA FABRICIA</div>
+        </div>
+        <span class="caret">▾</span>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> visual rico, profissional · <b>Contra:</b> ocupa mais altura</div>
+  </div>
+
+  <!-- ============ OPÇÃO 3 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Chip pill arredondado</div>
+        <div class="opt-desc">Label + pill 100% redondo com ícone de pessoa. Tap = abre seletor.</div>
+      </div>
+      <span class="opt-num">03</span>
+    </div>
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">ALBERTO SILVA DOS SANTOS</span>
+            <span class="mob-presenca">✅ Presente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+      <div class="cons-03">
+        <span class="lbl">Consultor</span>
+        <span class="pill">JULIANA FABRICIA</span>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> compacto, escaneável · <b>Contra:</b> pill grande pode quebrar em nomes longos</div>
+  </div>
+
+  <!-- ============ OPÇÃO 4 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Grid formulário (label · valor · ✎)</div>
+        <div class="opt-desc">Coluna fixa do label, valor no meio, botão de editar à direita.</div>
+      </div>
+      <span class="opt-num">04</span>
+    </div>
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">ALBERTO SILVA DOS SANTOS</span>
+            <span class="mob-presenca">✅ Presente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+      <div class="cons-04">
+        <span class="k">Consultor</span>
+        <span class="v">JULIANA FABRICIA</span>
+        <button class="ed">✎</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> hierarquia clara, ícone editar explícito · <b>Contra:</b> "formal" demais</div>
+  </div>
+
+  <!-- ============ OPÇÃO 5 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Subtexto do nome do cliente</div>
+        <div class="opt-desc">Consultor vira "subtítulo" do nome — economiza linha inteira.</div>
+      </div>
+      <span class="opt-num">05</span>
+    </div>
+    <div class="mob-card mob-card-05">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <div class="name-stack">
+              <span class="mob-name">ALBERTO SILVA DOS SANTOS</span>
+              <span class="sub-cons">JULIANA FABRICIA</span>
+            </div>
+            <span class="mob-presenca">✅ Presente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row" style="margin-top:4px;">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> sem linha extra, hierarquia natural · <b>Contra:</b> não há label "CONSULTOR" visível</div>
+  </div>
+
+  <!-- ============ OPÇÃO 6 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Card stripe lateral azul</div>
+        <div class="opt-desc">Borda esquerda azul + gradiente sutil. Identidade visual forte como "marca" do consultor.</div>
+      </div>
+      <span class="opt-num">06</span>
+    </div>
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">ALBERTO SILVA DOS SANTOS</span>
+            <span class="mob-presenca">✅ Presente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+      <div class="cons-06">
+        <div class="left">
+          <span class="lbl">Consultor</span>
+          <span class="nome">JULIANA FABRICIA</span>
+        </div>
+        <span class="ed">▾</span>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> elegante, premium · <b>Contra:</b> só destaca consultor (não ajuda treinador)</div>
+  </div>
+
+  <!-- ============ OPÇÃO 7 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Avatar grande no header</div>
+        <div class="opt-desc">Círculo de 38px à esquerda + cliente + consultor abaixo do nome.</div>
+      </div>
+      <span class="opt-num">07</span>
+    </div>
+    <div class="mob-card mob-card-07">
+      <div class="mob-header">
+        <span class="big-av">JF</span>
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <div class="name-stack">
+              <span class="mob-name">ALBERTO SILVA DOS SANTOS</span>
+              <span class="consultor-line">👤 JULIANA FABRICIA</span>
+            </div>
+            <span class="mob-presenca">✅ Pres.</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row" style="margin-top:4px;">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> visual mais rico de todos, identifica consultor por cor · <b>Contra:</b> rouba protagonismo do cliente</div>
+  </div>
+
+  <!-- ============ OPÇÃO 8 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Duas colunas: Treinador + Consultor</div>
+        <div class="opt-desc">Mostra os dois lado a lado em mini-caixas. Adapta também o que falta no card mobile.</div>
+      </div>
+      <span class="opt-num">08</span>
+    </div>
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">ALBERTO SILVA DOS SANTOS</span>
+            <span class="mob-presenca">✅ Presente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+      <div class="cons-08">
+        <div class="col t empty">
+          <span class="lbl">Treinador</span>
+          <span class="val">— atribuir —</span>
+        </div>
+        <div class="col c">
+          <span class="lbl">Consultor</span>
+          <span class="val">JULIANA FABRICIA</span>
+        </div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> resolve treinador + consultor de uma vez · <b>Contra:</b> linha mais alta, dois cliques</div>
+  </div>
+
+  <!-- ============ OPÇÃO 9 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Badge inline no header</div>
+        <div class="opt-desc">Pill compacto ao lado do nome, junto da presença. Sem linha extra.</div>
+      </div>
+      <span class="opt-num">09</span>
+    </div>
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row" style="flex-wrap:wrap;">
+            <span class="mob-name" style="flex:0 1 auto;">ALBERTO SILVA…</span>
+            <span class="cons-09">JULIANA FABRICIA</span>
+            <span class="mob-presenca">✅ Pres.</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> 1 linha total, ultra-compacto · <b>Contra:</b> nome do cliente fica menor</div>
+  </div>
+
+  <!-- ============ OPÇÃO 10 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Bandeira do consultor no topo</div>
+        <div class="opt-desc">Faixa colorida no topo do card mostra "👤 JULIANA FABRICIA ▾". Vira "âncora visual" da equipe.</div>
+      </div>
+      <span class="opt-num">10</span>
+    </div>
+    <div class="mob-card mob-card-10">
+      <div class="cons-banner">
+        <span>👤 Juliana Fabricia</span>
+        <span class="ic">▾</span>
+      </div>
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">ALBERTO SILVA DOS SANTOS</span>
+            <span class="mob-presenca">✅ Presente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> identifica time visualmente · <b>Contra:</b> roubo de espaço se vários consultores na lista</div>
+  </div>
+
+</div>
+
+</body>
+</html>

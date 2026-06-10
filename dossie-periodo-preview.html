@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Pré-visualização · Período no Dossiê Comportamental</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --surface:#10172a; --surface2:#1a2238;
+    --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.18);
+    --text:#e5e7eb; --muted:#9ca3af;
+    --accent:#c8f05a; --blue:#60a5fa; --amber:#f59e0b;
+    --red:#ef4444; --green:#34d399;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:30px; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; font-size:13px;
+  }
+  h1{ font-size:20px; margin:0 0 6px; font-weight:800; }
+  .sub{ color:var(--muted); margin-bottom:32px; font-size:13px; }
+  .preview-grid{ display:grid; grid-template-columns:1fr; gap:24px; max-width:980px; }
+  .preview{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden; box-shadow:0 4px 18px rgba(0,0,0,.3);
+  }
+  .preview-head{
+    padding:14px 18px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(167,139,250,.08),transparent);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .preview-tit{ font-size:14px; font-weight:800; color:#a78bfa; }
+  .preview-tit small{ color:var(--muted); font-weight:500; }
+  .preview-pick{
+    background:transparent; color:var(--accent); border:1px solid rgba(200,240,90,.4);
+    padding:5px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;
+  }
+  .preview-pick:hover{ background:rgba(200,240,90,.08); }
+  .preview-body{ padding:16px 18px 18px; }
+  .ic-perf-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px;
+  }
+  .ic-perf-card-h{
+    font-size:12px; font-weight:800; color:var(--accent);
+    text-transform:uppercase; letter-spacing:.06em;
+    margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(--border);
+  }
+  .ic-perf-lbl{
+    display:block; font-size:10px; font-weight:700; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.05em; margin-bottom:3px;
+  }
+  .ic-perf-input{
+    width:100%; padding:6px 10px; background:var(--surface2); color:var(--text);
+    border:1px solid var(--border); border-radius:5px; font-size:12px;
+    font-family:inherit;
+  }
+  .grid-4{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; }
+  /* Botões de atalho de período */
+  .periodo-row{
+    display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; padding-top:10px;
+    border-top:1px dashed var(--border);
+  }
+  .periodo-row-label{
+    width:100%; font-size:10px; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:2px;
+  }
+  .periodo-btn{
+    background:var(--surface2); color:var(--text);
+    border:1px solid var(--border); border-radius:5px;
+    padding:6px 12px; font-size:11px; font-weight:600; cursor:pointer;
+    font-family:inherit; transition:all .15s;
+  }
+  .periodo-btn:hover{ background:rgba(167,139,250,.1); border-color:rgba(167,139,250,.4); color:#a78bfa; }
+  .periodo-btn.padrao{ border-color:rgba(200,240,90,.4); color:var(--accent); }
+  .periodo-btn.padrao::after{ content:'★'; margin-left:4px; }
+  .legend{
+    margin-top:14px; padding:10px 12px; background:rgba(96,165,250,.06);
+    border-left:3px solid var(--blue); border-radius:4px;
+    font-size:11px; color:var(--text); line-height:1.55;
+  }
+  .legend b{ color:var(--blue); }
+  .compare{
+    margin-top:36px; padding:16px 20px; background:var(--surface);
+    border:1px solid var(--border); border-radius:10px;
+  }
+  .compare h2{ font-size:15px; margin:0 0 10px; color:var(--accent); }
+  .compare-table{ width:100%; border-collapse:collapse; font-size:12px; }
+  .compare-table th, .compare-table td{
+    text-align:left; padding:8px 10px; border-bottom:1px solid var(--border);
+  }
+  .compare-table th{ color:var(--muted); font-weight:700; font-size:10px;
+    text-transform:uppercase; letter-spacing:.05em; }
+  .pin-tag{ display:inline-block; padding:2px 8px; background:rgba(167,139,250,.15);
+    color:#a78bfa; border-radius:4px; font-size:10px; font-weight:700; margin-right:4px; }
+</style>
+</head>
+<body>
+
+<h1>📌 Pré-visualizações · Botão de período no Dossiê Comportamental</h1>
+<p class="sub">3 interpretações de "colocar o período" — clique no card que te atende.</p>
+
+<div class="preview-grid">
+
+  <!-- ═════════════════ OPÇÃO A ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">A · Validade do dossiê <small>(até a próxima reavaliação)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Preenche <b>Aplicado em = hoje</b> + <b>Próx. reavaliação = hoje + N tempo</b></div>
+      </div>
+      <button class="preview-pick">Escolher A</button>
+    </div>
+    <div class="preview-body">
+      <div class="ic-perf-card">
+        <div class="ic-perf-card-h">📌 Identificação</div>
+        <div class="grid-4">
+          <div><label class="ic-perf-lbl">Aplicado em</label><input type="date" class="ic-perf-input" value="2026-06-01"></div>
+          <div><label class="ic-perf-lbl">Próx. reavaliação</label><input type="date" class="ic-perf-input" value="2027-06-01"></div>
+          <div><label class="ic-perf-lbl">Tempo de casa</label><input type="text" class="ic-perf-input" placeholder="ex: 2 anos"></div>
+          <div><label class="ic-perf-lbl">Cargo</label><input type="text" class="ic-perf-input" value="Consultor"></div>
+        </div>
+        <div class="periodo-row">
+          <div class="periodo-row-label">⚡ Atalhos · validade do dossiê</div>
+          <button class="periodo-btn">3 meses</button>
+          <button class="periodo-btn">6 meses</button>
+          <button class="periodo-btn padrao">12 meses</button>
+          <button class="periodo-btn">18 meses</button>
+          <button class="periodo-btn">24 meses</button>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> consultores em momentos diferentes da jornada precisam de reaplicação em períodos diferentes — onboarding (3-6 meses), padrão (12), sênior (18-24).<br>
+        <b>Comportamento do clique:</b> preenche os 2 campos de data automaticamente. Pode sobrescrever manualmente depois.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO B ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">B · Cadência de uso <small>(com que frequência consultar o dossiê)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Novo campo independente · informa o ritmo recomendado pra esse perfil</div>
+      </div>
+      <button class="preview-pick">Escolher B</button>
+    </div>
+    <div class="preview-body">
+      <div class="ic-perf-card">
+        <div class="ic-perf-card-h">📌 Identificação</div>
+        <div class="grid-4">
+          <div><label class="ic-perf-lbl">Aplicado em</label><input type="date" class="ic-perf-input" value="2026-06-01"></div>
+          <div><label class="ic-perf-lbl">Próx. reavaliação</label><input type="date" class="ic-perf-input" value="2027-06-01"></div>
+          <div><label class="ic-perf-lbl">Tempo de casa</label><input type="text" class="ic-perf-input" placeholder="ex: 2 anos"></div>
+          <div><label class="ic-perf-lbl">Cargo</label><input type="text" class="ic-perf-input" value="Consultor"></div>
+        </div>
+        <div class="periodo-row">
+          <div class="periodo-row-label">📅 Cadência de revisão do dossiê</div>
+          <button class="periodo-btn">Semanal</button>
+          <button class="periodo-btn padrao">Quinzenal</button>
+          <button class="periodo-btn">Mensal</button>
+          <button class="periodo-btn">Trimestral</button>
+          <button class="periodo-btn">Anual</button>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> alguns consultores precisam de check-in semanal (onboarding intensivo), outros mensal/trimestral (sênior). A cadência aparece no card do consultor pra te lembrar quando voltar.<br>
+        <b>Comportamento do clique:</b> grava como tag no perfil · sincroniza com o módulo de Cadência (ainda não troca os 15d default — só sinaliza).
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO C ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">C · Quando foi aplicado <small>(atalho pra preencher "Aplicado em" rapidamente)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Substitui o "dd/mm/aaaa" por 5 atalhos de data + opção "outra data"</div>
+      </div>
+      <button class="preview-pick">Escolher C</button>
+    </div>
+    <div class="preview-body">
+      <div class="ic-perf-card">
+        <div class="ic-perf-card-h">📌 Identificação</div>
+        <div class="grid-4">
+          <div><label class="ic-perf-lbl">Aplicado em</label><input type="date" class="ic-perf-input" value="2026-06-01"></div>
+          <div><label class="ic-perf-lbl">Próx. reavaliação</label><input type="date" class="ic-perf-input" value="2027-06-01"></div>
+          <div><label class="ic-perf-lbl">Tempo de casa</label><input type="text" class="ic-perf-input" placeholder="ex: 2 anos"></div>
+          <div><label class="ic-perf-lbl">Cargo</label><input type="text" class="ic-perf-input" value="Consultor"></div>
+        </div>
+        <div class="periodo-row">
+          <div class="periodo-row-label">⏱ Atalho · quando o teste foi aplicado</div>
+          <button class="periodo-btn padrao">Hoje</button>
+          <button class="periodo-btn">Esta semana</button>
+          <button class="periodo-btn">Este mês</button>
+          <button class="periodo-btn">Último trimestre</button>
+          <button class="periodo-btn">Outra data…</button>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> se o gestor não lembra a data exata, usa um atalho relativo (ex: "Aplicado este mês" vira 1º dia do mês corrente).<br>
+        <b>Comportamento do clique:</b> só preenche o campo "Aplicado em" · o "Próx. reavaliação" continua manual.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- COMPARATIVO -->
+<div class="compare">
+  <h2>📊 Resumo comparativo</h2>
+  <table class="compare-table">
+    <thead><tr>
+      <th>Critério</th>
+      <th>A · Validade</th>
+      <th>B · Cadência</th>
+      <th>C · Quando aplicado</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Pergunta que responde</b></td>
+        <td>Quanto tempo este dossiê vale?</td>
+        <td>Com que frequência revisar?</td>
+        <td>Quando o teste foi aplicado?</td>
+      </tr>
+      <tr>
+        <td><b>Campo que altera</b></td>
+        <td>Aplicado em + Próx. reavaliação</td>
+        <td>Novo campo "cadência"</td>
+        <td>Só "Aplicado em"</td>
+      </tr>
+      <tr>
+        <td><b>Integração com outros módulos</b></td>
+        <td>Nenhuma · só metadata</td>
+        <td>Sincroniza com Cadência (sinaliza ritmo)</td>
+        <td>Nenhuma · só metadata</td>
+      </tr>
+      <tr>
+        <td><b>Esforço de build</b></td>
+        <td>~15 min</td>
+        <td>~40 min (schema + render)</td>
+        <td>~20 min</td>
+      </tr>
+      <tr>
+        <td><b>Melhor pra</b></td>
+        <td>Gestor que quer planejar reaplicação</td>
+        <td>Times com cadência variável por consultor</td>
+        <td>Preenchimento rápido sem calendário</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="margin-top:14px;padding:10px 12px;background:rgba(200,240,90,.06);border-left:3px solid var(--accent);border-radius:4px;font-size:12px;color:var(--text);">
+    <span class="pin-tag">DICA</span> Dá pra ter <b>A + C combinados</b>: atalhos de "quando aplicado" no campo da esquerda + atalhos de "validade" entre os dois campos de data. Custo: ~30 min.
+  </div>
+</div>
+
+</body>
+</html>

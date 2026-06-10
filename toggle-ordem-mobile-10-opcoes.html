@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Toggle ORDEM (mobile) — 10 opções</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #0a0e13;
+    color: #e6edf3;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 0 0 6px;
+    color: #c8f05a;
+    letter-spacing: .02em;
+  }
+  .sub {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 28px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 22px;
+  }
+  .opt {
+    background: #161b22;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .opt-h {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    border-bottom: 1px dashed rgba(255,255,255,.10);
+    padding-bottom: 10px;
+  }
+  .opt-num {
+    font-size: 10px;
+    font-weight: 800;
+    color: #c8f05a;
+    background: rgba(200,240,90,.08);
+    border: 1px solid rgba(200,240,90,.25);
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: .08em;
+  }
+  .opt-ttl {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e6edf3;
+    margin-bottom: 2px;
+  }
+  .opt-desc {
+    font-size: 10.5px;
+    color: #9aa5b1;
+    line-height: 1.45;
+  }
+  .opt-pros {
+    font-size: 9.5px;
+    color: #6b7280;
+    line-height: 1.4;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(255,255,255,.08);
+  }
+  .opt-pros b { color: #b88a5a; }
+
+  /* ===== Container que simula a barra do mobile ===== */
+  .stage {
+    background: #0c1117;
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 70px;
+  }
+  .stage-label {
+    font-size: 10px;
+    color: #6b7280;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  /* ============ Atual (referência) ============ */
+  .ref {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ref .lbl-side {
+    font-size: 11px; font-weight: 700;
+    color: #6b7280;
+    transition: color .15s;
+  }
+  .ref .lbl-side.on { color: #c8f05a; }
+  .ref-switch {
+    position: relative;
+    width: 46px; height: 24px;
+    background: rgba(200,240,90,.15);
+    border: 1px solid rgba(200,240,90,.4);
+    border-radius: 14px;
+    cursor: pointer;
+  }
+  .ref-switch .dot {
+    position: absolute; top: 2px; left: 3px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #c8f05a;
+    transform: translateX(20px);
+    transition: transform .2s;
+  }
+
+  /* ============ Opção 1: segmented duo (chips lado a lado) ============ */
+  .seg-01 {
+    display: inline-flex;
+    background: rgba(0,0,0,.30);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .seg-01 button {
+    background: transparent;
+    border: none;
+    color: #9aa5b1;
+    padding: 7px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 6px;
+    font-family: inherit;
+    letter-spacing: .04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .seg-01 button.on {
+    background: #c8f05a;
+    color: #0a0e1a;
+  }
+
+  /* ============ Opção 2: botão único alternante ============ */
+  .toggle-02 {
+    background: rgba(200,240,90,.10);
+    border: 1px solid rgba(200,240,90,.35);
+    color: #c8f05a;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: .04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+  }
+  .toggle-02 .arrow-stack {
+    display: inline-flex;
+    flex-direction: column;
+    font-size: 8px;
+    line-height: 1;
+    gap: 1px;
+  }
+  .toggle-02 .arrow-stack .up { color: #c8f05a; opacity: .25; }
+  .toggle-02 .arrow-stack .down { color: #c8f05a; }
+
+  /* ============ Opção 3: pill iOS com slider ============ */
+  .pill-03 {
+    position: relative;
+    display: inline-flex;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 30px;
+    padding: 4px;
+    width: 200px;
+    height: 38px;
+  }
+  .pill-03 .slider {
+    position: absolute;
+    top: 4px; left: 50%;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    background: linear-gradient(180deg, #d4f565, #c8f05a);
+    border-radius: 26px;
+    transition: left .25s cubic-bezier(.4,.0,.2,1);
+  }
+  .pill-03 button {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: .04em;
+    border-radius: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .pill-03 button.on { color: #0a0e1a; }
+
+  /* ============ Opção 4: ícone só (super-minimalista) ============ */
+  .iconly-04 {
+    display: inline-flex;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .iconly-04 button {
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    width: 36px; height: 36px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .iconly-04 button.on {
+    background: rgba(200,240,90,.18);
+    color: #c8f05a;
+  }
+  .iconly-04 .divider { width: 1px; background: rgba(255,255,255,.08); }
+
+  /* ============ Opção 5: chip duplo com gradient ============ */
+  .chip-05 {
+    display: inline-flex;
+    gap: 5px;
+  }
+  .chip-05 button {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.10);
+    color: #6b7280;
+    padding: 7px 12px;
+    border-radius: 16px;
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: .04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .chip-05 button.on {
+    background: linear-gradient(135deg, rgba(200,240,90,.25), rgba(200,240,90,.10));
+    border-color: rgba(200,240,90,.45);
+    color: #c8f05a;
+    box-shadow: 0 2px 8px rgba(200,240,90,.15);
+  }
+
+  /* ============ Opção 6: FAB circular ============ */
+  .fab-06 {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .fab-06 .lbl {
+    font-size: 10px;
+    color: #c8f05a;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .fab-06 .btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #d4f565, #c8f05a);
+    border: none;
+    color: #0a0e1a;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 12px rgba(200,240,90,.25);
+    font-family: inherit;
+  }
+
+  /* ============ Opção 7: dropdown estilo select ============ */
+  .drop-07 {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(200,240,90,.30);
+    color: #c8f05a;
+    padding: 8px 30px 8px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: .04em;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%3E%3Cpath%20fill%3D%22%23c8f05a%22%20d%3D%22M0%200l5%206%205-6z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+
+  /* ============ Opção 8: switch grande com label deslizante ============ */
+  .big-08 {
+    position: relative;
+    display: inline-flex;
+    background: rgba(0,0,0,.30);
+    border: 1px solid rgba(200,240,90,.20);
+    border-radius: 8px;
+    overflow: hidden;
+    height: 38px;
+    width: 220px;
+  }
+  .big-08 .slider {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 100%;
+    background: rgba(200,240,90,.15);
+    border-left: 2px solid #c8f05a;
+    transition: all .25s;
+  }
+  .big-08 button {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: .04em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .big-08 button.on { color: #c8f05a; }
+
+  /* ============ Opção 9: vertical stacked switch ============ */
+  .stack-09 {
+    display: inline-flex;
+    flex-direction: column;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .stack-09 button {
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    padding: 5px 12px;
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: .04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 100px;
+  }
+  .stack-09 button.on {
+    background: rgba(200,240,90,.15);
+    color: #c8f05a;
+  }
+  .stack-09 .div { height: 1px; background: rgba(255,255,255,.08); }
+
+  /* ============ Opção 10: cápsula moderna com dot ============ */
+  .cap-10 {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(0,0,0,.35);
+    border: 1px solid rgba(200,240,90,.25);
+    border-radius: 30px;
+    padding: 4px;
+    gap: 0;
+    position: relative;
+    height: 36px;
+  }
+  .cap-10 button {
+    position: relative;
+    z-index: 1;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    padding: 6px 16px;
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: .05em;
+    border-radius: 26px;
+    transition: color .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .cap-10 button.on {
+    background: #c8f05a;
+    color: #0a0e1a;
+    box-shadow: 0 2px 10px rgba(200,240,90,.30);
+  }
+
+  .footer-pick {
+    position: sticky;
+    bottom: 0;
+    margin-top: 30px;
+    padding: 16px 20px;
+    background: rgba(10,14,19,.92);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255,255,255,.08);
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+    font-size: 12px;
+    color: #9aa5b1;
+  }
+  .footer-pick b { color: #c8f05a; }
+</style>
+</head>
+<body>
+
+<h1>Toggle ORDEM ↑ Antiga / ↓ Recente — 10 estilos mobile</h1>
+<p class="sub">Atual: switch verde com bolinha. Escolha o estilo que prefere abaixo.</p>
+
+<div style="margin-bottom: 30px; padding: 14px; background: #1a1f29; border-radius: 10px; border: 1px solid rgba(255,255,255,.06);">
+  <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:8px;">REFERÊNCIA · ATUAL</div>
+  <div class="ref">
+    <span class="lbl-side">↑ Antiga</span>
+    <div class="ref-switch"><span class="dot"></span></div>
+    <span class="lbl-side on">↓ Recente</span>
+  </div>
+</div>
+
+<div class="grid">
+
+  <!-- ============ OPÇÃO 1 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Segmented duo</div>
+        <div class="opt-desc">Dois pills lado a lado, o ativo preenchido em verde. Padrão Material/iOS.</div>
+      </div>
+      <span class="opt-num">01</span>
+    </div>
+    <div class="stage">
+      <span class="stage-label">ORDEM</span>
+      <div class="seg-01">
+        <button>↑ Antiga</button>
+        <button class="on">↓ Recente</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> familiar, alvo de toque grande · <b>Contra:</b> ocupa mais largura</div>
+  </div>
+
+  <!-- ============ OPÇÃO 2 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Botão único alternante</div>
+        <div class="opt-desc">Um botão só, mostra a opção ATIVA. Tap troca pra outra. Compacto demais.</div>
+      </div>
+      <span class="opt-num">02</span>
+    </div>
+    <div class="stage">
+      <span class="stage-label">ORDEM</span>
+      <button class="toggle-02">
+        <span class="arrow-stack"><span class="up">↑</span><span class="down">↓</span></span>
+        RECENTE PRIMEIRO
+      </button>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> minúsculo, 1 toque · <b>Contra:</b> não-óbvio o estado "outro"</div>
+  </div>
+
+  <!-- ============ OPÇÃO 3 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Pill iOS com slider deslizante</div>
+        <div class="opt-desc">Cápsula longa com bolinha verde que desliza animadamente entre as duas opções.</div>
+      </div>
+      <span class="opt-num">03</span>
+    </div>
+    <div class="stage">
+      <span class="stage-label">ORDEM</span>
+      <div class="pill-03">
+        <div class="slider"></div>
+        <button>↑ Antiga</button>
+        <button class="on">↓ Recente</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> animação elegante, premium · <b>Contra:</b> ocupa 200px de largura</div>
+  </div>
+
+  <!-- ============ OPÇÃO 4 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Só ícones (ultra-compacto)</div>
+        <div class="opt-desc">Apenas as setas ↑↓, sem texto. Mostra o ativo em verde. Cabe em qualquer canto.</div>
+      </div>
+      <span class="opt-num">04</span>
+    </div>
+    <div class="stage">
+      <span class="stage-label">ORDEM</span>
+      <div class="iconly-04">
+        <button title="Antigas primeiro">↑</button>
+        <div class="divider"></div>
+        <button class="on" title="Recentes primeiro">↓</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> menor footprint · <b>Contra:</b> requer aprender que ↑=antiga</div>
+  </div>
+
+  <!-- ============ OPÇÃO 5 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Chip duplo com gradiente</div>
+        <div class="opt-desc">Dois chips arredondados. Ativo com gradiente verde + sombra suave.</div>
+      </div>
+      <span class="opt-num">05</span>
+    </div>
+    <div class="stage">
+      <span class="stage-label">ORDEM</span>
+      <div class="chip-05">
+        <button>↑ Antiga</button>
+        <button class="on">↓ Recente</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> visual moderno, profundidade · <b>Contra:</b> gap entre chips pode ser tap missed</div>
+  </div>
+
+  <!-- ============ OPÇÃO 6 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">FAB circular com label</div>
+        <div class="opt-desc">Botão redondo verde, label ao lado. Tap inverte a seta. Tipo "shuffle".</div>
+      </div>
+      <span class="opt-num">06</span>
+    </div>
+    <div class="stage">
+      <span class="stage-label">ORDEM</span>
+      <div class="fab-06">
+        <span class="lbl">Recente</span>
+        <button class="btn">↓</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> chamativo, único · <b>Contra:</b> exige acompanhar a label pra entender</div>
+  </div>
+
+  <!-- ============ OPÇÃO 7 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Dropdown nativo (select)</div>
+        <div class="opt-desc">Select estilo dropdown abre lista com as duas opções. Padrão de formulário.</div>
+      </div>
+      <span class="opt-num">07</span>
+    </div>
+    <div class="stage">
+      <span class="stage-label">ORDEM</span>
+      <select class="drop-07">
+        <option>↓ Recente</option>
+        <option>↑ Antiga</option>
+      </select>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> escalável (se virar 3+ opções) · <b>Contra:</b> 2 toques pra trocar</div>
+  </div>
+
+  <!-- ============ OPÇÃO 8 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Switch grande com slider full-width</div>
+        <div class="opt-desc">Container 220px, slider semi-transparente desliza pro lado ativo. Borda verde lateral.</div>
+      </div>
+      <span class="opt-num">08</span>
+    </div>
+    <div class="stage">
+      <span class="stage-label">ORDEM</span>
+      <div class="big-08">
+        <div class="slider"></div>
+        <button>↑ Antiga</button>
+        <button class="on">↓ Recente</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> tap area enorme, claro · <b>Contra:</b> rouba largura da barra</div>
+  </div>
+
+  <!-- ============ OPÇÃO 9 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Stack vertical (linhas)</div>
+        <div class="opt-desc">Empilhado em coluna, ativo destacado em verde. Para barras estreitas (modal mobile).</div>
+      </div>
+      <span class="opt-num">09</span>
+    </div>
+    <div class="stage" style="align-items:flex-start;">
+      <span class="stage-label" style="margin-top:6px;">ORDEM</span>
+      <div class="stack-09">
+        <button>↑ Antiga</button>
+        <div class="div"></div>
+        <button class="on">↓ Recente</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> não consome largura horizontal · <b>Contra:</b> exige espaço vertical</div>
+  </div>
+
+  <!-- ============ OPÇÃO 10 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Cápsula moderna com glow</div>
+        <div class="opt-desc">Container preto arredondado, opção ativa em verde brilhante com sombra glow. Mais "premium".</div>
+      </div>
+      <span class="opt-num">10</span>
+    </div>
+    <div class="stage">
+      <span class="stage-label">ORDEM</span>
+      <div class="cap-10">
+        <button>↑ Antiga</button>
+        <button class="on">↓ Recente</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> mais elegante, identidade forte · <b>Contra:</b> menor toque que segmented</div>
+  </div>
+
+</div>
+
+<div class="footer-pick">
+  Escolha um número (ex.: <b>3</b>) e eu aplico no toggle ORDEM do mobile e desktop.
+</div>
+
+</body>
+</html>

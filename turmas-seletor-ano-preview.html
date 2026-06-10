@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Pré-visualização · Seletor de ano em Gerenciar Turmas</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --surface:#10172a; --surface2:#1a2238;
+    --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.18);
+    --text:#e5e7eb; --muted:#9ca3af;
+    --accent:#c8f05a; --blue:#60a5fa; --amber:#f59e0b;
+    --red:#ef4444; --green:#34d399; --purple:#a78bfa;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:30px; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; font-size:13px;
+  }
+  h1{ font-size:20px; margin:0 0 6px; font-weight:800; }
+  .sub{ color:var(--muted); margin-bottom:32px; font-size:13px; }
+  .preview-grid{ display:grid; grid-template-columns:1fr; gap:24px; max-width:1080px; }
+  .preview{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden; box-shadow:0 4px 18px rgba(0,0,0,.3);
+  }
+  .preview-head{
+    padding:14px 18px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(167,139,250,.08),transparent);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .preview-tit{ font-size:14px; font-weight:800; color:#a78bfa; }
+  .preview-tit small{ color:var(--muted); font-weight:500; }
+  .preview-pick{
+    background:transparent; color:var(--accent); border:1px solid rgba(200,240,90,.4);
+    padding:5px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;
+  }
+  .preview-pick:hover{ background:rgba(200,240,90,.08); }
+  .preview-body{ padding:16px 18px 18px; }
+
+  /* Mockup do header */
+  .header-mock{
+    background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .header-tit{ font-size:14px; font-weight:800; color:var(--text); display:flex; align-items:center; gap:6px; }
+  .header-tit::before{ content:'⚙'; }
+  .swimlane-pill{
+    background:transparent; color:var(--text); border:1px solid var(--border2);
+    padding:5px 10px; border-radius:6px; font-size:11px; font-weight:600;
+    display:inline-flex; align-items:center; gap:5px;
+  }
+  .swimlane-pill::before{ content:'H'; background:var(--surface); padding:2px 5px; border-radius:3px; font-size:10px; font-weight:800; }
+  .seletor-label{ font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+
+  /* ──────────── OPÇÃO 1 · DROPDOWN ──────────── */
+  .ano-select{
+    background:var(--accent); color:#0a0e1a; font-weight:800;
+    border:none; border-radius:14px; padding:6px 14px; font-size:12px;
+    cursor:pointer; font-family:inherit; appearance:none;
+    padding-right:28px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4l3 3 3-3' stroke='%230a0e1a' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center;
+  }
+
+  /* ──────────── OPÇÃO 2 · PILLS HORIZONTAIS ──────────── */
+  .ano-pills{ display:flex; gap:6px; align-items:center; }
+  .ano-pill{
+    background:var(--surface); color:var(--muted);
+    padding:5px 12px; border-radius:14px; font-size:11px; font-weight:700;
+    cursor:pointer; border:1px solid var(--border); transition:all .15s;
+  }
+  .ano-pill:hover{ color:var(--text); border-color:var(--border2); }
+  .ano-pill.ativa{ background:var(--accent); color:#0a0e1a; border-color:var(--accent); }
+  .ano-pill.add{ background:transparent; border:1px dashed var(--border2); color:var(--accent); }
+
+  /* ──────────── OPÇÃO 3 · SETAS ‹ ANO › ──────────── */
+  .ano-setas{ display:inline-flex; align-items:stretch; }
+  .seta-btn{
+    width:30px; height:30px; padding:0;
+    background:var(--surface); color:var(--text);
+    border:1px solid var(--border); cursor:pointer;
+    font-size:14px; font-weight:800; font-family:inherit;
+  }
+  .seta-btn:hover{ background:var(--surface2); border-color:var(--border2); }
+  .seta-btn:first-child{ border-radius:14px 0 0 14px; border-right:none; }
+  .seta-btn:last-child{ border-radius:0 14px 14px 0; border-left:none; }
+  .ano-numero{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:80px; background:var(--accent); color:#0a0e1a;
+    font-weight:800; font-size:13px; padding:0 14px;
+  }
+
+  /* ──────────── OPÇÃO 4 · POPOVER GRID ──────────── */
+  .ano-popover-trigger{
+    background:var(--accent); color:#0a0e1a; border:none; cursor:pointer;
+    padding:6px 14px; border-radius:14px; font-size:12px; font-weight:800;
+    font-family:inherit; display:inline-flex; align-items:center; gap:6px;
+  }
+  .ano-popover-trigger::after{ content:'📅'; font-size:11px; }
+  .popover-mock{
+    position:relative; display:inline-block;
+    background:var(--surface); border:1px solid var(--border2); border-radius:10px;
+    padding:14px; margin-top:8px; box-shadow:0 8px 28px rgba(0,0,0,.5);
+    min-width:280px;
+  }
+  .popover-mock::before{
+    content:''; position:absolute; top:-7px; left:20px;
+    width:12px; height:12px; background:var(--surface);
+    border-left:1px solid var(--border2); border-top:1px solid var(--border2);
+    transform:rotate(45deg);
+  }
+  .pop-anos-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px; }
+  .pop-ano-cell{
+    background:var(--surface2); color:var(--text);
+    padding:10px 0; text-align:center; font-weight:700; font-size:12px;
+    border-radius:6px; cursor:pointer; border:1px solid transparent;
+    transition:all .15s; position:relative;
+  }
+  .pop-ano-cell:hover{ border-color:var(--accent); color:var(--accent); }
+  .pop-ano-cell.ativa{ background:var(--accent); color:#0a0e1a; }
+  .pop-ano-cell .badge-qtd{
+    position:absolute; top:2px; right:4px; font-size:8px;
+    background:var(--blue); color:#0a0e1a;
+    padding:0 4px; border-radius:6px; font-weight:800;
+  }
+  .pop-ano-cell.ativa .badge-qtd{ background:#0a0e1a; color:var(--accent); }
+  .pop-footer{
+    display:flex; align-items:center; justify-content:space-between;
+    padding-top:10px; border-top:1px solid var(--border); font-size:10px; color:var(--muted);
+  }
+
+  /* ──────────── OPÇÃO 5 · RANGE/MULTI-SELECT ──────────── */
+  .range-mock{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:6px 8px 6px 14px; display:inline-flex; align-items:center; gap:10px;
+  }
+  .range-tag{
+    background:var(--accent); color:#0a0e1a; font-weight:800; font-size:11px;
+    padding:3px 10px; border-radius:10px;
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .range-tag .x{
+    cursor:pointer; opacity:.65; font-weight:900; line-height:1;
+  }
+  .range-tag .x:hover{ opacity:1; }
+  .range-input{
+    background:transparent; border:none; color:var(--text);
+    font-family:inherit; font-size:11px; padding:3px 0; min-width:80px; outline:none;
+  }
+  .range-input::placeholder{ color:var(--muted); }
+
+  /* legenda */
+  .legend{
+    margin-top:14px; padding:10px 12px; background:rgba(96,165,250,.06);
+    border-left:3px solid var(--blue); border-radius:4px;
+    font-size:11px; color:var(--text); line-height:1.55;
+  }
+  .legend b{ color:var(--blue); }
+  .compare{
+    margin-top:36px; padding:16px 20px; background:var(--surface);
+    border:1px solid var(--border); border-radius:10px;
+  }
+  .compare h2{ font-size:15px; margin:0 0 10px; color:var(--accent); }
+  .compare-table{ width:100%; border-collapse:collapse; font-size:12px; }
+  .compare-table th, .compare-table td{
+    text-align:left; padding:8px 10px; border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  .compare-table th{ color:var(--muted); font-weight:700; font-size:10px;
+    text-transform:uppercase; letter-spacing:.05em; }
+  .compare-table tr td:first-child{ font-weight:700; color:var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>🗓 Pré-visualizações · Seletor de ano em "Gerenciar Turmas"</h1>
+<p class="sub">5 formas de escolher o calendário/ano no header — atual é só o botão "ANO 2026" + "+ Ano".</p>
+
+<div class="preview-grid">
+
+  <!-- ═════════════════ OPÇÃO 1 · DROPDOWN ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">1 · Dropdown nativo <small>(seletor &lt;select&gt; padrão)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Botão verde mostra o ano atual · clique abre lista vertical com todos os anos.</div>
+      </div>
+      <button class="preview-pick">Escolher 1</button>
+    </div>
+    <div class="preview-body">
+      <div class="header-mock">
+        <div class="header-tit">Gerenciar Turmas</div>
+        <span class="swimlane-pill">Swimlane</span>
+        <span style="margin-left:8px;" class="seletor-label">ANO</span>
+        <select class="ano-select">
+          <option>2024</option>
+          <option>2025</option>
+          <option selected>2026</option>
+          <option>2027</option>
+        </select>
+        <button class="ano-pill add">+ Ano</button>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> times com muitos anos de histórico (5+) · o dropdown comporta dezenas de opções.<br>
+        <b>Vantagem:</b> padrão do browser · zero código custom · funciona no mobile sem ajustes · acessibilidade nativa.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 2 · PILLS HORIZONTAIS ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">2 · Pills horizontais <small>(todos os anos visíveis · clique direto)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Cada ano é uma pílula clicável. O ativo destaca em verde. "+ Ano" continua na ponta.</div>
+      </div>
+      <button class="preview-pick">Escolher 2</button>
+    </div>
+    <div class="preview-body">
+      <div class="header-mock">
+        <div class="header-tit">Gerenciar Turmas</div>
+        <span class="swimlane-pill">Swimlane</span>
+        <span style="margin-left:8px;" class="seletor-label">ANO</span>
+        <div class="ano-pills">
+          <span class="ano-pill">2024</span>
+          <span class="ano-pill">2025</span>
+          <span class="ano-pill ativa">2026</span>
+          <span class="ano-pill">2027</span>
+          <span class="ano-pill add">+ Ano</span>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> 2-5 anos de turmas · gestor quer ver TODOS sem abrir nada.<br>
+        <b>Vantagem:</b> 1 clique pra trocar · sem dropdown · ano ativo sempre visível · vê o quanto há de histórico de uma vez.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 3 · SETAS ‹ ANO › ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">3 · Setas de navegação ‹ ANO › <small>(minimalista · 1 em 1)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Botão central com o ano · setas ‹ e › navegam um ano por vez (igual calendário do dashboard).</div>
+      </div>
+      <button class="preview-pick">Escolher 3</button>
+    </div>
+    <div class="preview-body">
+      <div class="header-mock">
+        <div class="header-tit">Gerenciar Turmas</div>
+        <span class="swimlane-pill">Swimlane</span>
+        <span style="margin-left:8px;" class="seletor-label">ANO</span>
+        <div class="ano-setas">
+          <button class="seta-btn" title="Ano anterior">‹</button>
+          <span class="ano-numero">2026</span>
+          <button class="seta-btn" title="Próximo ano">›</button>
+        </div>
+        <button class="ano-pill add">+ Ano</button>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> consistência com outros seletores do app (Pipeline, Feedback usam o mesmo padrão).<br>
+        <b>Vantagem:</b> 0 menus · 0 cliques pra ver opções · simples e direto. <b>Limitação:</b> ruim pra pular muitos anos (5 cliques pra ir de 2024 a 2029).
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 4 · POPOVER GRID ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">4 · Popover com grade <small>(visual · mostra qtd de turmas por ano)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Botão abre popover com matriz de anos · cada célula mostra quantas turmas tem (badge azul).</div>
+      </div>
+      <button class="preview-pick">Escolher 4</button>
+    </div>
+    <div class="preview-body">
+      <div class="header-mock">
+        <div class="header-tit">Gerenciar Turmas</div>
+        <span class="swimlane-pill">Swimlane</span>
+        <span style="margin-left:8px;" class="seletor-label">ANO</span>
+        <button class="ano-popover-trigger">2026</button>
+        <button class="ano-pill add" style="margin-left:auto;">+ Ano</button>
+      </div>
+      <div class="popover-mock">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">📅 Escolha o ano</div>
+        <div class="pop-anos-grid">
+          <div class="pop-ano-cell">2020<span class="badge-qtd">2</span></div>
+          <div class="pop-ano-cell">2021<span class="badge-qtd">3</span></div>
+          <div class="pop-ano-cell">2022<span class="badge-qtd">4</span></div>
+          <div class="pop-ano-cell">2023<span class="badge-qtd">5</span></div>
+          <div class="pop-ano-cell">2024<span class="badge-qtd">6</span></div>
+          <div class="pop-ano-cell">2025<span class="badge-qtd">8</span></div>
+          <div class="pop-ano-cell ativa">2026<span class="badge-qtd">4</span></div>
+          <div class="pop-ano-cell">2027</div>
+        </div>
+        <div class="pop-footer">
+          <span>Total · 32 turmas em 7 anos</span>
+          <button style="background:transparent;border:none;color:var(--accent);font-weight:700;font-size:11px;cursor:pointer;">+ Adicionar ano</button>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> 5+ anos de histórico · gestor quer escolher visualmente sem rolar dropdown.<br>
+        <b>Vantagem:</b> badge azul mostra quantas turmas tem em cada ano · ajuda a achar "aquele ano que rolaram muitas" · footer com total agregado.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 5 · RANGE / MULTI-SELECT ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">5 · Multi-select com tags <small>(seleciona vários anos pra ver agregado)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Tags removíveis · digite ano novo + Enter pra adicionar. Lista mostra turmas dos anos selecionados juntos.</div>
+      </div>
+      <button class="preview-pick">Escolher 5</button>
+    </div>
+    <div class="preview-body">
+      <div class="header-mock">
+        <div class="header-tit">Gerenciar Turmas</div>
+        <span class="swimlane-pill">Swimlane</span>
+        <span style="margin-left:8px;" class="seletor-label">ANOS</span>
+        <div class="range-mock">
+          <span class="range-tag">2024 <span class="x" title="Remover">×</span></span>
+          <span class="range-tag">2025 <span class="x">×</span></span>
+          <span class="range-tag">2026 <span class="x">×</span></span>
+          <input class="range-input" placeholder="+ ano…">
+        </div>
+        <button class="ano-pill add">+ Ano</button>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> análise comparativa entre anos · gestor quer ver "todas as turmas de 2024-2026 juntas" pra comparar volume/sazonalidade.<br>
+        <b>Vantagem:</b> permite agregar múltiplos anos · digita pra adicionar · clica × pra remover · funciona como "filtro" não como "navegação".<br>
+        <b>Limitação:</b> mistura turmas de anos diferentes na mesma lista — pode ficar confuso se não tiver indicador do ano em cada item.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- COMPARATIVO -->
+<div class="compare">
+  <h2>📊 Resumo comparativo</h2>
+  <table class="compare-table">
+    <thead><tr>
+      <th>Critério</th>
+      <th>1 · Dropdown</th>
+      <th>2 · Pills</th>
+      <th>3 · Setas ‹ ›</th>
+      <th>4 · Popover</th>
+      <th>5 · Multi-tags</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td>Cliques pra trocar de ano</td>
+        <td>2 (abre + escolhe)</td>
+        <td><b>1</b></td>
+        <td>1 (vizinho) / N (longe)</td>
+        <td>2 (abre + clica)</td>
+        <td>1 (clica × ou +)</td>
+      </tr>
+      <tr>
+        <td>Escala (5+ anos)</td>
+        <td><b>Excelente ✓</b></td>
+        <td>Ruim (ocupa muito espaço)</td>
+        <td>Médio (precisa setas várias vezes)</td>
+        <td><b>Excelente ✓</b></td>
+        <td>Médio</td>
+      </tr>
+      <tr>
+        <td>Mostra "qtd por ano"</td>
+        <td>Não</td>
+        <td>Não</td>
+        <td>Não</td>
+        <td><b>Sim ✓</b></td>
+        <td>Não</td>
+      </tr>
+      <tr>
+        <td>Combina múltiplos anos</td>
+        <td>Não</td>
+        <td>Não</td>
+        <td>Não</td>
+        <td>Não</td>
+        <td><b>Sim ✓</b></td>
+      </tr>
+      <tr>
+        <td>Funciona no mobile</td>
+        <td><b>Excelente ✓</b></td>
+        <td>Bom</td>
+        <td><b>Excelente ✓</b></td>
+        <td>Bom</td>
+        <td>Médio</td>
+      </tr>
+      <tr>
+        <td>Tempo de build</td>
+        <td><b>15 min</b></td>
+        <td>30 min</td>
+        <td>30 min</td>
+        <td>1h</td>
+        <td>1.5h</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="margin-top:14px;padding:10px 12px;background:rgba(200,240,90,.06);border-left:3px solid var(--accent);border-radius:4px;font-size:12px;color:var(--text);">
+    <span style="display:inline-block;padding:2px 8px;background:rgba(200,240,90,.18);color:var(--accent);border-radius:4px;font-size:10px;font-weight:700;margin-right:4px;">DICA</span>
+    Se você tem &lt;5 anos: <b>2 (pills)</b> ou <b>3 (setas)</b>. Se tem 5+ anos: <b>4 (popover com badges)</b>. Para análise comparativa: <b>5 (multi-select)</b>.
+  </div>
+</div>
+
+</body>
+</html>

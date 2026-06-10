@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Modal Imprimir reorganizado · 10 opções</title>
+<style>
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:#e6edf3; margin:0; padding:28px 20px 60px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .sub{ font-size:12px; color:#6b7280; margin-bottom:24px; }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:30px; max-width:1600px; margin:0 auto; }
+  @media(max-width:1100px){ .grid{ grid-template-columns:1fr; } }
+  .item{ display:flex; flex-direction:column; gap:10px; }
+  .item-h{ display:flex; align-items:baseline; gap:8px; }
+  .item-h .n{ font-size:11px; color:#d4a574; font-weight:700; letter-spacing:.08em; }
+  .item-h .nome{ font-size:14px; font-weight:700; }
+  .item-d{ font-size:11px; color:#6b7280; line-height:1.4; }
+
+  /* Modal base */
+  .modal{
+    --s:1.30;
+    background:#161b22; border:1px solid rgba(255,255,255,.08); border-radius:14px;
+    display:flex; flex-direction:column; min-height:660px;
+    box-shadow:0 30px 60px -15px rgba(0,0,0,.5);
+  }
+  .mh{ display:flex; justify-content:space-between; align-items:flex-start; padding:calc(12px * var(--s)) calc(14px * var(--s)); border-bottom:1px solid rgba(255,255,255,.08); }
+  .mt{ font-size:calc(14px * var(--s)); font-weight:700; color:#e6edf3; }
+  .ms{ font-size:calc(10px * var(--s)); color:#6b7280; margin-top:2px; }
+  .mh-r{ display:flex; gap:6px; align-items:center; }
+  .zoom{ display:inline-flex; border:1px solid rgba(212,165,116,.30); border-radius:6px; overflow:hidden; background:rgba(212,165,116,.06); align-items:center; }
+  .zoom button{ background:transparent; border:none; color:#d4a574; padding:4px 9px; font-size:13px; font-weight:800; cursor:pointer; font-family:inherit; }
+  .zoom .lbl{ font-size:10px; color:#d4a574; font-weight:700; padding:0 6px; min-width:36px; text-align:center; }
+  .mx{ background:transparent; border:1px solid rgba(255,255,255,.08); color:#9aa5b1; padding:4px 9px; border-radius:6px; cursor:pointer; font-size:13px; font-family:inherit; }
+
+  .tb{ display:flex; justify-content:space-between; padding:8px calc(14px * var(--s)); background:rgba(212,165,116,.04); border-bottom:1px solid rgba(255,255,255,.08); font-size:calc(11px * var(--s)); }
+  .tb a{ color:#d4a574; cursor:pointer; font-weight:600; margin-right:10px; }
+  .tb .cnt b{ color:#d4a574; }
+
+  .body{ flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:520px; }
+  .opts{ padding:8px 12px; border-right:1px solid rgba(255,255,255,.06); overflow-y:auto; }
+  .pv{ padding:12px; background:#0a0e13; }
+  .pv-h{ font-size:calc(10px * var(--s)); color:#d4a574; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding-bottom:8px; margin-bottom:8px; border-bottom:1px dashed rgba(212,165,116,.25); }
+  .pv-empty{ text-align:center; padding:26px 14px; color:#6b7280; font-size:calc(11px * var(--s)); font-style:italic; }
+  .pv-empty .ic{ font-size:calc(32px * var(--s)); display:block; margin-bottom:6px; opacity:.5; }
+
+  .cat{ border:1px solid rgba(255,255,255,.08); border-left-width:3px; border-radius:7px; margin:7px 0; background:rgba(255,255,255,.02); }
+  .cat-h{ display:flex; align-items:center; gap:7px; padding:9px 11px; cursor:pointer; }
+  .arr{ font-size:calc(10px * var(--s)); color:#d4a574; width:14px; display:inline-block; transform:rotate(90deg); }
+  .cat-ic{ font-size:calc(15px * var(--s)); }
+  .cat-nm{ flex:1; font-size:calc(12px * var(--s)); font-weight:700; }
+  .cat-info{ font-size:calc(9px * var(--s)); color:#6b7280; }
+  .badge{ color:#fff; padding:1px 6px; border-radius:8px; font-size:calc(9px * var(--s)); font-weight:800; margin-left:4px; }
+  .cat:nth-of-type(1){ border-left-color:#3b82f6; } .cat:nth-of-type(1) .cat-nm{ color:#93c5fd; } .cat:nth-of-type(1) .badge{ background:#3b82f6; }
+  .cat:nth-of-type(2){ border-left-color:#34d399; } .cat:nth-of-type(2) .cat-nm{ color:#86efac; } .cat:nth-of-type(2) .badge{ background:#34d399; color:#0a0e1a; }
+  .cat:nth-of-type(3){ border-left-color:#a855f7; } .cat:nth-of-type(3) .cat-nm{ color:#c4b5fd; } .cat:nth-of-type(3) .badge{ background:#a855f7; }
+  .cat:nth-of-type(4){ border-left-color:#f59e0b; } .cat:nth-of-type(4) .cat-nm{ color:#fbbf24; } .cat:nth-of-type(4) .badge{ background:#f59e0b; color:#0a0e1a; }
+  .cat:nth-of-type(5){ border-left-color:#d4a574; } .cat:nth-of-type(5) .cat-nm{ color:#f0c896; } .cat:nth-of-type(5) .badge{ background:#d4a574; color:#0a0e1a; }
+  .cat-b{ border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); padding:6px 0; }
+
+  .opt{ display:flex; align-items:flex-start; gap:8px; padding:8px 12px 8px 32px; cursor:pointer; border-left:3px solid transparent; }
+  .opt input{ width:calc(13px * var(--s)); height:calc(13px * var(--s)); accent-color:#d4a574; margin-top:1px; flex-shrink:0; }
+  .opt-c{ flex:1; min-width:0; }
+  .opt-t{ font-size:calc(11px * var(--s)); font-weight:600; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .opt-d{ font-size:calc(9px * var(--s)); color:#6b7280; margin-top:3px; line-height:1.4; }
+  .opt.sel{ background:rgba(212,165,116,.08); border-left-color:#d4a574; }
+  .cat:nth-of-type(1) .opt.sel{ background:rgba(59,130,246,.10); border-left-color:#3b82f6; }
+  .cat:nth-of-type(2) .opt.sel{ background:rgba(52,211,153,.10); border-left-color:#34d399; }
+  .cat:nth-of-type(3) .opt.sel{ background:rgba(168,85,247,.10); border-left-color:#a855f7; }
+  .cat:nth-of-type(4) .opt.sel{ background:rgba(245,158,11,.10); border-left-color:#f59e0b; }
+  .cat:nth-of-type(5) .opt.sel{ background:rgba(212,165,116,.10); border-left-color:#d4a574; }
+  .star{ font-size:calc(8px * var(--s)); background:rgba(251,191,36,.12); color:#fbbf24; padding:1px 6px; border-radius:8px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+
+  /* Sub-opções (variantes 1-10 abaixo) */
+  .sub-opts{ padding:4px 0 4px 50px; border-left:1px dashed rgba(255,255,255,.08); margin-left:38px; }
+  .sub-opt{ display:flex; align-items:center; gap:7px; padding:5px 0; cursor:pointer; font-size:calc(10.5px * var(--s)); color:#9aa5b1; }
+  .sub-opt input{ width:calc(12px * var(--s)); height:calc(12px * var(--s)); accent-color:#d4a574; }
+  .sub-opt.sel{ color:#e6edf3; font-weight:600; }
+  .sub-opt .ic{ font-size:calc(12px * var(--s)); }
+
+  .mf{ padding:10px calc(14px * var(--s)); border-top:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; }
+  .mf .info{ font-size:calc(9px * var(--s)); color:#6b7280; }
+  .btn{ font-size:calc(10px * var(--s)); padding:6px 11px; border-radius:5px; cursor:pointer; border:1px solid rgba(255,255,255,.08); background:transparent; color:#e6edf3; font-weight:600; font-family:inherit; }
+  .btn.pr{ background:#d4a574; color:#0a0e1a; border-color:#d4a574; font-weight:800; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V1 · Sub-opções INLINE indentadas (default · mais simples)
+     ════════════════════════════════════════════════════════════════ */
+  /* (usa o .sub-opts padrão acima) */
+
+  /* ════════════════════════════════════════════════════════════════
+     V2 · Sub-opções como CHIPS horizontais
+     ════════════════════════════════════════════════════════════════ */
+  .v2 .sub-opts{ padding:6px 14px 8px 50px; border:none; margin-left:0; display:flex; flex-wrap:wrap; gap:5px; }
+  .v2 .sub-opt{ background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:4px 11px; font-size:calc(10px * var(--s)); }
+  .v2 .sub-opt.sel{ background:rgba(212,165,116,.15); border-color:#d4a574; color:#d4a574; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V3 · Sub-opções com CARDS visuais (cada um é card pequeno)
+     ════════════════════════════════════════════════════════════════ */
+  .v3 .sub-opts{ padding:6px 14px 10px 50px; border:none; margin:0; display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+  .v3 .sub-opt{ background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius:6px; padding:7px 10px; font-size:calc(10px * var(--s)); }
+  .v3 .sub-opt.sel{ background:rgba(212,165,116,.10); border-color:rgba(212,165,116,.35); color:#d4a574; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V4 · Tree visual com guias verticais
+     ════════════════════════════════════════════════════════════════ */
+  .v4 .sub-opts{ padding:0 0 6px 0; margin:0; border:none; position:relative; }
+  .v4 .sub-opt{ padding:5px 12px 5px 60px; position:relative; }
+  .v4 .sub-opt::before{ content:''; position:absolute; left:42px; top:0; bottom:50%; width:1px; background:rgba(212,165,116,.30); }
+  .v4 .sub-opt::after{ content:''; position:absolute; left:42px; top:50%; width:12px; height:1px; background:rgba(212,165,116,.30); }
+  .v4 .sub-opt:last-child::before{ bottom:50%; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V5 · Sub-opções com ÍCONES grandes e MAIS espaço
+     ════════════════════════════════════════════════════════════════ */
+  .v5 .sub-opts{ padding:8px 14px 10px 50px; margin:0; border-left:2px solid rgba(212,165,116,.25); margin-left:38px; }
+  .v5 .sub-opt{ padding:7px 9px; border-radius:5px; gap:9px; }
+  .v5 .sub-opt:hover{ background:rgba(255,255,255,.03); }
+  .v5 .sub-opt .ic{ font-size:calc(15px * var(--s)); }
+  .v5 .sub-opt .lbl{ flex:1; font-size:calc(11px * var(--s)); }
+
+  /* ════════════════════════════════════════════════════════════════
+     V6 · Collapse: sub-opções escondidas até clicar no chevron
+     ════════════════════════════════════════════════════════════════ */
+  .v6 .opt .chev{ margin-left:auto; color:#d4a574; font-size:calc(10px * var(--s)); padding:0 4px; cursor:pointer; }
+  .v6 .opt.open .chev{ transform:rotate(90deg); }
+  .v6 .sub-opts{ padding:6px 0 8px 50px; border-left:1px dashed rgba(212,165,116,.25); margin-left:38px; }
+  /* (a sub-list aparece apenas quando .opt está .open na implementação real) */
+
+  /* ════════════════════════════════════════════════════════════════
+     V7 · Sub-opções como dropdown lateral (ao clicar no ⚙)
+     ════════════════════════════════════════════════════════════════ */
+  .v7 .opt .cog{ margin-left:auto; font-size:calc(12px * var(--s)); color:#d4a574; cursor:pointer; opacity:.7; }
+  .v7 .opt:hover .cog{ opacity:1; }
+  .v7 .sub-pop{ position:relative; padding:8px 14px 12px 50px; }
+  .v7 .sub-pop::before{ content:'↳ filtros'; font-size:calc(9px * var(--s)); color:#d4a574; font-weight:700; letter-spacing:.06em; text-transform:uppercase; display:block; margin-bottom:5px; }
+  .v7 .sub-opt{ font-size:calc(10.5px * var(--s)); padding:3px 0; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V8 · Sub-opções como BARRA SEGMENTADA (multi-toggle)
+     ════════════════════════════════════════════════════════════════ */
+  .v8 .sub-opts{ padding:6px 14px 8px 50px; border:none; margin:0; display:flex; gap:0; flex-wrap:wrap; background:rgba(0,0,0,.3); border-radius:6px; padding:4px; margin:6px 14px 8px 50px; }
+  .v8 .sub-opt{ flex:1; min-width:90px; padding:6px 9px; font-size:calc(10px * var(--s)); justify-content:center; border-radius:4px; }
+  .v8 .sub-opt.sel{ background:rgba(212,165,116,.20); color:#d4a574; font-weight:700; }
+  .v8 .sub-opt input{ display:none; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V9 · Sub-opções com indicador NUMÉRICO (mostra count)
+     ════════════════════════════════════════════════════════════════ */
+  .v9 .sub-opts{ padding:6px 0 8px 50px; border-left:1px dashed rgba(212,165,116,.30); margin-left:38px; }
+  .v9 .sub-opt{ padding:5px 12px; gap:7px; }
+  .v9 .sub-opt .cnt{ background:rgba(212,165,116,.15); color:#d4a574; padding:1px 7px; border-radius:8px; font-size:calc(9px * var(--s)); font-weight:800; min-width:24px; text-align:center; margin-left:auto; }
+  .v9 .sub-opt.sel .cnt{ background:#d4a574; color:#0a0e1a; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V10 · Sub-opções dentro de uma caixa visualmente DESTACADA
+     ════════════════════════════════════════════════════════════════ */
+  .v10 .sub-opts{ padding:9px 12px; margin:8px 14px 10px 50px; border:1px solid rgba(212,165,116,.15); border-radius:6px; background:rgba(212,165,116,.04); }
+  .v10 .sub-opts::before{ content:'⚙ Sub-filtros'; display:block; font-size:calc(9px * var(--s)); color:#d4a574; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:6px; }
+  .v10 .sub-opt{ padding:4px 0; gap:8px; }
+</style>
+</head>
+<body>
+
+<h1>Modal Imprimir reorganizado · 10 opções de layout</h1>
+<div class="sub">Estrutura nova confirmada — diferença está só em <b>como as sub-opções aparecem</b>. Mesma reorganização em todos os previews.</div>
+
+<div class="grid">
+
+<!-- ═══════════════════════════════ V1 ═══════════════════════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">01</span><span class="nome">Inline indentadas (default · mais simples)</span></div>
+  <div class="item-d">Sub-opções aparecem indentadas com borda lateral pontilhada. Mínimo de mudança no layout.</div>
+  <div class="modal">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso atual: MCIS · MCIS250</div></div><div class="mh-r"><div class="zoom"><button>A−</button><span class="lbl">130%</span><button>A+</button></div><button class="mx">✕</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 16 selecionadas</div></div>
+    <div class="body">
+      <div class="opts">
+        <!-- ESCOPO -->
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">3 opções <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐ SUGERIDA</span></div><div class="opt-d">Marque o tipo de listagem abaixo:</div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">👥</span>Todos os consultores</label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🥇</span>Top 3 consultores</label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🎯</span>Quem bateu meta</label>
+            </div>
+          </div>
+        </div>
+        <!-- STATUS -->
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">💰</span><span class="cat-nm">Por status de venda</span><span class="cat-info">1 + 5 sub <span class="badge">2</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📋 Todos os clientes</div><div class="opt-d">Marque os status que devem aparecer:</div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">💚</span>Só PAGOS <span class="star">⭐</span></label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">🟠</span>Só EM ABERTO <span class="star">⭐</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🤝</span>Em NEGOCIAÇÃO</label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">💵</span>Com ENTRADA recebida</label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">❌</span>Desistências/cancelados</label>
+            </div>
+          </div>
+        </div>
+        <!-- TREINAMENTO -->
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">🎓</span><span class="cat-nm">Por treinamento / produto</span><span class="cat-info">3 opções</span></div>
+          <div class="cat-b">
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📚 Agrupado por TREINAMENTO</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">💎 Top 5 maiores vendas</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🏆 Top Vendas High Ticket</div><div class="opt-d">Somente vendas a partir de R$ 30.000</div></div></label>
+          </div>
+        </div>
+        <!-- PERIODO -->
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📅</span><span class="cat-nm">Por período</span><span class="cat-info">2 opções <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📚 Somente a turma atual <span class="star">⭐</span></div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📅 Mês atual completo (consolidado)</div></div></label>
+          </div>
+        </div>
+        <!-- EXECUTIVOS -->
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">⭐</span><span class="cat-nm">Executivos</span><span class="cat-info">2 + 10 sub <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📊 Resumo executivo (1 página) <span class="star">⭐</span></div><div class="opt-d">Marque as seções que devem aparecer no resumo:</div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">📊</span>Resumo financeiro</label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">📚</span>Treinamentos pagos</label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">💵</span>Entradas</label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">🤝</span>Em negociação</label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">⏳</span>Em aberto</label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🏅</span>Ranking consultores</label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🎓</span>Ranking treinadores</label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🏆</span>Top treinamentos</label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">📈</span>Meta vs realizado</label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">✍</span>Assinatura/gerador</label>
+            </div>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📄 Detalhado · 1 página por consultor</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview do relatório</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 Sem mais o seletor de escopo no topo.</div><div><button class="btn">Cancelar</button> <button class="btn">📋</button> <button class="btn">💬</button> <button class="btn">💾</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ V2 ═══════════════════════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">02</span><span class="nome">Sub-opções como CHIPS horizontais</span></div>
+  <div class="item-d">Cada sub-opção vira um chip arredondado. Mais compacto, ocupa menos linhas.</div>
+  <div class="modal v2">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso atual: MCIS · MCIS250</div></div><div class="mh-r"><div class="zoom"><button>A−</button><span class="lbl">130%</span><button>A+</button></div><button class="mx">✕</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 16</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">3 opções <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>👥 Todos</label>
+              <label class="sub-opt"><input type="checkbox">🥇 Top 3</label>
+              <label class="sub-opt"><input type="checkbox">🎯 Bateu meta</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">💰</span><span class="cat-nm">Por status</span><span class="cat-info">2/5 <span class="badge">2</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📋 Todos os clientes</div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>💚 Pagos</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🟠 Aberto</label>
+              <label class="sub-opt"><input type="checkbox">🤝 Negociação</label>
+              <label class="sub-opt"><input type="checkbox">💵 Entrada</label>
+              <label class="sub-opt"><input type="checkbox">❌ Desistências</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">🎓</span><span class="cat-nm">Treinamento</span><span class="cat-info">3</span></div>
+          <div class="cat-b">
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📚 Agrupado por treinamento</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">💎 Top 5 maiores vendas</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🏆 High Ticket (≥ R$ 30k)</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📅</span><span class="cat-nm">Período</span><span class="cat-info">2 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📚 Turma atual <span class="star">⭐</span></div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📅 Mês atual consolidado</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">⭐</span><span class="cat-nm">Executivos</span><span class="cat-info">2 + 10 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📊 Resumo executivo <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>📊 Financeiro</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>📚 Pagos</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>💵 Entradas</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🤝 Negociação</label>
+              <label class="sub-opt"><input type="checkbox">⏳ Aberto</label>
+              <label class="sub-opt"><input type="checkbox">🏅 Rank cons.</label>
+              <label class="sub-opt"><input type="checkbox">🎓 Rank trein.</label>
+              <label class="sub-opt"><input type="checkbox">🏆 Top trein.</label>
+              <label class="sub-opt"><input type="checkbox">📈 Meta×Real</label>
+              <label class="sub-opt"><input type="checkbox">✍ Assinatura</label>
+            </div>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📄 Detalhado · 1 página/consultor</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 Chips compactos.</div><div><button class="btn">Cancelar</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ V3 ═══════════════════════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">03</span><span class="nome">Cards visuais em grid 2 colunas</span></div>
+  <div class="item-d">Sub-opções viram mini-cards organizados em grade. Visual mais limpo, escolha rápida.</div>
+  <div class="modal v3">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso atual: MCIS · MCIS250</div></div><div class="mh-r"><div class="zoom"><button>A−</button><span class="lbl">130%</span><button>A+</button></div><button class="mx">✕</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 16</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">3 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>👥 Todos</label>
+              <label class="sub-opt"><input type="checkbox">🥇 Top 3</label>
+              <label class="sub-opt"><input type="checkbox">🎯 Bateu meta</label>
+              <label class="sub-opt"></label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">💰</span><span class="cat-nm">Por status</span><span class="cat-info">2/5 <span class="badge">2</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📋 Todos os clientes</div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>💚 Pagos</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🟠 Aberto</label>
+              <label class="sub-opt"><input type="checkbox">🤝 Negociação</label>
+              <label class="sub-opt"><input type="checkbox">💵 Entrada</label>
+              <label class="sub-opt"><input type="checkbox">❌ Desist.</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">🎓</span><span class="cat-nm">Treinamento</span><span class="cat-info">3</span></div>
+          <div class="cat-b">
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📚 Agrupado</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">💎 Top 5 vendas</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🏆 High Ticket (≥R$30k)</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📅</span><span class="cat-nm">Período</span><span class="cat-info">2 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📚 Turma atual <span class="star">⭐</span></div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📅 Mês consolidado</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">⭐</span><span class="cat-nm">Executivos</span><span class="cat-info">2 + 10 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📊 Resumo executivo <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>📊 Financeiro</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>📚 Pagos</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>💵 Entradas</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🤝 Negoc.</label>
+              <label class="sub-opt"><input type="checkbox">⏳ Aberto</label>
+              <label class="sub-opt"><input type="checkbox">🏅 Rank C.</label>
+              <label class="sub-opt"><input type="checkbox">🎓 Rank T.</label>
+              <label class="sub-opt"><input type="checkbox">🏆 Top T.</label>
+              <label class="sub-opt"><input type="checkbox">📈 Meta×R</label>
+              <label class="sub-opt"><input type="checkbox">✍ Assin.</label>
+            </div>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📄 Detalhado · 1pg/consultor</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 Grid 2 colunas pra sub-opções.</div><div><button class="btn">Cancelar</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ V4 ═══════════════════════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">04</span><span class="nome">Tree visual (guias verticais conectando)</span></div>
+  <div class="item-d">Linhas conectoras tipo árvore (estilo file explorer). Hierarquia evidente.</div>
+  <div class="modal v4">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso atual: MCIS · MCIS250</div></div><div class="mh-r"><div class="zoom"><button>A−</button><span class="lbl">130%</span><button>A+</button></div><button class="mx">✕</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 16</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">3 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>Todos</label>
+              <label class="sub-opt"><input type="checkbox">🥇 Top 3</label>
+              <label class="sub-opt"><input type="checkbox">🎯 Bateu meta</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">💰</span><span class="cat-nm">Por status</span><span class="cat-info">2/5 <span class="badge">2</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📋 Todos os clientes</div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>💚 Pagos</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🟠 Aberto</label>
+              <label class="sub-opt"><input type="checkbox">🤝 Negociação</label>
+              <label class="sub-opt"><input type="checkbox">💵 Entrada</label>
+              <label class="sub-opt"><input type="checkbox">❌ Desistências</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">🎓</span><span class="cat-nm">Treinamento</span><span class="cat-info">3</span></div>
+          <div class="cat-b">
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📚 Agrupado</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">💎 Top 5 vendas</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🏆 High Ticket ≥R$30k</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📅</span><span class="cat-nm">Período</span><span class="cat-info">2 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📚 Turma atual <span class="star">⭐</span></div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📅 Mês consolidado</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">⭐</span><span class="cat-nm">Executivos</span><span class="cat-info">2 + 10 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📊 Resumo executivo <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>📊 Financeiro</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>📚 Treinamentos pagos</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>💵 Entradas</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🤝 Em negociação</label>
+              <label class="sub-opt"><input type="checkbox">⏳ Em aberto</label>
+              <label class="sub-opt"><input type="checkbox">🏅 Ranking consultores</label>
+              <label class="sub-opt"><input type="checkbox">🎓 Ranking treinadores</label>
+              <label class="sub-opt"><input type="checkbox">🏆 Top treinamentos</label>
+              <label class="sub-opt"><input type="checkbox">📈 Meta vs realizado</label>
+              <label class="sub-opt"><input type="checkbox">✍ Assinatura/gerador</label>
+            </div>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📄 Detalhado · 1pg/consultor</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 Tree visual.</div><div><button class="btn">Cancelar</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ V5 ═══════════════════════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">05</span><span class="nome">Ícones grandes + mais espaço</span></div>
+  <div class="item-d">Sub-opções com ícones maiores e padding generoso. Mais confortável de clicar.</div>
+  <div class="modal v5">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso atual: MCIS · MCIS250</div></div><div class="mh-r"><div class="zoom"><button>A−</button><span class="lbl">130%</span><button>A+</button></div><button class="mx">✕</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 16</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">3 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">👥</span><span class="lbl">Todos os consultores</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🥇</span><span class="lbl">Top 3 consultores</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🎯</span><span class="lbl">Quem bateu meta</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">💰</span><span class="cat-nm">Por status</span><span class="cat-info">2/5 <span class="badge">2</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📋 Todos os clientes</div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">💚</span><span class="lbl">Só PAGOS</span></label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">🟠</span><span class="lbl">Só EM ABERTO</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🤝</span><span class="lbl">Em NEGOCIAÇÃO</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">💵</span><span class="lbl">Com ENTRADA</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">❌</span><span class="lbl">Desistências</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">🎓</span><span class="cat-nm">Treinamento</span><span class="cat-info">3</span></div>
+          <div class="cat-b">
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📚 Agrupado por treinamento</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">💎 Top 5 maiores vendas</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🏆 Top High Ticket (≥ R$ 30k)</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📅</span><span class="cat-nm">Período</span><span class="cat-info">2 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📚 Turma atual <span class="star">⭐</span></div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📅 Mês consolidado</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">⭐</span><span class="cat-nm">Executivos</span><span class="cat-info">2 + 10 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📊 Resumo executivo <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">📊</span><span class="lbl">Resumo financeiro</span></label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">📚</span><span class="lbl">Treinamentos pagos</span></label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">💵</span><span class="lbl">Entradas</span></label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span class="ic">🤝</span><span class="lbl">Em negociação</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">⏳</span><span class="lbl">Em aberto</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🏅</span><span class="lbl">Ranking consultores</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🎓</span><span class="lbl">Ranking treinadores</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">🏆</span><span class="lbl">Top treinamentos</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">📈</span><span class="lbl">Meta vs realizado</span></label>
+              <label class="sub-opt"><input type="checkbox"><span class="ic">✍</span><span class="lbl">Assinatura/gerador</span></label>
+            </div>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📄 Detalhado · 1pg/consultor</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 Conforto máximo.</div><div><button class="btn">Cancelar</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ V6 ═══════════════════════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">06</span><span class="nome">Collapse (sub-opções escondidas até clicar)</span></div>
+  <div class="item-d">Sub-opções ficam escondidas; chevron ▸ no nome da opção pra expandir. Modal fica mais compacto.</div>
+  <div class="modal v6">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso atual: MCIS · MCIS250</div></div><div class="mh-r"><div class="zoom"><button>A−</button><span class="lbl">130%</span><button>A+</button></div><button class="mx">✕</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 16</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">3 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel open"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐</span></div></div><span class="chev">▸</span></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>👥 Todos os consultores</label>
+              <label class="sub-opt"><input type="checkbox">🥇 Top 3 consultores</label>
+              <label class="sub-opt"><input type="checkbox">🎯 Quem bateu meta</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">💰</span><span class="cat-nm">Por status</span><span class="cat-info">2/5 <span class="badge">2</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📋 Todos os clientes</div></div><span class="chev">▸</span></label>
+            <!-- sub-opts colapsadas aqui -->
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">🎓</span><span class="cat-nm">Treinamento</span><span class="cat-info">3</span></div>
+          <div class="cat-b">
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📚 Agrupado por treinamento</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">💎 Top 5 maiores vendas</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🏆 Top High Ticket (≥ R$ 30k)</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📅</span><span class="cat-nm">Período</span><span class="cat-info">2 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📚 Turma atual <span class="star">⭐</span></div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📅 Mês consolidado</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">⭐</span><span class="cat-nm">Executivos</span><span class="cat-info">2 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📊 Resumo executivo <span class="star">⭐</span></div></div><span class="chev">▸</span></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📄 Detalhado · 1pg/consultor</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 Compacto · expande on-demand.</div><div><button class="btn">Cancelar</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ V7 ═══════════════════════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">07</span><span class="nome">Sub-filtros com label "↳ filtros"</span></div>
+  <div class="item-d">Sub-opções rotuladas como "filtros". Visual destacado mostrando que são modificadores.</div>
+  <div class="modal v7">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso atual: MCIS · MCIS250</div></div><div class="mh-r"><div class="zoom"><button>A−</button><span class="lbl">130%</span><button>A+</button></div><button class="mx">✕</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 16</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">3 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐</span></div></div></label>
+            <div class="sub-pop">
+              <label class="sub-opt sel"><input type="checkbox" checked>👥 Todos os consultores</label>
+              <label class="sub-opt"><input type="checkbox">🥇 Top 3 consultores</label>
+              <label class="sub-opt"><input type="checkbox">🎯 Quem bateu meta</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">💰</span><span class="cat-nm">Por status</span><span class="cat-info">2/5 <span class="badge">2</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📋 Todos os clientes</div></div></label>
+            <div class="sub-pop">
+              <label class="sub-opt sel"><input type="checkbox" checked>💚 Só PAGOS</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🟠 Só EM ABERTO</label>
+              <label class="sub-opt"><input type="checkbox">🤝 Em NEGOCIAÇÃO</label>
+              <label class="sub-opt"><input type="checkbox">💵 Com ENTRADA</label>
+              <label class="sub-opt"><input type="checkbox">❌ Desistências</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">🎓</span><span class="cat-nm">Treinamento</span><span class="cat-info">3</span></div>
+          <div class="cat-b">
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📚 Agrupado por treinamento</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">💎 Top 5 maiores vendas</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🏆 Top High Ticket (≥ R$ 30k)</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📅</span><span class="cat-nm">Período</span><span class="cat-info">2 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📚 Turma atual <span class="star">⭐</span></div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📅 Mês consolidado</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">⭐</span><span class="cat-nm">Executivos</span><span class="cat-info">2 + 10 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📊 Resumo executivo <span class="star">⭐</span></div></div></label>
+            <div class="sub-pop">
+              <label class="sub-opt sel"><input type="checkbox" checked>📊 Resumo financeiro</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>📚 Treinamentos pagos</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>💵 Entradas</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🤝 Em negociação</label>
+              <label class="sub-opt"><input type="checkbox">⏳ Em aberto</label>
+              <label class="sub-opt"><input type="checkbox">🏅 Ranking consultores</label>
+              <label class="sub-opt"><input type="checkbox">🎓 Ranking treinadores</label>
+              <label class="sub-opt"><input type="checkbox">🏆 Top treinamentos</label>
+              <label class="sub-opt"><input type="checkbox">📈 Meta vs realizado</label>
+              <label class="sub-opt"><input type="checkbox">✍ Assinatura/gerador</label>
+            </div>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📄 Detalhado · 1pg/consultor</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 "↳ filtros" rotula as sub-opções.</div><div><button class="btn">Cancelar</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ V8 ═══════════════════════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">08</span><span class="nome">Multi-toggle segmentado</span></div>
+  <div class="item-d">Sub-opções aparecem como segmented control. Visual moderno tipo iOS.</div>
+  <div class="modal v8">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso atual: MCIS · MCIS250</div></div><div class="mh-r"><div class="zoom"><button>A−</button><span class="lbl">130%</span><button>A+</button></div><button class="mx">✕</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 16</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">3 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>👥 Todos</label>
+              <label class="sub-opt"><input type="checkbox">🥇 Top 3</label>
+              <label class="sub-opt"><input type="checkbox">🎯 Bateu meta</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">💰</span><span class="cat-nm">Por status</span><span class="cat-info">2/5 <span class="badge">2</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📋 Todos os clientes</div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>💚 Pagos</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🟠 Aberto</label>
+              <label class="sub-opt"><input type="checkbox">🤝 Negoc.</label>
+              <label class="sub-opt"><input type="checkbox">💵 Entrada</label>
+              <label class="sub-opt"><input type="checkbox">❌ Desist.</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">🎓</span><span class="cat-nm">Treinamento</span><span class="cat-info">3</span></div>
+          <div class="cat-b">
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📚 Agrupado</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">💎 Top 5</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🏆 High Ticket (≥R$30k)</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📅</span><span class="cat-nm">Período</span><span class="cat-info">2 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📚 Turma atual <span class="star">⭐</span></div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📅 Mês consolidado</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">⭐</span><span class="cat-nm">Executivos</span><span class="cat-info">2+10 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📊 Resumo executivo <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>📊 Financeiro</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>📚 Pagos</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>💵 Entradas</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🤝 Negoc.</label>
+              <label class="sub-opt"><input type="checkbox">⏳ Aberto</label>
+            </div>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📄 Detalhado · 1pg/consultor</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 Multi-toggle segmentado.</div><div><button class="btn">Cancelar</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ V9 ═══════════════════════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">09</span><span class="nome">Sub-opções com contador numérico</span></div>
+  <div class="item-d">Cada sub-opção mostra quantos registros tem (ex: "Só PAGOS · 12"). Útil pra ver volume.</div>
+  <div class="modal v9">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso atual: MCIS · MCIS250</div></div><div class="mh-r"><div class="zoom"><button>A−</button><span class="lbl">130%</span><button>A+</button></div><button class="mx">✕</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 16</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">3 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked><span>👥 Todos os consultores</span><span class="cnt">5</span></label>
+              <label class="sub-opt"><input type="checkbox"><span>🥇 Top 3 consultores</span><span class="cnt">3</span></label>
+              <label class="sub-opt"><input type="checkbox"><span>🎯 Quem bateu meta</span><span class="cnt">2</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">💰</span><span class="cat-nm">Por status</span><span class="cat-info">2/5 <span class="badge">2</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📋 Todos os clientes</div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked><span>💚 Só PAGOS</span><span class="cnt">12</span></label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span>🟠 Só EM ABERTO</span><span class="cnt">8</span></label>
+              <label class="sub-opt"><input type="checkbox"><span>🤝 Em NEGOCIAÇÃO</span><span class="cnt">5</span></label>
+              <label class="sub-opt"><input type="checkbox"><span>💵 Com ENTRADA</span><span class="cnt">3</span></label>
+              <label class="sub-opt"><input type="checkbox"><span>❌ Desistências</span><span class="cnt">1</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">🎓</span><span class="cat-nm">Treinamento</span><span class="cat-info">3</span></div>
+          <div class="cat-b">
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📚 Agrupado por treinamento</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">💎 Top 5 maiores vendas</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🏆 Top High Ticket (≥ R$ 30k)</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📅</span><span class="cat-nm">Período</span><span class="cat-info">2 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📚 Turma atual <span class="star">⭐</span></div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📅 Mês consolidado</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">⭐</span><span class="cat-nm">Executivos</span><span class="cat-info">2+10 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📊 Resumo executivo <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked><span>📊 Resumo financeiro</span><span class="cnt">✓</span></label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span>📚 Treinamentos pagos</span><span class="cnt">✓</span></label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span>💵 Entradas</span><span class="cnt">✓</span></label>
+              <label class="sub-opt sel"><input type="checkbox" checked><span>🤝 Em negociação</span><span class="cnt">✓</span></label>
+              <label class="sub-opt"><input type="checkbox"><span>⏳ Em aberto</span><span class="cnt">0</span></label>
+              <label class="sub-opt"><input type="checkbox"><span>🏅 Ranking consultores</span><span class="cnt">0</span></label>
+            </div>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📄 Detalhado · 1pg/consultor</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 Contadores numéricos.</div><div><button class="btn">Cancelar</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ V10 ═══════════════════════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">10</span><span class="nome">Caixa destacada "⚙ Sub-filtros"</span></div>
+  <div class="item-d">Sub-opções dentro de caixa com borda dourada e label "Sub-filtros". Maior destaque visual.</div>
+  <div class="modal v10">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso atual: MCIS · MCIS250</div></div><div class="mh-r"><div class="zoom"><button>A−</button><span class="lbl">130%</span><button>A+</button></div><button class="mx">✕</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 16</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">3 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>👥 Todos os consultores</label>
+              <label class="sub-opt"><input type="checkbox">🥇 Top 3 consultores</label>
+              <label class="sub-opt"><input type="checkbox">🎯 Quem bateu meta</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">💰</span><span class="cat-nm">Por status</span><span class="cat-info">2/5 <span class="badge">2</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📋 Todos os clientes</div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>💚 Só PAGOS</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🟠 Só EM ABERTO</label>
+              <label class="sub-opt"><input type="checkbox">🤝 Em NEGOCIAÇÃO</label>
+              <label class="sub-opt"><input type="checkbox">💵 Com ENTRADA</label>
+              <label class="sub-opt"><input type="checkbox">❌ Desistências</label>
+            </div>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">🎓</span><span class="cat-nm">Treinamento</span><span class="cat-info">3</span></div>
+          <div class="cat-b">
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📚 Agrupado por treinamento</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">💎 Top 5 maiores vendas</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🏆 Top High Ticket (≥ R$ 30k)</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📅</span><span class="cat-nm">Período</span><span class="cat-info">2 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📚 Turma atual <span class="star">⭐</span></div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📅 Mês consolidado</div></div></label>
+          </div>
+        </div>
+        <div class="cat"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">⭐</span><span class="cat-nm">Executivos</span><span class="cat-info">2+10 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">📊 Resumo executivo <span class="star">⭐</span></div></div></label>
+            <div class="sub-opts">
+              <label class="sub-opt sel"><input type="checkbox" checked>📊 Resumo financeiro</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>📚 Treinamentos pagos</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>💵 Entradas</label>
+              <label class="sub-opt sel"><input type="checkbox" checked>🤝 Em negociação</label>
+              <label class="sub-opt"><input type="checkbox">⏳ Em aberto</label>
+              <label class="sub-opt"><input type="checkbox">🏅 Ranking consultores</label>
+              <label class="sub-opt"><input type="checkbox">🎓 Ranking treinadores</label>
+              <label class="sub-opt"><input type="checkbox">🏆 Top treinamentos</label>
+              <label class="sub-opt"><input type="checkbox">📈 Meta vs realizado</label>
+              <label class="sub-opt"><input type="checkbox">✍ Assinatura/gerador</label>
+            </div>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">📄 Detalhado · 1pg/consultor</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 Caixa dourada destacada.</div><div><button class="btn">Cancelar</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+</div>
+
+<div style="margin-top:30px;padding:14px;background:rgba(212,165,116,.04);border:1px dashed rgba(212,165,116,.20);border-radius:10px;font-size:11px;color:#9aa5b1;line-height:1.6;max-width:1600px;margin-left:auto;margin-right:auto;">
+  <b style="color:#d4a574;">📋 Reorganização confirmada (igual em todos os previews):</b><br>
+  • <b>Removido:</b> seletor "Escopo dos dados" no topo<br>
+  • <b>📊 Por escopo</b> (3): Todos os consultores · Top 3 · Bateu meta — todas como sub-opções de "Todos os consultores"<br>
+  • <b>💰 Por status</b> (5 sub): Pagos · Aberto · Negociação · Entrada · Desistências — todas como sub-opções de "Todos os clientes"<br>
+  • <b>🎓 Treinamento</b> (3): Agrupado · Top 5 vendas · 🏆 Top High Ticket (≥R$30k). <i>Removido:</i> Clientes novos do mês<br>
+  • <b>📅 Período</b> (2): Turma atual · Mês consolidado<br>
+  • <b>⭐ Executivos</b> (2 + 10 sub no Resumo): 10 seções tipo Relatório Supremo (Resumo Financeiro, Treinamentos Pagos, Entradas, Negociação, Em aberto, Ranking Consultores, Ranking Treinadores, Top Treinamentos, Meta×Realizado, Assinatura/Gerador) + Detalhado por consultor<br><br>
+  <b style="color:#d4a574;">💡 Diferença entre os 10 previews:</b> só o estilo VISUAL das sub-opções (inline, chips, cards, tree, etc).
+</div>
+
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Modal Imprimir · 8 opções de visual</title>
+<style>
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:#e6edf3; margin:0; padding:28px 20px 60px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .sub{ font-size:12px; color:#6b7280; margin-bottom:24px; }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:30px; max-width:1500px; margin:0 auto; }
+  @media(max-width:1100px){ .grid{ grid-template-columns:1fr; } }
+  .item{ display:flex; flex-direction:column; gap:10px; }
+  .item-h{ display:flex; align-items:baseline; gap:8px; }
+  .item-h .n{ font-size:11px; color:#d4a574; font-weight:700; letter-spacing:.08em; }
+  .item-h .nome{ font-size:14px; font-weight:700; }
+  .item-d{ font-size:11px; color:#6b7280; line-height:1.4; margin-bottom:4px; }
+
+  /* ════════════════════════════════════════════════════════════════
+     Modal base — estrutura comum
+     ════════════════════════════════════════════════════════════════ */
+  .modal{
+    background:#161b22; border:1px solid rgba(255,255,255,.08); border-radius:14px;
+    display:flex; flex-direction:column; min-height:440px;
+    box-shadow:0 30px 60px -15px rgba(0,0,0,.5);
+  }
+  .mh{ display:flex; justify-content:space-between; align-items:flex-start; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.08); }
+  .mt{ font-size:14px; font-weight:700; color:#e6edf3; }
+  .ms{ font-size:10px; color:#6b7280; margin-top:2px; }
+  .mx{ background:transparent; border:1px solid rgba(255,255,255,.08); color:#9aa5b1; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:13px; font-family:inherit; }
+  .esc{ display:flex; align-items:center; gap:10px; padding:8px 14px; background:rgba(212,165,116,.06); border-bottom:1px solid rgba(255,255,255,.08); font-size:11px; }
+  .esc .lbl{ font-size:10px; color:#9aa5b1; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+  .esc .seg{ display:inline-flex; background:rgba(0,0,0,.3); border-radius:6px; padding:3px; gap:2px; }
+  .esc .seg button{ padding:5px 11px; border:none; background:transparent; color:#9aa5b1; font-size:10px; font-weight:700; cursor:pointer; border-radius:4px; font-family:inherit; }
+  .esc .seg button.on{ background:#d4a574; color:#0a0e1a; }
+  .tb{ display:flex; justify-content:space-between; padding:8px 14px; background:rgba(212,165,116,.04); border-bottom:1px solid rgba(255,255,255,.08); font-size:11px; }
+  .tb a{ color:#d4a574; cursor:pointer; font-weight:600; margin-right:10px; }
+  .tb .cnt b{ color:#d4a574; }
+  .body{ flex:1; display:grid; grid-template-columns:1fr 1fr; overflow:hidden; min-height:280px; }
+  .opts{ padding:8px 12px; border-right:1px solid rgba(255,255,255,.06); overflow-y:auto; }
+  .pv{ padding:12px; background:#0a0e13; overflow-y:auto; }
+  .pv-h{ font-size:10px; color:#d4a574; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding-bottom:8px; margin-bottom:8px; border-bottom:1px dashed rgba(212,165,116,.25); }
+  .pv-empty{ text-align:center; padding:26px 14px; color:#6b7280; font-size:11px; font-style:italic; }
+  .pv-empty .ic{ font-size:32px; display:block; margin-bottom:6px; opacity:.5; }
+
+  .cat{ border:1px solid rgba(255,255,255,.08); border-radius:7px; margin:7px 0; background:rgba(255,255,255,.02); }
+  .cat-h{ display:flex; align-items:center; gap:7px; padding:9px 11px; cursor:pointer; }
+  .arr{ font-size:10px; color:#d4a574; width:14px; display:inline-block; }
+  .cat-h.open .arr{ transform:rotate(90deg); }
+  .cat-ic{ font-size:14px; }
+  .cat-nm{ flex:1; }
+  .cat-info{ font-size:9px; color:#6b7280; }
+  .badge{ background:#d4a574; color:#0a0e1a; padding:1px 6px; border-radius:8px; font-size:9px; font-weight:800; margin-left:4px; }
+  .cat-b{ border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); padding:6px 0; }
+  .opt{ display:flex; align-items:flex-start; gap:8px; padding:6px 12px 6px 32px; cursor:pointer; border-left:3px solid transparent; }
+  .opt.sel{ background:rgba(212,165,116,.07); border-left-color:#d4a574; }
+  .opt input{ width:13px; height:13px; accent-color:#d4a574; margin-top:1px; }
+  .opt-c{ flex:1; }
+  .opt-t{ display:flex; gap:6px; align-items:center; }
+  .opt-d{ color:#6b7280; margin-top:2px; line-height:1.4; }
+  .star{ font-size:8px; background:rgba(251,191,36,.12); color:#fbbf24; padding:1px 6px; border-radius:8px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+  .mf{ padding:10px 14px; border-top:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; gap:10px; align-items:center; }
+  .mf .info{ font-size:9px; color:#6b7280; }
+  .btn{ font-size:10px; padding:6px 11px; border-radius:5px; cursor:pointer; border:1px solid rgba(255,255,255,.08); background:transparent; color:#e6edf3; font-weight:600; font-family:inherit; }
+  .btn.pr{ background:#d4a574; color:#0a0e1a; border-color:#d4a574; font-weight:800; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V1 · Refinement (tamanhos atuais com mais respiro)
+     ════════════════════════════════════════════════════════════════ */
+  .v1 .opt{ padding:9px 14px 9px 36px; }
+  .v1 .opt-t{ font-size:12px; font-weight:600; }
+  .v1 .opt-d{ font-size:10.5px; margin-top:3px; }
+  .v1 .cat-nm{ font-size:12px; font-weight:700; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V2 · Larger Type (legibilidade máxima)
+     ════════════════════════════════════════════════════════════════ */
+  .v2 .mt{ font-size:16px; }
+  .v2 .ms{ font-size:11px; }
+  .v2 .cat-nm{ font-size:13px; font-weight:700; letter-spacing:.01em; }
+  .v2 .cat-info{ font-size:10px; }
+  .v2 .opt-t{ font-size:13px; font-weight:600; color:#e6edf3; }
+  .v2 .opt-d{ font-size:11px; color:#9aa5b1; margin-top:4px; }
+  .v2 .opt{ padding:10px 14px 10px 38px; }
+  .v2 .star{ font-size:9px; padding:2px 7px; }
+  .v2 .esc .lbl{ font-size:11px; }
+  .v2 .esc .seg button{ font-size:11px; padding:6px 13px; }
+  .v2 .btn{ font-size:11px; padding:8px 13px; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V3 · Cards elevados (cada opção como card)
+     ════════════════════════════════════════════════════════════════ */
+  .v3 .cat{ background:transparent; border:none; padding:0; margin:6px 0; }
+  .v3 .cat-h{ padding:0 0 8px; }
+  .v3 .opt{ background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); border-radius:7px; margin:5px 0; padding:10px 12px 10px 32px; box-shadow:0 1px 0 rgba(255,255,255,.02), 0 2px 6px rgba(0,0,0,.15); }
+  .v3 .opt:hover{ border-color:rgba(212,165,116,.20); }
+  .v3 .opt.sel{ background:rgba(212,165,116,.08); border-color:rgba(212,165,116,.35); box-shadow:0 0 0 1px rgba(212,165,116,.15), 0 2px 8px rgba(212,165,116,.10); }
+  .v3 .cat-b{ background:transparent; border-top:none; padding:0; }
+  .v3 .opt-t{ font-size:12.5px; font-weight:700; }
+  .v3 .opt-d{ font-size:10.5px; margin-top:3px; color:#9aa5b1; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V4 · High contrast (texto branco vivo, opt-d mais visível)
+     ════════════════════════════════════════════════════════════════ */
+  .v4 .mt{ font-size:15px; color:#ffffff; }
+  .v4 .opt-t{ font-size:12px; font-weight:700; color:#ffffff; }
+  .v4 .opt-d{ font-size:11px; color:#cbd5e0; margin-top:3px; }
+  .v4 .cat-nm{ color:#ffffff; font-size:12.5px; font-weight:700; }
+  .v4 .opt input{ width:15px; height:15px; }
+  .v4 .opt{ padding:9px 14px 9px 36px; }
+  .v4 .star{ background:#fbbf24; color:#0a0e1a; font-weight:800; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V5 · Minimalista (estilo Linear/Notion · ícones reduzidos)
+     ════════════════════════════════════════════════════════════════ */
+  .v5 .cat{ background:transparent; border:none; border-top:1px solid rgba(255,255,255,.06); border-radius:0; margin:0; }
+  .v5 .cat-h{ padding:11px 6px 9px; }
+  .v5 .cat-nm{ font-size:11px; font-weight:600; color:#9aa5b1; text-transform:uppercase; letter-spacing:.07em; }
+  .v5 .cat-ic{ display:none; }
+  .v5 .arr{ font-size:9px; color:#6b7280; }
+  .v5 .opt{ padding:8px 12px 8px 28px; }
+  .v5 .opt:hover{ background:rgba(255,255,255,.03); }
+  .v5 .opt.sel{ background:transparent; border-left-color:transparent; }
+  .v5 .opt.sel .opt-t{ color:#e6edf3; }
+  .v5 .opt-t{ font-size:12.5px; font-weight:500; color:#cbd5e0; }
+  .v5 .opt-d{ font-size:10.5px; color:#6b7280; margin-top:2px; }
+  .v5 .cat-b{ border-top:none; background:transparent; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V6 · Coloridos por categoria (visual semantic)
+     ════════════════════════════════════════════════════════════════ */
+  .v6 .cat{ border-left-width:3px; }
+  .v6 .cat:nth-of-type(1){ border-left-color:#3b82f6; }
+  .v6 .cat:nth-of-type(2){ border-left-color:#34d399; }
+  .v6 .opt-t{ font-size:12px; font-weight:600; }
+  .v6 .opt-d{ font-size:10.5px; margin-top:3px; }
+  .v6 .cat:nth-of-type(1) .cat-nm{ color:#93c5fd; }
+  .v6 .cat:nth-of-type(2) .cat-nm{ color:#86efac; }
+  .v6 .cat:nth-of-type(1) .badge{ background:#3b82f6; color:#fff; }
+  .v6 .cat:nth-of-type(2) .badge{ background:#34d399; color:#0a0e1a; }
+  .v6 .cat:nth-of-type(1) .opt.sel{ background:rgba(59,130,246,.10); border-left-color:#3b82f6; }
+  .v6 .cat:nth-of-type(2) .opt.sel{ background:rgba(52,211,153,.10); border-left-color:#34d399; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V7 · Editorial (serifa nos títulos · estilo premium)
+     ════════════════════════════════════════════════════════════════ */
+  .v7 .mt{ font-family:'Georgia',serif; font-size:17px; letter-spacing:-.01em; font-weight:700; }
+  .v7 .cat-nm{ font-family:'Georgia',serif; font-size:13px; font-weight:700; letter-spacing:-.005em; }
+  .v7 .opt-t{ font-size:12.5px; font-weight:600; color:#e6edf3; }
+  .v7 .opt-d{ font-size:10.5px; color:#9aa5b1; font-style:italic; margin-top:3px; }
+  .v7 .opt{ padding:9px 14px 9px 36px; }
+
+  /* ════════════════════════════════════════════════════════════════
+     V8 · Glassmorphism dark + glow dourado
+     ════════════════════════════════════════════════════════════════ */
+  .v8 .modal{ background:rgba(22,27,34,.7); backdrop-filter:blur(16px); border:1px solid rgba(212,165,116,.15); box-shadow:0 30px 60px -15px rgba(0,0,0,.6), 0 0 40px -10px rgba(212,165,116,.20); }
+  .v8 .cat{ background:rgba(0,0,0,.20); border:1px solid rgba(212,165,116,.10); }
+  .v8 .cat.open{ border-color:rgba(212,165,116,.30); box-shadow:0 0 16px -4px rgba(212,165,116,.20); }
+  .v8 .mt{ font-size:15px; }
+  .v8 .cat-nm{ font-size:12.5px; font-weight:700; }
+  .v8 .opt-t{ font-size:12px; font-weight:600; }
+  .v8 .opt-d{ font-size:10.5px; color:#9aa5b1; margin-top:3px; }
+  .v8 .opt.sel{ background:rgba(212,165,116,.10); box-shadow:0 0 12px -2px rgba(212,165,116,.25) inset; }
+</style>
+</head>
+<body>
+
+<h1>Modal Imprimir · 8 opções de visual</h1>
+<div class="sub">Mesmo modal, 8 tratamentos diferentes de fonte / tamanho / cor / hierarquia.</div>
+
+<div class="grid">
+
+<!-- ═══════════════ V1 ═══════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">01</span><span class="nome">Refinement (atual + mais respiro)</span></div>
+  <div class="item-d">Tamanhos próximos do atual, mas com padding mais generoso e textos descritivos um pouco maiores.</div>
+  <div class="modal v1">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso: MCIS · MCIS250 · Marque as opções desejadas.</div></div><button class="mx">✕</button></div>
+    <div class="esc"><span class="lbl">ESCOPO:</span><div class="seg"><button>📚 Esta turma</button><button class="on">📅 Por mês</button><button>🗂 Todas</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 23 selecionadas</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat open"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">6 opções <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐ SUGERIDA</span></div><div class="opt-d">Cada consultor + clientes vinculados, ordenados alfabeticamente.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">👤 Consultor selecionado</div><div class="opt-d">Escolha 1 consultor específico.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🥇 Top 3 consultores</div><div class="opt-d">Os 3 com maior faturamento no mês.</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview do relatório</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 As seleções viram seções.</div><div><button class="btn">Cancelar</button> <button class="btn">📋</button> <button class="btn">💬</button> <button class="btn">💾</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ V2 ═══════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">02</span><span class="nome">Larger Type (legibilidade máxima)</span></div>
+  <div class="item-d">Fontes maiores em tudo. Texto descritivo passa de 10px → 11px, títulos +1px. Confortável de ler.</div>
+  <div class="modal v2">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso: MCIS · MCIS250 · Marque as opções desejadas.</div></div><button class="mx">✕</button></div>
+    <div class="esc"><span class="lbl">ESCOPO:</span><div class="seg"><button>📚 Esta turma</button><button class="on">📅 Por mês</button><button>🗂 Todas</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 23 selecionadas</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat open"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">6 opções <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐ SUGERIDA</span></div><div class="opt-d">Cada consultor + clientes vinculados, ordenados alfabeticamente.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">👤 Consultor selecionado</div><div class="opt-d">Escolha 1 consultor específico.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🥇 Top 3 consultores</div><div class="opt-d">Os 3 com maior faturamento no mês.</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview do relatório</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 As seleções viram seções.</div><div><button class="btn">Cancelar</button> <button class="btn">📋</button> <button class="btn">💬</button> <button class="btn">💾</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ V3 ═══════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">03</span><span class="nome">Cards elevados</span></div>
+  <div class="item-d">Cada opção vira um card com sombra. Sessão sem caixa externa — só título separador. Visual mais premium.</div>
+  <div class="modal v3">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso: MCIS · MCIS250 · Marque as opções desejadas.</div></div><button class="mx">✕</button></div>
+    <div class="esc"><span class="lbl">ESCOPO:</span><div class="seg"><button>📚 Esta turma</button><button class="on">📅 Por mês</button><button>🗂 Todas</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 23 selecionadas</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat open"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">6 opções <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐ SUGERIDA</span></div><div class="opt-d">Cada consultor + clientes vinculados, ordenados alfabeticamente.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">👤 Consultor selecionado</div><div class="opt-d">Escolha 1 consultor específico.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🥇 Top 3 consultores</div><div class="opt-d">Os 3 com maior faturamento no mês.</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview do relatório</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 As seleções viram seções.</div><div><button class="btn">Cancelar</button> <button class="btn">📋</button> <button class="btn">💬</button> <button class="btn">💾</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ V4 ═══════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">04</span><span class="nome">High contrast (texto branco vivo)</span></div>
+  <div class="item-d">Títulos em branco puro (#fff), descrição em cinza claro (#cbd5e0). Acessibilidade e leitura mais rápida.</div>
+  <div class="modal v4">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso: MCIS · MCIS250 · Marque as opções desejadas.</div></div><button class="mx">✕</button></div>
+    <div class="esc"><span class="lbl">ESCOPO:</span><div class="seg"><button>📚 Esta turma</button><button class="on">📅 Por mês</button><button>🗂 Todas</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 23 selecionadas</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat open"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">6 opções <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐ SUGERIDA</span></div><div class="opt-d">Cada consultor + clientes vinculados, ordenados alfabeticamente.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">👤 Consultor selecionado</div><div class="opt-d">Escolha 1 consultor específico.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🥇 Top 3 consultores</div><div class="opt-d">Os 3 com maior faturamento no mês.</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview do relatório</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 As seleções viram seções.</div><div><button class="btn">Cancelar</button> <button class="btn">📋</button> <button class="btn">💬</button> <button class="btn">💾</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ V5 ═══════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">05</span><span class="nome">Minimalista (Linear/Notion)</span></div>
+  <div class="item-d">Sem caixas, separadores invisíveis. Nomes das sessões em UPPERCASE pequeno e cinza. Foco no conteúdo.</div>
+  <div class="modal v5">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso: MCIS · MCIS250 · Marque as opções desejadas.</div></div><button class="mx">✕</button></div>
+    <div class="esc"><span class="lbl">ESCOPO:</span><div class="seg"><button>📚 Esta turma</button><button class="on">📅 Por mês</button><button>🗂 Todas</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 23 selecionadas</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat open"><div class="cat-h"><span class="arr">▸</span><span class="cat-nm">Por escopo</span><span class="cat-info">6 <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐ SUGERIDA</span></div><div class="opt-d">Cada consultor + clientes vinculados.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">👤 Consultor selecionado</div><div class="opt-d">Escolha 1 consultor específico.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🥇 Top 3 consultores</div><div class="opt-d">Maior faturamento no mês.</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview do relatório</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 As seleções viram seções.</div><div><button class="btn">Cancelar</button> <button class="btn">📋</button> <button class="btn">💬</button> <button class="btn">💾</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ V6 ═══════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">06</span><span class="nome">Coloridos por categoria</span></div>
+  <div class="item-d">Cada sessão ganha cor (azul/verde/dourado/roxo). Borda esquerda + título colorido = sinaliza tipo de informação.</div>
+  <div class="modal v6">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso: MCIS · MCIS250 · Marque as opções desejadas.</div></div><button class="mx">✕</button></div>
+    <div class="esc"><span class="lbl">ESCOPO:</span><div class="seg"><button>📚 Esta turma</button><button class="on">📅 Por mês</button><button>🗂 Todas</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 23 selecionadas</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat open"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">6 opções <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐ SUGERIDA</span></div><div class="opt-d">Cada consultor + clientes vinculados.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">👤 Consultor selecionado</div><div class="opt-d">Escolha 1 consultor específico.</div></div></label>
+          </div>
+        </div>
+        <div class="cat open"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">💰</span><span class="cat-nm">Por status</span><span class="cat-info">6 opções <span class="badge">2</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">💚 Só clientes PAGOS <span class="star">⭐ SUGERIDA</span></div><div class="opt-d">Quem já fechou e pagou.</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview do relatório</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 As seleções viram seções.</div><div><button class="btn">Cancelar</button> <button class="btn">📋</button> <button class="btn">💬</button> <button class="btn">💾</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ V7 ═══════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">07</span><span class="nome">Editorial (serifa nos títulos)</span></div>
+  <div class="item-d">Títulos em Georgia (serifa), descrições em itálico. Visual de revista premium / dossiê executivo.</div>
+  <div class="modal v7">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso: MCIS · MCIS250 · Marque as opções desejadas.</div></div><button class="mx">✕</button></div>
+    <div class="esc"><span class="lbl">ESCOPO:</span><div class="seg"><button>📚 Esta turma</button><button class="on">📅 Por mês</button><button>🗂 Todas</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 23 selecionadas</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat open"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">6 opções <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐ SUGERIDA</span></div><div class="opt-d">Cada consultor + clientes vinculados, ordenados alfabeticamente.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">👤 Consultor selecionado</div><div class="opt-d">Escolha 1 consultor específico.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🥇 Top 3 consultores</div><div class="opt-d">Os 3 com maior faturamento no mês.</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview do relatório</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 As seleções viram seções.</div><div><button class="btn">Cancelar</button> <button class="btn">📋</button> <button class="btn">💬</button> <button class="btn">💾</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ V8 ═══════════════ -->
+<div class="item">
+  <div class="item-h"><span class="n">08</span><span class="nome">Glassmorphism + glow dourado</span></div>
+  <div class="item-d">Vidro fosco com brilho dourado externo. Cards de sessão com sombra dourada interna quando abertos. Premium.</div>
+  <div class="modal v8">
+    <div class="mh"><div><div class="mt">🖨 Imprimir relatório de consultores</div><div class="ms">Curso: MCIS · MCIS250 · Marque as opções desejadas.</div></div><button class="mx">✕</button></div>
+    <div class="esc"><span class="lbl">ESCOPO:</span><div class="seg"><button>📚 Esta turma</button><button class="on">📅 Por mês</button><button>🗂 Todas</button></div></div>
+    <div class="tb"><div><a>☑ Selecionar todas</a><a>☐ Limpar</a></div><div class="cnt"><b>5</b> de 23 selecionadas</div></div>
+    <div class="body">
+      <div class="opts">
+        <div class="cat open"><div class="cat-h"><span class="arr">▸</span><span class="cat-ic">📊</span><span class="cat-nm">Por escopo</span><span class="cat-info">6 opções <span class="badge">1</span></span></div>
+          <div class="cat-b">
+            <label class="opt sel"><input type="checkbox" checked><div class="opt-c"><div class="opt-t">👥 Todos os consultores <span class="star">⭐ SUGERIDA</span></div><div class="opt-d">Cada consultor + clientes vinculados.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">👤 Consultor selecionado</div><div class="opt-d">Escolha 1 consultor específico.</div></div></label>
+            <label class="opt"><input type="checkbox"><div class="opt-c"><div class="opt-t">🥇 Top 3 consultores</div><div class="opt-d">Os 3 com maior faturamento no mês.</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="pv"><div class="pv-h">👁 Preview do relatório</div><div class="pv-empty"><span class="ic">📄</span>Marque opções para visualizar.</div></div>
+    </div>
+    <div class="mf"><div class="info">💡 As seleções viram seções.</div><div><button class="btn">Cancelar</button> <button class="btn">📋</button> <button class="btn">💬</button> <button class="btn">💾</button> <button class="btn pr">📄 Gerar PDF</button></div></div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

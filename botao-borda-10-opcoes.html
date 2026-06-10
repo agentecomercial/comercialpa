@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>10 opções de borda para o botão Imprimir</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg-2:#161b22; --bg-3:#1c2128;
+    --border:rgba(255,255,255,.08); --txt:#e6edf3; --txt-2:#9aa5b1; --txt-3:#6b7280;
+    --accent:#d4a574; --accent-2:#f0c896;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:var(--txt); margin:0; padding:32px 24px 80px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .sub{ font-size:12px; color:var(--txt-3); margin-bottom:28px; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:22px; max-width:1300px; margin:0 auto; }
+  .item{ display:flex; flex-direction:column; gap:8px; }
+  .item-h{ display:flex; align-items:baseline; gap:8px; }
+  .item-h .n{ font-size:11px; color:var(--accent); font-weight:700; letter-spacing:.08em; }
+  .item-h .nome{ font-size:14px; font-weight:700; }
+  .item-d{ font-size:11px; color:var(--txt-3); line-height:1.4; margin-bottom:4px; min-height:30px; }
+
+  /* Barra mock do dashboard pra ver no contexto */
+  .bar{
+    display:flex; align-items:center; justify-content:center;
+    padding:18px 16px; background:var(--bg-2); border:1px solid var(--border); border-radius:8px;
+  }
+
+  /* Botão interno (Imprimir + chevron) — mantém estrutura constante */
+  .btn-inner{ display:inline-flex; align-items:stretch; }
+  .btn-main{
+    border:none; background:#161b22; color:#d4a574;
+    font-weight:700; padding:6px 14px; font-size:11px; cursor:pointer;
+    font-family:inherit; display:inline-flex; align-items:center; gap:5px;
+  }
+  .btn-main:hover{ background:rgba(212,165,116,.10); }
+  .btn-drop{
+    border:none; border-left:1px solid rgba(212,165,116,.30);
+    background:#161b22; color:#d4a574;
+    padding:6px 9px; cursor:pointer; font-family:inherit; font-size:11px; font-weight:700;
+  }
+  .btn-drop:hover{ background:rgba(212,165,116,.10); }
+
+  /* ════════════════════════════════════════════════════════════════
+     OPÇÃO 1 · Gradient horizontal animado (ATUAL — mais lento)
+     ════════════════════════════════════════════════════════════════ */
+  .b1{ padding:1.5px; border-radius:7px;
+    background:linear-gradient(110deg, #d4a574, #a855f7, #3b82f6, #34d399, #d4a574);
+    background-size:300% 100%;
+    animation:b1grad 6s ease-in-out infinite;
+    display:inline-flex;
+  }
+  @keyframes b1grad { 0%,100% {background-position:0% 50%;} 50% {background-position:100% 50%;} }
+  .b1 .btn-main{ border-radius:5px 0 0 5px; }
+  .b1 .btn-drop{ border-radius:0 5px 5px 0; }
+
+  /* ════════════════════════════════════════════════════════════════
+     OPÇÃO 2 · Conic-gradient ROTATIVO (gira em volta)
+     ════════════════════════════════════════════════════════════════ */
+  .b2{ padding:2px; border-radius:7px; position:relative; display:inline-flex; overflow:hidden; }
+  .b2::before{
+    content:''; position:absolute; inset:-50%;
+    background:conic-gradient(from 0deg, #d4a574, #a855f7, #3b82f6, #d4a574);
+    animation:b2spin 4s linear infinite;
+  }
+  @keyframes b2spin { to { transform:rotate(360deg); } }
+  .b2 .btn-inner{ position:relative; z-index:1; background:#161b22; border-radius:5px; }
+  .b2 .btn-main{ border-radius:5px 0 0 5px; }
+  .b2 .btn-drop{ border-radius:0 5px 5px 0; }
+
+  /* ════════════════════════════════════════════════════════════════
+     OPÇÃO 3 · Pulse dourado (sem gradient, só glow respirando)
+     ════════════════════════════════════════════════════════════════ */
+  .b3{ padding:1.5px; border-radius:7px; background:#d4a574; display:inline-flex;
+    animation:b3pulse 2.5s ease-in-out infinite; }
+  @keyframes b3pulse {
+    0%,100% { box-shadow:0 0 0 0 rgba(212,165,116,.5), 0 0 8px 0 rgba(212,165,116,.20); background:#d4a574; }
+    50% { box-shadow:0 0 0 4px rgba(212,165,116,.15), 0 0 18px 2px rgba(212,165,116,.45); background:#f0c896; }
+  }
+  .b3 .btn-main{ border-radius:5px 0 0 5px; }
+  .b3 .btn-drop{ border-radius:0 5px 5px 0; }
+
+  /* ════════════════════════════════════════════════════════════════
+     OPÇÃO 4 · Neon outline estático dourado (sem animação)
+     ════════════════════════════════════════════════════════════════ */
+  .b4{ border:1.5px solid #d4a574; border-radius:7px; display:inline-flex;
+    box-shadow:0 0 0 1px rgba(212,165,116,.18), 0 0 12px -2px rgba(212,165,116,.35); }
+  .b4 .btn-main{ border-radius:5px 0 0 5px; padding:5.5px 14px; }
+  .b4 .btn-drop{ border-radius:0 5px 5px 0; padding:5.5px 9px; }
+
+  /* ════════════════════════════════════════════════════════════════
+     OPÇÃO 5 · Slide diagonal (gradient cruzando 45°)
+     ════════════════════════════════════════════════════════════════ */
+  .b5{ padding:1.5px; border-radius:7px;
+    background:linear-gradient(135deg, #d4a574 0%, #c084fc 30%, #d4a574 60%, #fbbf24 100%);
+    background-size:200% 200%;
+    animation:b5slide 5s ease-in-out infinite;
+    display:inline-flex;
+  }
+  @keyframes b5slide { 0%,100% {background-position:0% 0%;} 50% {background-position:100% 100%;} }
+  .b5 .btn-main{ border-radius:5px 0 0 5px; }
+  .b5 .btn-drop{ border-radius:0 5px 5px 0; }
+
+  /* ════════════════════════════════════════════════════════════════
+     OPÇÃO 6 · Shimmer (brilho passando)
+     ════════════════════════════════════════════════════════════════ */
+  .b6{ padding:1.5px; border-radius:7px; display:inline-flex; position:relative; overflow:hidden;
+    background:linear-gradient(90deg, #d4a574, #b88a5a, #d4a574, #b88a5a);
+    background-size:200% 100%; }
+  .b6::before{
+    content:''; position:absolute; top:0; bottom:0; width:30%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent);
+    animation:b6shimmer 2.5s linear infinite;
+  }
+  @keyframes b6shimmer { 0% {left:-30%;} 100% {left:130%;} }
+  .b6 .btn-main{ border-radius:5px 0 0 5px; position:relative; z-index:1; }
+  .b6 .btn-drop{ border-radius:0 5px 5px 0; position:relative; z-index:1; }
+
+  /* ════════════════════════════════════════════════════════════════
+     OPÇÃO 7 · Multi-camada (gradient + halo externo)
+     ════════════════════════════════════════════════════════════════ */
+  .b7{ padding:1.5px; border-radius:7px; display:inline-flex;
+    background:linear-gradient(110deg, #d4a574, #f0c896, #d4a574);
+    background-size:200% 100%;
+    animation:b7grad 4s ease-in-out infinite;
+    box-shadow:0 0 18px -3px rgba(212,165,116,.45), 0 4px 12px rgba(212,165,116,.20); }
+  @keyframes b7grad { 0%,100% {background-position:0% 50%;} 50% {background-position:100% 50%;} }
+  .b7 .btn-main{ border-radius:5px 0 0 5px; }
+  .b7 .btn-drop{ border-radius:0 5px 5px 0; }
+
+  /* ════════════════════════════════════════════════════════════════
+     OPÇÃO 8 · Shadow pulsante (borda fixa + sombra respirando)
+     ════════════════════════════════════════════════════════════════ */
+  .b8{ border:1.5px solid #d4a574; border-radius:7px; display:inline-flex;
+    animation:b8shadow 3s ease-in-out infinite; }
+  @keyframes b8shadow {
+    0%,100% { box-shadow:0 0 0 0 rgba(212,165,116,.5), 0 2px 8px rgba(0,0,0,.3); }
+    50% { box-shadow:0 0 0 5px rgba(212,165,116,.0), 0 0 24px 2px rgba(212,165,116,.50), 0 2px 8px rgba(0,0,0,.3); }
+  }
+  .b8 .btn-main{ border-radius:5px 0 0 5px; padding:5.5px 14px; }
+  .b8 .btn-drop{ border-radius:0 5px 5px 0; padding:5.5px 9px; }
+
+  /* ════════════════════════════════════════════════════════════════
+     OPÇÃO 9 · Linha animada (filete que corre em volta)
+     ════════════════════════════════════════════════════════════════ */
+  .b9{ padding:1.5px; border-radius:7px; display:inline-flex; position:relative; background:rgba(212,165,116,.20); overflow:hidden; }
+  .b9::before, .b9::after{
+    content:''; position:absolute; background:#fff;
+  }
+  .b9::before{
+    top:0; left:0; width:50%; height:1.5px;
+    animation:b9top 3s linear infinite;
+  }
+  @keyframes b9top {
+    0% { transform:translateX(-100%); } 25%,100% { transform:translateX(200%); }
+  }
+  .b9::after{
+    bottom:0; right:0; width:50%; height:1.5px;
+    animation:b9bot 3s linear infinite;
+  }
+  @keyframes b9bot {
+    0% { transform:translateX(100%); } 25%,100% { transform:translateX(-200%); }
+  }
+  .b9 .btn-inner{ position:relative; z-index:1; background:#161b22; border-radius:5px; }
+  .b9 .btn-main{ border-radius:5px 0 0 5px; }
+  .b9 .btn-drop{ border-radius:0 5px 5px 0; }
+
+  /* ════════════════════════════════════════════════════════════════
+     OPÇÃO 10 · Holographic edge (cores iridescentes saturadas)
+     ════════════════════════════════════════════════════════════════ */
+  .b10{ padding:2px; border-radius:8px; display:inline-flex;
+    background:linear-gradient(110deg, #ff006e, #d4a574, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #ff006e);
+    background-size:400% 100%;
+    animation:b10holo 8s linear infinite;
+    box-shadow:0 0 22px -5px rgba(212,165,116,.35); }
+  @keyframes b10holo { 0% {background-position:0% 50%;} 100% {background-position:400% 50%;} }
+  .b10 .btn-main{ border-radius:6px 0 0 6px; }
+  .b10 .btn-drop{ border-radius:0 6px 6px 0; }
+
+</style>
+</head>
+<body>
+
+<h1>10 opções de borda para o botão Imprimir</h1>
+<div class="sub">Mesmo botão (split: <b>Imprimir</b> + <b>▾</b>), 10 efeitos de borda diferentes. Diga o número que prefere.</div>
+
+<div class="grid">
+
+  <!-- 1 -->
+  <div class="item">
+    <div class="item-h"><span class="n">01</span><span class="nome">Gradient horizontal animado (ATUAL)</span></div>
+    <div class="item-d">Cores deslizam de lado a lado em 6s. Discreto.</div>
+    <div class="bar"><span class="b1"><div class="btn-inner"><button class="btn-main">🖨 Imprimir</button><button class="btn-drop">▾</button></div></span></div>
+  </div>
+
+  <!-- 2 -->
+  <div class="item">
+    <div class="item-h"><span class="n">02</span><span class="nome">Conic-gradient rotativo</span></div>
+    <div class="item-d">Cores giram em volta do botão. Bem chamativo.</div>
+    <div class="bar"><span class="b2"><div class="btn-inner"><button class="btn-main">🖨 Imprimir</button><button class="btn-drop">▾</button></div></span></div>
+  </div>
+
+  <!-- 3 -->
+  <div class="item">
+    <div class="item-h"><span class="n">03</span><span class="nome">Pulse dourado (respiração)</span></div>
+    <div class="item-d">Sem gradient, só pulsa dourado com glow. Minimal.</div>
+    <div class="bar"><span class="b3"><div class="btn-inner"><button class="btn-main">🖨 Imprimir</button><button class="btn-drop">▾</button></div></span></div>
+  </div>
+
+  <!-- 4 -->
+  <div class="item">
+    <div class="item-h"><span class="n">04</span><span class="nome">Neon outline estático</span></div>
+    <div class="item-d">Linha dourada fixa + halo sutil. Sem animação.</div>
+    <div class="bar"><span class="b4"><div class="btn-inner"><button class="btn-main">🖨 Imprimir</button><button class="btn-drop">▾</button></div></span></div>
+  </div>
+
+  <!-- 5 -->
+  <div class="item">
+    <div class="item-h"><span class="n">05</span><span class="nome">Slide diagonal 45°</span></div>
+    <div class="item-d">Gradient diagonal cruzando o botão. Dinâmico mas suave.</div>
+    <div class="bar"><span class="b5"><div class="btn-inner"><button class="btn-main">🖨 Imprimir</button><button class="btn-drop">▾</button></div></span></div>
+  </div>
+
+  <!-- 6 -->
+  <div class="item">
+    <div class="item-h"><span class="n">06</span><span class="nome">Shimmer (brilho passando)</span></div>
+    <div class="item-d">Faixa branca atravessa a borda como reflexo de luz.</div>
+    <div class="bar"><span class="b6"><div class="btn-inner"><button class="btn-main">🖨 Imprimir</button><button class="btn-drop">▾</button></div></span></div>
+  </div>
+
+  <!-- 7 -->
+  <div class="item">
+    <div class="item-h"><span class="n">07</span><span class="nome">Gradient + halo dourado externo</span></div>
+    <div class="item-d">Gradient interno + sombra dourada irradiando ao redor.</div>
+    <div class="bar"><span class="b7"><div class="btn-inner"><button class="btn-main">🖨 Imprimir</button><button class="btn-drop">▾</button></div></span></div>
+  </div>
+
+  <!-- 8 -->
+  <div class="item">
+    <div class="item-h"><span class="n">08</span><span class="nome">Shadow pulsante</span></div>
+    <div class="item-d">Borda fixa + sombra dourada que pulsa para fora.</div>
+    <div class="bar"><span class="b8"><div class="btn-inner"><button class="btn-main">🖨 Imprimir</button><button class="btn-drop">▾</button></div></span></div>
+  </div>
+
+  <!-- 9 -->
+  <div class="item">
+    <div class="item-h"><span class="n">09</span><span class="nome">Filete branco correndo</span></div>
+    <div class="item-d">Linha branca curta percorre a borda em loop.</div>
+    <div class="bar"><span class="b9"><div class="btn-inner"><button class="btn-main">🖨 Imprimir</button><button class="btn-drop">▾</button></div></span></div>
+  </div>
+
+  <!-- 10 -->
+  <div class="item">
+    <div class="item-h"><span class="n">10</span><span class="nome">Holographic (cores saturadas)</span></div>
+    <div class="item-d">Borda iridescente rosa·dourado·roxo·azul·verde·amarelo. Estilo NFT.</div>
+    <div class="bar"><span class="b10"><div class="btn-inner"><button class="btn-main">🖨 Imprimir</button><button class="btn-drop">▾</button></div></span></div>
+  </div>
+
+</div>
+
+<div style="margin-top:30px;padding:14px;background:rgba(212,165,116,.04);border:1px dashed rgba(212,165,116,.20);border-radius:10px;font-size:11px;color:var(--txt-2);line-height:1.6;max-width:1300px;margin-left:auto;margin-right:auto;">
+  <b style="color:var(--accent);">💡 Sobre o fix do bug:</b><br>
+  No estado atual o botão aparecia sem efeito porque o CSS era injetado apenas ao abrir o modal. Já corrigi (CSS agora injeta no carregamento do script). Recarregue o dashboard que o botão já mostra o gradient atual desde o boot.<br><br>
+  <b style="color:var(--accent);">📅 Sobre a sessão Por período:</b><br>
+  Vou implementar as 3 novas opções (todas as turmas do mês · turma escolhida do mês · turma atual) na próxima rodada. Aguardando você escolher qual borda aplicar primeiro.
+</div>
+
+</body>
+</html>

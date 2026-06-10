@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home mobile · Safari iOS · Tuner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Italiana&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    /* === Viewport === */
+    --vw-w: 390px;
+    --vw-h: 844px;
+
+    /* === Topbar === */
+    --tb-pt: 12px;
+    --tb-px: 14px;
+    --tb-pb: 12px;
+    --tb-brand-fs: 14px;
+    --tb-btn-fs: 11px;
+    --tb-btn-pad: 6px 9px;
+    --tb-gap: 6px;
+
+    /* === Welcome === */
+    --wel-mt: 24px;
+    --wel-mx: 16px;
+    --wel-ttl-fs: 22px;
+    --wel-sub-fs: 13px;
+    --wel-gap: 4px;
+
+    /* === Cards (grid) === */
+    --grid-mx: 16px;
+    --grid-mt: 18px;
+    --grid-gap: 12px;
+
+    /* === Card individual === */
+    --card-pad: 20px;
+    --card-radius: 14px;
+    --card-icon: 44px;
+    --card-icon-svg: 22px;
+    --card-ttl-fs: 17px;
+    --card-sub-fs: 12px;
+    --card-cta-fs: 12px;
+    --card-badge-fs: 10px;
+    --card-badge-pad: 4px 10px;
+    --card-gap: 14px;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: #0a0e13;
+    color: #e6edf3;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+  }
+
+  /* ═══ SIDEBAR ═══ */
+  .sidebar {
+    background: #161b22;
+    border-right: 1px solid rgba(255,255,255,.08);
+    padding: 18px 16px;
+    overflow-y: auto;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+  .sidebar h1 {
+    font-family: 'Italiana', serif;
+    font-size: 24px;
+    margin: 0 0 4px;
+    color: #f0c896;
+    letter-spacing: .02em;
+  }
+  .sidebar .sub {
+    font-size: 11px; color: #6b7280;
+    margin-bottom: 18px;
+    letter-spacing: .03em;
+  }
+
+  /* Presets */
+  .presets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+  .preset-btn {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.10);
+    color: #9aa5b1;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .12s;
+    text-align: center;
+  }
+  .preset-btn:hover { color: #c8f05a; border-color: #c8f05a; }
+  .preset-btn.on { background: rgba(200,240,90,.18); border-color: #c8f05a; color: #c8f05a; }
+
+  .orient-row {
+    display: flex; gap: 5px; margin-bottom: 16px;
+  }
+  .orient-btn {
+    flex: 1;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.10);
+    color: #9aa5b1;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 10px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 5px;
+  }
+  .orient-btn.on { background: rgba(80,140,255,.18); border-color: #5096ff; color: #93c5fd; }
+
+  .group {
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,.02);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 8px;
+  }
+  .group-h {
+    font-size: 10px;
+    color: #c8f05a;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    margin-bottom: 8px;
+    display: flex; justify-content: space-between;
+  }
+  .group-h .reset {
+    color: #6b7280; cursor: pointer; font-size: 9px;
+    border: 1px solid transparent; padding: 1px 6px; border-radius: 4px;
+  }
+  .group-h .reset:hover { color: #c8f05a; border-color: #c8f05a; }
+
+  .ctrl {
+    margin-bottom: 7px;
+  }
+  .ctrl-h {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; color: #9aa5b1; margin-bottom: 3px;
+    font-weight: 600;
+  }
+  .ctrl-h .val {
+    color: #c8f05a; font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    font-size: 10.5px;
+  }
+  .ctrl input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 3px;
+    background: rgba(255,255,255,.10);
+    border-radius: 2px;
+    cursor: pointer;
+    margin: 0;
+  }
+  .ctrl input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #c8f05a;
+    cursor: pointer;
+    border: 2px solid #0a0e13;
+    box-shadow: 0 0 8px rgba(200,240,90,.40);
+  }
+  .ctrl input[type=range]::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #c8f05a; cursor: pointer;
+    border: 2px solid #0a0e13;
+  }
+
+  .footer-actions {
+    display: flex; gap: 6px; margin-top: 12px;
+  }
+  .footer-actions button {
+    flex: 1;
+    background: linear-gradient(180deg, #d4f565, #c8f05a);
+    color: #0a0e1a;
+    border: none;
+    padding: 9px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .footer-actions button.outline {
+    background: transparent;
+    color: #c8f05a;
+    border: 1px solid #c8f05a;
+  }
+
+  /* ═══ STAGE ═══ */
+  .stage {
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px;
+    background:
+      radial-gradient(ellipse at top, #0e1322 0%, transparent 60%),
+      #050810;
+    min-height: 100vh;
+  }
+  .phone {
+    width: var(--vw-w);
+    height: var(--vw-h);
+    background: #0a0e13;
+    border-radius: 36px;
+    border: 8px solid #1a1d23;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.06),
+      0 30px 60px rgba(0,0,0,.55),
+      inset 0 0 0 1px rgba(0,0,0,.7);
+    overflow: hidden;
+    position: relative;
+    transition: width .3s, height .3s;
+  }
+  .phone.landscape {
+    width: var(--vw-h);
+    height: var(--vw-w);
+  }
+  /* ── Safari iOS: status bar (Dynamic Island) + URL bar embaixo + home indicator ── */
+  .sf-stat {
+    height: 42px; background: #0a0e13; color: #e6edf3;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 22px; font-size: 14px; font-weight: 700;
+    position: relative; flex-shrink: 0;
+    font-family: -apple-system, 'SF Pro Display', sans-serif;
+  }
+  .sf-stat::before {
+    /* Dynamic Island */
+    content: '';
+    position: absolute;
+    top: 8px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 26px;
+    background: #000;
+    border-radius: 100px;
+  }
+  .sf-stat .right {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px;
+  }
+  .sf-stat .bat-ios {
+    border: 1px solid #e6edf3; border-radius: 3px;
+    width: 22px; height: 11px; position: relative; display: inline-block;
+    opacity: .9;
+  }
+  .sf-stat .bat-ios::before {
+    content: ''; position: absolute; right: -2.5px; top: 2.5px;
+    width: 1.5px; height: 5px; background: #e6edf3;
+  }
+  .sf-stat .bat-ios::after {
+    content: ''; position: absolute; left: 1px; top: 1px; bottom: 1px;
+    width: 78%; background: #e6edf3; border-radius: 1px;
+  }
+
+  /* Safari URL bar EMBAIXO (iOS 15+) */
+  .sf-url-wrap {
+    background: rgba(20,20,22,.92);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,.06);
+    padding: 8px 10px 4px;
+    flex-shrink: 0;
+  }
+  .sf-url {
+    background: #2a2d33;
+    border-radius: 12px;
+    padding: 9px 12px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: #e6edf3;
+    letter-spacing: -.01em;
+  }
+  .sf-url .aA { font-weight: 700; color: #aaa; flex-shrink: 0; }
+  .sf-url .dom {
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-align: center; color: #e6edf3;
+  }
+  .sf-url .reload { color: #aaa; font-size: 13px; flex-shrink: 0; }
+
+  .sf-actions {
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 4px 14px 0;
+    color: #4a9eff; font-size: 18px;
+  }
+  .sf-actions span {
+    padding: 6px 8px; display: inline-flex; align-items: center; justify-content: center;
+  }
+  .sf-actions .disabled { opacity: .35; color: #aaa; }
+  .sf-actions .tabs {
+    border: 1.5px solid #4a9eff; border-radius: 4px;
+    width: 16px; height: 16px; position: relative;
+  }
+  .sf-actions .tabs::after {
+    content: ''; position: absolute; top: -3px; left: 3px;
+    width: 16px; height: 16px;
+    border: 1.5px solid #4a9eff; border-radius: 4px;
+    background: rgba(74,158,255,.10);
+  }
+
+  /* Home indicator */
+  .sf-home {
+    height: 18px; display: flex; align-items: center; justify-content: center;
+    background: rgba(20,20,22,.92);
+    flex-shrink: 0;
+  }
+  .sf-home::before {
+    content: ''; width: 110px; height: 4px;
+    background: #e6edf3; border-radius: 100px;
+  }
+
+  /* Tela interna */
+  .screen {
+    flex: 1; min-height: 0;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+  .phone {
+    display: flex; flex-direction: column;
+  }
+
+  /* ═══ HOME (mirror do dashboard.html) ═══ */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: var(--tb-pt) var(--tb-px) var(--tb-pb);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    background: #0c1117;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    gap: var(--tb-gap);
+    flex-wrap: nowrap;
+  }
+  .tb-left {
+    display: flex; align-items: center; gap: 6px;
+    min-width: 0; flex: 1;
+  }
+  .tb-dot { width: 8px; height: 8px; border-radius: 50%; background: #c8f05a; flex-shrink: 0; }
+  .tb-title {
+    font-size: var(--tb-brand-fs);
+    font-weight: 700;
+    color: #e6edf3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tb-right { display: flex; gap: var(--tb-gap); flex-shrink: 0; }
+  .tb-btn {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.10);
+    color: #93c5fd;
+    padding: var(--tb-btn-pad);
+    border-radius: 8px;
+    font-size: var(--tb-btn-fs);
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+  .tb-btn .dot-bell {
+    position: absolute; top: -3px; right: -3px;
+    background: #ef4444; color: #fff;
+    border-radius: 50%; width: 14px; height: 14px;
+    font-size: 8px; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid #0c1117;
+  }
+
+  .welcome {
+    margin: var(--wel-mt) var(--wel-mx) 0;
+    display: flex; flex-direction: column; gap: var(--wel-gap);
+  }
+  .welcome-ttl {
+    font-size: var(--wel-ttl-fs);
+    font-weight: 700;
+    color: #e6edf3;
+    line-height: 1.2;
+  }
+  .welcome-sub {
+    font-size: var(--wel-sub-fs);
+    color: #6b7280;
+  }
+
+  .home-grid {
+    margin: var(--grid-mt) var(--grid-mx) 24px;
+    display: flex; flex-direction: column;
+    gap: var(--grid-gap);
+  }
+  .home-card {
+    padding: var(--card-pad);
+    border-radius: var(--card-radius);
+    display: flex; flex-direction: column;
+    gap: var(--card-gap);
+    cursor: pointer;
+  }
+  .home-card.turmas {
+    background: linear-gradient(135deg, rgba(96,165,250,.14), rgba(96,165,250,.04));
+    border: 1px solid rgba(96,165,250,.20);
+  }
+  .home-card.ic {
+    background: linear-gradient(135deg, rgba(212,165,116,.14), rgba(212,165,116,.04));
+    border: 1px solid rgba(212,165,116,.30);
+  }
+  .home-card.pipeline {
+    background: linear-gradient(135deg, rgba(167,139,250,.14), rgba(167,139,250,.04));
+    border: 1px solid rgba(167,139,250,.30);
+  }
+  .card-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .card-icon {
+    width: var(--card-icon);
+    height: var(--card-icon);
+    border-radius: 12px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-icon svg { width: var(--card-icon-svg); height: var(--card-icon-svg); }
+  .card-badge {
+    font-size: var(--card-badge-fs);
+    font-weight: 700;
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    padding: var(--card-badge-pad);
+    border-radius: 100px;
+  }
+  .home-card.turmas .card-badge { color: #93c5fd; background: rgba(96,165,250,.15); border: 1px solid rgba(96,165,250,.30); }
+  .home-card.ic .card-badge { color: #f0c896; background: rgba(212,165,116,.15); border: 1px solid rgba(212,165,116,.30); }
+  .home-card.pipeline .card-badge { color: #a78bfa; background: rgba(167,139,250,.15); border: 1px solid rgba(167,139,250,.30); }
+  .card-body { display: flex; flex-direction: column; gap: 2px; }
+  .card-ttl {
+    font-size: var(--card-ttl-fs);
+    font-weight: 700;
+    color: #e6edf3;
+    line-height: 1.2;
+  }
+  .card-sub {
+    font-size: var(--card-sub-fs);
+    color: #6b7280;
+    line-height: 1.5;
+  }
+  .card-cta {
+    font-size: var(--card-cta-fs);
+    font-weight: 700;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .home-card.turmas .card-cta { color: #93c5fd; }
+  .home-card.ic .card-cta { color: #f0c896; }
+  .home-card.pipeline .card-cta { color: #a78bfa; }
+</style>
+</head>
+<body>
+
+<!-- ════ SIDEBAR ════ -->
+<aside class="sidebar">
+  <h1>Safari iOS</h1>
+  <div class="sub">iPhone · Dynamic Island + URL bar embaixo</div>
+
+  <div class="group">
+    <div class="group-h">Device <span class="reset" data-reset="device">↺</span></div>
+    <div class="presets">
+      <button class="preset-btn" data-device="320,568">iPhone SE</button>
+      <button class="preset-btn on" data-device="390,844">iPhone 14</button>
+      <button class="preset-btn" data-device="430,932">iPhone Pro Max</button>
+      <button class="preset-btn" data-device="412,915">Pixel 7</button>
+    </div>
+    <div class="orient-row">
+      <button class="orient-btn on" data-orient="portrait">📱 Retrato</button>
+      <button class="orient-btn" data-orient="landscape">🖥 Paisagem</button>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Largura</span><span class="val" data-out="vw-w">390px</span></div>
+      <input type="range" min="280" max="500" value="390" data-var="vw-w" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Altura</span><span class="val" data-out="vw-h">844px</span></div>
+      <input type="range" min="500" max="950" value="844" data-var="vw-h" data-unit="px">
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h">Topbar <span class="reset" data-reset="topbar">↺</span></div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Padding topo</span><span class="val" data-out="tb-pt">12px</span></div>
+      <input type="range" min="0" max="32" value="12" data-var="tb-pt" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Padding lados</span><span class="val" data-out="tb-px">14px</span></div>
+      <input type="range" min="6" max="28" value="14" data-var="tb-px" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Padding fundo</span><span class="val" data-out="tb-pb">12px</span></div>
+      <input type="range" min="6" max="28" value="12" data-var="tb-pb" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Fonte do brand</span><span class="val" data-out="tb-brand-fs">14px</span></div>
+      <input type="range" min="10" max="22" value="14" data-var="tb-brand-fs" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Fonte botões</span><span class="val" data-out="tb-btn-fs">11px</span></div>
+      <input type="range" min="8" max="16" value="11" data-var="tb-btn-fs" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Gap botões</span><span class="val" data-out="tb-gap">6px</span></div>
+      <input type="range" min="2" max="14" value="6" data-var="tb-gap" data-unit="px">
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h">Boas-vindas <span class="reset" data-reset="welcome">↺</span></div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Margem topo</span><span class="val" data-out="wel-mt">24px</span></div>
+      <input type="range" min="0" max="60" value="24" data-var="wel-mt" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Margem lados</span><span class="val" data-out="wel-mx">16px</span></div>
+      <input type="range" min="0" max="40" value="16" data-var="wel-mx" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Fonte título</span><span class="val" data-out="wel-ttl-fs">22px</span></div>
+      <input type="range" min="14" max="40" value="22" data-var="wel-ttl-fs" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Fonte subtítulo</span><span class="val" data-out="wel-sub-fs">13px</span></div>
+      <input type="range" min="9" max="20" value="13" data-var="wel-sub-fs" data-unit="px">
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h">Grid de cards <span class="reset" data-reset="grid">↺</span></div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Margem topo</span><span class="val" data-out="grid-mt">18px</span></div>
+      <input type="range" min="0" max="50" value="18" data-var="grid-mt" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Margem lados</span><span class="val" data-out="grid-mx">16px</span></div>
+      <input type="range" min="0" max="40" value="16" data-var="grid-mx" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Gap entre cards</span><span class="val" data-out="grid-gap">12px</span></div>
+      <input type="range" min="0" max="40" value="12" data-var="grid-gap" data-unit="px">
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-h">Card individual <span class="reset" data-reset="card">↺</span></div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Padding interno</span><span class="val" data-out="card-pad">20px</span></div>
+      <input type="range" min="8" max="40" value="20" data-var="card-pad" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Border-radius</span><span class="val" data-out="card-radius">14px</span></div>
+      <input type="range" min="0" max="30" value="14" data-var="card-radius" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Gap interno</span><span class="val" data-out="card-gap">14px</span></div>
+      <input type="range" min="0" max="32" value="14" data-var="card-gap" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Tamanho ícone</span><span class="val" data-out="card-icon">44px</span></div>
+      <input type="range" min="20" max="80" value="44" data-var="card-icon" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>SVG ícone</span><span class="val" data-out="card-icon-svg">22px</span></div>
+      <input type="range" min="10" max="48" value="22" data-var="card-icon-svg" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Fonte título</span><span class="val" data-out="card-ttl-fs">17px</span></div>
+      <input type="range" min="11" max="28" value="17" data-var="card-ttl-fs" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Fonte descrição</span><span class="val" data-out="card-sub-fs">12px</span></div>
+      <input type="range" min="9" max="18" value="12" data-var="card-sub-fs" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Fonte CTA</span><span class="val" data-out="card-cta-fs">12px</span></div>
+      <input type="range" min="9" max="18" value="12" data-var="card-cta-fs" data-unit="px">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-h"><span>Fonte badge</span><span class="val" data-out="card-badge-fs">10px</span></div>
+      <input type="range" min="7" max="14" value="10" data-var="card-badge-fs" data-unit="px">
+    </div>
+  </div>
+
+  <div class="footer-actions">
+    <button class="outline" id="resetAll">Resetar tudo</button>
+    <button id="exportCss">📋 Copiar CSS</button>
+  </div>
+</aside>
+
+<!-- ════ STAGE: phone com a home ════ -->
+<main class="stage">
+  <div class="phone" id="phone">
+    <!-- iOS status bar com Dynamic Island -->
+    <div class="sf-stat">
+      <span>9:41</span>
+      <span class="right">
+        <span>📶</span><span>5G</span><span class="bat-ios"></span>
+      </span>
+    </div>
+    <div class="screen">
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="tb-left">
+          <span class="tb-dot"></span>
+          <span class="tb-title">Febracis · ADM</span>
+        </div>
+        <div class="tb-right">
+          <span class="tb-btn">👥 Usuários</span>
+          <span class="tb-btn">🎨 Tema</span>
+          <span class="tb-btn">🔔<span class="dot-bell">0</span></span>
+          <span class="tb-btn">⏻ Sair</span>
+        </div>
+      </div>
+
+      <!-- Boas-vindas -->
+      <div class="welcome">
+        <div class="welcome-ttl">Bem-vindo ao sistema</div>
+        <div class="welcome-sub">Selecione uma área para continuar</div>
+      </div>
+
+      <!-- Cards -->
+      <div class="home-grid">
+        <!-- TURMAS -->
+        <div class="home-card turmas">
+          <div class="card-top">
+            <div class="card-icon">
+              <svg viewBox="0 0 22 22" fill="none">
+                <rect x="2" y="2" width="8" height="8" rx="2" stroke="#60a5fa" stroke-width="1.6"/>
+                <rect x="12" y="2" width="8" height="8" rx="2" stroke="#60a5fa" stroke-width="1.6"/>
+                <rect x="2" y="12" width="8" height="8" rx="2" stroke="#60a5fa" stroke-width="1.6"/>
+                <rect x="12" y="12" width="8" height="8" rx="2" stroke="#60a5fa" stroke-width="1.6"/>
+              </svg>
+            </div>
+            <span class="card-badge">Turmas</span>
+          </div>
+          <div class="card-body">
+            <div class="card-ttl">Gerenciar Turmas</div>
+            <div class="card-sub">Acesse, crie e gerencie os treinamentos ativos da equipe.</div>
+          </div>
+          <div class="card-cta">Acessar →</div>
+        </div>
+
+        <!-- IC -->
+        <div class="home-card ic">
+          <div class="card-top">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3 21h18M3 3v18" stroke="#d4a574" stroke-width="1" opacity=".25"/>
+                <path d="M4 17 L8 12 L12 14 L16 8 L20 10" stroke="#d4a574" stroke-width="1.8" fill="none"/>
+                <circle cx="20" cy="10" r="2.2" fill="#d4a574"/>
+              </svg>
+            </div>
+            <span class="card-badge">★ Estratégico</span>
+          </div>
+          <div class="card-body">
+            <div class="card-ttl">Inteligência Comercial</div>
+            <div class="card-sub">KPIs · Rankings · Tendências · Decisão</div>
+          </div>
+          <div class="card-cta">Abrir painel →</div>
+        </div>
+
+        <!-- PIPELINE -->
+        <div class="home-card pipeline">
+          <div class="card-top">
+            <div class="card-icon">
+              <svg viewBox="0 0 22 22" fill="none">
+                <circle cx="11" cy="11" r="9" stroke="#a78bfa" stroke-width="1.6"/>
+                <text x="11" y="16" font-size="12" font-weight="500" fill="#a78bfa" text-anchor="middle">$</text>
+              </svg>
+            </div>
+            <span class="card-badge">Pipeline</span>
+          </div>
+          <div class="card-body">
+            <div class="card-ttl">Pipeline Comercial</div>
+            <div class="card-sub">Metas, vendas, ranking e performance dos consultores.</div>
+          </div>
+          <div class="card-cta">Acessar →</div>
+        </div>
+      </div>
+    </div>
+    <!-- Safari URL bar (iOS 15+ embaixo) -->
+    <div class="sf-url-wrap">
+      <div class="sf-url">
+        <span class="aA">ᴬA</span>
+        <span class="dom">agentecomercial.github.io</span>
+        <span class="reload">↻</span>
+      </div>
+      <div class="sf-actions">
+        <span class="disabled">‹</span>
+        <span class="disabled">›</span>
+        <span>⇪</span>
+        <span>📖</span>
+        <span class="tabs"></span>
+      </div>
+    </div>
+    <!-- Home indicator -->
+    <div class="sf-home"></div>
+  </div>
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  var root = document.documentElement;
+  var DEFAULTS = {};
+  document.querySelectorAll('input[type=range][data-var]').forEach(function(inp){
+    DEFAULTS[inp.dataset.var] = inp.value;
+  });
+
+  function applyVar(name, val, unit){
+    root.style.setProperty('--' + name, val + (unit||''));
+    var out = document.querySelector('[data-out="'+name+'"]');
+    if(out) out.textContent = val + (unit||'');
+  }
+
+  /* Sliders → CSS vars */
+  document.querySelectorAll('input[type=range][data-var]').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      applyVar(inp.dataset.var, inp.value, inp.dataset.unit || 'px');
+    });
+    /* aplica valor inicial */
+    applyVar(inp.dataset.var, inp.value, inp.dataset.unit || 'px');
+  });
+
+  /* Presets de dispositivo */
+  document.querySelectorAll('[data-device]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('[data-device]').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      var d = btn.dataset.device.split(',');
+      var w = +d[0], h = +d[1];
+      setSlider('vw-w', w);
+      setSlider('vw-h', h);
+    });
+  });
+
+  /* Orientação */
+  document.querySelectorAll('[data-orient]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('[data-orient]').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      var phone = document.getElementById('phone');
+      if(btn.dataset.orient === 'landscape') phone.classList.add('landscape');
+      else phone.classList.remove('landscape');
+    });
+  });
+
+  /* Resets por grupo */
+  document.querySelectorAll('[data-reset]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var group = el.dataset.reset;
+      var prefixes = {
+        device: ['vw-'],
+        topbar: ['tb-'],
+        welcome: ['wel-'],
+        grid: ['grid-'],
+        card: ['card-']
+      };
+      var prefs = prefixes[group];
+      if(!prefs) return;
+      Object.keys(DEFAULTS).forEach(function(name){
+        if(prefs.some(function(p){ return name.indexOf(p) === 0; })){
+          setSlider(name, DEFAULTS[name]);
+        }
+      });
+    });
+  });
+
+  /* Resetar tudo */
+  document.getElementById('resetAll').addEventListener('click', function(){
+    Object.keys(DEFAULTS).forEach(function(name){
+      setSlider(name, DEFAULTS[name]);
+    });
+  });
+
+  function setSlider(name, val){
+    var inp = document.querySelector('input[data-var="'+name+'"]');
+    if(!inp) return;
+    inp.value = val;
+    applyVar(name, val, inp.dataset.unit || 'px');
+  }
+
+  /* Exportar CSS pronto */
+  document.getElementById('exportCss').addEventListener('click', function(){
+    var lines = ['/* === Home mobile · Configuração via tuner === */',
+                '@media (max-width: 768px) {'];
+    var get = function(name){
+      return getComputedStyle(root).getPropertyValue('--' + name).trim();
+    };
+    lines.push('  /* Topbar */');
+    lines.push('  .topbar { padding: calc('+get('tb-pt')+' + env(safe-area-inset-top)) '+get('tb-px')+' '+get('tb-pb')+' !important; gap: '+get('tb-gap')+' !important; }');
+    lines.push('  .topbar-title { font-size: '+get('tb-brand-fs')+' !important; }');
+    lines.push('  .topbar-right > * { font-size: '+get('tb-btn-fs')+' !important; }');
+    lines.push('  /* Boas-vindas (wrapper do "Bem-vindo ao sistema") */');
+    lines.push('  /* Ajuste seu wrapper: margin-top:'+get('wel-mt')+'; margin: '+get('wel-mt')+' '+get('wel-mx')+' 0; */');
+    lines.push('  /* Título: font-size:'+get('wel-ttl-fs')+'; Subtítulo: font-size:'+get('wel-sub-fs')+'; */');
+    lines.push('  /* Grid */');
+    lines.push('  .home-grid { margin: '+get('grid-mt')+' '+get('grid-mx')+' 24px !important; gap: '+get('grid-gap')+' !important; grid-template-columns: 1fr !important; }');
+    lines.push('  /* Card */');
+    lines.push('  .home-card { padding: '+get('card-pad')+' !important; border-radius: '+get('card-radius')+' !important; gap: '+get('card-gap')+' !important; }');
+    lines.push('  .home-card-icon { width: '+get('card-icon')+' !important; height: '+get('card-icon')+' !important; }');
+    lines.push('  .home-card-icon svg { width: '+get('card-icon-svg')+' !important; height: '+get('card-icon-svg')+' !important; }');
+    lines.push('  .home-card-title { font-size: '+get('card-ttl-fs')+' !important; }');
+    lines.push('  .home-card-sub { font-size: '+get('card-sub-fs')+' !important; }');
+    lines.push('  .home-card-footer { font-size: '+get('card-cta-fs')+' !important; }');
+    lines.push('  .home-card-label { font-size: '+get('card-badge-fs')+' !important; }');
+    lines.push('}');
+    var css = lines.join('\n');
+    navigator.clipboard.writeText(css).then(function(){
+      var btn = document.getElementById('exportCss');
+      var old = btn.textContent;
+      btn.textContent = '✓ Copiado!';
+      setTimeout(function(){ btn.textContent = old; }, 1500);
+    }).catch(function(){
+      alert(css);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

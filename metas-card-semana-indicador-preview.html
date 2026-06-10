@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Preview · Indicador de semana · 5 opções</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg-2:#161b22; --bg-3:#1c2128;
+    --border:rgba(255,255,255,.08); --txt:#e6edf3; --txt-2:#9aa5b1; --txt-3:#6b7280;
+    --accent:#d4a574; --accent-2:#f0c896;
+    --green:#34d399; --red:#ef4444; --amber:#f59e0b;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:var(--txt); margin:0; padding:32px 24px 80px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .sub{ font-size:12px; color:var(--txt-3); margin-bottom:24px; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(440px, 1fr)); gap:28px; max-width:1400px; margin:0 auto; }
+  .item{ display:flex; flex-direction:column; gap:10px; }
+  .item-h{ display:flex; align-items:baseline; gap:8px; }
+  .item-h .n{ font-size:11px; color:var(--accent); font-weight:700; letter-spacing:.08em; }
+  .item-h .nome{ font-size:13px; font-weight:700; }
+  .item-d{ font-size:11px; color:var(--txt-3); line-height:1.4; margin-bottom:4px; }
+
+  .btn{
+    font-size:10px; padding:6px 10px; border-radius:6px; cursor:pointer; font-family:inherit;
+    background:transparent; color:var(--txt-2); border:1px solid var(--border); font-weight:600;
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .btn:hover{ color:var(--accent); border-color:var(--accent); }
+  .btn.sem{ background:rgba(212,165,116,.08); border-color:rgba(212,165,116,.30); color:var(--accent); }
+
+  /* ─── Card base (Opção 9 hero cinematográfico) ─── */
+  .card{
+    background:
+      radial-gradient(60% 50% at 20% 0%, rgba(212,165,116,.14), transparent 60%),
+      radial-gradient(50% 50% at 100% 100%, rgba(168,85,247,.10), transparent 60%),
+      linear-gradient(135deg, #181d27 0%, #11151c 100%);
+    border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:16px;
+    box-shadow:0 20px 40px -15px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.03) inset;
+    position:relative;
+  }
+  .card .h{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .card .av{ width:48px; height:48px; border-radius:14px; background:linear-gradient(135deg, var(--accent), #b88a5a); color:#0a0e1a; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; box-shadow:0 4px 12px rgba(212,165,116,.3); flex-shrink:0; }
+  .card .nome{ font-size:15px; font-weight:800; }
+  .card .sub-h{ font-size:10px; color:var(--txt-3); margin-top:2px; }
+  .card .sub-h.sem{ color:var(--accent); }
+  .card .chips{ display:flex; gap:5px; margin-top:3px; flex-wrap:wrap; }
+  .card .chip{ font-size:9px; padding:3px 9px; border-radius:6px; font-weight:700; letter-spacing:.04em; }
+  .card .chip.cri{ background:linear-gradient(135deg, #ef4444, #b91c1c); color:#fff; }
+  .card .chip.warn{ background:rgba(245,158,11,.18); color:#fbbf24; border:1px solid rgba(245,158,11,.35); }
+  .card .big{ display:flex; justify-content:space-between; align-items:flex-end; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.05); margin-bottom:10px; }
+  .card .big .v{ font-size:22px; font-weight:800; color:var(--txt); }
+  .card .big .v small{ font-size:10px; color:var(--txt-3); display:block; }
+  .card .big .p{ font-size:20px; font-weight:800; color:#ef4444; }
+  .card .big .p.s{ color:var(--amber); font-size:14px; }
+  .card .tiers{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; }
+  .card .t{ padding:8px 6px; background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.04); border-radius:6px; text-align:center; }
+  .card .t .lbl{ font-size:9px; color:var(--accent); font-weight:700; }
+  .card .t .v{ font-size:10px; color:var(--txt); font-weight:700; margin-top:2px; }
+  .card .pace{ font-size:10px; color:var(--txt-2); padding:8px 10px; background:rgba(245,158,11,.08); border-left:2px solid var(--amber); border-radius:0 6px 6px 0; margin-bottom:10px; }
+  .card .pace b{ color:var(--amber); }
+  .card .foot{ display:flex; justify-content:space-between; padding-top:10px; border-top:1px solid rgba(255,255,255,.05); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO A · Subtítulo no header
+     ═══════════════════════════════════════════════════════════════ */
+  /* Sem CSS extra — só adiciona um <div class="sub-h sem"> abaixo do nome */
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO B · Stepper de bolinhas
+     ═══════════════════════════════════════════════════════════════ */
+  .stepper{ display:flex; justify-content:center; gap:14px; padding:12px 0 4px; margin-bottom:10px; border-bottom:1px dashed rgba(255,255,255,.05); }
+  .stepper .dot{
+    width:24px; height:24px; border-radius:50%; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:800;
+    background:rgba(255,255,255,.06); color:var(--txt-3); border:1px solid var(--border);
+    transition:all .15s; position:relative;
+  }
+  .stepper .dot:hover{ transform:scale(1.10); border-color:var(--accent); color:var(--accent); }
+  .stepper .dot.past{ background:rgba(52,211,153,.15); color:#86efac; border-color:rgba(52,211,153,.30); }
+  .stepper .dot.curr{
+    background:linear-gradient(135deg, var(--accent), #b88a5a); color:#0a0e1a;
+    border-color:var(--accent); transform:scale(1.18);
+    box-shadow:0 4px 12px rgba(212,165,116,.35);
+  }
+  .stepper .conn{
+    flex:1; max-width:30px; height:2px; background:rgba(255,255,255,.06);
+    align-self:center;
+  }
+  .stepper .conn.past{ background:rgba(52,211,153,.30); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO C · Chips horizontais
+     ═══════════════════════════════════════════════════════════════ */
+  .chips-row{ display:flex; gap:5px; padding:8px 0 4px; margin-bottom:10px; border-bottom:1px dashed rgba(255,255,255,.05); flex-wrap:wrap; }
+  .chips-row .ck{
+    flex:1; min-width:54px; padding:6px 4px; border-radius:6px; cursor:pointer;
+    background:rgba(255,255,255,.04); border:1px solid var(--border);
+    text-align:center; font-size:9px; font-weight:700; color:var(--txt-3);
+    transition:all .15s; line-height:1.2;
+  }
+  .chips-row .ck:hover{ border-color:var(--accent); color:var(--accent); }
+  .chips-row .ck small{ display:block; font-size:8px; font-weight:600; opacity:.7; margin-top:2px; }
+  .chips-row .ck.past{ background:rgba(52,211,153,.10); color:#86efac; border-color:rgba(52,211,153,.25); }
+  .chips-row .ck.curr{
+    background:linear-gradient(135deg, var(--accent), #b88a5a); color:#0a0e1a;
+    border-color:var(--accent); box-shadow:0 3px 8px rgba(212,165,116,.25);
+    transform:scale(1.04);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO D · Pílula no canto direito
+     ═══════════════════════════════════════════════════════════════ */
+  .pill-canto{
+    position:absolute; top:14px; right:14px;
+    padding:5px 11px; border-radius:8px;
+    background:linear-gradient(135deg, var(--accent), #b88a5a); color:#0a0e1a;
+    font-size:10px; font-weight:800; letter-spacing:.05em;
+    box-shadow:0 4px 12px rgba(212,165,116,.35);
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .pill-canto .total{ font-size:9px; opacity:.7; font-weight:700; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO E · Barra de fatias
+     ═══════════════════════════════════════════════════════════════ */
+  .fatias-wrap{ padding:10px 0 4px; margin-bottom:10px; border-bottom:1px dashed rgba(255,255,255,.05); }
+  .fatias-h{ display:flex; justify-content:space-between; font-size:9px; color:var(--txt-3); text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:6px; }
+  .fatias-h b{ color:var(--accent); }
+  .fatias{ display:flex; gap:3px; height:14px; border-radius:7px; overflow:hidden; }
+  .fatias .fat{ flex:1; }
+  .fatias .fat.past{ background:rgba(52,211,153,.40); }
+  .fatias .fat.curr{ background:linear-gradient(90deg, var(--accent), var(--accent-2)); box-shadow:0 0 12px -1px rgba(212,165,116,.5); }
+  .fatias .fat.fut{ background:rgba(255,255,255,.04); }
+  .fatias-labels{ display:flex; margin-top:4px; font-size:8px; color:var(--txt-3); }
+  .fatias-labels span{ flex:1; text-align:center; font-weight:700; letter-spacing:.04em; }
+  .fatias-labels span.curr{ color:var(--accent); font-size:9px; }
+
+</style>
+</head>
+<body>
+
+<h1>Indicador de semana atual · 5 opções (sobre card Opção 9)</h1>
+<div class="sub">Mesmo card, 5 formas de mostrar "estamos na semana X de Y". Nas opções B e C, clique nas semanas pra simular mudança no chip.</div>
+
+<div class="grid">
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       OPÇÃO A · Subtítulo no header
+       ═══════════════════════════════════════════════════════════════ -->
+  <div class="item">
+    <div class="item-h"><span class="n">A</span><span class="nome">Subtítulo no header</span></div>
+    <div class="item-d">Texto discreto logo abaixo do nome. Informa o mês + semana atual + janela de datas.</div>
+    <div class="card">
+      <div class="h">
+        <div class="av">D</div>
+        <div>
+          <div class="nome">DANIEL MOURA</div>
+          <div class="sub-h sem">📅 Junho 2026 · Semana 3 de 5 (15-21)</div>
+          <div class="chips" style="margin-top:5px;">
+            <span class="chip cri">CRÍTICO</span>
+            <span class="chip warn">⚠ 22% · S3</span>
+          </div>
+        </div>
+      </div>
+      <div class="big">
+        <div class="v">R$ 6.500 <small>faturado total</small></div>
+        <div><span class="p">0%</span> <span class="p s"> · 22%</span></div>
+      </div>
+      <div class="tiers">
+        <div class="t"><div class="lbl">MÍNIMA</div><div class="v">R$ 134.333</div></div>
+        <div class="t"><div class="lbl">BÁSICA</div><div class="v">R$ 158.039</div></div>
+        <div class="t"><div class="lbl">MASTER</div><div class="v">R$ 175.599</div></div>
+      </div>
+      <div class="pace">📅 <b>Semana 3 (15-21 jun):</b> Faltam <b>R$ 22.703</b> de <b>R$ 29.203</b> em <b>3 dias úteis</b> (R$ 7.568/dia)</div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       OPÇÃO B · Stepper de bolinhas
+       ═══════════════════════════════════════════════════════════════ -->
+  <div class="item">
+    <div class="item-h"><span class="n">B</span><span class="nome">Stepper de bolinhas (clique para simular)</span></div>
+    <div class="item-d">5 bolinhas no topo. Verdes = passadas · Dourada (maior) = atual · Cinza = futuras.</div>
+    <div class="card" data-card="B">
+      <div class="h">
+        <div class="av">D</div>
+        <div style="flex:1;">
+          <div class="nome">DANIEL MOURA</div>
+          <div class="chips" style="margin-top:5px;">
+            <span class="chip cri">CRÍTICO</span>
+            <span class="chip warn" data-chip>⚠ 22% · S3</span>
+          </div>
+        </div>
+      </div>
+      <div class="stepper">
+        <div class="dot past" data-sem="1">1</div>
+        <div class="conn past"></div>
+        <div class="dot past" data-sem="2">2</div>
+        <div class="conn past"></div>
+        <div class="dot curr" data-sem="3">3</div>
+        <div class="conn"></div>
+        <div class="dot" data-sem="4">4</div>
+        <div class="conn"></div>
+        <div class="dot" data-sem="5">5</div>
+      </div>
+      <div class="big">
+        <div class="v">R$ 6.500 <small>faturado total</small></div>
+        <div><span class="p">0%</span> <span class="p s"> · 22%</span></div>
+      </div>
+      <div class="tiers">
+        <div class="t"><div class="lbl">MÍNIMA</div><div class="v">R$ 134.333</div></div>
+        <div class="t"><div class="lbl">BÁSICA</div><div class="v">R$ 158.039</div></div>
+        <div class="t"><div class="lbl">MASTER</div><div class="v">R$ 175.599</div></div>
+      </div>
+      <div class="pace">📅 <b>Semana 3 (15-21 jun):</b> Faltam <b>R$ 22.703</b> de <b>R$ 29.203</b> em <b>3 dias úteis</b> (R$ 7.568/dia)</div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       OPÇÃO C · Chips horizontais
+       ═══════════════════════════════════════════════════════════════ -->
+  <div class="item">
+    <div class="item-h"><span class="n">C</span><span class="nome">Chips horizontais (clique para simular)</span></div>
+    <div class="item-d">5 chips em linha com a janela de datas em cada um. Atual destacada em dourado.</div>
+    <div class="card" data-card="C">
+      <div class="h">
+        <div class="av">D</div>
+        <div style="flex:1;">
+          <div class="nome">DANIEL MOURA</div>
+          <div class="chips" style="margin-top:5px;">
+            <span class="chip cri">CRÍTICO</span>
+            <span class="chip warn" data-chip>⚠ 22% · S3</span>
+          </div>
+        </div>
+      </div>
+      <div class="chips-row">
+        <div class="ck past" data-sem="1">S1<small>01-07</small></div>
+        <div class="ck past" data-sem="2">S2<small>08-14</small></div>
+        <div class="ck curr" data-sem="3">S3<small>15-21</small></div>
+        <div class="ck" data-sem="4">S4<small>22-28</small></div>
+        <div class="ck" data-sem="5">S5<small>29-30+jul</small></div>
+      </div>
+      <div class="big">
+        <div class="v">R$ 6.500 <small>faturado total</small></div>
+        <div><span class="p">0%</span> <span class="p s"> · 22%</span></div>
+      </div>
+      <div class="tiers">
+        <div class="t"><div class="lbl">MÍNIMA</div><div class="v">R$ 134.333</div></div>
+        <div class="t"><div class="lbl">BÁSICA</div><div class="v">R$ 158.039</div></div>
+        <div class="t"><div class="lbl">MASTER</div><div class="v">R$ 175.599</div></div>
+      </div>
+      <div class="pace">📅 <b>Semana 3 (15-21 jun):</b> Faltam <b>R$ 22.703</b> de <b>R$ 29.203</b> em <b>3 dias úteis</b> (R$ 7.568/dia)</div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       OPÇÃO D · Pílula no canto direito
+       ═══════════════════════════════════════════════════════════════ -->
+  <div class="item">
+    <div class="item-h"><span class="n">D</span><span class="nome">Pílula dourada no canto direito</span></div>
+    <div class="item-d">Badge fixa no topo direito. Compacta, mostra "SEMANA 3 / 5".</div>
+    <div class="card">
+      <div class="pill-canto">📅 SEMANA 3 <span class="total">/ 5</span></div>
+      <div class="h">
+        <div class="av">D</div>
+        <div>
+          <div class="nome">DANIEL MOURA</div>
+          <div class="chips" style="margin-top:5px;">
+            <span class="chip cri">CRÍTICO</span>
+            <span class="chip warn">⚠ 22%</span>
+          </div>
+        </div>
+      </div>
+      <div class="big">
+        <div class="v">R$ 6.500 <small>faturado total</small></div>
+        <div><span class="p">0%</span> <span class="p s"> · 22%</span></div>
+      </div>
+      <div class="tiers">
+        <div class="t"><div class="lbl">MÍNIMA</div><div class="v">R$ 134.333</div></div>
+        <div class="t"><div class="lbl">BÁSICA</div><div class="v">R$ 158.039</div></div>
+        <div class="t"><div class="lbl">MASTER</div><div class="v">R$ 175.599</div></div>
+      </div>
+      <div class="pace">📅 <b>15-21 jun:</b> Faltam <b>R$ 22.703</b> de <b>R$ 29.203</b> em <b>3 dias úteis</b> (R$ 7.568/dia)</div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       OPÇÃO E · Barra de fatias
+       ═══════════════════════════════════════════════════════════════ -->
+  <div class="item">
+    <div class="item-h"><span class="n">E</span><span class="nome">Barra de fatias (progresso de semanas)</span></div>
+    <div class="item-d">Barra dividida em 5 fatias horizontais. Verdes = passadas · Dourada brilhante = atual.</div>
+    <div class="card">
+      <div class="h">
+        <div class="av">D</div>
+        <div>
+          <div class="nome">DANIEL MOURA</div>
+          <div class="chips" style="margin-top:5px;">
+            <span class="chip cri">CRÍTICO</span>
+            <span class="chip warn">⚠ 22% · S3</span>
+          </div>
+        </div>
+      </div>
+      <div class="fatias-wrap">
+        <div class="fatias-h"><span>PROGRESSO DO MÊS</span><span><b>SEMANA 3</b> · 15-21 jun</span></div>
+        <div class="fatias">
+          <div class="fat past"></div>
+          <div class="fat past"></div>
+          <div class="fat curr"></div>
+          <div class="fat fut"></div>
+          <div class="fat fut"></div>
+        </div>
+        <div class="fatias-labels"><span>S1</span><span>S2</span><span class="curr">S3</span><span>S4</span><span>S5</span></div>
+      </div>
+      <div class="big">
+        <div class="v">R$ 6.500 <small>faturado total</small></div>
+        <div><span class="p">0%</span> <span class="p s"> · 22%</span></div>
+      </div>
+      <div class="tiers">
+        <div class="t"><div class="lbl">MÍNIMA</div><div class="v">R$ 134.333</div></div>
+        <div class="t"><div class="lbl">BÁSICA</div><div class="v">R$ 158.039</div></div>
+        <div class="t"><div class="lbl">MASTER</div><div class="v">R$ 175.599</div></div>
+      </div>
+      <div class="pace">📅 <b>Semana 3 (15-21 jun):</b> Faltam <b>R$ 22.703</b> de <b>R$ 29.203</b> em <b>3 dias úteis</b> (R$ 7.568/dia)</div>
+      <div class="foot">
+        <button class="btn">⚙ Configurar metas</button>
+        <button class="btn sem">📅 Semanal</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* Dados simulados por semana — quando clica, atualiza chip + pace + percentual semanal */
+  const SEMANAS = {
+    1: { janela:'01-07 jun', meta:35043, fat:18500, pct:53, dias:0 },
+    2: { janela:'08-14 jun', meta:29203, fat:32100, pct:110, dias:0 },
+    3: { janela:'15-21 jun', meta:29203, fat:6500,  pct:22,  dias:3 },
+    4: { janela:'22-28 jun', meta:29203, fat:0,     pct:0,   dias:5 },
+    5: { janela:'29-30+jul', meta:11681, fat:0,     pct:0,   dias:4 }
+  };
+  const fmt = n => 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits:0 });
+  const cls = pct => pct >= 90 ? 'ok' : pct >= 60 ? 'fire' : pct >= 30 ? 'warn' : 'bad';
+  const icon = pct => pct >= 100 ? '✅' : pct >= 70 ? '🔥' : '⚠';
+  const label = pct => pct >= 100 ? 'BATEU' : pct >= 70 ? 'NO RITMO' : 'DEVAGAR';
+
+  document.querySelectorAll('[data-card="B"], [data-card="C"]').forEach(card => {
+    const chip = card.querySelector('[data-chip]');
+    const pace = card.querySelector('.pace');
+    const handlers = card.querySelectorAll('[data-sem]');
+
+    function selecionar(sem){
+      const d = SEMANAS[sem]; if(!d) return;
+      /* Atualiza estado visual dos handlers */
+      handlers.forEach(h => {
+        const n = +h.dataset.sem;
+        h.classList.remove('past', 'curr');
+        if(n < sem) h.classList.add('past');
+        else if(n === sem) h.classList.add('curr');
+      });
+      /* Atualiza chip */
+      const i = icon(d.pct), l = label(d.pct);
+      chip.textContent = `${i} ${d.pct}% · S${sem}`;
+      chip.style.background = d.pct >= 100 ? 'rgba(52,211,153,.18)' : d.pct >= 70 ? 'rgba(212,165,116,.18)' : 'rgba(245,158,11,.18)';
+      chip.style.color = d.pct >= 100 ? '#86efac' : d.pct >= 70 ? '#f0c896' : '#fbbf24';
+      chip.style.borderColor = d.pct >= 100 ? 'rgba(52,211,153,.35)' : d.pct >= 70 ? 'rgba(212,165,116,.35)' : 'rgba(245,158,11,.35)';
+      /* Atualiza pace */
+      const restante = Math.max(0, d.meta - d.fat);
+      const ritmoDia = d.dias > 0 ? Math.round(restante / d.dias) : 0;
+      if(d.fat >= d.meta){
+        pace.innerHTML = `📅 <b>Semana ${sem} (${d.janela}):</b> Faturou ${fmt(d.fat)} de <b>${fmt(d.meta)}</b> · <b>Bateu +${fmt(d.fat - d.meta)}</b> 🏆`;
+      } else if(d.dias === 0){
+        pace.innerHTML = `📅 <b>Semana ${sem} (${d.janela}):</b> Faturou ${fmt(d.fat)} de <b>${fmt(d.meta)}</b> · Encerrada`;
+      } else {
+        pace.innerHTML = `📅 <b>Semana ${sem} (${d.janela}):</b> Faltam <b>${fmt(restante)}</b> de <b>${fmt(d.meta)}</b> em <b>${d.dias} dias úteis</b> (${fmt(ritmoDia)}/dia)`;
+      }
+    }
+    handlers.forEach(h => h.addEventListener('click', () => selecionar(+h.dataset.sem)));
+  });
+</script>
+
+</body>
+</html>

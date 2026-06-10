@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Menu Imprimir · seções colapsáveis</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg-2:#161b22; --bg-3:#1c2128;
+    --border:rgba(255,255,255,.08); --txt:#e6edf3; --txt-2:#9aa5b1; --txt-3:#6b7280;
+    --accent:#d4a574; --accent-2:#f0c896;
+    --green:#34d399; --red:#ef4444; --amber:#f59e0b; --blue:#3b82f6; --purple:#a855f7;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:var(--txt); margin:0; padding:32px 24px 80px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .sub{ font-size:12px; color:var(--txt-3); margin-bottom:24px; }
+  .wrap{ max-width:680px; margin:0 auto; }
+
+  /* Modal mock */
+  .modal{
+    background:var(--bg-2); border:1px solid var(--border); border-radius:14px;
+    box-shadow:0 30px 60px -15px rgba(0,0,0,.7);
+    display:flex; flex-direction:column; max-height:80vh; overflow:hidden;
+  }
+  .modal-h{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 16px; border-bottom:1px solid var(--border);
+  }
+  .modal-h .ttl{ font-size:14px; font-weight:700; color:var(--txt); }
+  .modal-h .sub{ font-size:10px; color:var(--txt-3); margin:0; margin-top:2px; }
+  .modal-h .x{
+    background:transparent; border:1px solid var(--border); color:var(--txt-2);
+    padding:4px 9px; border-radius:6px; cursor:pointer; font-size:13px; font-family:inherit;
+  }
+  .modal-h .x:hover{ color:var(--accent); border-color:var(--accent); }
+
+  /* Toolbar (selecionar tudo / limpar / contador) */
+  .toolbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 16px; background:rgba(212,165,116,.04);
+    border-bottom:1px solid var(--border); font-size:11px;
+  }
+  .toolbar .left{ display:flex; gap:10px; align-items:center; }
+  .toolbar a{ color:var(--accent); cursor:pointer; font-weight:600; }
+  .toolbar a:hover{ text-decoration:underline; }
+  .toolbar .cnt{ color:var(--accent); font-weight:700; }
+
+  /* Body com scroll */
+  .modal-b{
+    flex:1; overflow-y:auto; padding:8px 16px;
+  }
+
+  /* Categoria (accordion) */
+  .cat{
+    border:1px solid var(--border); border-radius:8px; margin:8px 0;
+    background:rgba(255,255,255,.02); overflow:hidden;
+    transition:border-color .15s;
+  }
+  .cat.open{ border-color:rgba(212,165,116,.30); background:rgba(212,165,116,.03); }
+  .cat-h{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 12px; cursor:pointer; user-select:none;
+    transition:background .12s;
+  }
+  .cat-h:hover{ background:rgba(255,255,255,.03); }
+  .cat-h .arrow{
+    font-size:11px; color:var(--accent); width:14px; text-align:center;
+    transition:transform .2s ease;
+    display:inline-block;
+  }
+  .cat.open .cat-h .arrow{ transform:rotate(90deg); }
+  .cat-h .ic{ font-size:15px; }
+  .cat-h .nome{ flex:1; font-size:12px; font-weight:700; color:var(--txt); }
+  .cat-h .info{
+    font-size:9px; color:var(--txt-3); font-weight:600;
+    display:flex; align-items:center; gap:5px;
+  }
+  .cat-h .badge{
+    background:var(--accent); color:#0a0e1a;
+    padding:2px 7px; border-radius:9px; font-size:9px; font-weight:800;
+  }
+
+  /* Body de cada categoria */
+  .cat-b{
+    border-top:1px solid var(--border);
+    background:rgba(0,0,0,.15);
+    padding:8px 0;
+    display:none;
+  }
+  .cat.open .cat-b{ display:block; }
+  .opt{
+    display:flex; align-items:flex-start; gap:9px;
+    padding:8px 14px 8px 38px; cursor:pointer;
+    border-left:3px solid transparent;
+    transition:background .12s, border-color .12s;
+  }
+  .opt:hover{ background:rgba(212,165,116,.04); }
+  .opt.sel{ background:rgba(212,165,116,.07); border-left-color:var(--accent); }
+  .opt input[type=checkbox]{
+    width:14px; height:14px; accent-color:var(--accent); cursor:pointer; flex-shrink:0;
+    margin-top:1px;
+  }
+  .opt .opt-c{ flex:1; min-width:0; }
+  .opt .opt-t{
+    font-size:11px; font-weight:600; color:var(--txt);
+    display:flex; gap:6px; align-items:center;
+  }
+  .opt .opt-t .opt-ic{ font-size:12px; }
+  .opt .opt-d{ font-size:9px; color:var(--txt-3); margin-top:2px; line-height:1.4; }
+  .opt.sel .opt-t{ color:var(--accent); }
+  /* Pequeno seletor adicional (quando opção precisa de input extra) */
+  .opt .extra{
+    margin-top:5px; font-size:10px; color:var(--txt-2);
+    display:flex; gap:6px; align-items:center;
+  }
+  .opt .extra select{
+    flex:1; max-width:200px;
+    background:rgba(0,0,0,.3); border:1px solid var(--border); color:var(--txt);
+    padding:3px 6px; border-radius:4px; font-size:10px; font-family:inherit;
+  }
+  .opt.sel .extra{ display:flex; }
+  .opt:not(.sel) .extra{ display:none; }
+
+  /* Footer */
+  .modal-f{
+    padding:12px 16px; border-top:1px solid var(--border);
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+  }
+  .modal-f .info{ font-size:10px; color:var(--txt-3); }
+  .modal-f .actions{ display:flex; gap:6px; }
+  .btn{
+    font-size:11px; padding:7px 12px; border-radius:5px; cursor:pointer;
+    border:1px solid var(--border); background:transparent; color:var(--txt); font-weight:600;
+    font-family:inherit; display:inline-flex; align-items:center; gap:5px;
+  }
+  .btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .btn.primary{ background:var(--accent); color:#0a0e1a; border-color:var(--accent); font-weight:800; }
+  .btn.primary:hover{ background:var(--accent-2); }
+  .btn.primary:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .pre-tip{
+    margin-top:18px; padding:12px 14px;
+    background:rgba(212,165,116,.04); border:1px dashed rgba(212,165,116,.20); border-radius:8px;
+    font-size:11px; color:var(--txt-2); line-height:1.5;
+  }
+  .pre-tip b{ color:var(--accent); }
+
+  /* Backdrop */
+  .backdrop{
+    background:rgba(0,0,0,.6); padding:20px;
+    border-radius:14px;
+    backdrop-filter:blur(4px);
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<h1>Menu Imprimir · sessões colapsáveis com setinha ▸</h1>
+<div class="sub">Click no nome da seção (ou na setinha) → abre as opções daquela categoria. Marcar uma ou mais opções dentro de qualquer seção.</div>
+
+<div class="backdrop">
+
+<div class="modal">
+
+  <div class="modal-h">
+    <div>
+      <div class="ttl">🖨 Imprimir relatório de consultores</div>
+      <div class="sub">Marque as opções desejadas em uma ou mais seções abaixo.</div>
+    </div>
+    <button class="x">✕</button>
+  </div>
+
+  <div class="toolbar">
+    <div class="left">
+      <a>☑ Selecionar todas</a>
+      <a>☐ Limpar seleção</a>
+    </div>
+    <div><span class="cnt">3</span> de 20 opções selecionadas</div>
+  </div>
+
+  <div class="modal-b">
+
+    <!-- ═══ Sessão 1 · ESCOPO ═══ -->
+    <div class="cat open">
+      <div class="cat-h">
+        <span class="arrow">▸</span>
+        <span class="ic">📊</span>
+        <span class="nome">Por escopo (quem entra no relatório)</span>
+        <span class="info">6 opções · <span class="badge">1</span></span>
+      </div>
+      <div class="cat-b">
+        <label class="opt sel">
+          <input type="checkbox" checked>
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">👥</span>Todos os consultores</div>
+            <div class="opt-d">Cada consultor + clientes vinculados, ordenados alfabeticamente</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">👤</span>Consultor selecionado</div>
+            <div class="opt-d">Escolha 1 consultor específico</div>
+            <div class="extra">
+              <span>Consultor:</span>
+              <select><option>— escolha —</option><option>DARLEY SANTOS</option><option>JULIANA FABRICIA</option><option>CARLOS BONFIM</option></select>
+            </div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">🥇</span>Top 3 consultores</div>
+            <div class="opt-d">Os 3 com maior faturamento no mês</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">🎯</span>Quem bateu meta</div>
+            <div class="opt-d">Filtra só consultores que atingiram alguma meta</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">⚠</span>Abaixo da meta</div>
+            <div class="opt-d">Foco em quem precisa de atenção</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">☑</span>Múltipla seleção</div>
+            <div class="opt-d">Modal com checkboxes para escolher exatamente quais</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- ═══ Sessão 2 · STATUS ═══ -->
+    <div class="cat open">
+      <div class="cat-h">
+        <span class="arrow">▸</span>
+        <span class="ic">💰</span>
+        <span class="nome">Por status de venda</span>
+        <span class="info">6 opções · <span class="badge">2</span></span>
+      </div>
+      <div class="cat-b">
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">📋</span>Todos os clientes (todos os status)</div>
+            <div class="opt-d">Lista completa sem filtro</div>
+          </div>
+        </label>
+        <label class="opt sel">
+          <input type="checkbox" checked>
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">💚</span>Só clientes PAGOS</div>
+            <div class="opt-d">Quem já fechou e pagou — conferir entrega</div>
+          </div>
+        </label>
+        <label class="opt sel">
+          <input type="checkbox" checked>
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">🟠</span>Só EM ABERTO</div>
+            <div class="opt-d">Quem fechou mas não pagou — lista de cobrança</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">🤝</span>Em NEGOCIAÇÃO</div>
+            <div class="opt-d">Pipeline em andamento</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">💵</span>Só com ENTRADA recebida</div>
+            <div class="opt-d">Pagou entrada mas restante em aberto</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">❌</span>DESISTÊNCIAS / cancelados</div>
+            <div class="opt-d">Análise de churn</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- ═══ Sessão 3 · TREINAMENTO ═══ -->
+    <div class="cat">
+      <div class="cat-h">
+        <span class="arrow">▸</span>
+        <span class="ic">🎓</span>
+        <span class="nome">Por treinamento / produto</span>
+        <span class="info">3 opções · <span class="badge" style="display:none;">0</span></span>
+      </div>
+      <div class="cat-b">
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">📚</span>Agrupado por TREINAMENTO</div>
+            <div class="opt-d">Cada treinamento com seus clientes e consultores</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">💎</span>Top 5 maiores vendas</div>
+            <div class="opt-d">As maiores vendas do mês independente de consultor</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">✨</span>Clientes NOVOS do mês</div>
+            <div class="opt-d">Primeira compra do cliente — foco em aquisição</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- ═══ Sessão 4 · PERÍODO ═══ -->
+    <div class="cat">
+      <div class="cat-h">
+        <span class="arrow">▸</span>
+        <span class="ic">📅</span>
+        <span class="nome">Por período</span>
+        <span class="info">3 opções</span>
+      </div>
+      <div class="cat-b">
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">📅</span>Mês atual completo</div>
+            <div class="opt-d">Tudo do mês corrente</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">📈</span>Comparativo mês × anterior</div>
+            <div class="opt-d">Lado a lado: mês atual × passado</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">🗓</span>Semanal (semana atual)</div>
+            <div class="opt-d">Recorte da semana corrente</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- ═══ Sessão 5 · EXECUTIVOS ═══ -->
+    <div class="cat">
+      <div class="cat-h">
+        <span class="arrow">▸</span>
+        <span class="ic">⭐</span>
+        <span class="nome">Executivos</span>
+        <span class="info">2 opções</span>
+      </div>
+      <div class="cat-b">
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">📊</span>Resumo executivo (1 página)</div>
+            <div class="opt-d">KPIs principais + ranking + alertas</div>
+          </div>
+        </label>
+        <label class="opt">
+          <input type="checkbox">
+          <div class="opt-c">
+            <div class="opt-t"><span class="opt-ic">📄</span>Detalhado · 1 página por consultor</div>
+            <div class="opt-d">PDF paginado para entrega individual</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="modal-f">
+    <div class="info">💡 As seleções viram seções no relatório final.</div>
+    <div class="actions">
+      <button class="btn">Cancelar</button>
+      <button class="btn">📋 Copiar</button>
+      <button class="btn">💬 WhatsApp</button>
+      <button class="btn">💾 .txt</button>
+      <button class="btn primary">📄 Gerar PDF</button>
+    </div>
+  </div>
+
+</div>
+
+</div>
+
+<div class="pre-tip">
+  <b>💡 Como funciona:</b><br>
+  • Click no nome da seção (ou na setinha <b>▸</b>) → expande pra mostrar as opções daquela categoria.<br>
+  • Cada opção tem checkbox individual — marque quantas quiser.<br>
+  • Algumas opções têm dropdown extra (ex: <b>Consultor selecionado</b> pede pra escolher o nome).<br>
+  • Contador no topo: mostra quantas opções estão marcadas no total.<br>
+  • Footer com 4 formatos: <b>📋 Copiar</b> · <b>💬 WhatsApp</b> · <b>💾 .txt</b> · <b>📄 PDF</b> (igual ao Relatório Supremo).<br>
+  • Badge dourado no header da seção mostra quantas marcadas naquela seção.
+</div>
+
+</div>
+
+<script>
+  /* Toggle accordion ao clicar no header da categoria */
+  document.querySelectorAll('.cat-h').forEach(h => h.addEventListener('click', e => {
+    /* Não fecha se clicou em input/label dentro */
+    if(e.target.closest('input, label, select')) return;
+    h.parentElement.classList.toggle('open');
+  }));
+  /* Toggle selecionar em label */
+  document.querySelectorAll('.opt').forEach(o => {
+    const cb = o.querySelector('input[type=checkbox]');
+    if(!cb) return;
+    cb.addEventListener('change', () => {
+      o.classList.toggle('sel', cb.checked);
+      _atualizarContador();
+    });
+  });
+  function _atualizarContador(){
+    document.querySelectorAll('.cat').forEach(c => {
+      const n = c.querySelectorAll('input[type=checkbox]:checked').length;
+      const badge = c.querySelector('.badge');
+      if(badge){
+        badge.textContent = n;
+        badge.style.display = n>0 ? '' : 'none';
+      }
+    });
+    const total = document.querySelectorAll('input[type=checkbox]:checked').length;
+    const cntEl = document.querySelector('.toolbar .cnt');
+    if(cntEl) cntEl.textContent = total;
+  }
+  /* Selecionar todas / limpar */
+  document.querySelectorAll('.toolbar a').forEach((a,i) => a.addEventListener('click', () => {
+    const sel = i === 0;
+    document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      cb.checked = sel;
+      cb.closest('.opt')?.classList.toggle('sel', sel);
+    });
+    _atualizarContador();
+  }));
+</script>
+
+</body>
+</html>

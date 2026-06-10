@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Banner consultor PREMIUM — 20 opções</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,400&family=DM+Sans:wght@500;700;800;900&family=Cormorant+Garamond:ital,wght@0,500;1,300&family=Bebas+Neue&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 30px 24px;
+    background: radial-gradient(ellipse at top, #15191f 0%, #0a0e13 60%);
+    color: #e6edf3;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    margin: 0 0 4px;
+    color: #f0c896;
+    font-weight: 500;
+    letter-spacing: -.01em;
+  }
+  h1 em { color: #d4a574; font-style: italic; font-weight: 400; }
+  .sub {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 36px;
+    letter-spacing: .03em;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 26px;
+  }
+  .opt {
+    background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.20);
+  }
+  .opt-h {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    border-bottom: 1px dashed rgba(255,255,255,.10);
+    padding-bottom: 10px;
+  }
+  .opt-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #d4a574;
+    background: rgba(212,165,116,.08);
+    border: 1px solid rgba(212,165,116,.30);
+    padding: 4px 11px;
+    border-radius: 100px;
+    letter-spacing: .04em;
+    min-width: 36px;
+    text-align: center;
+  }
+  .opt-ttl {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: #f0c896;
+    margin-bottom: 2px;
+    letter-spacing: -.01em;
+  }
+  .opt-desc {
+    font-size: 11px;
+    color: #9aa5b1;
+    line-height: 1.5;
+  }
+
+  /* ===== Card mobile base ===== */
+  .mob-card {
+    background: #0c1117;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 12px 14px;
+    border-left: 3px solid #6b7280;
+    position: relative;
+    overflow: hidden;
+  }
+  .mob-card.no-pad-top { padding-top: 0; }
+
+  .mob-card-inner {
+    padding: 12px 14px;
+  }
+  .mob-header { display: flex; align-items: center; }
+  .mob-info { flex: 1; min-width: 0; }
+  .mob-name-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+  }
+  .mob-name {
+    font-size: 13px; font-weight: 800; color: #e6edf3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex: 1; min-width: 0; letter-spacing: .02em;
+  }
+  .mob-presenca {
+    background: rgba(57,255,20,.12);
+    color: #39ff14;
+    font-size: 9px; padding: 2px 8px;
+    border-radius: 10px; font-weight: 700;
+    white-space: nowrap;
+  }
+  .mob-plus-btn {
+    background: rgba(200,240,90,.10);
+    border: 1px solid rgba(200,240,90,.35);
+    color: #c8f05a;
+    width: 22px; height: 22px; border-radius: 50%;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    line-height: 1; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .mob-meta-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 8px; font-size: 10.5px;
+  }
+  .mob-st { color: #6b7280; font-weight: 600; }
+  .mob-val { color: #e6edf3; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* ===== Banner base ===== */
+  .bn {
+    margin: -1px -1px 0;
+    padding: 8px 14px;
+    border-radius: 11px 11px 0 0;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .bn-txt { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; }
+  .bn-caret { opacity: .8; font-size: 11px; }
+  .bn .ic { font-size: 12px; }
+
+  /* ============ OPÇÃO 1 ============ */
+  .bn-01 {
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(220,38,38,.45), inset 0 1px 0 rgba(255,255,255,.18);
+    border-bottom: 1px solid rgba(127,29,29,.8);
+  }
+  .bn-01::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(255,255,255,.18), transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ============ OPÇÃO 2 — Metálico ============ */
+  .bn-02 {
+    background:
+      linear-gradient(180deg, #ef4444 0%, #b91c1c 50%, #7f1d1d 100%);
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0,0,0,.45);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.30),
+      inset 0 -1px 0 rgba(0,0,0,.45),
+      0 6px 16px rgba(220,38,38,.40);
+  }
+  .bn-02::after {
+    content: ''; position: absolute; left: 0; right: 0; top: 0; height: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,.15), transparent);
+    pointer-events: none;
+  }
+
+  /* ============ OPÇÃO 3 — Glassmorphism ============ */
+  .bn-03 {
+    background: rgba(220,38,38,.40);
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,.15);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.20);
+  }
+  .bn-03::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255,90,90,.5), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(190,30,30,.6), transparent 60%);
+    pointer-events: none; opacity: .8;
+  }
+
+  /* ============ OPÇÃO 4 — Borda dourada premium ============ */
+  .bn-04 {
+    background: linear-gradient(180deg, #dc2626, #991b1b);
+    color: #fff;
+    border-top: 2px solid #d4a574;
+    box-shadow: 0 0 0 1px rgba(212,165,116,.30), 0 4px 14px rgba(0,0,0,.4);
+    border-radius: 11px 11px 0 0;
+  }
+  .bn-04 .bn-txt::before {
+    content: '◆'; color: #d4a574; font-size: 8px; margin-right: 4px;
+  }
+
+  /* ============ OPÇÃO 5 — Carbon pattern ============ */
+  .bn-05 {
+    background:
+      repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,.10) 4px, rgba(0,0,0,.10) 5px),
+      linear-gradient(180deg, #dc2626, #7f1d1d);
+    color: #fff;
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.45), 0 4px 14px rgba(220,38,38,.30);
+  }
+
+  /* ============ OPÇÃO 6 — Editorial serif ============ */
+  .bn-06 {
+    background: linear-gradient(180deg, #b91c1c, #7f1d1d);
+    color: #f5e6c8;
+    border-bottom: 1px solid #d4a574;
+    font-family: 'Playfair Display', serif !important;
+    font-weight: 500 !important;
+    letter-spacing: .18em !important;
+    text-transform: uppercase;
+  }
+  .bn-06 .bn-txt {
+    font-family: inherit; font-size: 12px; font-weight: 500;
+  }
+  .bn-06 .bn-txt em {
+    color: #d4a574; font-style: italic; font-weight: 400; margin-right: 3px;
+  }
+
+  /* ============ OPÇÃO 7 — Avatar circular embutido ============ */
+  .bn-07 {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: #fff;
+    padding-left: 8px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+  }
+  .bn-07 .av-circle {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, #ffffff, #fbcfcf);
+    color: #b91c1c;
+    font-size: 9px; font-weight: 900;
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 10px rgba(255,255,255,.4);
+    margin-right: 8px;
+  }
+
+  /* ============ OPÇÃO 8 — Medalha dourada ============ */
+  .bn-08 {
+    background: linear-gradient(180deg, #dc2626, #7f1d1d);
+    color: #fff;
+    border-bottom: 1px solid rgba(212,165,116,.5);
+  }
+  .bn-08 .medal {
+    background: linear-gradient(135deg, #fbbf24, #d4a574);
+    color: #7c2d12;
+    font-size: 8px; font-weight: 900;
+    padding: 2px 7px;
+    border-radius: 100px;
+    box-shadow: 0 0 8px rgba(212,165,116,.5);
+    margin-right: 7px;
+    letter-spacing: .08em;
+  }
+
+  /* ============ OPÇÃO 9 — Ribbon lateral ============ */
+  .bn-09 {
+    background: linear-gradient(180deg, #b91c1c, #7f1d1d);
+    color: #fff;
+    padding-left: 22px;
+    position: relative;
+  }
+  .bn-09::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 14px;
+    background: #d4a574;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 7px 50%);
+  }
+
+  /* ============ OPÇÃO 10 — Neon glow ============ */
+  .bn-10 {
+    background: #170707;
+    color: #ff4d4d;
+    text-shadow: 0 0 6px #ef4444, 0 0 12px #dc2626;
+    border-bottom: 1px solid rgba(220,38,38,.5);
+    box-shadow:
+      inset 0 0 16px rgba(220,38,38,.30),
+      0 0 14px rgba(220,38,38,.30);
+  }
+
+  /* ============ OPÇÃO 11 — Gradient animado ============ */
+  .bn-11 {
+    background: linear-gradient(120deg, #dc2626, #ef4444, #b91c1c, #dc2626);
+    background-size: 300% 100%;
+    color: #fff;
+    animation: shift-11 6s ease infinite;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+  }
+  @keyframes shift-11 {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* ============ OPÇÃO 12 — Flag corner cut ============ */
+  .bn-12 {
+    background: linear-gradient(90deg, #dc2626 70%, #991b1b 100%);
+    color: #fff;
+    clip-path: polygon(0 0, 100% 0, 96% 100%, 0 100%);
+    padding-right: 28px;
+  }
+  .bn-12::after {
+    content: '★'; position: absolute; right: 18px; top: 50%;
+    transform: translateY(-50%); color: rgba(255,255,255,.40); font-size: 10px;
+  }
+
+  /* ============ OPÇÃO 13 — Diamante decorativo ============ */
+  .bn-13 {
+    background: linear-gradient(135deg, #dc2626, #7f1d1d);
+    color: #fff;
+    border-bottom: 1px solid rgba(212,165,116,.6);
+    box-shadow: 0 4px 12px rgba(220,38,38,.35);
+  }
+  .bn-13 .gem {
+    display: inline-block; width: 8px; height: 8px;
+    background: linear-gradient(135deg, #fff, #fbbf24);
+    transform: rotate(45deg);
+    box-shadow: 0 0 6px #fbbf24;
+    margin: 0 8px 0 2px;
+  }
+
+  /* ============ OPÇÃO 14 — Shadow inset profundo ============ */
+  .bn-14 {
+    background: linear-gradient(180deg, #ef4444, #b91c1c);
+    color: #fff;
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,.30),
+      inset 0 -3px 8px rgba(0,0,0,.45),
+      0 6px 16px rgba(220,38,38,.30);
+    border-bottom: 1px solid rgba(127,29,29,.8);
+    text-shadow: 0 1px 0 rgba(0,0,0,.30);
+  }
+
+  /* ============ OPÇÃO 15 — Speed lines ============ */
+  .bn-15 {
+    background: linear-gradient(90deg, #7f1d1d 0%, #dc2626 50%, #7f1d1d 100%);
+    color: #fff;
+    position: relative;
+  }
+  .bn-15::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(255,255,255,.04) 18px, rgba(255,255,255,.04) 20px);
+    pointer-events: none;
+  }
+  .bn-15::after {
+    content: '»'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    color: rgba(255,255,255,.40); font-size: 14px; font-weight: 900;
+  }
+
+  /* ============ OPÇÃO 16 — Duotone overlay ============ */
+  .bn-16 {
+    background:
+      linear-gradient(135deg, rgba(0,0,0,.35), transparent 50%),
+      linear-gradient(90deg, #ef4444, #b91c1c);
+    color: #fff;
+    border-bottom: 2px solid rgba(0,0,0,.40);
+    box-shadow: 0 4px 14px rgba(220,38,38,.30);
+  }
+
+  /* ============ OPÇÃO 17 — Colorblock lateral ============ */
+  .bn-17 {
+    background: #1a0707;
+    color: #fff;
+    padding-left: 0;
+    overflow: hidden;
+  }
+  .bn-17 .block {
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+    color: #fff;
+    padding: 100px 12px 100px 14px;
+    margin: -100px 0;
+    font-weight: 900;
+    font-size: 10px;
+    letter-spacing: .14em;
+    box-shadow: 4px 0 12px rgba(220,38,38,.30);
+  }
+  .bn-17 .name {
+    padding: 0 14px; flex: 1; font-size: 11px; color: #fbcfcf;
+  }
+
+  /* ============ OPÇÃO 18 — Aurora multitone ============ */
+  .bn-18 {
+    background:
+      radial-gradient(circle at 0% 50%, #f97316 0%, transparent 50%),
+      radial-gradient(circle at 100% 50%, #dc2626 0%, transparent 50%),
+      linear-gradient(90deg, #7f1d1d, #b91c1c);
+    color: #fff;
+    box-shadow: inset 0 0 30px rgba(0,0,0,.25), 0 4px 14px rgba(220,38,38,.30);
+    border-bottom: 1px solid rgba(220,38,38,.6);
+  }
+
+  /* ============ OPÇÃO 19 — Micro texture ============ */
+  .bn-19 {
+    background-color: #b91c1c;
+    background-image:
+      radial-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+      linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%);
+    background-size: 4px 4px, 100% 100%;
+    background-blend-mode: overlay, normal;
+    color: #fff;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+  }
+
+  /* ============ OPÇÃO 20 — Recibo premium com timestamp ============ */
+  .bn-20 {
+    background: linear-gradient(90deg, #dc2626, #991b1b);
+    color: #fff;
+    border-bottom: 1px dashed rgba(255,255,255,.40);
+    padding-bottom: 10px;
+  }
+  .bn-20 .badge-pro {
+    background: rgba(255,255,255,.18);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,.40);
+    letter-spacing: .12em;
+    margin-left: 6px;
+  }
+  .bn-20 .ts {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    color: rgba(255,255,255,.65);
+    letter-spacing: .04em;
+    margin-left: 6px;
+  }
+
+  /* ===== Botão escolher ===== */
+  .pick-row {
+    display: flex; justify-content: flex-end; margin-top: 4px;
+  }
+  .pick-btn {
+    background: linear-gradient(135deg, #d4a574, #b88a5a);
+    color: #1a1108;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .footer-pick {
+    position: sticky;
+    bottom: 0;
+    margin-top: 36px;
+    padding: 18px 22px;
+    background: rgba(10,14,19,.94);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(212,165,116,.30);
+    border-radius: 10px 10px 0 0;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    font-style: italic;
+    color: #f0c896;
+  }
+  .footer-pick b { color: #d4a574; font-weight: 700; font-style: normal; }
+</style>
+</head>
+<body>
+
+<h1>Banner do consultor — <em>20 estilos premium</em></h1>
+<p class="sub">Base: JULIANA FABRICIA · escolha o estilo de luxo que mais te agrada</p>
+
+<div class="grid">
+
+  <!-- 01 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Glow vermelho profundo</div>
+        <div class="opt-desc">Gradiente diagonal com sombra exterior radiante e brilho interno superior.</div>
+      </div><span class="opt-num">01</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-01">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Metálico polido</div>
+        <div class="opt-desc">Gradiente vertical com highlight superior e profundidade inferior, estilo botão metálico.</div>
+      </div><span class="opt-num">02</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-02">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Glassmorphism translúcido</div>
+        <div class="opt-desc">Efeito vidro com blur, manchas radiais e saturação extra. Visual ultra-moderno.</div>
+      </div><span class="opt-num">03</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-03">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Borda dourada premium</div>
+        <div class="opt-desc">Filete dourado superior + glow exterior. Diamante ◆ no início do nome.</div>
+      </div><span class="opt-num">04</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-04">
+        <span class="bn-txt">Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Carbon pattern diagonal</div>
+        <div class="opt-desc">Textura de fibra de carbono em diagonais sutis. Esportivo-premium.</div>
+      </div><span class="opt-num">05</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-05">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 06 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Editorial Playfair</div>
+        <div class="opt-desc">Tipografia serif elegante estilo revista de luxo, com filete dourado abaixo.</div>
+      </div><span class="opt-num">06</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-06">
+        <span class="bn-txt"><em>by</em>JULIANA FABRICIA</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 07 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Avatar branco glow</div>
+        <div class="opt-desc">Círculo branco com iniciais "JF" e glow externo, ao lado do nome.</div>
+      </div><span class="opt-num">07</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-07">
+        <span class="bn-txt"><span class="av-circle">JF</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 08 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Medalha dourada</div>
+        <div class="opt-desc">Badge dourado "PRO" antes do nome, sugerindo nível premium do consultor.</div>
+      </div><span class="opt-num">08</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-08">
+        <span class="bn-txt"><span class="medal">PRO</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 09 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Ribbon dourado lateral</div>
+        <div class="opt-desc">Fita dourada à esquerda em forma de bandeira com chanfro. Estilo certificado.</div>
+      </div><span class="opt-num">09</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-09">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Neon glow vermelho</div>
+        <div class="opt-desc">Texto vermelho brilhando com shadow neon sobre fundo escuro. Estilo cyberpunk de luxo.</div>
+      </div><span class="opt-num">10</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-10">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Gradient animado</div>
+        <div class="opt-desc">Gradiente em movimento contínuo (6s loop). Vivo, dinâmico, premium.</div>
+      </div><span class="opt-num">11</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-11">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Bandeira chanfrada</div>
+        <div class="opt-desc">Corte diagonal na ponta direita + estrela decorativa. Dinâmico e elegante.</div>
+      </div><span class="opt-num">12</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-12">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Diamante decorativo</div>
+        <div class="opt-desc">Pedra preciosa rotacionada como separador. Joalheria premium.</div>
+      </div><span class="opt-num">13</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-13">
+        <span class="bn-txt">Consultor<span class="gem"></span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Embossed profundo</div>
+        <div class="opt-desc">Profundidade dramática com highlights superiores e sombras internas inferiores.</div>
+      </div><span class="opt-num">14</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-14">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 15 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Speed lines</div>
+        <div class="opt-desc">Linhas verticais sutis + seta dupla. Sensação de movimento e velocidade.</div>
+      </div><span class="opt-num">15</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-15">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 16 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Duotone overlay</div>
+        <div class="opt-desc">Camada escura diagonal sobre o vermelho, criando profundidade e drama.</div>
+      </div><span class="opt-num">16</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-16">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 17 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Colorblock lateral</div>
+        <div class="opt-desc">Bloco vermelho à esquerda com nome em branco; resto do banner em vermelho-escuro.</div>
+      </div><span class="opt-num">17</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-17">
+        <span class="block">JF</span>
+        <span class="name">Juliana Fabricia</span>
+        <span class="bn-caret" style="margin-right:14px;">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 18 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Aurora multitone</div>
+        <div class="opt-desc">Manchas radiais laranja+vermelho sobrepostas como aurora boreal. Sofisticado.</div>
+      </div><span class="opt-num">18</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-18">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 19 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Micro pontilhado luxo</div>
+        <div class="opt-desc">Textura de pontos brancos sobreposta com blend mode overlay. Premium tátil.</div>
+      </div><span class="opt-num">19</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-19">
+        <span class="bn-txt"><span class="ic">👤</span>Juliana Fabricia</span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 20 -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Recibo VIP com timestamp</div>
+        <div class="opt-desc">Selo "VIP" + timestamp monospace + borda inferior tracejada. Estilo concierge.</div>
+      </div><span class="opt-num">20</span>
+    </div>
+    <div class="mob-card no-pad-top" style="padding:0;">
+      <div class="bn bn-20">
+        <span class="bn-txt">
+          <span class="ic">👤</span>Juliana Fabricia
+          <span class="badge-pro">VIP</span>
+          <span class="ts">12:42</span>
+        </span>
+        <span class="bn-caret">▾</span>
+      </div>
+      <div class="mob-card-inner">
+        <div class="mob-header"><div class="mob-info">
+          <div class="mob-name-row"><span class="mob-name">ALBERTO SILVA DOS SANTOS</span><span class="mob-presenca">✅ Pres.</span><button class="mob-plus-btn">+</button></div>
+          <div class="mob-meta-row"><span class="mob-st">Sem status · 1 treinamento</span><span class="mob-val">R$ 0,00</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-pick">
+  Escolha um número — ex.: <b>04</b>, <b>11</b>, <b>14</b> — e eu aplico no card do dashboard mantendo as cores por consultor.
+</div>
+
+</body>
+</html>

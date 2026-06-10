@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Funil · 10 opções pra leads perdidos/desistentes</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg-2:#161b22; --bg-3:#1c2128;
+    --border:rgba(255,255,255,.08); --txt:#e6edf3; --txt-2:#9aa5b1; --txt-3:#6b7280;
+    --accent:#d4a574; --accent-2:#f0c896;
+    --green:#34d399; --red:#ef4444; --gray:#6b7280;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:var(--txt); margin:0; padding:32px 24px 64px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .sub{ font-size:12px; color:var(--txt-3); margin-bottom:28px; }
+  .grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:24px; max-width:1400px; margin:0 auto; }
+  @media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
+
+  .item{ display:flex; flex-direction:column; gap:8px; }
+  .item-h{ display:flex; align-items:baseline; gap:8px; }
+  .item-h .n{ font-size:11px; color:var(--accent); font-weight:700; letter-spacing:.08em; }
+  .item-h .nome{ font-size:14px; font-weight:700; }
+  .item-d{ font-size:11px; color:var(--txt-3); line-height:1.4; margin-bottom:4px; }
+
+  /* ─── Funil base (idêntico ao do dashboard) ─── */
+  .funil{
+    background:var(--bg-2); border:1px solid var(--border); border-radius:12px;
+    padding:14px; min-width:0;
+  }
+  .funil-h{ display:flex; align-items:center; gap:7px; font-size:13px; font-weight:700; color:var(--txt); margin-bottom:6px; }
+  .funil-sub{ font-size:10px; color:var(--txt-3); margin-bottom:12px; }
+  .et{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 12px; margin-bottom:6px; border-radius:8px;
+    font-size:10px; font-weight:700; color:#fff; letter-spacing:.04em; text-transform:uppercase;
+  }
+  .et .pct{ font-size:9px; opacity:.85; background:rgba(0,0,0,.18); padding:2px 7px; border-radius:4px; margin-left:auto; margin-right:6px; }
+  .et .qtd{ background:rgba(0,0,0,.28); padding:2px 8px; border-radius:4px; font-size:9px; }
+  .e0{ background:linear-gradient(90deg,#ff8fa8,#ff7c97); }
+  .e1{ background:linear-gradient(90deg,#ff6b8a,#ee5476); }
+  .e2{ background:linear-gradient(90deg,#e94f74,#d63960); }
+  .e3{ background:linear-gradient(90deg,#d63960,#bc2c52); }
+  .e4{ background:linear-gradient(90deg,#b82550,#a01a45); }
+  .e5{ background:linear-gradient(90deg,#9a1740,#811236); }
+  .e6{ background:linear-gradient(90deg,#7a0d30,#5e0823); }
+
+  .footer{ display:flex; justify-content:space-around; margin-top:12px; padding-top:10px; border-top:1px solid var(--border); font-size:10px; color:var(--txt-3); }
+  .footer b{ display:block; color:var(--accent); font-size:14px; margin-top:3px; }
+  .footer .green{ color:var(--green); }
+
+  /* ─── Estilos específicos das opções ─── */
+
+  /* OP 1 · Etapa extra ❌ */
+  .op1 .et-perdido{ background:linear-gradient(90deg,#3b3b42,#2a2a30); color:#cbd5e0; opacity:.95; margin-top:10px; }
+
+  /* OP 2 · Drop zone destacada */
+  .op2 .dropzone{
+    margin-top:14px; padding:18px 12px; border:2px dashed rgba(239,68,68,.35);
+    border-radius:10px; text-align:center; color:#ef9a9a; font-size:11px; font-weight:600;
+    background:rgba(239,68,68,.04);
+  }
+
+  /* OP 3 · Mini-coluna lateral à direita */
+  .op3-wrap{ display:flex; gap:10px; align-items:stretch; }
+  .op3-wrap .funil{ flex:1; }
+  .op3-side{
+    background:linear-gradient(180deg,#2a2a30,#1c1c22); border:1px solid rgba(255,255,255,.06);
+    border-radius:12px; padding:14px 8px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:10px; min-width:64px; max-width:72px;
+  }
+  .op3-side .ic{ font-size:22px; color:#cbd5e0; }
+  .op3-side .lbl{ writing-mode:vertical-rl; transform:rotate(180deg); font-size:10px; font-weight:800; letter-spacing:.08em; color:#cbd5e0; text-transform:uppercase; }
+  .op3-side .n{ background:rgba(239,68,68,.18); color:#fca5a5; padding:3px 8px; border-radius:6px; font-size:10px; font-weight:700; }
+
+  /* OP 4 · Card separado abaixo */
+  .op4 .card-perdidos{
+    margin-top:14px; padding:12px;
+    background:linear-gradient(135deg, rgba(239,68,68,.08), rgba(107,114,128,.06));
+    border:1px solid rgba(239,68,68,.20); border-radius:10px;
+  }
+  .op4 .card-perdidos .ph{ display:flex; align-items:center; justify-content:space-between; font-size:11px; font-weight:700; color:#fca5a5; margin-bottom:6px; }
+  .op4 .card-perdidos .pn{ font-size:10px; color:var(--txt-3); }
+
+  /* OP 5 · Lixeira flutuante */
+  .op5{ position:relative; }
+  .op5 .lixo{
+    position:absolute; bottom:12px; right:12px;
+    width:50px; height:50px; border-radius:50%;
+    background:linear-gradient(135deg,#3b3b42,#1c1c22);
+    border:2px solid rgba(239,68,68,.45);
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; color:#fca5a5; cursor:pointer;
+    box-shadow:0 8px 18px rgba(0,0,0,.5), 0 0 12px -2px rgba(239,68,68,.3);
+  }
+  .op5 .lixo-badge{
+    position:absolute; top:-4px; right:-4px;
+    background:#ef4444; color:#fff; font-size:9px; font-weight:800;
+    padding:2px 6px; border-radius:8px; border:2px solid var(--bg-2);
+  }
+
+  /* OP 6 · Bottom bar com 2 destinos */
+  .op6 .bar2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; }
+  .op6 .b2{
+    padding:12px 10px; border-radius:8px; border:1px dashed rgba(255,255,255,.10);
+    text-align:center; font-size:11px; font-weight:700; cursor:pointer;
+  }
+  .op6 .b2.perd{ background:rgba(239,68,68,.06); color:#fca5a5; border-color:rgba(239,68,68,.30); }
+  .op6 .b2.rec{ background:rgba(96,165,250,.06); color:#93c5fd; border-color:rgba(96,165,250,.30); }
+  .op6 .b2 .qtd{ display:block; font-size:14px; font-weight:800; margin-top:3px; }
+
+  /* OP 7 · Aba toggle Funil / Perdidos */
+  .op7 .tabs{ display:flex; gap:6px; margin-bottom:10px; }
+  .op7 .tab{
+    flex:1; padding:6px 10px; font-size:10px; font-weight:700;
+    border:1px solid var(--border); border-radius:6px; cursor:pointer;
+    background:var(--bg-3); color:var(--txt-2); text-transform:uppercase; letter-spacing:.05em;
+  }
+  .op7 .tab.active{ background:rgba(212,165,116,.15); border-color:var(--accent); color:var(--accent); }
+  .op7 .tab.perd.active{ background:rgba(239,68,68,.15); border-color:#ef4444; color:#fca5a5; }
+
+  /* OP 8 · Cemitério colapsável */
+  .op8 .cem{
+    margin-top:14px; padding:10px 12px;
+    background:rgba(107,114,128,.06); border:1px solid rgba(107,114,128,.20);
+    border-radius:8px; display:flex; align-items:center; gap:8px;
+    font-size:11px; color:var(--txt-2); cursor:pointer; font-weight:600;
+  }
+  .op8 .cem .ic{ font-size:14px; }
+  .op8 .cem .chev{ margin-left:auto; color:var(--txt-3); }
+  .op8 .cem-body{
+    margin-top:6px; padding:10px 12px; background:rgba(0,0,0,.18);
+    border:1px solid rgba(107,114,128,.12); border-radius:8px;
+    font-size:10px; color:var(--txt-3); font-style:italic;
+  }
+
+  /* OP 9 · Etapa -1 antes (Recuperação) */
+  .op9 .pre{
+    background:linear-gradient(90deg,#3b3b42,#2a2a30);
+    color:#cbd5e0; opacity:.9; margin-bottom:10px;
+    border:1px dashed rgba(107,114,128,.30);
+  }
+
+  /* OP 10 · Dropdown de status no card (mostrado fora pra preview) */
+  .op10 .status-row{
+    margin-top:14px; display:flex; align-items:center; gap:8px;
+    padding:10px 12px; background:rgba(255,255,255,.02); border:1px dashed var(--border);
+    border-radius:8px; font-size:11px;
+  }
+  .op10 .status-row .lbl{ color:var(--txt-3); font-size:10px; text-transform:uppercase; letter-spacing:.05em; }
+  .op10 .status-row .sel{
+    flex:1; padding:5px 8px; background:var(--bg-3); border:1px solid var(--border);
+    border-radius:5px; color:var(--txt); font-size:11px; font-family:inherit;
+  }
+  .op10 .status-row .helper{ font-size:9px; color:var(--txt-3); }
+
+</style>
+</head>
+<body>
+
+<h1>Funil · 10 opções pra leads perdidos / desistentes</h1>
+<div class="sub">Cada opção mostra um jeito diferente de marcar leads que não fecharam, separado do funil ativo.</div>
+
+<div class="grid">
+
+<!-- OP 1 -->
+<div class="item">
+  <div class="item-h"><span class="n">1</span><span class="nome">Etapa extra ❌ DESISTIU</span></div>
+  <div class="item-d">Mesma régua do funil, cor cinza pra distinguir das etapas ativas.</div>
+  <div class="funil op1">
+    <div class="funil-h">📊 FUNIL DE CONVERSÃO</div>
+    <div class="funil-sub">Clique pra filtrar a lista</div>
+    <div class="et e0"><span>PROSPECÇÃO</span><span class="pct"></span><span class="qtd">2 leads</span></div>
+    <div class="et e1"><span>QUALIFICAÇÃO</span><span class="pct">0%</span><span class="qtd">0 leads</span></div>
+    <div class="et e2"><span>APRESENTAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e3"><span>NEGOCIAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e4"><span>PROPOSTA</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e5"><span>FECHAMENTO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e6"><span>PÓS-VENDA</span><span class="pct">—</span><span class="qtd">1 lead</span></div>
+    <div class="et et-perdido"><span>❌ DESISTIU</span><span class="pct">—</span><span class="qtd">3 leads</span></div>
+    <div class="footer"><div>Taxa Geral<b>33,3%</b></div><div>Receita<b class="green">R$ 10,8k</b></div></div>
+  </div>
+</div>
+
+<!-- OP 2 -->
+<div class="item">
+  <div class="item-h"><span class="n">2</span><span class="nome">Drop zone destacada</span></div>
+  <div class="item-d">Área pontilhada visível: "Arraste leads perdidos aqui". Ação concreta.</div>
+  <div class="funil op2">
+    <div class="funil-h">📊 FUNIL DE CONVERSÃO</div>
+    <div class="funil-sub">Clique pra filtrar a lista</div>
+    <div class="et e0"><span>PROSPECÇÃO</span><span class="pct"></span><span class="qtd">2 leads</span></div>
+    <div class="et e1"><span>QUALIFICAÇÃO</span><span class="pct">0%</span><span class="qtd">0 leads</span></div>
+    <div class="et e2"><span>APRESENTAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e3"><span>NEGOCIAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e4"><span>PROPOSTA</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e5"><span>FECHAMENTO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e6"><span>PÓS-VENDA</span><span class="pct">—</span><span class="qtd">1 lead</span></div>
+    <div class="dropzone">🗑 Arraste leads perdidos aqui · 3 já arquivados</div>
+    <div class="footer"><div>Taxa Geral<b>33,3%</b></div><div>Receita<b class="green">R$ 10,8k</b></div></div>
+  </div>
+</div>
+
+<!-- OP 3 -->
+<div class="item">
+  <div class="item-h"><span class="n">3</span><span class="nome">Mini-coluna lateral à direita</span></div>
+  <div class="item-d">Coluna vertical fixa ao lado do funil, igual estilo das mini-colunas do Kanban.</div>
+  <div class="op3-wrap">
+    <div class="funil">
+      <div class="funil-h">📊 FUNIL DE CONVERSÃO</div>
+      <div class="funil-sub">Clique pra filtrar a lista</div>
+      <div class="et e0"><span>PROSPECÇÃO</span><span class="pct"></span><span class="qtd">2 leads</span></div>
+      <div class="et e1"><span>QUALIFICAÇÃO</span><span class="pct">0%</span><span class="qtd">0 leads</span></div>
+      <div class="et e2"><span>APRESENTAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+      <div class="et e3"><span>NEGOCIAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+      <div class="et e4"><span>PROPOSTA</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+      <div class="et e5"><span>FECHAMENTO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+      <div class="et e6"><span>PÓS-VENDA</span><span class="pct">—</span><span class="qtd">1 lead</span></div>
+      <div class="footer"><div>Taxa Geral<b>33,3%</b></div><div>Receita<b class="green">R$ 10,8k</b></div></div>
+    </div>
+    <div class="op3-side">
+      <div class="ic">❌</div>
+      <div class="lbl">Desistiram</div>
+      <div class="n">3</div>
+    </div>
+  </div>
+</div>
+
+<!-- OP 4 -->
+<div class="item">
+  <div class="item-h"><span class="n">4</span><span class="nome">Card separado abaixo</span></div>
+  <div class="item-d">Bloco independente, fora do funil — visual distinto pra deixar claro que não é etapa.</div>
+  <div class="funil op4">
+    <div class="funil-h">📊 FUNIL DE CONVERSÃO</div>
+    <div class="funil-sub">Clique pra filtrar a lista</div>
+    <div class="et e0"><span>PROSPECÇÃO</span><span class="pct"></span><span class="qtd">2 leads</span></div>
+    <div class="et e1"><span>QUALIFICAÇÃO</span><span class="pct">0%</span><span class="qtd">0 leads</span></div>
+    <div class="et e2"><span>APRESENTAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e3"><span>NEGOCIAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e4"><span>PROPOSTA</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e5"><span>FECHAMENTO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e6"><span>PÓS-VENDA</span><span class="pct">—</span><span class="qtd">1 lead</span></div>
+    <div class="card-perdidos">
+      <div class="ph"><span>💔 NÃO VENDEU</span><span>3 leads · R$ 4,2k</span></div>
+      <div class="pn">Clientes que desistiram ou não responderam</div>
+    </div>
+    <div class="footer"><div>Taxa Geral<b>33,3%</b></div><div>Receita<b class="green">R$ 10,8k</b></div></div>
+  </div>
+</div>
+
+<!-- OP 5 -->
+<div class="item">
+  <div class="item-h"><span class="n">5</span><span class="nome">Lixeira flutuante (FAB)</span></div>
+  <div class="item-d">Botão circular fixo no canto inferior direito, abre lista de perdidos. Não ocupa espaço do funil.</div>
+  <div class="funil op5">
+    <div class="funil-h">📊 FUNIL DE CONVERSÃO</div>
+    <div class="funil-sub">Clique pra filtrar a lista</div>
+    <div class="et e0"><span>PROSPECÇÃO</span><span class="pct"></span><span class="qtd">2 leads</span></div>
+    <div class="et e1"><span>QUALIFICAÇÃO</span><span class="pct">0%</span><span class="qtd">0 leads</span></div>
+    <div class="et e2"><span>APRESENTAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e3"><span>NEGOCIAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e4"><span>PROPOSTA</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e5"><span>FECHAMENTO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e6"><span>PÓS-VENDA</span><span class="pct">—</span><span class="qtd">1 lead</span></div>
+    <div class="footer"><div>Taxa Geral<b>33,3%</b></div><div>Receita<b class="green">R$ 10,8k</b></div></div>
+    <div class="lixo" title="Arraste aqui pra arquivar · 3 perdidos">🗑<span class="lixo-badge">3</span></div>
+  </div>
+</div>
+
+<!-- OP 6 -->
+<div class="item">
+  <div class="item-h"><span class="n">6</span><span class="nome">Bottom bar · 2 destinos</span></div>
+  <div class="item-d">Duas opções de destino: ❌ Perdido (definitivo) ou ♻ Reciclar (volta pro topo no futuro).</div>
+  <div class="funil op6">
+    <div class="funil-h">📊 FUNIL DE CONVERSÃO</div>
+    <div class="funil-sub">Clique pra filtrar a lista</div>
+    <div class="et e0"><span>PROSPECÇÃO</span><span class="pct"></span><span class="qtd">2 leads</span></div>
+    <div class="et e1"><span>QUALIFICAÇÃO</span><span class="pct">0%</span><span class="qtd">0 leads</span></div>
+    <div class="et e2"><span>APRESENTAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e3"><span>NEGOCIAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e4"><span>PROPOSTA</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e5"><span>FECHAMENTO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e6"><span>PÓS-VENDA</span><span class="pct">—</span><span class="qtd">1 lead</span></div>
+    <div class="bar2">
+      <div class="b2 perd">❌ Perdido<span class="qtd">3</span></div>
+      <div class="b2 rec">♻ Reciclar<span class="qtd">1</span></div>
+    </div>
+    <div class="footer"><div>Taxa Geral<b>33,3%</b></div><div>Receita<b class="green">R$ 10,8k</b></div></div>
+  </div>
+</div>
+
+<!-- OP 7 -->
+<div class="item">
+  <div class="item-h"><span class="n">7</span><span class="nome">Tab toggle · Funil ↔ Perdidos</span></div>
+  <div class="item-d">Duas abas no topo: alterna a visão entre funil ativo e leads perdidos. Mantém limpo.</div>
+  <div class="funil op7">
+    <div class="tabs">
+      <div class="tab active">📊 Funil ativo (3)</div>
+      <div class="tab perd">❌ Perdidos (3)</div>
+    </div>
+    <div class="et e0"><span>PROSPECÇÃO</span><span class="pct"></span><span class="qtd">2 leads</span></div>
+    <div class="et e1"><span>QUALIFICAÇÃO</span><span class="pct">0%</span><span class="qtd">0 leads</span></div>
+    <div class="et e2"><span>APRESENTAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e3"><span>NEGOCIAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e4"><span>PROPOSTA</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e5"><span>FECHAMENTO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e6"><span>PÓS-VENDA</span><span class="pct">—</span><span class="qtd">1 lead</span></div>
+    <div class="footer"><div>Taxa Geral<b>33,3%</b></div><div>Receita<b class="green">R$ 10,8k</b></div></div>
+  </div>
+</div>
+
+<!-- OP 8 -->
+<div class="item">
+  <div class="item-h"><span class="n">8</span><span class="nome">Cemitério colapsável</span></div>
+  <div class="item-d">Accordion no fim do funil — "💀 Cemitério (3) ▼". Esconde até ser clicado, mas presente.</div>
+  <div class="funil op8">
+    <div class="funil-h">📊 FUNIL DE CONVERSÃO</div>
+    <div class="funil-sub">Clique pra filtrar a lista</div>
+    <div class="et e0"><span>PROSPECÇÃO</span><span class="pct"></span><span class="qtd">2 leads</span></div>
+    <div class="et e1"><span>QUALIFICAÇÃO</span><span class="pct">0%</span><span class="qtd">0 leads</span></div>
+    <div class="et e2"><span>APRESENTAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e3"><span>NEGOCIAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e4"><span>PROPOSTA</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e5"><span>FECHAMENTO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e6"><span>PÓS-VENDA</span><span class="pct">—</span><span class="qtd">1 lead</span></div>
+    <div class="cem"><span class="ic">💀</span>Cemitério · 3 leads <span class="chev">▼</span></div>
+    <div class="cem-body">Expande aqui a lista de quem desistiu (nome, motivo, data) ao clicar acima.</div>
+    <div class="footer"><div>Taxa Geral<b>33,3%</b></div><div>Receita<b class="green">R$ 10,8k</b></div></div>
+  </div>
+</div>
+
+<!-- OP 9 -->
+<div class="item">
+  <div class="item-h"><span class="n">9</span><span class="nome">Etapa "Recuperação" ANTES do funil</span></div>
+  <div class="item-d">Adiciona uma faixa no topo pra leads desistidos que podem voltar — incentivo a reativar.</div>
+  <div class="funil op9">
+    <div class="funil-h">📊 FUNIL DE CONVERSÃO</div>
+    <div class="funil-sub">Clique pra filtrar a lista</div>
+    <div class="et pre"><span>♻ RECUPERAÇÃO (DESISTIRAM)</span><span class="pct">—</span><span class="qtd">3 leads</span></div>
+    <div class="et e0"><span>PROSPECÇÃO</span><span class="pct"></span><span class="qtd">2 leads</span></div>
+    <div class="et e1"><span>QUALIFICAÇÃO</span><span class="pct">0%</span><span class="qtd">0 leads</span></div>
+    <div class="et e2"><span>APRESENTAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e3"><span>NEGOCIAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e4"><span>PROPOSTA</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e5"><span>FECHAMENTO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e6"><span>PÓS-VENDA</span><span class="pct">—</span><span class="qtd">1 lead</span></div>
+    <div class="footer"><div>Taxa Geral<b>33,3%</b></div><div>Receita<b class="green">R$ 10,8k</b></div></div>
+  </div>
+</div>
+
+<!-- OP 10 -->
+<div class="item">
+  <div class="item-h"><span class="n">10</span><span class="nome">Dropdown de status no card</span></div>
+  <div class="item-d">No card do lead: dropdown "Ativo / Perdido / Reciclar". Sem etapa extra — só atributo.</div>
+  <div class="funil op10">
+    <div class="funil-h">📊 FUNIL DE CONVERSÃO</div>
+    <div class="funil-sub">Clique pra filtrar a lista</div>
+    <div class="et e0"><span>PROSPECÇÃO</span><span class="pct"></span><span class="qtd">2 leads</span></div>
+    <div class="et e1"><span>QUALIFICAÇÃO</span><span class="pct">0%</span><span class="qtd">0 leads</span></div>
+    <div class="et e2"><span>APRESENTAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e3"><span>NEGOCIAÇÃO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e4"><span>PROPOSTA</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e5"><span>FECHAMENTO</span><span class="pct">—</span><span class="qtd">0 leads</span></div>
+    <div class="et e6"><span>PÓS-VENDA</span><span class="pct">—</span><span class="qtd">1 lead</span></div>
+    <div class="status-row">
+      <span class="lbl">Status do lead</span>
+      <select class="sel">
+        <option>✅ Ativo</option>
+        <option>❌ Perdido</option>
+        <option>♻ Reciclar mais tarde</option>
+      </select>
+    </div>
+    <div class="status-row" style="border-style:solid;border-color:rgba(212,165,116,.15);">
+      <span class="helper">→ Aplicado por card individual no Kanban. Não muda etapa, só marca status.</span>
+    </div>
+    <div class="footer"><div>Taxa Geral<b>33,3%</b></div><div>Receita<b class="green">R$ 10,8k</b></div></div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Pré-visualização · Reordenar consultores em Metas Individuais</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --surface:#10172a; --surface2:#1a2238;
+    --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.18);
+    --text:#e5e7eb; --muted:#9ca3af;
+    --accent:#c8f05a; --blue:#60a5fa; --amber:#f59e0b;
+    --red:#ef4444; --green:#34d399; --purple:#a78bfa;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:30px; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; font-size:13px;
+  }
+  h1{ font-size:20px; margin:0 0 6px; font-weight:800; }
+  .sub{ color:var(--muted); margin-bottom:32px; font-size:13px; }
+  .preview-grid{ display:grid; grid-template-columns:1fr; gap:24px; max-width:1080px; }
+  .preview{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden; box-shadow:0 4px 18px rgba(0,0,0,.3);
+  }
+  .preview-head{
+    padding:14px 18px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(167,139,250,.08),transparent);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .preview-tit{ font-size:14px; font-weight:800; color:#a78bfa; }
+  .preview-tit small{ color:var(--muted); font-weight:500; }
+  .preview-pick{
+    background:transparent; color:var(--accent); border:1px solid rgba(200,240,90,.4);
+    padding:5px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;
+  }
+  .preview-pick:hover{ background:rgba(200,240,90,.08); }
+  .preview-body{ padding:16px 18px 18px; }
+
+  /* Mockup do modal Metas Individuais */
+  .modal-mock{
+    background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+    padding:16px;
+  }
+  .modal-mock-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border);
+  }
+  .modal-mock-tit{ font-size:14px; font-weight:800; color:var(--text); }
+  .modal-toolbar{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    padding:8px 10px; background:rgba(0,0,0,.2); border-radius:6px; margin-bottom:10px;
+    font-size:11px; color:var(--muted);
+  }
+  .row-consultor{
+    display:flex; align-items:center; gap:10px; padding:8px 10px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:6px; margin-bottom:6px;
+    transition:all .15s; cursor:default;
+  }
+  .row-consultor.dragging{
+    opacity:.5; transform:rotate(-1deg); cursor:grabbing;
+  }
+  .row-consultor.drop-zone{
+    background:rgba(167,139,250,.1); border-color:#a78bfa; border-style:dashed;
+  }
+  .avatar{
+    width:30px; height:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:800; flex-shrink:0;
+  }
+  .nome{ font-size:12px; font-weight:700; color:var(--text); flex:1; }
+  .metas{ display:flex; gap:6px; font-size:10px; color:var(--muted); }
+  .meta-pill{ padding:2px 8px; background:var(--surface2); border:1px solid var(--border); border-radius:4px; }
+
+  /* Opção 1: Drag handle */
+  .drag-handle{
+    width:24px; height:24px; display:flex; align-items:center; justify-content:center;
+    color:var(--muted); cursor:grab; font-size:14px; user-select:none;
+    border-radius:4px; transition:all .15s;
+  }
+  .drag-handle:hover{ background:rgba(255,255,255,.06); color:var(--text); }
+  .drag-handle:active{ cursor:grabbing; }
+
+  /* Opção 2: Setas inline */
+  .seta-col{ display:flex; flex-direction:column; gap:1px; }
+  .seta-btn{
+    width:22px; height:14px; padding:0; background:transparent; color:var(--muted);
+    border:1px solid var(--border); border-radius:3px; cursor:pointer;
+    font-size:9px; line-height:1; display:flex; align-items:center; justify-content:center;
+    transition:all .15s;
+  }
+  .seta-btn:hover{ background:rgba(167,139,250,.1); color:#a78bfa; border-color:#a78bfa; }
+  .seta-btn.disabled{ opacity:.3; cursor:not-allowed; }
+
+  /* Opção 3: Drag livre */
+  .row-drag-livre{
+    cursor:grab;
+  }
+  .row-drag-livre:hover{
+    background:var(--surface2); border-color:rgba(167,139,250,.4);
+  }
+  .row-drag-livre:active{ cursor:grabbing; }
+  .row-drag-livre .dica-arrasta{
+    font-size:9px; color:var(--purple); opacity:0;
+    transition:opacity .15s;
+  }
+  .row-drag-livre:hover .dica-arrasta{ opacity:1; }
+
+  /* Opção 4: Dropdown ordenação */
+  .ordenacao-row{
+    display:flex; align-items:center; gap:10px; padding:8px 12px;
+    background:rgba(167,139,250,.08); border-left:3px solid #a78bfa;
+    border-radius:6px; margin-bottom:12px;
+  }
+  .ordenacao-sel{
+    background:var(--surface2); color:var(--text); border:1px solid var(--border);
+    border-radius:5px; padding:5px 10px; font-size:11px; font-family:inherit;
+    font-weight:600;
+  }
+
+  /* Opção 5: Numeração editável */
+  .pos-input{
+    width:30px; height:24px; text-align:center;
+    background:var(--surface2); color:var(--text); border:1px solid var(--border);
+    border-radius:4px; font-size:12px; font-weight:800; font-family:inherit;
+  }
+  .pos-input:focus{ outline:none; border-color:var(--accent); color:var(--accent); }
+
+  .legend{
+    margin-top:14px; padding:10px 12px; background:rgba(96,165,250,.06);
+    border-left:3px solid var(--blue); border-radius:4px;
+    font-size:11px; color:var(--text); line-height:1.55;
+  }
+  .legend b{ color:var(--blue); }
+  .compare{
+    margin-top:36px; padding:16px 20px; background:var(--surface);
+    border:1px solid var(--border); border-radius:10px;
+  }
+  .compare h2{ font-size:15px; margin:0 0 10px; color:var(--accent); }
+  .compare-table{ width:100%; border-collapse:collapse; font-size:12px; }
+  .compare-table th, .compare-table td{
+    text-align:left; padding:8px 10px; border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  .compare-table th{ color:var(--muted); font-weight:700; font-size:10px;
+    text-transform:uppercase; letter-spacing:.05em; }
+  .compare-table tr td:first-child{ font-weight:700; color:var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>🔀 Pré-visualizações · Reordenar consultores em Metas Individuais</h1>
+<p class="sub">5 abordagens diferentes pra movimentar a ordem dos consultores na lista.</p>
+
+<div class="preview-grid">
+
+  <!-- ═════════════════ OPÇÃO 1 · DRAG HANDLE ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">1 · Drag handle <small>(arraste pelo ícone ☰ no início)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Cada linha tem um ícone ☰ no início. Arrasta esse ícone pra reordenar.</div>
+      </div>
+      <button class="preview-pick">Escolher 1</button>
+    </div>
+    <div class="preview-body">
+      <div class="modal-mock">
+        <div class="modal-mock-head"><div class="modal-mock-tit">🎯 Metas Individuais — Junho / 2026</div><div style="color:var(--muted);font-size:11px;">5 consultores</div></div>
+        <div class="row-consultor">
+          <span class="drag-handle" title="Arraste pra reordenar">☰</span>
+          <div class="avatar" style="background:rgba(200,240,90,.2);color:var(--accent);">C</div>
+          <div class="nome">CARLOS BONFIM</div>
+          <div class="metas"><span class="meta-pill">Mín 8k</span><span class="meta-pill">Bás 15k</span><span class="meta-pill">Mst 25k</span></div>
+        </div>
+        <div class="row-consultor">
+          <span class="drag-handle">☰</span>
+          <div class="avatar" style="background:rgba(96,165,250,.2);color:var(--blue);">D</div>
+          <div class="nome">DANIEL MOURA</div>
+          <div class="metas"><span class="meta-pill">Mín 10k</span><span class="meta-pill">Bás 18k</span><span class="meta-pill">Mst 30k</span></div>
+        </div>
+        <div class="row-consultor drop-zone">
+          <span class="drag-handle">☰</span>
+          <div class="avatar" style="background:rgba(52,211,153,.2);color:var(--green);">D</div>
+          <div class="nome" style="color:var(--purple);">DARLEY SANTOS <small style="font-weight:500;font-style:italic;">← solte aqui</small></div>
+          <div class="metas"><span class="meta-pill">Mín 9k</span><span class="meta-pill">Bás 16k</span><span class="meta-pill">Mst 28k</span></div>
+        </div>
+        <div class="row-consultor dragging">
+          <span class="drag-handle">☰</span>
+          <div class="avatar" style="background:rgba(245,158,11,.2);color:var(--amber);">E</div>
+          <div class="nome">EXTRACLASSE <small style="color:var(--purple);">arrastando…</small></div>
+          <div class="metas"><span class="meta-pill">Mín 7k</span><span class="meta-pill">Bás 14k</span><span class="meta-pill">Mst 22k</span></div>
+        </div>
+        <div class="row-consultor">
+          <span class="drag-handle">☰</span>
+          <div class="avatar" style="background:rgba(167,139,250,.2);color:var(--purple);">J</div>
+          <div class="nome">JULIANA FABRICIA</div>
+          <div class="metas"><span class="meta-pill">Mín 6k</span><span class="meta-pill">Bás 13k</span><span class="meta-pill">Mst 20k</span></div>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> padrão clássico que todo mundo entende sem instrução. Funciona bem com mouse e touch.<br>
+        <b>Comportamento:</b> drag&drop nativo HTML5. Linha sendo arrastada fica meio-transparente + inclinada. Área de drop fica destacada em roxo.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 2 · SETAS INLINE ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">2 · Setas inline ▲▼ <small>(2 botões pequenos em cada linha)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Click ▲ sobe 1 posição · click ▼ desce 1 · setas dos extremos ficam desabilitadas.</div>
+      </div>
+      <button class="preview-pick">Escolher 2</button>
+    </div>
+    <div class="preview-body">
+      <div class="modal-mock">
+        <div class="modal-mock-head"><div class="modal-mock-tit">🎯 Metas Individuais — Junho / 2026</div><div style="color:var(--muted);font-size:11px;">5 consultores</div></div>
+        <div class="row-consultor">
+          <div class="seta-col"><button class="seta-btn disabled">▲</button><button class="seta-btn">▼</button></div>
+          <div class="avatar" style="background:rgba(200,240,90,.2);color:var(--accent);">C</div>
+          <div class="nome">CARLOS BONFIM</div>
+          <div class="metas"><span class="meta-pill">Mín 8k</span><span class="meta-pill">Bás 15k</span><span class="meta-pill">Mst 25k</span></div>
+        </div>
+        <div class="row-consultor">
+          <div class="seta-col"><button class="seta-btn">▲</button><button class="seta-btn">▼</button></div>
+          <div class="avatar" style="background:rgba(96,165,250,.2);color:var(--blue);">D</div>
+          <div class="nome">DANIEL MOURA</div>
+          <div class="metas"><span class="meta-pill">Mín 10k</span><span class="meta-pill">Bás 18k</span><span class="meta-pill">Mst 30k</span></div>
+        </div>
+        <div class="row-consultor">
+          <div class="seta-col"><button class="seta-btn">▲</button><button class="seta-btn">▼</button></div>
+          <div class="avatar" style="background:rgba(52,211,153,.2);color:var(--green);">D</div>
+          <div class="nome">DARLEY SANTOS</div>
+          <div class="metas"><span class="meta-pill">Mín 9k</span><span class="meta-pill">Bás 16k</span><span class="meta-pill">Mst 28k</span></div>
+        </div>
+        <div class="row-consultor">
+          <div class="seta-col"><button class="seta-btn">▲</button><button class="seta-btn">▼</button></div>
+          <div class="avatar" style="background:rgba(245,158,11,.2);color:var(--amber);">E</div>
+          <div class="nome">EXTRACLASSE</div>
+          <div class="metas"><span class="meta-pill">Mín 7k</span><span class="meta-pill">Bás 14k</span><span class="meta-pill">Mst 22k</span></div>
+        </div>
+        <div class="row-consultor">
+          <div class="seta-col"><button class="seta-btn">▲</button><button class="seta-btn disabled">▼</button></div>
+          <div class="avatar" style="background:rgba(167,139,250,.2);color:var(--purple);">J</div>
+          <div class="nome">JULIANA FABRICIA</div>
+          <div class="metas"><span class="meta-pill">Mín 6k</span><span class="meta-pill">Bás 13k</span><span class="meta-pill">Mst 20k</span></div>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> reordenações pequenas (subir/descer 1-2 posições). Sem dependência de drag (funciona até no Edge antigo).<br>
+        <b>Comportamento:</b> 2 botões ▲▼ que trocam a posição com a linha acima/abaixo. Topo desabilita ▲, fundo desabilita ▼.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 3 · DRAG LIVRE ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">3 · Drag livre <small>(linha inteira é arrastável)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Hover mostra "✋ arraste pra reordenar" + cursor de mãozinha. Sem ícone extra.</div>
+      </div>
+      <button class="preview-pick">Escolher 3</button>
+    </div>
+    <div class="preview-body">
+      <div class="modal-mock">
+        <div class="modal-mock-head"><div class="modal-mock-tit">🎯 Metas Individuais — Junho / 2026</div><div style="color:var(--muted);font-size:11px;">5 consultores · arraste pra reordenar</div></div>
+        <div class="row-consultor row-drag-livre">
+          <div class="avatar" style="background:rgba(200,240,90,.2);color:var(--accent);">C</div>
+          <div class="nome">CARLOS BONFIM <span class="dica-arrasta">✋ arraste pra reordenar</span></div>
+          <div class="metas"><span class="meta-pill">Mín 8k</span><span class="meta-pill">Bás 15k</span><span class="meta-pill">Mst 25k</span></div>
+        </div>
+        <div class="row-consultor row-drag-livre" style="border-color:rgba(167,139,250,.4);background:var(--surface2);">
+          <div class="avatar" style="background:rgba(96,165,250,.2);color:var(--blue);">D</div>
+          <div class="nome">DANIEL MOURA <span style="font-size:9px;color:var(--purple);opacity:1;">✋ arraste pra reordenar</span></div>
+          <div class="metas"><span class="meta-pill">Mín 10k</span><span class="meta-pill">Bás 18k</span><span class="meta-pill">Mst 30k</span></div>
+        </div>
+        <div class="row-consultor row-drag-livre">
+          <div class="avatar" style="background:rgba(52,211,153,.2);color:var(--green);">D</div>
+          <div class="nome">DARLEY SANTOS</div>
+          <div class="metas"><span class="meta-pill">Mín 9k</span><span class="meta-pill">Bás 16k</span><span class="meta-pill">Mst 28k</span></div>
+        </div>
+        <div class="row-consultor row-drag-livre">
+          <div class="avatar" style="background:rgba(245,158,11,.2);color:var(--amber);">E</div>
+          <div class="nome">EXTRACLASSE</div>
+          <div class="metas"><span class="meta-pill">Mín 7k</span><span class="meta-pill">Bás 14k</span><span class="meta-pill">Mst 22k</span></div>
+        </div>
+        <div class="row-consultor row-drag-livre">
+          <div class="avatar" style="background:rgba(167,139,250,.2);color:var(--purple);">J</div>
+          <div class="nome">JULIANA FABRICIA</div>
+          <div class="metas"><span class="meta-pill">Mín 6k</span><span class="meta-pill">Bás 13k</span><span class="meta-pill">Mst 20k</span></div>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> visual mais limpo (sem ícones extras). Ideal pra desktop com mouse.<br>
+        <b>Comportamento:</b> a linha inteira é arrastável · cursor vira "grab" no hover · dica "✋ arraste" aparece. <b>Limitação:</b> pode atrapalhar quem só quer focar nos inputs (precisa apertar onde NÃO tem campo).
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 4 · DROPDOWN ORDENAÇÃO ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">4 · Ordenação por critério <small>(dropdown no topo + reordena tudo de uma vez)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Seletor "Ordenar por: ▼" reorganiza a lista por nome, meta, ranking, etc.</div>
+      </div>
+      <button class="preview-pick">Escolher 4</button>
+    </div>
+    <div class="preview-body">
+      <div class="modal-mock">
+        <div class="modal-mock-head"><div class="modal-mock-tit">🎯 Metas Individuais — Junho / 2026</div><div style="color:var(--muted);font-size:11px;">5 consultores</div></div>
+        <div class="ordenacao-row">
+          <span style="font-size:11px;font-weight:700;color:var(--purple);">📊 Ordenar por:</span>
+          <select class="ordenacao-sel">
+            <option>Nome (A-Z)</option>
+            <option>Nome (Z-A)</option>
+            <option>Meta básica (maior → menor)</option>
+            <option selected>% atingimento (atual)</option>
+            <option>Última venda</option>
+            <option>Posição no ranking</option>
+            <option>— Customizado (arrasta) —</option>
+          </select>
+          <span style="font-size:10px;color:var(--muted);margin-left:auto;">a ordenação atual fica salva por gestor</span>
+        </div>
+        <div class="row-consultor">
+          <div class="avatar" style="background:rgba(200,240,90,.2);color:var(--accent);">C</div>
+          <div class="nome">CARLOS BONFIM <small style="color:var(--green);font-weight:500;">98% meta</small></div>
+          <div class="metas"><span class="meta-pill">Mín 8k</span><span class="meta-pill">Bás 15k</span><span class="meta-pill">Mst 25k</span></div>
+        </div>
+        <div class="row-consultor">
+          <div class="avatar" style="background:rgba(96,165,250,.2);color:var(--blue);">D</div>
+          <div class="nome">DANIEL MOURA <small style="color:var(--green);font-weight:500;">87% meta</small></div>
+          <div class="metas"><span class="meta-pill">Mín 10k</span><span class="meta-pill">Bás 18k</span><span class="meta-pill">Mst 30k</span></div>
+        </div>
+        <div class="row-consultor">
+          <div class="avatar" style="background:rgba(245,158,11,.2);color:var(--amber);">E</div>
+          <div class="nome">EXTRACLASSE <small style="color:var(--amber);font-weight:500;">72% meta</small></div>
+          <div class="metas"><span class="meta-pill">Mín 7k</span><span class="meta-pill">Bás 14k</span><span class="meta-pill">Mst 22k</span></div>
+        </div>
+        <div class="row-consultor">
+          <div class="avatar" style="background:rgba(167,139,250,.2);color:var(--purple);">J</div>
+          <div class="nome">JULIANA FABRICIA <small style="color:var(--amber);font-weight:500;">65% meta</small></div>
+          <div class="metas"><span class="meta-pill">Mín 6k</span><span class="meta-pill">Bás 13k</span><span class="meta-pill">Mst 20k</span></div>
+        </div>
+        <div class="row-consultor">
+          <div class="avatar" style="background:rgba(52,211,153,.2);color:var(--green);">D</div>
+          <div class="nome">DARLEY SANTOS <small style="color:var(--red);font-weight:500;">42% meta</small></div>
+          <div class="metas"><span class="meta-pill">Mín 9k</span><span class="meta-pill">Bás 16k</span><span class="meta-pill">Mst 28k</span></div>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> times grandes onde reordenar manualmente vira penoso · você prefere ver "quem está abaixo da meta no topo".<br>
+        <b>Comportamento:</b> 6 ordenações automáticas + 1 opção "Customizado" (que aí libera arrasta-e-solta). Ordem fica salva por gestor no Firebase.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 5 · NUMERAÇÃO EDITÁVEL ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">5 · Numeração editável <small>(badge com número antes do nome)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Cada linha tem um número editável (1, 2, 3...). Você troca o número → a lista reordena.</div>
+      </div>
+      <button class="preview-pick">Escolher 5</button>
+    </div>
+    <div class="preview-body">
+      <div class="modal-mock">
+        <div class="modal-mock-head"><div class="modal-mock-tit">🎯 Metas Individuais — Junho / 2026</div><div style="color:var(--muted);font-size:11px;">5 consultores</div></div>
+        <div class="row-consultor">
+          <input class="pos-input" value="1">
+          <div class="avatar" style="background:rgba(200,240,90,.2);color:var(--accent);">C</div>
+          <div class="nome">CARLOS BONFIM</div>
+          <div class="metas"><span class="meta-pill">Mín 8k</span><span class="meta-pill">Bás 15k</span><span class="meta-pill">Mst 25k</span></div>
+        </div>
+        <div class="row-consultor">
+          <input class="pos-input" value="2">
+          <div class="avatar" style="background:rgba(96,165,250,.2);color:var(--blue);">D</div>
+          <div class="nome">DANIEL MOURA</div>
+          <div class="metas"><span class="meta-pill">Mín 10k</span><span class="meta-pill">Bás 18k</span><span class="meta-pill">Mst 30k</span></div>
+        </div>
+        <div class="row-consultor">
+          <input class="pos-input" value="3">
+          <div class="avatar" style="background:rgba(52,211,153,.2);color:var(--green);">D</div>
+          <div class="nome">DARLEY SANTOS</div>
+          <div class="metas"><span class="meta-pill">Mín 9k</span><span class="meta-pill">Bás 16k</span><span class="meta-pill">Mst 28k</span></div>
+        </div>
+        <div class="row-consultor">
+          <input class="pos-input" value="4" style="border-color:var(--accent);color:var(--accent);">
+          <div class="avatar" style="background:rgba(245,158,11,.2);color:var(--amber);">E</div>
+          <div class="nome">EXTRACLASSE <small style="color:var(--accent);">← reposicionando</small></div>
+          <div class="metas"><span class="meta-pill">Mín 7k</span><span class="meta-pill">Bás 14k</span><span class="meta-pill">Mst 22k</span></div>
+        </div>
+        <div class="row-consultor">
+          <input class="pos-input" value="5">
+          <div class="avatar" style="background:rgba(167,139,250,.2);color:var(--purple);">J</div>
+          <div class="nome">JULIANA FABRICIA</div>
+          <div class="metas"><span class="meta-pill">Mín 6k</span><span class="meta-pill">Bás 13k</span><span class="meta-pill">Mst 20k</span></div>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> reordenações grandes (mover do 8 pro 2 sem arrastar 6 vezes). Bom pra teclado · sem mouse.<br>
+        <b>Comportamento:</b> digita o número desejado e dá Tab → a lista se reorganiza com aquele consultor naquela posição. Os outros descem 1.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- COMPARATIVO -->
+<div class="compare">
+  <h2>📊 Resumo comparativo</h2>
+  <table class="compare-table">
+    <thead><tr>
+      <th>Critério</th>
+      <th>1 · Drag handle</th>
+      <th>2 · Setas ▲▼</th>
+      <th>3 · Drag livre</th>
+      <th>4 · Dropdown</th>
+      <th>5 · Numeração</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td>Esforço pra reordenar 1 linha próxima</td>
+        <td>Médio (arrastar curto)</td>
+        <td><b>Baixo</b> (1 click ▲ ou ▼)</td>
+        <td>Médio (arrastar curto)</td>
+        <td>Alto (precisa critério)</td>
+        <td>Alto (digitar)</td>
+      </tr>
+      <tr>
+        <td>Esforço pra mover do fim pro topo</td>
+        <td>Médio (arrastar longo)</td>
+        <td>Alto (várias setas)</td>
+        <td>Médio (arrastar longo)</td>
+        <td>N/A</td>
+        <td><b>Baixo</b> (digita 1)</td>
+      </tr>
+      <tr>
+        <td>Funciona no touch (mobile)</td>
+        <td>Sim ✓</td>
+        <td><b>Excelente ✓</b></td>
+        <td>Ruim (atrapalha inputs)</td>
+        <td><b>Excelente ✓</b></td>
+        <td><b>Excelente ✓</b></td>
+      </tr>
+      <tr>
+        <td>Espaço visual ocupado</td>
+        <td>+24px à esquerda</td>
+        <td>+22px à esquerda</td>
+        <td>Zero</td>
+        <td>+linha no topo</td>
+        <td>+30px à esquerda</td>
+      </tr>
+      <tr>
+        <td>Tempo de implementação</td>
+        <td>~1h</td>
+        <td><b>~30 min</b></td>
+        <td>~1h</td>
+        <td>~1.5h</td>
+        <td>~1h</td>
+      </tr>
+      <tr>
+        <td>Curva de aprendizado</td>
+        <td><b>Zero</b> (todo mundo conhece)</td>
+        <td><b>Zero</b></td>
+        <td>Baixa (descobre no hover)</td>
+        <td>Baixa</td>
+        <td>Baixa</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="margin-top:14px;padding:10px 12px;background:rgba(200,240,90,.06);border-left:3px solid var(--accent);border-radius:4px;font-size:12px;color:var(--text);">
+    <span style="display:inline-block;padding:2px 8px;background:rgba(200,240,90,.18);color:var(--accent);border-radius:4px;font-size:10px;font-weight:700;margin-right:4px;">DICA</span>
+    A combinação mais robusta é <b>1 + 2</b>: drag handle pra reorganizações livres + setas pra ajustes pontuais.
+    Ou <b>4 + 1</b>: dropdown com ordenações automáticas + opção "Customizado" libera drag handle pro ajuste fino.
+  </div>
+</div>
+
+</body>
+</html>

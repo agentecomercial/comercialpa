@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Preview · Metas semanais</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg-2:#161b22; --bg-3:#1c2128;
+    --border:rgba(255,255,255,.08); --txt:#e6edf3; --txt-2:#9aa5b1; --txt-3:#6b7280;
+    --accent:#d4a574; --accent-2:#f0c896;
+    --green:#34d399; --red:#ef4444; --amber:#f59e0b; --blue:#3b82f6;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:var(--txt); margin:0; padding:32px 24px 80px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .sub{ font-size:12px; color:var(--txt-3); margin-bottom:24px; }
+  .wrap{ max-width:1280px; margin:0 auto; display:flex; flex-direction:column; gap:50px; }
+  .sec{ display:flex; flex-direction:column; gap:14px; }
+  .sec-h{ font-size:11px; color:var(--accent); font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding-bottom:8px; border-bottom:1px dashed var(--border); }
+  .sec-d{ font-size:11px; color:var(--txt-3); }
+
+  /* ─── Card meta do consultor (igual ao que existe) ─── */
+  .meta-card{
+    background:var(--bg-2); border:1px solid rgba(255,255,255,.06); border-radius:12px;
+    padding:14px; max-width:380px; position:relative;
+  }
+  .mc-h{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .mc-av{ width:38px; height:38px; border-radius:50%; background:rgba(212,165,116,.18); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; border:1.5px solid rgba(212,165,116,.32); }
+  .mc-nome{ font-size:13px; font-weight:700; }
+  .mc-tier{ display:inline-flex; align-items:center; gap:5px; font-size:9px; padding:2px 8px; border-radius:5px; background:rgba(239,68,68,.15); color:#fca5a5; font-weight:700; letter-spacing:.05em; text-transform:uppercase; margin-top:2px; }
+  .mc-tier .dot{ display:inline-block; width:6px; height:6px; border-radius:50%; background:#ef4444; }
+
+  /* NOVO chip indicador semanal */
+  .mc-sem{ display:inline-flex; align-items:center; gap:5px; font-size:9px; padding:2px 8px; border-radius:5px; background:rgba(239,68,68,.10); color:#fca5a5; font-weight:700; letter-spacing:.05em; text-transform:uppercase; margin-top:2px; margin-left:6px; border:1px dashed rgba(239,68,68,.25); }
+  .mc-sem.ok{ background:rgba(52,211,153,.10); color:#86efac; border-color:rgba(52,211,153,.25); }
+  .mc-sem.warn{ background:rgba(245,158,11,.10); color:#fbbf24; border-color:rgba(245,158,11,.25); }
+  .mc-sem.fire{ background:rgba(212,165,116,.10); color:#f0c896; border-color:rgba(212,165,116,.25); }
+
+  .mc-val{ font-size:11px; color:var(--txt-2); margin-bottom:4px; }
+  .mc-prog{ height:6px; background:rgba(255,255,255,.05); border-radius:3px; overflow:hidden; margin-bottom:6px; }
+  .mc-prog-fill{ height:100%; background:#ef4444; }
+  .mc-pct{ font-size:10px; color:var(--txt-3); display:flex; justify-content:space-between; margin-bottom:10px; }
+  .mc-tiers{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:12px; }
+  .mc-t{ padding:8px 6px; border:1px solid rgba(255,255,255,.08); border-radius:6px; text-align:center; background:rgba(255,255,255,.02); }
+  .mc-t .lbl{ font-size:9px; color:var(--accent); font-weight:700; letter-spacing:.04em; }
+  .mc-t .fl{ font-size:9px; color:var(--txt-3); margin:2px 0; }
+  .mc-t .v{ font-size:11px; color:var(--txt); font-weight:700; }
+  .mc-t .p{ font-size:9px; color:#fca5a5; margin-top:2px; }
+
+  /* Pace text */
+  .mc-pace{ font-size:10px; color:var(--txt-3); margin-bottom:10px; padding:6px 8px; background:rgba(255,255,255,.02); border-left:2px solid var(--accent); border-radius:0 4px 4px 0; }
+  .mc-pace b{ color:var(--accent); }
+
+  /* Footer com 2 botões */
+  .mc-foot{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding-top:8px; border-top:1px solid var(--border); }
+  .mc-btn{
+    font-size:10px; padding:6px 10px; border-radius:6px; cursor:pointer; font-family:inherit;
+    background:transparent; color:var(--txt-2); border:1px solid var(--border); font-weight:600;
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .mc-btn:hover{ color:var(--accent); border-color:var(--accent); }
+  .mc-btn.sem{ background:rgba(212,165,116,.08); border-color:rgba(212,165,116,.30); color:var(--accent); }
+  .mc-btn.sem:hover{ background:rgba(212,165,116,.18); }
+
+  /* ─── Modal Semanal ─── */
+  .modal{ background:var(--bg-2); border:1px solid var(--border); border-radius:14px; max-width:780px; box-shadow:0 30px 60px -15px rgba(0,0,0,.7); overflow:hidden; }
+  .mh{ display:flex; justify-content:space-between; align-items:flex-start; padding:14px 16px; border-bottom:1px solid var(--border); }
+  .mh-t{ font-size:14px; font-weight:700; color:var(--txt); }
+  .mh-s{ font-size:11px; color:var(--txt-3); margin-top:2px; }
+  .mh-x{ background:transparent; border:1px solid var(--border); color:var(--txt-2); padding:4px 8px; border-radius:6px; cursor:pointer; font-size:13px; }
+  .mb{ padding:14px 16px; }
+  .pace-bar{ background:rgba(212,165,116,.08); border:1px dashed rgba(212,165,116,.25); border-radius:8px; padding:10px 12px; font-size:11px; color:var(--txt-2); margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+  .pace-bar .label{ background:var(--accent); color:#0a0e1a; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:800; }
+  .pace-bar b{ color:var(--accent); }
+
+  /* Tabela */
+  .tbl{ width:100%; border-collapse:separate; border-spacing:0; font-size:11px; }
+  .tbl thead th{ background:var(--bg-3); color:var(--txt-2); padding:8px 10px; font-size:9px; text-transform:uppercase; letter-spacing:.06em; font-weight:700; text-align:left; border-bottom:1px solid var(--border); }
+  .tbl tbody td{ padding:7px 10px; border-bottom:1px solid var(--border); }
+  .tbl tbody tr.atual{ background:rgba(212,165,116,.08); }
+  .tbl tbody tr.atual td:first-child{ color:var(--accent); font-weight:700; }
+  .tbl tbody tr.totals{ background:rgba(255,255,255,.02); font-weight:700; }
+  .tbl tbody tr.totals td{ border-top:1px solid var(--border); padding-top:9px; }
+  .tbl .col-lbl{ color:var(--txt); font-weight:600; }
+  .tbl .col-lbl small{ color:var(--txt-3); font-weight:400; font-size:10px; display:block; margin-top:1px; }
+  .tbl input{
+    width:100%; background:var(--bg-3); border:1px solid var(--border); color:var(--txt); padding:4px 8px;
+    border-radius:5px; font-size:11px; font-family:inherit; text-align:right;
+  }
+  .tbl input:focus{ outline:none; border-color:var(--accent); }
+  .tbl .ro{ color:var(--txt-3); text-align:right; font-variant-numeric:tabular-nums; }
+  .tbl .v{ color:var(--accent); font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+
+  .mf{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-top:1px solid var(--border); gap:10px; }
+  .mf .info{ font-size:10px; color:var(--txt-3); }
+  .mf .actions{ display:flex; gap:8px; }
+  .btn{ font-size:11px; padding:7px 14px; border-radius:6px; cursor:pointer; font-family:inherit; border:1px solid var(--border); background:transparent; color:var(--txt); font-weight:600; }
+  .btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .btn.primary{ background:var(--accent); color:#0a0e1a; border-color:var(--accent); }
+  .btn.primary:hover{ background:var(--accent-2); }
+
+  /* ─── Dashboard cards ─── */
+  .dash-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .dash-card{
+    background:var(--bg-2); border:1px solid rgba(255,255,255,.06); border-radius:12px;
+    padding:14px;
+  }
+  .dc-h{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .dc-tit{ font-size:12px; font-weight:700; color:var(--txt); text-transform:uppercase; letter-spacing:.05em; }
+  .dc-tit .badge{ display:inline-block; font-size:9px; padding:2px 8px; border-radius:4px; background:rgba(212,165,116,.15); color:var(--accent); margin-left:6px; font-weight:700; }
+  .dc-tit .badge.s{ background:rgba(59,130,246,.15); color:var(--blue); }
+  .dc-tot{ font-size:11px; color:var(--txt-3); }
+  .dc-tot b{ color:var(--accent); font-size:14px; font-weight:800; }
+
+  .row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+  .row:last-child{ border-bottom:none; }
+  .row .av{ width:30px; height:30px; border-radius:50%; background:rgba(212,165,116,.18); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; border:1.5px solid rgba(212,165,116,.32); flex-shrink:0; }
+  .row .nome{ flex:1; font-size:11px; font-weight:600; }
+  .row .nome small{ color:var(--txt-3); font-size:9px; display:block; }
+  .row .barwrap{ flex:1.5; height:7px; background:rgba(255,255,255,.04); border-radius:4px; overflow:hidden; position:relative; }
+  .row .barwrap .b{ height:100%; }
+  .row .barwrap .b.ok{ background:linear-gradient(90deg,#34d399,#10b981); }
+  .row .barwrap .b.warn{ background:linear-gradient(90deg,#f59e0b,#d97706); }
+  .row .barwrap .b.bad{ background:linear-gradient(90deg,#ef4444,#b91c1c); }
+  .row .pct{ width:50px; text-align:right; font-size:11px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .row .pct.ok{ color:var(--green); } .row .pct.warn{ color:var(--amber); } .row .pct.bad{ color:#fca5a5; }
+
+</style>
+</head>
+<body>
+
+<h1>Preview · Implementação de metas semanais</h1>
+<div class="sub">3 seções: (1) card de meta do consultor com botão novo · (2) modal "Semanal" · (3) cards no Dashboard</div>
+
+<div class="wrap">
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SEÇÃO 1 · Card de meta do consultor
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-h">1 · Card do consultor na aba METAS</div>
+    <div class="sec-d">Novo botão <b>📅 Semanal</b> no canto inferior direito. Chip <b>🔥/⚠/✅</b> ao lado do tier mostra ritmo semanal.</div>
+
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+
+      <!-- Variação 1: Crítico no mensal + Devagar na semana -->
+      <div class="meta-card">
+        <div class="mc-h">
+          <div class="mc-av">D</div>
+          <div style="flex:1;">
+            <div class="mc-nome">DANIEL MOURA</div>
+            <div>
+              <span class="mc-tier"><span class="dot"></span>CRÍTICO</span>
+              <span class="mc-sem warn">⚠ DEVAGAR · 22%</span>
+            </div>
+          </div>
+        </div>
+        <div class="mc-val">R$ 0,00</div>
+        <div class="mc-prog"><div class="mc-prog-fill" style="width:0%;"></div></div>
+        <div class="mc-pct"><span>0% mensal</span><span style="color:var(--amber);">22% semanal</span></div>
+        <div class="mc-tiers">
+          <div class="mc-t"><div class="lbl">MÍNIMA</div><div class="fl">Falta</div><div class="v">R$ 134.333,78</div><div class="p">0%</div></div>
+          <div class="mc-t"><div class="lbl">BÁSICA</div><div class="fl">Falta</div><div class="v">R$ 158.039,74</div><div class="p">0%</div></div>
+          <div class="mc-t"><div class="lbl">MASTER</div><div class="fl">Falta</div><div class="v">R$ 175.599,71</div><div class="p">0%</div></div>
+        </div>
+        <div class="mc-pace">📅 <b>Semana 3 (15 a 21):</b> Faturou <b>R$ 6.500</b> de <b>R$ 29.203</b> · Faltam <b>R$ 22.703</b> em <b>3 dias úteis</b> (<b>R$ 7.568/dia</b>).</div>
+        <div class="mc-foot">
+          <button class="mc-btn">⚙ Configurar metas</button>
+          <button class="mc-btn sem">📅 Semanal</button>
+        </div>
+      </div>
+
+      <!-- Variação 2: No ritmo -->
+      <div class="meta-card">
+        <div class="mc-h">
+          <div class="mc-av" style="background:rgba(52,211,153,.18);color:#34d399;border-color:rgba(52,211,153,.32);">C</div>
+          <div style="flex:1;">
+            <div class="mc-nome">CARLOS BONFIM</div>
+            <div>
+              <span class="mc-tier" style="background:rgba(52,211,153,.15);color:#86efac;"><span class="dot" style="background:#34d399;"></span>NO RITMO</span>
+              <span class="mc-sem fire">🔥 NO RITMO · 88%</span>
+            </div>
+          </div>
+        </div>
+        <div class="mc-val">R$ 92.150,00</div>
+        <div class="mc-prog"><div class="mc-prog-fill" style="width:69%;background:#34d399;"></div></div>
+        <div class="mc-pct"><span>69% mensal</span><span style="color:var(--accent);">88% semanal</span></div>
+        <div class="mc-tiers">
+          <div class="mc-t"><div class="lbl">MÍNIMA</div><div class="fl">Falta</div><div class="v">R$ 42.000</div><div class="p" style="color:#fbbf24;">31%</div></div>
+          <div class="mc-t"><div class="lbl">BÁSICA</div><div class="fl">Falta</div><div class="v">R$ 65.000</div><div class="p" style="color:#fbbf24;">42%</div></div>
+          <div class="mc-t"><div class="lbl">MASTER</div><div class="fl">Falta</div><div class="v">R$ 83.000</div><div class="p" style="color:#fca5a5;">52%</div></div>
+        </div>
+        <div class="mc-pace" style="border-left-color:var(--green);">📅 <b>Semana 3 (15 a 21):</b> Faturou <b>R$ 25.700</b> de <b>R$ 29.200</b> · Faltam <b>R$ 3.500</b> em <b>3 dias úteis</b> (<b>R$ 1.167/dia</b>).</div>
+        <div class="mc-foot">
+          <button class="mc-btn">⚙ Configurar metas</button>
+          <button class="mc-btn sem">📅 Semanal</button>
+        </div>
+      </div>
+
+      <!-- Variação 3: Bateu -->
+      <div class="meta-card">
+        <div class="mc-h">
+          <div class="mc-av" style="background:rgba(212,165,116,.22);color:var(--accent);border-color:rgba(212,165,116,.42);">J</div>
+          <div style="flex:1;">
+            <div class="mc-nome">JULIANA FABRICIA</div>
+            <div>
+              <span class="mc-tier" style="background:rgba(212,165,116,.15);color:#f0c896;"><span class="dot" style="background:var(--accent);"></span>MASTER</span>
+              <span class="mc-sem ok">✅ BATEU · 112%</span>
+            </div>
+          </div>
+        </div>
+        <div class="mc-val">R$ 195.800,00</div>
+        <div class="mc-prog"><div class="mc-prog-fill" style="width:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));"></div></div>
+        <div class="mc-pct"><span>100% mensal</span><span style="color:var(--green);">112% semanal</span></div>
+        <div class="mc-tiers">
+          <div class="mc-t" style="border-color:rgba(212,165,116,.35);background:rgba(212,165,116,.05);"><div class="lbl">MÍNIMA</div><div class="fl">✓ Atingido</div><div class="v" style="color:#86efac;">100%</div><div class="p" style="color:#86efac;">+R$ 61k</div></div>
+          <div class="mc-t" style="border-color:rgba(212,165,116,.35);background:rgba(212,165,116,.05);"><div class="lbl">BÁSICA</div><div class="fl">✓ Atingido</div><div class="v" style="color:#86efac;">100%</div><div class="p" style="color:#86efac;">+R$ 37k</div></div>
+          <div class="mc-t" style="border-color:rgba(212,165,116,.35);background:rgba(212,165,116,.05);"><div class="lbl">MASTER</div><div class="fl">✓ Atingido</div><div class="v" style="color:#86efac;">100%</div><div class="p" style="color:#86efac;">+R$ 20k</div></div>
+        </div>
+        <div class="mc-pace" style="border-left-color:var(--accent);">📅 <b>Semana 3 (15 a 21):</b> Faturou <b>R$ 32.700</b> de <b>R$ 29.200</b> · Já bateu <b>+R$ 3.500</b> além da meta. 🏆</div>
+        <div class="mc-foot">
+          <button class="mc-btn">⚙ Configurar metas</button>
+          <button class="mc-btn sem">📅 Semanal</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SEÇÃO 2 · Modal Semanal
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-h">2 · Modal "Semanal" aberto</div>
+    <div class="sec-d">Preenchimento <b>manual</b> por semana. Junho/2026 tem 5 semanas (regra A aplicada: sáb/dom anexos, exceto dias 1-2 do mês).</div>
+
+    <div class="modal">
+      <div class="mh">
+        <div>
+          <div class="mh-t">📅 Meta semanal · Daniel Moura · Junho 2026</div>
+          <div class="mh-s">Preenchimento independente da meta mensal. Cada venda conta para semanal E mensal.</div>
+        </div>
+        <button class="mh-x">✕</button>
+      </div>
+
+      <div class="mb">
+
+        <div class="pace-bar">
+          <span class="label">SEMANA 3</span>
+          <div>Faturou <b>R$ 6.500,00</b> de <b>R$ 29.203,00</b> · Faltam <b>R$ 22.703,00</b> em <b>3 dias úteis</b> (R$ 7.568/dia)</div>
+        </div>
+
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>SEMANA</th>
+              <th style="text-align:right;">MÍNIMA</th>
+              <th style="text-align:right;">BÁSICA</th>
+              <th style="text-align:right;">MASTER</th>
+              <th style="text-align:right;">FATURADO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="col-lbl">Por mês <small>referência (não editável)</small></td>
+              <td class="ro">R$ 134.333,78</td>
+              <td class="ro">R$ 158.039,74</td>
+              <td class="ro">R$ 175.599,71</td>
+              <td class="v">R$ 6.500,00</td>
+            </tr>
+            <tr>
+              <td class="col-lbl">Semana 01 <small>01 a 07 jun</small></td>
+              <td><input value="35.043,60"></td>
+              <td><input value="41.227,76"></td>
+              <td><input value="45.808,62"></td>
+              <td class="v">R$ 0,00</td>
+            </tr>
+            <tr>
+              <td class="col-lbl">Semana 02 <small>08 a 14 jun</small></td>
+              <td><input value="29.203,00"></td>
+              <td><input value="34.356,47"></td>
+              <td><input value="38.173,85"></td>
+              <td class="v">R$ 0,00</td>
+            </tr>
+            <tr class="atual">
+              <td class="col-lbl">▶ Semana 03 <small>15 a 21 jun · ATUAL</small></td>
+              <td><input value="29.203,00"></td>
+              <td><input value="34.356,47"></td>
+              <td><input value="38.173,85"></td>
+              <td class="v">R$ 6.500,00</td>
+            </tr>
+            <tr>
+              <td class="col-lbl">Semana 04 <small>22 a 28 jun</small></td>
+              <td><input value="29.203,00"></td>
+              <td><input value="34.356,47"></td>
+              <td><input value="38.173,85"></td>
+              <td class="v">R$ 0,00</td>
+            </tr>
+            <tr>
+              <td class="col-lbl">Semana 05 <small>29-30 jun + 01-02 jul</small></td>
+              <td><input value="11.681,18"></td>
+              <td><input value="13.742,57"></td>
+              <td><input value="15.269,54"></td>
+              <td class="v">R$ 0,00</td>
+            </tr>
+            <tr class="totals">
+              <td>Σ Soma das semanas</td>
+              <td class="ro">R$ 134.333,78</td>
+              <td class="ro">R$ 158.039,74</td>
+              <td class="ro">R$ 175.599,71</td>
+              <td class="v">R$ 6.500,00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mf">
+        <div class="info">💡 As metas semanais são <b>independentes</b> da mensal. Vendas contam para ambas.</div>
+        <div class="actions">
+          <button class="btn">Cancelar</button>
+          <button class="btn primary">💾 Salvar semanais</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SEÇÃO 3 · Cards no Dashboard
+       ═══════════════════════════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-h">3 · Dashboard · 2 cards lado a lado</div>
+    <div class="sec-d">Card atual <b>renomeado</b> para "Mensal". Card <b>novo</b> "Semanal" com mesma estrutura, mas janela = semana corrente.</div>
+
+    <div class="dash-row">
+
+      <!-- CARD MENSAL (RENOMEADO) -->
+      <div class="dash-card">
+        <div class="dc-h">
+          <div class="dc-tit">💰 Faturado por consultor <span class="badge">MENSAL</span></div>
+          <div class="dc-tot">Total: <b>R$ 298.450</b></div>
+        </div>
+        <div class="row">
+          <div class="av">J</div>
+          <div class="nome">JULIANA<small>Master · 100%</small></div>
+          <div class="barwrap"><div class="b ok" style="width:100%;"></div></div>
+          <div class="pct ok">R$ 195.800</div>
+        </div>
+        <div class="row">
+          <div class="av">C</div>
+          <div class="nome">CARLOS<small>Básica · 69%</small></div>
+          <div class="barwrap"><div class="b warn" style="width:69%;"></div></div>
+          <div class="pct warn">R$ 92.150</div>
+        </div>
+        <div class="row">
+          <div class="av">D</div>
+          <div class="nome">DANIEL<small>Crítico · 0%</small></div>
+          <div class="barwrap"><div class="b bad" style="width:3%;"></div></div>
+          <div class="pct bad">R$ 0</div>
+        </div>
+        <div class="row">
+          <div class="av">DS</div>
+          <div class="nome">DARLEY<small>Crítico · 7%</small></div>
+          <div class="barwrap"><div class="b bad" style="width:7%;"></div></div>
+          <div class="pct bad">R$ 10.500</div>
+        </div>
+      </div>
+
+      <!-- CARD SEMANAL (NOVO) -->
+      <div class="dash-card" style="border-color:rgba(59,130,246,.20);">
+        <div class="dc-h">
+          <div class="dc-tit">💰 Faturado por consultor <span class="badge s">SEMANAL</span></div>
+          <div class="dc-tot">Semana 3 · <b>R$ 64.900</b></div>
+        </div>
+        <div class="row">
+          <div class="av">J</div>
+          <div class="nome">JULIANA<small>🔥 112% · bateu</small></div>
+          <div class="barwrap"><div class="b ok" style="width:100%;"></div></div>
+          <div class="pct ok">R$ 32.700</div>
+        </div>
+        <div class="row">
+          <div class="av">C</div>
+          <div class="nome">CARLOS<small>🔥 88% · no ritmo</small></div>
+          <div class="barwrap"><div class="b ok" style="width:88%;"></div></div>
+          <div class="pct ok">R$ 25.700</div>
+        </div>
+        <div class="row">
+          <div class="av">D</div>
+          <div class="nome">DANIEL<small>⚠ 22% · devagar</small></div>
+          <div class="barwrap"><div class="b warn" style="width:22%;"></div></div>
+          <div class="pct warn">R$ 6.500</div>
+        </div>
+        <div class="row">
+          <div class="av">DS</div>
+          <div class="nome">DARLEY<small>⚠ 0% · iniciou</small></div>
+          <div class="barwrap"><div class="b bad" style="width:0%;"></div></div>
+          <div class="pct bad">R$ 0</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

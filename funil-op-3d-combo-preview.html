@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Funil · Operação · Combo 11+15+18+19</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg-2:#161b22; --bg-3:#1c2128;
+    --border:rgba(255,255,255,.08); --txt:#e6edf3; --txt-2:#9aa5b1; --txt-3:#6b7280;
+    --accent:#d4a574; --accent-2:#f0c896;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:var(--txt); margin:0; padding:32px 24px 64px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; letter-spacing:-.01em; }
+  .sub{ font-size:12px; color:var(--txt-3); margin-bottom:32px; }
+
+  .stack{ display:flex; flex-direction:column; gap:36px; max-width:1100px; margin:0 auto; }
+  .item{ display:flex; flex-direction:column; gap:10px; }
+  .item-h{ display:flex; align-items:baseline; gap:10px; }
+  .item-h .n{ font-size:11px; color:var(--accent); font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .item-h .nome{ font-size:14px; font-weight:700; }
+  .item-h .desc{ font-size:11px; color:var(--txt-3); margin-left:auto; }
+
+  /* Conteúdo padrão idêntico ao do dashboard */
+  .card-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 2px; }
+  .card-tit{ font-size:13px; font-weight:700; color:var(--txt); text-transform:uppercase; letter-spacing:.06em; display:flex; align-items:center; gap:7px; }
+  .card-tit::before{ content:'📋'; }
+  .card-actions{ display:flex; gap:8px; align-items:center; font-size:10px; color:var(--txt-3); }
+  .btn{ font-size:11px; padding:6px 12px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--txt); cursor:pointer; font-weight:600; }
+  .btn.fast{ background:#3b82f6; color:#0a0e1a; border-color:#3b82f6; }
+  .vtoggle{ display:inline-flex; background:var(--bg); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .vtoggle button{ background:transparent; border:none; color:var(--txt-2); font-size:10px; padding:6px 10px; cursor:pointer; }
+  .vtoggle button.active{ background:rgba(255,255,255,.08); color:var(--txt); }
+
+  .col-row{ display:flex; gap:8px; align-items:stretch; }
+  .col{ flex:1; min-width:64px; max-width:64px; background:rgba(255,255,255,.015); border:1px solid var(--border); border-radius:10px; padding:10px 4px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .col-ico{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; border:1px solid; }
+  .col-nome{ writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; white-space:nowrap; flex:1; display:flex; align-items:center; }
+  .col-add{ width:24px; height:24px; border:1px dashed rgba(255,255,255,.14); border-radius:50%; color:var(--txt-3); background:transparent; cursor:pointer; font-size:13px; line-height:1; }
+  .col-cheia{ flex:1; max-width:none; border:1px solid var(--border); padding:10px 12px; align-items:stretch; }
+  .col-cheia-h{ display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#7a0d30; text-transform:uppercase; padding-bottom:8px; border-bottom:1px solid rgba(122,13,48,.4); }
+  .col-cheia-soma{ font-size:11px; color:var(--accent); margin-top:6px; }
+  .col-cheia-add{ margin-top:8px; padding:8px; font-size:11px; color:var(--txt-3); border:1px dashed rgba(255,255,255,.1); border-radius:6px; text-align:center; cursor:pointer; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     COMBO · 11 (spotlight) + 15 (neon pulse) + 18 (hex pattern) + 19 (dual frame)
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* Pulse dourado (15) aplicado no shadow do frame externo */
+  @keyframes comboPulse {
+    0%, 100% {
+      box-shadow:
+        0 0 0 1px rgba(212,165,116,.30),
+        0 0 18px -2px rgba(212,165,116,.18),
+        0 0 35px -8px rgba(212,165,116,.10),
+        0 25px 50px -15px rgba(0,0,0,.75);
+    }
+    50% {
+      box-shadow:
+        0 0 0 1px rgba(212,165,116,.55),
+        0 0 28px 0px rgba(212,165,116,.32),
+        0 0 60px 0px rgba(212,165,116,.18),
+        0 25px 50px -15px rgba(0,0,0,.75);
+    }
+  }
+
+  /* Frame externo dourado (19) — moldura ao redor */
+  .combo{
+    background:linear-gradient(180deg, #1a1f2a, #11151e);
+    border:1px solid rgba(212,165,116,.32);
+    border-radius:18px;
+    padding:6px;
+    animation:comboPulse 4s ease-in-out infinite;
+    position:relative;
+  }
+
+  /* Card interno (19) — onde fica o conteúdo · recebe pattern hex (18) */
+  .combo .card-body{
+    position:relative;
+    background:
+      radial-gradient(80% 50% at 50% -20%, rgba(212,165,116,.16), transparent 70%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32'><polygon points='14,1 27,8.5 27,23.5 14,31 1,23.5 1,8.5' fill='none' stroke='rgba(212,165,116,0.06)' stroke-width='1'/></svg>"),
+      linear-gradient(180deg, #131820, #0c1017);
+    border:1px solid rgba(255,255,255,.05);
+    border-radius:14px;
+    padding:14px;
+    overflow:hidden;
+  }
+
+  /* Spotlight follow-mouse (11) sobre o conteúdo */
+  .combo .card-body::before{
+    content:''; position:absolute; inset:0; pointer-events:none; border-radius:inherit;
+    background:radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%),
+      rgba(212,165,116,.18), transparent 40%);
+    transition:background .15s ease-out;
+    z-index:1;
+  }
+
+  /* Conteúdo acima do spotlight */
+  .combo .card-body > *{ position:relative; z-index:2; }
+
+</style>
+</head>
+<body>
+
+<h1>Funil · Operação · Kanban — Combo 11 + 15 + 18 + 19</h1>
+<div class="sub">Spotlight segue o mouse · Pulse dourado · Padrão hexagonal · Dual frame. Passe o mouse sobre o card pra ver o spotlight.</div>
+
+<div class="stack">
+
+  <div class="item">
+    <div class="item-h">
+      <span class="n">Combo</span>
+      <span class="nome">11 · spotlight + 15 · pulse + 18 · hex + 19 · dual frame</span>
+      <span class="desc">passe o mouse sobre o card</span>
+    </div>
+    <div class="combo" id="combo">
+      <div class="card-body">
+        <div class="card-head">
+          <div class="card-tit">OPERAÇÃO · KANBAN</div>
+          <div class="card-actions">💡 Arraste cards · Clique p/ detalhar
+            <button class="btn fast">⚡ Fast Lead</button>
+            <button class="btn">+ Novo</button>
+            <div class="vtoggle"><button class="active">▦ Kanban</button><button>≡ Lista</button></div>
+          </div>
+        </div>
+        <div class="col-row">
+          <div class="col"><div class="col-ico" style="background:#ff8fa822;border-color:#ff8fa855;color:#ff8fa8;">2</div><div class="col-nome" style="color:#ff8fa8;">PROSPECÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#ff6b8a22;border-color:#ff6b8a55;color:#ff6b8a;">🔍</div><div class="col-nome" style="color:#ff6b8a;">QUALIFICAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#e94f7422;border-color:#e94f7455;color:#e94f74;">🎤</div><div class="col-nome" style="color:#e94f74;">APRESENTAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#d6396022;border-color:#d6396055;color:#d63960;">🤝</div><div class="col-nome" style="color:#d63960;">NEGOCIAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#b8255022;border-color:#b8255055;color:#b82550;">📋</div><div class="col-nome" style="color:#b82550;">PROPOSTA</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#9a174022;border-color:#9a174055;color:#9a1740;">🔒</div><div class="col-nome" style="color:#9a1740;">FECHAMENTO</div><button class="col-add">+</button></div>
+          <div class="col col-cheia">
+            <div class="col-cheia-h"><span>PÓS-VENDA</span><span>0</span></div>
+            <div class="col-cheia-soma">💰 R$ 0</div>
+            <div class="col-cheia-add">+ Adicionar lead em Pós-Venda</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const combo = document.getElementById('combo');
+  if(combo){
+    const body = combo.querySelector('.card-body');
+    body.addEventListener('mousemove', e => {
+      const r = body.getBoundingClientRect();
+      body.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      body.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+    body.addEventListener('mouseleave', () => {
+      body.style.setProperty('--mx', '50%');
+      body.style.setProperty('--my', '50%');
+    });
+  }
+</script>
+
+</body>
+</html>

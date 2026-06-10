@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Consultor no mobile — 10 opções</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #0a0e13;
+    color: #e6edf3;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 0 0 6px;
+    color: #c8f05a;
+    letter-spacing: .02em;
+  }
+  .sub {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 28px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 22px;
+  }
+  .opt {
+    background: #161b22;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .opt-h {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    border-bottom: 1px dashed rgba(255,255,255,.10);
+    padding-bottom: 10px;
+  }
+  .opt-num {
+    font-size: 10px;
+    font-weight: 800;
+    color: #c8f05a;
+    background: rgba(200,240,90,.08);
+    border: 1px solid rgba(200,240,90,.25);
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: .08em;
+  }
+  .opt-ttl {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e6edf3;
+    margin-bottom: 2px;
+  }
+  .opt-desc {
+    font-size: 10.5px;
+    color: #9aa5b1;
+    line-height: 1.45;
+  }
+  .opt-pros {
+    font-size: 9.5px;
+    color: #6b7280;
+    line-height: 1.4;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(255,255,255,.08);
+  }
+  .opt-pros b { color: #b88a5a; }
+
+  /* === Card mobile base (replica do projeto) === */
+  .mob-card {
+    background: #0c1117;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    padding: 10px 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .mob-card.semst { border-left: 3px solid #6b7280; }
+  .mob-card.aberto { border-left: 3px solid #f59e0b; }
+  .mob-card.pago { border-left: 3px solid #34d399; }
+
+  .mob-header { display: flex; align-items: center; }
+  .mob-info { flex: 1; min-width: 0; }
+  .mob-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .mob-name {
+    font-size: 12px;
+    font-weight: 800;
+    color: #e6edf3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+  .mob-presenca {
+    background: rgba(245,158,11,.12);
+    color: #fbbf24;
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .mob-plus-btn {
+    background: rgba(200,240,90,.10);
+    border: 1px solid rgba(200,240,90,.35);
+    color: #c8f05a;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mob-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 10px;
+  }
+  .mob-st { color: #6b7280; font-weight: 600; }
+  .mob-val { color: #e6edf3; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* === Opção 1: chip de consultor inline no header === */
+  .cons-chip {
+    background: rgba(80,140,255,.12);
+    color: #93c5fd;
+    border: 1px solid rgba(80,140,255,.30);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+  .cons-chip.empty {
+    background: rgba(245,158,11,.10);
+    color: #fbbf24;
+    border-color: rgba(245,158,11,.30);
+    border-style: dashed;
+  }
+
+  /* === Opção 2: linha dedicada de consultor === */
+  .cons-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 4px 0;
+    border-top: 1px dashed rgba(255,255,255,.06);
+    font-size: 10px;
+    color: #9aa5b1;
+    cursor: pointer;
+  }
+  .cons-row b { color: #93c5fd; font-weight: 700; }
+  .cons-row .edit-ic { margin-left: auto; opacity: .6; font-size: 11px; }
+
+  /* === Opção 3: menu expandido === */
+  .menu-pop {
+    position: absolute;
+    top: 36px;
+    right: 8px;
+    background: #161b22;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.6);
+    padding: 4px;
+    min-width: 180px;
+    z-index: 10;
+  }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #e6edf3;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  .menu-item:hover { background: rgba(255,255,255,.04); }
+  .menu-item.featured { color: #c8f05a; background: rgba(200,240,90,.06); }
+  .menu-ic { width: 16px; text-align: center; }
+
+  /* === Opção 4: avatar circular === */
+  .cons-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5096ff, #3d80e6);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid rgba(80,140,255,.40);
+    flex-shrink: 0;
+  }
+  .cons-avatar.empty {
+    background: rgba(255,255,255,.03);
+    border: 2px dashed rgba(245,158,11,.40);
+    color: #fbbf24;
+  }
+
+  /* === Opção 5: footer com consultor === */
+  .cons-footer {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255,255,255,.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+  }
+  .cons-footer .lbl { color: #6b7280; letter-spacing: .05em; }
+  .cons-select {
+    background: rgba(80,140,255,.10);
+    border: 1px solid rgba(80,140,255,.30);
+    color: #93c5fd;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* === Opção 6: long-press no nome === */
+  .lp-hint {
+    position: absolute;
+    bottom: 4px;
+    right: 8px;
+    font-size: 8px;
+    color: #6b7280;
+    font-style: italic;
+    letter-spacing: .03em;
+    opacity: .6;
+  }
+
+  /* === Opção 7: swipe action === */
+  .swipe-wrap {
+    position: relative;
+    background: linear-gradient(to right, transparent 60%, rgba(80,140,255,.18) 60%);
+    border-radius: 10px;
+  }
+  .swipe-card {
+    transform: translateX(-20%);
+    transition: transform .2s;
+  }
+  .swipe-action {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #5096ff;
+    color: #fff;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* === Opção 8: botão ghost embaixo === */
+  .cons-ghost-btn {
+    width: 100%;
+    margin-top: 8px;
+    background: transparent;
+    border: 1px dashed rgba(80,140,255,.40);
+    color: #93c5fd;
+    padding: 7px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    letter-spacing: .05em;
+  }
+
+  /* === Opção 9: tag SEM CONSULTOR === */
+  .cons-tag-alert {
+    background: rgba(245,158,11,.18);
+    color: #fbbf24;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 4px;
+    letter-spacing: .08em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid rgba(245,158,11,.35);
+    text-transform: uppercase;
+  }
+  .cons-tag-alert.set {
+    background: rgba(80,140,255,.12);
+    color: #93c5fd;
+    border-color: rgba(80,140,255,.30);
+  }
+
+  /* === Opção 10: bottom-sheet preview === */
+  .bs-preview {
+    margin-top: 12px;
+    background: #161b22;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px 10px 0 0;
+    padding: 10px 12px;
+    position: relative;
+  }
+  .bs-grip {
+    width: 28px;
+    height: 3px;
+    background: rgba(255,255,255,.15);
+    border-radius: 2px;
+    margin: 0 auto 8px;
+  }
+  .bs-ttl {
+    font-size: 10px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .bs-list { display: flex; flex-direction: column; gap: 3px; }
+  .bs-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 6px;
+    font-size: 11px;
+    color: #e6edf3;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .bs-item:hover { background: rgba(255,255,255,.04); }
+  .bs-item.on {
+    background: rgba(80,140,255,.10);
+    color: #93c5fd;
+    font-weight: 700;
+  }
+  .bs-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5096ff, #3d80e6);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .escolha {
+    margin-top: 8px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .escolha .num-input {
+    background: #0c1117;
+    border: 1px solid rgba(255,255,255,.12);
+    color: #c8f05a;
+    width: 40px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .escolha button {
+    background: #c8f05a;
+    color: #0a0e1a;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .footer-pick {
+    position: sticky;
+    bottom: 0;
+    margin-top: 30px;
+    padding: 16px 20px;
+    background: rgba(10,14,19,.92);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255,255,255,.08);
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+    font-size: 12px;
+    color: #9aa5b1;
+  }
+  .footer-pick b { color: #c8f05a; }
+</style>
+</head>
+<body>
+
+<h1>Adicionar / alterar consultor no card mobile</h1>
+<p class="sub">10 abordagens diferentes — base: card "EDUARDA BALIEIRO CANTAO GUIMARAES" · Sem status · 1 treinamento</p>
+
+<div class="grid">
+
+  <!-- ============ OPÇÃO 1 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Chip inline no header</div>
+        <div class="opt-desc">Pill clicável ao lado do nome mostra o consultor. Vazio = pill tracejada laranja.</div>
+      </div>
+      <span class="opt-num">01</span>
+    </div>
+    <div class="mob-card semst">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">EDUARDA BALIEIRO C…</span>
+            <span class="cons-chip empty" title="Toque pra atribuir">+ Consultor</span>
+            <span class="mob-presenca">⏳ Pend.</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> sempre visível, 1 toque · <b>Contra:</b> espaço apertado no header em telas <360px</div>
+  </div>
+
+  <!-- ============ OPÇÃO 2 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Linha dedicada de consultor</div>
+        <div class="opt-desc">Nova linha entre nome e meta. Mostra consultor + ícone editar. Click abre seletor.</div>
+      </div>
+      <span class="opt-num">02</span>
+    </div>
+    <div class="mob-card semst">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">EDUARDA BALIEIRO C…</span>
+            <span class="mob-presenca">⏳ Pendente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="cons-row">
+            <span>👤 Consultor:</span>
+            <b>— Atribuir —</b>
+            <span class="edit-ic">✎</span>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> hierarquia clara · <b>Contra:</b> aumenta altura do card</div>
+  </div>
+
+  <!-- ============ OPÇÃO 3 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Menu "+" com opção destacada</div>
+        <div class="opt-desc">Botão "+" do header abre menu. Primeira opção é "Atribuir consultor" em destaque verde.</div>
+      </div>
+      <span class="opt-num">03</span>
+    </div>
+    <div class="mob-card semst" style="overflow:visible;">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">EDUARDA BALIEIRO C…</span>
+            <span class="mob-presenca">⏳ Pendente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+      <div class="menu-pop">
+        <div class="menu-item featured"><span class="menu-ic">👤</span>Atribuir consultor</div>
+        <div class="menu-item"><span class="menu-ic">➕</span>Adicionar treinamento</div>
+        <div class="menu-item"><span class="menu-ic">✏️</span>Editar cliente</div>
+        <div class="menu-item"><span class="menu-ic">📋</span>Ver informações</div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> reusa botão existente · <b>Contra:</b> requer 2 toques</div>
+  </div>
+
+  <!-- ============ OPÇÃO 4 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Avatar circular do consultor</div>
+        <div class="opt-desc">Círculo no header com iniciais do consultor. Vazio = círculo tracejado laranja com "?".</div>
+      </div>
+      <span class="opt-num">04</span>
+    </div>
+    <div class="mob-card semst">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="cons-avatar empty" title="Toque pra atribuir">?</span>
+            <span class="mob-name">EDUARDA BALIEIRO C…</span>
+            <span class="mob-presenca">⏳ Pend.</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> visual rico, escaneável em lista · <b>Contra:</b> só iniciais (ambiguidade)</div>
+  </div>
+
+  <!-- ============ OPÇÃO 5 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Footer com seletor</div>
+        <div class="opt-desc">Rodapé do card mostra "Consultor: [seletor ▾]". Tap abre dropdown nativo do sistema.</div>
+      </div>
+      <span class="opt-num">05</span>
+    </div>
+    <div class="mob-card semst">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">EDUARDA BALIEIRO C…</span>
+            <span class="mob-presenca">⏳ Pendente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+      <div class="cons-footer">
+        <span class="lbl">CONSULTOR</span>
+        <button class="cons-select">— Atribuir — <span style="opacity:.7;">▾</span></button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> familiar (select nativo) · <b>Contra:</b> ocupa linha extra sempre</div>
+  </div>
+
+  <!-- ============ OPÇÃO 6 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Long-press no nome do cliente</div>
+        <div class="opt-desc">Segura 1s no nome → modal de seleção rápida. Hint discreta no canto.</div>
+      </div>
+      <span class="opt-num">06</span>
+    </div>
+    <div class="mob-card semst">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name" style="text-decoration:underline dotted rgba(80,140,255,.35);text-underline-offset:3px;">EDUARDA BALIEIRO C…</span>
+            <span class="mob-presenca">⏳ Pend.</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+      <span class="lp-hint">⏱ segure pra atribuir consultor</span>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> sem alterar layout · <b>Contra:</b> não-óbvio, precisa de tutorial</div>
+  </div>
+
+  <!-- ============ OPÇÃO 7 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Swipe-left → botão consultor</div>
+        <div class="opt-desc">Desliza o card pra esquerda e revela botão "Consultor" estilo iOS Mail.</div>
+      </div>
+      <span class="opt-num">07</span>
+    </div>
+    <div class="swipe-wrap">
+      <div class="mob-card semst swipe-card">
+        <div class="mob-header">
+          <div class="mob-info">
+            <div class="mob-name-row">
+              <span class="mob-name">EDUARDA BALIEIRO C…</span>
+              <span class="mob-presenca">⏳ Pend.</span>
+              <button class="mob-plus-btn">+</button>
+            </div>
+            <div class="mob-meta-row">
+              <span class="mob-st">Sem status · 1 treinamento</span>
+              <span class="mob-val">R$ 0,00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="swipe-action">👤 Consultor</button>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> gesto natural, padrão iOS · <b>Contra:</b> conflita com scroll horizontal</div>
+  </div>
+
+  <!-- ============ OPÇÃO 8 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Botão ghost no rodapé</div>
+        <div class="opt-desc">Quando sem consultor, mostra CTA tracejado "+ Atribuir consultor" embaixo. Some quando preenchido.</div>
+      </div>
+      <span class="opt-num">08</span>
+    </div>
+    <div class="mob-card semst">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">EDUARDA BALIEIRO C…</span>
+            <span class="mob-presenca">⏳ Pendente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+      <button class="cons-ghost-btn">+ ATRIBUIR CONSULTOR</button>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> CTA enorme, fácil acerto · <b>Contra:</b> só ajuda quem ainda não tem</div>
+  </div>
+
+  <!-- ============ OPÇÃO 9 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Tag "SEM CONSULTOR" alerta</div>
+        <div class="opt-desc">Badge laranja chamativo na meta-row quando vazio. Vira azul quando atribuído.</div>
+      </div>
+      <span class="opt-num">09</span>
+    </div>
+    <div class="mob-card semst">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">EDUARDA BALIEIRO C…</span>
+            <span class="mob-presenca">⏳ Pendente</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row" style="flex-wrap:wrap;gap:6px;">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="cons-tag-alert">⚠ SEM CONSULTOR</span>
+            <span class="mob-val" style="margin-left:auto;">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> visual de alerta, prioriza ação · <b>Contra:</b> agressivo demais se houver muitos</div>
+  </div>
+
+  <!-- ============ OPÇÃO 10 ============ -->
+  <div class="opt">
+    <div class="opt-h">
+      <div>
+        <div class="opt-ttl">Bottom-sheet com lista</div>
+        <div class="opt-desc">Tap no card abre bottom-sheet com todos consultores, avatar e busca. Multi-tap rápido pra trocar.</div>
+      </div>
+      <span class="opt-num">10</span>
+    </div>
+    <div class="mob-card semst">
+      <div class="mob-header">
+        <div class="mob-info">
+          <div class="mob-name-row">
+            <span class="mob-name">EDUARDA BALIEIRO C…</span>
+            <span class="mob-presenca">⏳ Pend.</span>
+            <button class="mob-plus-btn">+</button>
+          </div>
+          <div class="mob-meta-row">
+            <span class="mob-st">Sem status · 1 treinamento</span>
+            <span class="mob-val">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bs-preview">
+      <div class="bs-grip"></div>
+      <div class="bs-ttl">Atribuir consultor</div>
+      <div class="bs-list">
+        <div class="bs-item"><span class="bs-avatar">DM</span>DANIEL MOURA</div>
+        <div class="bs-item on"><span class="bs-avatar">DS</span>DARLEY SANTOS <span style="margin-left:auto;color:#c8f05a;">✓</span></div>
+        <div class="bs-item"><span class="bs-avatar">JF</span>JULIANA FABRICIA</div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> melhor UX, escaneável, busca · <b>Contra:</b> mais código (componente novo)</div>
+  </div>
+
+</div>
+
+<div class="footer-pick">
+  Escolha uma opção (ex.: <b>3</b>) e eu implemento direto no card mobile do dashboard.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Pré-visualização · Colunas vazias do Kanban (10 opções)</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --surface:#10172a; --surface2:#1a2238;
+    --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.18);
+    --text:#e5e7eb; --muted:#9ca3af;
+    --accent:#c8f05a; --blue:#60a5fa; --amber:#f59e0b;
+    --red:#ef4444; --green:#34d399; --purple:#a78bfa;
+    --pink:#ec4899;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:30px; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; font-size:13px;
+  }
+  h1{ font-size:20px; margin:0 0 6px; font-weight:800; }
+  .sub{ color:var(--muted); margin-bottom:32px; font-size:13px; }
+  .preview{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden; margin-bottom:20px; box-shadow:0 4px 18px rgba(0,0,0,.3);
+  }
+  .preview-head{
+    padding:14px 18px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(167,139,250,.08),transparent);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .preview-tit{ font-size:14px; font-weight:800; color:#a78bfa; }
+  .preview-tit small{ color:var(--muted); font-weight:500; }
+  .preview-pick{
+    background:transparent; color:var(--accent); border:1px solid rgba(200,240,90,.4);
+    padding:5px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;
+  }
+  .preview-pick:hover{ background:rgba(200,240,90,.08); }
+  .preview-body{ padding:16px 18px 18px; }
+
+  /* Base do kanban */
+  .kb-mock{ background:var(--bg); border-radius:8px; padding:10px; overflow-x:auto; }
+  .kb-cols{ display:flex; gap:8px; min-height:180px; }
+  .kb-col{
+    flex:1; min-width:140px;
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    padding:8px 10px; display:flex; flex-direction:column; gap:6px;
+  }
+  .kb-col-h{ display:flex; align-items:center; justify-content:space-between; }
+  .kb-col-tit{
+    font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--text);
+  }
+  .kb-col-qtd{ font-size:11px; color:var(--muted); font-weight:700; }
+  .kb-col-soma{ font-size:10px; color:var(--muted); padding:2px 0; }
+  .kb-col-add{
+    background:transparent; color:var(--muted); border:1px dashed var(--border2);
+    border-radius:5px; padding:6px; font-size:10px; cursor:pointer; text-align:center;
+  }
+  .kb-card{
+    background:rgba(167,139,250,.06); border:1px solid rgba(167,139,250,.3);
+    border-radius:6px; padding:8px; font-size:11px;
+  }
+  .kb-card-nome{ font-weight:800; color:var(--text); }
+  .kb-card-val{ color:var(--accent); font-weight:800; margin-top:3px; }
+  .kb-card-trein{ background:rgba(167,139,250,.2); color:var(--purple); padding:2px 6px; border-radius:3px; font-size:9px; display:inline-block; margin-top:3px; }
+
+  /* OP 1 — vazias colapsadas (largura mínima) */
+  .op1 .kb-col.vazia{ min-width:48px; max-width:48px; padding:8px 4px; }
+  .op1 .kb-col.vazia .kb-col-tit{ font-size:8px; line-height:1.2; text-align:center; }
+  .op1 .kb-col.vazia .kb-col-add{ display:none; }
+  .op1 .kb-col.vazia .kb-col-soma{ display:none; }
+
+  /* OP 2 — vazias escondidas com chip "+ outras" */
+  .op2-chips{ display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+  .op2-chip{
+    background:rgba(167,139,250,.1); color:var(--purple);
+    border:1px dashed rgba(167,139,250,.4);
+    padding:4px 10px; border-radius:14px; font-size:10px; font-weight:700; cursor:pointer;
+  }
+  .op2 .kb-col.vazia{ display:none; }
+
+  /* OP 3 — vazias na lateral vertical */
+  .op3-wrap{ display:flex; gap:12px; }
+  .op3-side{
+    display:flex; flex-direction:column; gap:4px;
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    padding:6px; flex-shrink:0; width:120px;
+  }
+  .op3-side-tit{ font-size:9px; color:var(--muted); text-transform:uppercase; padding:4px 6px; font-weight:700; }
+  .op3-side-row{
+    display:flex; align-items:center; gap:6px;
+    padding:6px 8px; background:var(--surface2); border-radius:5px;
+    font-size:10px; color:var(--text); cursor:pointer;
+  }
+  .op3-side-bullet{ width:6px; height:6px; border-radius:50%; }
+
+  /* OP 4 — header rotacionado 90° */
+  .op4 .kb-col.vazia{ min-width:36px; max-width:36px; padding:8px 2px; align-items:center; }
+  .op4 .kb-col.vazia .kb-col-h{ writing-mode:vertical-rl; transform:rotate(180deg); height:140px; }
+  .op4 .kb-col.vazia .kb-col-tit{ font-size:9px; }
+  .op4 .kb-col.vazia .kb-col-add{ display:none; }
+  .op4 .kb-col.vazia .kb-col-soma{ display:none; }
+  .op4 .kb-col.vazia .kb-col-qtd{ display:none; }
+
+  /* OP 5 — acordeão (click expande) */
+  .op5 .kb-col.vazia{ min-width:36px; max-width:36px; padding:8px 4px; cursor:pointer; position:relative; }
+  .op5 .kb-col.vazia .kb-col-h, .op5 .kb-col.vazia .kb-col-soma, .op5 .kb-col.vazia .kb-col-add{ display:none; }
+  .op5 .kb-col.vazia::after{
+    content: attr(data-letra);
+    position:absolute; top:8px; left:50%; transform:translateX(-50%);
+    font-size:14px; font-weight:900; color:var(--muted);
+  }
+  .op5 .kb-col.vazia:hover{ background:rgba(167,139,250,.08); border-color:var(--purple); }
+  .op5 .kb-col.vazia .hint-expand{
+    position:absolute; bottom:8px; left:50%; transform:translateX(-50%) rotate(90deg);
+    font-size:9px; color:var(--muted); white-space:nowrap;
+  }
+
+  /* OP 6 — botão "ver todas etapas" no topo */
+  .op6-toggle{
+    background:var(--surface); border:1px solid var(--border); color:var(--muted);
+    padding:5px 12px; border-radius:14px; font-size:10px; cursor:pointer; margin-bottom:8px;
+    display:inline-flex; align-items:center; gap:5px;
+  }
+  .op6 .kb-col.vazia{ display:none; }
+
+  /* OP 7 — proporcional ao conteúdo */
+  .op7 .kb-col.vazia{ flex:0 0 60px; padding:8px 5px; }
+  .op7 .kb-col.com-cards{ flex:2; }
+  .op7 .kb-col.vazia .kb-col-add, .op7 .kb-col.vazia .kb-col-soma{ display:none; }
+  .op7 .kb-col.vazia .kb-col-tit{ font-size:8px; }
+
+  /* OP 8 — mini-colunas iconzadas */
+  .op8 .kb-col.vazia{ min-width:60px; max-width:60px; padding:10px 4px; text-align:center; }
+  .op8 .kb-col.vazia .kb-col-h{ flex-direction:column; gap:4px; align-items:center; justify-content:center; }
+  .op8 .kb-col.vazia .kb-col-tit{ display:none; }
+  .op8 .kb-col.vazia .kb-col-add, .op8 .kb-col.vazia .kb-col-soma{ display:none; }
+  .op8 .kb-col.vazia .icone-etapa{
+    width:32px; height:32px; border-radius:50%; background:var(--surface2);
+    display:flex; align-items:center; justify-content:center; font-size:14px;
+    color:var(--muted); border:1px solid var(--border);
+  }
+  .op8 .kb-col.vazia .nome-curto{ font-size:8px; color:var(--muted); margin-top:4px; font-weight:700; text-transform:uppercase; }
+
+  /* OP 9 — header curto compacto */
+  .op9 .kb-col.vazia{ min-width:80px; max-width:80px; padding:6px 4px; }
+  .op9 .kb-col.vazia .kb-col-h{ flex-direction:column; align-items:flex-start; gap:2px; }
+  .op9 .kb-col.vazia .kb-col-tit{ font-size:9px; }
+  .op9 .kb-col.vazia .kb-col-qtd{ font-size:9px; }
+  .op9 .kb-col.vazia .kb-col-soma{ font-size:9px; }
+  .op9 .kb-col.vazia .kb-col-add{ font-size:9px; padding:4px; }
+
+  /* OP 10 — barra horizontal no topo + ativas embaixo */
+  .op10-bar{
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    padding:6px 8px; margin-bottom:10px;
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+  }
+  .op10-bar-lbl{ font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-right:4px; }
+  .op10-mini-col{
+    display:inline-flex; align-items:center; gap:4px;
+    background:var(--surface2); padding:4px 10px; border-radius:5px;
+    font-size:10px; color:var(--muted); cursor:pointer; border:1px solid var(--border);
+  }
+  .op10-mini-col:hover{ background:rgba(167,139,250,.1); color:var(--purple); border-color:var(--purple); }
+  .op10 .kb-col.vazia{ display:none; }
+
+  .legend{
+    margin-top:14px; padding:10px 12px; background:rgba(96,165,250,.06);
+    border-left:3px solid var(--blue); border-radius:4px;
+    font-size:11px; color:var(--text); line-height:1.55;
+  }
+  .legend b{ color:var(--blue); }
+
+  .compare{
+    margin-top:36px; padding:16px 20px; background:var(--surface);
+    border:1px solid var(--border); border-radius:10px;
+  }
+  .compare h2{ font-size:15px; margin:0 0 10px; color:var(--accent); }
+  .compare-table{ width:100%; border-collapse:collapse; font-size:11px; }
+  .compare-table th, .compare-table td{
+    text-align:left; padding:6px 8px; border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  .compare-table th{ color:var(--muted); font-weight:700; font-size:10px;
+    text-transform:uppercase; letter-spacing:.05em; }
+  .compare-table tr td:first-child{ font-weight:700; color:var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>📋 Pré-visualizações · 10 formas de acuar colunas vazias do Kanban</h1>
+<p class="sub">Cenário atual: 6 etapas vazias ocupando toda largura · só "Pós-Venda" com 1 card. Como compactar?</p>
+
+<!-- ═════════════════ OP 1 ═════════════════ -->
+<div class="preview">
+  <div class="preview-head">
+    <div>
+      <div class="preview-tit">1 · Colunas vazias colapsadas (largura mínima)</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">Vazias viram tiras de 48px com só o título. Ativas ocupam o resto da tela.</div>
+    </div>
+    <button class="preview-pick">Escolher 1</button>
+  </div>
+  <div class="preview-body">
+    <div class="kb-mock op1">
+      <div class="kb-cols">
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROSPEC</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">QUALIF</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">APRES</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">NEGOC</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROP</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">FECH</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col com-cards">
+          <div class="kb-col-h"><div class="kb-col-tit">PÓS-VENDA</div><div class="kb-col-qtd">1</div></div>
+          <div class="kb-col-soma">💰 R$ 10,8k</div>
+          <div class="kb-card"><div class="kb-card-nome">JOAQUIM</div><div class="kb-card-val">R$ 10,8k · 100%</div><span class="kb-card-trein">MENT. IA</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="legend"><b>Quando usar:</b> mantém visibilidade das etapas, mas elas não competem por espaço. <b>Limitação:</b> ainda ocupa ~340px de largura total se tiver muitas etapas.</div>
+  </div>
+</div>
+
+<!-- ═════════════════ OP 2 ═════════════════ -->
+<div class="preview">
+  <div class="preview-head">
+    <div>
+      <div class="preview-tit">2 · Vazias escondidas + chips de etapas vazias no topo</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">Esconde colunas sem cards. Tags clicáveis em cima representam as ocultas.</div>
+    </div>
+    <button class="preview-pick">Escolher 2</button>
+  </div>
+  <div class="preview-body">
+    <div class="kb-mock op2">
+      <div class="op2-chips">
+        <span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-right:4px;">Vazias:</span>
+        <span class="op2-chip">＋ Prospecção</span>
+        <span class="op2-chip">＋ Qualificação</span>
+        <span class="op2-chip">＋ Apresentação</span>
+        <span class="op2-chip">＋ Negociação</span>
+        <span class="op2-chip">＋ Proposta</span>
+        <span class="op2-chip">＋ Fechamento</span>
+      </div>
+      <div class="kb-cols">
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROSP</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">QUAL</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">APR</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">NEG</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROP</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">FECH</div></div></div>
+        <div class="kb-col com-cards">
+          <div class="kb-col-h"><div class="kb-col-tit">PÓS-VENDA</div><div class="kb-col-qtd">1</div></div>
+          <div class="kb-col-soma">💰 R$ 10,8k</div>
+          <div class="kb-card"><div class="kb-card-nome">JOAQUIM</div><div class="kb-card-val">R$ 10,8k · 100%</div><span class="kb-card-trein">MENT. IA</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="legend"><b>Quando usar:</b> foco máximo nas etapas ativas. Click no chip cria/move card pra aquela etapa. <b>Limitação:</b> perde visão geral do funil.</div>
+  </div>
+</div>
+
+<!-- ═════════════════ OP 3 ═════════════════ -->
+<div class="preview">
+  <div class="preview-head">
+    <div>
+      <div class="preview-tit">3 · Sidebar vertical lateral · vazias listadas como linhas</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">Mini sidebar à esquerda lista etapas vazias. Click expande pra coluna.</div>
+    </div>
+    <button class="preview-pick">Escolher 3</button>
+  </div>
+  <div class="preview-body">
+    <div class="kb-mock">
+      <div class="op3-wrap">
+        <div class="op3-side">
+          <div class="op3-side-tit">Vazias (6)</div>
+          <div class="op3-side-row"><span class="op3-side-bullet" style="background:#ff8fa8;"></span>Prospecção</div>
+          <div class="op3-side-row"><span class="op3-side-bullet" style="background:#ff6b8a;"></span>Qualificação</div>
+          <div class="op3-side-row"><span class="op3-side-bullet" style="background:#e94f74;"></span>Apresentação</div>
+          <div class="op3-side-row"><span class="op3-side-bullet" style="background:#d63960;"></span>Negociação</div>
+          <div class="op3-side-row"><span class="op3-side-bullet" style="background:#b82550;"></span>Proposta</div>
+          <div class="op3-side-row"><span class="op3-side-bullet" style="background:#9a1740;"></span>Fechamento</div>
+        </div>
+        <div class="kb-cols" style="flex:1;">
+          <div class="kb-col com-cards">
+            <div class="kb-col-h"><div class="kb-col-tit">PÓS-VENDA</div><div class="kb-col-qtd">1</div></div>
+            <div class="kb-col-soma">💰 R$ 10,8k</div>
+            <div class="kb-card"><div class="kb-card-nome">JOAQUIM ARNALDO</div><div class="kb-card-val">R$ 10,8k · 100%</div><span class="kb-card-trein">MENT. IA NEGÓCIOS</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="legend"><b>Quando usar:</b> raras etapas ativas (1-2). Sidebar deixa o resto da tela 100% pras com cards. <b>Limitação:</b> visual diferente do kanban padrão · curva de aprendizado.</div>
+  </div>
+</div>
+
+<!-- ═════════════════ OP 4 ═════════════════ -->
+<div class="preview">
+  <div class="preview-head">
+    <div>
+      <div class="preview-tit">4 · Header rotacionado 90° (escrita vertical)</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">Vazias viram tiras finas (36px) com o nome em vertical. Estilo Trello "Mode Compact".</div>
+    </div>
+    <button class="preview-pick">Escolher 4</button>
+  </div>
+  <div class="preview-body">
+    <div class="kb-mock op4">
+      <div class="kb-cols">
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROSPECÇÃO</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">QUALIFICAÇÃO</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">APRESENTAÇÃO</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">NEGOCIAÇÃO</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROPOSTA</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">FECHAMENTO</div></div></div>
+        <div class="kb-col com-cards">
+          <div class="kb-col-h"><div class="kb-col-tit">PÓS-VENDA</div><div class="kb-col-qtd">1</div></div>
+          <div class="kb-col-soma">💰 R$ 10,8k</div>
+          <div class="kb-card"><div class="kb-card-nome">JOAQUIM ARNALDO</div><div class="kb-card-val">R$ 10,8k · 100%</div><span class="kb-card-trein">MENT. IA NEGÓCIOS</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="legend"><b>Quando usar:</b> ocupa ~250px com todas as etapas visíveis. Bonito visualmente · familiar pra quem usa Trello. <b>Limitação:</b> mobile complica.</div>
+  </div>
+</div>
+
+<!-- ═════════════════ OP 5 ═════════════════ -->
+<div class="preview">
+  <div class="preview-head">
+    <div>
+      <div class="preview-tit">5 · Acordeão · vazias colapsam pra letra · click expande</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">Cada vazia vira só a inicial da etapa (P/Q/A/N/P/F). Click expande aquela coluna.</div>
+    </div>
+    <button class="preview-pick">Escolher 5</button>
+  </div>
+  <div class="preview-body">
+    <div class="kb-mock op5">
+      <div class="kb-cols">
+        <div class="kb-col vazia" data-letra="P"><span class="hint-expand">▸ expandir</span></div>
+        <div class="kb-col vazia" data-letra="Q"><span class="hint-expand">▸ expandir</span></div>
+        <div class="kb-col vazia" data-letra="A"><span class="hint-expand">▸ expandir</span></div>
+        <div class="kb-col vazia" data-letra="N"><span class="hint-expand">▸ expandir</span></div>
+        <div class="kb-col vazia" data-letra="P"><span class="hint-expand">▸ expandir</span></div>
+        <div class="kb-col vazia" data-letra="F"><span class="hint-expand">▸ expandir</span></div>
+        <div class="kb-col com-cards">
+          <div class="kb-col-h"><div class="kb-col-tit">PÓS-VENDA</div><div class="kb-col-qtd">1</div></div>
+          <div class="kb-col-soma">💰 R$ 10,8k</div>
+          <div class="kb-card"><div class="kb-card-nome">JOAQUIM ARNALDO</div><div class="kb-card-val">R$ 10,8k · 100%</div><span class="kb-card-trein">MENT. IA NEGÓCIOS</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="legend"><b>Quando usar:</b> compactíssimo (~36px por vazia). Interativo. <b>Limitação:</b> letras iguais podem confundir (2 "P": Prospecção/Proposta).</div>
+  </div>
+</div>
+
+<!-- ═════════════════ OP 6 ═════════════════ -->
+<div class="preview">
+  <div class="preview-head">
+    <div>
+      <div class="preview-tit">6 · Hide-by-default · botão "+ ver todas etapas" no topo</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">Vazias somem completamente. Botão pra trazer todas de volta quando precisar.</div>
+    </div>
+    <button class="preview-pick">Escolher 6</button>
+  </div>
+  <div class="preview-body">
+    <div class="kb-mock op6">
+      <button class="op6-toggle">👁 Mostrar 6 etapas vazias</button>
+      <div class="kb-cols">
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROSP</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">QUAL</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">APR</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">NEG</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROP</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">FECH</div></div></div>
+        <div class="kb-col com-cards" style="max-width:280px;">
+          <div class="kb-col-h"><div class="kb-col-tit">PÓS-VENDA</div><div class="kb-col-qtd">1</div></div>
+          <div class="kb-col-soma">💰 R$ 10,8k</div>
+          <div class="kb-card"><div class="kb-card-nome">JOAQUIM ARNALDO</div><div class="kb-card-val">R$ 10,8k · 100%</div><span class="kb-card-trein">MENT. IA NEGÓCIOS</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="legend"><b>Quando usar:</b> foco total nas etapas ativas. <b>Limitação:</b> drag&drop pra etapa oculta exige clicar pra revelar antes.</div>
+  </div>
+</div>
+
+<!-- ═════════════════ OP 7 ═════════════════ -->
+<div class="preview">
+  <div class="preview-head">
+    <div>
+      <div class="preview-tit">7 · Largura proporcional ao conteúdo (auto-fit)</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">Coluna com cards ocupa mais espaço · vazias ficam reduzidas a 60px.</div>
+    </div>
+    <button class="preview-pick">Escolher 7</button>
+  </div>
+  <div class="preview-body">
+    <div class="kb-mock op7">
+      <div class="kb-cols">
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROSP</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">QUAL</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">APR</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">NEG</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROP</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">FECH</div><div class="kb-col-qtd">0</div></div></div>
+        <div class="kb-col com-cards">
+          <div class="kb-col-h"><div class="kb-col-tit">PÓS-VENDA</div><div class="kb-col-qtd">1</div></div>
+          <div class="kb-col-soma">💰 R$ 10,8k</div>
+          <div class="kb-card"><div class="kb-card-nome">JOAQUIM ARNALDO FEITOSA JUNIOR</div><div class="kb-card-val">R$ 10,8k · 100%</div><span class="kb-card-trein">MENT. IA NEGÓCIOS</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="legend"><b>Quando usar:</b> equilíbrio entre visibilidade e foco. Coluna ativa cresce automaticamente. <b>Limitação:</b> não comprime tanto quanto opções 4-5.</div>
+  </div>
+</div>
+
+<!-- ═════════════════ OP 8 ═════════════════ -->
+<div class="preview">
+  <div class="preview-head">
+    <div>
+      <div class="preview-tit">8 · Mini-colunas iconizadas (bolinhas)</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">Vazias viram bolinhas redondas com ícone + nome curto embaixo (60px).</div>
+    </div>
+    <button class="preview-pick">Escolher 8</button>
+  </div>
+  <div class="preview-body">
+    <div class="kb-mock op8">
+      <div class="kb-cols">
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="icone-etapa">🎯</div><div class="nome-curto">Prosp · 0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="icone-etapa">🔍</div><div class="nome-curto">Qual · 0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="icone-etapa">🎤</div><div class="nome-curto">Apres · 0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="icone-etapa">🤝</div><div class="nome-curto">Neg · 0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="icone-etapa">📋</div><div class="nome-curto">Prop · 0</div></div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="icone-etapa">🔒</div><div class="nome-curto">Fech · 0</div></div></div>
+        <div class="kb-col com-cards">
+          <div class="kb-col-h"><div class="kb-col-tit">PÓS-VENDA</div><div class="kb-col-qtd">1</div></div>
+          <div class="kb-col-soma">💰 R$ 10,8k</div>
+          <div class="kb-card"><div class="kb-card-nome">JOAQUIM ARNALDO</div><div class="kb-card-val">R$ 10,8k · 100%</div><span class="kb-card-trein">MENT. IA NEGÓCIOS</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="legend"><b>Quando usar:</b> visualmente bonito · ícone facilita reconhecimento rápido. <b>Limitação:</b> precisa definir ícone pra cada etapa (mas é só atribuir 1x).</div>
+  </div>
+</div>
+
+<!-- ═════════════════ OP 9 ═════════════════ -->
+<div class="preview">
+  <div class="preview-head">
+    <div>
+      <div class="preview-tit">9 · Header curto + corpo zero (80px)</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">Vazias mantêm título, qtd e "soma R$ 0" — mas reduzidas a 80px.</div>
+    </div>
+    <button class="preview-pick">Escolher 9</button>
+  </div>
+  <div class="preview-body">
+    <div class="kb-mock op9">
+      <div class="kb-cols">
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROSP</div><div class="kb-col-qtd">0</div></div><div class="kb-col-soma">💰 R$ 0</div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">QUAL</div><div class="kb-col-qtd">0</div></div><div class="kb-col-soma">💰 R$ 0</div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">APR</div><div class="kb-col-qtd">0</div></div><div class="kb-col-soma">💰 R$ 0</div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">NEG</div><div class="kb-col-qtd">0</div></div><div class="kb-col-soma">💰 R$ 0</div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">PROP</div><div class="kb-col-qtd">0</div></div><div class="kb-col-soma">💰 R$ 0</div></div>
+        <div class="kb-col vazia"><div class="kb-col-h"><div class="kb-col-tit">FECH</div><div class="kb-col-qtd">0</div></div><div class="kb-col-soma">💰 R$ 0</div></div>
+        <div class="kb-col com-cards">
+          <div class="kb-col-h"><div class="kb-col-tit">PÓS-VENDA</div><div class="kb-col-qtd">1</div></div>
+          <div class="kb-col-soma">💰 R$ 10,8k</div>
+          <div class="kb-card"><div class="kb-card-nome">JOAQUIM ARNALDO</div><div class="kb-card-val">R$ 10,8k · 100%</div><span class="kb-card-trein">MENT. IA NEGÓCIOS</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="legend"><b>Quando usar:</b> meio-termo · mantém visibilidade do funil mas reduz horizontal. Mantém soma à vista (útil quando há valores). <b>Limitação:</b> ainda ocupa ~500px com 6 vazias.</div>
+  </div>
+</div>
+
+<!-- ═════════════════ OP 10 ═════════════════ -->
+<div class="preview">
+  <div class="preview-head">
+    <div>
+      <div class="preview-tit">10 · Barra horizontal no topo · ativas embaixo cheias</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">Vazias viram chips na barra de cima. Embaixo só as ativas com tela cheia.</div>
+    </div>
+    <button class="preview-pick">Escolher 10</button>
+  </div>
+  <div class="preview-body">
+    <div class="kb-mock op10">
+      <div class="op10-bar">
+        <span class="op10-bar-lbl">Etapas vazias:</span>
+        <span class="op10-mini-col" style="border-color:#ff8fa8;"><span style="width:6px;height:6px;border-radius:50%;background:#ff8fa8;"></span>Prospecção · 0</span>
+        <span class="op10-mini-col" style="border-color:#ff6b8a;"><span style="width:6px;height:6px;border-radius:50%;background:#ff6b8a;"></span>Qualificação · 0</span>
+        <span class="op10-mini-col" style="border-color:#e94f74;"><span style="width:6px;height:6px;border-radius:50%;background:#e94f74;"></span>Apresentação · 0</span>
+        <span class="op10-mini-col" style="border-color:#d63960;"><span style="width:6px;height:6px;border-radius:50%;background:#d63960;"></span>Negociação · 0</span>
+        <span class="op10-mini-col" style="border-color:#b82550;"><span style="width:6px;height:6px;border-radius:50%;background:#b82550;"></span>Proposta · 0</span>
+        <span class="op10-mini-col" style="border-color:#9a1740;"><span style="width:6px;height:6px;border-radius:50%;background:#9a1740;"></span>Fechamento · 0</span>
+      </div>
+      <div class="kb-cols">
+        <div class="kb-col com-cards" style="flex:1;">
+          <div class="kb-col-h"><div class="kb-col-tit">PÓS-VENDA</div><div class="kb-col-qtd">1</div></div>
+          <div class="kb-col-soma">💰 R$ 10,8k</div>
+          <div class="kb-card"><div class="kb-card-nome">JOAQUIM ARNALDO FEITOSA JUNIOR</div><div class="kb-card-val">R$ 10,8k · 100%</div><span class="kb-card-trein">MENT. IA NEGÓCIOS</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="legend"><b>Quando usar:</b> foco máximo nas etapas com cards. Vazias ficam acessíveis em chips no topo (clica pra criar/mover). <b>Limitação:</b> drag&drop entre etapa ativa e vazia é menos intuitivo.</div>
+  </div>
+</div>
+
+<!-- COMPARATIVO -->
+<div class="compare">
+  <h2>📊 Comparação rápida</h2>
+  <table class="compare-table">
+    <thead><tr>
+      <th>#</th><th>Nome</th><th>Largura vazia</th><th>Drag&drop?</th><th>Tempo build</th>
+    </tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Colapsadas largura mín</td><td>48px</td><td>Sim (pequeno target)</td><td>30 min</td></tr>
+      <tr><td>2</td><td>Escondidas + chips no topo</td><td>0 (chip)</td><td>Não (chip cria)</td><td>1h</td></tr>
+      <tr><td>3</td><td>Sidebar vertical lateral</td><td>0 (linha sidebar)</td><td>Sim no row</td><td>1.5h</td></tr>
+      <tr><td>4</td><td>Header rotacionado 90°</td><td>36px</td><td>Sim (tira fina)</td><td>1h</td></tr>
+      <tr><td>5</td><td>Acordeão · letra · expand</td><td>36px → 140px</td><td>Sim (expandir antes)</td><td>1.5h</td></tr>
+      <tr><td>6</td><td>Hide-by-default + botão</td><td>0 (oculto)</td><td>Mostrar antes</td><td>30 min</td></tr>
+      <tr><td>7</td><td>Largura proporcional</td><td>60px</td><td>Sim</td><td>20 min</td></tr>
+      <tr><td>8</td><td>Mini ícones (bolinhas)</td><td>60px</td><td>Sim</td><td>1h</td></tr>
+      <tr><td>9</td><td>Header curto compacto</td><td>80px</td><td>Sim</td><td>20 min</td></tr>
+      <tr><td>10</td><td>Barra horizontal topo</td><td>0 (chip)</td><td>Não</td><td>1.5h</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:14px;padding:10px 12px;background:rgba(200,240,90,.06);border-left:3px solid var(--accent);border-radius:4px;font-size:12px;color:var(--text);">
+    <span style="display:inline-block;padding:2px 8px;background:rgba(200,240,90,.18);color:var(--accent);border-radius:4px;font-size:10px;font-weight:700;margin-right:4px;">SUGESTÃO</span>
+    Pra implementação rápida com bom resultado: <b>1 (largura mínima)</b> ou <b>7 (proporcional)</b>. Pra visual moderno: <b>8 (ícones)</b>. Pra foco total: <b>2 ou 10 (chips)</b>.
+  </div>
+</div>
+
+</body>
+</html>

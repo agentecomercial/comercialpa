@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>20 opções de impressão · consultores</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg-2:#161b22; --bg-3:#1c2128;
+    --border:rgba(255,255,255,.08); --txt:#e6edf3; --txt-2:#9aa5b1; --txt-3:#6b7280;
+    --accent:#d4a574; --accent-2:#f0c896;
+    --green:#34d399; --red:#ef4444; --amber:#f59e0b; --blue:#3b82f6; --purple:#a855f7;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:var(--txt); margin:0; padding:32px 24px 80px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .sub{ font-size:12px; color:var(--txt-3); margin-bottom:24px; }
+  .secao-tit{ font-size:11px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin:24px 0 10px; padding-bottom:6px; border-bottom:1px dashed var(--border); }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:14px; max-width:1400px; margin:0 auto; }
+  .card{
+    background:var(--bg-2); border:1px solid var(--border); border-radius:10px;
+    padding:12px; display:flex; flex-direction:column; gap:8px;
+    transition:border-color .15s;
+  }
+  .card:hover{ border-color:var(--accent); }
+  .card-h{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .card-h .n{ font-size:9px; color:var(--accent); font-weight:800; letter-spacing:.08em; }
+  .card-h .ttl{ font-size:12px; font-weight:700; color:var(--txt); margin-top:2px; line-height:1.2; }
+  .card-h .ic{ font-size:18px; flex-shrink:0; }
+  .card-d{ font-size:10px; color:var(--txt-3); line-height:1.4; min-height:28px; }
+
+  /* Preview do output */
+  .out{
+    background:rgba(0,0,0,.4); border:1px solid var(--border); border-radius:6px;
+    padding:8px; font-size:9px; color:var(--txt-2); line-height:1.4; min-height:80px;
+    font-family:'SFMono-Regular',Consolas,'Courier New',monospace;
+    position:relative; overflow:hidden;
+  }
+  .out::before{
+    content:'PREVIEW'; position:absolute; top:4px; right:6px;
+    font-size:7px; color:var(--txt-3); letter-spacing:.06em; opacity:.5;
+  }
+  .out .h{ font-weight:700; color:var(--accent); font-size:8px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+  .out .r{ display:flex; justify-content:space-between; padding:1px 0; }
+  .out .r b{ color:var(--txt); }
+  .out .r .g{ color:#86efac; }
+  .out .r .a{ color:#fbbf24; }
+  .out .r .r{ color:#fca5a5; }
+  .out .div{ border-top:1px dotted var(--border); margin:4px 0; }
+  .out table{ width:100%; font-size:8px; }
+  .out table td{ padding:1px 3px; }
+  .out .tag{ display:inline-block; padding:0 4px; border-radius:2px; font-size:7px; font-weight:700; }
+  .out .tag.p{ background:rgba(52,211,153,.15); color:#86efac; }
+  .out .tag.a{ background:rgba(245,158,11,.15); color:#fbbf24; }
+  .out .tag.n{ background:rgba(168,85,247,.15); color:#c4b5fd; }
+
+  /* Bar com chip de formato (PDF / Excel / TXT / WhatsApp) */
+  .formats{ display:flex; gap:3px; margin-top:4px; }
+  .fmt{ font-size:8px; padding:1px 5px; border-radius:8px; background:rgba(255,255,255,.04); color:var(--txt-3); border:1px solid var(--border); font-weight:600; }
+  .fmt.act{ background:rgba(212,165,116,.15); color:var(--accent); border-color:rgba(212,165,116,.30); }
+</style>
+</head>
+<body>
+
+<h1>20 opções de impressão · Dropdown do botão Imprimir</h1>
+<div class="sub">Cada card é uma opção de relatório que pode aparecer no menu dropdown. Preview do conteúdo que sairia no PDF/print.</div>
+
+<div class="secao-tit">📊 Por escopo (quem entra no relatório)</div>
+<div class="grid">
+
+  <!-- 1 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">01</div><div class="ttl">Todos os consultores</div></div><span class="ic">👥</span></div>
+    <div class="card-d">Relatório completo: cada consultor + clientes vinculados, ordenados alfabeticamente.</div>
+    <div class="out">
+      <div class="h">▼ DARLEY SANTOS · 12 clientes</div>
+      <div class="r"><span>João Silva</span><span class="tag p">PAGO</span></div>
+      <div class="r"><span>Maria Costa</span><span class="tag a">ABERTO</span></div>
+      <div class="div"></div>
+      <div class="h">▼ JULIANA FABRICIA · 8 clientes</div>
+      <div class="r"><span>Pedro Lima</span><span class="tag p">PAGO</span></div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span><span class="fmt">📋 Copiar</span><span class="fmt">💬 WhatsApp</span></div>
+  </div>
+
+  <!-- 2 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">02</div><div class="ttl">Consultor selecionado</div></div><span class="ic">👤</span></div>
+    <div class="card-d">Escolhe 1 consultor específico e gera só o relatório dele com todos os clientes.</div>
+    <div class="out">
+      <div class="h">DARLEY SANTOS</div>
+      <div class="r"><span>Total clientes:</span><b>12</b></div>
+      <div class="r"><span>Faturado:</span><b class="g">R$ 95.400</b></div>
+      <div class="r"><span>Em aberto:</span><b class="a">R$ 41.200</b></div>
+      <div class="div"></div>
+      <div style="font-size:8px;">▸ João Silva · MASTER · R$ 12k · PAGO<br>▸ Maria Costa · CEO · R$ 8k · ABERTO</div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span><span class="fmt">📋</span><span class="fmt">💬</span></div>
+  </div>
+
+  <!-- 3 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">03</div><div class="ttl">Top 3 consultores</div></div><span class="ic">🥇</span></div>
+    <div class="card-d">Os 3 com maior faturamento no mês. Cada um com sua lista de clientes.</div>
+    <div class="out">
+      <div class="r"><b>🥇 DARLEY</b><span class="g">R$ 95.4k · 12 clientes</span></div>
+      <div class="r"><b>🥈 JULIANA</b><span class="g">R$ 78.2k · 8 clientes</span></div>
+      <div class="r"><b>🥉 CARLOS</b><span class="g">R$ 56.8k · 6 clientes</span></div>
+      <div class="div"></div>
+      <div style="font-size:8px;">▼ Lista detalhada de clientes de cada um...</div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span><span class="fmt">📋</span></div>
+  </div>
+
+  <!-- 4 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">04</div><div class="ttl">Consultores que bateram meta</div></div><span class="ic">🎯</span></div>
+    <div class="card-d">Filtra só quem já bateu a meta (mínima/básica/master). Reconhecimento.</div>
+    <div class="out">
+      <div class="r"><b>JULIANA FABRICIA</b><span class="g">✓ MASTER 112%</span></div>
+      <div class="r"><b>CARLOS BONFIM</b><span class="g">✓ BÁSICA 95%</span></div>
+      <div class="div"></div>
+      <div style="font-size:8px;color:var(--txt-3);">2 de 5 bateram a meta este mês</div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span><span class="fmt">💬</span></div>
+  </div>
+
+  <!-- 5 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">05</div><div class="ttl">Consultores abaixo da meta</div></div><span class="ic">⚠</span></div>
+    <div class="card-d">Quem precisa de atenção. Útil pra reuniões 1:1 e PDI.</div>
+    <div class="out">
+      <div class="r"><b>DANIEL MOURA</b><span class="r">⚠ 0% · CRÍTICO</span></div>
+      <div class="r"><b>EXTRACLASSE</b><span class="r">⚠ 0% · sem meta</span></div>
+      <div class="r"><b>DARLEY SANTOS</b><span class="a">⚠ 7% · CRÍTICO</span></div>
+      <div class="div"></div>
+      <div style="font-size:8px;color:#fca5a5;">3 consultores precisam de ação</div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span><span class="fmt">📋</span></div>
+  </div>
+
+  <!-- 6 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">06</div><div class="ttl">Por consultor (selecionar múltiplos)</div></div><span class="ic">☑</span></div>
+    <div class="card-d">Modal com checkboxes — usuário escolhe os consultores que quer no relatório.</div>
+    <div class="out">
+      <div class="r">☑ <b>DARLEY SANTOS</b></div>
+      <div class="r">☐ <b>JULIANA FABRICIA</b></div>
+      <div class="r">☑ <b>CARLOS BONFIM</b></div>
+      <div class="r">☐ <b>DANIEL MOURA</b></div>
+      <div class="div"></div>
+      <div style="font-size:8px;color:var(--accent);">2 de 5 selecionados → gerar</div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span></div>
+  </div>
+
+</div>
+
+<div class="secao-tit">💰 Por status de venda</div>
+<div class="grid">
+
+  <!-- 7 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">07</div><div class="ttl">Todos os clientes (todos status)</div></div><span class="ic">📋</span></div>
+    <div class="card-d">Lista completa sem filtro. Visão panorâmica de toda a operação.</div>
+    <div class="out">
+      <table>
+        <tr><td>João Silva</td><td>DARLEY</td><td class="g">PAGO</td></tr>
+        <tr><td>Maria Costa</td><td>DARLEY</td><td class="a">ABERTO</td></tr>
+        <tr><td>Pedro Lima</td><td>JULIANA</td><td class="g">PAGO</td></tr>
+        <tr><td>Ana Souza</td><td>CARLOS</td><td>NEGOC</td></tr>
+        <tr><td>...</td><td>...</td><td>...</td></tr>
+      </table>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span><span class="fmt">Excel</span></div>
+  </div>
+
+  <!-- 8 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">08</div><div class="ttl">Só clientes PAGOS</div></div><span class="ic">💚</span></div>
+    <div class="card-d">Quem já fechou e pagou. Bom pra fechar fatura, conferir entrega.</div>
+    <div class="out">
+      <table>
+        <tr><td>João Silva</td><td class="g">R$ 12k</td></tr>
+        <tr><td>Pedro Lima</td><td class="g">R$ 8k</td></tr>
+        <tr><td>Carla Mendes</td><td class="g">R$ 15k</td></tr>
+      </table>
+      <div class="div"></div>
+      <div class="r"><b>Total pagos:</b><b class="g">R$ 35k</b></div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span><span class="fmt">Excel</span></div>
+  </div>
+
+  <!-- 9 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">09</div><div class="ttl">Só clientes EM ABERTO</div></div><span class="ic">🟠</span></div>
+    <div class="card-d">Quem fechou mas não pagou. Ação: cobrança.</div>
+    <div class="out">
+      <table>
+        <tr><td>Maria Costa</td><td class="a">R$ 8k</td></tr>
+        <tr><td>Roberto Dias</td><td class="a">R$ 5k</td></tr>
+      </table>
+      <div class="div"></div>
+      <div class="r"><b>Aberto total:</b><b class="a">R$ 13k</b></div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span><span class="fmt">💬 lista cobrança</span></div>
+  </div>
+
+  <!-- 10 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">10</div><div class="ttl">Em NEGOCIAÇÃO</div></div><span class="ic">🤝</span></div>
+    <div class="card-d">Pipeline em negociação. Visão de pipeline pra próximos fechamentos.</div>
+    <div class="out">
+      <table>
+        <tr><td>Ana Souza</td><td>R$ 18k</td><td class="n">75%</td></tr>
+        <tr><td>Lucas Mota</td><td>R$ 22k</td><td class="n">50%</td></tr>
+      </table>
+      <div class="div"></div>
+      <div class="r"><b>Potencial:</b><b class="n">R$ 24k ponderado</b></div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span></div>
+  </div>
+
+  <!-- 11 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">11</div><div class="ttl">Só com ENTRADA recebida</div></div><span class="ic">💵</span></div>
+    <div class="card-d">Quem já pagou entrada mas o restante tá em aberto.</div>
+    <div class="out">
+      <table>
+        <tr><td>Maria Costa</td><td class="g">R$ 2k entrada</td></tr>
+        <tr><td>Pedro Lima</td><td class="g">R$ 3k entrada</td></tr>
+      </table>
+      <div class="div"></div>
+      <div class="r"><b>Entradas no mês:</b><b class="g">R$ 5k</b></div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span></div>
+  </div>
+
+  <!-- 12 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">12</div><div class="ttl">DESISTÊNCIAS / cancelados</div></div><span class="ic">❌</span></div>
+    <div class="card-d">Quem desistiu da venda. Importante pra análise de churn.</div>
+    <div class="out">
+      <table>
+        <tr><td>João Pedro</td><td>DARLEY</td><td class="r">❌</td></tr>
+        <tr><td>Sofia Reis</td><td>CARLOS</td><td class="r">❌</td></tr>
+      </table>
+      <div class="div"></div>
+      <div class="r"><b>Perdas:</b><b class="r">2 clientes</b></div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span></div>
+  </div>
+
+</div>
+
+<div class="secao-tit">🎓 Por treinamento / produto</div>
+<div class="grid">
+
+  <!-- 13 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">13</div><div class="ttl">Agrupado por TREINAMENTO</div></div><span class="ic">📚</span></div>
+    <div class="card-d">Cada treinamento listado com seus clientes e consultores.</div>
+    <div class="out">
+      <div class="h">▼ MASTER COACHING · 8 vendas</div>
+      <div style="font-size:8px;">João Silva (Darley) · R$ 12k<br>Pedro Lima (Juliana) · R$ 12k</div>
+      <div class="div"></div>
+      <div class="h">▼ CEO PERFORMANCE · 4 vendas</div>
+      <div style="font-size:8px;">Maria Costa (Darley) · R$ 18k</div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span></div>
+  </div>
+
+  <!-- 14 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">14</div><div class="ttl">Top 5 maiores vendas</div></div><span class="ic">💎</span></div>
+    <div class="card-d">As 5 maiores vendas do mês, independente de consultor ou treinamento.</div>
+    <div class="out">
+      <table>
+        <tr><td>1.</td><td>Maria Costa · CEO</td><td class="g">R$ 18k</td></tr>
+        <tr><td>2.</td><td>Lucas Mota · FORMAÇÃO</td><td class="g">R$ 15k</td></tr>
+        <tr><td>3.</td><td>João Silva · MASTER</td><td class="g">R$ 12k</td></tr>
+      </table>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span></div>
+  </div>
+
+  <!-- 15 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">15</div><div class="ttl">Clientes NOVOS do mês</div></div><span class="ic">✨</span></div>
+    <div class="card-d">Primeira compra do cliente no app. Foco em aquisição.</div>
+    <div class="out">
+      <table>
+        <tr><td>João Silva</td><td>01/06</td><td class="g">R$ 12k</td></tr>
+        <tr><td>Maria Costa</td><td>08/06</td><td class="a">R$ 8k</td></tr>
+        <tr><td>Pedro Lima</td><td>15/06</td><td class="g">R$ 8k</td></tr>
+      </table>
+      <div class="div"></div>
+      <div class="r"><b>Novos no mês:</b><b>3 clientes</b></div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span></div>
+  </div>
+
+</div>
+
+<div class="secao-tit">📅 Por período & comparação</div>
+<div class="grid">
+
+  <!-- 16 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">16</div><div class="ttl">Mês atual completo</div></div><span class="ic">📅</span></div>
+    <div class="card-d">Tudo do mês corrente: vendas, status, consultores, totais.</div>
+    <div class="out">
+      <div class="h">JUNHO/2026 · 5 consultores</div>
+      <div class="r"><b>Faturado:</b><b class="g">R$ 230k</b></div>
+      <div class="r"><b>Em aberto:</b><b class="a">R$ 89k</b></div>
+      <div class="r"><b>Negociação:</b><b class="n">R$ 56k</b></div>
+      <div class="div"></div>
+      <div style="font-size:8px;">▼ Lista completa de clientes...</div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span><span class="fmt">📋</span></div>
+  </div>
+
+  <!-- 17 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">17</div><div class="ttl">Comparativo mês × anterior</div></div><span class="ic">📈</span></div>
+    <div class="card-d">Lado a lado: junho × maio. Evolução de cada consultor.</div>
+    <div class="out">
+      <table>
+        <tr><td><b>DARLEY</b></td><td>R$ 78k</td><td class="g">→ R$ 95k ↑22%</td></tr>
+        <tr><td><b>JULIANA</b></td><td>R$ 92k</td><td class="r">→ R$ 78k ↓15%</td></tr>
+      </table>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span></div>
+  </div>
+
+  <!-- 18 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">18</div><div class="ttl">Semanal (semana atual)</div></div><span class="ic">🗓</span></div>
+    <div class="card-d">Recorte da semana corrente — visão tática.</div>
+    <div class="out">
+      <div class="h">S3 · 15-21 jun</div>
+      <div class="r"><b>Faturado semana:</b><b class="g">R$ 32k</b></div>
+      <div class="r"><b>Meta semana:</b><b>R$ 50k · 64%</b></div>
+      <div class="div"></div>
+      <div style="font-size:8px;">5 clientes fechados · 2 entradas</div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span></div>
+  </div>
+
+</div>
+
+<div class="secao-tit">⭐ Relatórios completos / executivos</div>
+<div class="grid">
+
+  <!-- 19 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">19</div><div class="ttl">Relatório executivo (resumo)</div></div><span class="ic">📊</span></div>
+    <div class="card-d">1 página: KPIs principais + ranking + alertas. Pra reunião rápida.</div>
+    <div class="out">
+      <div class="h">RESUMO EXECUTIVO · Junho 2026</div>
+      <div class="r"><b>Faturado total:</b><b class="g">R$ 230k</b></div>
+      <div class="r"><b>Meta da equipe:</b><b>R$ 574k · 40%</b></div>
+      <div class="r"><b>Top consultor:</b><b>DARLEY (R$ 95k)</b></div>
+      <div class="r"><b>Alertas:</b><b class="r">3 abaixo da meta</b></div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span><span class="fmt">💬</span></div>
+  </div>
+
+  <!-- 20 -->
+  <div class="card">
+    <div class="card-h"><div><div class="n">20</div><div class="ttl">Detalhado · 1 página por consultor</div></div><span class="ic">📄</span></div>
+    <div class="card-d">PDF paginado: 1 consultor por página. Bom pra entregar individual.</div>
+    <div class="out">
+      <div class="h">📄 Página 1 de 5</div>
+      <div class="r"><b>CONSULTOR:</b><b>DARLEY SANTOS</b></div>
+      <div class="r"><b>Clientes:</b><b>12</b></div>
+      <div class="r"><b>Meta atingida:</b><b class="r">7%</b></div>
+      <div class="div"></div>
+      <div style="font-size:8px;">Lista completa de clientes · KPIs · histórico</div>
+      <div style="font-size:7px;color:var(--txt-3);margin-top:4px;">→ Próximo: JULIANA FABRICIA</div>
+    </div>
+    <div class="formats"><span class="fmt act">PDF</span></div>
+  </div>
+
+</div>
+
+<div style="margin-top:32px;padding:14px;background:rgba(212,165,116,.04);border:1px dashed rgba(212,165,116,.20);border-radius:10px;font-size:12px;color:var(--txt-2);line-height:1.6;">
+  <b style="color:var(--accent);">💡 Como funciona o dropdown:</b><br>
+  • Click no botão principal <b>🖨 Imprimir</b> abre direto a opção padrão (geralmente #1 ou #19).<br>
+  • Click no chevron <b>▾</b> abre o menu com as 20 opções agrupadas (por escopo · por status · por treinamento · por período · executivos).<br>
+  • Cada opção tem chips de <b>formato</b>: PDF · Copiar · WhatsApp · Excel (quando aplicável).<br>
+  • Algumas opções (ex: 02 · 06) abrem um <b>sub-modal</b> de seleção antes de gerar.
+</div>
+
+</body>
+</html>

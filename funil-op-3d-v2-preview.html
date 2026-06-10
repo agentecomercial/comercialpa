@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Funil · Operação 3D · v2 (10 novas opções)</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg-2:#161b22; --bg-3:#1c2128;
+    --border:rgba(255,255,255,.08); --txt:#e6edf3; --txt-2:#9aa5b1; --txt-3:#6b7280;
+    --accent:#d4a574; --accent-2:#f0c896;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:var(--txt); margin:0; padding:32px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; letter-spacing:-.01em; }
+  .sub{ font-size:12px; color:var(--txt-3); margin-bottom:32px; }
+  .grid{ display:grid; grid-template-columns:1fr; gap:42px; max-width:1100px; margin:0 auto; }
+  .item{ display:flex; flex-direction:column; gap:10px; }
+  .item-h{ display:flex; align-items:baseline; gap:10px; }
+  .item-h .n{ font-size:11px; color:var(--accent); font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .item-h .nome{ font-size:14px; font-weight:700; }
+  .item-h .desc{ font-size:11px; color:var(--txt-3); margin-left:auto; }
+
+  /* Conteúdo padrão idêntico ao do dashboard */
+  .card-body{ padding:14px; position:relative; z-index:2; }
+  .card-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 2px; }
+  .card-tit{ font-size:13px; font-weight:700; color:var(--txt); text-transform:uppercase; letter-spacing:.06em; display:flex; align-items:center; gap:7px; }
+  .card-tit::before{ content:'📋'; }
+  .card-actions{ display:flex; gap:8px; align-items:center; font-size:10px; color:var(--txt-3); }
+  .btn{ font-size:11px; padding:6px 12px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--txt); cursor:pointer; font-weight:600; }
+  .btn.fast{ background:#3b82f6; color:#0a0e1a; border-color:#3b82f6; }
+  .vtoggle{ display:inline-flex; background:var(--bg); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .vtoggle button{ background:transparent; border:none; color:var(--txt-2); font-size:10px; padding:6px 10px; cursor:pointer; }
+  .vtoggle button.active{ background:rgba(255,255,255,.08); color:var(--txt); }
+
+  .col-row{ display:flex; gap:8px; align-items:stretch; }
+  .col{ flex:1; min-width:64px; max-width:64px; background:rgba(255,255,255,.015); border:1px solid var(--border); border-radius:10px; padding:10px 4px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .col-ico{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; border:1px solid; }
+  .col-nome{ writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; white-space:nowrap; flex:1; display:flex; align-items:center; }
+  .col-add{ width:24px; height:24px; border:1px dashed rgba(255,255,255,.14); border-radius:50%; color:var(--txt-3); background:transparent; cursor:pointer; font-size:13px; line-height:1; }
+  .col-cheia{ flex:1; max-width:none; border:1px solid var(--border); padding:10px 12px; align-items:stretch; }
+  .col-cheia-h{ display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#7a0d30; text-transform:uppercase; padding-bottom:8px; border-bottom:1px solid rgba(122,13,48,.4); }
+  .col-cheia-soma{ font-size:11px; color:var(--accent); margin-top:6px; }
+  .col-cheia-add{ margin-top:8px; padding:8px; font-size:11px; color:var(--txt-3); border:1px dashed rgba(255,255,255,.1); border-radius:6px; text-align:center; cursor:pointer; }
+
+  .wrap{ position:relative; }
+  .wrap .card-content{ position:relative; z-index:2; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 11 · Spotlight que segue o mouse
+     ═══════════════════════════════════════════════════════════════ */
+  .op11{
+    background:linear-gradient(180deg, #161c26, #0d1119);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:18px;
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,.8),
+      0 0 0 1px rgba(255,255,255,.03) inset;
+    overflow:hidden;
+  }
+  .op11::before{
+    content:''; position:absolute; inset:0; pointer-events:none; border-radius:inherit;
+    background:radial-gradient(600px circle at var(--mx,50%) var(--my,50%),
+      rgba(212,165,116,.18), transparent 40%);
+    transition:background .15s ease-out;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 12 · 3D extrusion (lateral visível)
+     ═══════════════════════════════════════════════════════════════ */
+  .op12-wrap{ padding-bottom:14px; }
+  .op12{
+    background:linear-gradient(180deg, #1d2330, #131822);
+    border:1px solid rgba(255,255,255,.10);
+    border-top:1px solid rgba(255,255,255,.20);
+    border-radius:14px 14px 6px 6px;
+    box-shadow:
+      0 12px 0 -2px #0d1119,
+      0 12px 0 -1px rgba(212,165,116,.20),
+      0 26px 40px -10px rgba(0,0,0,.7),
+      0 1px 0 rgba(255,255,255,.08) inset;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 13 · Multi-corner glow (4 luzes)
+     ═══════════════════════════════════════════════════════════════ */
+  .op13{
+    background:
+      radial-gradient(160px at 0% 0%, rgba(212,165,116,.18), transparent 60%),
+      radial-gradient(160px at 100% 0%, rgba(168,85,247,.16), transparent 60%),
+      radial-gradient(160px at 100% 100%, rgba(212,165,116,.14), transparent 60%),
+      radial-gradient(160px at 0% 100%, rgba(59,130,246,.14), transparent 60%),
+      linear-gradient(180deg, #181d27, #0e131b);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;
+    box-shadow:
+      0 30px 50px -15px rgba(0,0,0,.7),
+      0 0 0 1px rgba(255,255,255,.04) inset;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 14 · Latão / Brass escovado
+     ═══════════════════════════════════════════════════════════════ */
+  .op14{
+    background:
+      linear-gradient(125deg,
+        rgba(212,165,116,.04) 0%,
+        rgba(212,165,116,.10) 40%,
+        rgba(255,255,255,.06) 50%,
+        rgba(212,165,116,.08) 60%,
+        rgba(212,165,116,.03) 100%),
+      repeating-linear-gradient(90deg,
+        rgba(255,255,255,.015) 0,
+        rgba(255,255,255,.015) 1px,
+        transparent 1px,
+        transparent 3px),
+      linear-gradient(180deg, #1c2129, #131821);
+    border:1px solid rgba(212,165,116,.20);
+    border-top:1px solid rgba(212,165,116,.45);
+    border-radius:14px;
+    box-shadow:
+      0 20px 40px rgba(0,0,0,.6),
+      0 1px 0 rgba(255,255,255,.08) inset,
+      0 -1px 0 rgba(0,0,0,.4) inset;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 15 · Neon outline pulsante (sutil)
+     ═══════════════════════════════════════════════════════════════ */
+  @keyframes neonPulse {
+    0%, 100% { box-shadow:
+      0 0 0 1px rgba(212,165,116,.45),
+      0 0 18px 1px rgba(212,165,116,.18),
+      0 0 35px -5px rgba(212,165,116,.10),
+      0 25px 50px -15px rgba(0,0,0,.75),
+      0 1px 0 rgba(255,255,255,.05) inset; }
+    50%  { box-shadow:
+      0 0 0 1px rgba(212,165,116,.70),
+      0 0 28px 2px rgba(212,165,116,.30),
+      0 0 60px 0px rgba(212,165,116,.18),
+      0 25px 50px -15px rgba(0,0,0,.75),
+      0 1px 0 rgba(255,255,255,.08) inset; }
+  }
+  .op15{
+    background:linear-gradient(180deg, #161b24, #0c1018);
+    border:1px solid rgba(212,165,116,.30);
+    border-radius:16px;
+    animation:neonPulse 4s ease-in-out infinite;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 16 · Heavy layered depth (3 camadas reais)
+     ═══════════════════════════════════════════════════════════════ */
+  .op16-wrap{ position:relative; padding:0 18px 24px; }
+  .op16-wrap::before{
+    content:''; position:absolute; left:30px; right:30px; top:10px; bottom:0;
+    background:linear-gradient(180deg, rgba(212,165,116,.06), transparent);
+    border:1px solid rgba(212,165,116,.10);
+    border-radius:14px;
+    transform:translateY(18px);
+    filter:blur(.5px);
+  }
+  .op16-wrap::after{
+    content:''; position:absolute; left:42px; right:42px; top:14px; bottom:0;
+    background:rgba(255,255,255,.02);
+    border:1px solid rgba(255,255,255,.04);
+    border-radius:14px;
+    transform:translateY(30px);
+    filter:blur(.8px);
+  }
+  .op16{
+    position:relative; z-index:3;
+    background:linear-gradient(180deg, #1c2230 0%, #11151e 100%);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    box-shadow:
+      0 35px 60px -20px rgba(0,0,0,.85),
+      0 12px 24px rgba(0,0,0,.5),
+      0 1px 0 rgba(255,255,255,.08) inset;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 17 · Crystal frosted (vidro denso + reflexo)
+     ═══════════════════════════════════════════════════════════════ */
+  .op17{
+    background:
+      linear-gradient(135deg,
+        rgba(255,255,255,.06) 0%,
+        rgba(255,255,255,.01) 30%,
+        rgba(255,255,255,.04) 60%,
+        rgba(255,255,255,.01) 100%),
+      linear-gradient(180deg, rgba(28,33,45,.85), rgba(15,19,26,.85));
+    backdrop-filter:blur(24px) saturate(180%);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid rgba(255,255,255,.10);
+    border-top:1px solid rgba(255,255,255,.22);
+    border-radius:18px;
+    box-shadow:
+      0 32px 60px -20px rgba(0,0,0,.85),
+      0 8px 16px rgba(0,0,0,.4),
+      0 0 0 1px rgba(212,165,116,.06) inset;
+  }
+  .op17::before{
+    content:''; position:absolute; top:0; left:0; right:0; height:50%;
+    background:linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+    border-radius:18px 18px 0 0;
+    pointer-events:none;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 18 · Hexagon pattern + glow dourado
+     ═══════════════════════════════════════════════════════════════ */
+  .op18{
+    background:
+      radial-gradient(80% 50% at 50% -20%, rgba(212,165,116,.16), transparent 70%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32'><polygon points='14,1 27,8.5 27,23.5 14,31 1,23.5 1,8.5' fill='none' stroke='rgba(212,165,116,0.05)' stroke-width='1'/></svg>"),
+      linear-gradient(180deg, #181d27, #0d1119);
+    border:1px solid rgba(212,165,116,.18);
+    border-radius:16px;
+    box-shadow:
+      0 30px 50px -15px rgba(0,0,0,.75),
+      0 0 0 1px rgba(255,255,255,.03) inset;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 19 · Dual frame (borda dupla concêntrica)
+     ═══════════════════════════════════════════════════════════════ */
+  .op19{
+    background:linear-gradient(180deg, #1a1f2a, #11151e);
+    border:1px solid rgba(212,165,116,.28);
+    border-radius:18px;
+    padding:6px;
+    box-shadow:
+      0 25px 50px -15px rgba(0,0,0,.75),
+      0 0 30px -10px rgba(212,165,116,.15);
+  }
+  .op19 .card-body{
+    background:linear-gradient(180deg, #131820, #0c1017);
+    border:1px solid rgba(255,255,255,.05);
+    border-radius:14px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 20 · Cinema noir (alto contraste, fundo profundo)
+     ═══════════════════════════════════════════════════════════════ */
+  .op20{
+    background:
+      radial-gradient(120% 80% at 50% 0%, #1c2230 0%, #0a0d13 70%),
+      #06080d;
+    border:1px solid rgba(255,255,255,.04);
+    border-radius:14px;
+    box-shadow:
+      0 40px 80px -30px rgba(0,0,0,.95),
+      0 16px 32px rgba(0,0,0,.5),
+      0 -1px 0 rgba(212,165,116,.18) inset,
+      0 1px 0 rgba(255,255,255,.04) inset;
+  }
+  .op20::before{
+    content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:60%; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(212,165,116,.6), transparent);
+    pointer-events:none;
+  }
+
+</style>
+</head>
+<body>
+
+<h1>Funil · Operação · Kanban — 10 NOVAS opções (v2)</h1>
+<div class="sub">10 efeitos diferentes do primeiro lote. Diga o número que vai pro dashboard.</div>
+
+<div class="grid">
+
+  <!-- OP 11 -->
+  <div class="item">
+    <div class="item-h"><span class="n">11</span><span class="nome">Spotlight follow-mouse</span><span class="desc">luz dourada segue o cursor (passe o mouse sobre o card)</span></div>
+    <div class="wrap op11" id="op11">
+      <div class="card-body">
+        <div class="card-head">
+          <div class="card-tit">OPERAÇÃO · KANBAN</div>
+          <div class="card-actions">💡 Arraste cards · Clique p/ detalhar
+            <button class="btn fast">⚡ Fast Lead</button>
+            <button class="btn">+ Novo</button>
+            <div class="vtoggle"><button class="active">▦ Kanban</button><button>≡ Lista</button></div>
+          </div>
+        </div>
+        <div class="col-row">
+          <div class="col"><div class="col-ico" style="background:#ff8fa822;border-color:#ff8fa855;color:#ff8fa8;">2</div><div class="col-nome" style="color:#ff8fa8;">PROSPECÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#ff6b8a22;border-color:#ff6b8a55;color:#ff6b8a;">🔍</div><div class="col-nome" style="color:#ff6b8a;">QUALIFICAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#e94f7422;border-color:#e94f7455;color:#e94f74;">🎤</div><div class="col-nome" style="color:#e94f74;">APRESENTAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#d6396022;border-color:#d6396055;color:#d63960;">🤝</div><div class="col-nome" style="color:#d63960;">NEGOCIAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#b8255022;border-color:#b8255055;color:#b82550;">📋</div><div class="col-nome" style="color:#b82550;">PROPOSTA</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#9a174022;border-color:#9a174055;color:#9a1740;">🔒</div><div class="col-nome" style="color:#9a1740;">FECHAMENTO</div><button class="col-add">+</button></div>
+          <div class="col col-cheia"><div class="col-cheia-h"><span>PÓS-VENDA</span><span>0</span></div><div class="col-cheia-soma">💰 R$ 0</div><div class="col-cheia-add">+ Adicionar lead em Pós-Venda</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 12 -->
+  <div class="item">
+    <div class="item-h"><span class="n">12</span><span class="nome">Extrusion 3D (lateral visível)</span><span class="desc">card parece estampado pra fora — base dourada</span></div>
+    <div class="op12-wrap">
+      <div class="wrap op12">
+        <div class="card-body">
+          <div class="card-head">
+            <div class="card-tit">OPERAÇÃO · KANBAN</div>
+            <div class="card-actions">💡 Arraste cards · Clique p/ detalhar
+              <button class="btn fast">⚡ Fast Lead</button>
+              <button class="btn">+ Novo</button>
+              <div class="vtoggle"><button class="active">▦ Kanban</button><button>≡ Lista</button></div>
+            </div>
+          </div>
+          <div class="col-row">
+            <div class="col"><div class="col-ico" style="background:#ff8fa822;border-color:#ff8fa855;color:#ff8fa8;">2</div><div class="col-nome" style="color:#ff8fa8;">PROSPECÇÃO</div><button class="col-add">+</button></div>
+            <div class="col"><div class="col-ico" style="background:#ff6b8a22;border-color:#ff6b8a55;color:#ff6b8a;">🔍</div><div class="col-nome" style="color:#ff6b8a;">QUALIFICAÇÃO</div><button class="col-add">+</button></div>
+            <div class="col"><div class="col-ico" style="background:#e94f7422;border-color:#e94f7455;color:#e94f74;">🎤</div><div class="col-nome" style="color:#e94f74;">APRESENTAÇÃO</div><button class="col-add">+</button></div>
+            <div class="col"><div class="col-ico" style="background:#d6396022;border-color:#d6396055;color:#d63960;">🤝</div><div class="col-nome" style="color:#d63960;">NEGOCIAÇÃO</div><button class="col-add">+</button></div>
+            <div class="col"><div class="col-ico" style="background:#b8255022;border-color:#b8255055;color:#b82550;">📋</div><div class="col-nome" style="color:#b82550;">PROPOSTA</div><button class="col-add">+</button></div>
+            <div class="col"><div class="col-ico" style="background:#9a174022;border-color:#9a174055;color:#9a1740;">🔒</div><div class="col-nome" style="color:#9a1740;">FECHAMENTO</div><button class="col-add">+</button></div>
+            <div class="col col-cheia"><div class="col-cheia-h"><span>PÓS-VENDA</span><span>0</span></div><div class="col-cheia-soma">💰 R$ 0</div><div class="col-cheia-add">+ Adicionar lead em Pós-Venda</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 13 -->
+  <div class="item">
+    <div class="item-h"><span class="n">13</span><span class="nome">4 Corner Glows</span><span class="desc">luzes douradas + roxa + azul nas 4 esquinas</span></div>
+    <div class="wrap op13">
+      <div class="card-body">
+        <div class="card-head">
+          <div class="card-tit">OPERAÇÃO · KANBAN</div>
+          <div class="card-actions">💡 Arraste cards · Clique p/ detalhar
+            <button class="btn fast">⚡ Fast Lead</button>
+            <button class="btn">+ Novo</button>
+            <div class="vtoggle"><button class="active">▦ Kanban</button><button>≡ Lista</button></div>
+          </div>
+        </div>
+        <div class="col-row">
+          <div class="col"><div class="col-ico" style="background:#ff8fa822;border-color:#ff8fa855;color:#ff8fa8;">2</div><div class="col-nome" style="color:#ff8fa8;">PROSPECÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#ff6b8a22;border-color:#ff6b8a55;color:#ff6b8a;">🔍</div><div class="col-nome" style="color:#ff6b8a;">QUALIFICAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#e94f7422;border-color:#e94f7455;color:#e94f74;">🎤</div><div class="col-nome" style="color:#e94f74;">APRESENTAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#d6396022;border-color:#d6396055;color:#d63960;">🤝</div><div class="col-nome" style="color:#d63960;">NEGOCIAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#b8255022;border-color:#b8255055;color:#b82550;">📋</div><div class="col-nome" style="color:#b82550;">PROPOSTA</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#9a174022;border-color:#9a174055;color:#9a1740;">🔒</div><div class="col-nome" style="color:#9a1740;">FECHAMENTO</div><button class="col-add">+</button></div>
+          <div class="col col-cheia"><div class="col-cheia-h"><span>PÓS-VENDA</span><span>0</span></div><div class="col-cheia-soma">💰 R$ 0</div><div class="col-cheia-add">+ Adicionar lead em Pós-Venda</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 14 -->
+  <div class="item">
+    <div class="item-h"><span class="n">14</span><span class="nome">Latão escovado</span><span class="desc">metal premium — brilho diagonal + textura escovada</span></div>
+    <div class="wrap op14">
+      <div class="card-body">
+        <div class="card-head">
+          <div class="card-tit">OPERAÇÃO · KANBAN</div>
+          <div class="card-actions">💡 Arraste cards · Clique p/ detalhar
+            <button class="btn fast">⚡ Fast Lead</button>
+            <button class="btn">+ Novo</button>
+            <div class="vtoggle"><button class="active">▦ Kanban</button><button>≡ Lista</button></div>
+          </div>
+        </div>
+        <div class="col-row">
+          <div class="col"><div class="col-ico" style="background:#ff8fa822;border-color:#ff8fa855;color:#ff8fa8;">2</div><div class="col-nome" style="color:#ff8fa8;">PROSPECÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#ff6b8a22;border-color:#ff6b8a55;color:#ff6b8a;">🔍</div><div class="col-nome" style="color:#ff6b8a;">QUALIFICAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#e94f7422;border-color:#e94f7455;color:#e94f74;">🎤</div><div class="col-nome" style="color:#e94f74;">APRESENTAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#d6396022;border-color:#d6396055;color:#d63960;">🤝</div><div class="col-nome" style="color:#d63960;">NEGOCIAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#b8255022;border-color:#b8255055;color:#b82550;">📋</div><div class="col-nome" style="color:#b82550;">PROPOSTA</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#9a174022;border-color:#9a174055;color:#9a1740;">🔒</div><div class="col-nome" style="color:#9a1740;">FECHAMENTO</div><button class="col-add">+</button></div>
+          <div class="col col-cheia"><div class="col-cheia-h"><span>PÓS-VENDA</span><span>0</span></div><div class="col-cheia-soma">💰 R$ 0</div><div class="col-cheia-add">+ Adicionar lead em Pós-Venda</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 15 -->
+  <div class="item">
+    <div class="item-h"><span class="n">15</span><span class="nome">Neon pulse dourado</span><span class="desc">borda + halo pulsam lentamente (4s ciclo)</span></div>
+    <div class="wrap op15">
+      <div class="card-body">
+        <div class="card-head">
+          <div class="card-tit">OPERAÇÃO · KANBAN</div>
+          <div class="card-actions">💡 Arraste cards · Clique p/ detalhar
+            <button class="btn fast">⚡ Fast Lead</button>
+            <button class="btn">+ Novo</button>
+            <div class="vtoggle"><button class="active">▦ Kanban</button><button>≡ Lista</button></div>
+          </div>
+        </div>
+        <div class="col-row">
+          <div class="col"><div class="col-ico" style="background:#ff8fa822;border-color:#ff8fa855;color:#ff8fa8;">2</div><div class="col-nome" style="color:#ff8fa8;">PROSPECÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#ff6b8a22;border-color:#ff6b8a55;color:#ff6b8a;">🔍</div><div class="col-nome" style="color:#ff6b8a;">QUALIFICAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#e94f7422;border-color:#e94f7455;color:#e94f74;">🎤</div><div class="col-nome" style="color:#e94f74;">APRESENTAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#d6396022;border-color:#d6396055;color:#d63960;">🤝</div><div class="col-nome" style="color:#d63960;">NEGOCIAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#b8255022;border-color:#b8255055;color:#b82550;">📋</div><div class="col-nome" style="color:#b82550;">PROPOSTA</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#9a174022;border-color:#9a174055;color:#9a1740;">🔒</div><div class="col-nome" style="color:#9a1740;">FECHAMENTO</div><button class="col-add">+</button></div>
+          <div class="col col-cheia"><div class="col-cheia-h"><span>PÓS-VENDA</span><span>0</span></div><div class="col-cheia-soma">💰 R$ 0</div><div class="col-cheia-add">+ Adicionar lead em Pós-Venda</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 16 -->
+  <div class="item">
+    <div class="item-h"><span class="n">16</span><span class="nome">Heavy layered depth</span><span class="desc">3 camadas reais empilhadas com blur progressivo</span></div>
+    <div class="op16-wrap">
+      <div class="wrap op16">
+        <div class="card-body">
+          <div class="card-head">
+            <div class="card-tit">OPERAÇÃO · KANBAN</div>
+            <div class="card-actions">💡 Arraste cards · Clique p/ detalhar
+              <button class="btn fast">⚡ Fast Lead</button>
+              <button class="btn">+ Novo</button>
+              <div class="vtoggle"><button class="active">▦ Kanban</button><button>≡ Lista</button></div>
+            </div>
+          </div>
+          <div class="col-row">
+            <div class="col"><div class="col-ico" style="background:#ff8fa822;border-color:#ff8fa855;color:#ff8fa8;">2</div><div class="col-nome" style="color:#ff8fa8;">PROSPECÇÃO</div><button class="col-add">+</button></div>
+            <div class="col"><div class="col-ico" style="background:#ff6b8a22;border-color:#ff6b8a55;color:#ff6b8a;">🔍</div><div class="col-nome" style="color:#ff6b8a;">QUALIFICAÇÃO</div><button class="col-add">+</button></div>
+            <div class="col"><div class="col-ico" style="background:#e94f7422;border-color:#e94f7455;color:#e94f74;">🎤</div><div class="col-nome" style="color:#e94f74;">APRESENTAÇÃO</div><button class="col-add">+</button></div>
+            <div class="col"><div class="col-ico" style="background:#d6396022;border-color:#d6396055;color:#d63960;">🤝</div><div class="col-nome" style="color:#d63960;">NEGOCIAÇÃO</div><button class="col-add">+</button></div>
+            <div class="col"><div class="col-ico" style="background:#b8255022;border-color:#b8255055;color:#b82550;">📋</div><div class="col-nome" style="color:#b82550;">PROPOSTA</div><button class="col-add">+</button></div>
+            <div class="col"><div class="col-ico" style="background:#9a174022;border-color:#9a174055;color:#9a1740;">🔒</div><div class="col-nome" style="color:#9a1740;">FECHAMENTO</div><button class="col-add">+</button></div>
+            <div class="col col-cheia"><div class="col-cheia-h"><span>PÓS-VENDA</span><span>0</span></div><div class="col-cheia-soma">💰 R$ 0</div><div class="col-cheia-add">+ Adicionar lead em Pós-Venda</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 17 -->
+  <div class="item">
+    <div class="item-h"><span class="n">17</span><span class="nome">Crystal frosted</span><span class="desc">vidro denso + reflexo diagonal + borda superior brilhante</span></div>
+    <div class="wrap op17">
+      <div class="card-body">
+        <div class="card-head">
+          <div class="card-tit">OPERAÇÃO · KANBAN</div>
+          <div class="card-actions">💡 Arraste cards · Clique p/ detalhar
+            <button class="btn fast">⚡ Fast Lead</button>
+            <button class="btn">+ Novo</button>
+            <div class="vtoggle"><button class="active">▦ Kanban</button><button>≡ Lista</button></div>
+          </div>
+        </div>
+        <div class="col-row">
+          <div class="col"><div class="col-ico" style="background:#ff8fa822;border-color:#ff8fa855;color:#ff8fa8;">2</div><div class="col-nome" style="color:#ff8fa8;">PROSPECÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#ff6b8a22;border-color:#ff6b8a55;color:#ff6b8a;">🔍</div><div class="col-nome" style="color:#ff6b8a;">QUALIFICAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#e94f7422;border-color:#e94f7455;color:#e94f74;">🎤</div><div class="col-nome" style="color:#e94f74;">APRESENTAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#d6396022;border-color:#d6396055;color:#d63960;">🤝</div><div class="col-nome" style="color:#d63960;">NEGOCIAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#b8255022;border-color:#b8255055;color:#b82550;">📋</div><div class="col-nome" style="color:#b82550;">PROPOSTA</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#9a174022;border-color:#9a174055;color:#9a1740;">🔒</div><div class="col-nome" style="color:#9a1740;">FECHAMENTO</div><button class="col-add">+</button></div>
+          <div class="col col-cheia"><div class="col-cheia-h"><span>PÓS-VENDA</span><span>0</span></div><div class="col-cheia-soma">💰 R$ 0</div><div class="col-cheia-add">+ Adicionar lead em Pós-Venda</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 18 -->
+  <div class="item">
+    <div class="item-h"><span class="n">18</span><span class="nome">Padrão hexagonal + glow</span><span class="desc">favo sutil dourado de fundo + halo no topo</span></div>
+    <div class="wrap op18">
+      <div class="card-body">
+        <div class="card-head">
+          <div class="card-tit">OPERAÇÃO · KANBAN</div>
+          <div class="card-actions">💡 Arraste cards · Clique p/ detalhar
+            <button class="btn fast">⚡ Fast Lead</button>
+            <button class="btn">+ Novo</button>
+            <div class="vtoggle"><button class="active">▦ Kanban</button><button>≡ Lista</button></div>
+          </div>
+        </div>
+        <div class="col-row">
+          <div class="col"><div class="col-ico" style="background:#ff8fa822;border-color:#ff8fa855;color:#ff8fa8;">2</div><div class="col-nome" style="color:#ff8fa8;">PROSPECÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#ff6b8a22;border-color:#ff6b8a55;color:#ff6b8a;">🔍</div><div class="col-nome" style="color:#ff6b8a;">QUALIFICAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#e94f7422;border-color:#e94f7455;color:#e94f74;">🎤</div><div class="col-nome" style="color:#e94f74;">APRESENTAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#d6396022;border-color:#d6396055;color:#d63960;">🤝</div><div class="col-nome" style="color:#d63960;">NEGOCIAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#b8255022;border-color:#b8255055;color:#b82550;">📋</div><div class="col-nome" style="color:#b82550;">PROPOSTA</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#9a174022;border-color:#9a174055;color:#9a1740;">🔒</div><div class="col-nome" style="color:#9a1740;">FECHAMENTO</div><button class="col-add">+</button></div>
+          <div class="col col-cheia"><div class="col-cheia-h"><span>PÓS-VENDA</span><span>0</span></div><div class="col-cheia-soma">💰 R$ 0</div><div class="col-cheia-add">+ Adicionar lead em Pós-Venda</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 19 -->
+  <div class="item">
+    <div class="item-h"><span class="n">19</span><span class="nome">Dual frame concêntrico</span><span class="desc">borda externa dourada + moldura interna escura</span></div>
+    <div class="wrap op19">
+      <div class="card-body">
+        <div class="card-head">
+          <div class="card-tit">OPERAÇÃO · KANBAN</div>
+          <div class="card-actions">💡 Arraste cards · Clique p/ detalhar
+            <button class="btn fast">⚡ Fast Lead</button>
+            <button class="btn">+ Novo</button>
+            <div class="vtoggle"><button class="active">▦ Kanban</button><button>≡ Lista</button></div>
+          </div>
+        </div>
+        <div class="col-row">
+          <div class="col"><div class="col-ico" style="background:#ff8fa822;border-color:#ff8fa855;color:#ff8fa8;">2</div><div class="col-nome" style="color:#ff8fa8;">PROSPECÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#ff6b8a22;border-color:#ff6b8a55;color:#ff6b8a;">🔍</div><div class="col-nome" style="color:#ff6b8a;">QUALIFICAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#e94f7422;border-color:#e94f7455;color:#e94f74;">🎤</div><div class="col-nome" style="color:#e94f74;">APRESENTAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#d6396022;border-color:#d6396055;color:#d63960;">🤝</div><div class="col-nome" style="color:#d63960;">NEGOCIAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#b8255022;border-color:#b8255055;color:#b82550;">📋</div><div class="col-nome" style="color:#b82550;">PROPOSTA</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#9a174022;border-color:#9a174055;color:#9a1740;">🔒</div><div class="col-nome" style="color:#9a1740;">FECHAMENTO</div><button class="col-add">+</button></div>
+          <div class="col col-cheia"><div class="col-cheia-h"><span>PÓS-VENDA</span><span>0</span></div><div class="col-cheia-soma">💰 R$ 0</div><div class="col-cheia-add">+ Adicionar lead em Pós-Venda</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 20 -->
+  <div class="item">
+    <div class="item-h"><span class="n">20</span><span class="nome">Cinema noir</span><span class="desc">fundo profundo radial + filete dourado no topo</span></div>
+    <div class="wrap op20">
+      <div class="card-body">
+        <div class="card-head">
+          <div class="card-tit">OPERAÇÃO · KANBAN</div>
+          <div class="card-actions">💡 Arraste cards · Clique p/ detalhar
+            <button class="btn fast">⚡ Fast Lead</button>
+            <button class="btn">+ Novo</button>
+            <div class="vtoggle"><button class="active">▦ Kanban</button><button>≡ Lista</button></div>
+          </div>
+        </div>
+        <div class="col-row">
+          <div class="col"><div class="col-ico" style="background:#ff8fa822;border-color:#ff8fa855;color:#ff8fa8;">2</div><div class="col-nome" style="color:#ff8fa8;">PROSPECÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#ff6b8a22;border-color:#ff6b8a55;color:#ff6b8a;">🔍</div><div class="col-nome" style="color:#ff6b8a;">QUALIFICAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#e94f7422;border-color:#e94f7455;color:#e94f74;">🎤</div><div class="col-nome" style="color:#e94f74;">APRESENTAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#d6396022;border-color:#d6396055;color:#d63960;">🤝</div><div class="col-nome" style="color:#d63960;">NEGOCIAÇÃO</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#b8255022;border-color:#b8255055;color:#b82550;">📋</div><div class="col-nome" style="color:#b82550;">PROPOSTA</div><button class="col-add">+</button></div>
+          <div class="col"><div class="col-ico" style="background:#9a174022;border-color:#9a174055;color:#9a1740;">🔒</div><div class="col-nome" style="color:#9a1740;">FECHAMENTO</div><button class="col-add">+</button></div>
+          <div class="col col-cheia"><div class="col-cheia-h"><span>PÓS-VENDA</span><span>0</span></div><div class="col-cheia-soma">💰 R$ 0</div><div class="col-cheia-add">+ Adicionar lead em Pós-Venda</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* Spotlight follow-mouse pro card 11 */
+  const op11 = document.getElementById('op11');
+  if(op11){
+    op11.addEventListener('mousemove', e => {
+      const r = op11.getBoundingClientRect();
+      op11.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      op11.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+  }
+</script>
+
+</body>
+</html>

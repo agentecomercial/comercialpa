@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Filtros do card consultor — 8 opções</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;700&family=Italiana&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 28px 24px 80px;
+    background: radial-gradient(ellipse at top, #15191f, #0a0e13);
+    color: #e6edf3;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: 'Italiana', serif;
+    font-size: 32px;
+    margin: 0 0 6px;
+    color: #f0c896;
+  }
+  .sub {
+    font-size: 12px; color: #6b7280;
+    margin-bottom: 32px; letter-spacing: .03em;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(560px, 1fr));
+    gap: 26px;
+  }
+  .opt {
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .opt-h {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 1px dashed rgba(255,255,255,.10);
+    padding-bottom: 10px; gap: 12px;
+  }
+  .opt-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 700; color: #d4a574;
+    background: rgba(212,165,116,.08);
+    border: 1px solid rgba(212,165,116,.30);
+    padding: 3px 11px; border-radius: 100px;
+    min-width: 38px; text-align: center;
+  }
+  .opt-ttl {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 500; color: #f0c896;
+  }
+  .opt-desc { font-size: 11px; color: #9aa5b1; line-height: 1.5; margin-top: 2px; }
+  .opt-pros {
+    font-size: 10.5px; color: #6b7280; line-height: 1.4;
+    padding-top: 8px; border-top: 1px dashed rgba(255,255,255,.06);
+  }
+  .opt-pros b { color: #b88a5a; }
+
+  /* === Container base do card de filtros (replica do projeto) === */
+  .panel {
+    background: #161b22;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  /* === Botão base (pill estilo atual) === */
+  .pill {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.10);
+    color: #9aa5b1;
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .pill:hover { border-color: rgba(255,255,255,.25); color: #e6edf3; }
+  .pill .num { font-weight: 800; opacity: .75; }
+  .pill.on { background: #c8f05a; color: #0a0e1a; border-color: #c8f05a; }
+  .pill.on .num { opacity: 1; color: #0a0e1a; }
+
+  /* Cores semânticas (estado ativo por status) */
+  .pill.pago.on    { background: #22c55e; color: #042713; border-color: #16a34a; }
+  .pill.aberto.on  { background: #fbbf24; color: #2a1a02; border-color: #d97706; }
+  .pill.entrada.on { background: #3b82f6; color: #fff;    border-color: #2563eb; }
+  .pill.negoc.on   { background: #a855f7; color: #fff;    border-color: #9333ea; }
+  .pill.desist.on  { background: #ef4444; color: #fff;    border-color: #dc2626; }
+
+  /* Subtle pré-coloração (apenas borda colorida discreta, sem fundo) */
+  .pill.hint-pago    { border-color: rgba(34,197,94,.30); }
+  .pill.hint-aberto  { border-color: rgba(251,191,36,.30); }
+  .pill.hint-entrada { border-color: rgba(59,130,246,.30); }
+  .pill.hint-negoc   { border-color: rgba(168,85,247,.30); }
+  .pill.hint-desist  { border-color: rgba(239,68,68,.30); }
+  .pill.hint-pago    .num { color: #4ade80; }
+  .pill.hint-aberto  .num { color: #fcd34d; }
+  .pill.hint-entrada .num { color: #93c5fd; }
+  .pill.hint-negoc   .num { color: #c4b5fd; }
+  .pill.hint-desist  .num { color: #fca5a5; }
+
+  /* Labels de seção */
+  .sec-label {
+    font-size: 10px; font-weight: 700; color: #6b7280;
+    text-transform: uppercase; letter-spacing: .12em;
+    margin-right: 6px;
+  }
+
+  /* "Limpar" link sutil */
+  .clear-link {
+    background: transparent; border: none;
+    color: #6b7280; font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    padding: 4px 8px; border-radius: 4px;
+    transition: color .12s;
+  }
+  .clear-link:hover { color: #ef4444; }
+
+  /* Linha base flex */
+  .row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .row + .row { margin-top: 10px; }
+
+  /* === ATUAL (referência) === */
+  .ref {
+    background: linear-gradient(180deg, rgba(80,140,255,.06), transparent);
+    border: 1px solid rgba(80,140,255,.20);
+  }
+  .ref-lbl {
+    color: #93c5fd; font-size: 10px; font-weight: 800;
+    letter-spacing: .12em; text-transform: uppercase;
+  }
+
+  /* === Opção 4 — mini-cards stacked === */
+  .o4-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+  .o4-card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.08);
+    border-top: 3px solid var(--c, #6b7280);
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .o4-card:hover { background: rgba(255,255,255,.06); }
+  .o4-card.on {
+    background: color-mix(in srgb, var(--c) 18%, transparent);
+    border-color: var(--c);
+  }
+  .o4-card .o4-lbl {
+    font-size: 9px; font-weight: 700; color: var(--c);
+    text-transform: uppercase; letter-spacing: .08em;
+    margin-bottom: 4px;
+  }
+  .o4-card .o4-num {
+    font-size: 18px; font-weight: 800; color: var(--c);
+    font-family: 'DM Mono', monospace;
+    line-height: 1;
+  }
+
+  /* === Opção 5 — segmented control === */
+  .o5-seg {
+    display: inline-flex;
+    background: rgba(0,0,0,.30);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .o5-seg button {
+    background: transparent; border: none;
+    color: #9aa5b1;
+    padding: 6px 12px;
+    font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    border-radius: 6px;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .o5-seg button.on {
+    background: #c8f05a; color: #0a0e1a;
+  }
+  .o5-seg .num { opacity: .75; }
+  .o5-seg button.on .num { opacity: 1; }
+
+  /* === Opção 6 — Pills com glow === */
+  .pill.glow.on {
+    box-shadow: 0 0 18px color-mix(in srgb, var(--c, #c8f05a) 60%, transparent);
+  }
+  .pill.glow.pago.on    { --c: #22c55e; }
+  .pill.glow.aberto.on  { --c: #fbbf24; }
+  .pill.glow.entrada.on { --c: #3b82f6; }
+  .pill.glow.negoc.on   { --c: #a855f7; }
+
+  /* === Opção 7 — Chip "Filtrando por" === */
+  .chip-filter {
+    background: rgba(200,240,90,.08);
+    border: 1px solid rgba(200,240,90,.30);
+    color: #c8f05a;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .chip-filter .x {
+    background: rgba(0,0,0,.30); color: #c8f05a;
+    width: 14px; height: 14px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; cursor: pointer;
+  }
+
+  /* === Opção 8 — Sidebar layout === */
+  .o8-layout {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 14px;
+  }
+  .o8-side {
+    display: flex; flex-direction: column;
+    gap: 4px;
+    padding-right: 12px;
+    border-right: 1px solid rgba(255,255,255,.06);
+  }
+  .o8-item {
+    background: transparent; border: none;
+    color: #9aa5b1;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    text-align: left;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: all .12s;
+  }
+  .o8-item:hover { background: rgba(255,255,255,.04); color: #e6edf3; }
+  .o8-item.on { background: rgba(200,240,90,.12); color: #c8f05a; }
+  .o8-item .num {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 6px;
+  }
+  .o8-item.on .num { background: rgba(200,240,90,.20); color: #c8f05a; }
+  .o8-cont {
+    display: flex; flex-direction: column; gap: 10px;
+    justify-content: flex-start;
+  }
+</style>
+</head>
+<body>
+
+<h1>Filtros do card consultor — 8 propostas</h1>
+<p class="sub">Base: filtros de STATUS + PRESENÇA. Referência atual no topo.</p>
+
+<!-- REFERÊNCIA -->
+<div class="opt ref" style="max-width:760px;margin-bottom:30px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <span class="ref-lbl">REFERÊNCIA · ATUAL</span>
+    <span style="font-size:10px;color:#6b7280;">Como está hoje no card do consultor</span>
+  </div>
+  <div class="panel">
+    <div class="row">
+      <button class="pill on">Todos <span class="num">(14)</span></button>
+      <button class="pill">Aberto</button>
+      <button class="pill">Pago</button>
+      <button class="pill">Entrada</button>
+      <button class="pill">Negociação</button>
+      <button class="clear-link">Limpar</button>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <span class="sec-label">PRESENÇA</span>
+      <button class="pill">⏳ Pendente</button>
+      <button class="pill on">✅ Presente</button>
+      <button class="pill">❌ Falta</button>
+    </div>
+    <div style="margin-top:10px;"><a style="color:#9aa5b1;font-size:11px;text-decoration:underline;cursor:pointer;">← Voltar para todos</a></div>
+  </div>
+</div>
+
+<div class="grid">
+
+  <!-- 01 — Contagem + cores semânticas (incremental) -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">01 · Contagem em todos + cores semânticas</div><div class="opt-desc">Adiciona <code>(n)</code> em cada status e usa cor própria quando ativo (Pago verde, Aberto âmbar, etc.).</div></div><span class="opt-num">01</span></div>
+    <div class="panel">
+      <div class="row">
+        <button class="pill on">Todos <span class="num">(14)</span></button>
+        <button class="pill aberto">Aberto <span class="num">(5)</span></button>
+        <button class="pill pago on">Pago <span class="num">(3)</span></button>
+        <button class="pill entrada">Entrada <span class="num">(1)</span></button>
+        <button class="pill negoc">Negociação <span class="num">(2)</span></button>
+        <button class="clear-link" style="margin-left:auto;">× Limpar</button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <span class="sec-label">PRESENÇA</span>
+        <button class="pill">⏳ Pendente <span class="num">(3)</span></button>
+        <button class="pill on">✅ Presente <span class="num">(10)</span></button>
+        <button class="pill">❌ Falta <span class="num">(1)</span></button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> mudança pequena, alto impacto · <b>Contra:</b> ainda uma "pilha" de pills</div>
+  </div>
+
+  <!-- 02 — Agrupado com labels "STATUS" e "PRESENÇA" -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">02 · Agrupado com labels (espelha PRESENÇA)</div><div class="opt-desc">Adiciona "STATUS" como label da 1ª linha, criando duas seções pares. Bordas coloridas como dica visual quando inativo.</div></div><span class="opt-num">02</span></div>
+    <div class="panel">
+      <div class="row">
+        <span class="sec-label">STATUS</span>
+        <button class="pill on">Todos <span class="num">(14)</span></button>
+        <button class="pill hint-aberto">Aberto <span class="num">(5)</span></button>
+        <button class="pill hint-pago">Pago <span class="num">(3)</span></button>
+        <button class="pill hint-entrada">Entrada <span class="num">(1)</span></button>
+        <button class="pill hint-negoc">Negociação <span class="num">(2)</span></button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <span class="sec-label">PRESENÇA</span>
+        <button class="pill">⏳ Pendente <span class="num">(3)</span></button>
+        <button class="pill on">✅ Presente <span class="num">(10)</span></button>
+        <button class="pill">❌ Falta <span class="num">(1)</span></button>
+        <button class="clear-link" style="margin-left:auto;">× Limpar filtros</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> hierarquia clara, "Limpar" único · <b>Contra:</b> bordas coloridas exigem aprendizado</div>
+  </div>
+
+  <!-- 03 — Cores semânticas + cor no número -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">03 · Cores no contador (sutil, sem fundo)</div><div class="opt-desc">Borda neutra, mas o número de cada status aparece já na cor dele. Quando ativo, o pill todo recebe a cor.</div></div><span class="opt-num">03</span></div>
+    <div class="panel">
+      <div class="row">
+        <span class="sec-label">STATUS</span>
+        <button class="pill on">Todos <span class="num">(14)</span></button>
+        <button class="pill aberto hint-aberto">Aberto <span class="num">(5)</span></button>
+        <button class="pill pago hint-pago">Pago <span class="num">(3)</span></button>
+        <button class="pill entrada hint-entrada">Entrada <span class="num">(1)</span></button>
+        <button class="pill negoc hint-negoc">Negociação <span class="num">(2)</span></button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <span class="sec-label">PRESENÇA</span>
+        <button class="pill">⏳ Pendente <span class="num">(3)</span></button>
+        <button class="pill on">✅ Presente <span class="num">(10)</span></button>
+        <button class="pill">❌ Falta <span class="num">(1)</span></button>
+        <button class="clear-link" style="margin-left:auto;">× Limpar</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> escaneável, info na borda · <b>Contra:</b> pouca diferença vs. 02</div>
+  </div>
+
+  <!-- 04 — Mini-cards stacked -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">04 · Mini-cards stacked com número grande</div><div class="opt-desc">Cada status vira um mini-card com cor própria e número grande. Visual KPI, mais "premium". PRESENÇA fica como sub-linha.</div></div><span class="opt-num">04</span></div>
+    <div class="panel">
+      <div class="o4-grid">
+        <div class="o4-card on" style="--c:#c8f05a;"><div class="o4-lbl">Todos</div><div class="o4-num">14</div></div>
+        <div class="o4-card" style="--c:#fbbf24;"><div class="o4-lbl">Aberto</div><div class="o4-num">5</div></div>
+        <div class="o4-card" style="--c:#22c55e;"><div class="o4-lbl">Pago</div><div class="o4-num">3</div></div>
+        <div class="o4-card" style="--c:#3b82f6;"><div class="o4-lbl">Entrada</div><div class="o4-num">1</div></div>
+        <div class="o4-card" style="--c:#a855f7;"><div class="o4-lbl">Negoc.</div><div class="o4-num">2</div></div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <span class="sec-label">PRESENÇA</span>
+        <button class="pill">⏳ <span class="num">3</span></button>
+        <button class="pill on">✅ <span class="num">10</span></button>
+        <button class="pill">❌ <span class="num">1</span></button>
+        <button class="clear-link" style="margin-left:auto;">× Limpar</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> visual KPI, escaneável · <b>Contra:</b> consome mais altura vertical</div>
+  </div>
+
+  <!-- 05 — Segmented control iOS -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">05 · Segmented control iOS</div><div class="opt-desc">Barra única com todos os status em um único componente compacto. Estilo iOS Mail/Settings.</div></div><span class="opt-num">05</span></div>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between;">
+        <div class="o5-seg">
+          <button class="on">Todos <span class="num">14</span></button>
+          <button>Aberto <span class="num">5</span></button>
+          <button>Pago <span class="num">3</span></button>
+          <button>Entrada <span class="num">1</span></button>
+          <button>Negoc. <span class="num">2</span></button>
+        </div>
+        <button class="clear-link">× Limpar</button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <span class="sec-label">PRESENÇA</span>
+        <button class="pill">⏳ Pendente <span class="num">(3)</span></button>
+        <button class="pill on">✅ Presente <span class="num">(10)</span></button>
+        <button class="pill">❌ Falta <span class="num">(1)</span></button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> compacto, padrão iOS · <b>Contra:</b> sem cores semânticas, "Todos" perde destaque</div>
+  </div>
+
+  <!-- 06 — Pills coloridas com glow -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">06 · Glow colorido ao ativar</div><div class="opt-desc">Borda neutra com glow colorido difuso quando ativo. Visual mais premium e leve.</div></div><span class="opt-num">06</span></div>
+    <div class="panel">
+      <div class="row">
+        <span class="sec-label">STATUS</span>
+        <button class="pill on">Todos <span class="num">(14)</span></button>
+        <button class="pill glow aberto on">Aberto <span class="num">(5)</span></button>
+        <button class="pill glow pago">Pago <span class="num">(3)</span></button>
+        <button class="pill glow entrada">Entrada <span class="num">(1)</span></button>
+        <button class="pill glow negoc">Negociação <span class="num">(2)</span></button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <span class="sec-label">PRESENÇA</span>
+        <button class="pill">⏳ Pendente <span class="num">(3)</span></button>
+        <button class="pill on">✅ Presente <span class="num">(10)</span></button>
+        <button class="pill">❌ Falta <span class="num">(1)</span></button>
+        <button class="clear-link" style="margin-left:auto;">× Limpar</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> visualmente premium · <b>Contra:</b> glow pode incomodar em monitores claros</div>
+  </div>
+
+  <!-- 07 — Chip "Filtrando por" com remove individual -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">07 · Chip "Filtrando por…" com remoção</div><div class="opt-desc">Quando há filtros ativos, exibe chip central <code>Filtrando por: ABERTO × · PRESENTE ×</code>. Permite remover cada filtro individualmente.</div></div><span class="opt-num">07</span></div>
+    <div class="panel">
+      <div class="row">
+        <span class="sec-label">STATUS</span>
+        <button class="pill on">Todos <span class="num">(14)</span></button>
+        <button class="pill aberto on">Aberto <span class="num">(5)</span></button>
+        <button class="pill pago">Pago <span class="num">(3)</span></button>
+        <button class="pill entrada">Entrada <span class="num">(1)</span></button>
+        <button class="pill negoc">Negociação <span class="num">(2)</span></button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <span class="sec-label">PRESENÇA</span>
+        <button class="pill">⏳ Pendente <span class="num">(3)</span></button>
+        <button class="pill on">✅ Presente <span class="num">(10)</span></button>
+        <button class="pill">❌ Falta <span class="num">(1)</span></button>
+      </div>
+      <div class="row" style="margin-top:12px;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.02);border-radius:6px;border:1px dashed rgba(200,240,90,.20);">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:10px;color:#6b7280;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Filtrando:</span>
+          <span class="chip-filter">ABERTO <span class="x">×</span></span>
+          <span class="chip-filter">PRESENTE <span class="x">×</span></span>
+        </div>
+        <button class="clear-link">Limpar todos</button>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> ótimo feedback do estado, micro-controles · <b>Contra:</b> altura extra quando filtra</div>
+  </div>
+
+  <!-- 08 — Sidebar lateral à esquerda -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">08 · Sidebar lateral (lista vertical)</div><div class="opt-desc">Status como menu lateral à esquerda + presença horizontal. Estilo Gmail/Spark. Mais espaço pra tabela.</div></div><span class="opt-num">08</span></div>
+    <div class="panel">
+      <div class="o8-layout">
+        <div class="o8-side">
+          <button class="o8-item on">Todos <span class="num">14</span></button>
+          <button class="o8-item">Aberto <span class="num">5</span></button>
+          <button class="o8-item">Pago <span class="num">3</span></button>
+          <button class="o8-item">Entrada <span class="num">1</span></button>
+          <button class="o8-item">Negociação <span class="num">2</span></button>
+        </div>
+        <div class="o8-cont">
+          <div>
+            <span class="sec-label">PRESENÇA</span>
+          </div>
+          <div class="row">
+            <button class="pill">⏳ Pendente <span class="num">(3)</span></button>
+            <button class="pill on">✅ Presente <span class="num">(10)</span></button>
+            <button class="pill">❌ Falta <span class="num">(1)</span></button>
+          </div>
+          <button class="clear-link" style="margin-top:auto;align-self:flex-end;">× Limpar filtros</button>
+        </div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> escalável, mais "app-like" · <b>Contra:</b> rompe com layout horizontal do resto</div>
+  </div>
+
+</div>
+
+<div style="position:sticky;bottom:0;margin-top:36px;padding:16px;background:rgba(10,14,19,.94);backdrop-filter:blur(10px);border-top:1px solid rgba(212,165,116,.30);text-align:center;font-family:'Italiana',serif;font-size:14px;color:#f0c896;border-radius:10px 10px 0 0;">
+  Me passe o número (ex. <b style="color:#d4a574;">02</b>, <b style="color:#d4a574;">04</b>, <b style="color:#d4a574;">07</b>) e eu aplico no card real do consultor.
+</div>
+
+</body>
+</html>

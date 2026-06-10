@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Navegação de semanas no FPC · 10 opções</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500;700&family=Italiana&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 28px 24px 80px;
+    background: radial-gradient(ellipse at top, #15191f, #0a0e13);
+    color: #e6edf3;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: 'Italiana', serif;
+    font-size: 30px; margin: 0 0 6px; color: #f0c896;
+  }
+  .sub { font-size: 12px; color: #6b7280; margin-bottom: 32px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(560px, 1fr));
+    gap: 24px;
+  }
+  .opt {
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .opt-h {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 1px dashed rgba(255,255,255,.10);
+    padding-bottom: 10px; gap: 12px;
+  }
+  .opt-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 700; color: #d4a574;
+    background: rgba(212,165,116,.08);
+    border: 1px solid rgba(212,165,116,.30);
+    padding: 2px 12px; border-radius: 100px;
+    min-width: 38px; text-align: center;
+  }
+  .opt-ttl {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px; font-weight: 500; color: #f0c896;
+  }
+  .opt-desc { font-size: 11px; color: #9aa5b1; line-height: 1.5; margin-top: 2px; }
+  .opt-pros {
+    font-size: 10.5px; color: #6b7280; line-height: 1.4;
+    padding-top: 8px; border-top: 1px dashed rgba(255,255,255,.06);
+  }
+  .opt-pros b { color: #b88a5a; }
+
+  /* === Card base do FPC === */
+  .card {
+    background: #161b22;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .card-h {
+    font-size: 11px; font-weight: 700; color: #6b7280;
+    text-transform: uppercase; letter-spacing: .10em;
+    margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .card-h .ttl { color: #9aa5b1; }
+  .card-h .ttl b { color: #e6edf3; font-weight: 700; }
+
+  /* Tabela simulada */
+  .tbl-mock {
+    border-top: 1px solid rgba(255,255,255,.06);
+    padding-top: 10px;
+    display: grid; gap: 6px;
+  }
+  .tbl-row {
+    display: grid;
+    grid-template-columns: 30px 1fr 80px 50px;
+    gap: 8px; align-items: center;
+    font-size: 11px;
+  }
+  .tbl-row .nm { color: #e6edf3; font-weight: 600; }
+  .tbl-row .val { color: #c8f05a; font-family: 'DM Mono', monospace; font-weight: 700; text-align: right; }
+  .tbl-row .pct { color: #6b7280; font-family: 'DM Mono', monospace; text-align: right; font-size: 10px; }
+  .tbl-row.head { color: #6b7280; font-size: 9px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+  .tbl-row.head .nm { color: #6b7280; }
+  .tbl-row.head .val,
+  .tbl-row.head .pct { color: #6b7280; }
+
+  /* ============ 01 — Setas ‹ › ao lado do título ============ */
+  .o01-nav {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(0,0,0,.30);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 8px;
+    padding: 3px 4px;
+  }
+  .o01-nav button {
+    background: transparent; border: none;
+    color: #9aa5b1;
+    width: 22px; height: 22px;
+    cursor: pointer; font-family: inherit;
+    font-size: 14px; line-height: 1;
+    border-radius: 5px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .o01-nav button:hover { color: #c8f05a; background: rgba(200,240,90,.10); }
+  .o01-nav .lbl {
+    font-size: 11px; font-weight: 800; color: #c8f05a;
+    font-family: 'DM Mono', monospace;
+    padding: 0 4px;
+  }
+
+  /* ============ 02 — Pills tabs S1..SN ============ */
+  .o02-tabs { display: inline-flex; gap: 4px; }
+  .o02-tab {
+    background: transparent; border: 1px solid rgba(255,255,255,.10);
+    color: #9aa5b1;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .o02-tab.on { background: #c8f05a; color: #0a0e1a; border-color: #c8f05a; }
+  .o02-tab.batida { border-color: rgba(34,197,94,.40); color: #4ade80; }
+  .o02-tab.batida.on { background: #22c55e; color: #042713; border-color: #16a34a; }
+
+  /* ============ 03 — Dropdown select ============ */
+  .o03-sel {
+    background: rgba(0,0,0,.30);
+    border: 1px solid rgba(255,255,255,.10);
+    color: #e6edf3;
+    padding: 6px 30px 6px 12px;
+    border-radius: 6px;
+    font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23c8f05a' d='M0 0l5 6 5-6z'/></svg>");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+
+  /* ============ 04 — Prev/next + indicador "S2 de 4" ============ */
+  .o04-row {
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .o04-row .arrow {
+    background: rgba(200,240,90,.08); border: 1px solid rgba(200,240,90,.30);
+    color: #c8f05a; width: 28px; height: 28px;
+    border-radius: 6px; cursor: pointer; font-size: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .o04-row .arrow:hover { background: rgba(200,240,90,.15); }
+  .o04-row .arrow.disabled { opacity: .25; cursor: not-allowed; }
+  .o04-row .pos {
+    font-size: 11px; color: #9aa5b1;
+    text-align: center; min-width: 110px;
+  }
+  .o04-row .pos b { color: #c8f05a; font-family: 'DM Mono', monospace; font-weight: 800; }
+
+  /* ============ 05 — Timeline horizontal com mini-cards ============ */
+  .o05-tl {
+    display: flex; gap: 5px;
+    overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .o05-tl::-webkit-scrollbar { display: none; }
+  .o05-step {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.10);
+    border-left: 2px solid transparent;
+    border-radius: 5px;
+    padding: 5px 9px;
+    cursor: pointer;
+    min-width: 96px;
+    transition: all .12s;
+  }
+  .o05-step.on {
+    background: rgba(200,240,90,.08);
+    border-color: rgba(200,240,90,.40);
+    border-left-color: #c8f05a;
+  }
+  .o05-step.batida { border-left-color: #22c55e; }
+  .o05-step.batida.on { border-color: rgba(34,197,94,.40); background: rgba(34,197,94,.10); }
+  .o05-step .o05-num {
+    font-size: 9px; color: #9aa5b1; font-weight: 700; letter-spacing: .08em;
+  }
+  .o05-step .o05-data {
+    font-size: 9px; color: #6b7280; margin-top: 1px;
+  }
+  .o05-step .o05-st {
+    font-size: 9px; font-weight: 700; margin-top: 2px;
+  }
+  .o05-step.batida .o05-st { color: #22c55e; }
+  .o05-step.parcial .o05-st { color: #fbbf24; }
+  .o05-step.zero .o05-st { color: #ef4444; }
+
+  /* ============ 06 — Swipe horizontal com dots ============ */
+  .o06-strip {
+    display: flex; gap: 6px; overflow-x: auto;
+    padding-bottom: 4px; scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+  }
+  .o06-strip::-webkit-scrollbar { display: none; }
+  .o06-card {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    background: rgba(200,240,90,.06);
+    border: 1px solid rgba(200,240,90,.30);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px; font-weight: 700; color: #c8f05a;
+    text-align: center;
+  }
+  .o06-dots {
+    display: flex; gap: 4px; justify-content: center; margin-top: 6px;
+  }
+  .o06-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,.18);
+  }
+  .o06-dot.on { background: #c8f05a; width: 18px; border-radius: 4px; }
+
+  /* ============ 07 — Segmented control iOS ============ */
+  .o07-seg {
+    display: inline-flex;
+    background: rgba(0,0,0,.30);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .o07-seg button {
+    background: transparent; border: none;
+    color: #9aa5b1; padding: 5px 12px;
+    font-size: 10px; font-weight: 800;
+    cursor: pointer; font-family: inherit;
+    border-radius: 6px; letter-spacing: .04em;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .o07-seg button.on { background: #c8f05a; color: #0a0e1a; }
+  .o07-seg button .badge {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,.20);
+  }
+  .o07-seg button.batida .badge { background: #22c55e; }
+  .o07-seg button.parcial .badge { background: #fbbf24; }
+  .o07-seg button.on .badge { background: #0a0e1a; opacity: .35; }
+
+  /* ============ 08 — Mini calendário ============ */
+  .o08-cal {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .o08-week {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 6px;
+    padding: 6px 4px;
+    cursor: pointer;
+    text-align: center;
+    position: relative;
+  }
+  .o08-week .o08-lbl {
+    font-size: 9px; font-weight: 700; color: #6b7280;
+    letter-spacing: .06em;
+  }
+  .o08-week .o08-dates {
+    font-size: 8px; color: #9aa5b1; margin-top: 1px;
+  }
+  .o08-week .o08-stat {
+    margin-top: 3px;
+    height: 3px; background: rgba(255,255,255,.06);
+    border-radius: 2px; overflow: hidden;
+  }
+  .o08-week .o08-stat .fill { height: 100%; background: #c8f05a; }
+  .o08-week.on {
+    background: rgba(200,240,90,.10);
+    border-color: #c8f05a;
+  }
+  .o08-week.batida .o08-stat .fill { background: #22c55e; }
+  .o08-week.parcial .o08-stat .fill { background: #fbbf24; }
+
+  /* ============ 09 — Slider arrastável ============ */
+  .o09-slider {
+    position: relative;
+    background: rgba(0,0,0,.30);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 100px;
+    padding: 5px 8px;
+    height: 30px;
+    display: flex; align-items: center;
+    width: 100%;
+  }
+  .o09-track {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,.10);
+    border-radius: 2px;
+    position: relative;
+    margin: 0 4px;
+  }
+  .o09-fill {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: linear-gradient(90deg, #c8f05a, #d4f565);
+    border-radius: 2px;
+    width: 50%;
+  }
+  .o09-handle {
+    position: absolute; top: 50%;
+    left: 50%; transform: translate(-50%, -50%);
+    width: 22px; height: 22px;
+    background: #c8f05a;
+    border: 2px solid #0a0e1a;
+    border-radius: 50%;
+    cursor: grab;
+    box-shadow: 0 0 12px rgba(200,240,90,.40);
+  }
+  .o09-stops { display: flex; justify-content: space-between; margin-top: 4px; padding: 0 6px; }
+  .o09-stops span { font-size: 8px; color: #6b7280; font-weight: 700; }
+  .o09-stops span.on { color: #c8f05a; }
+
+  /* ============ 10 — Carrossel com preview ============ */
+  .o10-track {
+    position: relative; overflow: hidden;
+    border-radius: 8px;
+    background: rgba(0,0,0,.20);
+    padding: 8px;
+  }
+  .o10-strip {
+    display: flex; gap: 8px; align-items: center;
+    justify-content: center;
+  }
+  .o10-card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+    transition: all .2s;
+  }
+  .o10-card.aux {
+    transform: scale(.78); opacity: .45;
+    width: 80px;
+  }
+  .o10-card.main {
+    background: rgba(200,240,90,.08);
+    border: 1px solid rgba(200,240,90,.40);
+    box-shadow: 0 0 20px rgba(200,240,90,.20);
+    transform: scale(1.05);
+    min-width: 200px;
+    padding: 12px;
+  }
+  .o10-card .o10-num {
+    font-size: 11px; font-weight: 800; color: #c8f05a;
+    font-family: 'DM Mono', monospace;
+  }
+  .o10-card.aux .o10-num { color: #6b7280; font-size: 9px; }
+  .o10-card .o10-data {
+    font-size: 9px; color: #9aa5b1; margin-top: 3px;
+  }
+  .o10-card .o10-stat {
+    font-size: 9px; margin-top: 4px; color: #6b7280; font-weight: 700;
+  }
+  .o10-card.main .o10-stat { color: #c8f05a; }
+  .o10-side {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 6px;
+  }
+  .o10-side button {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.10);
+    color: #9aa5b1; width: 22px; height: 22px;
+    border-radius: 50%; cursor: pointer;
+    font-size: 12px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>Navegação entre semanas — Faturado por consultor</h1>
+<p class="sub">10 maneiras de navegar entre as semanas disponíveis. Mês exemplo: junho com S1–S4.</p>
+
+<div class="grid">
+
+  <!-- 01 -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">01 · Setas ‹ › compactas ao lado do título</div><div class="opt-desc">Minimalista. Um par de setas com o número da semana em destaque no centro. Hover dá feedback.</div></div><span class="opt-num">01</span></div>
+    <div class="card">
+      <div class="card-h">
+        <span class="ttl">FATURADO POR CONSULTOR · <b>Semanal</b></span>
+        <span class="o01-nav">
+          <button>‹</button>
+          <span class="lbl">S2 · 08/06–14/06</span>
+          <button>›</button>
+        </span>
+      </div>
+      <div class="tbl-mock">
+        <div class="tbl-row head"><span></span><span class="nm">Consultor</span><span class="val">Faturado</span><span class="pct">%</span></div>
+        <div class="tbl-row"><span>🥇</span><span class="nm">Darley</span><span class="val">R$ 24k</span><span class="pct">88%</span></div>
+        <div class="tbl-row"><span>🥈</span><span class="nm">Daniel</span><span class="val">R$ 18k</span><span class="pct">64%</span></div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> compacto, escaneável · <b>Contra:</b> só vê a semana atual</div>
+  </div>
+
+  <!-- 02 -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">02 · Pills (S1 · S2 · S3 · S4) com cor de status</div><div class="opt-desc">Todas as semanas visíveis. Cor da pill indica quem bateu meta. 1 clique pra trocar.</div></div><span class="opt-num">02</span></div>
+    <div class="card">
+      <div class="card-h">
+        <span class="ttl">FATURADO POR CONSULTOR · <b>Semanal</b></span>
+        <span class="o02-tabs">
+          <button class="o02-tab batida">S1</button>
+          <button class="o02-tab on">S2</button>
+          <button class="o02-tab">S3</button>
+          <button class="o02-tab">S4</button>
+        </span>
+      </div>
+      <div class="tbl-mock">
+        <div class="tbl-row head"><span></span><span class="nm">Consultor</span><span class="val">Faturado</span><span class="pct">%</span></div>
+        <div class="tbl-row"><span>🥇</span><span class="nm">Darley</span><span class="val">R$ 24k</span><span class="pct">88%</span></div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> tudo visível, escolha rápida · <b>Contra:</b> mais espaço horizontal</div>
+  </div>
+
+  <!-- 03 -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">03 · Dropdown select</div><div class="opt-desc">Lista todas as semanas com período. Familiar (formulário). Ocupa pouco espaço.</div></div><span class="opt-num">03</span></div>
+    <div class="card">
+      <div class="card-h">
+        <span class="ttl">FATURADO POR CONSULTOR · <b>Semanal</b></span>
+        <select class="o03-sel">
+          <option>S2 · 08/06–14/06 (atual)</option>
+          <option>S1 · 01/06–07/06 ✓</option>
+          <option>S3 · 15/06–21/06</option>
+          <option>S4 · 22/06–30/06</option>
+        </select>
+      </div>
+      <div class="tbl-mock">
+        <div class="tbl-row head"><span></span><span class="nm">Consultor</span><span class="val">Faturado</span><span class="pct">%</span></div>
+        <div class="tbl-row"><span>🥇</span><span class="nm">Darley</span><span class="val">R$ 24k</span><span class="pct">88%</span></div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> menor espaço, escalável · <b>Contra:</b> 2 cliques pra trocar</div>
+  </div>
+
+  <!-- 04 -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">04 · Setas grandes + posição "S2 · 08/06–14/06"</div><div class="opt-desc">Setas destacadas em verde. Posição central com data. Setas desabilitam nos extremos.</div></div><span class="opt-num">04</span></div>
+    <div class="card">
+      <div class="card-h">
+        <span class="ttl">FATURADO POR CONSULTOR · <b>Semanal</b></span>
+        <span class="o04-row">
+          <button class="arrow">‹</button>
+          <span class="pos"><b>S2</b> · 08/06–14/06</span>
+          <button class="arrow">›</button>
+        </span>
+      </div>
+      <div class="tbl-mock">
+        <div class="tbl-row head"><span></span><span class="nm">Consultor</span><span class="val">Faturado</span><span class="pct">%</span></div>
+        <div class="tbl-row"><span>🥇</span><span class="nm">Darley</span><span class="val">R$ 24k</span><span class="pct">88%</span></div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> setas óbvias, tátil · <b>Contra:</b> só uma semana por vez</div>
+  </div>
+
+  <!-- 05 -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">05 · Timeline horizontal com status</div><div class="opt-desc">Mini-cards lado a lado mostram nº, datas e status (BATIDA, PARCIAL, ZERO). 1 click. Vê tudo de relance.</div></div><span class="opt-num">05</span></div>
+    <div class="card">
+      <div class="card-h"><span class="ttl">FATURADO POR CONSULTOR · <b>Semanal</b></span></div>
+      <div class="o05-tl">
+        <div class="o05-step batida"><div class="o05-num">S1</div><div class="o05-data">01–07/06</div><div class="o05-st">✓ BATIDA</div></div>
+        <div class="o05-step parcial on"><div class="o05-num">S2 · ATUAL</div><div class="o05-data">08–14/06</div><div class="o05-st">⏳ PARCIAL</div></div>
+        <div class="o05-step zero"><div class="o05-num">S3</div><div class="o05-data">15–21/06</div><div class="o05-st">— ZERO</div></div>
+        <div class="o05-step"><div class="o05-num">S4</div><div class="o05-data">22–30/06</div><div class="o05-st" style="color:#6b7280;">FUTURO</div></div>
+      </div>
+      <div class="tbl-mock" style="margin-top:10px;">
+        <div class="tbl-row head"><span></span><span class="nm">Consultor</span><span class="val">Faturado</span><span class="pct">%</span></div>
+        <div class="tbl-row"><span>🥇</span><span class="nm">Darley</span><span class="val">R$ 24k</span><span class="pct">88%</span></div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> mostra status de todas, dashboard total · <b>Contra:</b> ocupa altura extra</div>
+  </div>
+
+  <!-- 06 -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">06 · Swipe horizontal + dots indicadores</div><div class="opt-desc">Desliza horizontalmente. Dots embaixo mostram posição. Estilo carrossel de fotos no celular.</div></div><span class="opt-num">06</span></div>
+    <div class="card">
+      <div class="card-h"><span class="ttl">FATURADO POR CONSULTOR · <b>Semanal</b></span></div>
+      <div class="o06-strip">
+        <div class="o06-card">S2 · 08/06–14/06 · 🥇 Darley R$ 24k</div>
+      </div>
+      <div class="o06-dots">
+        <span class="o06-dot"></span>
+        <span class="o06-dot on"></span>
+        <span class="o06-dot"></span>
+        <span class="o06-dot"></span>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> ótimo no mobile, intuitivo · <b>Contra:</b> menos óbvio no desktop</div>
+  </div>
+
+  <!-- 07 -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">07 · Segmented control iOS com bullets de status</div><div class="opt-desc">Botões empilhados em barra. Bullet ao lado do número indica meta (verde batida, âmbar parcial, cinza vazio).</div></div><span class="opt-num">07</span></div>
+    <div class="card">
+      <div class="card-h">
+        <span class="ttl">FATURADO POR CONSULTOR · <b>Semanal</b></span>
+        <span class="o07-seg">
+          <button class="batida">S1 <span class="badge"></span></button>
+          <button class="parcial on">S2 <span class="badge"></span></button>
+          <button>S3 <span class="badge"></span></button>
+          <button>S4 <span class="badge"></span></button>
+        </span>
+      </div>
+      <div class="tbl-mock">
+        <div class="tbl-row head"><span></span><span class="nm">Consultor</span><span class="val">Faturado</span><span class="pct">%</span></div>
+        <div class="tbl-row"><span>🥇</span><span class="nm">Darley</span><span class="val">R$ 24k</span><span class="pct">88%</span></div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> compacto, status visual · <b>Contra:</b> não mostra data inline</div>
+  </div>
+
+  <!-- 08 -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">08 · Mini calendário em grid 4 colunas</div><div class="opt-desc">Visualização tipo calendário. Barra de progresso em cada semana mostra atingimento da meta agregada.</div></div><span class="opt-num">08</span></div>
+    <div class="card">
+      <div class="card-h"><span class="ttl">FATURADO POR CONSULTOR · <b>Semanal</b></span></div>
+      <div class="o08-cal">
+        <div class="o08-week batida"><div class="o08-lbl">S1</div><div class="o08-dates">01–07/06</div><div class="o08-stat"><div class="fill" style="width:100%"></div></div></div>
+        <div class="o08-week parcial on"><div class="o08-lbl">S2</div><div class="o08-dates">08–14/06</div><div class="o08-stat"><div class="fill" style="width:64%"></div></div></div>
+        <div class="o08-week"><div class="o08-lbl">S3</div><div class="o08-dates">15–21/06</div><div class="o08-stat"><div class="fill" style="width:8%"></div></div></div>
+        <div class="o08-week"><div class="o08-lbl">S4</div><div class="o08-dates">22–30/06</div><div class="o08-stat"><div class="fill" style="width:0%"></div></div></div>
+      </div>
+      <div class="tbl-mock" style="margin-top:10px;">
+        <div class="tbl-row head"><span></span><span class="nm">Consultor</span><span class="val">Faturado</span><span class="pct">%</span></div>
+        <div class="tbl-row"><span>🥇</span><span class="nm">Darley</span><span class="val">R$ 24k</span><span class="pct">88%</span></div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> visão executiva total · <b>Contra:</b> só funciona em mês de 4 semanas</div>
+  </div>
+
+  <!-- 09 -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">09 · Slider arrastável</div><div class="opt-desc">Arrastar o handle pra navegar. Track segue a "progressão do mês". Stops embaixo mostram S1..SN.</div></div><span class="opt-num">09</span></div>
+    <div class="card">
+      <div class="card-h"><span class="ttl">FATURADO POR CONSULTOR · <b>Semanal · S2 (08/06–14/06)</b></span></div>
+      <div class="o09-slider">
+        <div class="o09-track">
+          <div class="o09-fill"></div>
+          <div class="o09-handle"></div>
+        </div>
+      </div>
+      <div class="o09-stops">
+        <span>S1</span><span class="on">S2</span><span>S3</span><span>S4</span>
+      </div>
+      <div class="tbl-mock" style="margin-top:10px;">
+        <div class="tbl-row head"><span></span><span class="nm">Consultor</span><span class="val">Faturado</span><span class="pct">%</span></div>
+        <div class="tbl-row"><span>🥇</span><span class="nm">Darley</span><span class="val">R$ 24k</span><span class="pct">88%</span></div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> visual de progresso temporal · <b>Contra:</b> gesto menos exato pra escolher exata</div>
+  </div>
+
+  <!-- 10 -->
+  <div class="opt">
+    <div class="opt-h"><div><div class="opt-ttl">10 · Carrossel com semanas adjacentes em prévia</div><div class="opt-desc">Semana atual no centro grande; anterior e próxima como cards menores ao lado em segundo plano.</div></div><span class="opt-num">10</span></div>
+    <div class="card">
+      <div class="card-h"><span class="ttl">FATURADO POR CONSULTOR · <b>Semanal</b></span></div>
+      <div class="o10-track">
+        <div class="o10-strip">
+          <div class="o10-card aux"><div class="o10-num">S1</div><div class="o10-data">01–07</div><div class="o10-stat">✓ Batida</div></div>
+          <div class="o10-card main"><div class="o10-num">S2 · ATUAL</div><div class="o10-data">08/06 – 14/06</div><div class="o10-stat">⏳ PARCIAL 64%</div></div>
+          <div class="o10-card aux"><div class="o10-num">S3</div><div class="o10-data">15–21</div><div class="o10-stat">— Pendente</div></div>
+        </div>
+        <div class="o10-side">
+          <button>‹</button>
+          <span style="font-size:9px;color:#6b7280;">Navegue entre as semanas</span>
+          <button>›</button>
+        </div>
+      </div>
+      <div class="tbl-mock" style="margin-top:10px;">
+        <div class="tbl-row head"><span></span><span class="nm">Consultor</span><span class="val">Faturado</span><span class="pct">%</span></div>
+        <div class="tbl-row"><span>🥇</span><span class="nm">Darley</span><span class="val">R$ 24k</span><span class="pct">88%</span></div>
+      </div>
+    </div>
+    <div class="opt-pros"><b>Pró:</b> sensação cinematográfica, contexto · <b>Contra:</b> mais altura, mais código</div>
+  </div>
+
+</div>
+
+<div style="position:sticky;bottom:0;margin-top:36px;padding:16px;background:rgba(10,14,19,.94);backdrop-filter:blur(10px);border-top:1px solid rgba(212,165,116,.30);text-align:center;font-family:'Italiana',serif;font-size:14px;color:#f0c896;border-radius:10px 10px 0 0;">
+  Me passe o número (ex.: <b style="color:#d4a574;">02</b>, <b style="color:#d4a574;">05</b>, <b style="color:#d4a574;">07</b>) e eu aplico no card real.
+</div>
+
+</body>
+</html>

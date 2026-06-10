@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Config manual de semanas · 10 opções</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg-2:#161b22; --bg-3:#1c2128;
+    --border:rgba(255,255,255,.08); --txt:#e6edf3; --txt-2:#9aa5b1; --txt-3:#6b7280;
+    --accent:#d4a574; --accent-2:#f0c896;
+    --green:#34d399; --red:#ef4444; --amber:#f59e0b; --blue:#3b82f6; --purple:#a855f7;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:#05070d; color:var(--txt); margin:0; padding:32px 24px 80px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .sub{ font-size:12px; color:var(--txt-3); margin-bottom:28px; }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:28px; max-width:1400px; margin:0 auto; }
+  @media (max-width:1100px){ .grid{ grid-template-columns:1fr; } }
+  .item{ display:flex; flex-direction:column; gap:8px; }
+  .item-h{ display:flex; align-items:baseline; gap:8px; }
+  .item-h .n{ font-size:11px; color:var(--accent); font-weight:700; letter-spacing:.08em; }
+  .item-h .nome{ font-size:14px; font-weight:700; }
+  .item-d{ font-size:11px; color:var(--txt-3); line-height:1.4; margin-bottom:4px; }
+
+  /* Container base */
+  .box{
+    background:var(--bg-2); border:1px solid var(--border); border-radius:12px;
+    padding:14px; min-width:0;
+  }
+  .box .title{ font-size:11px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+  .box .title .right{ font-size:10px; color:var(--txt-3); font-weight:500; text-transform:none; letter-spacing:0; }
+
+  /* Stepper compartilhado */
+  .stepper{ display:flex; gap:5px; flex-wrap:wrap; }
+  .step{ flex:1; min-width:80px; padding:8px 6px; border:1px solid var(--border); border-radius:7px; background:rgba(255,255,255,.02); text-align:center; font-size:10px; font-weight:600; color:var(--txt-3); line-height:1.3; cursor:pointer; }
+  .step.curr{ background:linear-gradient(135deg,#d4a574,#b88a5a); color:#0a0e1a; border-color:var(--accent); }
+  .step small{ display:block; font-size:9px; opacity:.75; margin-top:2px; font-weight:500; }
+
+  /* Inputs base */
+  input[type=date], input[type=text], input[type=number]{
+    background:rgba(0,0,0,.3); border:1px solid var(--border); color:var(--txt);
+    padding:5px 8px; border-radius:5px; font-size:11px; font-family:inherit;
+  }
+  input:focus{ outline:none; border-color:var(--accent); }
+  .btn{ font-size:11px; padding:6px 12px; border-radius:5px; cursor:pointer; font-family:inherit; border:1px solid var(--border); background:transparent; color:var(--txt); font-weight:600; }
+  .btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .btn.primary{ background:var(--accent); color:#0a0e1a; border-color:var(--accent); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 1 · Toggle Auto/Manual + inputs date
+     ═══════════════════════════════════════════════════════════════ */
+  .toggle{ display:flex; background:var(--bg-3); border-radius:7px; padding:3px; gap:3px; }
+  .toggle button{ flex:1; padding:6px 10px; border:none; background:transparent; color:var(--txt-3); font-size:10px; font-weight:700; cursor:pointer; border-radius:5px; font-family:inherit; }
+  .toggle button.on{ background:var(--accent); color:#0a0e1a; }
+  .tbl{ width:100%; border-collapse:separate; border-spacing:0; font-size:11px; margin-top:10px; }
+  .tbl th{ background:rgba(255,255,255,.03); color:var(--txt-3); padding:6px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:.06em; }
+  .tbl td{ padding:6px 8px; border-bottom:1px solid var(--border); }
+  .tbl td .lbl{ color:var(--accent); font-weight:700; }
+  .tbl td input[type=date]{ width:140px; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 2 · Calendário pintável
+     ═══════════════════════════════════════════════════════════════ */
+  .cal{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; max-width:340px; }
+  .cal-wd{ font-size:9px; color:var(--txt-3); text-align:center; font-weight:700; padding:4px 0; }
+  .cal-day{ aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; cursor:pointer; border-radius:5px; background:rgba(255,255,255,.02); border:1px solid var(--border); }
+  .cal-day.s1{ background:rgba(212,165,116,.20); color:var(--accent); border-color:rgba(212,165,116,.40); }
+  .cal-day.s2{ background:rgba(168,85,247,.20); color:#c4b5fd; border-color:rgba(168,85,247,.40); }
+  .cal-day.s3{ background:rgba(59,130,246,.20); color:#93c5fd; border-color:rgba(59,130,246,.40); }
+  .cal-day.s4{ background:rgba(52,211,153,.20); color:#86efac; border-color:rgba(52,211,153,.40); }
+  .cal-day.s5{ background:rgba(245,158,11,.20); color:#fbbf24; border-color:rgba(245,158,11,.40); }
+  .cal-day.off{ opacity:.3; }
+  .cal-leg{ display:flex; gap:6px; margin-top:10px; font-size:10px; flex-wrap:wrap; }
+  .cal-leg .chip{ display:flex; align-items:center; gap:5px; padding:3px 8px; border-radius:5px; cursor:pointer; border:1px solid var(--border); }
+  .cal-leg .chip.act{ background:var(--accent); color:#0a0e1a; border-color:var(--accent); font-weight:700; }
+  .cal-leg .dot{ width:10px; height:10px; border-radius:50%; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 3 · Cards de semana editáveis inline
+     ═══════════════════════════════════════════════════════════════ */
+  .cards-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; }
+  .sem-card{ padding:10px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,.02); }
+  .sem-card.curr{ border-color:var(--accent); background:rgba(212,165,116,.08); }
+  .sem-card .h{ display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:var(--accent); margin-bottom:8px; }
+  .sem-card .h .ed{ background:transparent; border:1px solid var(--border); color:var(--txt-3); padding:1px 6px; border-radius:3px; font-size:9px; cursor:pointer; }
+  .sem-card .inps{ display:flex; flex-direction:column; gap:5px; }
+  .sem-card .inps label{ font-size:9px; color:var(--txt-3); }
+  .sem-card .inps input{ font-size:11px; padding:4px 7px; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 4 · Presets + ajuste fino
+     ═══════════════════════════════════════════════════════════════ */
+  .presets{ display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
+  .preset{ font-size:10px; padding:5px 11px; border-radius:14px; border:1px solid var(--border); background:rgba(255,255,255,.02); color:var(--txt-2); cursor:pointer; font-weight:600; font-family:inherit; }
+  .preset.act{ background:var(--accent); color:#0a0e1a; border-color:var(--accent); }
+  .preset:hover:not(.act){ border-color:var(--accent); color:var(--accent); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 5 · Timeline com marcadores arrastáveis
+     ═══════════════════════════════════════════════════════════════ */
+  .tl{ position:relative; height:46px; background:rgba(255,255,255,.04); border-radius:6px; margin:18px 0 6px; }
+  .tl-bar{ position:absolute; top:0; bottom:0; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
+  .tl-bar.b1{ left:0; width:23%; background:rgba(212,165,116,.30); color:var(--accent); }
+  .tl-bar.b2{ left:23%; width:23%; background:rgba(168,85,247,.30); color:#c4b5fd; }
+  .tl-bar.b3{ left:46%; width:23%; background:rgba(59,130,246,.30); color:#93c5fd; }
+  .tl-bar.b4{ left:69%; width:23%; background:rgba(52,211,153,.30); color:#86efac; }
+  .tl-bar.b5{ left:92%; width:8%; background:rgba(245,158,11,.30); color:#fbbf24; }
+  .tl-handle{ position:absolute; top:-6px; bottom:-6px; width:3px; background:var(--accent); cursor:ew-resize; border-radius:2px; box-shadow:0 0 8px rgba(212,165,116,.5); }
+  .tl-handle::after{ content:'⇔'; position:absolute; top:-14px; left:-5px; font-size:10px; color:var(--accent); }
+  .tl-scale{ display:flex; justify-content:space-between; font-size:9px; color:var(--txt-3); padding:0 2px; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 6 · Modal dedicado (abre outro modal)
+     ═══════════════════════════════════════════════════════════════ */
+  .mock-btn{ display:inline-flex; align-items:center; gap:6px; padding:7px 13px; background:rgba(212,165,116,.08); border:1px solid rgba(212,165,116,.30); border-radius:6px; color:var(--accent); font-size:11px; font-weight:600; cursor:pointer; }
+  .modal-mock{ margin-top:14px; padding:14px; background:rgba(0,0,0,.4); border:1px dashed rgba(212,165,116,.3); border-radius:8px; }
+  .modal-mock .mh{ font-size:11px; font-weight:700; color:var(--accent); margin-bottom:10px; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 7 · Botões +/- dias por semana
+     ═══════════════════════════════════════════════════════════════ */
+  .plus-row{ display:flex; flex-direction:column; gap:8px; }
+  .pr{ display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border); border-radius:7px; background:rgba(255,255,255,.02); font-size:11px; }
+  .pr .lbl{ color:var(--accent); font-weight:700; min-width:42px; }
+  .pr .ctrl{ display:flex; align-items:center; gap:5px; }
+  .pr .ctrl button{ width:24px; height:24px; border-radius:5px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:var(--txt); cursor:pointer; font-weight:700; }
+  .pr .ctrl button:hover{ background:rgba(212,165,116,.15); color:var(--accent); border-color:var(--accent); }
+  .pr .ctrl .n{ min-width:18px; text-align:center; font-weight:800; color:var(--accent); }
+  .pr .janela{ margin-left:auto; color:var(--txt-3); font-size:10px; font-variant-numeric:tabular-nums; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 8 · Chips de dias por semana (drag/remove)
+     ═══════════════════════════════════════════════════════════════ */
+  .chip-row{ display:flex; flex-direction:column; gap:8px; }
+  .chip-sem{ padding:8px 10px; border:1px solid var(--border); border-radius:7px; background:rgba(255,255,255,.02); }
+  .chip-sem .h{ font-size:10px; color:var(--accent); font-weight:700; margin-bottom:6px; display:flex; justify-content:space-between; }
+  .chip-sem .h .tot{ color:var(--txt-3); font-weight:500; }
+  .chips-dias{ display:flex; gap:4px; flex-wrap:wrap; }
+  .chip-d{ display:inline-flex; align-items:center; gap:4px; padding:3px 8px 3px 9px; background:rgba(212,165,116,.10); border:1px solid rgba(212,165,116,.30); border-radius:12px; font-size:10px; color:var(--accent); font-weight:700; }
+  .chip-d.dom{ background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.30); color:#fca5a5; }
+  .chip-d .x{ cursor:pointer; opacity:.6; font-weight:900; }
+  .chip-d .x:hover{ opacity:1; }
+  .chip-add{ background:transparent; border:1px dashed var(--border); color:var(--txt-3); border-radius:12px; padding:3px 9px; font-size:10px; cursor:pointer; font-family:inherit; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 9 · Sliders por semana
+     ═══════════════════════════════════════════════════════════════ */
+  .sl-row{ display:flex; flex-direction:column; gap:12px; }
+  .sl{ display:flex; flex-direction:column; gap:4px; }
+  .sl .h{ display:flex; justify-content:space-between; font-size:10px; color:var(--accent); font-weight:700; }
+  .sl .bar{ position:relative; height:8px; background:rgba(255,255,255,.04); border-radius:4px; }
+  .sl .bar .fill{ position:absolute; top:0; bottom:0; background:linear-gradient(90deg,var(--accent),var(--accent-2)); border-radius:4px; }
+  .sl .bar .h1, .sl .bar .h2{ position:absolute; top:-4px; width:14px; height:16px; background:var(--accent); border-radius:3px; cursor:ew-resize; transform:translateX(-50%); box-shadow:0 2px 6px rgba(0,0,0,.4); }
+  .sl .legenda{ font-size:9px; color:var(--txt-3); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     OPÇÃO 10 · Splitter no calendário linear
+     ═══════════════════════════════════════════════════════════════ */
+  .lin-cal{ display:flex; gap:2px; padding:12px 0; position:relative; }
+  .lin-day{ flex:1; min-width:18px; height:30px; background:rgba(255,255,255,.04); border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:8px; color:var(--txt-3); position:relative; }
+  .lin-day.s1{ background:rgba(212,165,116,.20); color:var(--accent); }
+  .lin-day.s2{ background:rgba(168,85,247,.20); color:#c4b5fd; }
+  .lin-day.s3{ background:rgba(59,130,246,.20); color:#93c5fd; }
+  .lin-day.s4{ background:rgba(52,211,153,.20); color:#86efac; }
+  .lin-day.s5{ background:rgba(245,158,11,.20); color:#fbbf24; }
+  .lin-day.weekend{ opacity:.4; }
+  .lin-split{ position:absolute; top:4px; bottom:4px; width:4px; background:var(--red); cursor:ew-resize; border-radius:2px; box-shadow:0 0 10px rgba(239,68,68,.6); z-index:2; }
+  .lin-split::after{ content:'×'; position:absolute; top:-12px; left:-5px; font-size:12px; color:var(--red); font-weight:900; }
+  .lin-help{ font-size:10px; color:var(--txt-3); margin-top:6px; text-align:center; font-style:italic; }
+
+</style>
+</head>
+<body>
+
+<h1>Config manual de semanas · 10 opções</h1>
+<div class="sub">Como permitir o usuário editar as janelas das semanas quando não quiser a divisão automática (regra A). Junho/2026 com 5 semanas como exemplo.</div>
+
+<div class="grid">
+
+  <!-- OP 1 -->
+  <div class="item">
+    <div class="item-h"><span class="n">1</span><span class="nome">Toggle Auto/Manual + tabela de datas</span></div>
+    <div class="item-d">Switch no topo. Modo Manual libera inputs date pra cada semana. Mais explícito.</div>
+    <div class="box">
+      <div class="title">Definição de semanas<div class="right">junho/2026</div></div>
+      <div class="toggle">
+        <button>🤖 Automático</button>
+        <button class="on">✏ Manual</button>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>Semana</th><th>Início</th><th>Fim</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">S01</td><td><input type="date" value="2026-06-01"></td><td><input type="date" value="2026-06-07"></td></tr>
+          <tr><td class="lbl">S02</td><td><input type="date" value="2026-06-08"></td><td><input type="date" value="2026-06-14"></td></tr>
+          <tr><td class="lbl">S03</td><td><input type="date" value="2026-06-15"></td><td><input type="date" value="2026-06-21"></td></tr>
+          <tr><td class="lbl">S04</td><td><input type="date" value="2026-06-22"></td><td><input type="date" value="2026-06-28"></td></tr>
+          <tr><td class="lbl">S05</td><td><input type="date" value="2026-06-29"></td><td><input type="date" value="2026-07-02"></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px;display:flex;gap:6px;justify-content:flex-end;">
+        <button class="btn">+ Adicionar semana</button>
+        <button class="btn primary">Salvar definição</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 2 -->
+  <div class="item">
+    <div class="item-h"><span class="n">2</span><span class="nome">Calendário pintável (clique para atribuir)</span></div>
+    <div class="item-d">Escolhe semana na legenda, clica nos dias para pintar. Mais visual, intuitivo.</div>
+    <div class="box">
+      <div class="title">Pintar dias por semana<div class="right">junho/2026</div></div>
+      <div class="cal">
+        <div class="cal-wd">D</div><div class="cal-wd">S</div><div class="cal-wd">T</div><div class="cal-wd">Q</div><div class="cal-wd">Q</div><div class="cal-wd">S</div><div class="cal-wd">S</div>
+        <div class="cal-day off">31</div><div class="cal-day s1">1</div><div class="cal-day s1">2</div><div class="cal-day s1">3</div><div class="cal-day s1">4</div><div class="cal-day s1">5</div><div class="cal-day s1">6</div>
+        <div class="cal-day s1">7</div><div class="cal-day s2">8</div><div class="cal-day s2">9</div><div class="cal-day s2">10</div><div class="cal-day s2">11</div><div class="cal-day s2">12</div><div class="cal-day s2">13</div>
+        <div class="cal-day s2">14</div><div class="cal-day s3">15</div><div class="cal-day s3">16</div><div class="cal-day s3">17</div><div class="cal-day s3">18</div><div class="cal-day s3">19</div><div class="cal-day s3">20</div>
+        <div class="cal-day s3">21</div><div class="cal-day s4">22</div><div class="cal-day s4">23</div><div class="cal-day s4">24</div><div class="cal-day s4">25</div><div class="cal-day s4">26</div><div class="cal-day s4">27</div>
+        <div class="cal-day s4">28</div><div class="cal-day s5">29</div><div class="cal-day s5">30</div><div class="cal-day off">1</div><div class="cal-day off">2</div><div class="cal-day off">3</div><div class="cal-day off">4</div>
+      </div>
+      <div class="cal-leg">
+        <div class="chip"><span class="dot" style="background:#d4a574;"></span>S1 (7d)</div>
+        <div class="chip"><span class="dot" style="background:#a855f7;"></span>S2 (7d)</div>
+        <div class="chip act"><span class="dot" style="background:#3b82f6;"></span>S3 (7d) ✏</div>
+        <div class="chip"><span class="dot" style="background:#34d399;"></span>S4 (7d)</div>
+        <div class="chip"><span class="dot" style="background:#f59e0b;"></span>S5 (2d)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 3 -->
+  <div class="item">
+    <div class="item-h"><span class="n">3</span><span class="nome">Cards inline editáveis</span></div>
+    <div class="item-d">Mantém o stepper, mas cada card vira editável (botão ✏). Compacto, sem mudar contexto.</div>
+    <div class="box">
+      <div class="title">Stepper editável<div class="right">5 semanas</div></div>
+      <div class="cards-row">
+        <div class="sem-card">
+          <div class="h"><span>S1</span><button class="ed">✏</button></div>
+          <div class="inps"><label>Início</label><input type="date" value="2026-06-01"><label>Fim</label><input type="date" value="2026-06-07"></div>
+        </div>
+        <div class="sem-card">
+          <div class="h"><span>S2</span><button class="ed">✏</button></div>
+          <div class="inps"><label>Início</label><input type="date" value="2026-06-08"><label>Fim</label><input type="date" value="2026-06-14"></div>
+        </div>
+        <div class="sem-card curr">
+          <div class="h"><span>S3 ATUAL</span><button class="ed">✏</button></div>
+          <div class="inps"><label>Início</label><input type="date" value="2026-06-15"><label>Fim</label><input type="date" value="2026-06-21"></div>
+        </div>
+        <div class="sem-card">
+          <div class="h"><span>S4</span><button class="ed">✏</button></div>
+          <div class="inps"><label>Início</label><input type="date" value="2026-06-22"><label>Fim</label><input type="date" value="2026-06-28"></div>
+        </div>
+        <div class="sem-card">
+          <div class="h"><span>S5</span><button class="ed">✏</button></div>
+          <div class="inps"><label>Início</label><input type="date" value="2026-06-29"><label>Fim</label><input type="date" value="2026-07-02"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 4 -->
+  <div class="item">
+    <div class="item-h"><span class="n">4</span><span class="nome">Presets + ajuste fino</span></div>
+    <div class="item-d">Chips de preset comum (5 semanas seg-sex, 4 semanas igualadas, etc.) + tabela editável abaixo.</div>
+    <div class="box">
+      <div class="title">Preset de divisão<div class="right">edição manual após escolher</div></div>
+      <div class="presets">
+        <button class="preset">🤖 Automático</button>
+        <button class="preset act">✏ 5 sem seg-sex+anexos</button>
+        <button class="preset">4 sem iguais</button>
+        <button class="preset">Quinzenal (2×)</button>
+        <button class="preset">Seg-Sáb (sem dom)</button>
+        <button class="preset">📋 Custom</button>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>Semana</th><th>Início</th><th>Fim</th><th>Dias</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">S01</td><td><input type="date" value="2026-06-01"></td><td><input type="date" value="2026-06-07"></td><td style="color:var(--txt-3);font-size:10px;">7</td></tr>
+          <tr><td class="lbl">S02</td><td><input type="date" value="2026-06-08"></td><td><input type="date" value="2026-06-14"></td><td style="color:var(--txt-3);font-size:10px;">7</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- OP 5 -->
+  <div class="item">
+    <div class="item-h"><span class="n">5</span><span class="nome">Timeline horizontal com handles</span></div>
+    <div class="item-d">Barra única dividida em semanas. Arraste os divisores pra mover. Visual e direto.</div>
+    <div class="box">
+      <div class="title">Arraste os divisores<div class="right">junho/2026 · 30 dias</div></div>
+      <div class="tl">
+        <div class="tl-bar b1">S1</div>
+        <div class="tl-bar b2">S2</div>
+        <div class="tl-bar b3">S3</div>
+        <div class="tl-bar b4">S4</div>
+        <div class="tl-bar b5">S5</div>
+        <div class="tl-handle" style="left:23%;"></div>
+        <div class="tl-handle" style="left:46%;"></div>
+        <div class="tl-handle" style="left:69%;"></div>
+        <div class="tl-handle" style="left:92%;"></div>
+      </div>
+      <div class="tl-scale"><span>01</span><span>06</span><span>13</span><span>19</span><span>26</span><span>30</span></div>
+      <div style="margin-top:8px;font-size:10px;color:var(--txt-3);">💡 S1: 01-06 (6d) · S2: 07-12 (6d) · S3: 13-18 (6d) · S4: 19-25 (7d) · S5: 26-30 (5d)</div>
+    </div>
+  </div>
+
+  <!-- OP 6 -->
+  <div class="item">
+    <div class="item-h"><span class="n">6</span><span class="nome">Modal dedicado (botão "Configurar semanas")</span></div>
+    <div class="item-d">Botão pequeno no stepper abre um modal especializado pra editar todas as semanas. Menos poluído.</div>
+    <div class="box">
+      <div class="title">Stepper + acesso<div class="right">configuração oculta</div></div>
+      <div class="stepper">
+        <div class="step curr">S01<small>01-07</small></div>
+        <div class="step">S02<small>08-14</small></div>
+        <div class="step">S03<small>15-21</small></div>
+        <div class="step">S04<small>22-28</small></div>
+        <div class="step">S05<small>29-02</small></div>
+      </div>
+      <div style="margin-top:10px;text-align:right;">
+        <button class="mock-btn">⚙ Configurar semanas manualmente</button>
+      </div>
+      <div class="modal-mock">
+        <div class="mh">→ Abre modal separado:</div>
+        <div style="font-size:10px;color:var(--txt-2);line-height:1.6;">
+          📅 Janelas de semanas · Junho 2026<br>
+          ⚪ Modo Auto · 🔵 <b>Modo Manual</b><br>
+          <span style="color:var(--txt-3);">→ Tabela editável + botões Adicionar/Remover semana<br>→ Salva configuração e fecha</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 7 -->
+  <div class="item">
+    <div class="item-h"><span class="n">7</span><span class="nome">Botões +/- dias por semana</span></div>
+    <div class="item-d">Incrementa ou decrementa o número de dias de cada semana. Sistema redistribui datas automaticamente.</div>
+    <div class="box">
+      <div class="title">Ajuste granular<div class="right">+/- dias por semana</div></div>
+      <div class="plus-row">
+        <div class="pr">
+          <span class="lbl">S01</span>
+          <div class="ctrl"><button>−</button><span class="n">7</span><button>+</button></div>
+          <span style="color:var(--txt-3);font-size:10px;">dias</span>
+          <span class="janela">01/06 → 07/06</span>
+        </div>
+        <div class="pr">
+          <span class="lbl">S02</span>
+          <div class="ctrl"><button>−</button><span class="n">7</span><button>+</button></div>
+          <span style="color:var(--txt-3);font-size:10px;">dias</span>
+          <span class="janela">08/06 → 14/06</span>
+        </div>
+        <div class="pr">
+          <span class="lbl">S03</span>
+          <div class="ctrl"><button>−</button><span class="n">7</span><button>+</button></div>
+          <span style="color:var(--txt-3);font-size:10px;">dias</span>
+          <span class="janela">15/06 → 21/06</span>
+        </div>
+        <div class="pr">
+          <span class="lbl">S04</span>
+          <div class="ctrl"><button>−</button><span class="n">9</span><button>+</button></div>
+          <span style="color:var(--txt-3);font-size:10px;">dias (ajustado)</span>
+          <span class="janela">22/06 → 30/06</span>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--txt-3);text-align:right;">💡 4 semanas configuradas · 30 dias atribuídos · soma fecha</div>
+    </div>
+  </div>
+
+  <!-- OP 8 -->
+  <div class="item">
+    <div class="item-h"><span class="n">8</span><span class="nome">Chips de dias por semana (drag/remove)</span></div>
+    <div class="item-d">Cada semana lista os dias como chips. Click no × remove (vai pra "não atribuído"). Botão + adiciona.</div>
+    <div class="box">
+      <div class="title">Dias por semana<div class="right">5 semanas · 30 dias</div></div>
+      <div class="chip-row">
+        <div class="chip-sem">
+          <div class="h"><span>📅 S1 (01-07)</span><span class="tot">7 dias</span></div>
+          <div class="chips-dias">
+            <span class="chip-d">1<span class="x">×</span></span><span class="chip-d">2<span class="x">×</span></span><span class="chip-d">3<span class="x">×</span></span><span class="chip-d">4<span class="x">×</span></span><span class="chip-d">5<span class="x">×</span></span><span class="chip-d dom">6<span class="x">×</span></span><span class="chip-d dom">7<span class="x">×</span></span><button class="chip-add">+ dia</button>
+          </div>
+        </div>
+        <div class="chip-sem">
+          <div class="h"><span>📅 S2 (08-14)</span><span class="tot">7 dias</span></div>
+          <div class="chips-dias">
+            <span class="chip-d">8<span class="x">×</span></span><span class="chip-d">9<span class="x">×</span></span><span class="chip-d">10<span class="x">×</span></span><span class="chip-d">11<span class="x">×</span></span><span class="chip-d">12<span class="x">×</span></span><span class="chip-d dom">13<span class="x">×</span></span><span class="chip-d dom">14<span class="x">×</span></span><button class="chip-add">+ dia</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 9 -->
+  <div class="item">
+    <div class="item-h"><span class="n">9</span><span class="nome">Sliders com handles (ini/fim)</span></div>
+    <div class="item-d">Cada semana é uma faixa horizontal arrastável. Visual rico, requer mais código mas é fluido.</div>
+    <div class="box">
+      <div class="title">Faixas arrastáveis<div class="right">arraste o handle</div></div>
+      <div class="sl-row">
+        <div class="sl">
+          <div class="h"><span>S1</span><span>01/06 - 07/06 (7d)</span></div>
+          <div class="bar"><div class="fill" style="left:0%;width:23%;"></div><div class="h1" style="left:0%;"></div><div class="h2" style="left:23%;"></div></div>
+        </div>
+        <div class="sl">
+          <div class="h"><span>S2</span><span>08/06 - 14/06 (7d)</span></div>
+          <div class="bar"><div class="fill" style="left:23%;width:23%;"></div><div class="h1" style="left:23%;"></div><div class="h2" style="left:46%;"></div></div>
+        </div>
+        <div class="sl">
+          <div class="h"><span>S3 atual</span><span>15/06 - 21/06 (7d)</span></div>
+          <div class="bar"><div class="fill" style="left:46%;width:23%;"></div><div class="h1" style="left:46%;"></div><div class="h2" style="left:69%;"></div></div>
+        </div>
+        <div class="sl">
+          <div class="h"><span>S4</span><span>22/06 - 28/06 (7d)</span></div>
+          <div class="bar"><div class="fill" style="left:69%;width:23%;"></div><div class="h1" style="left:69%;"></div><div class="h2" style="left:92%;"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OP 10 -->
+  <div class="item">
+    <div class="item-h"><span class="n">10</span><span class="nome">Calendário linear com splitters arrastáveis</span></div>
+    <div class="item-d">30 dias do mês em linha. Divisores vermelhos arrastáveis entre eles. Mais granular.</div>
+    <div class="box">
+      <div class="title">Splitter entre dias<div class="right">arraste o divisor vermelho</div></div>
+      <div class="lin-cal">
+        <div class="lin-day s1">1</div><div class="lin-day s1">2</div><div class="lin-day s1">3</div><div class="lin-day s1">4</div><div class="lin-day s1">5</div><div class="lin-day s1 weekend">6</div><div class="lin-day s1 weekend">7</div>
+        <div class="lin-split" style="left:23.3%;"></div>
+        <div class="lin-day s2">8</div><div class="lin-day s2">9</div><div class="lin-day s2">10</div><div class="lin-day s2">11</div><div class="lin-day s2">12</div><div class="lin-day s2 weekend">13</div><div class="lin-day s2 weekend">14</div>
+        <div class="lin-split" style="left:46.6%;"></div>
+        <div class="lin-day s3">15</div><div class="lin-day s3">16</div><div class="lin-day s3">17</div><div class="lin-day s3">18</div><div class="lin-day s3">19</div><div class="lin-day s3 weekend">20</div><div class="lin-day s3 weekend">21</div>
+        <div class="lin-split" style="left:70%;"></div>
+        <div class="lin-day s4">22</div><div class="lin-day s4">23</div><div class="lin-day s4">24</div><div class="lin-day s4">25</div><div class="lin-day s4">26</div><div class="lin-day s4 weekend">27</div><div class="lin-day s4 weekend">28</div>
+        <div class="lin-split" style="left:93.3%;"></div>
+        <div class="lin-day s5">29</div><div class="lin-day s5">30</div>
+      </div>
+      <div class="lin-help">arraste os divisores ⇆ vermelhos para mover · duplo-click para remover</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

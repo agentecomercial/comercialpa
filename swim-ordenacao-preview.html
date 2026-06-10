@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Pré-visualização · Toggle crescente/decrescente do Swimlane</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --surface:#10172a; --surface2:#1a2238;
+    --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.18);
+    --text:#e5e7eb; --muted:#9ca3af;
+    --accent:#c8f05a; --blue:#60a5fa; --amber:#f59e0b;
+    --red:#ef4444; --green:#34d399; --purple:#a78bfa;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:30px; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; font-size:13px;
+  }
+  h1{ font-size:20px; margin:0 0 6px; font-weight:800; }
+  .sub{ color:var(--muted); margin-bottom:32px; font-size:13px; }
+  .preview-grid{ display:grid; grid-template-columns:1fr; gap:24px; max-width:1080px; }
+  .preview{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden; box-shadow:0 4px 18px rgba(0,0,0,.3);
+  }
+  .preview-head{
+    padding:14px 18px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(167,139,250,.08),transparent);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .preview-tit{ font-size:14px; font-weight:800; color:#a78bfa; }
+  .preview-tit small{ color:var(--muted); font-weight:500; }
+  .preview-pick{
+    background:transparent; color:var(--accent); border:1px solid rgba(200,240,90,.4);
+    padding:5px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;
+  }
+  .preview-pick:hover{ background:rgba(200,240,90,.08); }
+  .preview-body{ padding:16px 18px 18px; }
+
+  /* Mockup do swimlane (simplificado, 3 linhas pra mostrar a ordem) */
+  .swim-mock{
+    background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+    padding:12px 14px;
+  }
+  .swim-toolbar{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    padding-bottom:10px; margin-bottom:10px; border-bottom:1px solid var(--border);
+  }
+  .ano-pill-mock{ background:var(--accent); color:#0a0e1a; font-weight:800; padding:5px 12px; border-radius:14px; font-size:11px; }
+  .swim-grid-mock{
+    display:grid; grid-template-columns:90px repeat(4,1fr); gap:3px;
+    font-size:10px;
+  }
+  .mes-h{ text-align:center; color:var(--muted); font-weight:700; padding:4px 0; text-transform:uppercase; }
+  .tipo-h{ font-size:11px; font-weight:700; padding:5px 4px; display:flex; align-items:center; }
+  .cell{ background:rgba(255,255,255,.03); border-radius:3px; height:26px; }
+  .cell.filled{
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:10px; padding:0 4px;
+  }
+  /* Controles */
+  .seletor-label{ font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+
+  /* OP 1 — seta única */
+  .seta-toggle{
+    background:var(--surface); color:var(--text); border:1px solid var(--border2);
+    border-radius:14px; padding:5px 12px; cursor:pointer; font-weight:700;
+    font-size:12px; font-family:inherit; display:inline-flex; align-items:center; gap:6px;
+  }
+  .seta-toggle:hover{ background:var(--surface2); }
+  .seta-toggle .arrow{
+    display:inline-block; font-size:14px; color:var(--accent); transition:transform .2s;
+  }
+  .seta-toggle.asc .arrow{ transform:rotate(180deg); }
+
+  /* OP 2 — dropdown */
+  .order-select{
+    background:var(--surface); color:var(--text); border:1px solid var(--border2);
+    border-radius:14px; padding:5px 28px 5px 12px; font-size:11px; font-weight:700;
+    cursor:pointer; font-family:inherit; appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4l3 3 3-3' stroke='%23c8f05a' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center;
+  }
+
+  /* OP 3 — pills duplas */
+  .pills-dup{
+    display:inline-flex; background:var(--surface);
+    border:1px solid var(--border); border-radius:14px; padding:2px;
+  }
+  .pills-dup button{
+    background:transparent; color:var(--muted); border:none;
+    padding:4px 12px; border-radius:12px; font-size:11px; font-weight:700;
+    cursor:pointer; font-family:inherit; transition:all .15s;
+  }
+  .pills-dup button.ativa{ background:var(--accent); color:#0a0e1a; }
+  .pills-dup button:not(.ativa):hover{ color:var(--text); }
+
+  /* OP 4 — cabeçalho clicável */
+  .tipo-clickable{
+    cursor:pointer; transition:color .15s;
+  }
+  .tipo-clickable:hover{ color:var(--accent); }
+  .tipo-clickable .indic{ margin-left:4px; font-size:10px; color:var(--accent); }
+
+  /* OP 5 — switch */
+  .switch-wrap{ display:inline-flex; align-items:center; gap:6px; }
+  .switch{
+    position:relative; width:46px; height:24px;
+    background:var(--surface); border:1px solid var(--border2);
+    border-radius:14px; cursor:pointer; transition:all .15s;
+  }
+  .switch::after{
+    content:''; position:absolute; top:2px; left:3px;
+    width:16px; height:16px; border-radius:50%;
+    background:var(--accent); transition:transform .2s;
+  }
+  .switch.on{ background:rgba(200,240,90,.15); border-color:rgba(200,240,90,.4); }
+  .switch.on::after{ transform:translateX(20px); }
+  .switch-lbl{ font-size:11px; font-weight:700; }
+
+  .legend{
+    margin-top:14px; padding:10px 12px; background:rgba(96,165,250,.06);
+    border-left:3px solid var(--blue); border-radius:4px;
+    font-size:11px; color:var(--text); line-height:1.55;
+  }
+  .legend b{ color:var(--blue); }
+  .compare{
+    margin-top:36px; padding:16px 20px; background:var(--surface);
+    border:1px solid var(--border); border-radius:10px;
+  }
+  .compare h2{ font-size:15px; margin:0 0 10px; color:var(--accent); }
+  .compare-table{ width:100%; border-collapse:collapse; font-size:12px; }
+  .compare-table th, .compare-table td{
+    text-align:left; padding:8px 10px; border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  .compare-table th{ color:var(--muted); font-weight:700; font-size:10px;
+    text-transform:uppercase; letter-spacing:.05em; }
+  .compare-table tr td:first-child{ font-weight:700; color:var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>🔃 Pré-visualizações · Toggle crescente/decrescente do Swimlane</h1>
+<p class="sub">5 formas de permitir o gestor alternar entre "mais recente no topo" e "mais antiga no topo".</p>
+
+<div class="preview-grid">
+
+  <!-- ═════════════════ OPÇÃO 1 · SETA ÚNICA TOGGLEÁVEL ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">1 · Seta única toggleável <small>(↓ Recente / ↑ Antiga · 1 clique alterna)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Botão único com seta que gira ao clicar · texto descreve a direção atual.</div>
+      </div>
+      <button class="preview-pick">Escolher 1</button>
+    </div>
+    <div class="preview-body">
+      <div class="swim-mock">
+        <div class="swim-toolbar">
+          <span class="seletor-label">ANO</span>
+          <span class="ano-pill-mock">2026</span>
+          <span class="seletor-label" style="margin-left:8px;">ORDEM</span>
+          <button class="seta-toggle">
+            <span class="arrow">↓</span>
+            Mais recente
+          </button>
+        </div>
+        <div class="swim-grid-mock">
+          <div></div><div class="mes-h">MAI</div><div class="mes-h">JUN</div><div class="mes-h">JUL</div><div class="mes-h">AGO</div>
+          <div class="tipo-h" style="color:var(--purple);">TCE-B</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell filled" style="background:rgba(167,139,250,.2);color:var(--purple);">TCE-BEL</div>
+          <div class="tipo-h" style="color:var(--green);">CEOP</div><div class="cell"></div><div class="cell filled" style="background:rgba(52,211,153,.2);color:var(--green);">CEOP13</div><div class="cell"></div><div class="cell"></div>
+          <div class="tipo-h" style="color:var(--blue);">BHP</div><div class="cell filled" style="background:rgba(96,165,250,.2);color:var(--blue);">BHP15</div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> a opção mais minimalista · 1 botão · seta gira animada · pouco espaço ocupado.<br>
+        <b>Comportamento:</b> click alterna direção · texto muda ("Mais recente" ↔ "Mais antiga") · seta rotaciona 180°.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 2 · DROPDOWN COM MAIS OPÇÕES ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">2 · Dropdown com 4 opções <small>(mais flexível · inclui alfabético e por qtd)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Dropdown lista 4 ordens: Mais recente · Mais antiga · Alfabético A-Z · Qtd turmas.</div>
+      </div>
+      <button class="preview-pick">Escolher 2</button>
+    </div>
+    <div class="preview-body">
+      <div class="swim-mock">
+        <div class="swim-toolbar">
+          <span class="seletor-label">ANO</span>
+          <span class="ano-pill-mock">2026</span>
+          <span class="seletor-label" style="margin-left:8px;">ORDENAR POR</span>
+          <select class="order-select">
+            <option selected>Mais recente ↓</option>
+            <option>Mais antiga ↑</option>
+            <option>Alfabético A-Z</option>
+            <option>Qtd de turmas ↓</option>
+          </select>
+        </div>
+        <div class="swim-grid-mock">
+          <div></div><div class="mes-h">MAI</div><div class="mes-h">JUN</div><div class="mes-h">JUL</div><div class="mes-h">AGO</div>
+          <div class="tipo-h" style="color:var(--purple);">TCE-B</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell filled" style="background:rgba(167,139,250,.2);color:var(--purple);">TCE-BEL</div>
+          <div class="tipo-h" style="color:var(--green);">CEOP</div><div class="cell"></div><div class="cell filled" style="background:rgba(52,211,153,.2);color:var(--green);">CEOP13</div><div class="cell"></div><div class="cell"></div>
+          <div class="tipo-h" style="color:var(--blue);">BHP</div><div class="cell filled" style="background:rgba(96,165,250,.2);color:var(--blue);">BHP15</div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> mais flexibilidade · inclui ordenações secundárias (alfabético, qtd turmas) sem ocupar mais espaço.<br>
+        <b>Comportamento:</b> 4 opções no dropdown · escolha persiste na sessão (local storage).
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 3 · PILLS DUPLAS ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">3 · Pills duplas pinned <small>(2 botões sempre visíveis · ativo em verde)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">As 2 direções aparecem lado a lado · clique direto, sem abrir menu.</div>
+      </div>
+      <button class="preview-pick">Escolher 3</button>
+    </div>
+    <div class="preview-body">
+      <div class="swim-mock">
+        <div class="swim-toolbar">
+          <span class="seletor-label">ANO</span>
+          <span class="ano-pill-mock">2026</span>
+          <span class="seletor-label" style="margin-left:8px;">ORDEM</span>
+          <div class="pills-dup">
+            <button class="ativa">↓ Recente</button>
+            <button>↑ Antiga</button>
+          </div>
+        </div>
+        <div class="swim-grid-mock">
+          <div></div><div class="mes-h">MAI</div><div class="mes-h">JUN</div><div class="mes-h">JUL</div><div class="mes-h">AGO</div>
+          <div class="tipo-h" style="color:var(--purple);">TCE-B</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell filled" style="background:rgba(167,139,250,.2);color:var(--purple);">TCE-BEL</div>
+          <div class="tipo-h" style="color:var(--green);">CEOP</div><div class="cell"></div><div class="cell filled" style="background:rgba(52,211,153,.2);color:var(--green);">CEOP13</div><div class="cell"></div><div class="cell"></div>
+          <div class="tipo-h" style="color:var(--blue);">BHP</div><div class="cell filled" style="background:rgba(96,165,250,.2);color:var(--blue);">BHP15</div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> as duas opções sempre visíveis · zero clique pra entender qual está ativa.<br>
+        <b>Comportamento:</b> 2 botões pílula agrupados · clica direto · ativo destaca em verde.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 4 · CABEÇALHO CLICÁVEL ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">4 · Cabeçalho clicável <small>(estilo planilha · clica no header pra ordenar)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Sem botão extra · clica no cabeçalho da 1ª coluna ("Tipo ↓") pra inverter a ordem.</div>
+      </div>
+      <button class="preview-pick">Escolher 4</button>
+    </div>
+    <div class="preview-body">
+      <div class="swim-mock">
+        <div class="swim-toolbar">
+          <span class="seletor-label">ANO</span>
+          <span class="ano-pill-mock">2026</span>
+          <span style="margin-left:auto;font-size:10px;color:var(--muted);font-style:italic;">💡 Clique no cabeçalho "Tipo" para ordenar</span>
+        </div>
+        <div class="swim-grid-mock">
+          <div class="tipo-h tipo-clickable" style="color:var(--accent);border-bottom:2px solid var(--accent);font-size:10px;">TIPO <span class="indic">↓</span></div>
+          <div class="mes-h">MAI</div><div class="mes-h">JUN</div><div class="mes-h">JUL</div><div class="mes-h">AGO</div>
+          <div class="tipo-h" style="color:var(--purple);">TCE-B</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell filled" style="background:rgba(167,139,250,.2);color:var(--purple);">TCE-BEL</div>
+          <div class="tipo-h" style="color:var(--green);">CEOP</div><div class="cell"></div><div class="cell filled" style="background:rgba(52,211,153,.2);color:var(--green);">CEOP13</div><div class="cell"></div><div class="cell"></div>
+          <div class="tipo-h" style="color:var(--blue);">BHP</div><div class="cell filled" style="background:rgba(96,165,250,.2);color:var(--blue);">BHP15</div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> não polui o toolbar · usa padrão familiar de planilha (Excel, Google Sheets).<br>
+        <b>Comportamento:</b> hover no header destaca · click alterna ↓ ↔ ↑ · indicador da direção fica no header.<br>
+        <b>Bonus:</b> dá pra estender pra ordenar por meses também (clicar em "ABR" ordena por turmas em abril).
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ OPÇÃO 5 · SWITCH ON/OFF ═════════════════ -->
+  <div class="preview">
+    <div class="preview-head">
+      <div>
+        <div class="preview-tit">5 · Switch on/off <small>(toggle visual estilo iOS)</small></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Switch que alterna entre 2 estados · label "Decrescente" muda conforme posição.</div>
+      </div>
+      <button class="preview-pick">Escolher 5</button>
+    </div>
+    <div class="preview-body">
+      <div class="swim-mock">
+        <div class="swim-toolbar">
+          <span class="seletor-label">ANO</span>
+          <span class="ano-pill-mock">2026</span>
+          <div class="switch-wrap" style="margin-left:8px;">
+            <span class="switch-lbl" style="color:var(--muted);">↑ Antiga</span>
+            <div class="switch on" title="Click pra alternar"></div>
+            <span class="switch-lbl" style="color:var(--accent);">↓ Recente</span>
+          </div>
+        </div>
+        <div class="swim-grid-mock">
+          <div></div><div class="mes-h">MAI</div><div class="mes-h">JUN</div><div class="mes-h">JUL</div><div class="mes-h">AGO</div>
+          <div class="tipo-h" style="color:var(--purple);">TCE-B</div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell filled" style="background:rgba(167,139,250,.2);color:var(--purple);">TCE-BEL</div>
+          <div class="tipo-h" style="color:var(--green);">CEOP</div><div class="cell"></div><div class="cell filled" style="background:rgba(52,211,153,.2);color:var(--green);">CEOP13</div><div class="cell"></div><div class="cell"></div>
+          <div class="tipo-h" style="color:var(--blue);">BHP</div><div class="cell filled" style="background:rgba(96,165,250,.2);color:var(--blue);">BHP15</div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        </div>
+      </div>
+      <div class="legend">
+        <b>Quando usar:</b> linguagem familiar (igual switches do iOS/Android) · funciona muito bem no mobile.<br>
+        <b>Comportamento:</b> switch desliza pra esquerda/direita · labels nos 2 lados · cor do lado ativo fica verde.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- COMPARATIVO -->
+<div class="compare">
+  <h2>📊 Resumo comparativo</h2>
+  <table class="compare-table">
+    <thead><tr>
+      <th>Critério</th>
+      <th>1 · Seta</th>
+      <th>2 · Dropdown</th>
+      <th>3 · Pills</th>
+      <th>4 · Header</th>
+      <th>5 · Switch</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td>Cliques pra inverter</td>
+        <td><b>1</b></td>
+        <td>2 (abre + escolhe)</td>
+        <td><b>1</b></td>
+        <td><b>1</b></td>
+        <td><b>1</b></td>
+      </tr>
+      <tr>
+        <td>Mostra direção atual visível</td>
+        <td>Sim (seta + texto)</td>
+        <td>Sim (texto)</td>
+        <td>Sim (destaque verde)</td>
+        <td>Sim (indicador no header)</td>
+        <td>Sim (cor do lado ativo)</td>
+      </tr>
+      <tr>
+        <td>Suporta mais opções (ex: alfabético)</td>
+        <td>Não (só 2 estados)</td>
+        <td><b>Sim ✓</b> (4+ no menu)</td>
+        <td>Não (limitado a 2)</td>
+        <td>Não direto</td>
+        <td>Não</td>
+      </tr>
+      <tr>
+        <td>Espaço no toolbar</td>
+        <td>Pequeno</td>
+        <td>Médio</td>
+        <td>Médio</td>
+        <td><b>Zero</b> (no header da tabela)</td>
+        <td>Médio (switch + 2 labels)</td>
+      </tr>
+      <tr>
+        <td>Mobile-friendly</td>
+        <td><b>Sim ✓</b></td>
+        <td><b>Sim ✓</b></td>
+        <td>Sim</td>
+        <td>Médio (header pequeno)</td>
+        <td><b>Excelente ✓</b></td>
+      </tr>
+      <tr>
+        <td>Tempo de build</td>
+        <td><b>15 min</b></td>
+        <td>30 min</td>
+        <td>20 min</td>
+        <td>30 min</td>
+        <td>25 min</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="margin-top:14px;padding:10px 12px;background:rgba(200,240,90,.06);border-left:3px solid var(--accent);border-radius:4px;font-size:12px;color:var(--text);">
+    <span style="display:inline-block;padding:2px 8px;background:rgba(200,240,90,.18);color:var(--accent);border-radius:4px;font-size:10px;font-weight:700;margin-right:4px;">DICA</span>
+    Se você quer só 2 estados (asc/desc): <b>1 (seta)</b> ou <b>3 (pills)</b>. Se quer ordenações futuras (alfabético, qtd): <b>2 (dropdown)</b>. Se quer padrão "planilha": <b>4 (header clicável)</b>.
+  </div>
+</div>
+
+</body>
+</html>
