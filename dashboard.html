@@ -60,6 +60,7 @@
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
 <link rel="stylesheet" href="assets/css/homeScreen.css?v=20260605-120231">
+<link rel="stylesheet" href="assets/css/turma-mobile-accordion.css?v=20260610-310000">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -169,7 +170,28 @@
         </div>
       </div>
 
-      
+      <!-- Card TREINAMENTOS / APRESENTAÇÕES (módulo isolado em 52-treinamentos-apresentacoes.js) -->
+      <div class="home-card" style="background:linear-gradient(135deg,rgba(212,165,116,.14) 0%,rgba(212,165,116,.04) 100%);border:2px solid rgba(212,165,116,.4);box-shadow:0 8px 32px rgba(212,165,116,.18),inset 0 1px 0 rgba(255,255,255,.10);" onclick="abrirTreinamentosApresentacoes()">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+          <div class="home-card-icon" style="background:none;border:none;">
+            <svg viewBox="0 0 22 22" fill="none">
+              <path d="M3 5h16M3 11h16M3 17h10" stroke="#f0c896" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="18" cy="17" r="3" stroke="#f0c896" stroke-width="1.6" fill="none"/>
+              <path d="M17 16l1 1 2-2" stroke="#f0c896" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+          </div>
+          <span class="home-card-label" style="color:#f0c896;background:rgba(212,165,116,.18);border-color:rgba(212,165,116,.4);">Conteúdo</span>
+        </div>
+        <div>
+          <div class="home-card-title">Treinamentos / Apresentações</div>
+          <div class="home-card-sub">Materiais de treinamento e apresentações organizados por produto.</div>
+        </div>
+        <div class="home-card-footer">
+          Acessar
+          <svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="#f0c896" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -3649,10 +3671,15 @@ try{
 <script defer src="assets/js/45-ic-cobranca.js?v=20260603-151115"></script>
 <script defer src="assets/js/46-ic-manual.js?v=20260603-151115"></script>
 <script defer src="assets/js/47-ic-executivo.js?v=20260603-151115"></script>
-<script defer src="assets/js/48-ic-funil-vendas.js?v=20260608-005713"></script>
+<script defer src="assets/js/48-ic-funil-vendas.js?v=20260608-016000"></script>
 <script defer src="assets/js/49-ic-analise-perfil.js?v=20260603-151115"></script>
 <script defer src="assets/js/50-ic-cadencia.js?v=20260603-151115"></script>
 <script defer src="assets/js/51-ic-preparo1a1.js?v=20260603-151115"></script>
+<!-- Treinamentos / Apresentações (módulo isolado — não interfere em nada existente) -->
+<script defer src="assets/js/treinamentos/registro-inicial.js?v=20260610-210000"></script>
+<script defer src="assets/js/52-treinamentos-apresentacoes.js?v=20260610-260000"></script>
+<!-- Turma · Layout Mobile Accordion (Consultor + Treinador) — só ativo em ≤ 768px -->
+<script defer src="assets/js/56-turma-mobile-accordion.js?v=20260610-310000"></script>
 <script defer src="assets/js/53-imprimir-consultores.js?v=20260603-162608"></script>
 <script defer src="assets/js/99-diag.js?v=20260603-151115"></script>
 <script defer src="assets/js/99-schema-asserter.js?v=20260603-151115"></script>
@@ -4357,9 +4384,12 @@ try{
   </div>
 </div>
 
-<script defer src="assets/js/11-pipeline-comercial.js?v=20260606-161644"></script>
+<!-- ══ TREINAMENTOS / APRESENTAÇÕES (tela host vazia — populada por 52-treinamentos-apresentacoes.js) ══ -->
+<div id="trapScreen" style="display:none;background:var(--bg);min-height:100vh;"></div>
 
-<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260603-151115"></script>
+<script defer src="assets/js/11-pipeline-comercial.js?v=20260610-180000"></script>
+
+<script defer src="assets/js/12-pipeline-v2-patch.js?v=20260610-190000"></script>
 <script defer src="assets/js/13-funil-vendas.js"></script>
 
 <script defer src="assets/js/14-notificacoes.js?v=20260603-151115"></script>

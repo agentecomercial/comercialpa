@@ -1,0 +1,1695 @@
+/* ═══════════════════════════════════════════════════════════════════
+   MÓDULO TREINAMENTOS / APRESENTAÇÕES
+   ───────────────────────────────────────────────────────────────────
+   Isolado em IIFE. Não toca em nenhuma funcionalidade existente do
+   dashboard. Roda via file:// (sem fetch, sem ES modules).
+
+   API PÚBLICA (window):
+     abrirTreinamentosApresentacoes()  ← chamado pelo 4º card da home
+     voltarHomeTrap()                   ← botão Voltar interno
+
+   DEPENDÊNCIAS (já presentes no dashboard):
+     window.TRAP_REGISTRO    (seed em treinamentos/registro-inicial.js)
+     window._fbGet/_fbSet/_fbChange  (stubs em 00-firebase-stubs.js)
+     window._getSessao       (sessão p/ checar perfil admin)
+     window._showToast       (notificações)
+
+   PERSISTÊNCIA FIREBASE:
+     treinamentos/overrides/{id}   → flags editáveis pelo admin
+     treinamentos/adicionados/{id} → conteúdos adicionados via UI
+
+   TELAS INTERNAS (navegáveis):
+     1. Painel principal · lista + filtros
+     2. Adicionar conteúdo · Caminho A (Claude) + Caminho B (HTML)
+     3. Admin · gestão tabular + histórico
+     4. (futuro) Editor de apresentação
+     5. (futuro) Editor de treinamento
+     6. (futuro) Modo apresentação fullscreen
+   ═══════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+
+  /* ── Estado interno ─────────────────────────────────────────────── */
+  var _montado = false;
+  var _overrides = {};
+  var _adicionados = {};
+  var _telaAtual = 'painel'; /* painel | adicionar | admin | visualizar */
+  var _filtroTipo = '';
+  var _filtroStatus = 'publicado';
+  var _filtroProduto = '';
+  var _busca = '';
+  var _modoGestao = false;
+  var _listenerOver = null;
+  var _listenerAdd = null;
+  var _itemVisualizando = null;
+  var _indiceMod = 0; /* item selecionado dentro de item.estrutura */
+
+  /* ── Estado do wizard Claude (Caminho A) ───────────────────────── */
+  var _claudeStep = 1;
+  var _claudePdfs = [];  /* [{name, size, dataUrl}] */
+  var _claudeBriefing = { desc:'', tipo:'treinamento', produto:'', tema:'black-tie', publico:'' };
+  var _claudeHtml = '';  /* HTML colado/editado */
+
+  /* ── Helpers ────────────────────────────────────────────────────── */
+  function _esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function _ehAdmin(){
+    var s = (typeof window._getSessao === 'function') ? window._getSessao() : null;
+    var p = s ? (s.perfil || s.role || '').toLowerCase() : '';
+    return p === 'adm' || p === 'admin' || p === 'master' || p === 'gestor';
+  }
+  function _toast(msg, cor){
+    if(typeof window._showToast === 'function') window._showToast(msg, cor || 'var(--accent)');
+  }
+  function _slug(s){
+    return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0, 50) || ('item-' + Date.now());
+  }
+
+  /* ── Mesclagem SEED + adicionados + overrides ──────────────────── */
+  function _getItens(){
+    var seed = window.TRAP_REGISTRO || [];
+    var todos = seed.concat(Object.values(_adicionados || {}));
+    return todos.map(function(i){
+      return Object.assign({}, i, _overrides[i.id] || {});
+    }).sort(function(a, b){
+      return (a.ordem || 999) - (b.ordem || 999);
+    });
+  }
+
+  /* ── CSS injetado uma vez ───────────────────────────────────────── */
+  function _injectCss(){
+    if(document.getElementById('trapCss')) return;
+    var css = ''
+      /* ── Tela host segue padrão de #loginScreen/#turmasScreen (main.css:3):
+            position:fixed cobrindo viewport. Sem isso, a safety net em
+            18-usuarios.js força o login a aparecer sobreposto. ─────── */
+      + '#trapScreen{ position:fixed; top:0; left:0; width:100%; height:100%; overflow-y:auto; overflow-x:hidden; z-index:1; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; }'
+      /* Layout base */
+      + '.trap-app{ font-family:"DM Sans","Inter",sans-serif; color:var(--text); padding:24px; max-width:1280px; margin:0 auto; }'
+      + '.trap-topbar{ display:flex; align-items:center; gap:14px; padding:12px 0 20px; border-bottom:1px solid var(--border); margin-bottom:24px; }'
+      + '.trap-back{ background:none; border:1px solid var(--border); color:var(--muted,#9aa5b1); font-size:13px; font-weight:600; padding:7px 14px; border-radius:8px; cursor:pointer; font-family:inherit; transition:all .15s; }'
+      + '.trap-back:hover{ color:var(--text); border-color:var(--border2,rgba(255,255,255,.14)); }'
+      + '.trap-tit{ font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px; }'
+      + '.trap-spacer{ flex:1; }'
+      + '.trap-nav-pills{ display:flex; gap:4px; background:var(--bg-3,#1c2128); border:1px solid var(--border); padding:4px; border-radius:10px; }'
+      + '.trap-nav-pill{ background:none; border:none; color:var(--muted,#9aa5b1); font-size:12px; font-weight:700; padding:7px 14px; border-radius:7px; cursor:pointer; font-family:inherit; }'
+      + '.trap-nav-pill.active{ background:rgba(200,240,90,.12); color:var(--accent); }'
+      + '.trap-nav-pill:hover:not(.active){ color:var(--text); }'
+      + '.trap-toggle-gestao{ background:rgba(200,240,90,.08); border:1px solid rgba(200,240,90,.25); color:var(--accent); font-size:11px; font-weight:700; padding:7px 12px; border-radius:8px; cursor:pointer; font-family:inherit; }'
+      + '.trap-toggle-gestao.on{ background:var(--accent); color:var(--bg); }'
+
+      /* Hero */
+      + '.trap-hero{ display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:24px; padding-bottom:18px; border-bottom:1px solid var(--border); }'
+      + '.trap-hero h1{ font-size:24px; font-weight:800; margin:0 0 6px; background:linear-gradient(135deg, #f0c896, #c8f05a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }'
+      + '.trap-hero p{ font-size:13px; color:var(--muted,#9aa5b1); margin:0; }'
+      + '.trap-btn-primary{ background:var(--accent); border:none; color:var(--bg); padding:10px 18px; border-radius:9px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:7px; transition:all .15s; }'
+      + '.trap-btn-primary:hover{ transform:translateY(-1px); box-shadow:0 8px 24px rgba(200,240,90,.3); }'
+      + '.trap-btn-sec{ background:transparent; border:1px solid var(--border2,rgba(255,255,255,.14)); color:var(--text); padding:9px 14px; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer; font-family:inherit; }'
+      + '.trap-btn-sec:hover{ border-color:var(--accent); color:var(--accent); }'
+
+      /* Stats */
+      + '.trap-stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:22px; }'
+      + '.trap-stat{ background:var(--bg-3,#1c2128); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }'
+      + '.trap-stat-n{ font-size:22px; font-weight:800; color:var(--text); }'
+      + '.trap-stat-l{ font-size:10px; font-weight:700; color:var(--muted,#9aa5b1); text-transform:uppercase; letter-spacing:.06em; margin-top:4px; }'
+
+      /* Tabs e filtros */
+      + '.trap-tabs{ display:flex; gap:4px; margin-bottom:18px; background:var(--bg-3,#1c2128); border:1px solid var(--border); padding:4px; border-radius:10px; width:fit-content; }'
+      + '.trap-tabs button{ background:none; border:none; color:var(--muted,#9aa5b1); font-size:12px; font-weight:700; padding:8px 16px; border-radius:7px; cursor:pointer; font-family:inherit; }'
+      + '.trap-tabs button.active{ background:rgba(200,240,90,.12); color:var(--accent); }'
+      + '.trap-filtros{ display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }'
+      + '.trap-input, .trap-select{ background:var(--bg-3,#1c2128); border:1px solid var(--border); color:var(--text); font-size:12px; font-family:inherit; padding:9px 12px; border-radius:8px; }'
+      + '.trap-input{ min-width:240px; }'
+      + '.trap-input:focus, .trap-select:focus{ outline:none; border-color:var(--accent); }'
+      + '.trap-chip{ background:var(--bg-3,#1c2128); border:1px solid var(--border); color:var(--muted,#9aa5b1); font-size:11px; font-weight:600; padding:8px 12px; border-radius:8px; cursor:pointer; font-family:inherit; }'
+      + '.trap-chip.active{ background:rgba(200,240,90,.10); border-color:rgba(200,240,90,.35); color:var(--accent); }'
+
+      /* Grid de cards */
+      + '.trap-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px; }'
+      + '.trap-card{ background:linear-gradient(180deg, var(--bg-3,#1c2128), #161b22); border:1px solid var(--border); border-radius:14px; padding:16px; position:relative; display:flex; flex-direction:column; transition:all .2s; cursor:pointer; }'
+      + '.trap-card:hover{ transform:translateY(-2px); border-color:var(--border2,rgba(255,255,255,.14)); box-shadow:0 12px 36px rgba(0,0,0,.4); }'
+      + '.trap-card.oculto{ opacity:.45; }'
+      + '.trap-card-thumb{ aspect-ratio:16/9; background:linear-gradient(135deg, rgba(212,165,116,.15), rgba(212,165,116,.04)); border:1px solid var(--border); border-radius:10px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; font-size:36px; color:#f0c896; }'
+      + '.trap-card-thumb.t-trein{ background:linear-gradient(135deg, rgba(96,165,250,.15), rgba(96,165,250,.04)); color:var(--blue,#60a5fa); }'
+      + '.trap-card-thumb.t-apres{ background:linear-gradient(135deg, rgba(167,139,250,.15), rgba(167,139,250,.04)); color:var(--purple,#a78bfa); }'
+      + '.trap-card-meta{ display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }'
+      + '.trap-badge{ font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; padding:3px 8px; border-radius:5px; display:inline-flex; align-items:center; gap:3px; }'
+      + '.trap-badge.tr{ background:rgba(96,165,250,.14); color:var(--blue,#60a5fa); border:1px solid rgba(96,165,250,.3); }'
+      + '.trap-badge.ap{ background:rgba(167,139,250,.14); color:var(--purple,#a78bfa); border:1px solid rgba(167,139,250,.3); }'
+      + '.trap-badge.prod{ background:rgba(212,165,116,.14); color:#f0c896; border:1px solid rgba(212,165,116,.3); }'
+      + '.trap-badge.ativo{ background:rgba(52,211,153,.14); color:var(--green,#34d399); border:1px solid rgba(52,211,153,.3); }'
+      + '.trap-badge.oculto{ background:rgba(239,68,68,.14); color:var(--red,#ef4444); border:1px solid rgba(239,68,68,.3); }'
+      + '.trap-badge.novo{ background:var(--accent); color:var(--bg); }'
+      + '.trap-card-tit{ font-size:15px; font-weight:700; margin:0 0 6px; line-height:1.3; }'
+      + '.trap-card-desc{ font-size:11px; color:var(--muted,#9aa5b1); line-height:1.5; flex:1; margin:0 0 12px; }'
+      + '.trap-card-foot{ display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px dashed var(--border); }'
+      + '.trap-card-cta{ color:var(--accent); font-size:11px; font-weight:700; }'
+      + '.trap-card-acts{ display:flex; gap:4px; }'
+      + '.trap-icbtn{ background:transparent; border:1px solid var(--border); color:var(--muted,#9aa5b1); width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; font-family:inherit; transition:all .15s; padding:0; }'
+      + '.trap-icbtn:hover{ color:var(--accent); border-color:var(--accent); background:rgba(200,240,90,.06); }'
+      + '.trap-icbtn.danger:hover{ color:var(--red,#ef4444); border-color:var(--red,#ef4444); background:rgba(239,68,68,.06); }'
+
+      /* Card vazio (CTA) */
+      + '.trap-card-add{ background:transparent; border:1px dashed var(--border2,rgba(255,255,255,.14)); align-items:center; justify-content:center; text-align:center; padding:30px 20px; color:var(--muted,#9aa5b1); cursor:pointer; }'
+      + '.trap-card-add:hover{ border-color:var(--accent); color:var(--accent); }'
+      + '.trap-card-add-ic{ font-size:36px; opacity:.4; margin-bottom:10px; }'
+      + '.trap-card-add-tit{ font-size:13px; font-weight:700; margin-bottom:6px; }'
+      + '.trap-card-add-sub{ font-size:11px; line-height:1.5; opacity:.8; }'
+
+      /* Vazio total */
+      + '.trap-empty{ background:var(--bg-3,#1c2128); border:1px dashed var(--border2,rgba(255,255,255,.14)); border-radius:14px; padding:60px 20px; text-align:center; color:var(--muted,#9aa5b1); }'
+      + '.trap-empty-ic{ font-size:48px; opacity:.4; margin-bottom:12px; }'
+
+      /* Tela ADICIONAR */
+      + '.trap-add-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:24px; }'
+      + '.trap-caminho{ background:linear-gradient(180deg, var(--bg-3,#1c2128), #161b22); border:1px solid var(--border); border-radius:14px; padding:22px; position:relative; }'
+      + '.trap-caminho-tag{ position:absolute; top:14px; right:14px; font-size:9px; font-weight:800; padding:4px 10px; border-radius:100px; letter-spacing:.06em; color:var(--bg); }'
+      + '.trap-caminho-tag.a{ background:linear-gradient(135deg, #c8f05a, #f0c896); }'
+      + '.trap-caminho-tag.b{ background:linear-gradient(135deg, #60a5fa, #a78bfa); }'
+      + '.trap-caminho-h{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }'
+      + '.trap-caminho-ic{ width:44px; height:44px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:22px; border:1px solid; flex-shrink:0; }'
+      + '.trap-caminho-ic.a{ background:rgba(200,240,90,.15); color:var(--accent); border-color:rgba(200,240,90,.3); }'
+      + '.trap-caminho-ic.b{ background:rgba(96,165,250,.15); color:var(--blue,#60a5fa); border-color:rgba(96,165,250,.3); }'
+      + '.trap-caminho-t{ font-size:15px; font-weight:800; }'
+      + '.trap-caminho-sub{ font-size:11px; color:var(--muted,#9aa5b1); }'
+      + '.trap-caminho-desc{ font-size:12px; color:var(--muted,#9aa5b1); line-height:1.6; margin-bottom:16px; }'
+
+      /* Form metadados */
+      + '.trap-meta-form{ background:linear-gradient(135deg, rgba(212,165,116,.06), rgba(212,165,116,.01)); border:1px solid rgba(212,165,116,.25); border-radius:14px; padding:22px; }'
+      + '.trap-meta-h{ display:flex; align-items:center; gap:12px; margin-bottom:18px; padding-bottom:14px; border-bottom:1px dashed rgba(212,165,116,.3); }'
+      + '.trap-meta-h-ic{ width:36px; height:36px; border-radius:9px; background:rgba(212,165,116,.18); color:#f0c896; display:flex; align-items:center; justify-content:center; font-size:18px; }'
+      + '.trap-meta-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:16px; }'
+      + '.trap-fld label{ display:block; font-size:10px; font-weight:700; color:var(--muted,#9aa5b1); margin-bottom:5px; }'
+      + '.trap-fld input, .trap-fld select, .trap-fld textarea{ width:100%; background:var(--bg-3,#1c2128); border:1px solid var(--border); color:var(--text); padding:9px 11px; border-radius:7px; font-size:12px; font-family:inherit; }'
+      + '.trap-meta-foot{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; padding-top:14px; border-top:1px dashed rgba(212,165,116,.2); }'
+
+      /* Tela ADMIN */
+      + '.trap-adm-bar{ background:var(--bg-3,#1c2128); border:1px solid var(--border); border-radius:10px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }'
+      + '.trap-adm-table{ width:100%; border-collapse:separate; border-spacing:0; background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:12px; overflow:hidden; }'
+      + '.trap-adm-table th{ background:var(--bg-3,#1c2128); padding:10px 12px; text-align:left; font-size:9px; font-weight:800; color:var(--muted,#9aa5b1); text-transform:uppercase; letter-spacing:.06em; border-bottom:1px solid var(--border); }'
+      + '.trap-adm-table td{ padding:12px; border-bottom:1px solid var(--border); font-size:12px; }'
+      + '.trap-adm-table tr:hover td{ background:rgba(200,240,90,.02); }'
+      + '.trap-toggle{ width:36px; height:20px; background:var(--bg-3,#1c2128); border:1px solid var(--border); border-radius:100px; position:relative; cursor:pointer; transition:all .15s; }'
+      + '.trap-toggle::after{ content:""; position:absolute; left:2px; top:2px; width:14px; height:14px; background:var(--muted,#9aa5b1); border-radius:50%; transition:all .15s; }'
+      + '.trap-toggle.on{ background:rgba(200,240,90,.25); border-color:var(--accent); }'
+      + '.trap-toggle.on::after{ left:18px; background:var(--accent); }'
+
+      /* Visualizador embutido (iframe) */
+      + '.trap-viz{ position:fixed; inset:0; background:var(--bg-2,#161b22); z-index:5; display:flex; flex-direction:column; }'
+      + '.trap-viz-bar{ display:flex; align-items:center; gap:10px; padding:10px 16px; background:var(--bg-3,#1c2128); border-bottom:1px solid var(--border); flex-shrink:0; }'
+      + '.trap-viz-t{ font-size:13px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }'
+      + '.trap-viz-t small{ display:block; font-size:10px; font-weight:500; color:var(--muted,#9aa5b1); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }'
+      + '.trap-viz-btn{ background:transparent; border:1px solid var(--border); color:var(--muted,#9aa5b1); padding:7px 12px; border-radius:7px; font-size:11px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; transition:all .15s; flex-shrink:0; }'
+      + '.trap-viz-btn:hover{ color:var(--accent); border-color:var(--accent); background:rgba(200,240,90,.06); }'
+      + '.trap-viz-body{ flex:1; display:grid; grid-template-columns:auto 1fr; overflow:hidden; min-height:0; }'
+      + '.trap-viz-side{ background:var(--bg-2,#161b22); border-right:1px solid var(--border); width:260px; overflow-y:auto; padding:14px; }'
+      + '.trap-viz-side h4{ font-size:10px; font-weight:800; color:var(--muted,#9aa5b1); text-transform:uppercase; letter-spacing:.08em; margin:0 0 12px; padding-bottom:8px; border-bottom:1px dashed var(--border); }'
+      + '.trap-viz-mod{ display:block; width:100%; text-align:left; background:transparent; border:1px solid transparent; color:var(--muted,#9aa5b1); font-size:11px; font-weight:600; padding:9px 11px; border-radius:7px; cursor:pointer; font-family:inherit; margin-bottom:3px; transition:all .12s; line-height:1.4; }'
+      + '.trap-viz-mod:hover{ color:var(--text); background:var(--bg-3,#1c2128); }'
+      + '.trap-viz-mod.curr{ background:rgba(200,240,90,.10); border-color:rgba(200,240,90,.30); color:var(--accent); }'
+      + '.trap-viz-mod-n{ display:inline-block; font-family:"DM Mono",monospace; font-size:10px; opacity:.6; margin-right:6px; }'
+      + '.trap-viz-iframe-wrap{ position:relative; background:#fff; overflow:hidden; }'
+      + '.trap-viz-iframe-wrap iframe{ width:100%; height:100%; border:0; display:block; }'
+      + '.trap-viz-loading{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:var(--bg-2,#161b22); color:var(--muted,#9aa5b1); font-size:13px; z-index:2; }'
+      + '.trap-viz-loading.hide{ display:none; }'
+      + '.trap-viz-nav{ position:absolute; bottom:14px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:3; background:rgba(0,0,0,.6); backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.1); border-radius:100px; padding:6px; }'
+      + '.trap-viz-nav button{ background:transparent; border:none; color:#fff; padding:6px 14px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; border-radius:100px; }'
+      + '.trap-viz-nav button:hover{ background:rgba(255,255,255,.1); }'
+      + '.trap-viz-nav button:disabled{ opacity:.35; cursor:not-allowed; }'
+      + '.trap-viz-nav .pos{ color:rgba(255,255,255,.6); font-variant-numeric:tabular-nums; padding:0 8px; align-self:center; font-size:10px; }'
+
+      /* Botões de abrir no card (substitui o "Abrir em nova aba" sozinho) */
+      + '.trap-card-actions{ display:flex; gap:6px; padding-top:12px; border-top:1px dashed var(--border); }'
+      + '.trap-card-actions button{ flex:1; background:rgba(200,240,90,.10); border:1px solid rgba(200,240,90,.30); color:var(--accent); font-size:11px; font-weight:700; padding:7px 8px; border-radius:6px; cursor:pointer; font-family:inherit; transition:all .15s; }'
+      + '.trap-card-actions button:hover{ background:rgba(200,240,90,.20); transform:translateY(-1px); }'
+      + '.trap-card-actions button.sec{ background:transparent; color:var(--muted,#9aa5b1); border-color:var(--border); flex:0 0 auto; padding:7px 10px; }'
+      + '.trap-card-actions button.sec:hover{ color:var(--text); border-color:var(--border2,rgba(255,255,255,.14)); background:rgba(255,255,255,.02); }'
+
+      /* ── Wizard Claude ─────────────────────────────────────────── */
+      + '.trap-wiz-steps{ display:flex; gap:8px; margin-bottom:24px; }'
+      + '.trap-wiz-step{ flex:1; background:var(--bg-3,#1c2128); border:1px solid var(--border); border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:10px; opacity:.5; transition:all .2s; }'
+      + '.trap-wiz-step.curr{ opacity:1; border-color:rgba(200,240,90,.35); background:linear-gradient(135deg, rgba(200,240,90,.06), rgba(200,240,90,.01)); }'
+      + '.trap-wiz-step.done{ opacity:1; }'
+      + '.trap-wiz-step-n{ width:30px; height:30px; border-radius:50%; background:var(--bg-2,#161b22); border:1.5px solid var(--border); color:var(--muted,#9aa5b1); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0; }'
+      + '.trap-wiz-step.curr .trap-wiz-step-n{ background:var(--accent); color:var(--bg); border-color:var(--accent); }'
+      + '.trap-wiz-step.done .trap-wiz-step-n{ background:rgba(52,211,153,.15); color:var(--green,#34d399); border-color:rgba(52,211,153,.4); }'
+      + '.trap-wiz-step-t{ font-size:11px; font-weight:700; line-height:1.3; }'
+      + '.trap-wiz-step-s{ font-size:9px; color:var(--muted,#9aa5b1); font-weight:600; text-transform:uppercase; letter-spacing:.05em; }'
+      + '.trap-wiz-panel{ background:var(--bg-3,#1c2128); border:1px solid var(--border); border-radius:14px; padding:24px; margin-bottom:18px; }'
+      + '.trap-wiz-panel h3{ font-size:16px; font-weight:800; margin:0 0 6px; }'
+      + '.trap-wiz-panel .sub{ font-size:12px; color:var(--muted,#9aa5b1); margin-bottom:18px; }'
+      + '.trap-wiz-nav{ display:flex; gap:8px; justify-content:space-between; align-items:center; padding:14px 0; }'
+      + '.trap-wiz-nav .right{ display:flex; gap:8px; }'
+
+      /* Chips de público-alvo (sugestões automáticas) */
+      + '.trap-pub-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }'
+      + '.trap-pub-chip{ background:var(--bg-2,#161b22); border:1px solid var(--border); color:var(--muted,#9aa5b1); font-size:11px; font-weight:600; padding:5px 11px; border-radius:100px; cursor:pointer; font-family:inherit; transition:all .15s; display:inline-flex; align-items:center; gap:4px; }'
+      + '.trap-pub-chip:hover{ color:var(--text); border-color:var(--border2,rgba(255,255,255,.14)); transform:translateY(-1px); }'
+      + '.trap-pub-chip.on{ background:rgba(200,240,90,.15); border-color:rgba(200,240,90,.4); color:var(--accent); }'
+      + '.trap-pub-chip.on::before{ content:"✓"; font-weight:800; }'
+      /* Botão especial "Selecionar todos" — visual diferenciado */
+      + '.trap-pub-chip.todos{ background:rgba(96,165,250,.10); border-color:rgba(96,165,250,.30); color:var(--blue,#60a5fa); font-weight:700; }'
+      + '.trap-pub-chip.todos::before{ content:"" !important; }'
+      + '.trap-pub-chip.todos:hover{ background:rgba(96,165,250,.20); color:var(--blue,#60a5fa); border-color:rgba(96,165,250,.5); }'
+      + '.trap-pub-chip.todos.on{ background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.30); color:var(--red,#ef4444); }'
+      + '.trap-pub-chip.todos.on:hover{ background:rgba(239,68,68,.20); }'
+      /* Botão extrair do PDF */
+      + '.trap-extract-bar{ display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap; }'
+      + '.trap-extract-btn{ background:rgba(96,165,250,.10); border:1px solid rgba(96,165,250,.30); color:var(--blue,#60a5fa); font-size:11px; font-weight:700; padding:7px 12px; border-radius:7px; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; transition:all .15s; }'
+      + '.trap-extract-btn:hover:not(:disabled){ background:rgba(96,165,250,.20); transform:translateY(-1px); }'
+      + '.trap-extract-btn:disabled{ opacity:.5; cursor:not-allowed; }'
+      + '.trap-extract-hint{ font-size:10px; color:var(--muted,#9aa5b1); }'
+      /* PDF drop zone */
+      + '.trap-dropzone{ background:var(--bg-2,#161b22); border:2px dashed var(--border2,rgba(255,255,255,.14)); border-radius:12px; padding:30px 20px; text-align:center; cursor:pointer; transition:all .2s; margin-bottom:14px; }'
+      + '.trap-dropzone:hover, .trap-dropzone.over{ border-color:var(--accent); background:rgba(200,240,90,.04); }'
+      + '.trap-dropzone-ic{ font-size:38px; opacity:.5; margin-bottom:8px; }'
+      + '.trap-dropzone-t{ font-size:13px; font-weight:700; margin-bottom:4px; }'
+      + '.trap-dropzone-s{ font-size:11px; color:var(--muted,#9aa5b1); }'
+      + '.trap-pdf-list{ display:flex; flex-direction:column; gap:6px; margin-top:10px; }'
+      + '.trap-pdf-item{ background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:8px; padding:10px 14px; display:flex; align-items:center; gap:10px; font-size:12px; }'
+      + '.trap-pdf-item-ic{ font-size:18px; color:var(--red,#ef4444); flex-shrink:0; }'
+      + '.trap-pdf-item-info{ flex:1; min-width:0; }'
+      + '.trap-pdf-item-n{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }'
+      + '.trap-pdf-item-s{ font-size:10px; color:var(--muted,#9aa5b1); }'
+      + '.trap-pdf-item button{ background:transparent; border:1px solid var(--border); color:var(--muted,#9aa5b1); width:28px; height:28px; border-radius:6px; cursor:pointer; font-size:13px; font-family:inherit; }'
+      + '.trap-pdf-item button:hover{ color:var(--red,#ef4444); border-color:var(--red,#ef4444); }'
+
+      /* Prompt block */
+      + '.trap-prompt-box{ background:#0a0e1a; border:1px solid var(--border2,rgba(255,255,255,.14)); border-radius:10px; padding:14px; font-family:"DM Mono",monospace; font-size:11px; color:var(--muted,#9aa5b1); line-height:1.6; max-height:280px; overflow-y:auto; white-space:pre-wrap; word-wrap:break-word; }'
+
+      /* Editor + Preview (step 3) */
+      + '.trap-ed-grid{ display:grid; grid-template-columns:1fr 1fr 220px; gap:14px; height:calc(100vh - 320px); min-height:480px; }'
+      + '.trap-ed-pane{ background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:10px; display:flex; flex-direction:column; overflow:hidden; }'
+      + '.trap-ed-pane-h{ background:var(--bg-3,#1c2128); padding:8px 12px; border-bottom:1px solid var(--border); font-size:10px; font-weight:800; color:var(--muted,#9aa5b1); text-transform:uppercase; letter-spacing:.06em; display:flex; align-items:center; gap:8px; }'
+      + '.trap-ed-textarea{ flex:1; background:#0a0e1a; border:0; color:#e6edf3; font-family:"DM Mono",monospace; font-size:11px; padding:12px; resize:none; outline:none; line-height:1.6; }'
+      + '.trap-ed-preview{ flex:1; background:#fff; position:relative; }'
+      + '.trap-ed-preview iframe{ width:100%; height:100%; border:0; display:block; }'
+      + '.trap-ed-preview-vazio{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; color:var(--muted,#9aa5b1); font-size:12px; background:var(--bg-2,#161b22); }'
+      + '.trap-ed-sug{ background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; }'
+      + '.trap-ed-sug h5{ font-size:10px; font-weight:800; color:var(--muted,#9aa5b1); text-transform:uppercase; letter-spacing:.08em; margin:0 0 4px; padding-bottom:6px; border-bottom:1px dashed var(--border); }'
+      + '.trap-ed-sug h5:not(:first-child){ margin-top:14px; }'
+      + '.trap-ed-sug-btn{ background:var(--bg-3,#1c2128); border:1px solid var(--border); color:var(--text); font-size:11px; font-weight:600; padding:9px 11px; border-radius:7px; cursor:pointer; font-family:inherit; text-align:left; line-height:1.4; transition:all .15s; }'
+      + '.trap-ed-sug-btn:hover{ color:var(--accent); border-color:var(--accent); background:rgba(200,240,90,.06); transform:translateX(2px); }'
+
+      + '@media(max-width:1100px){ .trap-ed-grid{ grid-template-columns:1fr 1fr; height:auto; } .trap-ed-sug{ grid-column:span 2; } }'
+      + '@media(max-width:780px){ .trap-add-grid{ grid-template-columns:1fr; } .trap-stats{ grid-template-columns:repeat(2,1fr); } .trap-meta-grid{ grid-template-columns:1fr; } .trap-viz-body{ grid-template-columns:1fr; } .trap-viz-side{ display:none; } .trap-ed-grid{ grid-template-columns:1fr; } .trap-wiz-steps{ flex-direction:column; } }';
+    var st = document.createElement('style');
+    st.id = 'trapCss';
+    st.textContent = css;
+    document.head.appendChild(st);
+  }
+
+  /* ── Shell HTML ─────────────────────────────────────────────────── */
+  function _buildShell(){
+    var host = document.getElementById('trapScreen');
+    if(!host) return;
+    host.innerHTML = ''
+      + '<div class="trap-app">'
+      +   '<div class="trap-topbar">'
+      +     '<button class="trap-back" onclick="window.voltarHomeTrap()">‹ Voltar</button>'
+      +     '<div class="trap-tit">📚 Treinamentos / Apresentações</div>'
+      +     '<div class="trap-spacer"></div>'
+      +     '<div class="trap-nav-pills">'
+      +       '<button class="trap-nav-pill active" data-tela="painel">📋 Painel</button>'
+      +       '<button class="trap-nav-pill" data-tela="adicionar">+ Adicionar</button>'
+      +       '<button class="trap-nav-pill" data-tela="admin" id="trapNavAdmin" style="display:none;">⚙ Admin</button>'
+      +     '</div>'
+      +   '</div>'
+      +   '<div id="trapConteudo"></div>'
+      + '</div>';
+
+    /* Click nas pills de navegação interna */
+    host.querySelectorAll('.trap-nav-pill').forEach(function(b){
+      b.addEventListener('click', function(){
+        var tela = b.dataset.tela;
+        host.querySelectorAll('.trap-nav-pill').forEach(function(x){ x.classList.toggle('active', x === b); });
+        _telaAtual = tela;
+        _renderTela();
+      });
+    });
+  }
+
+  /* ── Render tela atual ──────────────────────────────────────────── */
+  function _renderTela(){
+    var alvo = document.getElementById('trapConteudo');
+    if(!alvo) return;
+    /* Admin só pra admin */
+    var pillAdmin = document.getElementById('trapNavAdmin');
+    if(pillAdmin) pillAdmin.style.display = _ehAdmin() ? '' : 'none';
+    if(_telaAtual === 'admin' && !_ehAdmin()){ _telaAtual = 'painel'; }
+
+    if(_telaAtual === 'visualizar')        { alvo.innerHTML = _viewVisualizar(); }
+    else if(_telaAtual === 'criar-claude') { alvo.innerHTML = _viewCriarClaude(); _bindCriarClaude(); }
+    else if(_telaAtual === 'adicionar')    alvo.innerHTML = _viewAdicionar();
+    else if(_telaAtual === 'admin')        { alvo.innerHTML = _viewAdmin(); _bindAdminEvents(); }
+    else                                   { alvo.innerHTML = _viewPainel(); _bindPainelEvents(); }
+
+    window.scrollTo(0, 0);
+  }
+
+  /* ────────────────────────────────────────────────────────────────
+     VIEW · VISUALIZADOR EMBUTIDO (iframe)
+     ────────────────────────────────────────────────────────────────
+     Conteúdos com estrutura[] ganham sidebar de navegação entre
+     os HTMLs vinculados (ex: Método CIS · 7 HTMLs).
+     Conteúdo simples (sem estrutura) usa só o iframe. */
+  function _viewVisualizar(){
+    var item = _itemVisualizando;
+    if(!item) return _viewPainel();
+    var temEstrutura = Array.isArray(item.estrutura) && item.estrutura.length > 0;
+    var modAtual = temEstrutura ? item.estrutura[_indiceMod] : null;
+    var urlAtual = modAtual ? modAtual.url : item.url;
+    var subTit = modAtual ? modAtual.titulo : item.descricao;
+    /* Conteúdo gerado pelo Claude é salvo inline em item.conteudo (sem URL real).
+       Usa srcdoc no iframe nesse caso. */
+    var ehInline = item.url && item.url.indexOf('__inline:') === 0 && item.conteudo;
+
+    var sideHtml = '';
+    if(temEstrutura){
+      sideHtml = '<aside class="trap-viz-side"><h4>Conteúdo · '+item.estrutura.length+' partes</h4>'
+        + item.estrutura.map(function(s, i){
+            var n = String(i + 1).padStart(2, '0');
+            return '<button class="trap-viz-mod'+(i === _indiceMod ? ' curr' : '')+'" onclick="window._trapVizSetMod('+i+')">'
+              + '<span class="trap-viz-mod-n">'+n+'</span>' + _esc(s.titulo)
+              + '</button>';
+          }).join('')
+        + '</aside>';
+    }
+
+    var navHtml = '';
+    if(temEstrutura){
+      var n = item.estrutura.length;
+      navHtml = '<div class="trap-viz-nav">'
+        + '<button onclick="window._trapVizAnt()" '+(_indiceMod === 0 ? 'disabled' : '')+' title="Anterior (atalho: ←)">‹ Anterior</button>'
+        + '<span class="pos">'+(_indiceMod + 1)+' / '+n+'</span>'
+        + '<button onclick="window._trapVizProx()" '+(_indiceMod === n - 1 ? 'disabled' : '')+' title="Próximo (atalho: →)">Próximo ›</button>'
+        + '</div>';
+    }
+
+    return ''
+      + '<div class="trap-viz">'
+      +   '<div class="trap-viz-bar">'
+      +     '<button class="trap-viz-btn" onclick="window._trapVizFechar()" title="Fechar visualizador (ESC)">‹ Voltar</button>'
+      +     '<div class="trap-viz-t">'+_esc(item.icone||'📄')+' '+_esc(item.titulo)+'<small>'+_esc(subTit||'')+' · <code style="font-size:9px;">'+_esc(urlAtual)+'</code></small></div>'
+      +     (ehInline
+            ? '<button class="trap-viz-btn" onclick="window._trapAbrirInlineNovaAba(\''+_esc(item.id)+'\')" title="Abrir esta página em nova aba">↗ Nova aba</button>'
+            : '<button class="trap-viz-btn" onclick="window.open(\''+_esc(urlAtual)+'\',\'_blank\',\'noopener,noreferrer\')" title="Abrir esta página em nova aba">↗ Nova aba</button>')
+      +     '<button class="trap-viz-btn" onclick="window._trapVizFechar()" title="Fechar (ESC)" style="padding:7px 10px;">✕</button>'
+      +   '</div>'
+      +   '<div class="trap-viz-body">'
+      +     sideHtml
+      +     '<div class="trap-viz-iframe-wrap">'
+      +       '<div class="trap-viz-loading" id="trapVizLoading">Carregando…</div>'
+      +       (ehInline
+            ? '<iframe srcdoc="'+_esc(_prepHtmlPreview(item.conteudo))+'" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" onload="var l=document.getElementById(\'trapVizLoading\');if(l)l.classList.add(\'hide\');" title="'+_esc(item.titulo)+'"></iframe>'
+            : '<iframe src="'+_esc(urlAtual)+'" onload="var l=document.getElementById(\'trapVizLoading\');if(l)l.classList.add(\'hide\');" title="'+_esc(item.titulo)+'"></iframe>')
+      +       navHtml
+      +     '</div>'
+      +   '</div>'
+      + '</div>';
+  }
+
+  /* Atalhos de teclado dentro do visualizador (setas ←/→) */
+  document.addEventListener('keydown', function(e){
+    if(_telaAtual !== 'visualizar') return;
+    if(!_itemVisualizando || !Array.isArray(_itemVisualizando.estrutura)) return;
+    /* Ignora se foco está dentro do iframe (não dá pra detectar facilmente,
+       então só responde se foco está no body) */
+    if(document.activeElement && document.activeElement.tagName === 'IFRAME') return;
+    if(e.key === 'ArrowRight'){ e.preventDefault(); window._trapVizProx(); }
+    else if(e.key === 'ArrowLeft'){ e.preventDefault(); window._trapVizAnt(); }
+  });
+
+  /* ────────────────────────────────────────────────────────────────
+     VIEW 1 · PAINEL PRINCIPAL
+     ──────────────────────────────────────────────────────────────── */
+  function _viewPainel(){
+    var itens = _getItens();
+    var produtos = Array.from(new Set(itens.map(function(i){ return i.produto; }))).sort();
+
+    /* Stats */
+    var stTrein = itens.filter(function(i){ return i.tipo === 'treinamento' && i.status === 'publicado'; }).length;
+    var stApres = itens.filter(function(i){ return i.tipo === 'apresentacao' && i.status === 'publicado'; }).length;
+    var stOcultos = itens.filter(function(i){ return i.status === 'oculto'; }).length;
+
+    /* Filtro */
+    var visiveis = itens.filter(function(i){
+      if(_filtroTipo && i.tipo !== _filtroTipo) return false;
+      if(_filtroStatus && i.status !== _filtroStatus) return false;
+      if(_filtroProduto && i.produto !== _filtroProduto) return false;
+      if(_busca){
+        var t = (i.titulo + ' ' + i.descricao).toLowerCase();
+        if(t.indexOf(_busca.toLowerCase()) < 0) return false;
+      }
+      /* Usuário comum nunca vê ocultos */
+      if(!_modoGestao && i.status === 'oculto') return false;
+      return true;
+    });
+
+    var html = ''
+      + '<div class="trap-hero">'
+      +   '<div><h1>Treinamentos & Apresentações</h1><p>Materiais internos e apresentações comerciais organizados por produto.</p></div>'
+      +   '<button class="trap-btn-primary" onclick="window._trapIr(\'adicionar\')">+ Adicionar conteúdo</button>'
+      + '</div>'
+      + '<div class="trap-stats">'
+      +   '<div class="trap-stat"><div class="trap-stat-n">'+itens.length+'</div><div class="trap-stat-l">Total</div></div>'
+      +   '<div class="trap-stat"><div class="trap-stat-n" style="color:var(--blue,#60a5fa);">'+stTrein+'</div><div class="trap-stat-l">Treinamentos</div></div>'
+      +   '<div class="trap-stat"><div class="trap-stat-n" style="color:var(--purple,#a78bfa);">'+stApres+'</div><div class="trap-stat-l">Apresentações</div></div>'
+      +   '<div class="trap-stat"><div class="trap-stat-n" style="color:'+(stOcultos?'var(--red,#ef4444)':'var(--muted,#9aa5b1)')+';">'+stOcultos+'</div><div class="trap-stat-l">Ocultos</div></div>'
+      + '</div>'
+      + '<div class="trap-tabs">'
+      +   '<button class="'+(_filtroTipo===''?'active':'')+'" data-tipo="">📋 Tudo · '+itens.length+'</button>'
+      +   '<button class="'+(_filtroTipo==='treinamento'?'active':'')+'" data-tipo="treinamento">🎓 Treinamentos · '+itens.filter(function(i){return i.tipo==='treinamento';}).length+'</button>'
+      +   '<button class="'+(_filtroTipo==='apresentacao'?'active':'')+'" data-tipo="apresentacao">🎯 Apresentações · '+itens.filter(function(i){return i.tipo==='apresentacao';}).length+'</button>'
+      + '</div>'
+      + '<div class="trap-filtros">'
+      +   '<input class="trap-input" id="trapBusca" placeholder="🔍 Buscar por título ou descrição..." value="'+_esc(_busca)+'">'
+      +   '<select class="trap-select" id="trapProduto">'
+      +     '<option value="">📦 Todos os produtos</option>'
+      +     produtos.map(function(p){ return '<option value="'+_esc(p)+'"'+(p===_filtroProduto?' selected':'')+'>📦 '+_esc(p)+'</option>'; }).join('')
+      +   '</select>'
+      +   '<div class="trap-spacer"></div>'
+      +   '<button class="trap-chip '+(_filtroStatus==='publicado'?'active':'')+'" data-st="publicado">✓ Publicados</button>'
+      +   (_modoGestao ? '<button class="trap-chip '+(_filtroStatus==='oculto'?'active':'')+'" data-st="oculto">⊘ Ocultos</button>' : '')
+      +   '<button class="trap-chip '+(_filtroStatus===''?'active':'')+'" data-st="">Todos</button>'
+      +   (_ehAdmin() ? '<button class="trap-toggle-gestao '+(_modoGestao?'on':'')+'" id="trapBtnGestao">⚙ Modo Gestão'+(_modoGestao?' ATIVO':'')+'</button>' : '')
+      + '</div>';
+
+    if(!visiveis.length){
+      html += '<div class="trap-empty"><div class="trap-empty-ic">📭</div>'
+        + (itens.length === 0
+            ? '<div style="font-size:14px;font-weight:700;margin-bottom:6px;">Nenhum conteúdo cadastrado ainda</div>Use <b style="color:var(--accent);">+ Adicionar conteúdo</b> pra criar via Claude ou importar HTMLs existentes.'
+            : '<div style="font-size:14px;font-weight:700;margin-bottom:6px;">Nenhum conteúdo encontrado</div>Tente ajustar os filtros.')
+        + '</div>';
+    } else {
+      html += '<div class="trap-grid">' + visiveis.map(_cardHtml).join('') + '</div>';
+    }
+    return html;
+  }
+
+  function _cardHtml(i){
+    var tipoLabel = i.tipo === 'treinamento' ? '🎓 Treinamento' : '🎯 Apresentação';
+    var tipoCls = i.tipo === 'treinamento' ? 'tr' : 'ap';
+    var thumbCls = i.tipo === 'treinamento' ? 't-trein' : 't-apres';
+    var ocultoCls = i.status === 'oculto' ? ' oculto' : '';
+    var id = _esc(i.id);
+
+    var adminActs = ''
+      + '<button class="trap-icbtn" onclick="event.stopPropagation();window._trapToggleStatus(\''+id+'\')" title="'+(i.status==='publicado'?'Ocultar':'Publicar')+'">'+(i.status==='publicado'?'👁':'⊘')+'</button>'
+      + '<button class="trap-icbtn" onclick="event.stopPropagation();window._trapToggleNovo(\''+id+'\')" title="'+(i.novo?'Tirar badge Novo':'Marcar como Novo')+'">'+(i.novo?'✨':'⊕')+'</button>';
+
+    return ''
+      + '<div class="trap-card'+ocultoCls+'" onclick="window._trapAbrirAqui(\''+id+'\')" title="Abrir embutido — clique nos botões para outras opções">'
+      +   '<div class="trap-card-thumb '+thumbCls+'">'+_esc(i.icone||'📄')+'</div>'
+      +   '<div class="trap-card-meta">'
+      +     '<span class="trap-badge '+tipoCls+'">'+tipoLabel+'</span>'
+      +     '<span class="trap-badge prod">📦 '+_esc(i.produto)+'</span>'
+      +     (i.novo ? '<span class="trap-badge novo">✨ Novo</span>' : '')
+      +     (i.status === 'oculto' ? '<span class="trap-badge oculto">⊘ Oculto</span>' : '')
+      +   '</div>'
+      +   '<h3 class="trap-card-tit">'+_esc(i.titulo)+'</h3>'
+      +   '<p class="trap-card-desc">'+_esc(i.descricao)+'</p>'
+      +   '<div class="trap-card-actions">'
+      +     '<button onclick="event.stopPropagation();window._trapAbrirAqui(\''+id+'\')" title="Visualizar dentro do aplicativo">👁 Abrir aqui</button>'
+      +     '<button class="sec" onclick="event.stopPropagation();window._trapAbrirNovaAba(\''+id+'\')" title="Abrir em nova aba do navegador">↗</button>'
+      +   '</div>'
+      +   (_modoGestao ? '<div class="trap-card-foot" style="padding-top:8px;border-top:none;justify-content:flex-end;"><div class="trap-card-acts">'+adminActs+'</div></div>' : '')
+      + '</div>';
+  }
+
+  function _bindPainelEvents(){
+    var host = document.getElementById('trapConteudo');
+    if(!host) return;
+    host.querySelectorAll('.trap-tabs button').forEach(function(b){
+      b.addEventListener('click', function(){ _filtroTipo = b.dataset.tipo; _renderTela(); });
+    });
+    host.querySelectorAll('.trap-chip[data-st]').forEach(function(b){
+      b.addEventListener('click', function(){ _filtroStatus = b.dataset.st; _renderTela(); });
+    });
+    var busca = host.querySelector('#trapBusca');
+    if(busca) busca.addEventListener('input', function(){ _busca = busca.value; _renderTela(); setTimeout(function(){ var x=document.getElementById('trapBusca'); if(x){ x.focus(); x.setSelectionRange(_busca.length,_busca.length); } },0); });
+    var prod = host.querySelector('#trapProduto');
+    if(prod) prod.addEventListener('change', function(){ _filtroProduto = prod.value; _renderTela(); });
+    var btnG = host.querySelector('#trapBtnGestao');
+    if(btnG) btnG.addEventListener('click', function(){
+      if(!_ehAdmin()){ _toast('❌ Acesso restrito a administradores', 'var(--red)'); return; }
+      _modoGestao = !_modoGestao;
+      _toast(_modoGestao ? '⚙ Modo Gestão ativado' : 'Modo usuário comum');
+      _renderTela();
+    });
+  }
+
+  /* ────────────────────────────────────────────────────────────────
+     VIEW 2 · ADICIONAR CONTEÚDO (2 caminhos)
+     ──────────────────────────────────────────────────────────────── */
+  function _viewAdicionar(){
+    return ''
+      + '<div class="trap-hero">'
+      +   '<div><h1>Adicionar conteúdo · 2 caminhos</h1><p>Crie do zero via Claude ou importe HTMLs existentes.</p></div>'
+      + '</div>'
+      + '<div class="trap-add-grid">'
+      +   _caminhoAHtml()
+      +   _caminhoBHtml()
+      + '</div>'
+      + _formMetadadosHtml();
+  }
+
+  function _caminhoAHtml(){
+    return ''
+      + '<div class="trap-caminho">'
+      +   '<div class="trap-caminho-tag a">CAMINHO A</div>'
+      +   '<div class="trap-caminho-h">'
+      +     '<div class="trap-caminho-ic a">🤖</div>'
+      +     '<div><div class="trap-caminho-t">Criar com o Claude</div><div class="trap-caminho-sub">Assistente IA gera o HTML</div></div>'
+      +   '</div>'
+      +   '<div class="trap-caminho-desc">Descreva o conteúdo em linguagem natural. O Claude monta a estrutura HTML completa (treinamento ou apresentação), aplica o tema visual e salva pronto para publicar.</div>'
+      +   '<div class="trap-fld" style="margin-bottom:10px;"><label>Descreva o conteúdo</label><textarea rows="4" id="trapClaudeDesc" placeholder="Ex: Treinamento sobre Negociação Avançada em 5 módulos, com exercícios práticos no fim de cada módulo. Público: consultores closer."></textarea></div>'
+      +   '<button class="trap-btn-primary" style="width:100%;" onclick="window._trapGerarClaude()">⚡ Gerar via Claude</button>'
+      +   '<div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);font-size:10px;color:var(--muted,#9aa5b1);"><b style="color:var(--accent);">Quando usar:</b> ideias do zero, sem material pronto.</div>'
+      + '</div>';
+  }
+
+  function _caminhoBHtml(){
+    return ''
+      + '<div class="trap-caminho">'
+      +   '<div class="trap-caminho-tag b">CAMINHO B</div>'
+      +   '<div class="trap-caminho-h">'
+      +     '<div class="trap-caminho-ic b">📁</div>'
+      +     '<div><div class="trap-caminho-t">Importar HTML existente</div><div class="trap-caminho-sub">Vincula sem alterar o arquivo</div></div>'
+      +   '</div>'
+      +   '<div class="trap-caminho-desc">Aponte o caminho relativo de um HTML standalone (ou pasta com index.html). Foi assim que o <code style="background:var(--bg-2,#161b22);padding:1px 4px;border-radius:3px;font-size:11px;color:var(--blue,#60a5fa);">treinamento-cis/</code> foi adicionado.</div>'
+      +   '<div class="trap-fld" style="margin-bottom:10px;"><label>Caminho do HTML (relativo ao dashboard)</label><input type="text" id="trapCamUrl" placeholder="ex: meu-treinamento/index.html  ou  apresentacao-foo.html"></div>'
+      +   '<button class="trap-btn-primary" style="width:100%;" onclick="window._trapPreviewHtml()">👁 Visualizar antes de adicionar</button>'
+      +   '<div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);font-size:10px;color:var(--muted,#9aa5b1);"><b style="color:var(--blue,#60a5fa);">Quando usar:</b> material já feito; preserva 100% do HTML original.</div>'
+      + '</div>';
+  }
+
+  function _formMetadadosHtml(){
+    return ''
+      + '<div class="trap-meta-form">'
+      +   '<div class="trap-meta-h"><div class="trap-meta-h-ic">⚙</div><div><div style="font-size:14px;font-weight:800;color:#f0c896;">Metadados · etapa final (comum aos 2 caminhos)</div><div style="font-size:11px;color:var(--muted,#9aa5b1);">Define como o conteúdo aparece na listagem.</div></div></div>'
+      +   '<div class="trap-meta-grid">'
+      +     '<div class="trap-fld"><label>Título de exibição</label><input type="text" id="trapMTitulo" placeholder="Ex: Treinamento Método CIS"></div>'
+      +     '<div class="trap-fld"><label>Tipo</label><select id="trapMTipo"><option value="treinamento">🎓 Treinamento</option><option value="apresentacao">🎯 Apresentação</option></select></div>'
+      +     '<div class="trap-fld"><label>Produto</label><input type="text" id="trapMProduto" placeholder="Ex: CIS, Comercial, Pipeline"></div>'
+      +   '</div>'
+      +   '<div class="trap-fld" style="margin-bottom:14px;"><label>Descrição curta (exibida no card)</label><input type="text" id="trapMDesc" placeholder="Resumo em 1-2 frases"></div>'
+      +   '<div class="trap-meta-grid" style="grid-template-columns:1fr 1fr 1fr;">'
+      +     '<div class="trap-fld"><label>Ordem na lista (menor aparece antes)</label><input type="number" id="trapMOrdem" value="10"></div>'
+      +     '<div class="trap-fld"><label>Ícone (emoji)</label><input type="text" id="trapMIcone" value="🎓" maxlength="4"></div>'
+      +     '<div class="trap-fld"><label>URL / caminho do HTML</label><input type="text" id="trapMUrl" placeholder="caminho/index.html"></div>'
+      +   '</div>'
+      +   '<div class="trap-meta-foot">'
+      +     '<label style="display:flex;align-items:center;gap:7px;font-size:11px;cursor:pointer;"><input type="checkbox" id="trapMPub" checked> <b>● Publicar imediatamente</b></label>'
+      +     '<label style="display:flex;align-items:center;gap:7px;font-size:11px;cursor:pointer;"><input type="checkbox" id="trapMNovo" checked> ✨ Marcar como Novo</label>'
+      +     '<div style="flex:1;"></div>'
+      +     '<button class="trap-btn-sec" onclick="window._trapIr(\'painel\')">Cancelar</button>'
+      +     '<button class="trap-btn-primary" onclick="window._trapAdicionar()">✓ Adicionar à listagem</button>'
+      +   '</div>'
+      + '</div>';
+  }
+
+  /* ────────────────────────────────────────────────────────────────
+     VIEW · WIZARD CRIAR VIA CLAUDE (Caminho A · 4 etapas)
+     ────────────────────────────────────────────────────────────────
+     1. Briefing + PDFs · 2. Prompt + colar resposta
+     3. Editor + sugestões + preview · 4. Metadados + salvar
+     ──────────────────────────────────────────────────────────────── */
+  function _viewCriarClaude(){
+    var stepper = ''
+      + '<div class="trap-wiz-steps">'
+      +   _wizStepHtml(1, '📎', 'Briefing & PDFs', 'descreva + anexe materiais')
+      +   _wizStepHtml(2, '🤖', 'Gerar via Claude', 'prompt + colar HTML')
+      +   _wizStepHtml(3, '✎',  'Editor & Preview', 'ajuste com sugestões')
+      +   _wizStepHtml(4, '✓',  'Salvar', 'metadados + adicionar')
+      + '</div>';
+
+    var corpo;
+    if(_claudeStep === 1)      corpo = _wizStep1Html();
+    else if(_claudeStep === 2) corpo = _wizStep2Html();
+    else if(_claudeStep === 3) corpo = _wizStep3Html();
+    else                       corpo = _wizStep4Html();
+
+    return ''
+      + '<div class="trap-hero">'
+      +   '<div><h1>🤖 Criar com o Claude</h1><p>Wizard de 4 etapas. PDFs são anexados ao Claude; o HTML gerado é editado e visualizado antes de ir pra listagem.</p></div>'
+      +   '<button class="trap-btn-sec" onclick="window._trapWizCancelar()">✕ Cancelar</button>'
+      + '</div>'
+      + stepper
+      + corpo;
+  }
+
+  function _wizStepHtml(n, ic, t, s){
+    var cls = (_claudeStep === n ? 'curr' : (_claudeStep > n ? 'done' : ''));
+    return ''
+      + '<div class="trap-wiz-step '+cls+'" onclick="window._trapWizIr('+n+')">'
+      +   '<div class="trap-wiz-step-n">'+(_claudeStep > n ? '✓' : n)+'</div>'
+      +   '<div><div class="trap-wiz-step-s">Etapa '+n+'</div><div class="trap-wiz-step-t">'+ic+' '+t+'</div></div>'
+      + '</div>';
+  }
+
+  /* ── STEP 1 · Briefing + PDFs ── */
+  function _wizStep1Html(){
+    var b = _claudeBriefing;
+    var pdfsHtml = '';
+    if(_claudePdfs.length){
+      pdfsHtml = '<div class="trap-pdf-list">'
+        + _claudePdfs.map(function(p, i){
+            return '<div class="trap-pdf-item">'
+              + '<span class="trap-pdf-item-ic">📄</span>'
+              + '<div class="trap-pdf-item-info"><div class="trap-pdf-item-n">'+_esc(p.name)+'</div><div class="trap-pdf-item-s">'+_fmtKb(p.size)+'</div></div>'
+              + '<button onclick="window._trapPdfRemover('+i+')" title="Remover">✕</button>'
+              + '</div>';
+          }).join('')
+        + '</div>';
+    }
+
+    return ''
+      + '<div class="trap-wiz-panel">'
+      +   '<h3>📎 Etapa 1 · Briefing & PDFs</h3>'
+      +   '<div class="sub">Anexe os PDFs de referência (apresentações antigas, materiais base, artigos) e descreva o que quer criar. Os PDFs ficam disponíveis pra você anexar diretamente no Claude.ai.</div>'
+
+      +   '<div id="trapDropzone" class="trap-dropzone" onclick="document.getElementById(\'trapPdfInput\').click()">'
+      +     '<div class="trap-dropzone-ic">📎</div>'
+      +     '<div class="trap-dropzone-t">Arraste PDFs aqui ou clique para selecionar</div>'
+      +     '<div class="trap-dropzone-s">Aceita múltiplos arquivos · máx 20MB cada</div>'
+      +   '</div>'
+      +   '<input type="file" id="trapPdfInput" accept="application/pdf" multiple style="display:none;">'
+      +   pdfsHtml
+
+      +   '<div style="height:18px;"></div>'
+      +   '<div class="trap-meta-grid" style="grid-template-columns:1fr 1fr;">'
+      +     '<div class="trap-fld"><label>Tipo de conteúdo</label><select id="trapWBTipo"><option value="treinamento"'+(b.tipo==='treinamento'?' selected':'')+'>🎓 Treinamento (módulos/etapas)</option><option value="apresentacao"'+(b.tipo==='apresentacao'?' selected':'')+'>🎯 Apresentação (slides)</option></select></div>'
+      +     '<div class="trap-fld"><label>Tema visual</label><select id="trapWBTema"><option value="black-tie"'+(b.tema==='black-tie'?' selected':'')+'>Black Tie (preto + dourado)</option><option value="champagne"'+(b.tema==='champagne'?' selected':'')+'>Champagne (claro)</option><option value="lima"'+(b.tema==='lima'?' selected':'')+'>Verde Lima</option><option value="febracis"'+(b.tema==='febracis'?' selected':'')+'>Febracis padrão</option></select></div>'
+      +   '</div>'
+      +   '<div class="trap-fld" style="margin-bottom:14px;">'
+      +     '<label>Público-alvo · digite ou clique nas opções abaixo</label>'
+      +     '<input type="text" id="trapWBPublico" placeholder="Ex: consultores closer com 6+ meses, gestores comerciais..." value="'+_esc(b.publico)+'">'
+      +     _chipsPublicoHtml(b.publico)
+      +   '</div>'
+      +   '<div class="trap-fld">'
+      +     '<label>Conteúdo · objetivo, escopo, módulos/slides desejados</label>'
+      +     '<div class="trap-extract-bar">'
+      +       '<button type="button" class="trap-extract-btn" id="trapBtnExtrair" onclick="window._trapExtrairPdf(this)"'+(_claudePdfs.length?'':' disabled')+'>🔍 Extrair automaticamente dos '+_claudePdfs.length+' PDF(s)</button>'
+      +       '<span class="trap-extract-hint">'+(_claudePdfs.length?'O texto extraído é colocado no campo abaixo. Você pode editar livremente depois.':'Anexe PDFs na seção acima para habilitar a extração automática.')+'</span>'
+      +     '</div>'
+      +     '<textarea id="trapWBDesc" rows="8" placeholder="Ex: Treinamento sobre Negociação Avançada em 5 módulos. Cada módulo deve ter 1 vídeo conceitual + 1 exercício prático + checkpoint. Foco em quebra de objeções e fechamento sob pressão.\n\nOU clique em &quot;Extrair automaticamente dos PDFs&quot; acima.">'+_esc(b.desc)+'</textarea>'
+      +   '</div>'
+      + '</div>'
+
+      + '<div class="trap-wiz-nav">'
+      +   '<button class="trap-btn-sec" onclick="window._trapWizCancelar()">‹ Cancelar</button>'
+      +   '<button class="trap-btn-primary" onclick="window._trapWizProx(1)">Continuar para o Claude →</button>'
+      + '</div>';
+  }
+
+  /* ── STEP 2 · Prompt + colar HTML ── */
+  function _wizStep2Html(){
+    var prompt = _gerarPromptClaude();
+    var temPdfs = _claudePdfs.length > 0;
+
+    return ''
+      + '<div class="trap-wiz-panel">'
+      +   '<h3>🤖 Etapa 2 · Gerar via Claude</h3>'
+      +   '<div class="sub">Use o botão abaixo pra copiar o prompt + abrir o Claude.ai. Anexe os '+(_claudePdfs.length)+' PDF(s) selecionado(s), cole o prompt, e cole o HTML gerado de volta aqui.</div>'
+
+      +   '<div style="background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);border-radius:10px;padding:14px;margin-bottom:14px;">'
+      +     '<div style="font-size:11px;font-weight:800;color:var(--blue,#60a5fa);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">📋 Como fazer (3 passos):</div>'
+      +     '<ol style="font-size:12px;color:var(--muted,#9aa5b1);line-height:1.7;margin:0;padding-left:20px;">'
+      +       '<li>Clique <b style="color:var(--blue,#60a5fa);">"Copiar + Abrir Claude.ai"</b> abaixo</li>'
+      +       '<li>No Claude.ai: <b>anexe os PDFs</b> (clipe 📎)'+(temPdfs?'':' — você não tem PDFs anexados, mas pode subir lá direto')+', cole o prompt e envie</li>'
+      +       '<li>Cole o HTML gerado pelo Claude no campo abaixo</li>'
+      +     '</ol>'
+      +   '</div>'
+
+      +   '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">'
+      +     '<button class="trap-btn-primary" onclick="window._trapCopiarEAbrirClaude()">📋 Copiar prompt + Abrir Claude.ai</button>'
+      +     '<button class="trap-btn-sec" onclick="window._trapCopiarPrompt()">📋 Apenas copiar prompt</button>'
+      +     '<button class="trap-btn-sec" onclick="window.open(\'https://claude.ai/new\',\'_blank\',\'noopener,noreferrer\')">↗ Abrir Claude.ai</button>'
+      +   '</div>'
+
+      +   '<div style="margin-bottom:14px;">'
+      +     '<div style="font-size:10px;font-weight:800;color:var(--muted,#9aa5b1);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">PROMPT GERADO</div>'
+      +     '<div class="trap-prompt-box" id="trapPromptBox">'+_esc(prompt)+'</div>'
+      +   '</div>'
+
+      +   '<div class="trap-fld">'
+      +     '<label>Cole aqui o HTML completo que o Claude gerou (do &lt;!DOCTYPE html&gt; até &lt;/html&gt;)</label>'
+      +     '<textarea id="trapWHtmlInput" rows="10" placeholder="<!DOCTYPE html>..." style="font-family:\'DM Mono\',monospace;font-size:11px;">'+_esc(_claudeHtml)+'</textarea>'
+      +   '</div>'
+      + '</div>'
+
+      + '<div class="trap-wiz-nav">'
+      +   '<button class="trap-btn-sec" onclick="window._trapWizIr(1)">‹ Voltar</button>'
+      +   '<button class="trap-btn-primary" onclick="window._trapWizProx(2)">Editar HTML →</button>'
+      + '</div>';
+  }
+
+  /* ── STEP 3 · Editor + Sugestões + Preview ── */
+  function _wizStep3Html(){
+    return ''
+      + '<div class="trap-wiz-panel">'
+      +   '<h3>✎ Etapa 3 · Editor com sugestões + Preview</h3>'
+      +   '<div class="sub">Edite o HTML diretamente e veja o resultado em tempo real. Use as sugestões à direita para aplicar transformações rápidas.</div>'
+
+      +   '<div class="trap-ed-grid">'
+      +     '<div class="trap-ed-pane">'
+      +       '<div class="trap-ed-pane-h">📝 HTML</div>'
+      +       '<textarea class="trap-ed-textarea" id="trapEdHtml" spellcheck="false">'+_esc(_claudeHtml)+'</textarea>'
+      +     '</div>'
+      +     '<div class="trap-ed-pane">'
+      +       '<div class="trap-ed-pane-h">👁 Preview ao vivo</div>'
+      +       '<div class="trap-ed-preview" id="trapEdPreviewWrap">'
+      +         (_claudeHtml
+              ? '<iframe id="trapEdPreview" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>'
+              : '<div class="trap-ed-preview-vazio"><div style="font-size:36px;opacity:.4;">📭</div>Cole o HTML pra ver o preview</div>')
+      +       '</div>'
+      +     '</div>'
+      +     '<div class="trap-ed-sug">'
+      +       '<h5>✨ Sugestões rápidas</h5>'
+      +       '<button class="trap-ed-sug-btn" onclick="window._trapSug(\'capa\')">🎯 Adicionar capa atrativa<br><small style="opacity:.6;font-weight:500;">hero + título + subtítulo</small></button>'
+      +       '<button class="trap-ed-sug-btn" onclick="window._trapSug(\'indice\')">📋 Inserir índice no início<br><small style="opacity:.6;font-weight:500;">TOC clicável com âncoras</small></button>'
+      +       '<button class="trap-ed-sug-btn" onclick="window._trapSug(\'cta\')">🔗 Adicionar CTA final<br><small style="opacity:.6;font-weight:500;">Próximos passos + contato</small></button>'
+
+      +       '<h5>🎨 Temas visuais</h5>'
+      +       '<button class="trap-ed-sug-btn" onclick="window._trapSug(\'tema-blacktie\')">⚫ Black Tie (preto + dourado)</button>'
+      +       '<button class="trap-ed-sug-btn" onclick="window._trapSug(\'tema-champagne\')">🥂 Champagne (claro elegante)</button>'
+      +       '<button class="trap-ed-sug-btn" onclick="window._trapSug(\'tema-lima\')">🟢 Verde Lima</button>'
+
+      +       '<h5>📐 Estrutura</h5>'
+      +       '<button class="trap-ed-sug-btn" onclick="window._trapSug(\'fontes\')">✒ Aplicar Playfair + DM Sans</button>'
+      +       '<button class="trap-ed-sug-btn" onclick="window._trapSug(\'responsivo\')">📱 Garantir responsividade</button>'
+      +       '<button class="trap-ed-sug-btn" onclick="window._trapSug(\'limpar\')">🧹 Limpar comentários HTML</button>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>'
+
+      + '<div class="trap-wiz-nav">'
+      +   '<button class="trap-btn-sec" onclick="window._trapWizIr(2)">‹ Voltar</button>'
+      +   '<div class="right">'
+      +     '<button class="trap-btn-sec" onclick="window._trapDownloadHtml()">⬇ Baixar HTML</button>'
+      +     '<button class="trap-btn-primary" onclick="window._trapWizProx(3)">Próximo: salvar →</button>'
+      +   '</div>'
+      + '</div>';
+  }
+
+  /* ── STEP 4 · Metadados + Salvar ── */
+  function _wizStep4Html(){
+    var b = _claudeBriefing;
+    var tituloSug = _extrairTitulo(_claudeHtml) || '';
+
+    return ''
+      + '<div class="trap-wiz-panel">'
+      +   '<h3>✓ Etapa 4 · Metadados & salvar</h3>'
+      +   '<div class="sub">Defina como o conteúdo aparece na listagem. O HTML é salvo no Firebase (treinamentos/htmls/{id}) e abre embutido.</div>'
+
+      +   '<div class="trap-meta-grid">'
+      +     '<div class="trap-fld"><label>Título de exibição</label><input type="text" id="trapWMTit" value="'+_esc(tituloSug)+'" placeholder="Ex: Negociação Avançada para Closers"></div>'
+      +     '<div class="trap-fld"><label>Tipo</label><select id="trapWMTipo"><option value="treinamento"'+(b.tipo==='treinamento'?' selected':'')+'>🎓 Treinamento</option><option value="apresentacao"'+(b.tipo==='apresentacao'?' selected':'')+'>🎯 Apresentação</option></select></div>'
+      +     '<div class="trap-fld"><label>Produto</label><input type="text" id="trapWMProd" value="'+_esc(b.produto)+'" placeholder="Ex: CIS, Comercial"></div>'
+      +   '</div>'
+      +   '<div class="trap-fld" style="margin-bottom:14px;"><label>Descrição curta</label><input type="text" id="trapWMDesc" placeholder="1-2 frases que aparecem no card"></div>'
+      +   '<div class="trap-meta-grid" style="grid-template-columns:1fr 1fr 1fr;">'
+      +     '<div class="trap-fld"><label>Ordem</label><input type="number" id="trapWMOrdem" value="100"></div>'
+      +     '<div class="trap-fld"><label>Ícone</label><input type="text" id="trapWMIcone" value="🤖" maxlength="4"></div>'
+      +     '<div class="trap-fld"><label>Tamanho do HTML</label><input type="text" value="'+_fmtKb((_claudeHtml||'').length)+'" disabled></div>'
+      +   '</div>'
+
+      +   '<div style="background:rgba(200,240,90,.05);border:1px solid rgba(200,240,90,.2);border-radius:10px;padding:14px;margin-top:14px;">'
+      +     '<div style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">👁 Última pré-visualização antes de adicionar</div>'
+      +     '<div style="aspect-ratio:16/9;background:#fff;border-radius:6px;overflow:hidden;border:1px solid var(--border);">'
+      +       '<iframe id="trapWMPreview" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" style="width:100%;height:100%;border:0;"></iframe>'
+      +     '</div>'
+      +   '</div>'
+
+      +   '<div class="trap-meta-foot" style="margin-top:16px;">'
+      +     '<label style="display:flex;align-items:center;gap:7px;font-size:11px;cursor:pointer;"><input type="checkbox" id="trapWMPub" checked> <b>● Publicar imediatamente</b></label>'
+      +     '<label style="display:flex;align-items:center;gap:7px;font-size:11px;cursor:pointer;"><input type="checkbox" id="trapWMNovo" checked> ✨ Marcar como Novo</label>'
+      +   '</div>'
+      + '</div>'
+
+      + '<div class="trap-wiz-nav">'
+      +   '<button class="trap-btn-sec" onclick="window._trapWizIr(3)">‹ Voltar editar</button>'
+      +   '<button class="trap-btn-primary" onclick="window._trapWizFinalizar()">✓ Adicionar à listagem</button>'
+      + '</div>';
+  }
+
+  /* ── Helpers do wizard ─────────────────────────────────────────── */
+  /* Sugestões de público-alvo (chips toggleáveis) */
+  var _PUBLICOS_SUG = [
+    'CEO','Diretores','Empresários','Gestores','Coordenadores',
+    'Microempreendedores','Consultores','Closer','Equipe interna',
+    'Marketing','Vendas','RH','Líderes','Sócios','Investidores'
+  ];
+  function _chipsPublicoHtml(valorAtual){
+    var atuais = (valorAtual||'').split(/,\s*/).map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
+    var todosOn = _PUBLICOS_SUG.every(function(p){ return atuais.indexOf(p.toLowerCase()) >= 0; });
+    return '<div class="trap-pub-chips">'
+      + '<button type="button" class="trap-pub-chip todos'+(todosOn?' on':'')+'" onclick="window._trapPublicoTodos()" title="'+(todosOn?'Remover todas as sugestões':'Marcar todas as sugestões')+'">'+(todosOn?'✕ Limpar todos':'⚡ Selecionar todos')+'</button>'
+      + _PUBLICOS_SUG.map(function(p){
+          var on = atuais.indexOf(p.toLowerCase()) >= 0;
+          return '<button type="button" class="trap-pub-chip'+(on?' on':'')+'" onclick="window._trapPublicoChip(\''+_esc(p)+'\',this)">'+_esc(p)+'</button>';
+        }).join('')
+      + '</div>';
+  }
+
+  /* Carrega pdf.js sob demanda (de CDN). Em file:// funciona pelo script tag.
+     Worker URL é setado pra mesma CDN. Cache simples: só carrega 1x. */
+  var _pdfJsCarregando = false;
+  var _pdfJsFila = [];
+  function _carregarPdfJs(cb){
+    if(window.pdfjsLib){ cb(null); return; }
+    _pdfJsFila.push(cb);
+    if(_pdfJsCarregando) return;
+    _pdfJsCarregando = true;
+    var script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    script.onload = function(){
+      if(window.pdfjsLib){
+        try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){}
+        _pdfJsFila.forEach(function(f){ try{ f(null); }catch(e){} });
+        _pdfJsFila = [];
+      } else {
+        _pdfJsFila.forEach(function(f){ try{ f(new Error('pdfjsLib não disponível')); }catch(e){} });
+        _pdfJsFila = [];
+      }
+    };
+    script.onerror = function(){
+      _pdfJsCarregando = false;
+      _pdfJsFila.forEach(function(f){ try{ f(new Error('Falha ao carregar pdf.js')); }catch(e){} });
+      _pdfJsFila = [];
+    };
+    document.head.appendChild(script);
+  }
+
+  /* Lê um arquivo PDF e retorna o texto extraído (Promise<string>) */
+  function _extrairTextoPdfFile(file){
+    return new Promise(function(resolve, reject){
+      var fr = new FileReader();
+      fr.onload = function(e){
+        try{
+          window.pdfjsLib.getDocument({ data: e.target.result }).promise
+            .then(function(pdf){
+              var paginas = [];
+              for(var i = 1; i <= pdf.numPages; i++) paginas.push(i);
+              return Promise.all(paginas.map(function(n){
+                return pdf.getPage(n).then(function(page){ return page.getTextContent(); });
+              }));
+            })
+            .then(function(contents){
+              var txt = contents.map(function(c){
+                return c.items.map(function(it){ return it.str; }).join(' ');
+              }).join('\n\n');
+              resolve(txt.replace(/\s+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim());
+            })
+            .catch(reject);
+        }catch(err){ reject(err); }
+      };
+      fr.onerror = function(){ reject(new Error('Falha ao ler arquivo')); };
+      fr.readAsArrayBuffer(file);
+    });
+  }
+
+  function _fmtKb(n){
+    if(!n) return '0 B';
+    if(n < 1024) return n + ' B';
+    if(n < 1024*1024) return Math.round(n/1024) + ' KB';
+    return (n / (1024*1024)).toFixed(1) + ' MB';
+  }
+  function _extrairTitulo(html){
+    if(!html) return '';
+    var m = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    if(m) return m[1].trim();
+    m = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+    return m ? m[1].trim().replace(/<[^>]+>/g,'') : '';
+  }
+  function _gerarPromptClaude(){
+    var b = _claudeBriefing;
+    var temas = {
+      'black-tie': 'Black Tie elegante: paleta preto (#0a0e1a) + dourado (#f0c896) + accent verde lima (#c8f05a). Fontes serif elegante (Playfair Display) para títulos + DM Sans para corpo.',
+      'champagne': 'Champagne luxuoso: paleta off-white (#faf6ee) + dourado champagne + acentos discretos. Sensação de produto premium.',
+      'lima': 'Verde Lima vibrante: paleta dark com accent verde-lima dominante. Energético, juvenil, contemporâneo.',
+      'febracis': 'Padrão Febracis: cores institucionais, layout corporativo limpo, foco em legibilidade.'
+    };
+    var tipoDesc = b.tipo === 'treinamento'
+      ? 'um TREINAMENTO com estrutura de módulos sequenciais (módulo 1, 2, 3...). Cada módulo deve ter: título, objetivo, conteúdo conceitual, exercício prático, checkpoint. Use seções <section> com âncoras para navegação.'
+      : 'uma APRESENTAÇÃO com estrutura de SLIDES individuais (1 slide por seção). Use <section class="slide"> para cada slide. Inclua: capa, índice, slides de conteúdo, slide de CTA/contato.';
+    var pdfsTxt = _claudePdfs.length ? '\n\nMATERIAIS DE REFERÊNCIA ANEXADOS:\n' + _claudePdfs.map(function(p){ return '- ' + p.name + ' (' + _fmtKb(p.size) + ')'; }).join('\n') + '\n\nLeia os PDFs anexados e use o conteúdo deles como base. Mantenha consistência com o que estiver nos PDFs.' : '';
+
+    return ''
+      + '# Briefing\n\n'
+      + 'Gere ' + tipoDesc + '\n\n'
+      + 'PÚBLICO-ALVO: ' + (b.publico || 'consultores comerciais') + '\n\n'
+      + 'TEMA VISUAL: ' + (temas[b.tema] || temas['black-tie']) + '\n\n'
+      + 'DESCRIÇÃO DO CONTEÚDO:\n' + (b.desc || '(preencha na etapa 1)') + '\n'
+      + pdfsTxt + '\n\n'
+      + '# Requisitos técnicos\n\n'
+      + '- HTML5 standalone (sem dependências externas além de Google Fonts)\n'
+      + '- CSS inline no <head> dentro de <style>\n'
+      + '- Responsivo (mobile-first com media queries)\n'
+      + '- Semântico (header, main, section, footer)\n'
+      + '- Acessível (alt em imagens, contraste mínimo AA)\n'
+      + '- Sem JavaScript externo (inline se necessário)\n'
+      + '- Pronto pra abrir direto em file:// (sem fetch, sem CORS issues)\n\n'
+      + '# Output\n\n'
+      + 'Responda APENAS com o HTML completo (do <!DOCTYPE html> até </html>), sem markdown, sem comentários explicativos antes ou depois. Eu vou colar direto num editor.';
+  }
+  /* Pré-processa o HTML antes de injetar no srcdoc do preview:
+     - Garante <base target="_blank"> no head — evita que clicks em
+       links naveguem o iframe pra fora do srcdoc (causa de "some tudo")
+     - Aceita HTML incompleto e envolve em estrutura mínima */
+  function _prepHtmlPreview(html){
+    if(!html) return '';
+    /* Se já tem <base>, não duplica */
+    if(/<base\b[^>]*>/i.test(html)) return html;
+    if(/<head[^>]*>/i.test(html)){
+      return html.replace(/<head([^>]*)>/i, '<head$1><base target="_blank">');
+    }
+    if(/<html[^>]*>/i.test(html)){
+      return html.replace(/<html([^>]*)>/i, '<html$1><head><base target="_blank"></head>');
+    }
+    /* Fragmento solto — envolve com estrutura mínima */
+    return '<!DOCTYPE html><html><head><meta charset="UTF-8"><base target="_blank"></head><body>' + html + '</body></html>';
+  }
+
+  function _atualizarPreview(){
+    var ifr = document.getElementById('trapEdPreview');
+    if(!ifr) return;
+    try{
+      var html = _claudeHtml
+        ? _prepHtmlPreview(_claudeHtml)
+        : '<html><body style="background:#fff;padding:30px;font-family:sans-serif;color:#666;text-align:center;">Cole o HTML para ver o preview</body></html>';
+      ifr.srcdoc = html;
+    }catch(e){}
+  }
+
+  function _bindCriarClaude(){
+    if(_claudeStep === 1){
+      _bindStep1();
+    } else if(_claudeStep === 2){
+      var ta = document.getElementById('trapWHtmlInput');
+      if(ta){
+        ta.addEventListener('input', function(){ _claudeHtml = ta.value; });
+      }
+    } else if(_claudeStep === 3){
+      var ed = document.getElementById('trapEdHtml');
+      if(ed){
+        ed.addEventListener('input', function(){
+          _claudeHtml = ed.value;
+          _atualizarPreview();
+        });
+      }
+      _atualizarPreview();
+    } else if(_claudeStep === 4){
+      _atualizarPreviewFinal();
+    }
+  }
+
+  function _bindStep1(){
+    var inp = document.getElementById('trapPdfInput');
+    var drop = document.getElementById('trapDropzone');
+    if(inp){
+      inp.addEventListener('change', function(e){ _processarPdfs(e.target.files); });
+    }
+    if(drop){
+      drop.addEventListener('dragover', function(e){ e.preventDefault(); drop.classList.add('over'); });
+      drop.addEventListener('dragleave', function(){ drop.classList.remove('over'); });
+      drop.addEventListener('drop', function(e){
+        e.preventDefault();
+        drop.classList.remove('over');
+        _processarPdfs(e.dataTransfer.files);
+      });
+    }
+    /* Captura inputs do briefing em tempo real */
+    ['trapWBTipo','trapWBTema','trapWBPublico','trapWBDesc'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      var key = { trapWBTipo:'tipo', trapWBTema:'tema', trapWBPublico:'publico', trapWBDesc:'desc' }[id];
+      el.addEventListener('input', function(){ _claudeBriefing[key] = el.value; });
+      el.addEventListener('change', function(){ _claudeBriefing[key] = el.value; });
+    });
+  }
+
+  function _processarPdfs(files){
+    if(!files || !files.length) return;
+    Array.from(files).forEach(function(f){
+      if(f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')){
+        _toast('Só PDFs são aceitos: ' + f.name, 'var(--amber)');
+        return;
+      }
+      if(f.size > 20 * 1024 * 1024){
+        _toast('Arquivo > 20MB ignorado: ' + f.name, 'var(--amber)');
+        return;
+      }
+      /* Guarda referência ao File pra permitir extração de texto via pdf.js depois */
+      _claudePdfs.push({ name: f.name, size: f.size, file: f });
+    });
+    _renderTela();
+    _toast('📎 ' + _claudePdfs.length + ' PDF(s) anexado(s)');
+  }
+
+  /* Toggle de chip de público-alvo — adiciona/remove do input.
+     Após mudar, re-sincroniza o estado do botão "Selecionar todos" */
+  window._trapPublicoChip = function(label, btn){
+    var input = document.getElementById('trapWBPublico');
+    if(!input) return;
+    var atual = input.value.trim();
+    var arr = atual ? atual.split(/,\s*/).map(function(s){ return s.trim(); }).filter(Boolean) : [];
+    var idx = -1;
+    arr.forEach(function(s, i){ if(s.toLowerCase() === label.toLowerCase()) idx = i; });
+    if(idx >= 0){
+      arr.splice(idx, 1);
+      if(btn && btn.classList) btn.classList.remove('on');
+    } else {
+      arr.push(label);
+      if(btn && btn.classList) btn.classList.add('on');
+    }
+    input.value = arr.join(', ');
+    _claudeBriefing.publico = input.value;
+    _sincronizarBtnTodos();
+  };
+
+  /* Marca/desmarca TODAS as sugestões de público de uma vez.
+     Preserva entradas manuais que o usuário digitou no campo. */
+  window._trapPublicoTodos = function(){
+    var input = document.getElementById('trapWBPublico');
+    if(!input) return;
+    var atuais = (input.value||'').split(/,\s*/).map(function(s){ return s.trim(); }).filter(Boolean);
+    var atuaisLow = atuais.map(function(s){ return s.toLowerCase(); });
+    var todosOn = _PUBLICOS_SUG.every(function(p){ return atuaisLow.indexOf(p.toLowerCase()) >= 0; });
+
+    /* Manuais = qualquer entrada que NÃO está na lista de sugestões */
+    var manuais = atuais.filter(function(s){
+      return !_PUBLICOS_SUG.some(function(p){ return p.toLowerCase() === s.toLowerCase(); });
+    });
+
+    if(todosOn){
+      /* Limpa só as sugestões, mantém as manuais */
+      input.value = manuais.join(', ');
+      _toast('✕ Sugestões de público removidas');
+    } else {
+      /* Adiciona todas as sugestões, mantendo as manuais primeiro */
+      input.value = manuais.concat(_PUBLICOS_SUG).join(', ');
+      _toast('⚡ Todas as ' + _PUBLICOS_SUG.length + ' sugestões marcadas');
+    }
+    _claudeBriefing.publico = input.value;
+
+    /* Re-renderiza só o container de chips pra refletir o novo estado */
+    var container = document.querySelector('.trap-pub-chips');
+    if(container){
+      var temp = document.createElement('div');
+      temp.innerHTML = _chipsPublicoHtml(input.value);
+      var novo = temp.firstChild;
+      if(novo) container.parentNode.replaceChild(novo, container);
+    }
+  };
+
+  /* Atualiza o texto/estado do botão "Selecionar todos" sem
+     re-renderizar todos os chips individuais. */
+  function _sincronizarBtnTodos(){
+    var btn = document.querySelector('.trap-pub-chip.todos');
+    if(!btn) return;
+    var input = document.getElementById('trapWBPublico');
+    if(!input) return;
+    var atuaisLow = (input.value||'').split(/,\s*/).map(function(s){ return s.trim().toLowerCase(); }).filter(Boolean);
+    var todosOn = _PUBLICOS_SUG.every(function(p){ return atuaisLow.indexOf(p.toLowerCase()) >= 0; });
+    btn.classList.toggle('on', todosOn);
+    btn.textContent = todosOn ? '✕ Limpar todos' : '⚡ Selecionar todos';
+    btn.title = todosOn ? 'Remover todas as sugestões' : 'Marcar todas as sugestões';
+  }
+
+  /* Extrai texto de todos os PDFs anexados e injeta no campo de descrição.
+     Carrega pdf.js sob demanda (lazy load). */
+  window._trapExtrairPdf = function(btn){
+    if(!_claudePdfs.length){ _toast('Anexe pelo menos um PDF antes', 'var(--amber)'); return; }
+    var pdfsComFile = _claudePdfs.filter(function(p){ return p.file; });
+    if(!pdfsComFile.length){
+      _toast('PDFs não têm dados — reanexe os arquivos pra extrair', 'var(--amber)');
+      return;
+    }
+    var txtOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Carregando pdf.js...';
+
+    _carregarPdfJs(function(err){
+      if(err){
+        btn.disabled = false; btn.textContent = txtOriginal;
+        _toast('❌ Falha ao carregar pdf.js (sem internet?). Cole o texto manualmente.', 'var(--red)');
+        return;
+      }
+      btn.textContent = '⏳ Extraindo ' + pdfsComFile.length + ' PDF(s)...';
+      Promise.all(pdfsComFile.map(function(p){
+        return _extrairTextoPdfFile(p.file).then(
+          function(t){ return { name: p.name, texto: t }; },
+          function(e){ return { name: p.name, texto: '[Erro: '+(e.message||'falha')+']' }; }
+        );
+      })).then(function(resultados){
+        var totalChars = 0;
+        var combinado = resultados.map(function(r){
+          var t = r.texto || '';
+          totalChars += t.length;
+          /* Limita por PDF pra não explodir o prompt (Claude tem limite) */
+          if(t.length > 8000) t = t.slice(0, 8000) + '\n\n[... texto truncado em 8000 chars ...]';
+          return '═══ ' + r.name + ' ═══\n\n' + t;
+        }).join('\n\n');
+
+        var desc = document.getElementById('trapWBDesc');
+        if(desc){
+          var atual = desc.value.trim();
+          var prefixo = (atual ? atual + '\n\n──────────────\n\n' : '');
+          desc.value = prefixo + '# Conteúdo extraído dos PDFs anexados\n\n' + combinado
+            + '\n\n──────────────\n\n# Instruções complementares\n\n(opcional — adicione aqui ajustes/foco específico que o Claude deve respeitar)';
+          _claudeBriefing.desc = desc.value;
+          desc.focus();
+          /* Scroll pro fim onde o usuário pode escrever instruções complementares */
+          desc.scrollTop = desc.scrollHeight;
+        }
+        btn.disabled = false; btn.textContent = txtOriginal;
+        _toast('✓ Extraído ' + Math.round(totalChars/1024) + 'KB de texto de ' + pdfsComFile.length + ' PDF(s)');
+      }).catch(function(e){
+        btn.disabled = false; btn.textContent = txtOriginal;
+        console.error('[trap] extração PDF:', e);
+        _toast('❌ Erro na extração: ' + (e.message || 'desconhecido'), 'var(--red)');
+      });
+    });
+  };
+
+  function _atualizarPreviewFinal(){
+    var ifr = document.getElementById('trapWMPreview');
+    if(!ifr) return;
+    try{
+      ifr.srcdoc = _claudeHtml
+        ? _prepHtmlPreview(_claudeHtml)
+        : '<html><body>Sem HTML pra previsualizar</body></html>';
+    }catch(e){}
+  }
+
+  /* ── Handlers globais do wizard ────────────────────────────────── */
+  window._trapWizCancelar = function(){
+    if(!confirm('Cancelar criação? Os dados serão perdidos.')) return;
+    _claudeStep = 1;
+    _claudePdfs = [];
+    _claudeBriefing = { desc:'', tipo:'treinamento', produto:'', tema:'black-tie', publico:'' };
+    _claudeHtml = '';
+    _telaAtual = 'adicionar';
+    _renderTela();
+  };
+  window._trapWizIr = function(n){
+    if(n < 1 || n > 4) return;
+    /* Salva campos atuais antes de mudar */
+    if(_claudeStep === 2){
+      var ta = document.getElementById('trapWHtmlInput');
+      if(ta) _claudeHtml = ta.value;
+    } else if(_claudeStep === 3){
+      var ed = document.getElementById('trapEdHtml');
+      if(ed) _claudeHtml = ed.value;
+    }
+    _claudeStep = n;
+    _renderTela();
+  };
+  window._trapWizProx = function(deStep){
+    if(deStep === 1){
+      if(!_claudeBriefing.desc || _claudeBriefing.desc.trim().length < 20){
+        _toast('Descreva o conteúdo com mais detalhes (mín 20 chars) antes de continuar', 'var(--amber)');
+        var d = document.getElementById('trapWBDesc'); if(d) d.focus();
+        return;
+      }
+    } else if(deStep === 2){
+      var ta = document.getElementById('trapWHtmlInput');
+      if(ta) _claudeHtml = ta.value;
+      if(!_claudeHtml || _claudeHtml.trim().length < 100){
+        _toast('Cole o HTML completo gerado pelo Claude antes de continuar', 'var(--amber)');
+        return;
+      }
+      if(!/<\/html>/i.test(_claudeHtml)){
+        if(!confirm('O HTML parece incompleto (não tem </html>). Continuar mesmo assim?')) return;
+      }
+    } else if(deStep === 3){
+      var ed = document.getElementById('trapEdHtml');
+      if(ed) _claudeHtml = ed.value;
+    }
+    _claudeStep = deStep + 1;
+    _renderTela();
+  };
+  window._trapPdfRemover = function(idx){
+    _claudePdfs.splice(idx, 1);
+    _renderTela();
+    _toast('PDF removido');
+  };
+
+  window._trapCopiarPrompt = function(){
+    var p = _gerarPromptClaude();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(p).then(function(){
+        _toast('📋 Prompt copiado pra área de transferência');
+      }).catch(function(){
+        _fallbackCopiar(p);
+      });
+    } else {
+      _fallbackCopiar(p);
+    }
+  };
+  window._trapCopiarEAbrirClaude = function(){
+    window._trapCopiarPrompt();
+    setTimeout(function(){
+      window.open('https://claude.ai/new', '_blank', 'noopener,noreferrer');
+    }, 200);
+  };
+  function _fallbackCopiar(txt){
+    var ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position = 'fixed'; ta.style.top = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); _toast('📋 Prompt copiado'); }
+    catch(e){ _toast('❌ Não foi possível copiar — selecione manualmente'); }
+    document.body.removeChild(ta);
+  }
+
+  window._trapDownloadHtml = function(){
+    if(!_claudeHtml){ _toast('Nada pra baixar', 'var(--amber)'); return; }
+    var blob = new Blob([_claudeHtml], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    var slug = _slug(_extrairTitulo(_claudeHtml) || 'conteudo-gerado');
+    a.download = slug + '.html';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    _toast('⬇ HTML baixado');
+  };
+
+  /* Sugestões — transformações simples no HTML */
+  window._trapSug = function(tipo){
+    if(!_claudeHtml){ _toast('Cole o HTML primeiro', 'var(--amber)'); return; }
+    var html = _claudeHtml;
+    var titulo = _extrairTitulo(html) || 'Conteúdo';
+    if(tipo === 'capa'){
+      var capa = '<section style="min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:40px;background:linear-gradient(135deg,#0a0e1a,#1c2128);color:#f0c896;"><h1 style="font-family:\'Playfair Display\',serif;font-size:clamp(36px,6vw,72px);margin:0 0 20px;">'+titulo+'</h1><p style="font-size:18px;opacity:.8;max-width:600px;">'+_esc((_claudeBriefing.desc||'').slice(0,160))+'</p></section>';
+      html = html.replace(/<body([^>]*)>/i, '<body$1>' + capa);
+    } else if(tipo === 'indice'){
+      var matches = html.match(/<h2[^>]*>([^<]+)<\/h2>/gi) || [];
+      var lis = matches.map(function(m, i){
+        var t = m.replace(/<[^>]+>/g, '');
+        return '<li><a href="#sec-'+i+'" style="color:#f0c896;text-decoration:none;">'+t+'</a></li>';
+      }).join('');
+      if(lis){
+        var idx = 0;
+        html = html.replace(/<h2/gi, function(){ return '<h2 id="sec-'+(idx++)+'"'; });
+        var indice = '<nav style="background:#1c2128;padding:24px;margin:20px;border-radius:12px;"><h3 style="color:#c8f05a;margin:0 0 12px;">📋 Índice</h3><ol style="line-height:1.8;">'+lis+'</ol></nav>';
+        html = html.replace(/<body([^>]*)>/i, '<body$1>' + indice);
+      }
+    } else if(tipo === 'cta'){
+      var cta = '<section style="padding:60px 30px;text-align:center;background:linear-gradient(135deg,#c8f05a,#f0c896);color:#0a0e1a;"><h2 style="font-size:32px;margin:0 0 16px;">Próximos passos</h2><p style="font-size:16px;max-width:500px;margin:0 auto 24px;">Pronto para aplicar? Entre em contato e implemente esses conceitos no seu time.</p><a href="#contato" style="display:inline-block;background:#0a0e1a;color:#c8f05a;padding:14px 32px;border-radius:8px;font-weight:700;text-decoration:none;">Falar com consultor →</a></section>';
+      html = html.replace(/<\/body>/i, cta + '</body>');
+    } else if(tipo === 'tema-blacktie'){
+      html = html.replace(/<body([^>]*)>/i, '<body$1 style="background:#0a0e1a;color:#e6edf3;font-family:\'DM Sans\',sans-serif;">');
+    } else if(tipo === 'tema-champagne'){
+      html = html.replace(/<body([^>]*)>/i, '<body$1 style="background:#faf6ee;color:#3a2e1f;font-family:\'DM Sans\',sans-serif;">');
+    } else if(tipo === 'tema-lima'){
+      html = html.replace(/<body([^>]*)>/i, '<body$1 style="background:#0d1117;color:#c8f05a;font-family:\'DM Sans\',sans-serif;">');
+    } else if(tipo === 'fontes'){
+      var fontLink = '<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">';
+      if(!/Playfair/.test(html)){
+        html = html.replace(/<\/head>/i, fontLink + '</head>');
+      }
+      html = html.replace(/<h1/gi, '<h1 style="font-family:\'Playfair Display\',serif"');
+    } else if(tipo === 'responsivo'){
+      if(!/viewport/i.test(html)){
+        html = html.replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width,initial-scale=1">');
+      }
+    } else if(tipo === 'limpar'){
+      html = html.replace(/<!--[\s\S]*?-->/g, '');
+    }
+    _claudeHtml = html;
+    var ed = document.getElementById('trapEdHtml');
+    if(ed) ed.value = html;
+    _atualizarPreview();
+    _toast('✨ Sugestão aplicada — confira o preview');
+  };
+
+  /* Finalizar wizard — grava conteúdo como item adicionado */
+  window._trapWizFinalizar = function(){
+    var titulo = (document.getElementById('trapWMTit')||{}).value.trim();
+    var tipo = (document.getElementById('trapWMTipo')||{}).value;
+    var produto = (document.getElementById('trapWMProd')||{}).value.trim();
+    var desc = (document.getElementById('trapWMDesc')||{}).value.trim();
+    var ordem = +((document.getElementById('trapWMOrdem')||{}).value) || 100;
+    var icone = (document.getElementById('trapWMIcone')||{}).value || '🤖';
+    var publicar = (document.getElementById('trapWMPub')||{}).checked;
+    var novo = (document.getElementById('trapWMNovo')||{}).checked;
+
+    if(!titulo){ _toast('Título é obrigatório', 'var(--amber)'); return; }
+    if(!produto){ _toast('Produto é obrigatório', 'var(--amber)'); return; }
+    if(!_claudeHtml){ _toast('HTML vazio', 'var(--red)'); return; }
+
+    var id = _slug(titulo);
+    if((window.TRAP_REGISTRO||[]).some(function(s){ return s.id === id; })){
+      id = id + '-' + Date.now().toString(36).slice(-4);
+    }
+
+    var obj = {
+      id: id, titulo: titulo, descricao: desc, produto: produto, tipo: tipo,
+      status: publicar ? 'publicado' : 'oculto',
+      novo: novo, ordem: ordem,
+      url: '__inline:' + id, /* URL especial — conteúdo vem do campo conteudo */
+      conteudo: _claudeHtml,  /* HTML completo armazenado */
+      icone: icone,
+      origem: 'claude',
+      briefing: _claudeBriefing,
+      criadoEm: new Date().toISOString()
+    };
+    _salvarAdicionado(id, obj);
+
+    /* Reset wizard */
+    _claudeStep = 1;
+    _claudePdfs = [];
+    _claudeBriefing = { desc:'', tipo:'treinamento', produto:'', tema:'black-tie', publico:'' };
+    _claudeHtml = '';
+
+    _toast('✓ "'+titulo+'" criado e adicionado à listagem');
+    _telaAtual = 'painel';
+    var host = document.getElementById('trapScreen');
+    if(host) host.querySelectorAll('.trap-nav-pill').forEach(function(x){ x.classList.toggle('active', x.dataset.tela === 'painel'); });
+    _renderTela();
+  };
+
+  /* ────────────────────────────────────────────────────────────────
+     VIEW 3 · ADMIN (tabela completa + histórico básico)
+     ──────────────────────────────────────────────────────────────── */
+  function _viewAdmin(){
+    var itens = _getItens();
+    var rows = itens.map(function(i){
+      var tipoLabel = i.tipo === 'treinamento' ? 'Treinamento' : 'Apresentação';
+      var tipoCls = i.tipo === 'treinamento' ? 'tr' : 'ap';
+      var stCls = i.status === 'publicado' ? 'ativo' : 'oculto';
+      var stLabel = i.status === 'publicado' ? '● Publicado' : '⊘ Oculto';
+      var orig = i.origem === 'claude' ? '🤖 Claude' : (i.origem === 'html-existente' ? '📁 HTML' : '—');
+      var id = _esc(i.id);
+      return ''
+        + '<tr>'
+        +   '<td><div style="font-weight:700;">'+_esc(i.titulo)+'</div><div style="font-size:10px;color:var(--muted,#9aa5b1);margin-top:2px;">'+_esc(i.descricao||'')+'</div></td>'
+        +   '<td><span class="trap-badge '+tipoCls+'">'+tipoLabel+'</span></td>'
+        +   '<td><span class="trap-badge prod">'+_esc(i.produto)+'</span></td>'
+        +   '<td><span style="font-size:10px;color:var(--muted,#9aa5b1);">'+orig+'</span></td>'
+        +   '<td><span class="trap-badge '+stCls+'">'+stLabel+'</span></td>'
+        +   '<td><div class="trap-toggle '+(i.status==='publicado'?'on':'')+'" data-id="'+id+'" data-act="toggle-status" title="Alternar visibilidade"></div></td>'
+        +   '<td style="font-size:10px;color:var(--muted,#9aa5b1);"><code style="background:var(--bg-3,#1c2128);padding:2px 5px;border-radius:3px;font-size:9px;">'+_esc(i.url)+'</code></td>'
+        +   '<td><div style="display:flex;gap:4px;"><button class="trap-icbtn" data-id="'+id+'" data-act="abrir" title="Abrir">↗</button>'+
+              (i.origem !== undefined ? '<button class="trap-icbtn danger" data-id="'+id+'" data-act="remover" title="Remover da lista">✕</button>' : '')+'</div></td>'
+        + '</tr>';
+    }).join('');
+
+    return ''
+      + '<div class="trap-hero">'
+      +   '<div><h1>Admin · Gestão completa</h1><p>Visualize tudo (ativos + ocultos), edite visibilidade e veja origem de cada conteúdo.</p></div>'
+      + '</div>'
+      + '<div class="trap-adm-bar">'
+      +   '<span style="font-size:11px;color:var(--muted,#9aa5b1);font-weight:700;">'+itens.length+' conteúdo(s) cadastrado(s)</span>'
+      +   '<div style="flex:1;"></div>'
+      +   '<button class="trap-btn-primary" onclick="window._trapIr(\'adicionar\')">+ Adicionar conteúdo</button>'
+      + '</div>'
+      + (itens.length === 0
+          ? '<div class="trap-empty"><div class="trap-empty-ic">📭</div><div style="font-size:14px;font-weight:700;margin-bottom:6px;">Nenhum conteúdo cadastrado</div>Comece adicionando via <b style="color:var(--accent);">+ Adicionar conteúdo</b>.</div>'
+          : '<table class="trap-adm-table"><thead><tr><th>Nome / Descrição</th><th>Tipo</th><th>Produto</th><th>Origem</th><th>Status</th><th>Visível</th><th>URL</th><th>Ações</th></tr></thead><tbody>'+rows+'</tbody></table>');
+  }
+
+  function _bindAdminEvents(){
+    var host = document.getElementById('trapConteudo');
+    if(!host) return;
+    host.querySelectorAll('[data-act]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var id = el.dataset.id;
+        var act = el.dataset.act;
+        if(act === 'toggle-status') window._trapToggleStatus(id);
+        else if(act === 'abrir') window._trapAbrirConteudo(id);
+        else if(act === 'remover') window._trapRemoverAdd(id);
+      });
+    });
+  }
+
+  /* ── Persistência ───────────────────────────────────────────────── */
+  function _salvarOverride(id, patch){
+    _overrides[id] = Object.assign({}, _overrides[id] || {}, patch);
+    if(typeof window._fbSet === 'function'){
+      window._fbSet('treinamentos/overrides/' + id, _overrides[id]);
+    }
+  }
+  function _salvarAdicionado(id, obj){
+    _adicionados[id] = obj;
+    if(typeof window._fbSet === 'function'){
+      window._fbSet('treinamentos/adicionados/' + id, obj);
+    }
+  }
+  function _removerAdicionado(id){
+    delete _adicionados[id];
+    if(typeof window._fbSet === 'function'){
+      window._fbSet('treinamentos/adicionados/' + id, null);
+    }
+  }
+
+  /* ── Ações expostas ─────────────────────────────────────────────── */
+  window._trapIr = function(tela){
+    _telaAtual = tela;
+    var host = document.getElementById('trapScreen');
+    if(host){
+      host.querySelectorAll('.trap-nav-pill').forEach(function(x){ x.classList.toggle('active', x.dataset.tela === tela); });
+    }
+    _renderTela();
+  };
+
+  /* Abrir em nova aba do navegador (opção secundária) */
+  window._trapAbrirNovaAba = function(id){
+    var item = _getItens().find(function(i){ return i.id === id; });
+    if(!item) return;
+    /* Para conteúdo inline (Claude), gera Blob URL e abre */
+    if(item.url && item.url.indexOf('__inline:') === 0 && item.conteudo){
+      return window._trapAbrirInlineNovaAba(id);
+    }
+    if(!item.url){ _toast('❌ Conteúdo sem URL', 'var(--red)'); return; }
+    window.open(item.url, '_blank', 'noopener,noreferrer');
+    _toast('↗ ' + item.titulo + ' aberto em nova aba');
+  };
+
+  /* Abrir conteúdo inline (Claude) em nova aba via Blob URL */
+  window._trapAbrirInlineNovaAba = function(id){
+    var item = _getItens().find(function(i){ return i.id === id; });
+    if(!item || !item.conteudo){ _toast('❌ Sem conteúdo', 'var(--red)'); return; }
+    var blob = new Blob([item.conteudo], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    /* Não revoga imediato — deixa a nova aba carregar */
+    setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 60000);
+    _toast('↗ ' + item.titulo + ' aberto em nova aba');
+  };
+
+  /* Compat: chamadas antigas vão pra "abrir aqui" */
+  window._trapAbrirConteudo = function(id){ window._trapAbrirAqui(id); };
+
+  /* Abrir embutido (iframe dentro do app) — padrão */
+  window._trapAbrirAqui = function(id){
+    var item = _getItens().find(function(i){ return i.id === id; });
+    if(!item) return;
+    if(!item.url){ _toast('❌ Conteúdo sem URL', 'var(--red)'); return; }
+    _itemVisualizando = item;
+    _indiceMod = 0;
+    _telaAtual = 'visualizar';
+    _renderTela();
+  };
+
+  /* Trocar de módulo dentro do visualizador (quando item tem estrutura) */
+  window._trapVizSetMod = function(idx){
+    if(!_itemVisualizando) return;
+    var n = (_itemVisualizando.estrutura||[]).length;
+    if(!n) return;
+    _indiceMod = Math.max(0, Math.min(n - 1, +idx || 0));
+    _renderTela();
+  };
+  window._trapVizProx = function(){ window._trapVizSetMod(_indiceMod + 1); };
+  window._trapVizAnt  = function(){ window._trapVizSetMod(_indiceMod - 1); };
+
+  /* Fecha o visualizador embutido e volta ao painel */
+  window._trapVizFechar = function(){
+    _itemVisualizando = null;
+    _indiceMod = 0;
+    _telaAtual = 'painel';
+    var host = document.getElementById('trapScreen');
+    if(host) host.querySelectorAll('.trap-nav-pill').forEach(function(x){ x.classList.toggle('active', x.dataset.tela === 'painel'); });
+    _renderTela();
+  };
+
+  /* Atalho ESC fecha o visualizador */
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && _telaAtual === 'visualizar'){
+      window._trapVizFechar();
+    }
+  });
+
+  window._trapToggleStatus = function(id){
+    var item = _getItens().find(function(i){ return i.id === id; });
+    if(!item) return;
+    var novo = item.status === 'publicado' ? 'oculto' : 'publicado';
+    _salvarOverride(id, { status: novo });
+    _toast(novo === 'publicado' ? '✓ Conteúdo publicado' : '⊘ Conteúdo ocultado');
+    _renderTela();
+  };
+
+  window._trapToggleNovo = function(id){
+    var item = _getItens().find(function(i){ return i.id === id; });
+    if(!item) return;
+    _salvarOverride(id, { novo: !item.novo });
+    _toast(item.novo ? 'Badge "Novo" removida' : '✨ Marcado como Novo');
+    _renderTela();
+  };
+
+  window._trapRemoverAdd = function(id){
+    if(!_adicionados[id]){ _toast('Itens do seed não podem ser removidos por aqui', 'var(--amber)'); return; }
+    if(!confirm('Remover este conteúdo da listagem?\n\nO arquivo HTML original NÃO é apagado — só o vínculo.')) return;
+    _removerAdicionado(id);
+    _toast('✕ Conteúdo removido da listagem');
+    _renderTela();
+  };
+
+  window._trapPreviewHtml = function(){
+    var url = (document.getElementById('trapCamUrl')||{}).value;
+    if(!url){ _toast('Informe o caminho do HTML primeiro', 'var(--amber)'); return; }
+    window.open(url, '_blank', 'noopener,noreferrer');
+    /* Auto-preenche metadados (sugestão) */
+    var mUrl = document.getElementById('trapMUrl');
+    if(mUrl && !mUrl.value) mUrl.value = url;
+    var mTit = document.getElementById('trapMTitulo');
+    if(mTit && !mTit.value){
+      var nome = url.split('/').pop().replace(/\.html?$/i, '').replace(/-/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+      mTit.value = nome;
+    }
+  };
+
+  window._trapGerarClaude = function(){
+    /* Entra no wizard Caminho A. Pré-popula descrição se já tiver. */
+    var desc = (document.getElementById('trapClaudeDesc')||{}).value;
+    if(desc) _claudeBriefing.desc = desc;
+    _claudeStep = 1;
+    _telaAtual = 'criar-claude';
+    _renderTela();
+  };
+
+  window._trapAdicionar = function(){
+    var titulo = (document.getElementById('trapMTitulo')||{}).value.trim();
+    var tipo = (document.getElementById('trapMTipo')||{}).value;
+    var produto = (document.getElementById('trapMProduto')||{}).value.trim();
+    var desc = (document.getElementById('trapMDesc')||{}).value.trim();
+    var ordem = +((document.getElementById('trapMOrdem')||{}).value) || 100;
+    var icone = (document.getElementById('trapMIcone')||{}).value || '📄';
+    var url = (document.getElementById('trapMUrl')||{}).value.trim();
+    var publicar = (document.getElementById('trapMPub')||{}).checked;
+    var novo = (document.getElementById('trapMNovo')||{}).checked;
+
+    if(!titulo){ _toast('Título é obrigatório', 'var(--amber)'); return; }
+    if(!produto){ _toast('Produto é obrigatório', 'var(--amber)'); return; }
+    if(!url){ _toast('URL/caminho do HTML é obrigatório', 'var(--amber)'); return; }
+
+    var camUrl = (document.getElementById('trapCamUrl')||{}).value.trim();
+    var origem = camUrl ? 'html-existente' : 'claude';
+    var id = _slug(titulo);
+    /* Evita colisão com seed */
+    if((window.TRAP_REGISTRO||[]).some(function(s){ return s.id === id; })){
+      id = id + '-' + Date.now().toString(36).slice(-4);
+    }
+
+    var obj = {
+      id: id, titulo: titulo, descricao: desc, produto: produto, tipo: tipo,
+      status: publicar ? 'publicado' : 'oculto',
+      novo: novo, ordem: ordem, url: url, icone: icone, origem: origem,
+      criadoEm: new Date().toISOString()
+    };
+    _salvarAdicionado(id, obj);
+    _toast('✓ "'+titulo+'" adicionado à listagem');
+    _telaAtual = 'painel';
+    var host = document.getElementById('trapScreen');
+    if(host) host.querySelectorAll('.trap-nav-pill').forEach(function(x){ x.classList.toggle('active', x.dataset.tela === 'painel'); });
+    _renderTela();
+  };
+
+  /* ── Carregamento Firebase ──────────────────────────────────────── */
+  function _carregar(cb){
+    var pendentes = 2;
+    function ok(){ pendentes--; if(pendentes <= 0 && cb) cb(); }
+    if(typeof window._fbGet === 'function'){
+      window._fbGet('treinamentos/overrides').then(function(d){ _overrides = d || {}; ok(); }).catch(function(){ ok(); });
+      window._fbGet('treinamentos/adicionados').then(function(d){ _adicionados = d || {}; ok(); }).catch(function(){ ok(); });
+      /* Listeners real-time */
+      if(typeof window._fbChange === 'function'){
+        if(!_listenerOver){
+          _listenerOver = window._fbChange('treinamentos/overrides', function(d){
+            _overrides = d || {};
+            if(document.getElementById('trapScreen').style.display !== 'none') _renderTela();
+          });
+        }
+        if(!_listenerAdd){
+          _listenerAdd = window._fbChange('treinamentos/adicionados', function(d){
+            _adicionados = d || {};
+            if(document.getElementById('trapScreen').style.display !== 'none') _renderTela();
+          });
+        }
+      }
+    } else {
+      if(cb) cb();
+    }
+  }
+
+  /* ── Pontos de entrada GLOBAIS ──────────────────────────────────── */
+
+  /* Registra trapScreen no array _TELAS pra que:
+     - 18-usuarios.js (safety net 8s) reconheça que uma tela está visível
+     - _mostrarTela() esconda trapScreen quando outra tela for ativada
+     Idempotente: só adiciona uma vez. */
+  function _registrarNoArrayTelas(){
+    try{
+      if(typeof window._TELAS !== 'undefined' && Array.isArray(window._TELAS)){
+        if(window._TELAS.indexOf('trapScreen') < 0) window._TELAS.push('trapScreen');
+      }
+    }catch(e){}
+  }
+
+  window.abrirTreinamentosApresentacoes = function(){
+    _injectCss();
+    _registrarNoArrayTelas();
+    var host = document.getElementById('trapScreen');
+    if(!host) return;
+    host.style.background = 'var(--bg, #0a0e1a)';
+
+    /* Usa _mostrarTela do sistema (esconde todas + mostra trapScreen). */
+    if(typeof window._mostrarTela === 'function'){
+      window._mostrarTela('trapScreen', false);
+    } else {
+      /* Fallback: esconde manualmente */
+      ['turmasScreen','telaTurmasScreen','mapeamentoScreen','novaPipelineScreen','dashboard','loginScreen','propostaComercialScreen','turmaInativaScreen'].forEach(function(t){
+        var el = document.getElementById(t);
+        if(el) el.style.display = 'none';
+      });
+      host.style.display = 'block';
+    }
+
+    if(!_montado){
+      _buildShell();
+      _montado = true;
+    }
+    _carregar(function(){ _renderTela(); });
+    window.scrollTo(0, 0);
+  };
+
+  window.voltarHomeTrap = function(){
+    /* Volta pra home (turmasScreen contém a .home-grid) usando o
+       sistema do dashboard quando disponível. */
+    if(typeof window._mostrarTela === 'function'){
+      window._mostrarTela('turmasScreen', false);
+    } else {
+      var host = document.getElementById('trapScreen');
+      if(host) host.style.display = 'none';
+      var home = document.getElementById('turmasScreen');
+      if(home) home.style.display = '';
+    }
+  };
+
+})();
