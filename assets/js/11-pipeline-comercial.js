@@ -36,6 +36,23 @@
            'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     return M[_npMes-1]+' / '+_npAno;
   }
+  /* Retorna array de YYYY-MM cobrindo o período ativo.
+     'mes'/'ano'/'dia' → [_mesKey()] (mês corrente).
+     'periodo' → todos os meses entre start.y/m e end.y/m inclusivos. */
+  function _npMesesAtivos(){
+    if(_npCalMode === 'periodo' && _npPerSel && _npPerSel.start && _npPerSel.end){
+      var meses = [];
+      var y = _npPerSel.start.y, m = _npPerSel.start.m;
+      var yF = _npPerSel.end.y, mF = _npPerSel.end.m;
+      while(y < yF || (y === yF && m <= mF)){
+        meses.push(y + '-' + String(m).padStart(2,'0'));
+        m++; if(m > 12){ m = 1; y++; }
+        if(meses.length > 60) break; /* salvaguarda: max 5 anos */
+      }
+      return meses.length ? meses : [_mesKey()];
+    }
+    return [_mesKey()];
+  }
 
   /* ── Semanas (regra A): seg-sex + sáb/dom ANEXOS pra semana anterior,
         exceto sáb/dom que sejam dia 1 ou 2 do mês → vão pra semana POSTERIOR.
@@ -376,6 +393,8 @@
     window._npTurmasMeta={};  /* reset cache de metas das turmas do mês */
     if(typeof window._fbGet!=='function') return;
     var mkSnap = _mesKey();
+    var mksRange = _npMesesAtivos(); /* array de YYYY-MM no período ativo */
+    var multiMes = mksRange.length > 1;
     var genSnap = _npGen;
     /* Skeleton enquanto carrega */
     var _skelAlvos=['npTop3','npChartConsultores','npChartMeta','npMetasGrid','npTurmasAtingimentoGrid'];
@@ -402,12 +421,14 @@
         var tid=e[0],td=e[1];
         if(td.mesMeta){
           /* Vínculo explícito (turmas com mesMeta definido) */
-          if(td.mesMeta!==mkSnap) return;
+          if(multiMes){ if(mksRange.indexOf(td.mesMeta) < 0) return; }
+          else { if(td.mesMeta!==mkSnap) return; }
         } else {
           /* Fallback legado: âncora em periodEnd — turma conta só no mês em que termina.
              Use mesMeta no modal ou _migrarMesMetaLegado() para controle explícito. */
           var pe=(td.periodEnd||td.periodStart||'').slice(0,7);
-          if(pe!==mkSnap) return;
+          if(multiMes){ if(mksRange.indexOf(pe) < 0) return; }
+          else { if(pe!==mkSnap) return; }
         }
         /* Cachear meta da turma para o bloco de atingimento */
         window._npTurmasMeta[tid]={nome:td.nome||tid,meta:+(td.meta||0)};
@@ -492,16 +513,28 @@
     window._npMetaGeral=null;
 
     var mk=_mesKey();
+    var mksRange = _npMesesAtivos();
 
-    /* Vendas avulsas do mês */
-    if(typeof window._fbChange==='function'){
+    /* Vendas avulsas. Mês único → listener (real-time). Multi-mês → fbGet
+       paralelo de todos os meses do range, merge e render (snapshot). */
+    if(mksRange.length === 1 && typeof window._fbChange==='function'){
       _npListenerAvulso=window._fbChange('pipelineSales/'+mk, function(data){
         if(_genLocal !== _npGen) return;
         _npVendasAvulso=data||{};
         _npRenderTudo();
       });
+    } else if(mksRange.length > 1){
+      Promise.all(mksRange.map(function(k){
+        return window._fbGet('pipelineSales/'+k).catch(function(){ return {}; });
+      })).then(function(arr){
+        if(_genLocal !== _npGen) return;
+        var merged={};
+        arr.forEach(function(d){ if(d) Object.assign(merged, d); });
+        _npVendasAvulso=merged;
+        _npRenderTudo();
+      });
     } else {
-      /* Fallback: fbGet */
+      /* Fallback: fbGet mês único */
       window._fbGet('pipelineSales/'+mk).then(function(d){
         if(_genLocal !== _npGen) return;
         _npVendasAvulso=d||{};
@@ -625,6 +658,20 @@
     var sessao=typeof _getSessao==='function'?_getSessao():null;
     var isPerfil=sessao&&sessao.perfil==='consultor';
 
+    /* Filtro de data baseado no calendário (canto superior direito).
+       'dia' → só vendas com v.data === dia exato.
+       'periodo' → só vendas com v.data dentro do range [start, end].
+       'mes'/'ano' → já filtrado upstream pelo _mesKey() na coleta do Firebase. */
+    var dataIni=null, dataFim=null;
+    if(_npCalMode==='dia' && _npDiaSel){
+      var dy=_npDiaSel.y, dm=String(_npDiaSel.m).padStart(2,'0'), dd=String(_npDiaSel.d).padStart(2,'0');
+      dataIni=dataFim=dy+'-'+dm+'-'+dd;
+    } else if(_npCalMode==='periodo' && _npPerSel && _npPerSel.start && _npPerSel.end){
+      var s=_npPerSel.start, e=_npPerSel.end;
+      dataIni=s.y+'-'+String(s.m).padStart(2,'0')+'-'+String(s.d).padStart(2,'0');
+      dataFim=e.y+'-'+String(e.m).padStart(2,'0')+'-'+String(e.d).padStart(2,'0');
+    }
+
     return lista.filter(function(v){
       if(isPerfil){
         var meuNome=(sessao.nome||sessao.login||'').toUpperCase();
@@ -636,6 +683,13 @@
       if(ori){
         if(ori.slice(0,2)==='t:'){if(v._turmaId!==ori.slice(2)) return false;}
         else{if(v._src!==ori) return false;}
+      }
+      if(dataIni && dataFim){
+        /* Filtra apenas vendas com data explicitamente fora do range.
+           Vendas sem data (turma com cl.data vazio) passam — assume que
+           pertencem ao mês carregado pelo Firebase. */
+        var dV=String(v.data||'').slice(0,10);
+        if(dV && (dV<dataIni || dV>dataFim)) return false;
       }
       if(q){
         var ql=q.toLowerCase();
@@ -2313,16 +2367,36 @@
         + '.np-sem-cons-num{width:18px;text-align:center;font-size:10px;color:var(--muted);font-weight:700;}'
         + '.np-sem-cons-row input[type=checkbox]{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}'
         + '.np-sem-cons-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}'
-        + '.np-sem-cons-nome{flex:1;font-weight:600;color:var(--text);}'
-        + '.np-sem-cons-tag{font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,224,0,.15);color:#ffe000;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}'
-        + '.np-sem-cons-vals{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;min-width:160px;}'
+        + '.np-sem-cons-nome{flex:1;font-weight:600;color:var(--text);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+        + '.np-sem-cons-tag{font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,224,0,.15);color:#ffe000;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;}'
+        + '.np-sem-cons-vals{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
         + '.np-sem-cons-vals b{color:var(--accent);}'
+        /* ── Opção 5 · Split sidebar + lista ────────────── */
+        + '.np-sem-grid{display:grid;grid-template-columns:260px 1fr;gap:14px;align-items:start;margin-top:14px;}'
+        + '.np-sem-grid .np-sem-batch{position:sticky;top:0;display:flex;flex-direction:column;gap:12px;}'
+        + '.np-sem-grid .np-sem-batch-h{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-bottom:0;padding-bottom:10px;border-bottom:1px dashed var(--border2);}'
+        + '.np-sem-grid .np-sem-batch-h .np-sem-sel-btn{justify-content:flex-start;text-align:left;width:100%;}'
+        + '.np-sem-grid .np-sem-batch-h .cnt{font-size:11px;color:var(--muted);margin-top:4px;}'
+        + '.np-sem-grid .np-sem-batch-row{grid-template-columns:1fr;margin-bottom:0;padding-bottom:10px;border-bottom:1px dashed var(--border2);}'
+        + '.np-sem-grid .np-sem-batch-acts{flex-direction:column;}'
+        + '.np-sem-grid .np-sem-batch-btn{width:100%;text-align:center;}'
+        + '.np-sem-grid .np-sem-list{display:flex;flex-direction:column;gap:5px;min-width:0;}'
+        + '.np-sem-grid .np-sem-cons-row{display:grid;grid-template-columns:24px 18px 28px minmax(0,1fr) auto minmax(0,1fr) auto;gap:8px;align-items:center;}'
+        + '@media(max-width:780px){.np-sem-grid{grid-template-columns:1fr;}.np-sem-grid .np-sem-batch{position:static;}}'
         /* Footer */
         + '.np-sem-f{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border2);gap:10px;}'
         + '.np-sem-f .info{font-size:10px;color:var(--muted);}'
         + '.np-sem-f .actions{display:flex;gap:8px;}'
         + '.np-sem-btn{font-size:11px;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:inherit;border:1px solid var(--border2);background:transparent;color:var(--text);font-weight:600;}'
-        + '.np-sem-btn:hover{border-color:var(--accent);color:var(--accent);}';
+        + '.np-sem-btn:hover{border-color:var(--accent);color:var(--accent);}'
+        /* Atalhos de seleção rápida no header do lote */
+        + '.np-sem-sel-btn{background:var(--surface2,#1c2128);border:1px solid var(--border);color:var(--muted);font-size:11px;font-weight:700;padding:6px 12px;border-radius:7px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:5px;}'
+        + '.np-sem-sel-btn:hover{color:var(--text);border-color:var(--border2,rgba(255,255,255,.14));transform:translateY(-1px);}'
+        + '.np-sem-sel-sem:hover{color:#ffe000;border-color:rgba(255,238,0,.4);background:rgba(255,238,0,.06);}'
+        + '.np-sem-sel-com:hover{color:#c8f05a;border-color:rgba(200,240,90,.4);background:rgba(200,240,90,.06);}'
+        + '.np-sem-sel-clear:hover{color:#ff5252;border-color:rgba(255,82,82,.4);background:rgba(255,82,82,.06);}'
+        /* Botão Copiar por linha */
+        + '.np-sem-cons-copy:hover{background:rgba(200,240,90,.18) !important;border-color:rgba(200,240,90,.5) !important;transform:translateY(-1px);}';
       document.head.appendChild(st);
     }
 
@@ -2351,6 +2425,7 @@
         + '<span class="np-sem-cons-nome">'+_esc(nome)+'</span>'
         + (has?'<span class="np-sem-cons-tag">meta definida</span>':'')
         + '<span class="np-sem-cons-vals">'+vals+'</span>'
+        + (has?'<button type="button" class="np-sem-cons-copy" data-copy-nome="'+nomeEsc+'" title="Copiar Mín/Bás/Mas desta semana para o painel superior" style="background:rgba(200,240,90,.10);border:1px solid rgba(200,240,90,.30);color:var(--accent);font-size:10px;font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:inherit;flex-shrink:0;margin-left:6px;transition:all .15s;">📋 Copiar</button>':'')
         + '</label>';
     }
     var listaHtml = consList.map(_consRowHtml).join('');
@@ -2370,23 +2445,30 @@
       +       '<button class="np-sem-cfg-btn" id="npSemCfgBtn" title="Configurar janelas das semanas manualmente">⚙ Janelas</button>'
       +     '</div>'
       +     '<div class="np-sem-cfg-panel" id="npSemCfgPanel" style="display:none;"></div>'
-      +     '<div class="np-sem-batch">'
-      +       '<div class="np-sem-batch-h">'
-      +         '<label><input type="checkbox" id="npSemAllCk"> Selecionar todos</label>'
-      +         '<span class="cnt"><span id="npSemSelN">0</span> de '+consList.length+' selecionados</span>'
-      +       '</div>'
-      +       '<div class="np-sem-batch-row">'
-      +         '<div class="fld"><span class="lbl min">🥈 MÍNIMA</span><input id="npSemBatchMin" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)"></div>'
-      +         '<div class="fld"><span class="lbl bas">🥉 BÁSICA</span><input id="npSemBatchBas" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)"></div>'
-      +         '<div class="fld"><span class="lbl mas">🥇 MASTER</span><input id="npSemBatchMas" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)"></div>'
-      +       '</div>'
-      +       '<div class="np-sem-batch-acts">'
-      +         '<button class="np-sem-batch-btn primary" id="npSemAplicar" disabled>Aplicar aos selecionados</button>'
-      +         '<button class="np-sem-batch-btn" id="npSemCopiarAnt">↺ Copiar semana anterior</button>'
-      +         '<button class="np-sem-batch-btn" id="npSemCopiarMensal" title="Divide a meta mensal proporcionalmente">⥥ Da meta mensal (÷'+semanas.length+')</button>'
-      +       '</div>'
+      +     '<div class="np-sem-grid">'
+      +       '<aside class="np-sem-batch">'
+      +         '<div class="np-sem-batch-h">'
+      +           '<span style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Selecionar</span>'
+      +           '<button type="button" class="np-sem-sel-btn" data-sel="all" title="Marcar todos">✓ Todos</button>'
+      +           '<button type="button" class="np-sem-sel-btn np-sem-sel-sem" data-sel="sem" title="Marcar só consultores SEM meta nesta semana — útil após copiar valores de quem já tem">○ Sem meta</button>'
+      +           '<button type="button" class="np-sem-sel-btn np-sem-sel-com" data-sel="com" title="Marcar só consultores COM meta nesta semana">● Com meta</button>'
+      +           '<button type="button" class="np-sem-sel-btn np-sem-sel-clear" data-sel="clear" title="Desmarcar tudo">✕ Limpar</button>'
+      +           '<label style="display:none;"><input type="checkbox" id="npSemAllCk"></label>'
+      +           '<span class="cnt"><span id="npSemSelN">0</span> de '+consList.length+' selecionados</span>'
+      +         '</div>'
+      +         '<div class="np-sem-batch-row">'
+      +           '<div class="fld"><span class="lbl min">🥈 MÍNIMA</span><input id="npSemBatchMin" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)"></div>'
+      +           '<div class="fld"><span class="lbl bas">🥉 BÁSICA</span><input id="npSemBatchBas" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)"></div>'
+      +           '<div class="fld"><span class="lbl mas">🥇 MASTER</span><input id="npSemBatchMas" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)"></div>'
+      +         '</div>'
+      +         '<div class="np-sem-batch-acts">'
+      +           '<button class="np-sem-batch-btn primary" id="npSemAplicar" disabled>Aplicar aos selecionados</button>'
+      +           '<button class="np-sem-batch-btn" id="npSemCopiarAnt">↺ Copiar semana anterior</button>'
+      +           '<button class="np-sem-batch-btn" id="npSemCopiarMensal" title="Divide a meta mensal proporcionalmente">⥥ Da meta mensal (÷'+semanas.length+')</button>'
+      +         '</div>'
+      +       '</aside>'
+      +       '<div class="np-sem-list" id="npSemList">'+listaHtml+'</div>'
       +     '</div>'
-      +     '<div class="np-sem-list" id="npSemList">'+listaHtml+'</div>'
       +   '</div>'
       +   '<div class="np-sem-f">'
       +     '<div class="info">💡 Mudou no Firebase ao clicar <b>Aplicar</b>. Cada venda conta para semanal E mensal.</div>'
@@ -2420,10 +2502,61 @@
         _rerender();
       });
     });
-    /* Select all */
+    /* Select all (hidden, mantido pra compat) */
     ov.querySelector('#npSemAllCk').addEventListener('change', function(e){
       ov.querySelectorAll('[data-sem-ck]').forEach(function(c){ c.checked = e.target.checked; });
       _atualizarContador();
+    });
+    /* 4 atalhos de seleção rápida — usa .has class no row pra detectar meta */
+    function _semAplicarSelecao(modo){
+      var n=0;
+      ov.querySelectorAll('.np-sem-cons-row').forEach(function(row){
+        var chk = row.querySelector('[data-sem-ck]');
+        if(!chk) return;
+        var has = row.classList.contains('has');
+        var marca = false;
+        if(modo === 'all') marca = true;
+        else if(modo === 'clear') marca = false;
+        else if(modo === 'sem') marca = !has;
+        else if(modo === 'com') marca = has;
+        chk.checked = marca;
+        if(marca) n++;
+      });
+      _atualizarContador();
+      if(typeof _showToast==='function'){
+        var msgs = { all:'✓ '+n+' consultores marcados', clear:'✕ Seleção limpa',
+                     sem:'○ '+n+' SEM meta marcados', com:'● '+n+' COM meta marcados' };
+        _showToast(msgs[modo]||'', 'var(--accent)');
+      }
+    }
+    ov.querySelectorAll('[data-sel]').forEach(function(b){
+      b.addEventListener('click', function(){ _semAplicarSelecao(b.dataset.sel); });
+    });
+    /* 📋 Copiar — lê valores da semana ativa do consultor clicado e preenche
+       o painel superior. Como o button está dentro do <label>, precisa
+       parar a propagação pra não togglar o checkbox da linha. */
+    ov.addEventListener('click', function(ev){
+      var btn = ev.target.closest('.np-sem-cons-copy');
+      if(!btn) return;
+      ev.stopPropagation();
+      ev.preventDefault();
+      var nome = btn.getAttribute('data-copy-nome');
+      if(!nome) return;
+      /* Desfaz a entidade HTML do data-attr (data-copy-nome usa &quot;) */
+      nome = nome.replace(/&quot;/g, '"');
+      var ms = (((_npGoalsSem||{})[nome])||{})[_npSemModalSel] || {};
+      if(!ms.min && !ms.bas && !ms.mas){
+        if(typeof _showToast==='function') _showToast('Sem valores pra copiar de '+nome+' na semana '+_npSemModalSel, 'var(--amber)');
+        return;
+      }
+      function _fmtNum(v){ return Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+      var iMin = ov.querySelector('#npSemBatchMin');
+      var iBas = ov.querySelector('#npSemBatchBas');
+      var iMas = ov.querySelector('#npSemBatchMas');
+      if(iMin) iMin.value = ms.min ? _fmtNum(ms.min) : '';
+      if(iBas) iBas.value = ms.bas ? _fmtNum(ms.bas) : '';
+      if(iMas) iMas.value = ms.mas ? _fmtNum(ms.mas) : '';
+      if(typeof _showToast==='function') _showToast('📋 Valores de '+nome+' (Sem '+_npSemModalSel+') copiados. Marque os destinos e clique Aplicar.', 'var(--accent)');
     });
     /* Click checkbox individual */
     ov.addEventListener('change', function(e){
