@@ -28,7 +28,7 @@
   let _modoLista = false;
   /* Maximo de cards visiveis por coluna sem precisar rolar.
      Acima disso, mostra "Ver mais X leads" no fundo. */
-  let _maxCards = 5;
+  let _maxCards = 4;
   /* Colunas em que o usuario clicou "Ver mais": passam a permitir
      scrollar livremente dentro da altura fixa (4 cards). */
   const _colsExpandidas = new Set();
@@ -153,7 +153,7 @@
 .fv-fchip:hover{ border-color:rgba(255,255,255,0.18); }
 .fv-fchip.active{ background:rgba(212,165,116,0.15); border-color:var(--accent); color:var(--accent); }
 
-.fv-main{ display:grid; grid-template-columns:280px 1fr; gap:14px; align-items:start; }
+.fv-main{ display:grid; grid-template-columns:280px minmax(0, 1fr); gap:14px; align-items:start; }
 .fv-side{ position:sticky; top:20px; display:flex; flex-direction:column; gap:14px; }
 .fv-funil{ background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:12px; padding:14px; }
 .fv-funil-h{ font-size:11px; text-transform:uppercase; color:var(--txt-2); font-weight:600; letter-spacing:0.06em; }
@@ -244,10 +244,10 @@
 .fv-vbtn.active{ background:var(--accent); color:var(--bg); }
 
 /* KANBAN */
-.fv-kanban{ display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; }
+.fv-kanban{ display:flex; gap:10px; overflow-x:auto; overflow-y:visible; padding-bottom:6px; min-width:0; width:100%; }
 .fv-kanban::-webkit-scrollbar{ height:6px; }
 .fv-kanban::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.14); border-radius:3px; }
-.fv-col{ background:var(--bg,#0d1117); border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px; max-height:calc(var(--fv-max,5) * 92px + 100px); overflow-y:auto; min-width:0; flex:1; }
+.fv-col{ background:var(--bg,#0d1117); border:1px solid var(--border); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px; max-height:calc(var(--fv-max,4) * 138px + 100px); overflow-y:auto; min-width:260px; max-width:260px; flex-shrink:0; }
 /* Scrollbar mais visivel quando o usuario abriu "Ver mais" e a coluna
    passou a ter scroll interno */
 .fv-col::-webkit-scrollbar{ width:6px; }
@@ -264,7 +264,7 @@
 .fv-col-soma b{ color:var(--accent); }
 .fv-col-add{ background:transparent; border:1px dashed rgba(255,255,255,0.14); color:var(--txt-3,#6b7280); padding:4px; border-radius:6px; font-size:10px; cursor:pointer; font-family:inherit; margin-top:2px; font-weight:600; transition:all 0.15s; }
 .fv-col-add:hover{ color:var(--accent); border-color:var(--accent); }
-.fv-card{ background:var(--bg-3,#1c2128); border:1px solid var(--border); border-left:3px solid var(--col-cor,var(--accent)); border-radius:8px; padding:8px 10px; cursor:grab; transition:all 0.15s; position:relative; font-size:11px; }
+.fv-card{ background:var(--bg-3,#1c2128); border:1px solid var(--border); border-left:3px solid var(--col-cor,var(--accent)); border-radius:8px; padding:8px 10px; cursor:grab; transition:all 0.15s; position:relative; font-size:11px; flex-shrink:0; min-height:130px; overflow:hidden; }
 .fv-card:hover{ transform:translateY(-1px); border-color:rgba(255,255,255,0.14); box-shadow:0 4px 12px rgba(0,0,0,0.3); }
 .fv-card:active{ cursor:grabbing; }
 .fv-card.dragging{ opacity:0.5; }
@@ -397,11 +397,11 @@
    pra nao duplicar com o badge .fv-card-prob. */
 .fv-card-progress{
   display:none;
-  position:relative;
+  position:absolute;
+  left:12px; right:12px; bottom:10px;
   height:4px; border-radius:2px;
   background:rgba(255,255,255,.06);
-  margin-top:6px;
-  overflow:visible;
+  overflow:hidden;
 }
 .fv-card-progress .bar{
   height:100%;
@@ -2206,10 +2206,9 @@
          naturalmente. Sem botoes "Ver mais"/"Ver menos". */
       const cards = leadsEt.map(l => _cardHtml(l, et.cor)).join('');
       const mais = '';
-      /* OPÇÃO 8: colunas vazias viram mini-colunas verticais (default). Click na mini
-         expande; click no header de coluna cheia retrai. Estado em _colsToggleadas. */
-      const invertida = _colsToggleadas.has(i);
-      const mini = invertida ? !vazia : vazia;
+      /* Default: colunas começam em mini (64px) — abre só a que o usuário clicar.
+         Estado em _colsToggleadas (presence = aberta/expandida). */
+      const mini = !_colsToggleadas.has(i);
       if(mini){
         const badge = vazia
           ? `<div class="fv-col-vazia-icone" style="background:${et.cor}22;border-color:${et.cor}55;color:${et.cor};">${et.ico||'•'}</div>`
@@ -2349,9 +2348,9 @@
   }
 
   function _render(){
-    /* Garantia: _maxCards sempre 5 (grid fixo) e --fv-max sincronizado */
-    _maxCards = 5;
-    document.documentElement.style.setProperty('--fv-max', '5');
+    /* Garantia: _maxCards sempre 4 (grid fixo) e --fv-max sincronizado */
+    _maxCards = 4;
+    document.documentElement.style.setProperty('--fv-max', '4');
     const arr = _filtrar(_leads);
     /* KPIs e Funil de Conversão consideram só leads ATIVOS (sem perdido/reciclar).
        Kanban e Lista escondem PERDIDOS (somem do funil de verdade) mas mantêm
@@ -2461,18 +2460,18 @@
     /* Botão + dentro das colunas vazias iconizadas (Opção 8) */
     $$('.fv-col-vazia-add').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); _abrirNovoLead(+b.dataset.et); }));
 
-    /* Click na mini-coluna vertical (área fora do botão "+") → expande para coluna normal */
+    /* Accordion: click na mini abre só ela (fecha as outras). Click no header
+       da aberta retrai. Apenas uma coluna full por vez. */
     $$('.fv-col-vazia[data-mini="1"]').forEach(col => col.addEventListener('click', e => {
       if(e.target.closest('.fv-col-vazia-add')) return;
       const i = +col.dataset.et;
-      if(_colsToggleadas.has(i)) _colsToggleadas.delete(i); else _colsToggleadas.add(i);
+      _colsToggleadas.clear();
+      _colsToggleadas.add(i);
       _render();
     }));
-    /* Click no header da coluna expandida (.fv-col-h) → retrai em mini-vertical */
     $$('.fv-col-h[data-toggle-col]').forEach(h => h.addEventListener('click', e => {
       if(e.target.closest('button')) return;
-      const i = +h.dataset.toggleCol;
-      if(_colsToggleadas.has(i)) _colsToggleadas.delete(i); else _colsToggleadas.add(i);
+      _colsToggleadas.clear();
       _render();
     }));
   }
@@ -3149,11 +3148,11 @@
       _opCollapsed = !_opCollapsed;
       op.classList.toggle('collapsed', _opCollapsed);
       if(expandindo){
+        /* Accordion: só uma coluna aberta por vez. Abre a PRIMEIRA com leads
+           (ou nenhuma se todas vazias). Usuário alterna clicando nas minis. */
         _colsToggleadas.clear();
-        ETAPAS.forEach((_, i) => {
-          const tem = _leads.some(l => l.etapa === i);
-          if(tem) _colsToggleadas.add(i); /* inverte default → fica mini */
-        });
+        const primeiraComLeads = ETAPAS.findIndex((_, i) => _leads.some(l => l.etapa === i));
+        if(primeiraComLeads >= 0) _colsToggleadas.add(primeiraComLeads);
         _render();
       }
     });
@@ -3176,9 +3175,9 @@
     _buildShell();
     _attachFiltros();
     _attachOpToggle();
-    /* Forca _maxCards a sempre ser 5 — grid fixo, scroll para excedente */
-    _maxCards = 5;
-    document.documentElement.style.setProperty('--fv-max', '5');
+    /* Forca _maxCards a sempre ser 4 — grid fixo, scroll para excedente */
+    _maxCards = 4;
+    document.documentElement.style.setProperty('--fv-max', '4');
     await _carregar();
     // Permissão visual
     const u = window._currentUser || {};
