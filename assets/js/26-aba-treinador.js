@@ -86,7 +86,7 @@ function renderTreinador(){
           <div style="position:absolute;top:3px;left:${isMinistrante?'23':'3'}px;width:18px;height:18px;border-radius:50%;background:${isMinistrante?'#0f0f0f':'var(--muted)'};transition:left .3s;"></div>
         </div>
       </div>`:'';
-    return `<div class="person-card" onclick="openTreinadorDetail('${t}')" style="position:relative;">
+    return `<div class="person-card" onclick="openTreinadorDetail('${t}')" style="position:relative;--c-cor:${cor};">
       <div style="position:absolute;top:14px;right:14px;display:flex;flex-direction:column;align-items:center;line-height:1;">
         <span style="font-size:36px;font-weight:800;color:var(--accent);line-height:1;">${td.length}</span>
         <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;">cliente${td.length!==1?'s':''}</span>

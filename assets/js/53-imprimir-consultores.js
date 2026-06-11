@@ -686,8 +686,20 @@
   }
   function _rerender(){
     var ov = document.getElementById('icvOv'); if(!ov) return;
+    /* Preserva posição de scroll do painel de opções e do preview pra evitar
+       que clicar em checkboxes específicos (esc_sel, pe_*, parents) volte
+       tudo pro topo. */
+    var optsEl = ov.querySelector('.icv-opts');
+    var pvEl   = ov.querySelector('#icvPvC');
+    var scOpts = optsEl ? optsEl.scrollTop : 0;
+    var scPv   = pvEl ? pvEl.scrollTop : 0;
     ov.outerHTML = _renderModal();
-    _wire(document.getElementById('icvOv'));
+    var ovNovo = document.getElementById('icvOv');
+    _wire(ovNovo);
+    var optsN = ovNovo && ovNovo.querySelector('.icv-opts');
+    var pvN   = ovNovo && ovNovo.querySelector('#icvPvC');
+    if(optsN) optsN.scrollTop = scOpts;
+    if(pvN)   pvN.scrollTop   = scPv;
   }
 
   /* ──────────── Geração de conteúdo ──────────── */
@@ -1685,6 +1697,8 @@
   var ORDEM_HIERARQUICA = {
     /* 10-29 · EXECUTIVOS (sempre no topo) */
     'ex_fin':       10,
+    /* Detalhado por consultor SEMPRE logo abaixo do Resumo financeiro */
+    'ex_detalh':    11,
     'ex_meta':      12,
     'ex_rk_cons':   14,
     'ex_rk_trein':  16,
@@ -1696,8 +1710,6 @@
     'ex_aberto':    24,
     'ex_entradas':  26,
     'ex_assin':     28,
-    /* 30-39 · DETALHADO (vinculado ao filtro) */
-    'ex_detalh':    30,
     /* 40-49 · TREINAMENTOS / produtos */
     'tr_agrup':     40,
     'tr_top5':      42,
@@ -1851,11 +1863,14 @@
        CINZA    = #888888  · textos secundários (sub, header de tabela)
        HAIRLINE = #d6d6d6  · linhas finas */
     var css = ''
-      /* Margens enxutas pra caber mais conteúdo por página */
-      + '@page{size:A4;margin:12mm 12mm 14mm;'
+      /* Formato A4 explícito (210×297mm, retrato) + margens enxutas.
+         "size: A4 portrait" força o navegador a usar A4 em qualquer região. */
+      + '@page{size:A4 portrait;size:210mm 297mm;margin:12mm 12mm 14mm;'
       +   '@bottom-center{content:"'+footerText.replace(/"/g,'\\"')+'" counter(page) " / " counter(pages);'
       +     'font-family:Helvetica,Arial,sans-serif;font-size:7pt;color:#888;letter-spacing:.10em;}'
       + '}'
+      /* Reforço pro caso do navegador ignorar o size:A4 — limita largura visual */
+      + '@media print{html,body{width:210mm;}}'
       + '*{box-sizing:border-box;}'
       + 'html,body{margin:0;padding:0;}'
       + 'body{font-family:Helvetica,Arial,sans-serif;background:#fff;color:#111;font-size:9pt;line-height:1.3;}'
@@ -1911,9 +1926,13 @@
       /* Preview no pop-up antes da impressão (mesmas margens) */
       + '@media screen{body{max-width:210mm;margin:0 auto;padding:12mm;background:#f4f3f0;}}';
 
-    var docTitle = 'Relatório Executivo Consultor · '
-      + (modoIndividual ? (consultorUnico || 'Febracis')
-                        : (turmaNome || 'Febracis'));
+    /* Nome do arquivo PDF · usa o <title> da página gerada.
+       Padrão "Turma & Consultor" quando os dois existem;
+       senão usa o que tiver disponível. */
+    var partesTitulo = [];
+    if(turmaNome) partesTitulo.push(turmaNome);
+    if(modoIndividual && consultorUnico) partesTitulo.push(consultorUnico);
+    var docTitle = partesTitulo.length ? partesTitulo.join(' & ') : 'Febracis';
     var doc = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
       + '<title>'+_escSafe(docTitle)+'</title>'
       + '<style>'+css+'</style></head><body>'

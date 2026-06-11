@@ -210,6 +210,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* Cor única por consultor/treinador — vem de --c-cor injetada inline
+       no person-card. Cada nome com cor diferente facilita distinguir
+       visualmente no accordion colapsado. */
+    color: var(--c-cor, var(--text, #e6edf3)) !important;
+    text-shadow: 0 1px 4px rgba(0,0,0,.55);
   }
 
   /* Quando expandido, scrolla suavemente e tem indicação visual */

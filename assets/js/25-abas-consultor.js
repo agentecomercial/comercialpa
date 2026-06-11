@@ -43,7 +43,7 @@ function renderConsultor(){
     const barW=metaInd>0?Math.min(Math.round((pago/(metaInd*1.5))*100),100):0;
     const _pos=_posMapC[c];
     const _medal=_pos===0?'🥇':_pos===1?'🥈':_pos===2?'🥉':`<span style="font-size:20px;font-weight:700;color:var(--muted);">${_pos+1}º</span>`;
-    return `<div class="person-card" onclick="openConsultorDetail('${c}')" style="position:relative;">
+    return `<div class="person-card" onclick="openConsultorDetail('${c}')" style="position:relative;--c-cor:${cor};">
       <div style="position:absolute;top:14px;right:14px;display:flex;flex-direction:column;align-items:center;line-height:1;">
         <span style="font-size:36px;font-weight:800;color:var(--accent);line-height:1;">${cd.length}</span>
         <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;">cliente${cd.length!==1?'s':''}</span>
