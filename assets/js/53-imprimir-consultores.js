@@ -23,7 +23,7 @@
     return _mesFiltro || _mesAtualYM();
   }
   /* Pré-seleção sugerida — marcas com ⭐ e marcadas por default na 1ª abertura. */
-  var PRE_SELECT = ['esc_todos','st_pago','st_aberto','pe_curso_atual','ex_fin','ex_trein_pg','ex_entradas','ex_negoc'];
+  var PRE_SELECT = ['esc_todos','st_negoc','st_pago','st_aberto','pe_curso_atual','ex_fin','ex_trein_pg','ex_entradas','ex_negoc'];
   var _primeiraAbertura = true;
   /* Cache de turmas vindas do Firebase (assíncrono — preenchido após o load) */
   var _fbTurmasCache = {};
@@ -48,7 +48,7 @@
       { id:'pe_outro',       ic:'🗓', t:'Escolher outro período', d:'Escolha mês + turma específica (ou todas as turmas do mês)', extra:'periodo' }
     ]},
     { id:'escopo', ic:'📊', nome:'Por escopo (quem entra no relatório)', opts:[
-      { id:'esc_parent', ic:'👥', t:'Todos os consultores', d:'Marque as variações abaixo:', isParent:true, subs:[
+      { id:'esc_parent', ic:'👥', t:'Quem aparece no relatório', d:'FILTRO — recorta TODOS os blocos pelos consultores marcados:', isParent:true, subs:[
         { id:'esc_todos', ic:'👥', t:'Todos os consultores' },
         { id:'esc_top3',  ic:'🥇', t:'Top 3 consultores' },
         { id:'esc_bateu', ic:'🎯', t:'Quem bateu meta' },
@@ -56,10 +56,10 @@
       ]}
     ]},
     { id:'status', ic:'💰', nome:'Por status de venda', opts:[
-      { id:'st_parent', ic:'📋', t:'Todos os clientes', d:'Marque os status que devem aparecer:', isParent:true, subs:[
+      { id:'st_parent', ic:'📋', t:'Quais status entram no relatório', d:'FILTRO — só os status marcados aparecem nos blocos:', isParent:true, subs:[
+        { id:'st_negoc',   ic:'🤝', t:'Em NEGOCIAÇÃO' },
         { id:'st_pago',    ic:'💚', t:'Só PAGOS' },
         { id:'st_aberto',  ic:'🟠', t:'Só EM ABERTO' },
-        { id:'st_negoc',   ic:'🤝', t:'Em NEGOCIAÇÃO' },
         { id:'st_entrada', ic:'💵', t:'Com ENTRADA recebida' },
         { id:'st_desist',  ic:'❌', t:'Desistências / cancelados' }
       ]}
@@ -82,7 +82,7 @@
         { id:'ex_meta',      ic:'📈', t:'Meta vs realizado' },
         { id:'ex_assin',     ic:'✍', t:'Assinatura / gerador' }
       ]},
-      { id:'ex_detalh', ic:'📄', t:'Detalhado · 1 página por consultor', d:'PDF paginado para entrega individual' }
+      { id:'ex_detalh', ic:'📄', t:'Detalhado por consultor', d:'Lista completa de clientes por consultor (fluxo contínuo)' }
     ]}
   ];
 
@@ -126,7 +126,7 @@
       /* Escala global do modal — multiplica todos os tamanhos via var(--icv-scale).
          Inicializada via JS (a partir de _icvScale) ao abrir; default fallback = 1.30.
          Botões A−/A+ no header ajustam ao vivo e salvam em localStorage. */
-      '.icv-modal{--icv-scale:1.30;background:#161b22;border:1px solid rgba(255,255,255,.08);border-radius:14px;width:100%;max-width:1100px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 30px 60px -15px rgba(0,0,0,.7);}',
+      '.icv-modal{--icv-scale:1.30;background:#161b22;border:1px solid rgba(255,255,255,.08);border-radius:14px;width:100%;max-width:min(1500px,96vw);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 30px 60px -15px rgba(0,0,0,.7);}',
       '.icv-h{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);}',
       '.icv-h .ttl{font-size:calc(14px * var(--icv-scale,1));font-weight:700;color:#e6edf3;}',
       '.icv-h .sub{font-size:calc(10px * var(--icv-scale,1));color:#6b7280;margin-top:2px;}',
@@ -155,13 +155,16 @@
       '.icv-toolbar a{color:#d4a574;cursor:pointer;font-weight:600;margin-right:10px;}',
       '.icv-toolbar a:hover{text-decoration:underline;}',
       '.icv-toolbar .cnt b{color:#d4a574;font-weight:700;}',
-      '.icv-b{flex:1;overflow:hidden;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:0;}',
+      /* Mais espaço pro preview (~58%) e menos pras opções (~42%) — caber relatório sem cortar */
+      '.icv-b{flex:1;overflow:hidden;padding:0;display:grid;grid-template-columns:minmax(360px,42fr) minmax(560px,58fr);gap:0;}',
       '@media(max-width:820px){.icv-b{grid-template-columns:1fr;}}',
       '.icv-opts{overflow-y:auto;padding:8px 14px 14px;border-right:1px solid rgba(255,255,255,.06);}',
       '.icv-preview{overflow-y:auto;padding:14px;background:#0a0e13;}',
       '.icv-preview .pv-h{display:flex;justify-content:space-between;align-items:center;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#d4a574;font-weight:700;padding-bottom:8px;margin-bottom:10px;border-bottom:1px dashed rgba(212,165,116,.25);}',
       '.icv-preview .pv-h .meta{color:#6b7280;font-weight:600;font-size:9px;}',
       '.icv-preview .pv-c{font-size:11px;color:#cbd5e0;line-height:1.5;}',
+      /* Preview NÃO usa quebras de página — flui contínuo (page-breaks só no PDF) */
+      '.icv-preview .pv-c *{page-break-before:auto!important;page-break-after:auto!important;page-break-inside:auto!important;break-before:auto!important;break-after:auto!important;break-inside:auto!important;}',
       '.icv-preview .pv-c h2{font-size:13px;color:#f0c896;margin:14px 0 4px;padding-bottom:3px;border-bottom:1px solid rgba(212,165,116,.25);}',
       '.icv-preview .pv-c h2:first-child{margin-top:0;}',
       '.icv-preview .pv-c h3{font-size:11px;color:#b88a5a;margin:8px 0 4px;}',
@@ -171,6 +174,13 @@
       '.icv-preview .pv-c p{margin:4px 0;font-size:10px;}',
       '.icv-preview .pv-empty{text-align:center;padding:32px 14px;color:#6b7280;font-size:11px;font-style:italic;}',
       '.icv-preview .pv-empty .ic{font-size:32px;display:block;margin-bottom:6px;opacity:.5;}',
+      /* Header de filtros em cascata (preview) */
+      '.icv-preview .pv-filtros{margin:0 0 12px;padding:9px 12px;background:linear-gradient(180deg,rgba(212,165,116,.10),rgba(212,165,116,.04));border:1px solid rgba(212,165,116,.30);border-left:3px solid #d4a574;border-radius:6px;font-size:calc(11px * var(--icv-scale,1));color:#e6edf3;line-height:1.55;}',
+      '.icv-preview .pv-filtros b{color:#d4a574;font-weight:700;}',
+      '.icv-preview .pv-filtros em{color:#9aa5b1;font-style:italic;}',
+      /* Tag "FILTRO" nas sub-opções de Status e Escopo */
+      '.icv-sub-opt .filtro-tag{margin-left:auto;font-size:calc(9px * var(--icv-scale,1));font-weight:700;letter-spacing:.08em;color:#d4a574;background:rgba(212,165,116,.12);border:1px solid rgba(212,165,116,.30);padding:1px 7px;border-radius:8px;text-transform:uppercase;}',
+      '.icv-sub-opt.sel .filtro-tag{background:rgba(212,165,116,.22);color:#fff;}',
       '.icv-cat{border:1px solid rgba(255,255,255,.08);border-radius:8px;margin:8px 0;background:rgba(255,255,255,.02);overflow:hidden;border-left-width:3px;}',
       '.icv-cat.open{background:rgba(255,255,255,.025);}',
       /* Cores por categoria (sugestão 06) — borda esquerda + título + badge */
@@ -305,6 +315,12 @@
     var consultores = _consultoresDoEscopo();
     var sessoesHtml = SESSOES.map(function(sec){
       var optsHtml = sec.opts.map(function(o){
+        /* Sincronização: parent fica marcado quando TODOS os filhos estão marcados */
+        if(o.isParent && o.subs && o.subs.length){
+          var todosMarcados = o.subs.every(function(s){ return _selecionadas.has(s.id); });
+          if(todosMarcados) _selecionadas.add(o.id);
+          else _selecionadas.delete(o.id);
+        }
         var sel = _selecionadas.has(o.id);
         var sugerida = PRE_SELECT.indexOf(o.id) >= 0;
         /* Extras embutidos (mês + turma) para a opção pe_outro */
@@ -358,11 +374,17 @@
                 + '<div class="icv-multi-cons-chips">'+consChips+'</div>'
                 + '</div>';
             }
+            /* Sub-opções de Status (st_*) e Escopo (esc_*) viraram FILTROS
+               em cascata — não geram bloco. Mostro tag "FILTRO" pra deixar
+               claro pro usuário. */
+            var ehFiltro = /^st_|^esc_/.test(s.id);
+            var filtroTag = ehFiltro ? '<span class="filtro-tag">FILTRO</span>' : '';
             return '<label class="icv-sub-opt'+(ssel?' sel':'')+'" data-opt-id="'+s.id+'">'
               + '<input type="checkbox" '+(ssel?'checked':'')+'>'
               + '<span class="ic">'+s.ic+'</span>'
               + '<span class="lbl">'+_esc(s.t)+(ssug?' <span class="icv-star-tag" style="margin-left:4px;">⭐</span>':'')+'</span>'
               + cntHtml
+              + filtroTag
               + '</label>'
               + multiHtml;
           }).join('');
@@ -424,7 +446,7 @@
       +     '</div>'
       +   '</div>'
       +   '<div class="icv-f">'
-      +     '<div class="info">💡 As seleções viram seções no relatório final.</div>'
+      +     '<div class="info">💡 <b>Período / Escopo / Status</b> são <b>filtros em cascata</b> · <b>Executivos / Treinamentos</b> são os <b>blocos</b> que entram no relatório.</div>'
       +     '<div class="actions">'
       +       '<button class="icv-btn" id="icvCancel">Cancelar</button>'
       +       '<button class="icv-btn" id="icvCopiar">📋 Copiar</button>'
@@ -464,12 +486,33 @@
     /* IDs que ao mudar precisam RE-RENDERIZAR o modal (porque expandem UI extra
        como multi-select de consultores, picker de mês, etc). */
     var IDS_RERENDER = ['esc_sel','pe_outro','pe_mes','pe_curso_atual'];
+    /* Helper: encontra a opção parent (isParent:true) pelo id */
+    function _acharParent(id){
+      var encontrada = null;
+      SESSOES.forEach(function(sec){
+        sec.opts.forEach(function(o){
+          if(o.id === id && o.subs && o.subs.length) encontrada = o;
+        });
+      });
+      return encontrada;
+    }
     /* Checkboxes (opções principais E sub-opções) */
     function _bindCheckbox(label){
       var id = label.dataset.optId; if(!id) return;
       var cb = label.querySelector('input[type=checkbox]'); if(!cb) return;
       cb.addEventListener('change', function(){
         if(cb.checked) _selecionadas.add(id); else _selecionadas.delete(id);
+        /* Se for um parent (st_parent, esc_parent, ex_resumo), propaga
+           marcação/desmarcação para todos os filhos. */
+        var parent = _acharParent(id);
+        if(parent){
+          parent.subs.forEach(function(s){
+            if(cb.checked) _selecionadas.add(s.id);
+            else _selecionadas.delete(s.id);
+          });
+          _rerender();
+          return;
+        }
         label.classList.toggle('sel', cb.checked);
         if(IDS_RERENDER.indexOf(id) >= 0){
           _rerender();
@@ -575,19 +618,35 @@
     var pvC = ov.querySelector('#icvPvC');
     var pvM = ov.querySelector('#icvPvMeta');
     if(!pvC) return;
-    /* Atualiza info do escopo (qtd de clientes + consultores no escopo atual) */
     if(!_selecionadas.size){
       pvC.innerHTML = '<div class="pv-empty"><span class="ic">📄</span>Marque uma ou mais opções nas sessões à esquerda para visualizar o relatório aqui.</div>'+_diagBoxHtml();
       if(pvM) pvM.textContent = '—';
       return;
     }
+    /* Header de filtros aplicados em cascata */
+    var filtroResumo = _filtroResumo();
+    var totalCli = _clientesFiltrados().length;
+    var hdrFiltros = '<div class="pv-filtros">'
+      + '<b>🔗 Filtros em cascata:</b> '
+      + (filtroResumo || '<em>nenhum filtro — universo completo do escopo</em>')
+      + '<br><b>📊 Clientes no recorte:</b> ' + totalCli
+      + '</div>';
+    /* Coleta blocos selecionados respeitando ORDEM_HIERARQUICA fixa */
+    var ids = Array.from(_selecionadas).filter(function(id){
+      return id in ORDEM_HIERARQUICA;
+    }).sort(function(a,b){ return _ordemDe(a) - _ordemDe(b); });
     var partes = [];
-    _selecionadas.forEach(function(id){
+    var qtdBlocos = 0;
+    ids.forEach(function(id){
       var sec = _buildSection(id);
-      if(sec){ partes.push('<section>'+sec.html+'</section>'); }
+      if(sec){ partes.push('<section>'+sec.html+'</section>'); qtdBlocos++; }
     });
-    pvC.innerHTML = partes.join('') + _diagBoxHtml();
-    if(pvM) pvM.textContent = _selecionadas.size+' seção(ões) · '+_dataStrPt();
+    if(!partes.length){
+      /* Usuário só marcou filtros mas nenhum bloco — preview mostra resumo */
+      partes.push('<div class="pv-empty"><span class="ic">📋</span>Marque ao menos 1 bloco em <b>Executivos</b> ou <b>Por treinamento</b> para gerar conteúdo. Os filtros estão ativos.</div>');
+    }
+    pvC.innerHTML = hdrFiltros + partes.join('') + _diagBoxHtml();
+    if(pvM) pvM.textContent = qtdBlocos + ' bloco(s) · ' + totalCli + ' cliente(s) filtrado(s) · '+_dataStrPt();
   }
   /* Diagnóstico das fontes de dados — sempre visível no fim do preview */
   function _diagBoxHtml(){
@@ -643,9 +702,10 @@
     if(!Array.isArray(d)) d = [];
     return d.filter(function(x){ return x && x.cliente; });
   }
-  /* Agrupa por consultor — respeita o escopo selecionado (atual/mês/todas).
+  /* Agrupa por consultor — UNIVERSO BASE (só escopo, sem filtros de status/consultor).
+     Usado para resolver "top 3", "bateu meta", etc. sem dependência circular.
      Marca cada cliente com a turma de origem (_turmaNome) pra rastreio. */
-  function _porConsultor(){
+  function _porConsultorBase(){
     var map = {};
     _clientesDoEscopo().forEach(function(c){
       if(!c || !c.cliente) return;
@@ -654,6 +714,114 @@
       map[k].push(c);
     });
     return map;
+  }
+  /* Agrupa por consultor — JÁ FILTRADO (escopo + status + consultor).
+     Usado por rankings, listagens, executivos e detalhado. */
+  function _porConsultor(){
+    var map = {};
+    _clientesFiltrados().forEach(function(c){
+      if(!c || !c.cliente) return;
+      var k = c.consultor || '(Sem consultor)';
+      if(!map[k]) map[k] = [];
+      map[k].push(c);
+    });
+    return map;
+  }
+
+  /* ─── FILTROS GLOBAIS (cascata) ───────────────────────────────────────
+     As sub-opções de "Por status" e "Por escopo" deixaram de gerar blocos
+     próprios — viraram FILTROS que afetam TODAS as seções do relatório.
+       _filtroStatusAtivo()        → Set de status marcados (vazio = todos)
+       _filtroEntradaAtivo()       → flag pra st_entrada (entrada>0)
+       _filtroConsultoresAtivo()   → Set de nomes (null = todos)
+       _clientesDoEscopoComConsultor()
+                                   → escopo + filtro consultor, SEM filtro
+                                     de status. Usado nos blocos com filtro
+                                     hardcoded (ex_em_negoc, ex_em_aberto,
+                                     ex_trein_pg, ex_entradas).
+       _clientesFiltrados()        → escopo + status + consultor. Cascata
+                                     completa. Usado por blocos que devem
+                                     espelhar os filtros do usuário. */
+  function _filtroStatusAtivo(){
+    var sts = new Set();
+    if(_selecionadas.has('st_pago'))    sts.add('pago');
+    if(_selecionadas.has('st_aberto'))  sts.add('aberto');
+    if(_selecionadas.has('st_negoc'))   sts.add('negociacao');
+    if(_selecionadas.has('st_desist')){ sts.add('desistiu'); sts.add('cancelado'); sts.add('cancelada'); }
+    return sts;
+  }
+  function _filtroEntradaAtivo(){
+    return _selecionadas.has('st_entrada');
+  }
+  function _filtroConsultoresAtivo(){
+    var set = new Set();
+    var ativo = false;
+    if(_selecionadas.has('esc_top3')){
+      ativo = true;
+      var base = _porConsultorBase();
+      Object.keys(base).map(function(n){
+        return { nome:n, pago:_statsConsultor(base[n]).pago };
+      }).sort(function(a,b){ return b.pago - a.pago; }).slice(0,3)
+        .forEach(function(r){ set.add(r.nome); });
+    }
+    if(_selecionadas.has('esc_bateu')){
+      ativo = true;
+      var goals = window._npGoals || {};
+      var base2 = _porConsultorBase();
+      Object.keys(base2).forEach(function(n){
+        var g = goals[n] || {};
+        var meta = +(g.metaMinima || g.metaValor || 0);
+        var pago = _statsConsultor(base2[n]).pago;
+        if(meta>0 && pago>=meta) set.add(n);
+      });
+    }
+    if(_selecionadas.has('esc_sel') && _consultoresEscolhidos.size > 0){
+      ativo = true;
+      _consultoresEscolhidos.forEach(function(n){ set.add(n); });
+    }
+    /* esc_todos = não filtra (universo total). Se nenhum filtro ativo → null. */
+    return ativo ? set : null;
+  }
+  function _clientesDoEscopoComConsultor(){
+    var lista = _clientesDoEscopo();
+    var cs = _filtroConsultoresAtivo();
+    if(!cs) return lista;
+    return lista.filter(function(c){
+      return cs.has(String(c.consultor||'').trim());
+    });
+  }
+  function _clientesFiltrados(){
+    var lista = _clientesDoEscopoComConsultor();
+    var sts = _filtroStatusAtivo();
+    var fent = _filtroEntradaAtivo();
+    var algumStatus = sts.size > 0 || fent;
+    if(!algumStatus) return lista;
+    return lista.filter(function(c){
+      var st = String(c.status||'').toLowerCase();
+      if(sts.size > 0 && sts.has(st)) return true;
+      if(fent && +(c.entrada||0) > 0) return true;
+      return false;
+    });
+  }
+  /* Resumo textual dos filtros ativos — usado em header do preview e PDF */
+  function _filtroResumo(){
+    var partes = [];
+    var sts = _filtroStatusAtivo();
+    var labels = { pago:'PAGO', aberto:'ABERTO', negociacao:'NEGOCIAÇÃO', desistiu:'DESISTIU' };
+    var stLabel = [];
+    if(sts.has('pago'))       stLabel.push(labels.pago);
+    if(sts.has('aberto'))     stLabel.push(labels.aberto);
+    if(sts.has('negociacao')) stLabel.push(labels.negociacao);
+    if(sts.has('desistiu'))   stLabel.push(labels.desistiu);
+    if(_filtroEntradaAtivo()) stLabel.push('COM ENTRADA');
+    if(stLabel.length) partes.push('status=' + stLabel.join(','));
+    var cs = _filtroConsultoresAtivo();
+    if(cs){
+      var nomes = Array.from(cs);
+      var resumo = nomes.length <= 3 ? nomes.join(', ') : (nomes.slice(0,3).join(', ')+' +'+(nomes.length-3));
+      partes.push('consultor=' + resumo);
+    }
+    return partes.join(' · ');
   }
   /* Período como TOPO DA CADEIA — todas as outras seções (status, treinamento,
      executivos) usam o resultado desta função. A opção de Período marcada define
@@ -779,32 +947,28 @@
     return { total:total, pago:pago, aberto:aberto, negociacao:neg, entrada:entrada, qtd:clientes.length };
   }
 
-  /* Cada section retorna {titulo, html, txt} */
+  /* Cada section retorna {titulo, html, txt}
+     ── NOVO FLUXO (cascata) ────────────────────────────────────────
+     Sub-opções de "Por escopo" (esc_*) e "Por status" (st_*) deixaram
+     de gerar BLOCOS — viraram FILTROS GLOBAIS aplicados em cascata
+     sobre todas as seções. Por isso retornam null aqui.
+     "Por treinamento" (tr_*) e "Executivos" (ex_*) continuam como
+     blocos opcionais que aparecem no relatório quando marcados. */
   function _buildSection(id){
     switch(id){
-      case 'esc_todos':   return _sec_escTodos();
-      case 'esc_sel':     return _sec_escSelManual();
-      case 'esc_top3':    return _sec_escTop3();
-      case 'esc_bateu':   return _sec_escBateu();
-      case 'esc_abaixo':  return _sec_escAbaixo();
-      case 'esc_multi':   return { titulo:'☑ Múltipla seleção', html:'<p>Funcionalidade em desenvolvimento.</p>', txt:'(em breve)\n' };
-      case 'st_todos':    return _sec_stTodos();
-      case 'st_pago':     return _sec_stFiltro('pago', '💚 Clientes PAGOS', 'PAGO');
-      case 'st_aberto':   return _sec_stFiltro('aberto', '🟠 Clientes EM ABERTO', 'ABERTO');
-      case 'st_negoc':    return _sec_stFiltro('negociacao', '🤝 Em NEGOCIAÇÃO', 'NEGOCIAÇÃO');
-      case 'st_entrada':  return _sec_stEntrada();
-      case 'st_desist':   return _sec_stFiltro('desistiu', '❌ DESISTÊNCIAS / cancelados', 'DESISTIU');
+      /* FILTROS (não geram bloco) */
+      case 'esc_parent': case 'esc_todos': case 'esc_top3':
+      case 'esc_bateu':  case 'esc_sel':
+      case 'st_parent':  case 'st_pago':   case 'st_aberto':
+      case 'st_negoc':   case 'st_entrada':case 'st_desist':
+      case 'pe_curso_atual': case 'pe_mes': case 'pe_outro':
+      case 'ex_resumo':
+        return null;
+      /* BLOCOS DE TREINAMENTO */
       case 'tr_agrup':    return _sec_trAgrupado();
       case 'tr_top5':     return _sec_trTop5();
       case 'tr_hight':    return _sec_trHightTicket();
-      case 'pe_curso_atual': return _sec_peCursoAtual();
-      case 'pe_mes':      return _sec_peMes();
-      case 'pe_outro':    return _sec_peOutroPeriodo();
-      /* Parents: não geram seção própria (são só agrupadores visuais) */
-      case 'esc_parent':
-      case 'st_parent':
-      case 'ex_resumo':   return null;
-      /* Resumo executivo — sub-opções (geram blocos próprios) */
+      /* BLOCOS DE EXECUTIVOS */
       case 'ex_fin':       return _sec_exFinanceiro();
       case 'ex_trein_pg':  return _sec_exTreinPagos();
       case 'ex_entradas':  return _sec_exEntradas();
@@ -969,45 +1133,67 @@
     html += '</tbody></table>';
     return { titulo:'📋 Todos os clientes', html:html, txt:txt };
   }
+  /* Strip de emojis pra títulos limpos no PDF estilo "Relatório Executivo".
+     Preserva texto, remove só pictogramas iniciais. */
+  function _stripEmoji(s){
+    return String(s||'').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]+\s*/u, '').trim();
+  }
   function _sec_stFiltro(status, titulo, lblTxt){
-    var lst = _clientesDoEscopo().filter(function(c){ return String(c.status||'').toLowerCase() === status; });
+    /* Bloco de status fixo — filtra hardcoded por status, respeita consultor.
+       Mensagem vazia segue padrão "Nenhum X registrado. —". Header "TÍTULO (N · R$)". */
+    var lst = _clientesDoEscopoComConsultor().filter(function(c){ return String(c.status||'').toLowerCase() === status; });
     var sum = lst.reduce(function(a,c){ return a + +(c.valor||0); }, 0);
-    var html = '<h2>'+_esc(titulo)+' ('+lst.length+')</h2>'
-      + '<p style="color:#9aa5b1;">Total: <b style="color:#d4a574;">'+_fmtR(sum)+'</b></p>'
-      + '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;"><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;text-align:left;">Consultor</th><th style="padding:5px 8px;text-align:right;">Valor</th></tr></thead><tbody>';
-    var txt = titulo+' ('+lst.length+') · Total '+_fmtR(sum)+'\n';
+    var tituloLimpo = _stripEmoji(titulo);
+    var header = '<h2>'+_esc(tituloLimpo)+' ('+lst.length+(lst.length ? ' · '+_fmtR(sum) : '')+')</h2>';
+    var txt = tituloLimpo+' ('+lst.length+(lst.length?' · '+_fmtR(sum):'')+')\n';
+    if(!lst.length){
+      var label = String(lblTxt||'').toLowerCase();
+      var msg = (status === 'pago')       ? 'Nenhum pagamento registrado.'
+              : (status === 'aberto')     ? 'Nenhum cliente em aberto.'
+              : (status === 'negociacao') ? 'Nenhuma negociação ativa.'
+              : (status === 'desistiu')   ? 'Nenhuma desistência registrada.'
+              : 'Sem registros.';
+      return { titulo:tituloLimpo, html: header + '<div class="rs-empty"><span>'+msg+'</span><span class="dash">—</span></div>', txt: txt + '  ' + msg + '\n' };
+    }
+    var html = header
+      + '<table><thead><tr><th>Cliente</th><th>Treinamento</th><th style="text-align:right;">Valor</th><th>Forma</th><th>Consultor</th></tr></thead><tbody>';
     lst.forEach(function(c){
-      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:4px 8px;">'+_esc(c.cliente)+'</td><td style="padding:4px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:4px 8px;text-align:right;">'+_fmtR(c.valor)+'</td></tr>';
-      txt += '• '+c.cliente+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+'\n';
+      var forma = c.forma || c.formaPagamento || '—';
+      html += '<tr><td>'+_esc(c.cliente)+'</td><td>'+_esc(c.treinamento||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td><td>'+_esc(forma)+'</td><td>'+_esc(c.consultor||'—')+'</td></tr>';
+      txt += '• '+c.cliente+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+(c.consultor||'—')+'\n';
     });
     html += '</tbody></table>';
-    return { titulo:titulo, html:html, txt:txt };
+    return { titulo:tituloLimpo, html:html, txt:txt };
   }
   function _sec_stEntrada(){
-    var lst = _clientesDoEscopo().filter(function(c){ return +(c.entrada||0) > 0; });
+    var lst = _clientesDoEscopoComConsultor().filter(function(c){ return +(c.entrada||0) > 0; });
     var sum = lst.reduce(function(a,c){ return a + +(c.entrada||0); }, 0);
-    var html = '<h2>💵 Clientes com ENTRADA ('+lst.length+')</h2>'
-      + '<p style="color:#9aa5b1;">Total entradas: <b style="color:#34d399;">'+_fmtR(sum)+'</b></p>'
-      + '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;"><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;text-align:left;">Consultor</th><th style="padding:5px 8px;text-align:right;">Entrada</th><th style="padding:5px 8px;text-align:right;">Valor total</th></tr></thead><tbody>';
-    var txt = '💵 COM ENTRADA · Total '+_fmtR(sum)+'\n';
+    var tituloLimpo = 'Entradas recebidas';
+    var header = '<h2>'+tituloLimpo+' ('+lst.length+(lst.length ? ' · '+_fmtR(sum) : '')+')</h2>';
+    var txt = tituloLimpo.toUpperCase()+' ('+lst.length+(lst.length?' · '+_fmtR(sum):'')+')\n';
+    if(!lst.length){
+      return { titulo:tituloLimpo, html: header + '<div class="rs-empty"><span>Nenhuma entrada registrada.</span><span class="dash">—</span></div>', txt: txt + '  Nenhuma entrada registrada.\n' };
+    }
+    var html = header
+      + '<table><thead><tr><th>Cliente</th><th>Consultor</th><th style="text-align:right;">Entrada</th><th style="text-align:right;">Valor total</th></tr></thead><tbody>';
     lst.forEach(function(c){
-      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:4px 8px;">'+_esc(c.cliente)+'</td><td style="padding:4px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:4px 8px;text-align:right;color:#34d399;">'+_fmtR(c.entrada)+'</td><td style="padding:4px 8px;text-align:right;">'+_fmtR(c.valor)+'</td></tr>';
+      html += '<tr><td>'+_esc(c.cliente)+'</td><td>'+_esc(c.consultor||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.entrada)+'</td><td style="text-align:right;">'+_fmtR(c.valor)+'</td></tr>';
       txt += '• '+c.cliente+' · '+(c.consultor||'—')+' · entrada '+_fmtR(c.entrada)+' / total '+_fmtR(c.valor)+'\n';
     });
     html += '</tbody></table>';
-    return { titulo:'💵 Com entrada', html:html, txt:txt };
+    return { titulo:tituloLimpo, html:html, txt:txt };
   }
 
   /* ── TREINAMENTO ── (consolida TODAS as turmas) */
   function _sec_trAgrupado(){
     var grupos = {};
-    _clientesDoEscopo().forEach(function(c){
+    _clientesFiltrados().forEach(function(c){
       var k = c.treinamento || '(Sem treinamento)';
       if(!grupos[k]) grupos[k] = [];
       grupos[k].push(c);
     });
-    var html = '<h2>📚 Por treinamento</h2>';
-    var txt = '📚 POR TREINAMENTO\n';
+    var html = '<h2>Por treinamento</h2>';
+    var txt = 'POR TREINAMENTO\n';
     Object.keys(grupos).sort().forEach(function(k){
       var lst = grupos[k];
       var sum = lst.reduce(function(a,c){ return a + +(c.valor||0); }, 0);
@@ -1020,135 +1206,156 @@
       txt += '\n▼ '+k+' · '+lst.length+' venda(s) · '+_fmtR(sum)+'\n';
       lst.forEach(function(c){ txt += '   • '+c.cliente+' ('+(c.consultor||'—')+') · '+_fmtR(c.valor)+'\n'; });
     });
-    return { titulo:'📚 Por treinamento', html:html, txt:txt };
+    return { titulo:'Por treinamento', html:html, txt:txt };
   }
   function _sec_trTop5(){
-    var top = _clientesDoEscopo().slice().sort(function(a,b){ return +(b.valor||0) - +(a.valor||0); }).slice(0,5);
-    var html = '<h2>💎 Top 5 maiores vendas</h2><table style="width:100%;font-size:12px;">';
-    var txt = '💎 TOP 5 MAIORES VENDAS\n';
+    var top = _clientesFiltrados().slice().sort(function(a,b){ return +(b.valor||0) - +(a.valor||0); }).slice(0,5);
+    if(!top.length){
+      return { titulo:'Top 5 maiores vendas', html:'<h2>Top 5 maiores vendas</h2><div class="rs-empty"><span>Nenhuma venda no recorte.</span><span class="dash">—</span></div>', txt:'TOP 5 MAIORES VENDAS\n  (sem dados)\n' };
+    }
+    var html = '<h2>Top 5 maiores vendas</h2><table><thead><tr><th style="width:8mm;">#</th><th>Cliente</th><th>Treinamento</th><th>Consultor</th><th style="text-align:right;">Valor</th></tr></thead><tbody>';
+    var txt = 'TOP 5 MAIORES VENDAS\n';
     top.forEach(function(c,i){
-      html += '<tr><td style="padding:5px;font-weight:700;">'+(i+1)+'.</td><td style="padding:5px;">'+_esc(c.cliente)+' · '+_esc(c.treinamento||'—')+'</td><td style="padding:5px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:5px;text-align:right;color:#34d399;font-weight:700;">'+_fmtR(c.valor)+'</td></tr>';
+      html += '<tr><td>'+(i+1)+'</td><td>'+_esc(c.cliente)+'</td><td>'+_esc(c.treinamento||'—')+'</td><td>'+_esc(c.consultor||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td></tr>';
       txt += (i+1)+'. '+c.cliente+' · '+(c.treinamento||'—')+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+'\n';
     });
-    html += '</table>';
-    return { titulo:'💎 Top 5 vendas', html:html, txt:txt };
+    html += '</tbody></table>';
+    return { titulo:'Top 5 maiores vendas', html:html, txt:txt };
   }
   /* Top Vendas High Ticket — só vendas ≥ R$ 30.000 */
   function _sec_trHightTicket(){
     var LIMITE = 30000;
-    var lst = _clientesDoEscopo()
+    var lst = _clientesFiltrados()
       .filter(function(c){ return +(c.valor||0) >= LIMITE; })
       .sort(function(a,b){ return +(b.valor||0) - +(a.valor||0); });
-    var html = '<h2>🏆 Top Vendas High Ticket · ≥ R$ 30.000 ('+lst.length+')</h2>';
-    var txt = '🏆 TOP VENDAS HIGH TICKET (≥ R$ 30.000)\n';
+    var total = lst.reduce(function(s,c){ return s + +(c.valor||0); }, 0);
+    var head = '<h2>Top vendas High Ticket · ≥ R$ 30.000 ('+lst.length+(lst.length?' · '+_fmtR(total):'')+')</h2>';
     if(!lst.length){
-      html += '<p style="color:#fbbf24;">Nenhuma venda acima do limite no escopo atual.</p>';
-      txt += '(nenhuma)\n';
-    } else {
-      html += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;"><th style="padding:5px 8px;text-align:left;">#</th><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;text-align:left;">Consultor</th><th style="padding:5px 8px;text-align:left;">Treinamento</th><th style="padding:5px 8px;text-align:right;">Valor</th><th style="padding:5px 8px;">Status</th></tr></thead><tbody>';
-      lst.forEach(function(c, i){
-        html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:4px 8px;color:#d4a574;font-weight:700;">'+(i+1)+'</td><td style="padding:4px 8px;">'+_esc(c.cliente)+'</td><td style="padding:4px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:4px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:4px 8px;text-align:right;color:#d4a574;font-weight:700;">'+_fmtR(c.valor)+'</td><td style="padding:4px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
-        txt += (i+1)+'. '+c.cliente+' · '+(c.consultor||'—')+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
-      });
-      html += '</tbody></table>';
-      var total = lst.reduce(function(s,c){ return s + +(c.valor||0); }, 0);
-      html += '<p style="margin-top:8px;color:#9aa5b1;">Total: <b style="color:#d4a574;">'+_fmtR(total)+'</b></p>';
+      return { titulo:'Top vendas High Ticket', html: head + '<div class="rs-empty"><span>Nenhuma venda acima do limite.</span><span class="dash">—</span></div>', txt:'TOP HIGH TICKET\n  (sem dados)\n' };
     }
-    return { titulo:'🏆 High Ticket', html:html, txt:txt };
+    var html = head + '<table><thead><tr><th style="width:8mm;">#</th><th>Cliente</th><th>Consultor</th><th>Treinamento</th><th style="text-align:right;">Valor</th></tr></thead><tbody>';
+    var txt = 'TOP HIGH TICKET (≥ R$ 30.000)\n';
+    lst.forEach(function(c, i){
+      html += '<tr><td>'+(i+1)+'</td><td>'+_esc(c.cliente)+'</td><td>'+_esc(c.consultor||'—')+'</td><td>'+_esc(c.treinamento||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td></tr>';
+      txt += (i+1)+'. '+c.cliente+' · '+(c.consultor||'—')+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+'\n';
+    });
+    html += '</tbody></table>';
+    return { titulo:'Top vendas High Ticket', html:html, txt:txt };
   }
 
   /* ── EXECUTIVOS · 10 sub-seções do Resumo ── */
   function _sec_exFinanceiro(){
-    var lst = _clientesDoEscopo();
+    var lst = _clientesFiltrados();
     var s = _statsConsultor(lst);
-    var html = '<h2>📊 Resumo financeiro</h2>'
-      + '<table style="width:100%;font-size:12px;border-collapse:collapse;">'
-      +   '<tr><td style="padding:5px;">Volume total</td><td style="padding:5px;text-align:right;font-weight:700;">'+_fmtR(s.total)+'</td></tr>'
-      +   '<tr><td style="padding:5px;">Faturado (pago)</td><td style="padding:5px;text-align:right;color:#34d399;font-weight:700;">'+_fmtR(s.pago)+'</td></tr>'
-      +   '<tr><td style="padding:5px;">Em aberto</td><td style="padding:5px;text-align:right;color:#f59e0b;font-weight:700;">'+_fmtR(s.aberto)+'</td></tr>'
-      +   '<tr><td style="padding:5px;">Em negociação</td><td style="padding:5px;text-align:right;color:#a855f7;font-weight:700;">'+_fmtR(s.negociacao)+'</td></tr>'
-      +   '<tr><td style="padding:5px;">Entradas recebidas</td><td style="padding:5px;text-align:right;color:#34d399;font-weight:700;">'+_fmtR(s.entrada)+'</td></tr>'
-      + '</table>';
-    var txt = '📊 RESUMO FINANCEIRO\n  Total: '+_fmtR(s.total)+'\n  Pago: '+_fmtR(s.pago)+'\n  Aberto: '+_fmtR(s.aberto)+'\n  Negoc: '+_fmtR(s.negociacao)+'\n  Entradas: '+_fmtR(s.entrada)+'\n';
-    return { titulo:'📊 Resumo financeiro', html:html, txt:txt };
+    /* Contagens auxiliares pro título de cada linha */
+    var nPago = lst.filter(function(c){ return String(c.status||'').toLowerCase() === 'pago'; }).length;
+    var nEnt  = lst.filter(function(c){ return +(c.entrada||0) > 0; }).length;
+    var nNeg  = lst.filter(function(c){ return String(c.status||'').toLowerCase() === 'negociacao'; }).length;
+    var nAbe  = lst.filter(function(c){ return String(c.status||'').toLowerCase() === 'aberto'; }).length;
+    var trPago = new Set(lst.filter(function(c){ return String(c.status||'').toLowerCase() === 'pago'; }).map(function(c){ return c.treinamento||'—'; })).size;
+    var trNeg  = new Set(lst.filter(function(c){ return String(c.status||'').toLowerCase() === 'negociacao'; }).map(function(c){ return c.treinamento||'—'; })).size;
+    var trAbe  = new Set(lst.filter(function(c){ return String(c.status||'').toLowerCase() === 'aberto'; }).map(function(c){ return c.treinamento||'—'; })).size;
+    var html = '<h2>Resumo financeiro</h2>'
+      + '<div class="fin-resumo">'
+      +   '<div class="fr-row"><span class="lbl">Total faturado (PAGO) · '+trPago+' treinos · '+nPago+' clientes</span><span class="val">'+_fmtR(s.pago)+'</span></div>'
+      +   '<div class="fr-row"><span class="lbl">Total em entradas · '+nEnt+' clientes</span><span class="val">'+_fmtR(s.entrada)+'</span></div>'
+      +   '<div class="fr-row"><span class="lbl">Em negociação · '+trNeg+' treinos · '+nNeg+' clientes</span><span class="val">'+_fmtR(s.negociacao)+'</span></div>'
+      +   '<div class="fr-row"><span class="lbl">Em aberto · '+trAbe+' treinos · '+nAbe+' clientes</span><span class="val">'+_fmtR(s.aberto)+'</span></div>'
+      +   '<div class="fr-row fr-total"><span class="lbl">TOTAL GERAL (RECEITA REALIZADA)</span><span class="val">'+_fmtR(s.pago)+'</span></div>'
+      + '</div>';
+    var txt = 'RESUMO FINANCEIRO\n'
+      + '  Total faturado (PAGO): '+_fmtR(s.pago)+' · '+nPago+' clientes\n'
+      + '  Total em entradas:    '+_fmtR(s.entrada)+' · '+nEnt+' clientes\n'
+      + '  Em negociação:        '+_fmtR(s.negociacao)+' · '+nNeg+' clientes\n'
+      + '  Em aberto:            '+_fmtR(s.aberto)+' · '+nAbe+' clientes\n'
+      + '  TOTAL GERAL:          '+_fmtR(s.pago)+'\n';
+    return { titulo:'Resumo financeiro', html:html, txt:txt };
   }
   function _sec_exTreinPagos(){
-    return _sec_stFiltro('pago', '📚 Treinamentos pagos', 'PAGO');
+    return _sec_stFiltro('pago', 'Treinamentos pagos', 'PAGO');
   }
   function _sec_exEntradas(){ return _sec_stEntrada(); }
-  function _sec_exEmNegoc(){ return _sec_stFiltro('negociacao', '🤝 Em negociação', 'NEGOCIAÇÃO'); }
-  function _sec_exEmAberto(){ return _sec_stFiltro('aberto', '⏳ Em aberto', 'ABERTO'); }
+  function _sec_exEmNegoc(){ return _sec_stFiltro('negociacao', 'Em negociação', 'NEGOCIAÇÃO'); }
+  function _sec_exEmAberto(){ return _sec_stFiltro('aberto', 'Em aberto', 'ABERTO'); }
   function _sec_exRkConsultores(){
     var grupos = _porConsultor();
     var ranking = Object.keys(grupos).map(function(n){
       var s = _statsConsultor(grupos[n]);
       return {nome:n, pago:s.pago, qtd:s.qtd};
     }).sort(function(a,b){ return b.pago - a.pago; });
-    var medals=['🥇','🥈','🥉'];
-    var html = '<h2>🏅 Ranking de consultores</h2><table style="width:100%;font-size:12px;border-collapse:collapse;">';
-    var txt = '🏅 RANKING DE CONSULTORES\n';
+    var html = '<h2>Ranking de consultores</h2>';
+    if(!ranking.length){
+      html += '<div class="rs-empty"><span>Nenhum consultor com vendas no recorte.</span><span class="dash">—</span></div>';
+      return { titulo:'Ranking de consultores', html:html, txt:'RANKING DE CONSULTORES\n  (sem dados)\n' };
+    }
+    html += '<table><thead><tr><th style="width:10mm;">#</th><th>Consultor</th><th style="text-align:right;">Faturado</th><th style="text-align:right;">Clientes</th></tr></thead><tbody>';
+    var txt = 'RANKING DE CONSULTORES\n';
     ranking.forEach(function(r,i){
-      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:5px;font-size:14px;">'+(medals[i]||(i+1+'º'))+'</td><td style="padding:5px;font-weight:700;">'+_esc(r.nome)+'</td><td style="padding:5px;text-align:right;color:#34d399;">'+_fmtR(r.pago)+'</td><td style="padding:5px;text-align:right;color:#9aa5b1;font-size:10px;">'+r.qtd+' clientes</td></tr>';
-      txt += (medals[i]||(i+1+'.'))+' '+r.nome+' · '+_fmtR(r.pago)+' · '+r.qtd+' clientes\n';
+      html += '<tr><td>'+(i+1)+'º</td><td>'+_esc(r.nome)+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(r.pago)+'</td><td style="text-align:right;">'+r.qtd+'</td></tr>';
+      txt += (i+1)+'. '+r.nome+' · '+_fmtR(r.pago)+' · '+r.qtd+' clientes\n';
     });
-    html += '</table>';
-    return { titulo:'🏅 Ranking consultores', html:html, txt:txt };
+    html += '</tbody></table>';
+    return { titulo:'Ranking de consultores', html:html, txt:txt };
   }
   function _sec_exRkTreinadores(){
-    /* Treinadores = quem ministra. Tenta extrair de window.allTrainers (via __getAllTrainers) */
     var trainers = (typeof window.__getAllTrainers === 'function') ? window.__getAllTrainers() : (window.allTrainers || []);
     if(!trainers || !trainers.length){
-      return { titulo:'🎓 Ranking treinadores', html:'<h2>🎓 Ranking de treinadores</h2><p style="color:#9aa5b1;">Sem dados de treinadores disponíveis no contexto atual.</p>', txt:'🎓 RANKING TREINADORES\n(sem dados)\n' };
+      return { titulo:'Ranking de treinadores', html:'<h2>Ranking de treinadores</h2><div class="rs-empty"><span>Sem dados de treinadores no contexto atual.</span><span class="dash">—</span></div>', txt:'RANKING DE TREINADORES\n  (sem dados)\n' };
     }
-    var html = '<h2>🎓 Ranking de treinadores</h2><ul style="font-size:11px;">';
-    var txt = '🎓 RANKING TREINADORES\n';
+    var html = '<h2>Ranking de treinadores</h2><table><thead><tr><th style="width:10mm;">#</th><th>Treinador</th></tr></thead><tbody>';
+    var txt = 'RANKING DE TREINADORES\n';
     trainers.forEach(function(t,i){
       var nome = (typeof t === 'string') ? t : (t && (t.nome||t.name) || '—');
-      html += '<li>'+(i+1)+'º · '+_esc(nome)+'</li>';
+      html += '<tr><td>'+(i+1)+'º</td><td>'+_esc(nome)+'</td></tr>';
       txt += (i+1)+'. '+nome+'\n';
     });
-    html += '</ul>';
-    return { titulo:'🎓 Ranking treinadores', html:html, txt:txt };
+    html += '</tbody></table>';
+    return { titulo:'Ranking de treinadores', html:html, txt:txt };
   }
   function _sec_exTopTreinamentos(){
     var map = {};
-    _clientesDoEscopo().forEach(function(c){
+    _clientesDoEscopoComConsultor().forEach(function(c){
       if(String(c.status||'').toLowerCase() !== 'pago') return;
       var k = c.treinamento || '(Sem treinamento)';
       if(!map[k]) map[k] = { nome:k, qtd:0, total:0 };
       map[k].qtd++; map[k].total += +(c.valor||0);
     });
     var lst = Object.values(map).sort(function(a,b){ return b.total - a.total; }).slice(0,10);
-    var html = '<h2>🏆 Top treinamentos (pagos)</h2><table style="width:100%;font-size:12px;border-collapse:collapse;">';
-    var txt = '🏆 TOP TREINAMENTOS\n';
+    if(!lst.length){
+      return { titulo:'Top treinamentos', html:'<h2>Top treinamentos (pagos)</h2><div class="rs-empty"><span>Nenhum treinamento pago no recorte.</span><span class="dash">—</span></div>', txt:'TOP TREINAMENTOS\n  (sem dados)\n' };
+    }
+    var html = '<h2>Top treinamentos (pagos)</h2><table><thead><tr><th style="width:10mm;">#</th><th>Treinamento</th><th style="text-align:right;">Qtd</th><th style="text-align:right;">Total</th></tr></thead><tbody>';
+    var txt = 'TOP TREINAMENTOS\n';
     lst.forEach(function(t,i){
-      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:5px;color:#d4a574;font-weight:700;">'+(i+1)+'</td><td style="padding:5px;">'+_esc(t.nome)+'</td><td style="padding:5px;text-align:right;color:#9aa5b1;">'+t.qtd+'×</td><td style="padding:5px;text-align:right;color:#34d399;font-weight:700;">'+_fmtR(t.total)+'</td></tr>';
+      html += '<tr><td>'+(i+1)+'</td><td>'+_esc(t.nome)+'</td><td style="text-align:right;">'+t.qtd+'×</td><td style="text-align:right;font-weight:700;">'+_fmtR(t.total)+'</td></tr>';
       txt += (i+1)+'. '+t.nome+' · '+t.qtd+'× · '+_fmtR(t.total)+'\n';
     });
-    html += '</table>';
-    return { titulo:'🏆 Top treinamentos', html:html, txt:txt };
+    html += '</tbody></table>';
+    return { titulo:'Top treinamentos', html:html, txt:txt };
   }
   function _sec_exMetaRealizado(){
     var goals = window._npGoals || {};
     var grupos = _porConsultor();
-    var html = '<h2>📈 Meta vs Realizado</h2><table style="width:100%;font-size:12px;border-collapse:collapse;">'
-      + '<thead><tr style="background:#1c2128;color:#9aa5b1;"><th style="padding:5px 8px;text-align:left;">Consultor</th><th style="padding:5px 8px;text-align:right;">Meta</th><th style="padding:5px 8px;text-align:right;">Realizado</th><th style="padding:5px 8px;text-align:right;">%</th></tr></thead><tbody>';
-    var txt = '📈 META VS REALIZADO\n';
-    Object.keys(grupos).sort().forEach(function(n){
+    var nomes = Object.keys(grupos).sort();
+    if(!nomes.length){
+      return { titulo:'Meta vs Realizado', html:'<h2>Meta vs Realizado</h2><div class="rs-empty"><span>Sem consultores no recorte.</span><span class="dash">—</span></div>', txt:'META VS REALIZADO\n  (sem dados)\n' };
+    }
+    var html = '<h2>Meta vs Realizado</h2><table><thead><tr><th>Consultor</th><th style="text-align:right;">Meta</th><th style="text-align:right;">Realizado</th><th style="text-align:right;">%</th></tr></thead><tbody>';
+    var txt = 'META VS REALIZADO\n';
+    nomes.forEach(function(n){
       var s = _statsConsultor(grupos[n]);
       var g = goals[n] || {};
       var meta = +(g.metaMinima || g.metaValor || 0);
       var pct = meta ? Math.round(s.pago/meta*100) : 0;
-      var cls = !meta ? '#6b7280' : (pct>=100 ? '#34d399' : pct>=70 ? '#f59e0b' : '#fca5a5');
-      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:5px 8px;font-weight:700;">'+_esc(n)+'</td><td style="padding:5px 8px;text-align:right;">'+(meta?_fmtR(meta):'sem meta')+'</td><td style="padding:5px 8px;text-align:right;color:#34d399;">'+_fmtR(s.pago)+'</td><td style="padding:5px 8px;text-align:right;color:'+cls+';font-weight:700;">'+(meta?pct+'%':'—')+'</td></tr>';
+      html += '<tr><td>'+_esc(n)+'</td><td style="text-align:right;">'+(meta?_fmtR(meta):'sem meta')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(s.pago)+'</td><td style="text-align:right;font-weight:700;">'+(meta?pct+'%':'—')+'</td></tr>';
       txt += n+' · meta '+(meta?_fmtR(meta):'—')+' · real '+_fmtR(s.pago)+' · '+(meta?pct+'%':'—')+'\n';
     });
     html += '</tbody></table>';
-    return { titulo:'📈 Meta vs Realizado', html:html, txt:txt };
+    return { titulo:'Meta vs Realizado', html:html, txt:txt };
   }
   function _sec_exAssinatura(){
     var hoje = _hojeStr();
-    var html = '<h2>✍ Assinatura</h2>'
+    var html = '<h2>Assinatura</h2>'
       + '<p style="color:#9aa5b1;font-size:11px;">Gerado em '+hoje+'</p>'
       + '<div style="margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,.1);">'
       +   '<div style="display:flex;justify-content:space-between;gap:40px;">'
@@ -1449,88 +1656,76 @@
   function _sec_exDetalh(){
     var grupos = _porConsultor();
     var nomes = Object.keys(grupos).sort();
-    var html = '<h2>📄 Detalhado · 1 página por consultor</h2>';
-    var txt = '📄 DETALHADO POR CONSULTOR\n';
-    nomes.forEach(function(n, i){
+    if(!nomes.length){
+      return { titulo:'Detalhado', html:'<h2>Detalhado por consultor</h2><div class="rs-empty"><span>Sem consultores no recorte.</span><span class="dash">—</span></div>', txt:'DETALHADO POR CONSULTOR\n  (sem dados)\n' };
+    }
+    var html = '<h2>Detalhado por consultor</h2>';
+    var txt = 'DETALHADO POR CONSULTOR\n';
+    nomes.forEach(function(n){
       var lst = grupos[n], s = _statsConsultor(lst);
-      var quebra = i > 0 ? 'page-break-before:always;' : '';
-      html += '<div style="'+quebra+'padding-top:18px;"><h3 style="color:#b88a5a;">'+_esc(n)+'</h3>'
-        + '<p>Clientes: <b>'+s.qtd+'</b> · Faturado: <b style="color:#34d399;">'+_fmtR(s.pago)+'</b> · Aberto: <b style="color:#f59e0b;">'+_fmtR(s.aberto)+'</b></p>';
-      html += '<ul style="font-size:11px;">';
-      lst.forEach(function(c){ html += '<li>'+_esc(c.cliente)+' · '+_esc(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+_esc(String(c.status||'').toUpperCase())+'</li>'; });
-      html += '</ul></div>';
+      /* Consultores um abaixo do outro — sem quebra de página */
+      html += '<div class="rs-detalh-item"><h3>'+_esc(n)+'</h3>'
+        + '<p>Clientes: <b>'+s.qtd+'</b> · Faturado: <b>'+_fmtR(s.pago)+'</b> · Aberto: <b>'+_fmtR(s.aberto)+'</b></p>';
+      html += '<table><thead><tr><th>Cliente</th><th>Treinamento</th><th style="text-align:right;">Valor</th><th>Status</th></tr></thead><tbody>';
+      lst.forEach(function(c){
+        html += '<tr><td>'+_esc(c.cliente)+'</td><td>'+_esc(c.treinamento||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td><td>'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
+      });
+      html += '</tbody></table></div>';
       txt += '\n═══ '+n+' ═══\nClientes: '+s.qtd+' · Faturado: '+_fmtR(s.pago)+' · Aberto: '+_fmtR(s.aberto)+'\n';
       lst.forEach(function(c){ txt += '   • '+c.cliente+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n'; });
     });
-    return { titulo:'📄 Detalhado', html:html, txt:txt };
+    return { titulo:'Detalhado', html:html, txt:txt };
   }
 
-  /* ──────────── Hierarquia das seções (estilo Relatório Supremo) ────────────
-     Define a ORDEM em que cada seção sai no documento impresso, independente da
-     ordem em que o usuário clicou nos checkboxes. Agrupada em blocos lógicos:
-       10-19 → Resumo executivo / financeiro
-       20-49 → Detalhamento por status
-       50-69 → Ranking / escopo de consultores
-       70-79 → Treinamentos / produtos
-       80-89 → Período (notas de contexto)
-       95-99 → Detalhado paginado / assinatura (final do documento) */
+  /* ──────────── Hierarquia das seções ────────────
+     EXECUTIVOS sempre no topo do relatório. Em seguida, Detalhado (com 1
+     página por consultor, vinculado ao filtro), depois os blocos de
+     Treinamento. Status/Escopo/Período não saem como blocos — viraram
+     filtros globais. */
   var ORDEM_HIERARQUICA = {
-    /* 10-19 · Resumo executivo */
+    /* 10-29 · EXECUTIVOS (sempre no topo) */
     'ex_fin':       10,
-    'ex_meta':      15,
-    /* 20-49 · Status financeiro */
-    'st_pago':      20,
-    'ex_trein_pg':  21,
-    'st_entrada':   25,
+    'ex_meta':      12,
+    'ex_rk_cons':   14,
+    'ex_rk_trein':  16,
+    'ex_top_trein': 18,
+    /* Blocos de status seguem a mesma ordem dos checkboxes:
+       NEGOCIAÇÃO → PAGOS → EM ABERTO → ENTRADAS */
+    'ex_negoc':     20,
+    'ex_trein_pg':  22,
+    'ex_aberto':    24,
     'ex_entradas':  26,
-    'st_negoc':     30,
-    'ex_negoc':     31,
-    'st_aberto':    35,
-    'ex_aberto':    36,
-    'st_desist':    40,
-    'st_todos':     45,
-    /* 50-69 · Consultores / escopo / ranking */
-    'esc_todos':    50,
-    'esc_top3':     52,
-    'esc_bateu':    54,
-    'esc_sel':      56,
-    'ex_rk_cons':   60,
-    'ex_rk_trein':  62,
-    /* 70-79 · Treinamentos / produtos */
-    'tr_agrup':     70,
-    'tr_top5':      75,
-    'tr_hight':     76,
-    'ex_top_trein': 78,
-    /* 80-89 · Período (info de contexto) */
-    'pe_curso_atual': 80,
-    'pe_mes':         82,
-    'pe_outro':       84,
-    /* 95-99 · Fechamento */
-    'ex_detalh':    95,
-    'ex_assin':     99
+    'ex_assin':     28,
+    /* 30-39 · DETALHADO (vinculado ao filtro) */
+    'ex_detalh':    30,
+    /* 40-49 · TREINAMENTOS / produtos */
+    'tr_agrup':     40,
+    'tr_top5':      42,
+    'tr_hight':     44
   };
   function _ordemDe(id){
     return (id in ORDEM_HIERARQUICA) ? ORDEM_HIERARQUICA[id] : 999;
   }
 
-  /* ──────────── Exportação ──────────── */
+  /* ──────────── Exportação ────────────
+     Ordem fixa do relatório (executivos → detalhado → treinamentos),
+     ignorando ids que não são blocos (st_*, esc_*, pe_*). */
   function _gerarConteudo(){
-    if(!_selecionadas.size){
-      return { html:'', txt:'(nenhuma seção selecionada)' };
+    var idsBlocos = Array.from(_selecionadas).filter(function(id){
+      return id in ORDEM_HIERARQUICA;
+    });
+    if(!idsBlocos.length){
+      return { html:'', txt:'(nenhum bloco marcado — só filtros)' };
     }
-    /* Ordena as seções pela ORDEM_HIERARQUICA (não pela ordem que o usuário marcou) */
-    var idsOrdenados = Array.from(_selecionadas).sort(function(a,b){
-      var oa = _ordemDe(a), ob = _ordemDe(b);
-      if(oa !== ob) return oa - ob;
-      return a.localeCompare(b);
+    var idsOrdenados = idsBlocos.sort(function(a,b){
+      return _ordemDe(a) - _ordemDe(b);
     });
     var allHtml = [], allTxt = [];
-    idsOrdenados.forEach(function(id, idx){
+    idsOrdenados.forEach(function(id){
       var sec = _buildSection(id);
       if(!sec) return;
-      /* page-break entre seções principais (exceto antes da primeira) */
-      var brk = idx > 0 ? ' rs-break' : '';
-      allHtml.push('<section class="rs-section'+brk+'">'+sec.html+'</section>');
+      /* Sem quebra de página entre seções — fluxo contínuo pra economizar folhas */
+      allHtml.push('<section class="rs-section">'+sec.html+'</section>');
       allTxt.push(sec.txt);
     });
     return { html:allHtml.join('\n'), txt:allTxt.join('\n────────────────────────────\n') };
@@ -1573,90 +1768,163 @@
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
     if(typeof _showToast==='function') _showToast('💾 Arquivo baixado','var(--accent)');
   }
+  /* Helper: período do relatório no formato "DD/MM → DD/MM/YYYY" pra usar no hero */
+  function _periodoStrPdf(){
+    var per = _periodoAtivo();
+    /* Tenta extrair datas reais do escopo */
+    if(per === 'atual'){
+      var t = window._turmaAtiva || {};
+      if(t.periodStart || t.periodEnd){
+        var ini = _fmtDataBR(t.periodStart);
+        var fim = _fmtDataBR(t.periodEnd || t.periodStart);
+        if(ini && fim) return ini + ' → ' + fim;
+      }
+      return '';
+    }
+    if(per === 'mes_atual' || per === 'outro'){
+      var ym = (per === 'outro') ? _mesFiltroAtivo() : _mesAtualYM();
+      var parts = (ym || '').split('-');
+      if(parts.length === 2){
+        var meses = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+        var idx = parseInt(parts[1], 10) - 1;
+        return (meses[idx] || parts[1]) + ' / ' + parts[0];
+      }
+    }
+    return '';
+  }
+  function _fmtDataBR(ymd){
+    if(!ymd) return '';
+    var m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m) return m[3] + '/' + m[2] + '/' + m[1];
+    return ymd;
+  }
+  function _hojeFmtFlat(){
+    var d = new Date();
+    return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
+  }
+  function _perfilAtual(){
+    try {
+      var sess = (typeof _getSessao === 'function') ? _getSessao() : null;
+      if(sess && sess.perfil) return String(sess.perfil).toUpperCase();
+    } catch(e){}
+    return 'ADM';
+  }
+
   function _abrirPrint(htmlBody){
     var data = _hojeStr();
-    var ctxLabel = (typeof _escopoLabel === 'function') ? _escopoLabel() : '';
+    var dataFlat = _hojeFmtFlat();
+    var perfil = _perfilAtual();
     var turma = window._turmaAtiva || {};
     var turmaNome = turma.nome || turma.codigo || '';
-    var qtdSec = _selecionadas.size;
-    /* Paleta corporativa do Relatório Supremo (PDF) traduzida para CSS:
-       PRETO    = #111111
-       OCRE     = #c9a14a (linha hairline mais clara)
-       CINZA    = #666666 (textos secundários)
-       HAIRLINE = #e6e6e6 (linhas finas) */
+    var periodo = _periodoStrPdf();
+    /* Detecta "modo individual": esc_sel marcado com exatamente 1 consultor escolhido.
+       O eyebrow é fixo; no modo individual, o nome do consultor vira o h1. */
+    var consFiltro = _filtroConsultoresAtivo();
+    var modoIndividual = (consFiltro && consFiltro.size === 1
+                          && _selecionadas.has('esc_sel')
+                          && _consultoresEscolhidos.size === 1);
+    var consultorUnico = modoIndividual ? Array.from(_consultoresEscolhidos)[0] : '';
+    var eyebrowText = 'R E L A T Ó R I O &nbsp;&nbsp; E X E C U T I V O &nbsp;&nbsp; C O N S U L T O R';
+    var heroTitle;
+    if(modoIndividual){
+      /* Nome do consultor em destaque; turma/período como sub-linha */
+      heroTitle = _escSafe(consultorUnico);
+    } else {
+      heroTitle = turmaNome
+        ? (turmaNome + (periodo ? ' &nbsp;·&nbsp; ' + _escSafe(periodo) : ''))
+        : (periodo || 'Relatório Consultor');
+    }
+    var heroSubExtra = '';
+    if(modoIndividual && (turmaNome || periodo)){
+      var subParts = [];
+      if(turmaNome) subParts.push(turmaNome);
+      if(periodo) subParts.push(periodo);
+      heroSubExtra = '<div class="sub-extra">' + _escSafe(subParts.join(' · ')) + '</div>';
+    }
+    /* Texto do footer (injetado no @page · @bottom-center via CSS) */
+    var footerText = 'FEBRACIS · CONFIDENCIAL'
+      + (turmaNome ? ' · ' + turmaNome : '')
+      + ' · Pág. ';
+    /* Paleta corporativa do Relatório Executivo:
+       PRETO    = #111111  · texto principal e títulos
+       OCRE     = #c9a14a  · acentos, eyebrow, hairline ocre, valor destacado
+       CINZA    = #888888  · textos secundários (sub, header de tabela)
+       HAIRLINE = #d6d6d6  · linhas finas */
     var css = ''
-      + '@page{size:A4;margin:18mm 16mm 22mm;}'
+      /* Margens enxutas pra caber mais conteúdo por página */
+      + '@page{size:A4;margin:12mm 12mm 14mm;'
+      +   '@bottom-center{content:"'+footerText.replace(/"/g,'\\"')+'" counter(page) " / " counter(pages);'
+      +     'font-family:Helvetica,Arial,sans-serif;font-size:7pt;color:#888;letter-spacing:.10em;}'
+      + '}'
       + '*{box-sizing:border-box;}'
       + 'html,body{margin:0;padding:0;}'
-      + 'body{font-family:"Times New Roman",Times,Georgia,serif;background:#fff;color:#111;font-size:11pt;line-height:1.45;}'
-      /* CAPA */
-      + '.rs-capa{min-height:calc(100vh - 40mm);display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0 4mm;page-break-after:always;}'
-      + '.rs-capa .brand{font-family:Helvetica,Arial,sans-serif;font-size:9pt;letter-spacing:.32em;text-transform:uppercase;color:#c9a14a;font-weight:700;margin-bottom:18mm;border-bottom:1px solid #c9a14a;padding-bottom:6mm;width:100%;}'
-      + '.rs-capa h1{font-family:"Times New Roman",Times,serif;font-size:34pt;line-height:1.08;margin:0 0 6mm;color:#111;font-weight:400;letter-spacing:-.01em;}'
-      + '.rs-capa h1 em{font-style:italic;color:#c9a14a;}'
-      + '.rs-capa .sub{font-family:Helvetica,Arial,sans-serif;font-size:10pt;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:14mm;}'
-      + '.rs-capa .meta{display:flex;flex-direction:column;gap:3mm;font-family:Helvetica,Arial,sans-serif;font-size:9pt;color:#111;border-top:1px solid #e6e6e6;padding-top:6mm;width:100%;}'
-      + '.rs-capa .meta .row{display:flex;justify-content:space-between;align-items:baseline;}'
-      + '.rs-capa .meta .lbl{color:#666;text-transform:uppercase;letter-spacing:.14em;font-size:7.5pt;}'
-      + '.rs-capa .meta .val{color:#111;font-weight:600;font-size:10pt;}'
-      /* HEADER que aparece em todas as páginas (exceto capa) */
-      + '.rs-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid #c9a14a;padding-bottom:3mm;margin-bottom:8mm;font-family:Helvetica,Arial,sans-serif;}'
-      + '.rs-head .ttl{font-size:8.5pt;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:.18em;}'
-      + '.rs-head .ttl em{font-style:italic;color:#c9a14a;font-weight:400;}'
-      + '.rs-head .date{font-size:7.5pt;color:#666;}'
-      /* SEÇÕES */
-      + '.rs-section{margin:0 0 10mm;}'
-      + '.rs-break{page-break-before:always;}'
-      + '.rs-section h2{font-family:Helvetica,Arial,sans-serif;font-size:9.5pt;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:.16em;margin:0 0 4mm;padding-bottom:2mm;border-bottom:1px solid #111;}'
-      + '.rs-section h3{font-family:"Times New Roman",Times,serif;font-size:13pt;font-weight:400;color:#c9a14a;margin:6mm 0 2mm;font-style:italic;}'
-      + '.rs-section p{margin:1.5mm 0;font-size:10.5pt;color:#111;}'
-      + '.rs-section ul{margin:2mm 0 2mm 6mm;padding:0;font-size:10pt;}'
-      + '.rs-section ul li{margin:.8mm 0;color:#111;}'
+      + 'body{font-family:Helvetica,Arial,sans-serif;background:#fff;color:#111;font-size:9pt;line-height:1.3;}'
+      /* HERO compacto (sem capa fullpage — só na 1ª página) */
+      + '.rs-hero{padding:0 0 3mm;border-bottom:1.2pt solid #111;margin-bottom:4mm;}'
+      + '.rs-hero .eyebrow{font-family:Helvetica,Arial,sans-serif;font-size:7.5pt;font-weight:700;letter-spacing:.38em;color:#c9a14a;text-transform:uppercase;margin-bottom:2mm;}'
+      + '.rs-hero h1{font-family:"Times New Roman",Times,Georgia,serif;font-size:22pt;font-weight:400;color:#111;letter-spacing:-.01em;line-height:1;margin:0 0 1.5mm;}'
+      + '.rs-hero .sub{font-family:Helvetica,Arial,sans-serif;font-size:8pt;color:#888;letter-spacing:.02em;}'
+      + '.rs-hero .sub-extra{font-family:Helvetica,Arial,sans-serif;font-size:9pt;color:#666;letter-spacing:.06em;text-transform:uppercase;margin:0 0 1.5mm;}'
+      + '.rs-hero .filtros{font-family:Helvetica,Arial,sans-serif;font-size:7.5pt;color:#666;margin-top:1.5mm;padding-top:1.5mm;border-top:.4pt solid #d6d6d6;line-height:1.35;}'
+      + '.rs-hero .filtros b{color:#c9a14a;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}'
+      /* SEÇÕES compactas — header ocre uppercase sem fundo, hairline abaixo */
+      + '.rs-section{margin:0 0 3.5mm;page-break-inside:auto;}'
+      /* Detalhado: blocos um abaixo do outro, sem quebra de página */
+      + '.rs-detalh-item{padding-top:2mm;}'
+      + '.rs-detalh-item + .rs-detalh-item{padding-top:3mm;border-top:.4pt solid #d6d6d6;margin-top:2mm;}'
+      + '.rs-section h2{font-family:Helvetica,Arial,sans-serif;font-size:7.5pt;font-weight:700;color:#c9a14a;text-transform:uppercase;letter-spacing:.16em;margin:0 0 1.2mm;padding-bottom:.8mm;border-bottom:.5pt solid #111;}'
+      + '.rs-section h3{font-family:"Times New Roman",Times,serif;font-size:11pt;font-weight:400;color:#c9a14a;margin:2.5mm 0 1mm;font-style:italic;}'
+      + '.rs-section p{margin:.6mm 0;font-size:9pt;color:#111;}'
+      + '.rs-section ul{margin:.5mm 0 1mm 5mm;padding:0;font-size:8.5pt;}'
+      + '.rs-section ul li{margin:.2mm 0;color:#111;line-height:1.3;}'
       + '.rs-section b{color:#111;font-weight:700;}'
       + '.rs-section em{font-style:italic;color:#666;}'
-      /* TABELAS estilo Supremo: hairlines finas, header preto, tipografia Helvetica */
-      + '.rs-section table{width:100%;border-collapse:collapse;margin:3mm 0;font-family:Helvetica,Arial,sans-serif;font-size:8.5pt;page-break-inside:avoid;}'
-      + '.rs-section table thead{background:#111;}'
-      + '.rs-section table th{padding:2.2mm 2.5mm;text-align:left;color:#c9a14a;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:7.5pt;border:none;}'
-      + '.rs-section table td{padding:2mm 2.5mm;border-bottom:.4pt solid #e6e6e6;color:#111;vertical-align:top;}'
-      + '.rs-section table tr:last-child td{border-bottom:none;}'
-      + '.rs-section table tr:nth-child(even) td{background:#fafafa;}'
-      /* Caixas de destaque (resumo financeiro etc.) */
-      + '.rs-section .box{border:.5pt solid #e6e6e6;border-left:2pt solid #c9a14a;padding:4mm 5mm;margin:3mm 0;background:#fafafa;}'
-      /* Cores semânticas (sem confiar em inline-style das seções) */
-      + '.rs-section [style*="color:#34d399"]{color:#0a7a44 !important;font-weight:700;}'
-      + '.rs-section [style*="color:#f59e0b"]{color:#a86b00 !important;font-weight:700;}'
+      /* EMPTY STATE — "Nenhum X registrado. —" alinhado em 2 colunas */
+      + '.rs-empty{display:flex;justify-content:space-between;align-items:baseline;padding:.8mm 0 1.2mm;border-bottom:.4pt solid #d6d6d6;font-size:9pt;color:#111;font-style:italic;}'
+      + '.rs-empty .dash{color:#888;font-style:normal;letter-spacing:.05em;}'
+      /* TABELAS densas — header ocre uppercase, sem bg, hairlines simples */
+      + '.rs-section table{width:100%;border-collapse:collapse;margin:.3mm 0 1mm;font-family:Helvetica,Arial,sans-serif;font-size:8pt;page-break-inside:auto;}'
+      + '.rs-section table thead{background:transparent;}'
+      + '.rs-section table th{padding:1.2mm 1.5mm .8mm;text-align:left;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.10em;font-size:6.8pt;border-bottom:.5pt solid #111;background:transparent;}'
+      + '.rs-section table td{padding:1mm 1.5mm;border-bottom:.4pt solid #e6e6e6;color:#111;vertical-align:top;background:transparent;line-height:1.3;}'
+      + '.rs-section table tr:last-child td{border-bottom:.4pt solid #e6e6e6;}'
+      /* Resumo financeiro — linhas label→valor + linha TOTAL GERAL destacada */
+      + '.fin-resumo{margin:.3mm 0 1mm;}'
+      + '.fin-resumo .fr-row{display:flex;justify-content:space-between;align-items:baseline;gap:5mm;padding:1.3mm 0;border-bottom:.4pt solid #d6d6d6;font-size:9pt;}'
+      + '.fin-resumo .fr-row .lbl{color:#111;}'
+      + '.fin-resumo .fr-row .val{color:#111;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;}'
+      + '.fin-resumo .fr-total{border-top:1.2pt solid #111;border-bottom:1.2pt solid #111;margin-top:.5mm;padding:1.8mm 0;}'
+      + '.fin-resumo .fr-total .lbl{font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#111;font-size:9pt;}'
+      + '.fin-resumo .fr-total .val{color:#c9a14a;font-size:13pt;font-family:"Times New Roman",Times,serif;font-weight:400;}'
+      /* Cores semânticas — neutraliza no impresso, mantém preto/negrito */
+      + '.rs-section [style*="color:#34d399"]{color:#111 !important;font-weight:700;}'
+      + '.rs-section [style*="color:#f59e0b"]{color:#111 !important;font-weight:700;}'
+      + '.rs-section [style*="color:#a855f7"]{color:#111 !important;font-weight:700;}'
       + '.rs-section [style*="color:#b88a5a"]{color:#c9a14a !important;}'
-      /* Footer com paginação */
-      + '.rs-foot{position:fixed;bottom:6mm;left:16mm;right:16mm;display:flex;justify-content:space-between;align-items:center;font-family:Helvetica,Arial,sans-serif;font-size:7pt;color:#666;border-top:.4pt solid #e6e6e6;padding-top:2mm;letter-spacing:.08em;text-transform:uppercase;}'
-      + '.rs-foot .pg{font-variant-numeric:tabular-nums;}'
-      /* Suprime emojis no impresso (mantém limpeza) */
-      + '.rs-section h2 .emoji,.rs-section h3 .emoji{display:none;}'
-      + '@media screen{body{max-width:210mm;margin:0 auto;padding:18mm 16mm;background:#f4f3f0;}.rs-section,.rs-capa{background:#fff;}.rs-section,.rs-capa{padding:0;}body{box-shadow:none;}}'
-      + '@media print{.rs-foot{display:flex;}}';
+      + '.rs-section [style*="color:#d4a574"]{color:#c9a14a !important;}'
+      + '.rs-section [style*="color:#9aa5b1"]{color:#888 !important;}'
+      + '.rs-section [style*="color:#fca5a5"]{color:#111 !important;font-weight:700;}'
+      + '.rs-section [style*="color:#6b7280"]{color:#888 !important;}'
+      + '.rs-section [style*="background:#1c2128"]{background:transparent !important;}'
+      + '.rs-section [style*="background:#1c1c1c"]{background:transparent !important;}'
+      + '.rs-section [style*="border-bottom:1px solid #2a2f37"]{border-bottom:.4pt solid #e6e6e6 !important;}'
+      /* Preview no pop-up antes da impressão (mesmas margens) */
+      + '@media screen{body{max-width:210mm;margin:0 auto;padding:12mm;background:#f4f3f0;}}';
 
+    var docTitle = 'Relatório Executivo Consultor · '
+      + (modoIndividual ? (consultorUnico || 'Febracis')
+                        : (turmaNome || 'Febracis'));
     var doc = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
-      + '<title>Relatório de Consultores · '+_escSafe(turmaNome||'Febracis')+'</title>'
+      + '<title>'+_escSafe(docTitle)+'</title>'
       + '<style>'+css+'</style></head><body>'
-      /* CAPA */
-      + '<div class="rs-capa">'
-        + '<div class="brand">Febracis · Relatório de Consultores</div>'
-        + '<h1>Análise <em>consultiva</em><br>de desempenho.</h1>'
-        + '<div class="sub">'+_escSafe(ctxLabel||'Relatório gerencial')+'</div>'
-        + '<div class="meta">'
-          + (turmaNome ? '<div class="row"><span class="lbl">Turma</span><span class="val">'+_escSafe(turmaNome)+'</span></div>' : '')
-          + '<div class="row"><span class="lbl">Contexto</span><span class="val">'+_escSafe(ctxLabel||'—')+'</span></div>'
-          + '<div class="row"><span class="lbl">Seções</span><span class="val">'+qtdSec+'</span></div>'
-          + '<div class="row"><span class="lbl">Emissão</span><span class="val">'+_escSafe(data)+'</span></div>'
-        + '</div>'
-      + '</div>'
-      /* HEADER recorrente + conteúdo */
-      + '<div class="rs-head">'
-        + '<div class="ttl">Relatório <em>de consultores</em></div>'
-        + '<div class="date">'+_escSafe(data)+(turmaNome?(' · '+_escSafe(turmaNome)):'')+'</div>'
+      /* HERO (sem capa fullpage) */
+      + '<div class="rs-hero">'
+        + '<div class="eyebrow">'+eyebrowText+'</div>'
+        + '<h1>'+heroTitle+'</h1>'
+        + heroSubExtra
+        + '<div class="sub">Gerado em '+_escSafe(dataFlat)+' por '+_escSafe(perfil)+'</div>'
       + '</div>'
       + htmlBody
-      + '<div class="rs-foot"><span>Febracis · Gestão Comercial</span><span class="pg">'+_escSafe(data)+'</span></div>'
       + '<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
       + '</body></html>';
 

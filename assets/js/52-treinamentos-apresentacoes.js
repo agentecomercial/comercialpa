@@ -452,7 +452,10 @@
     var html = ''
       + '<div class="trap-hero">'
       +   '<div><h1>Treinamentos & Apresentações</h1><p>Materiais internos e apresentações comerciais organizados por produto.</p></div>'
-      +   '<button class="trap-btn-primary" onclick="window._trapIr(\'adicionar\')">+ Adicionar conteúdo</button>'
+      +   '<div style="display:flex;gap:8px;align-items:center;">'
+      +     '<button class="trap-btn-primary" onclick="window._trapIr(\'adicionar\')" style="background:transparent;border:1px solid var(--border2,rgba(255,255,255,.14));color:var(--text,#e6edf3);">+ Adicionar conteúdo</button>'
+      +     '<button class="trap-btn-primary" onclick="window.abrirEditorApresentacao && window.abrirEditorApresentacao({novo:true})">📐 Nova apresentação</button>'
+      +   '</div>'
       + '</div>'
       + '<div class="trap-stats">'
       +   '<div class="trap-stat"><div class="trap-stat-n">'+itens.length+'</div><div class="trap-stat-l">Total</div></div>'
@@ -1492,6 +1495,12 @@
     var item = _getItens().find(function(i){ return i.id === id; });
     if(!item) return;
     if(!item.url){ _toast('❌ Conteúdo sem URL', 'var(--red)'); return; }
+    /* URL __editor:apr_xxx → apresentação criada no editor visual; reabre no editor */
+    if(item.url.indexOf('__editor:') === 0 && typeof window.abrirEditorApresentacao === 'function'){
+      var aprId = item.url.slice(9);
+      window.abrirEditorApresentacao({ id: aprId });
+      return;
+    }
     _itemVisualizando = item;
     _indiceMod = 0;
     _telaAtual = 'visualizar';

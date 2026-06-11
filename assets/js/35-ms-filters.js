@@ -88,7 +88,9 @@
     ms.classList.toggle('open', abrindo);
   };
 
-  /* Menu kebab "···" (ações secundárias do card Clientes — Opção B) */
+  /* Menu kebab "···" (ações secundárias do card Clientes — Opção B)
+     Popover usa position:fixed pra escapar do overflow:hidden do .tpanel;
+     posicionamos manualmente embaixo do trigger via getBoundingClientRect. */
   window._cliMenuToggle = function(ev){
     if(ev && ev.stopPropagation) ev.stopPropagation();
     var menu = document.getElementById('cliBarMenu');
@@ -99,7 +101,41 @@
     menu.classList.toggle('open', abrindo);
     var trg = menu.querySelector('.cli-menu-trigger');
     if(trg) trg.setAttribute('aria-expanded', abrindo ? 'true' : 'false');
+    if(abrindo) _cliMenuReposicionar();
   };
+  function _cliMenuReposicionar(){
+    var menu = document.getElementById('cliBarMenu');
+    if(!menu) return;
+    var trg = menu.querySelector('.cli-menu-trigger');
+    var pop = menu.querySelector('.cli-menu-pop');
+    if(!trg || !pop) return;
+    var r = trg.getBoundingClientRect();
+    /* Mede o popover antes de posicionar (força display:block temporário) */
+    var prev = pop.style.display;
+    pop.style.visibility = 'hidden';
+    pop.style.display = 'block';
+    var pw = pop.offsetWidth || 220;
+    pop.style.display = prev;
+    pop.style.visibility = '';
+    /* Alinha pela direita do trigger; se sair da viewport pela esquerda, alinha pela esquerda */
+    var top = Math.round(r.bottom + 6);
+    var left = Math.round(r.right - pw);
+    if(left < 8) left = Math.round(r.left);
+    /* Se ainda sair pela direita, encosta na borda */
+    var maxLeft = window.innerWidth - pw - 8;
+    if(left > maxLeft) left = maxLeft;
+    pop.style.top = top + 'px';
+    pop.style.left = left + 'px';
+  }
+  /* Reposiciona em resize/scroll enquanto aberto */
+  window.addEventListener('resize', function(){
+    var m = document.getElementById('cliBarMenu');
+    if(m && m.classList.contains('open')) _cliMenuReposicionar();
+  });
+  window.addEventListener('scroll', function(){
+    var m = document.getElementById('cliBarMenu');
+    if(m && m.classList.contains('open')) _cliMenuReposicionar();
+  }, true);
   window._cliMenuClose = function(){
     var menu = document.getElementById('cliBarMenu');
     if(menu) menu.classList.remove('open');

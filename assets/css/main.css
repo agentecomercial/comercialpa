@@ -644,10 +644,12 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   border-color:var(--accent);color:var(--accent);
 }
 .cli-bar-unica .cli-menu-pop{
-  position:absolute;top:calc(100% + 6px);right:0;min-width:220px;
+  /* position:fixed pra escapar do overflow:hidden do .tpanel.
+     Coordenadas (top/left) são preenchidas via JS no toggle a partir do bounding rect do trigger. */
+  position:fixed;min-width:220px;
   background:var(--surface);border:1px solid var(--border2);border-radius:8px;
   padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.5);
-  display:none;z-index:1500;
+  display:none;z-index:9999;
 }
 .cli-bar-unica .cli-menu.open .cli-menu-pop{display:block;}
 .cli-bar-unica .cli-menu-item{

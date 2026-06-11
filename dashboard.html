@@ -15,7 +15,7 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Italiana&family=Petit+Formal+Script&family=Cinzel:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260606-160951">
+<link rel="stylesheet" href="assets/css/main.css?v=20260611-100000">
 <link rel="stylesheet" href="assets/css/themes.css?v=20260603-151115">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
@@ -3659,7 +3659,7 @@ try{
 <script defer src="assets/js/31-modo-consultor-desktop.js?v=20260603-151115"></script>
 <script defer src="assets/js/33-relatorio-supremo.js?v=20260603-151115"></script>
 <script defer src="assets/js/34-ms-status-filter.js?v=20260603-151115"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260603-151115"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260611-100000"></script>
 <script defer src="assets/js/36-col-filter.js?v=20260603-151115"></script>
 <script defer src="assets/js/37-theme-picker.js?v=20260603-151115"></script>
 <script defer src="assets/js/38-audit-treinamentos.js?v=20260603-151115"></script>
@@ -3677,10 +3677,12 @@ try{
 <script defer src="assets/js/51-ic-preparo1a1.js?v=20260603-151115"></script>
 <!-- Treinamentos / Apresentações (módulo isolado — não interfere em nada existente) -->
 <script defer src="assets/js/treinamentos/registro-inicial.js?v=20260610-210000"></script>
-<script defer src="assets/js/52-treinamentos-apresentacoes.js?v=20260610-260000"></script>
+<script defer src="assets/js/52-treinamentos-apresentacoes.js?v=20260611-100000"></script>
+<!-- Editor de Apresentações (Fase 1 · Fundação) -->
+<script defer src="assets/js/53-editor-apresentacoes.js?v=20260611-600000"></script>
 <!-- Turma · Layout Mobile Accordion (Consultor + Treinador) — só ativo em ≤ 768px -->
 <script defer src="assets/js/56-turma-mobile-accordion.js?v=20260610-320000"></script>
-<script defer src="assets/js/53-imprimir-consultores.js?v=20260603-162608"></script>
+<script defer src="assets/js/53-imprimir-consultores.js?v=20260611-380000"></script>
 <script defer src="assets/js/99-diag.js?v=20260603-151115"></script>
 <script defer src="assets/js/99-schema-asserter.js?v=20260603-151115"></script>
 <script defer src="assets/js/99-smoke-test.js?v=20260604-090737"></script>
@@ -4386,6 +4388,9 @@ try{
 
 <!-- ══ TREINAMENTOS / APRESENTAÇÕES (tela host vazia — populada por 52-treinamentos-apresentacoes.js) ══ -->
 <div id="trapScreen" style="display:none;background:var(--bg);min-height:100vh;"></div>
+
+<!-- ══ EDITOR DE APRESENTAÇÕES (tela host — populada por 53-editor-apresentacoes.js) ══ -->
+<div id="editorApresentacaoScreen" style="display:none;"></div>
 
 <script defer src="assets/js/11-pipeline-comercial.js?v=20260610-180000"></script>
 
