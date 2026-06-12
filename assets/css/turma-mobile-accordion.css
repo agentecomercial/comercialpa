@@ -137,8 +137,15 @@
     position: absolute;
     top: 12px;
     right: 12px;
-    width: 36px;
-    height: 36px;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px;
+    min-height: 36px !important;  /* anula main.css:2402 que força 44px em <640px */
+    max-width: 36px;
+    max-height: 36px;
+    aspect-ratio: 1 / 1;
+    box-sizing: border-box;
+    flex-shrink: 0;
     background: rgba(200, 240, 90, .08);
     border: 1px solid rgba(200, 240, 90, .3);
     border-radius: 50%;
