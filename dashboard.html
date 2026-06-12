@@ -1329,12 +1329,20 @@
             <div class="ac-filt-field">
               <label>Período</label>
               <select id="acFiltPeriodo" onchange="_agendaAtualizarFiltros()">
-                <option value="0" selected>Todos</option>
-                <option value="7">Próximos 7 dias</option>
-                <option value="15">Próximos 15 dias</option>
-                <option value="30">Próximos 30 dias</option>
-                <option value="60">Próximos 60 dias</option>
-                <option value="90">Próximos 90 dias</option>
+                <option value="all">Tudo (passado + futuro)</option>
+                <optgroup label="⬅ Passado">
+                  <option value="-30">Últimos 30 dias</option>
+                  <option value="-90">Últimos 90 dias</option>
+                  <option value="-180">Últimos 6 meses</option>
+                  <option value="-365">Último ano</option>
+                  <option value="-730">Últimos 2 anos</option>
+                </optgroup>
+                <optgroup label="Futuro ➡">
+                  <option value="30">Próximos 30 dias</option>
+                  <option value="90" selected>Próximos 90 dias</option>
+                  <option value="180">Próximos 6 meses</option>
+                  <option value="365">Próximo ano</option>
+                </optgroup>
               </select>
             </div>
             <div class="ac-filt-field">
@@ -1582,9 +1590,9 @@
         if(typeof _agendaRenderMeses === 'function')           _agendaRenderMeses();
         _agendaRenderEventos();
       }
-      /* === ESTADO dos filtros — TODOS começam VAZIOS (Todos) === */
+      /* === ESTADO dos filtros — período começa em "Próximos 90 dias" (alinhado com agenda.html) === */
       window._agendaFiltros = window._agendaFiltros || {
-        periodo: 0,          /* 0 = Todos (default) */
+        periodo: '90',       /* default: próximos 90 dias */
         treinamento: '',
         treinador: '',
         busca: ''
@@ -1688,7 +1696,7 @@
         var sT = document.getElementById('acFiltTreinamento');
         var sM = document.getElementById('acFiltTreinador');
         var iB = document.getElementById('acFiltBusca');
-        window._agendaFiltros.periodo     = sP ? +sP.value : 90;
+        window._agendaFiltros.periodo     = sP ? sP.value : '90';
         window._agendaFiltros.treinamento = sT ? sT.value  : '';
         window._agendaFiltros.treinador   = sM ? sM.value  : '';
         window._agendaFiltros.busca       = iB ? (iB.value||'').toLowerCase().trim() : '';
@@ -1697,10 +1705,10 @@
       }
 
       function _agendaLimparFiltros(){
-        window._agendaFiltros = { periodo:0, treinamento:'', treinador:'', busca:'' };
+        window._agendaFiltros = { periodo:'90', treinamento:'', treinador:'', busca:'' };
         window._agendaFiltroUnit = '';
         window._agendaMesSel = '';
-        var sP = document.getElementById('acFiltPeriodo'); if(sP) sP.value = '0';
+        var sP = document.getElementById('acFiltPeriodo'); if(sP) sP.value = '90';
         var sT = document.getElementById('acFiltTreinamento'); if(sT) sT.value = '';
         var sM = document.getElementById('acFiltTreinador');   if(sM) sM.value = '';
         var iB = document.getElementById('acFiltBusca');       if(iB) iB.value = '';
@@ -1722,7 +1730,7 @@
         var f = window._agendaFiltros;
         var n = 0;
         if(window._agendaFiltroUnit) n++;
-        if(f.periodo && f.periodo !== 0) n++;  /* 0 = Todos = sem filtro */
+        if(f.periodo && f.periodo !== '90') n++;  /* '90' = default = não conta como filtro extra */
         if(f.treinamento)            n++;
         if(f.treinador)              n++;
         if(f.busca)                  n++;
@@ -1735,13 +1743,28 @@
 
       function _agendaAplicarTodosFiltros(evts){
         var f = window._agendaFiltros;
-        var agora = Date.now();
-        var limiteFim = f.periodo > 0 ? agora + f.periodo*86400000 : Infinity;
+        var hoje = new Date(); hoje.setHours(0,0,0,0);
+        var baseMs, limiteMs;
+        if(f.periodo === 'all'){
+          baseMs = hoje.getTime() - 800*86400000;
+          limiteMs = hoje.getTime() + 400*86400000;
+        } else {
+          var d = parseInt(f.periodo, 10);
+          if(isNaN(d)) d = 90;
+          if(d < 0){
+            baseMs = hoje.getTime() + d*86400000;
+            limiteMs = hoje.getTime();
+          } else {
+            baseMs = hoje.getTime();
+            limiteMs = hoje.getTime() + d*86400000;
+          }
+        }
         var busca = (f.busca||'').toLowerCase();
         var mesSel = window._agendaMesSel || '';
         return evts.filter(function(e){
           if(window._agendaFiltroUnit && e.unit !== window._agendaFiltroUnit) return false;
-          if(f.periodo > 0 && (e.startMs||0) > limiteFim) return false;
+          var ini = e.startMs || 0;
+          if(ini < baseMs || ini > limiteMs) return false;
           if(f.treinamento && e.titulo !== f.treinamento) return false;
           if(f.treinador && e.ministrante !== f.treinador) return false;
           if(busca){
