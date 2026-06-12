@@ -1228,11 +1228,15 @@
       }
       eventos = (data.items || []).map(parseEvento);
       // ─── Cache compacto para o card AGENDA do dashboard.html consumir ──
+      // Inclui passado (até ~2 anos atrás) + futuro pra que o filtro de período
+      // do dashboard ("Últimos 30/90 dias", "Últimos 2 anos") tenha o que mostrar.
       try {
         var _pad = function(n){return n<10?'0'+n:n;};
         var _wdMap = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
-        var _cacheEvts = eventos
-          .filter(function(e){ return e.start && e.start.getTime() >= Date.now() - 86400000; }) // hoje em diante
+        var _agora = Date.now();
+        var _limitePassado = _agora - 730 * 86400000; // 2 anos atrás
+        var _ordenados = eventos
+          .filter(function(e){ return e.start && e.start.getTime() >= _limitePassado; })
           .map(function(e){
             var d = e.start;
             var ehOnline = /online|remoto|zoom|meet|teams|webinar|google\s*meet/i.test((e.local||'')+' '+(e.desc||''));
@@ -1256,10 +1260,14 @@
             };
           })
           .sort(function(a,b){ return a.startMs - b.startMs; });
+        // Divide cache em até 300 do passado recente + até 300 do futuro próximo
+        var _passados = _ordenados.filter(function(e){ return e.startMs < _agora; }).slice(-300);
+        var _futuros  = _ordenados.filter(function(e){ return e.startMs >= _agora; }).slice(0, 300);
+        var _cacheEvts = _passados.concat(_futuros);
         localStorage.setItem('agendaFebracis.eventosCache', JSON.stringify({
-          ts: Date.now(),
+          ts: _agora,
           total: _cacheEvts.length,
-          eventos: _cacheEvts.slice(0, 50)
+          eventos: _cacheEvts
         }));
       } catch(_e){ /* localStorage pode falhar em modo privativo */ }
       treinosUnicos = derivarTreinos(eventos);
