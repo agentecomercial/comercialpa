@@ -3259,6 +3259,16 @@ body{overflow-x:hidden;}
   color:var(--text);
   outline:none;
   transition:border-color .15s,background .15s;
+  color-scheme:dark;
+}
+.agenda-card-v3 .ac-filt-field select option,
+.agenda-card-v3 .ac-filt-field select optgroup{
+  background:var(--surface);
+  color:var(--text);
+}
+.agenda-card-v3 .ac-filt-field select optgroup{
+  font-style:normal;font-weight:700;
+  color:var(--muted);
 }
 .agenda-card-v3 .ac-filt-field select:hover,
 .agenda-card-v3 .ac-filt-field input[type=search]:hover{background:rgba(255,255,255,.03);}
