@@ -48,6 +48,7 @@ var _PROPOSTA_PRECOS = {
   'TAV':       {integral:3997.00,  parcelado:333.08,  parcelado_desc:249.75,   avista_credito:2497.00, avista:1997.00,  reciclagem:1498.50},
   'MAESTRIA':  {integral:85000.00, parcelado:9925.48, parcelado_desc:9925.48,  avista_credito:85000.00,avista:85000.00, reciclagem:85000.00},
   'CIS_GLOBAL':{integral:1997.00,  parcelado:199.70,  parcelado_desc:199.70,   avista_credito:1997.00, avista:1997.00,  reciclagem:998.50},
+  'CI':        {integral:60000.00, parcelado:5000.00, parcelado_desc:5000.00,  avista_credito:50000.00,avista:50000.00, reciclagem:60000.00},
   /* Placeholders adicionados — preços virão da hidratação do Firebase (appConfig/treinamentosMeta) */
   'JE':        {integral:0, parcelado:0, parcelado_desc:0, avista_credito:0, avista:0, reciclagem:0},
   'GE':        {integral:0, parcelado:0, parcelado_desc:0, avista_credito:0, avista:0, reciclagem:0},
@@ -89,6 +90,7 @@ var _PRODUTOS_PROPOSTA={
 'CIS_GLOBAL':{customRenderer:true,nome:'Método CIS Global',codigo:'CIS_GLOBAL',img:'assets/img/propostas/CIS_GLOBAL.jpg',texto:'\u00c9 uma imensa honra convidá-lo(a) para o Método CIS Global.\n\n[TEXTO_DO_PRODUTO — substitua com base no PDF do treinamento]\n\nNão deixe essa oportunidade passar!',preco:'R$ [VALOR]',validade:'30 dias'},
 'CIS':{customRenderer:true,nome:'Método CIS Presencial',codigo:'CIS',img:'assets/img/propostas/CIS.png',texto:'O Método CIS (Coaching Integral Sistêmico) é o maior e mais completo treinamento de inteligência emocional do mundo, criado por Paulo Vieira — especialista em comportamento humano e presidente da Febracis.\n\nCom mais de 248 edições realizadas e 1,8 milhão de pessoas impactadas em 83 países, o programa é projetado para ajudar você a desbloquear seu potencial máximo através de 5 pilares essenciais que transformam todas as 11 áreas da sua vida:\n\n✅ Performance: maior capacidade de liderança\n✅ Emocional: elimine hábitos tóxicos e sabotadores\n✅ Financeiro: organize e alavanche sua vida financeira\n✅ Profissional: cresça e se destaque na sua área\n✅ Relacionamentos: restaure e fortaleça seus laços\n\nSão mais de 50 horas de imersão profunda em 3 dias de treinamento presencial, com Paulo Vieira, Camila Vieira e Júlia Vieira.\n\nNão perca essa oportunidade de transformar sua vida de dentro para fora!',preco:'R$ [VALOR]',validade:'30 dias'},
 'TEAM':{nome:'Team Coaching Febracis',codigo:'TEAM',img:'assets/img/propostas/TEAM.png',texto:'\u00c9 uma imensa honra convidá-lo(a) para o Team Coaching Febracis.\n\n[TEXTO_DO_PRODUTO — substitua com base no PDF do treinamento]\n\nNão deixe essa oportunidade passar!',preco:'R$ [VALOR]',validade:'30 dias'},
+'CI':{nome:'Coaching Individual',codigo:'CI',img:'assets/img/propostas/CI.jpg',texto:'É uma imensa honra convidá-lo(a) para o Coaching Individual.\n\n[TEXTO_DO_PRODUTO — substitua com base no PDF do treinamento]\n\nNão deixe essa oportunidade passar!',preco:'R$ 60.000,00',validade:'30 dias'},
 };
 
 /* ─────────────────────────────────────────────────────────────────
@@ -198,6 +200,10 @@ function abrirPropostaModal(){
   if(frame){frame.src='about:blank';frame.style.display='none';}
   if(ph) ph.style.display='flex';
   document.getElementById('propostaOverlay').classList.add('open');
+  /* Ativa o preview em tempo real desde o início — qualquer interação
+     (sliders, +/− qty, preço, checkbox) regenera o PDF instantaneamente
+     sem precisar clicar em "Visualizar". */
+  window._propostaPreviewAtivo = true;
 }
 
 function fecharPropostaModal(){
@@ -246,7 +252,9 @@ function _propostaRenderTreinamentos(){
     qtyInput.value = '1';
     qtyInput.title = 'Quantidade';
     qtyInput.style.cssText = 'width:34px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 3px;color:var(--text);font-size:11px;font-weight:700;text-align:center;font-family:DM Mono,monospace;';
-    qtyInput.addEventListener('change', function(){
+    /* Usa 'input' (não 'change') pra capturar os clicks dos botões nativos
+       +/− do input type=number — dispara a cada incremento, instantâneo. */
+    qtyInput.addEventListener('input', function(){
       if(parseInt(this.value)<1 || isNaN(parseInt(this.value))) this.value='1';
       _propostaRecalcular();
     });
@@ -261,7 +269,8 @@ function _propostaRenderTreinamentos(){
     precoInput.placeholder = '0,00';
     precoInput.title = indisponivel ? 'Sem preco de tabela — digite manualmente' : 'Edite para sobrescrever o preco unitario';
     precoInput.style.cssText = 'width:112px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:DM Mono,monospace;white-space:nowrap;';
-    precoInput.addEventListener('change', function(){_propostaRecalcular();});
+    /* 'input' pra atualização instantânea conforme o user digita */
+    precoInput.addEventListener('input', function(){_propostaRecalcular();});
     precoInput.addEventListener('focus', function(){this.select();});
     /* Marca como editado pelo usuario para nao ser sobrescrito ao trocar
        a forma de pagamento (entrada manual prevalece) */
@@ -502,182 +511,98 @@ function _propostaRecalcular(){
   }
 }
 
+/* _propostaPreview() — delega ao gerador jsPDF em modo preview pra
+   garantir preview = impresso 1:1. Inclui DEBOUNCE de 220ms pra não
+   regenerar o PDF a cada milimetro dos sliders (gerar PDF custa CPU). */
 function _propostaPreview(){
-  window._propostaPreviewAtivo = true; // habilita re-render automático no _propostaRecalcular
-  var cliente = _propostaClienteAtual();
-  var pagamento = document.getElementById('propostaPagamento').value;
-  var pagLabel = _PROPOSTA_LABELS[pagamento];
-  var selecionados = [];
-  var container = document.getElementById('propostaTreinamentos');
-  if(container) container.querySelectorAll('input[type=checkbox]').forEach(function(chk){
-    if(!chk.checked) return;
-    var nome = chk.id.replace('prop_','');
-    var inp = document.getElementById('propval_'+nome);
-    var qtyInp = document.getElementById('propqty_'+nome);
-    var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
-    selecionados.push({nome:nome, val:inp?parseVal(inp.value):0, qty:qty});
-  });
-  /* Em formas parceladas (12x), INVESTIMENTO FINAL exibe a SOMA DAS
-     PARCELAS (ou seja, o valor de 1 mes). Em integral/a vista, mantem
-     o valor cheio normalmente (parcelasMul fica em 1). */
-  var parcelasMul = (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? 12 : 1;
-  var total = selecionados.reduce(function(a,s){return a + s.val * s.qty;},0);
-  var consultor = _propostaConsultorAtual();
-  var fonteUser = parseInt(document.getElementById('propFonte').value)||10;
-  var paddingUser = parseInt(document.getElementById('propPadding').value)||4;
-  /* AUTO-FIT em A4 unica folha:
-     reduz fonte/padding proporcionalmente quando ha muitos treinamentos
-     selecionados, evitando quebra de pagina. Limites min: fonte 6.5pt, pad 1. */
-  var qtdItens = selecionados.length;
-  var fator = qtdItens > 8 ? Math.max(0.55, 8 / qtdItens) : 1;
-  var fonte = qtdItens > 8 ? Math.max(6.5, Math.round(fonteUser * fator * 10) / 10) : fonteUser;
-  var padding = qtdItens > 8 ? Math.max(1, Math.round(paddingUser * fator)) : paddingUser;
-  var corH = document.getElementById('propCorHeader').value||'#0f0f0f';
-  var corA = document.getElementById('propCorAccent').value||'#c8f05a';
-  var validade = document.getElementById('propValidade').value||'30';
-
-  // ═══════════════════════════════════════════════
-  //   PREVIEW HTML — Executive Financial (Preview 05)
-  //   Paleta fixa Febracis (navy + ouro). Configurações
-  //   de fonte/padding ainda respeitadas.
-  // ═══════════════════════════════════════════════
-  var _docRef = '2026/PROP/'+String(Date.now()).slice(-6);
-  var _dt = new Date();
-  var _dataStr = String(_dt.getDate()).padStart(2,'0')+' · '+String(_dt.getMonth()+1).padStart(2,'0')+' · '+_dt.getFullYear();
-
-  var rows = selecionados.map(function(s, i){
-    /* "VALOR TOTAL (R$)" da linha = qty × valor unitario (parcela quando
-       a forma de pagamento eh em 12x). NAO multiplica por parcelas, para
-       manter coerencia com o INVESTIMENTO FINAL (soma das parcelas). */
-    var subtotal = s.val * s.qty;
-    var nomeFmt = (s.qty > 1 ? s.qty + '× ' : '') + s.nome;
-    return '<tr>'
-      +'<td style="padding:'+padding+'px 10px;font-size:'+fonte+'pt;color:#666;">L'+String(i+1).padStart(2,'0')+'</td>'
-      +'<td style="padding:'+padding+'px 10px;font-weight:700;font-size:'+fonte+'pt;color:#0a1f3d;">'+nomeFmt+'</td>'
-      +'<td style="padding:'+padding+'px 10px;text-align:center;font-size:'+fonte+'pt;color:#333;">'+pagLabel+'</td>'
-      +'<td style="padding:'+padding+'px 10px;text-align:center;font-family:Georgia,serif;font-size:'+fonte+'pt;color:#333;">'+s.qty+'</td>'
-      +'<td style="padding:'+padding+'px 10px;text-align:right;font-family:Georgia,serif;font-weight:700;font-size:'+fonte+'pt;color:#0a1f3d;">'+formatVal(subtotal)+'</td>'
-      +'</tr>';
-  }).join('');
-
-  var motivHtml = String(_PROPOSTA_TEXTO).replace(/\n/g,' ');
-
-  var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
-    +'<style>'
-    +'@page{size:A4 portrait;margin:0;}'
-    +'*{box-sizing:border-box;margin:0;padding:0;}'
-    +'body{font-family:"Helvetica Neue",Arial,sans-serif;background:#e8eaef;color:#1a1a1a;}'
-    /* .doc com dimensoes fixas A4 (210x297mm). overflow:hidden garante
-       que o conteudo nao estoure pra uma segunda pagina. */
-    +'.doc{background:#fff;width:210mm;height:297mm;margin:18px auto;box-shadow:0 4px 18px rgba(10,31,61,.2);position:relative;display:flex;flex-direction:column;overflow:hidden;}'
-    +'@media print{body{background:#fff;}.doc{margin:0;width:210mm;height:297mm;box-shadow:none;page-break-after:avoid;page-break-inside:avoid;}}'
-    +'.faixa-ouro{height:4px;background:linear-gradient(90deg,#f5b400 0%,#fbcf3b 50%,#f5b400 100%);}'
-    +'.header{padding:24px 36px 14px;border-bottom:1.5px solid #0a1f3d;}'
-    +'.brand-row{display:flex;justify-content:space-between;align-items:flex-start;font-size:8pt;letter-spacing:.25em;font-weight:700;}'
-    +'.brand-row .l{color:#0a1f3d;}'
-    +'.brand-row .r{text-align:right;color:#666;letter-spacing:.15em;}'
-    +'.brand-row .r b{display:block;color:#0a1f3d;font-size:9.5pt;letter-spacing:.05em;font-family:Georgia,serif;margin-top:2px;}'
-    +'.doc-meta{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px;}'
-    +'h1{font-family:"Helvetica Neue",sans-serif;font-size:22pt;font-weight:300;color:#0a1f3d;line-height:1.05;letter-spacing:-.5px;}'
-    +'h1 b{font-weight:700;color:#f5b400;}'
-    +'.doc-ref{text-align:right;font-size:8pt;color:#666;letter-spacing:.15em;font-weight:600;}'
-    +'.doc-ref b{display:block;color:#0a1f3d;font-size:10pt;letter-spacing:.04em;font-family:Georgia,serif;font-weight:700;margin-top:2px;}'
-    +'.body{padding:20px 36px 24px;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;}'
-    +'.dados-row{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #0a1f3d;margin-bottom:18px;}'
-    +'.dado{padding:10px 14px;border-right:1px solid #0a1f3d;}'
-    +'.dado:last-child{border-right:none;}'
-    +'.dado .l{font-size:7pt;letter-spacing:.25em;color:#666;text-transform:uppercase;font-weight:700;}'
-    +'.dado .v{font-family:Georgia,serif;font-size:11pt;color:#0a1f3d;font-weight:700;margin-top:2px;}'
-    +'.dado.pag-sel{background:#dcfce7;}'
-    +'.dado.pag-sel .l{color:#0a8043;}'
-    +'.dado.pag-sel .v{color:#0a8043;}'
-    +'h2{font-size:9pt;letter-spacing:.22em;color:#0a1f3d;text-transform:uppercase;font-weight:700;border-bottom:2px solid #f5b400;padding-bottom:4px;margin:18px 0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
-    +'.motiv{background:#f7f9fb;border-left:4px solid #f5b400;padding:12px 16px;font-style:italic;font-size:'+fonte+'pt;line-height:1.7;color:#3a3a3a;margin-bottom:14px;}'
-    +'.motiv b{color:#0a1f3d;font-style:normal;font-weight:700;}'
-    +'.belt-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}'
-    +'.belt{border:1px solid #0a1f3d;padding:10px 14px;position:relative;}'
-    +'.belt::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;}'
-    +'.belt.green::before{background:#16a34a;}'
-    +'.belt.gold::before{background:#f5b400;}'
-    +'.belt-h{font-size:8pt;letter-spacing:.22em;color:#0a1f3d;text-transform:uppercase;font-weight:700;margin-top:2px;}'
-    +'.belt-t{font-family:Georgia,serif;font-size:12pt;color:#0a1f3d;font-weight:700;margin:3px 0 5px;}'
-    +'.belt-l{font-size:9pt;color:#3a3a3a;line-height:1.5;}'
-    +'table.invest{width:100%;border-collapse:collapse;font-size:'+fonte+'pt;}'
-    +'table.invest thead th{background:#0a1f3d;color:#fff;padding:'+padding+'px 10px;text-align:left;font-size:8pt;letter-spacing:.18em;text-transform:uppercase;font-weight:700;}'
-    +'table.invest thead th:nth-child(3){text-align:center;}'
-    +'table.invest thead th:nth-child(4){text-align:right;}'
-    +'table.invest tbody td{padding:'+padding+'px 10px;border-bottom:1px solid #e5e7eb;}'
-    +'table.invest tbody tr:nth-child(even) td{background:#f7f9fc;}'
-    +'.invest-final-row td{background:#dcfce7 !important;border-top:2px solid #f5b400 !important;border-bottom:2px solid #0a1f3d !important;font-weight:700 !important;color:#0a8043 !important;}'
-    +'.invest-final-row td:last-child{font-size:14pt !important;font-family:Georgia,serif !important;white-space:nowrap !important;}'
-    +'.nota{background:#fffbe8;border-left:4px solid #f5b400;padding:11px 14px;font-size:9pt;line-height:1.6;color:#3a3a3a;margin:14px 0;}'
-    +'.nota b{color:#0a1f3d;}'
-    +'.fp-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}'
-    +'.fp{background:#eff6ff;border-left:3px solid #1d4ed8;padding:10px 14px;}'
-    +'.fp b{display:block;font-size:8pt;letter-spacing:.18em;color:#0a1f3d;text-transform:uppercase;font-weight:700;margin-bottom:3px;}'
-    +'.fp span{font-size:10pt;color:#1a1a1a;}'
-    +'.assin-row{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;}'
-    +'.assin{border-top:1px solid #0a1f3d;padding-top:6px;font-size:8pt;letter-spacing:.15em;color:#666;text-transform:uppercase;font-weight:600;}'
-    +'.assin b{display:block;font-family:Georgia,serif;font-size:11pt;color:#0a1f3d;font-weight:700;text-transform:none;letter-spacing:0;margin-bottom:2px;}'
-    +'.foot{background:#0a1f3d;color:#a8b8d0;font-size:7.5pt;text-align:center;padding:10px 36px;letter-spacing:.22em;text-transform:uppercase;font-weight:600;margin-top:18px;}'
-    +'.foot b{color:#f5b400;}'
-    +'</style></head><body>'
-    +'<div class="doc">'
-    +'<div class="faixa-ouro"></div>'
-    +'<div class="header">'
-    +'<div class="brand-row">'
-    +'<span class="l">F E B R A C I S &nbsp;·&nbsp; P R O P O S T A &nbsp; C O M E R C I A L &nbsp; E X E C U T I V A</span>'
-    +'<span class="r">DOC<b>'+_docRef+'</b></span>'
-    +'</div>'
-    +'<div class="doc-meta">'
-    +'<h1>PROPOSTA<br><b>COMERCIAL</b></h1>'
-    +'<div class="doc-ref">EMISSÃO<b>'+_dataStr+'</b>VALIDADE '+validade+' DIAS</div>'
-    +'</div>'
-    +'</div>'
-    +'<div class="body">'
-    +'<div class="dados-row">'
-    +'<div class="dado"><div class="l">Cliente</div><div class="v">'+(cliente||'—')+'</div></div>'
-    +'<div class="dado"><div class="l">Especialista</div><div class="v">'+(consultor||'—')+'</div></div>'
-    +'<div class="dado pag-sel"><div class="l">Pagamento</div><div class="v">'+(pagLabel||'—')+'</div></div>'
-    +'</div>'
-    +'<h2>I · Introdução & Reconhecimento</h2>'
-    +'<div class="motiv">'+motivHtml+'</div>'
-    +'<h2>II · Investimento Consolidado</h2>'
-    +'<table class="invest"><thead><tr><th>Linha</th><th>Descrição</th><th>Pagamento</th><th style="text-align:center;">Qtd</th><th>Valor total (R$)</th></tr></thead>'
-    +'<tbody>'+rows
-    +(function(){
-      var parc = (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? 12 : 0;
-      var celulaParc = parc
-        ? '<td style="text-align:center;font-weight:700;white-space:nowrap;">'+parc+'x</td>'
-        : '<td></td>';
-      return '<tr class="invest-final-row"><td>—</td><td>INVESTIMENTO FINAL</td><td></td>'+celulaParc+'<td style="white-space:nowrap;text-align:right;">'+formatVal(total)+'</td></tr>';
-    })()
-    +'</tbody></table>'
-    +'<div class="nota"><b>Nota de Exceção:</b> bônus de "Desconto de Contingência de Diretoria" aplicado em caráter excepcional. Validade fixa de <b>'+validade+' dias</b> a partir da emissão. Após esse prazo, a condição é revogada automaticamente.</div>'
-    +'<h2>III · Formas de Pagamento</h2>'
-    +'<div class="fp-row">'
-    +'<div class="fp"><b>Cartão de Crédito</b><span>Em até 12x</span></div>'
-    +'<div class="fp"><b>PIX à vista</b><span>Com prioridade de acesso</span></div>'
-    +'</div>'
-    +'<div class="assin-row">'
-    +'<div class="assin"><b>'+(consultor||'—')+'</b>Especialista Febracis</div>'
-    +'<div class="assin"><b>'+(cliente||'—')+'</b>Aceite do Cliente</div>'
-    +'</div>'
-    +'</div>'
-    +'<div class="foot"><b>FEBRACIS</b> · DOC. '+_docRef+' · CONFIDENCIAL · USO INTERNO</div>'
-    +'</div></body></html>';
-
-  var frame = document.getElementById('propostaPreviewFrame');
-  var ph = document.getElementById('propostaPreviewPlaceholder');
-  frame.srcdoc = html;
-  frame.style.display = 'block';
-  if(ph) ph.style.display = 'none';
+  window._propostaPreviewAtivo = true;
+  if(window._propostaPreviewTimer) clearTimeout(window._propostaPreviewTimer);
+  window._propostaPreviewTimer = setTimeout(function(){
+    console.log('[_propostaPreview] disparando gerarPropostaPDF("preview")...');
+    try { gerarPropostaPDF("preview"); }
+    catch(e){ console.error("[_propostaPreview] ERRO:", e); }
+  }, 220);
 }
 
-function gerarPropostaPDF(){
-  console.log('%c[gerarPropostaPDF] versão EXECUTIVE FINANCIAL v3 carregada', 'background:#0a1f3d;color:#f5b400;padding:3px 8px;font-weight:700;');
+/* ─── Barra de zoom flutuante do preview ───
+   Mantém o nível atual em window._propostaZoomNivel. Aceita:
+   'fith' (padrão, encaixa pela largura), 'fit' (página inteira),
+   '100' (tamanho real), 'in' (+25%), 'out' (-25%) ou um número (%).
+   Re-aplica o zoom no iframe sem regerar o PDF. */
+window._propostaZoomNivel = 'fith';
+
+function _propostaZoomHash(){
+  var n = window._propostaZoomNivel || 'fith';
+  if(n === 'fith') return 'view=FitH&zoom=page-width';
+  if(n === 'fit')  return 'view=Fit&zoom=page-fit';
+  if(typeof n === 'number' || /^\d+$/.test(String(n))){
+    return 'zoom=' + n;
+  }
+  return 'view=FitH&zoom=page-width';
+}
+
+window._propostaZoom = function(acao){
+  var nivel = window._propostaZoomNivel;
+  function toNum(v){
+    if(v==='fith') return 100;
+    if(v==='fit')  return 75;
+    if(typeof v === 'number') return v;
+    return parseInt(v,10) || 100;
+  }
+  if(acao === 'in')   nivel = Math.min(400, toNum(nivel) + 25);
+  else if(acao === 'out') nivel = Math.max(25, toNum(nivel) - 25);
+  else if(acao === 'fith') nivel = 'fith';
+  else if(acao === 'fit')  nivel = 'fit';
+  else if(acao === '100')  nivel = 100;
+  else if(typeof acao === 'number') nivel = acao;
+
+  window._propostaZoomNivel = nivel;
+
+  /* Atualiza display do label */
+  var lbl = document.getElementById('propZoomVal');
+  if(lbl){
+    if(nivel === 'fith') lbl.textContent = 'Largura';
+    else if(nivel === 'fit')  lbl.textContent = 'Página';
+    else lbl.textContent = nivel + '%';
+  }
+  /* Sincroniza o slider de zoom em real-time */
+  var slider = document.getElementById('propZoomSlider');
+  if(slider){
+    var n = toNum(nivel);
+    if(parseInt(slider.value,10) !== n) slider.value = n;
+  }
+  /* Marca botão ativo */
+  ['propZoomFitH','propZoomFit','propZoom100'].forEach(function(id){
+    var b = document.getElementById(id); if(b) b.classList.remove('on');
+  });
+  var ativo = nivel === 'fith' ? 'propZoomFitH' : nivel === 'fit' ? 'propZoomFit' : (nivel === 100 ? 'propZoom100' : null);
+  if(ativo){ var ba = document.getElementById(ativo); if(ba) ba.classList.add('on'); }
+
+  /* Re-aplica no iframe (sem regerar o PDF — só muda o hash) */
+  var frame = document.getElementById('propostaPreviewFrame');
+  if(frame && frame.src && frame.src.indexOf('blob:') === 0){
+    var base = frame.src.split('#')[0];
+    frame.src = base + '#toolbar=0&navpanes=0&' + _propostaZoomHash();
+  }
+};
+
+/* gerarPropostaPDF(modo)
+   modo = 'save'    (default) → doc.save() — baixa o arquivo
+   modo = 'preview'           → renderiza no #propostaPreviewFrame via blob URL
+   Em ambos os modos é gerado EXATAMENTE o mesmo PDF (mesmo código jsPDF),
+   garantindo que preview = impresso 1:1. */
+function gerarPropostaPDF(modo){
+  modo = modo || 'save';
+  var _ehSave = (modo === 'save');
+  var _ehPreview = (modo === 'preview');
+  if(_ehSave) console.log('%c[gerarPropostaPDF] versão EXECUTIVE FINANCIAL v3 carregada', 'background:#0a1f3d;color:#f5b400;padding:3px 8px;font-weight:700;');
   var cliente = _propostaClienteAtual();
-  if(!cliente){_showToast('⚠️ Selecione um cliente.','var(--amber)');return;}
+  if(_ehPreview) console.log('[gerarPropostaPDF preview] cliente=', cliente);
+  if(!cliente){
+    if(_ehSave) _showToast('⚠️ Selecione um cliente.','var(--amber)');
+    if(_ehPreview) console.warn('[gerarPropostaPDF preview] ABORTOU: sem cliente selecionado');
+    return;
+  }
 
   var pagamento = document.getElementById('propostaPagamento').value;
   var pagLabel = _PROPOSTA_LABELS[pagamento];
@@ -691,25 +616,46 @@ function gerarPropostaPDF(){
     selecionados.push({nome: nome, val: val});
   });
 
-  if(!selecionados.length){_showToast('⚠️ Selecione ao menos um treinamento.','var(--amber)');return;}
+  if(_ehPreview) console.log('[gerarPropostaPDF preview] selecionados=', selecionados.length, 'jspdf=', typeof window.jspdf);
+  if(!selecionados.length){
+    if(_ehSave) _showToast('⚠️ Selecione ao menos um treinamento.','var(--amber)');
+    if(_ehPreview) console.warn('[gerarPropostaPDF preview] ABORTOU: nenhum treinamento marcado');
+    return;
+  }
   if(typeof window.jspdf === 'undefined'){
     if(typeof window._ensureJsPDF==='function'){
-      _showToast('⏳ Preparando gerador de PDF (primeira vez)…','var(--muted)');
-      window._ensureJsPDF().then(gerarPropostaPDF).catch(function(){
-        _showToast('❌ Erro ao carregar jsPDF.','var(--red)');
+      if(_ehSave) _showToast('⏳ Preparando gerador de PDF (primeira vez)…','var(--muted)');
+      window._ensureJsPDF().then(function(){ gerarPropostaPDF(modo); }).catch(function(){
+        if(_ehSave) _showToast('❌ Erro ao carregar jsPDF.','var(--red)');
       });
       return;
     }
-    _showToast('❌ jsPDF não carregado.','var(--red)');return;
+    if(_ehSave) _showToast('❌ jsPDF não carregado.','var(--red)');return;
   }
 
   var total = selecionados.reduce(function(a,s){return a+s.val;},0);
-  // Ler ajustes visuais
-  var _fonte = parseInt(document.getElementById('propFonte').value)||10;
-  var _pad   = parseInt(document.getElementById('propPadding').value)||4;
-  var _corH  = document.getElementById('propCorHeader').value||'#0f0f0f';
-  var _corA  = document.getElementById('propCorAccent').value||'#c8f05a';
-  var _valid = document.getElementById('propValidade').value||'30';
+  /* ─── Leitura dos ajustes visuais do MODAL (em tempo real) ───
+     Defaults vêm do painel de controle preview-proposta-painel-controle.html
+     última config validada: mg=12, esc=0.9, h1=19, h2=9, body=12, tbl=10,
+     padCel=1, gap=7, cardH=13. */
+  function _getN(id, def){
+    var el = document.getElementById(id);
+    if(!el) return def;
+    var v = parseFloat(el.value);
+    return isNaN(v) ? def : v;
+  }
+  var _mgUser  = _getN('propMargem', 12);
+  var _escUser = _getN('propEscala', 0.9);
+  var _h1User  = _getN('propH1', 19);
+  var _h2User  = _getN('propH2', 9);
+  var _bodyUser= _getN('propBody', 11);
+  var _tblUser = _getN('propFonte', 10);   /* slider original "Fonte" agora controla a tabela */
+  var _padUser = _getN('propPadding', 1);
+  var _gapUser = _getN('propGap', 7);
+  var _cardHUser = _getN('propCardH', 13);
+  var _corH  = document.getElementById('propCorHeader') ? document.getElementById('propCorHeader').value || '#0f0f0f' : '#0f0f0f';
+  var _corA  = document.getElementById('propCorAccent') ? document.getElementById('propCorAccent').value || '#c8f05a' : '#c8f05a';
+  var _valid = document.getElementById('propValidade') ? document.getElementById('propValidade').value || '30' : '30';
   var _consultor = _propostaConsultorAtual();
 
   function _hexRgb(hex){
@@ -725,7 +671,16 @@ function gerarPropostaPDF(){
      (evita problemas em strict mode com hoisting de bloco).
   ═══════════════════════════════════════════════ */
   var doc = new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  var W = 210, H = 297, mg = 18;
+  var W = 210, H = 297, mg = _mgUser;
+  /* Constantes calculadas a partir dos sliders do modal × escala global. */
+  var ESC = _escUser;
+  var SZ_H1     = _h1User * ESC;
+  var SZ_H2     = _h2User * ESC;
+  var SZ_BODY   = _bodyUser * ESC;
+  var SZ_TBL    = _tblUser * ESC;
+  var PAD_TBL   = _padUser * ESC;
+  var GAP_SEC   = _gapUser * ESC;
+  var ALT_CARD  = _cardHUser * ESC;
 
   var COR_NAVY     = [10, 31, 61];
   var COR_OURO     = [245, 180, 0];
@@ -755,47 +710,48 @@ function gerarPropostaPDF(){
   doc.setFontSize(7.5);
   doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
   doc.text('F E B R A C I S    ·    P R O P O S T A   C O M E R C I A L   E X E C U T I V A', mg, 12);
-  // "DOC ..." direita
-  doc.setTextColor(COR_CINZA[0], COR_CINZA[1], COR_CINZA[2]);
-  doc.setFontSize(7);
-  doc.text('DOC', W - mg, 11, {align:'right'});
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(9);
-  doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
-  doc.text(_docRef, W - mg, 15, {align:'right'});
+  /* "DOC 2026/PROP/XXX" removido do header a pedido do usuário.
+     _docRef continua sendo gerado pois é usado no rodapé (linha 1002). */
 
   // Título grande
   doc.setFont('helvetica','normal');
-  doc.setFontSize(22);
+  doc.setFontSize(SZ_H1);
   doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
-  doc.text('PROPOSTA', mg, 28);
+  doc.text('PROPOSTA', mg, 26);
   doc.setFont('helvetica','bold');
   doc.setTextColor(COR_OURO[0], COR_OURO[1], COR_OURO[2]);
-  doc.text('COMERCIAL', mg, 37);
+  doc.text('COMERCIAL', mg, 33);
 
   // Emissão direita
   doc.setFont('helvetica','bold');
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(COR_CINZA[0], COR_CINZA[1], COR_CINZA[2]);
-  doc.text('EMISSÃO', W - mg, 28, {align:'right'});
-  doc.setFontSize(10);
+  doc.text('EMISSÃO', W - mg, 25, {align:'right'});
+  doc.setFontSize(SZ_BODY);
   doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
-  doc.text(_dataAgora, W - mg, 33, {align:'right'});
-  doc.setFontSize(7);
+  doc.text(_dataAgora, W - mg, 29, {align:'right'});
+  doc.setFontSize(6.5);
   doc.setTextColor(COR_CINZA[0], COR_CINZA[1], COR_CINZA[2]);
-  doc.text('VALIDADE ' + _valid + ' DIAS', W - mg, 38, {align:'right'});
+  doc.text('VALIDADE ' + _valid + ' DIAS', W - mg, 33, {align:'right'});
 
   // Linha divisória do header
   doc.setDrawColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
   doc.setLineWidth(0.4);
-  doc.line(mg, 42, W - mg, 42);
+  doc.line(mg, 37, W - mg, 37);
 
-  var y = 50;
+  var y = 42;
   var maxW = W - mg*2;
 
   // ── DADOS-ROW (3 colunas com border) ──────────────
+  /* Controles do painel: dadosH=8mm, dadosLbl=6pt, dadosVal=9pt × ESCALA */
+  var DADOS_H_USER = _getN('propDadosH', 8) * ESC;
+  var DADOS_LBL_USER = _getN('propDadosLbl', 6);
+  var DADOS_VAL_USER = _getN('propDadosVal', 9);
   var colW = maxW / 3;
-  var dadosH = 14;
+  var dadosH = DADOS_H_USER;
+  /* Posições Y relativas à altura da faixa (35% pro label, 78% pro valor) */
+  var yLbl = y + dadosH * 0.35;
+  var yVal = y + dadosH * 0.78;
   doc.setDrawColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
   doc.setLineWidth(0.3);
   doc.rect(mg, y, maxW, dadosH, 'S');
@@ -808,30 +764,30 @@ function gerarPropostaPDF(){
       doc.rect(x, y, colW, dadosH, 'F');
     }
     doc.setFont('helvetica','bold');
-    doc.setFontSize(6.5);
+    doc.setFontSize(DADOS_LBL_USER);
     if(destaque){
       doc.setTextColor(COR_VERDE_DK[0], COR_VERDE_DK[1], COR_VERDE_DK[2]);
     } else {
       doc.setTextColor(COR_CINZA[0], COR_CINZA[1], COR_CINZA[2]);
     }
-    doc.text(String(label).toUpperCase(), x + 3, y + 4);
+    doc.text(String(label).toUpperCase(), x + 2.5, yLbl);
     doc.setFont('times','bold');
-    doc.setFontSize(10);
+    doc.setFontSize(DADOS_VAL_USER);
     if(destaque){
       doc.setTextColor(COR_VERDE_DK[0], COR_VERDE_DK[1], COR_VERDE_DK[2]);
     } else {
       doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
     }
-    var maxTextW = colW - 6;
+    var maxTextW = colW - 5;
     var texto = String(valor||'—');
     while(texto.length > 4 && doc.getTextWidth(texto+'…') > maxTextW){ texto = texto.slice(0,-1); }
     if(texto !== String(valor||'—')) texto += '…';
-    doc.text(texto, x + 3, y + 11);
+    doc.text(texto, x + 2.5, yVal);
   };
   _drawDado(mg,           'Cliente',      cliente);
   _drawDado(mg + colW,    'Especialista', _consultor);
   _drawDado(mg + colW*2,  'Pagamento',    pagLabel, true);
-  y += dadosH + 8;
+  y += dadosH + GAP_SEC;
 
   // ── HELPERS DE SEÇÃO (function expressions — compatíveis com strict mode) ──
   var _quebraPagina = function(nec){
@@ -843,55 +799,90 @@ function gerarPropostaPDF(){
     }
   };
   var _h2 = function(numeroRomano, titulo){
-    _quebraPagina(11);
+    _quebraPagina(9);
     doc.setFont('helvetica','bold');
-    doc.setFontSize(8.5);
+    doc.setFontSize(SZ_H2);
     doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
     doc.text((numeroRomano + ' · ' + titulo).toUpperCase(), mg, y);
-    y += 2;
+    y += 1.5;
     doc.setDrawColor(COR_OURO[0], COR_OURO[1], COR_OURO[2]);
     doc.setLineWidth(0.6);
     doc.line(mg, y, W - mg, y);
-    y += 6;
+    y += 4;
   };
 
   // ── SEÇÃO I · Introdução & Reconhecimento (motivacional) ──
   _h2('I', 'Introdução & Reconhecimento');
 
-  // Box motivacional: fundo cinza claro + border ouro à esquerda
-  var motivLines = doc.splitTextToSize(_PROPOSTA_TEXTO.replace(/\n/g,' '), maxW - 12);
-  var motivH = motivLines.length * 4.2 + 8;
-  _quebraPagina(motivH + 4);
-  doc.setFillColor(247, 249, 251);
+  // Box motivacional · Estilo 26 (Fundo Navy + texto bege/dourado italic Times)
+  var motivX = mg + 5;
+  var motivMaxW = maxW - 10;
+  var motivLines = doc.splitTextToSize(_PROPOSTA_TEXTO.replace(/\n/g,' '), motivMaxW);
+  var motivH = motivLines.length * 3.6 + 5;
+  _quebraPagina(motivH + 3);
+  /* Fundo navy escura sólida */
+  doc.setFillColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
   doc.rect(mg, y, maxW, motivH, 'F');
+  /* Borda lateral dourada esquerda */
   doc.setFillColor(COR_OURO[0], COR_OURO[1], COR_OURO[2]);
-  doc.rect(mg, y, 1.8, motivH, 'F');
+  doc.rect(mg, y, 1.6, motivH, 'F');
+  /* Texto italic Times em bege/dourado claro */
   doc.setFont('times','italic');
-  doc.setFontSize(9.5);
-  doc.setTextColor(60, 60, 60);
-  var motivY = y + 5;
-  motivLines.forEach(function(line){
-    doc.text(line, mg + 6, motivY);
-    motivY += 4.2;
+  doc.setFontSize(SZ_BODY);
+  doc.setTextColor(245, 225, 170);
+  var motivY = y + 3.5;
+  /* Texto JUSTIFICADO: para cada linha (exceto a última), distribui
+     o espaço extra entre as palavras. Garante espaço mínimo igual ao
+     de um " " normal pra evitar palavras grudadas se o cálculo falhar. */
+  var spaceW = doc.getTextWidth(' ') || (SZ_BODY * 0.25);  /* fallback */
+  motivLines.forEach(function(line, i){
+    var isUltima = (i === motivLines.length - 1);
+    var palavras = String(line).trim().split(/\s+/).filter(Boolean);
+    if(isUltima || palavras.length < 2){
+      doc.text(line, motivX, motivY);
+    } else {
+      /* Soma a largura de cada palavra (sem espaços) */
+      var larguraPalavras = 0;
+      palavras.forEach(function(w){ larguraPalavras += doc.getTextWidth(w); });
+      /* Espaço entre palavras = espaço sobrando dividido pelos gaps.
+         Se ficar menor que um " " normal (linha quase cheia ou
+         medições erradas), usa pelo menos o espaço normal. */
+      var espacoEntre = (motivMaxW - larguraPalavras) / (palavras.length - 1);
+      if(espacoEntre < spaceW) espacoEntre = spaceW;
+      var curX = motivX;
+      palavras.forEach(function(w){
+        doc.text(w, curX, motivY);
+        curX += doc.getTextWidth(w) + espacoEntre;
+      });
+    }
+    motivY += 3.6;
   });
-  y += motivH + 8;
+  y += motivH + GAP_SEC;
 
   // ── SEÇÃO II · Investimento Consolidado (autoTable) ──
   _h2('II', 'Investimento Consolidado');
   var bodyRows = selecionados.map(function(s, i){
-    return ['L' + String(i+1).padStart(2,'0'), s.nome, pagLabel, formatVal(s.val)];
+    /* Descrição = "CÓDIGO - Nome Completo" — busca o nome em _PRODUTOS_PROPOSTA.
+       Se não houver nome cadastrado, mostra só o código. */
+    var meta = _PRODUTOS_PROPOSTA[s.nome];
+    var nomeCompleto = (meta && meta.nome) ? meta.nome : '';
+    var descricao = nomeCompleto ? (s.nome + ' - ' + nomeCompleto) : s.nome;
+    return ['L' + String(i+1).padStart(2,'0'), descricao, pagLabel, formatVal(s.val)];
   });
   var _parcFinalPdf = (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? '12x' : '';
   bodyRows.push(['—', 'INVESTIMENTO FINAL', _parcFinalPdf, formatVal(total)]);
 
+  /* Recalcula largura das colunas pra ocupar maxW totalmente */
+  var _wTab1 = 14, _wTab3 = 32, _wTab4 = 26;
+  var _wTab2 = maxW - _wTab1 - _wTab3 - _wTab4;
   doc.autoTable({
     startY: y,
     head: [['LINHA', 'DESCRIÇÃO', 'PAGAMENTO', 'VALOR (R$)']],
     body: bodyRows,
     margin: {left: mg, right: mg},
     styles: {
-      fontSize: 9,
-      cellPadding: 3,
+      fontSize: SZ_TBL,
+      cellPadding: PAD_TBL,
       lineColor: COR_HAIRLINE,
       lineWidth: 0.15,
       textColor: [40,40,40]
@@ -900,15 +891,15 @@ function gerarPropostaPDF(){
       fillColor: COR_NAVY,
       textColor: [255,255,255],
       fontStyle: 'bold',
-      fontSize: 7.5,
-      cellPadding: 3,
-      halign: 'left'
+      fontSize: SZ_TBL * 0.78,
+      cellPadding: PAD_TBL * 1.5,
+      halign: 'center'
     },
     columnStyles: {
-      0: {cellWidth: 16, halign: 'left'},
-      1: {cellWidth: 90, halign: 'left', fontStyle: 'bold'},
-      2: {cellWidth: 38, halign: 'center'},
-      3: {cellWidth: 30, halign: 'right', fontStyle: 'bold', font: 'times'}
+      0: {cellWidth: _wTab1, halign: 'center'},
+      1: {cellWidth: _wTab2, halign: 'center', fontStyle: 'bold'},
+      2: {cellWidth: _wTab3, halign: 'center'},
+      3: {cellWidth: _wTab4, halign: 'center', fontStyle: 'bold', font: 'times'}
     },
     alternateRowStyles: {fillColor: COR_ZEBRA},
     didParseCell: function(d){
@@ -917,50 +908,51 @@ function gerarPropostaPDF(){
         d.cell.styles.fillColor = COR_VERDE_BG;
         d.cell.styles.textColor = COR_VERDE_DK;
         d.cell.styles.fontStyle = 'bold';
-        d.cell.styles.fontSize = (d.column.index === 3) ? 12 : 9;
+        d.cell.styles.fontSize = (d.column.index === 3) ? SZ_TBL * 1.25 : SZ_TBL;
+        d.cell.styles.cellPadding = PAD_TBL * 1.8;
       }
     }
   });
-  y = doc.lastAutoTable.finalY + 8;
+  y = doc.lastAutoTable.finalY + GAP_SEC;
 
   // ── NOTA DE EXCEÇÃO ────────────────────────────────
-  var notaTxt = 'Nota de Exceção: bônus de "Desconto de Contingência de Diretoria" aplicado em caráter excepcional. Validade fixa de ' + _valid + ' dias a partir da emissão deste documento. Após esse prazo, o sistema revoga automaticamente a condição.';
-  var notaLines = doc.splitTextToSize(notaTxt, maxW - 12);
-  var notaH = notaLines.length * 3.6 + 7;
-  _quebraPagina(notaH + 4);
+  var notaTxt = 'Nota de Exceção: bônus de "Desconto de Contingência de Diretoria" aplicado em caráter excepcional. Validade fixa de ' + _valid + ' dias a partir da emissão.';
+  var notaLines = doc.splitTextToSize(notaTxt, maxW - 10);
+  var notaH = notaLines.length * 3.2 + 4;
+  _quebraPagina(notaH + 3);
   doc.setFillColor(COR_OURO_LT[0], COR_OURO_LT[1], COR_OURO_LT[2]);
   doc.rect(mg, y, maxW, notaH, 'F');
   doc.setFillColor(COR_OURO[0], COR_OURO[1], COR_OURO[2]);
-  doc.rect(mg, y, 1.8, notaH, 'F');
+  doc.rect(mg, y, 1.6, notaH, 'F');
   doc.setFont('helvetica','normal');
-  doc.setFontSize(8);
+  doc.setFontSize(SZ_BODY * 0.85);
   doc.setTextColor(60, 60, 60);
-  var notaY = y + 5;
+  var notaY = y + 3;
   notaLines.forEach(function(line){
-    doc.text(line, mg + 6, notaY);
-    notaY += 3.6;
+    doc.text(line, mg + 5, notaY);
+    notaY += 3.2;
   });
-  y += notaH + 8;
+  y += notaH + GAP_SEC;
 
   // ── SEÇÃO III · Formas de Pagamento (cards) ──
   _h2('III', 'Formas de Pagamento');
-  var fpH = 14;
+  var fpH = ALT_CARD;
   var fpGap = 4;
   var fpW = (maxW - fpGap) / 2;
-  _quebraPagina(fpH + 4);
+  _quebraPagina(fpH + 3);
   // Card 1: Cartão
   doc.setFillColor(240, 245, 251);
   doc.rect(mg, y, fpW, fpH, 'F');
   doc.setFillColor(COR_AZUL[0], COR_AZUL[1], COR_AZUL[2]);
   doc.rect(mg, y, 1.5, fpH, 'F');
   doc.setFont('helvetica','bold');
-  doc.setFontSize(7);
+  doc.setFontSize(SZ_BODY * 0.85);
   doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
-  doc.text('CARTÃO DE CRÉDITO', mg + 5, y + 5);
+  doc.text('CARTÃO DE CRÉDITO', mg + 4, y + fpH * 0.4);
   doc.setFont('helvetica','normal');
-  doc.setFontSize(9);
+  doc.setFontSize(SZ_BODY);
   doc.setTextColor(40, 40, 40);
-  doc.text('Em até 12x', mg + 5, y + 10);
+  doc.text('Em até 12x', mg + 4, y + fpH * 0.78);
   // Card 2: PIX
   var xf2 = mg + fpW + fpGap;
   doc.setFillColor(240, 245, 251);
@@ -968,55 +960,83 @@ function gerarPropostaPDF(){
   doc.setFillColor(COR_AZUL[0], COR_AZUL[1], COR_AZUL[2]);
   doc.rect(xf2, y, 1.5, fpH, 'F');
   doc.setFont('helvetica','bold');
-  doc.setFontSize(7);
+  doc.setFontSize(SZ_BODY * 0.85);
   doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
-  doc.text('PIX À VISTA', xf2 + 5, y + 5);
+  doc.text('PIX À VISTA', xf2 + 4, y + fpH * 0.4);
   doc.setFont('helvetica','normal');
-  doc.setFontSize(9);
+  doc.setFontSize(SZ_BODY);
   doc.setTextColor(40, 40, 40);
-  doc.text('Com prioridade de acesso', xf2 + 5, y + 10);
-  y += fpH + 14;
+  doc.text('Com prioridade de acesso', xf2 + 4, y + fpH * 0.78);
+  y += fpH + GAP_SEC;
 
   // ── ASSINATURAS DUPLAS ────────────────────────────
-  _quebraPagina(28);
-  var assinY = Math.max(y, H - 50);
-  var assinW = (maxW - 12) / 2;
+  _quebraPagina(22);
+  var assinY = Math.max(y, H - 30);
+  var assinW = (maxW - 10) / 2;
   doc.setDrawColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
   doc.setLineWidth(0.3);
   doc.line(mg, assinY, mg + assinW, assinY);
-  doc.line(mg + assinW + 12, assinY, W - mg, assinY);
+  doc.line(mg + assinW + 10, assinY, W - mg, assinY);
   doc.setFont('times','bold');
-  doc.setFontSize(10);
+  doc.setFontSize(SZ_BODY * 1.05);
   doc.setTextColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
-  doc.text(_consultor || '—', mg + 1, assinY + 5);
-  doc.text(cliente || '—', mg + assinW + 13, assinY + 5);
+  doc.text(_consultor || '—', mg + 1, assinY + 4);
+  doc.text(cliente || '—', mg + assinW + 11, assinY + 4);
   doc.setFont('helvetica','normal');
-  doc.setFontSize(7);
+  doc.setFontSize(SZ_BODY * 0.75);
   doc.setTextColor(COR_CINZA[0], COR_CINZA[1], COR_CINZA[2]);
-  doc.text('ESPECIALISTA FEBRACIS', mg + 1, assinY + 10);
-  doc.text('ACEITE DO CLIENTE', mg + assinW + 13, assinY + 10);
+  doc.text('ESPECIALISTA FEBRACIS', mg + 1, assinY + 8);
+  doc.text('ACEITE DO CLIENTE', mg + assinW + 11, assinY + 8);
 
   // ── RODAPÉ NAVY ────────────────────────────────────
   var totalPgs = doc.internal.getNumberOfPages();
   for(var pg = 1; pg <= totalPgs; pg++){
     doc.setPage(pg);
     doc.setFillColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
-    doc.rect(0, H - 12, W, 12, 'F');
+    doc.rect(0, H - 9, W, 9, 'F');
     doc.setFont('helvetica','bold');
-    doc.setFontSize(7);
+    doc.setFontSize(6.5);
     doc.setTextColor(COR_OURO[0], COR_OURO[1], COR_OURO[2]);
-    doc.text('FEBRACIS', mg, H - 5);
+    doc.text('FEBRACIS', mg, H - 3.5);
     doc.setFont('helvetica','normal');
     doc.setTextColor(170, 180, 200);
-    doc.text('· DOC. ' + _docRef + ' · CONFIDENCIAL · USO INTERNO', mg + 17, H - 5);
-    doc.text('PÁG. ' + pg + ' / ' + totalPgs, W - mg, H - 5, {align:'right'});
+    doc.text('· DOC. ' + _docRef + ' · CONFIDENCIAL · USO INTERNO', mg + 14, H - 3.5);
+    doc.text('PÁG. ' + pg + ' / ' + totalPgs, W - mg, H - 3.5, {align:'right'});
   }
 
+  /* ── Ramificação final: save (baixa arquivo) ou preview (renderiza no iframe) ── */
+  if(_ehPreview){
+    try {
+      var blobPv = doc.output('blob');
+      var urlPv = URL.createObjectURL(blobPv);
+      var framePv = document.getElementById('propostaPreviewFrame');
+      var phPv = document.getElementById('propostaPreviewPlaceholder');
+      if(framePv){
+        /* Revoga blob URL anterior pra não vazar memória */
+        if(framePv._lastBlobUrl){ try { URL.revokeObjectURL(framePv._lastBlobUrl); } catch(e){} }
+        framePv._lastBlobUrl = urlPv;
+        /* Limpa srcdoc antigo e seta src com PDF embutido */
+        framePv.removeAttribute('srcdoc');
+        /* Aplica o zoom atual (gerenciado pela barra de zoom flutuante).
+           Default = FitH (encaixa pela largura, PDF aparece grande). */
+        framePv.src = urlPv + '#toolbar=0&navpanes=0&' + _propostaZoomHash();
+        /* Exibe a barra de zoom flutuante (escondida até o 1º render) */
+        var zb = document.getElementById('propZoomBar');
+        if(zb) zb.style.display = '';
+        framePv.style.display = 'block';
+        if(phPv) phPv.style.display = 'none';
+      }
+      window._propostaPreviewAtivo = true;
+    } catch(ePv){ console.warn('[gerarPropostaPDF preview]', ePv); }
+    return;
+  }
+  /* modo === 'save' */
   fecharPropostaModal();
   doc.save('Proposta Exclusiva '+String(cliente).toUpperCase()+'.pdf');
   _showToast('✅ Proposta gerada para '+cliente+'!','var(--accent)');
   if(typeof _addPendLog==='function') _addPendLog('Proposta gerada','Cliente: '+cliente+' · '+selecionados.length+' treinamentos','📋');
 }
+
 
 /* ============================================================
    PROPOSTA PERSONALIZADA POR PRODUTO

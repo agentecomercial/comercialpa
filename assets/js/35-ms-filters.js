@@ -101,31 +101,60 @@
     menu.classList.toggle('open', abrindo);
     var trg = menu.querySelector('.cli-menu-trigger');
     if(trg) trg.setAttribute('aria-expanded', abrindo ? 'true' : 'false');
-    if(abrindo) _cliMenuReposicionar();
+    if(abrindo){
+      _cliMenuReposicionar();
+    } else {
+      _cliMenuSyncVisibility();
+    }
   };
+  /* PORTAL: move o popover pra ser filho direto do <body> uma única vez.
+     Necessário porque algum ancestral tem `transform`/`filter`/`will-change`
+     que faz position:fixed ancorar nele em vez da viewport, deslocando
+     o popover pra fora da posição calculada (recomendação Fable 5). */
+  var _cliPopPortalDone = false;
+  function _cliMenuMoverParaBody(){
+    if(_cliPopPortalDone) return;
+    var menu = document.getElementById('cliBarMenu');
+    if(!menu) return;
+    var pop = menu.querySelector('.cli-menu-pop');
+    if(!pop || pop.parentNode === document.body) { _cliPopPortalDone = true; return; }
+    /* Move o pop pro body. O CSS .cli-bar-unica .cli-menu-pop usa o ancestral
+       .cli-bar-unica como seletor — então damos uma classe extra pra que o
+       popover continue estilizado mesmo solto no body. */
+    pop.classList.add('cli-menu-pop-portal');
+    document.body.appendChild(pop);
+    _cliPopPortalDone = true;
+  }
+  /* Show/hide são controlados via classe — quando o pop sai do .cli-menu,
+     a regra `.cli-menu.open .cli-menu-pop{display:block}` não funciona mais.
+     Aplicamos display diretamente pelo estado do menu. */
+  function _cliMenuSyncVisibility(){
+    var menu = document.getElementById('cliBarMenu');
+    var pop = document.querySelector('.cli-menu-pop-portal') || (menu && menu.querySelector('.cli-menu-pop'));
+    if(!menu || !pop) return;
+    pop.style.display = menu.classList.contains('open') ? 'block' : 'none';
+  }
   function _cliMenuReposicionar(){
+    _cliMenuMoverParaBody();
     var menu = document.getElementById('cliBarMenu');
     if(!menu) return;
     var trg = menu.querySelector('.cli-menu-trigger');
-    var pop = menu.querySelector('.cli-menu-pop');
+    var pop = document.querySelector('.cli-menu-pop-portal') || menu.querySelector('.cli-menu-pop');
     if(!trg || !pop) return;
+    _cliMenuSyncVisibility();
     var r = trg.getBoundingClientRect();
-    /* Mede o popover antes de posicionar (força display:block temporário) */
-    var prev = pop.style.display;
-    pop.style.visibility = 'hidden';
-    pop.style.display = 'block';
-    var pw = pop.offsetWidth || 220;
-    pop.style.display = prev;
-    pop.style.visibility = '';
-    /* Alinha pela direita do trigger; se sair da viewport pela esquerda, alinha pela esquerda */
-    var top = Math.round(r.bottom + 6);
-    var left = Math.round(r.right - pw);
-    if(left < 8) left = Math.round(r.left);
-    /* Se ainda sair pela direita, encosta na borda */
-    var maxLeft = window.innerWidth - pw - 8;
-    if(left > maxLeft) left = maxLeft;
-    pop.style.top = top + 'px';
-    pop.style.left = left + 'px';
+    /* Ancora pela direita (fixed agora respeita viewport — popover está no body). */
+    pop.style.position = 'fixed';
+    pop.style.top = Math.round(r.bottom + 6) + 'px';
+    pop.style.right = Math.round(window.innerWidth - r.right) + 'px';
+    pop.style.left = 'auto';
+    pop.style.zIndex = '9999';
+    /* Fallback: se o trigger está praticamente colado na borda direita
+       (resta menos de 8px), ancora pela esquerda do trigger. */
+    if(window.innerWidth - r.right < 8){
+      pop.style.right = 'auto';
+      pop.style.left = Math.max(8, Math.round(r.left)) + 'px';
+    }
   }
   /* Reposiciona em resize/scroll enquanto aberto */
   window.addEventListener('resize', function(){
@@ -139,16 +168,25 @@
   window._cliMenuClose = function(){
     var menu = document.getElementById('cliBarMenu');
     if(menu) menu.classList.remove('open');
+    _cliMenuSyncVisibility();
   };
 
-  /* Fecha clicando fora — multi-selects + menu kebab */
+  /* Fecha clicando fora — multi-selects + menu kebab.
+     Atenção: o popover está no body (portal), então !mk.contains(ev.target)
+     não funciona pra ele. Checamos o popover separadamente. */
   document.addEventListener('click', function(ev){
     document.querySelectorAll('.ms-filt.open').forEach(function(ms){
       if(!ms.contains(ev.target)) ms.classList.remove('open');
     });
     var mk = document.getElementById('cliBarMenu');
-    if(mk && mk.classList.contains('open') && !mk.contains(ev.target)){
-      mk.classList.remove('open');
+    if(mk && mk.classList.contains('open')){
+      var pop = document.querySelector('.cli-menu-pop-portal');
+      var clicouNoMenu = mk.contains(ev.target);
+      var clicouNoPop = pop && pop.contains(ev.target);
+      if(!clicouNoMenu && !clicouNoPop){
+        mk.classList.remove('open');
+        _cliMenuSyncVisibility();
+      }
     }
   });
   /* Fecha com ESC */

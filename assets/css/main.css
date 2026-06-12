@@ -643,15 +643,31 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .cli-bar-unica .cli-menu.open .cli-menu-trigger{
   border-color:var(--accent);color:var(--accent);
 }
-.cli-bar-unica .cli-menu-pop{
+.cli-bar-unica .cli-menu-pop, .cli-menu-pop-portal{
   /* position:fixed pra escapar do overflow:hidden do .tpanel.
-     Coordenadas (top/left) são preenchidas via JS no toggle a partir do bounding rect do trigger. */
+     Coordenadas (top/right) são preenchidas via JS no toggle a partir
+     do bounding rect do trigger.
+     A classe .cli-menu-pop-portal é adicionada quando o popover é movido
+     pro <body> (portal) — necessário pq algum ancestral tem transform/
+     filter que afeta como position:fixed ancora. */
   position:fixed;min-width:220px;
   background:var(--surface);border:1px solid var(--border2);border-radius:8px;
   padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.5);
   display:none;z-index:9999;
 }
 .cli-bar-unica .cli-menu.open .cli-menu-pop{display:block;}
+/* Quando o popover está como filho do body (portal), o ancestral
+   .cli-bar-unica não existe mais — usamos as mesmas regras de item. */
+.cli-menu-pop-portal .cli-menu-item{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:8px 12px;background:transparent;border:none;
+  border-radius:6px;
+  font-size:12px;font-weight:500;color:var(--text);
+  cursor:pointer;text-align:left;
+  font-family:'DM Sans',sans-serif;transition:background .12s;
+}
+.cli-menu-pop-portal .cli-menu-item:hover{background:var(--surface2);}
+.cli-menu-pop-portal .cli-menu-item .ic{font-size:14px;width:18px;text-align:center;line-height:1;}
 .cli-bar-unica .cli-menu-item{
   display:flex;align-items:center;gap:10px;width:100%;
   padding:8px 12px;background:transparent;border:none;

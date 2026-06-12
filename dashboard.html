@@ -15,7 +15,7 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Italiana&family=Petit+Formal+Script&family=Cinzel:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260611-100000">
+<link rel="stylesheet" href="assets/css/main.css?v=20260611-200000">
 <link rel="stylesheet" href="assets/css/themes.css?v=20260603-151115">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
@@ -60,7 +60,7 @@
 <!-- TELA DE TURMAS -->
 <!-- ══ CSS DA HOME ══ -->
 <link rel="stylesheet" href="assets/css/homeScreen.css?v=20260605-120231">
-<link rel="stylesheet" href="assets/css/turma-mobile-accordion.css?v=20260611-500000">
+<link rel="stylesheet" href="assets/css/turma-mobile-accordion.css?v=20260611-520000">
 
 <div id="turmasScreen">
   <!-- Header da home -->
@@ -724,48 +724,105 @@
       <!-- Coluna direita: preview + ajustes -->
       <div style="flex:1;display:flex;flex-direction:column;">
 
-        <!-- Ajustes visuais -->
-        <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:12px;align-items:center;background:var(--surface2);">
-          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;">Ajustes visuais</span>
+        <!-- Ajustes visuais (espelham o painel de controle standalone) -->
+        <style>
+          .pa-ctrl{display:flex;align-items:center;gap:5px;}
+          .pa-ctrl label{font-size:10px;color:var(--muted);white-space:nowrap;}
+          .pa-ctrl input[type=range]{width:60px;}
+          .pa-ctrl .v{font-size:10px;color:var(--accent);font-family:'DM Mono',monospace;min-width:32px;text-align:right;}
+        </style>
+        <div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;background:var(--surface2);">
+          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;flex-basis:100%;">Ajustes visuais · em tempo real</span>
 
-          <div style="display:flex;align-items:center;gap:6px;">
-            <label style="font-size:11px;color:var(--muted);">Fonte</label>
-            <input type="range" id="propFonte" min="7" max="14" step="1" value="10" style="width:70px;" oninput="document.getElementById('propFonteVal').textContent=this.value+'pt';_propostaPreview()">
-            <span id="propFonteVal" style="font-size:11px;color:var(--text);min-width:24px;">10pt</span>
-          </div>
+          <div class="pa-ctrl"><label>Margem</label>
+            <input type="range" id="propMargem" min="5" max="20" step="1" value="12" oninput="document.getElementById('propMargemV').textContent=this.value+'mm';_propostaPreview()">
+            <span class="v" id="propMargemV">12mm</span></div>
 
-          <div style="display:flex;align-items:center;gap:6px;">
-            <label style="font-size:11px;color:var(--muted);">Espaçamento</label>
-            <input type="range" id="propPadding" min="2" max="8" step="1" value="4" style="width:70px;" oninput="document.getElementById('propPaddingVal').textContent=this.value+'mm';_propostaPreview()">
-            <span id="propPaddingVal" style="font-size:11px;color:var(--text);min-width:28px;">4mm</span>
-          </div>
+          <div class="pa-ctrl"><label>Escala</label>
+            <input type="range" id="propEscala" min="0.6" max="1.2" step="0.05" value="0.9" oninput="document.getElementById('propEscalaV').textContent=Math.round(this.value*100)+'%';_propostaPreview()">
+            <span class="v" id="propEscalaV">90%</span></div>
 
-          <div style="display:flex;align-items:center;gap:6px;">
-            <label style="font-size:11px;color:var(--muted);">Cor cabeçalho</label>
-            <input type="color" id="propCorHeader" value="#0f0f0f" onchange="_propostaPreview()" style="width:32px;height:24px;border:none;border-radius:4px;cursor:pointer;padding:0;">
-          </div>
+          <div class="pa-ctrl"><label>H1</label>
+            <input type="range" id="propH1" min="14" max="30" step="1" value="19" oninput="document.getElementById('propH1V').textContent=this.value+'pt';_propostaPreview()">
+            <span class="v" id="propH1V">19pt</span></div>
 
-          <div style="display:flex;align-items:center;gap:6px;">
-            <label style="font-size:11px;color:var(--muted);">Cor accent</label>
-            <input type="color" id="propCorAccent" value="#c8f05a" onchange="_propostaPreview()" style="width:32px;height:24px;border:none;border-radius:4px;cursor:pointer;padding:0;">
-          </div>
+          <div class="pa-ctrl"><label>H2</label>
+            <input type="range" id="propH2" min="6" max="12" step="0.5" value="9" oninput="document.getElementById('propH2V').textContent=this.value+'pt';_propostaPreview()">
+            <span class="v" id="propH2V">9pt</span></div>
 
-          <div style="display:flex;align-items:center;gap:6px;">
-            <label style="font-size:11px;color:var(--muted);">Validade</label>
-            <input type="number" id="propValidade" value="30" min="1" max="90" style="width:50px;background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--text);font-size:11px;" oninput="_propostaPreview()">
-            <span style="font-size:11px;color:var(--muted);">dias</span>
-          </div>
+          <div class="pa-ctrl"><label>Body</label>
+            <input type="range" id="propBody" min="6" max="14" step="0.5" value="11" oninput="document.getElementById('propBodyV').textContent=this.value+'pt';_propostaPreview()">
+            <span class="v" id="propBodyV">11pt</span></div>
 
-          <button onclick="_propostaPreview()" style="margin-left:auto;font-size:11px;padding:5px 14px;border-radius:var(--radius-sm);border:1px solid rgba(200,240,90,.3);background:var(--accent-dim);color:var(--accent);cursor:pointer;font-family:DM Sans,sans-serif;">👁 Visualizar</button>
+          <div class="pa-ctrl"><label>Tabela</label>
+            <input type="range" id="propFonte" min="5" max="14" step="0.5" value="10" oninput="document.getElementById('propFonteVal').textContent=this.value+'pt';_propostaPreview()">
+            <span class="v" id="propFonteVal">10pt</span></div>
+
+          <div class="pa-ctrl"><label>Pad. Cel.</label>
+            <input type="range" id="propPadding" min="0.5" max="5" step="0.5" value="0.5" oninput="document.getElementById('propPaddingVal').textContent=this.value+'mm';_propostaPreview()">
+            <span class="v" id="propPaddingVal">0.5mm</span></div>
+
+          <div class="pa-ctrl"><label>Gap</label>
+            <input type="range" id="propGap" min="2" max="14" step="1" value="7" oninput="document.getElementById('propGapV').textContent=this.value+'mm';_propostaPreview()">
+            <span class="v" id="propGapV">7mm</span></div>
+
+          <div class="pa-ctrl"><label>Cards</label>
+            <input type="range" id="propCardH" min="8" max="22" step="1" value="13" oninput="document.getElementById('propCardHV').textContent=this.value+'mm';_propostaPreview()">
+            <span class="v" id="propCardHV">13mm</span></div>
+
+          <!-- Faixa Cliente / Especialista / Pagamento -->
+          <div class="pa-ctrl"><label>Faixa H</label>
+            <input type="range" id="propDadosH" min="6" max="18" step="0.5" value="8" oninput="document.getElementById('propDadosHV').textContent=this.value+'mm';_propostaPreview()">
+            <span class="v" id="propDadosHV">8mm</span></div>
+
+          <div class="pa-ctrl"><label>Faixa Lbl</label>
+            <input type="range" id="propDadosLbl" min="4" max="9" step="0.5" value="6" oninput="document.getElementById('propDadosLblV').textContent=this.value+'pt';_propostaPreview()">
+            <span class="v" id="propDadosLblV">6pt</span></div>
+
+          <div class="pa-ctrl"><label>Faixa Val</label>
+            <input type="range" id="propDadosVal" min="6" max="14" step="0.5" value="9" oninput="document.getElementById('propDadosValV').textContent=this.value+'pt';_propostaPreview()">
+            <span class="v" id="propDadosValV">9pt</span></div>
+
+          <div class="pa-ctrl"><label>Validade</label>
+            <input type="number" id="propValidade" value="30" min="1" max="90" style="width:42px;background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:2px 5px;color:var(--text);font-size:10px;" oninput="_propostaPreview()">
+            <span style="font-size:10px;color:var(--muted);">dias</span></div>
+
+          <!-- inputs de cor escondidos (não usados no PDF mas mantidos pra compat) -->
+          <input type="color" id="propCorHeader" value="#0f0f0f" style="display:none;">
+          <input type="color" id="propCorAccent" value="#c8f05a" style="display:none;">
+
+          <button onclick="_propostaPreview()" style="margin-left:auto;font-size:11px;padding:5px 14px;border-radius:var(--radius-sm);border:1px solid rgba(200,240,90,.3);background:var(--accent-dim);color:var(--accent);cursor:pointer;font-family:DM Sans,sans-serif;">👁 Atualizar</button>
         </div>
 
         <!-- iframe preview -->
-        <div style="flex:1;background:#555;position:relative;">
+        <!-- Barra de zoom flutuante sobre o iframe -->
+        <style>
+          .pa-zoom{position:absolute;top:8px;right:14px;display:flex;align-items:center;gap:2px;background:rgba(15,20,30,.85);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.10);border-radius:6px;padding:3px 4px;z-index:5;box-shadow:0 4px 14px rgba(0,0,0,.35);}
+          .pa-zoom button{background:transparent;border:none;color:#cbd5e0;font-family:inherit;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:4px;line-height:1;transition:all .12s;font-weight:700;}
+          .pa-zoom button:hover{background:rgba(255,255,255,.08);color:#fff;}
+          .pa-zoom button.on{background:rgba(200,240,90,.18);color:var(--accent,#c8f05a);}
+          .pa-zoom .pa-zoom-val{font-size:11px;color:#cbd5e0;font-family:"DM Mono",monospace;min-width:42px;text-align:center;padding:0 4px;}
+          .pa-zoom .pa-zoom-sep{width:1px;height:14px;background:rgba(255,255,255,.10);margin:0 2px;}
+          .pa-zoom input[type=range]{width:120px;height:4px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,.10);border-radius:99px;outline:none;margin:0 4px;}
+          .pa-zoom input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;border-radius:50%;background:#c8f05a;cursor:pointer;box-shadow:0 0 0 2px rgba(200,240,90,.25);}
+          .pa-zoom input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#c8f05a;cursor:pointer;border:none;box-shadow:0 0 0 2px rgba(200,240,90,.25);}
+        </style>
+        <div style="flex:1;background:#3a3a3a;position:relative;min-height:600px;">
+          <div class="pa-zoom" id="propZoomBar" style="display:none;">
+            <button type="button" onclick="window._propostaZoom('out')" title="Diminuir zoom (−25%)">−</button>
+            <input type="range" id="propZoomSlider" min="25" max="400" step="5" value="100" oninput="window._propostaZoom(parseInt(this.value,10))" title="Zoom em tempo real">
+            <span class="pa-zoom-val" id="propZoomVal">Largura</span>
+            <button type="button" onclick="window._propostaZoom('in')" title="Aumentar zoom (+25%)">+</button>
+            <span class="pa-zoom-sep"></span>
+            <button type="button" id="propZoomFitH" class="on" onclick="window._propostaZoom('fith')" title="Encaixar pela largura">↔</button>
+            <button type="button" id="propZoomFit" onclick="window._propostaZoom('fit')" title="Encaixar página inteira">⬛</button>
+            <button type="button" id="propZoom100" onclick="window._propostaZoom('100')" title="Tamanho real (100%)">1:1</button>
+          </div>
           <div id="propostaPreviewPlaceholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#999;">
             <div style="font-size:28px;opacity:.4;">📄</div>
-            <div style="font-size:12px;">Configure e clique em 👁 Visualizar</div>
+            <div style="font-size:12px;">Configure e clique em 👁 Atualizar</div>
           </div>
-          <iframe id="propostaPreviewFrame" src="about:blank" style="display:none;width:100%;height:100%;min-height:480px;border:none;"></iframe>
+          <iframe id="propostaPreviewFrame" src="about:blank" style="display:none;width:100%;height:100%;min-height:600px;border:none;background:#3a3a3a;"></iframe>
         </div>
 
       </div>
@@ -3659,7 +3716,7 @@ try{
 <script defer src="assets/js/31-modo-consultor-desktop.js?v=20260603-151115"></script>
 <script defer src="assets/js/33-relatorio-supremo.js?v=20260603-151115"></script>
 <script defer src="assets/js/34-ms-status-filter.js?v=20260603-151115"></script>
-<script defer src="assets/js/35-ms-filters.js?v=20260611-100000"></script>
+<script defer src="assets/js/35-ms-filters.js?v=20260611-200000"></script>
 <script defer src="assets/js/36-col-filter.js?v=20260603-151115"></script>
 <script defer src="assets/js/37-theme-picker.js?v=20260603-151115"></script>
 <script defer src="assets/js/38-audit-treinamentos.js?v=20260603-151115"></script>
@@ -3690,13 +3747,13 @@ try{
 <script defer src="assets/js/22-pdf-consultor.js?v=20260603-151115"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
 <script defer src="assets/js/24-aba-produto.js?v=20260603-151115"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260611-500000"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260611-500000"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260611-520000"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260611-520000"></script>
 <script defer src="assets/js/27-novos-membros.js?v=20260603-151115"></script>
 <script defer src="assets/js/28-modais-cliente.js?v=20260605-222750"></script>
 <script defer src="assets/js/18-usuarios.js?v=20260603-151115"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260606-091627"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260611-890000"></script>
 <script defer src="assets/js/17-presenca.js?v=20260603-151115"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">

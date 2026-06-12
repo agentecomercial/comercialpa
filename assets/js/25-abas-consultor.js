@@ -49,7 +49,7 @@ function renderConsultor(){
         <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;">cliente${cd.length!==1?'s':''}</span>
       </div>
       <div class="pc-avatar" style="background:${bg};color:${cor};border:2px solid ${cor};">${c.toUpperCase().charAt(0)}</div>
-      <div class="pc-name" style="font-size:15px;">${c.toUpperCase()}</div>
+      <div class="pc-name" data-cor="${cor}" style="font-size:15px;color:${cor};text-shadow:0 1px 4px rgba(0,0,0,.55);">${c.toUpperCase()}</div>
       <div class="pc-stats">
         <div><div class="pc-stat-label" style="font-size:13px;">Potencial</div><div class="pc-stat-val" style="font-size:16px;color:var(--blue);">${formatVal(total)}</div></div>
         <div><div class="pc-stat-label" style="font-size:13px;">Faturado</div><div class="pc-stat-val" style="font-size:16px;color:${colMeta.text};">${formatVal(pago)}</div></div>

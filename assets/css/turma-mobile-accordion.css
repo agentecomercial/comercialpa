@@ -210,11 +210,15 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* Cor única por consultor/treinador — vem de --c-cor injetada inline
-       no person-card. Cada nome com cor diferente facilita distinguir
-       visualmente no accordion colapsado. */
-    color: var(--c-cor, var(--text, #e6edf3)) !important;
-    text-shadow: 0 1px 4px rgba(0,0,0,.55);
+  }
+
+  /* Cor única por consultor/treinador no .pc-name vem agora INLINE no HTML
+     (data-cor + style="color:..."), pra garantir max especificidade contra
+     qualquer regra herdada. Esta regra ficou de fallback caso o inline
+     seja removido por hot-reload. */
+  #consultorCards .person-card[style*="--c-cor"] .pc-name,
+  #treinadorCards .person-card[style*="--c-cor"] .pc-name {
+    color: var(--c-cor, var(--text, #e6edf3));
   }
 
   /* Quando expandido, scrolla suavemente e tem indicação visual */
