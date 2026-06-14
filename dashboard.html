@@ -15,7 +15,7 @@
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Italiana&family=Petit+Formal+Script&family=Cinzel:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=20260611-200000">
+<link rel="stylesheet" href="assets/css/main.css?v=20260614-190000">
 <link rel="stylesheet" href="assets/css/themes.css?v=20260603-151115">
 <script>
   // Limpa chave antiga (v1) e aplica apenas se houver tema EXPLICITAMENTE escolhido.
@@ -1481,7 +1481,7 @@
             <button class="clear-link" onclick="closeTreinadorDetail()">← Voltar para todos</button>
           </div>
         </div>
-        <table style="table-layout:auto;">
+        <table id="treinadorDetailTableEl" style="table-layout:auto;">
           <thead><tr>
             <th>Cliente</th><th style="text-align:center;">Treinamento</th>
             <th>Consultor</th><th>Valor</th>
@@ -1490,6 +1490,7 @@
           </tr></thead>
           <tbody id="treinadorDetailTable"></tbody>
         </table>
+        <div id="treinadorDetailCards" class="client-cards-mobile"></div>
       </div>
     </div>
 
@@ -3762,6 +3763,7 @@ try{
 <script defer src="assets/js/53-editor-apresentacoes.js?v=20260611-600000"></script>
 <!-- Turma · Layout Mobile Accordion (Consultor + Treinador) — só ativo em ≤ 768px -->
 <script defer src="assets/js/56-turma-mobile-accordion.js?v=20260610-320000"></script>
+<script defer src="assets/js/57-treinador-mobile-cards.js?v=20260614-200000"></script>
 <script defer src="assets/js/53-imprimir-consultores.js?v=20260611-420000"></script>
 <script defer src="assets/js/99-diag.js?v=20260603-151115"></script>
 <script defer src="assets/js/99-schema-asserter.js?v=20260603-151115"></script>
@@ -3771,7 +3773,7 @@ try{
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
 <script defer src="assets/js/24-aba-produto.js?v=20260603-151115"></script>
 <script defer src="assets/js/25-abas-consultor.js?v=20260611-520000"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260614-180000"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260614-190000"></script>
 <script defer src="assets/js/27-novos-membros.js?v=20260603-151115"></script>
 <script defer src="assets/js/28-modais-cliente.js?v=20260605-222750"></script>
 <script defer src="assets/js/18-usuarios.js?v=20260603-151115"></script>

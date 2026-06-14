@@ -1109,6 +1109,8 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   #mainClientTable{display:none;}
   /* Detalhe consultor (ADM) → também esconde tabela e mostra cards */
   #consultorDetailTableEl{display:none;}
+  /* Detalhe treinador → também esconde tabela e mostra cards */
+  #treinadorDetailTableEl{display:none;}
   .client-cards-mobile{display:block;}
 
   /* Grids de pessoas */
