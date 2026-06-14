@@ -223,6 +223,56 @@ function _renderFiltrosPresencaConsultor(){
 }
 window._renderFiltrosPresencaConsultor = _renderFiltrosPresencaConsultor;
 
+/* ── Atualizar barra de presença no card do treinador (espelho do consultor) ── */
+window._atualizarBarraPresencaTreinador = function(){
+  var bar = document.getElementById('presencaBarTreinador');
+  if(!bar) return;
+  var t = window._treinadorAtivo;
+  if(!t || typeof data === 'undefined') return;
+  var base = data.filter(function(d){ return d&&d.cliente&&d.treinador===t; });
+  var pres = base.filter(function(d){ return d.presenca==='presente'; }).length;
+  var falt = base.filter(function(d){ return d.presenca==='falta'; }).length;
+  var pend = base.filter(function(d){ return !d.presenca||d.presenca==='pendente'; }).length;
+  var tot  = base.length;
+  var pct  = tot>0 ? Math.round((pres/tot)*100) : 0;
+  var cor  = pct>=80?'#34d399':pct>=50?'#ffb740':'#ff5f57';
+  bar.innerHTML =
+    '<span style="font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px;">Presença</span>'
+    +'<span style="color:#34d399;font-weight:700;">✅ '+pres+'</span>'
+    +'<span style="color:var(--muted);">·</span>'
+    +'<span style="color:#ff5f57;font-weight:700;">❌ '+falt+'</span>'
+    +'<span style="color:var(--muted);">·</span>'
+    +'<span style="color:var(--muted);">⏳ '+pend+'</span>'
+    +'<span style="color:var(--muted);margin:0 4px;">|</span>'
+    +'<span style="font-weight:700;color:'+cor+';">'+pct+'% presença</span>';
+};
+
+/* ── Estado filtro presença do card treinador ── */
+var _filtroPresencaTreinador = null;
+
+window._setFiltroPresencaTreinador = function(v){
+  _filtroPresencaTreinador = (_filtroPresencaTreinador === v) ? null : v;
+  _renderFiltrosPresencaTreinador();
+  if(typeof _renderTreinadorDetail === 'function' && window._treinadorAtivo){
+    _renderTreinadorDetail(window._treinadorAtivo);
+  }
+};
+
+window._getFiltroPresencaTreinador = function(){ return _filtroPresencaTreinador; };
+
+function _renderFiltrosPresencaTreinador(){
+  var wrap = document.getElementById('presencaFBtnsTreinador');
+  if(!wrap) return;
+  wrap.innerHTML = PRESENCA_OPTS.map(function(opt){
+    var ativo = _filtroPresencaTreinador === opt.v;
+    return '<button id="pfbtnt_'+opt.v+'" onclick="_setFiltroPresencaTreinador(\''+opt.v+'\')" '
+      +'style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid '+(ativo?opt.border:'rgba(255,255,255,.08)')+';background:'+(ativo?opt.bg:'transparent')+';color:'+(ativo?opt.cor:'var(--muted)')+';cursor:pointer;font-family:\'DM Sans\',sans-serif;font-weight:'+(ativo?'700':'400')+';transition:all .12s;white-space:nowrap;"'
+      +' onmouseover="this.style.opacity=\'0.8\'" onmouseout="this.style.opacity=\'1\'">'
+      +opt.icon+' '+opt.l+'</button>';
+  }).join('');
+}
+window._renderFiltrosPresencaTreinador = _renderFiltrosPresencaTreinador;
+
 /* ── Renderizar botões de filtro (aba geral) ── */
 window._renderFiltrosPresenca = function(){
   var wrap = document.getElementById('presencaFBtns');

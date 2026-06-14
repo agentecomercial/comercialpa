@@ -144,9 +144,14 @@ function _renderTreinadorDetail(t){
   /* Schema hibrido: entrada pode estar no scalar (d.entrada) ou nos subs
      (d.treinamentos[i].entrada). _entradaPendenteDoCliente consolida ambos. */
   const _entOf=d=>(typeof window._entradaPendenteDoCliente==='function')?window._entradaPendenteDoCliente(d):(d&&d.entrada||0);
-  const td=activeTreinadorStatus===null?tdA:activeTreinadorStatus==='entrada'?tdA.filter(d=>_entOf(d)>0):tdA.filter(d=>d.status===activeTreinadorStatus);
+  const _tdStatus=activeTreinadorStatus===null?tdA:activeTreinadorStatus==='entrada'?tdA.filter(d=>_entOf(d)>0):tdA.filter(d=>d.status===activeTreinadorStatus);
+  // Filtro de presença (espelho do consultor)
+  var _fpT=window._getFiltroPresencaTreinador?window._getFiltroPresencaTreinador():null;
+  const td=_fpT?_tdStatus.filter(d=>(d.presenca||'pendente')===_fpT):_tdStatus;
+  if(window._renderFiltrosPresencaTreinador) window._renderFiltrosPresencaTreinador();
 
-  // Métricas
+  // ── Métricas (Potencial = só negociação, igual consultor) ──
+  const potencial=tdA.filter(d=>d.status==='negociacao').reduce((a,d)=>a+d.valor,0);
   const total=tdA.reduce((a,d)=>a+d.valor,0);
   const pago=tdA.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
   const aberto=tdA.filter(d=>d.status==='aberto').reduce((a,d)=>a+d.valor,0);
@@ -155,6 +160,7 @@ function _renderTreinadorDetail(t){
   const nPago=tdA.filter(d=>d.status==='pago').length;
   const nAberto=tdA.filter(d=>d.status==='aberto').length;
   const nEntrada=tdA.filter(d=>_entOf(d)>0).length;
+  const nNegoc=tdA.filter(d=>d.status==='negociacao').length;
 
   const fl=activeTreinadorStatus?' · Filtro: '+activeTreinadorStatus.toUpperCase():'';
   const pct=META>0?Math.round((pago/META)*100):0;
@@ -163,7 +169,7 @@ function _renderTreinadorDetail(t){
 
   document.getElementById('treinadorDetailName').textContent=t.toUpperCase()+' — '+tdA.length+' cliente'+(tdA.length!==1?'s':'');
 
-  // KPIs + barra de progresso (igual ao consultor)
+  // KPIs CLICÁVEIS + barra de progresso + barra de presença (igual ao consultor)
   document.getElementById('treinadorDetailSub').innerHTML=
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
     +'<div style="flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;">'
@@ -172,33 +178,45 @@ function _renderTreinadorDetail(t){
     +'<span style="font-size:11px;font-weight:600;color:'+_colTDetail.text+';font-family:\'DM Mono\',monospace;min-width:36px;text-align:right;">'+pct+'%</span>'
     +'<span style="font-size:10px;color:var(--muted);">da meta</span>'
     +'</div>'
+    // KPI cards — clicáveis para filtrar a lista
     +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">'
-    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div onclick="setTreinadorStatus(\'negociacao\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--accent)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Potencial</div>'
-    +'<div style="font-size:13px;font-weight:700;color:var(--text);font-family:\'DM Mono\',monospace;">'+formatVal(total)+'</div>'
-    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nTodos+' cliente'+(nTodos!==1?'s':'')+'</div>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--text);font-family:\'DM Mono\',monospace;">'+formatVal(potencial)+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nNegoc+' em negoc.</div>'
     +'</div>'
-    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div onclick="setTreinadorStatus(\'pago\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--pago)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Faturado</div>'
     +'<div style="font-size:13px;font-weight:700;color:var(--pago);font-family:\'DM Mono\',monospace;">'+formatVal(pago)+'</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nPago+' pago'+(nPago!==1?'s':'')+'</div>'
     +'</div>'
-    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div onclick="setTreinadorStatus(\'aberto\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--amber)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Em aberto</div>'
     +'<div style="font-size:13px;font-weight:700;color:var(--amber);font-family:\'DM Mono\',monospace;">'+formatVal(aberto)+'</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nAberto+' cliente'+(nAberto!==1?'s':'')+'</div>'
     +'</div>'
-    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;">'
+    +'<div onclick="setTreinadorStatus(\'entrada\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--blue)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Entradas</div>'
     +'<div style="font-size:13px;font-weight:700;color:var(--blue);font-family:\'DM Mono\',monospace;">'+(entrada>0?formatVal(entrada):'—')+'</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nEntrada+' cliente'+(nEntrada!==1?'s':'')+'</div>'
     +'</div>'
     +'</div>'
+    // Barra de presença
+    +'<div id="presencaBarTreinador" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 0 4px;font-size:11px;"></div>'
+    // Chips de filtro de presença
+    +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0 4px;font-size:11px;">'
+    +'<span style="font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px;">Presença</span>'
+    +'<span id="presencaFBtnsTreinador" style="display:inline-flex;gap:6px;flex-wrap:wrap;"></span>'
+    +'</div>'
+    // Subtítulo compacto (mantém o agregado original)
     +'<span style="font-size:12px;color:var(--muted);">Potencial: '+formatVal(total)+' · Faturado: <span style="color:'+_colTDetail.text+';font-weight:700;">'+formatVal(pago)+'</span>'+(entrada>0?' · Entradas: '+formatVal(entrada):'')+fl+'</span>';
 
-  // Contadores nos botões de filtro
-  const _ftMap={ftAll:nTodos,ftAberto:nAberto,ftPago:nPago,ftEntrada:nEntrada};
-  const _ftLabel={ftAll:'Todos',ftAberto:'Aberto',ftPago:'Pago',ftEntrada:'Entrada'};
+  // Atualizar barra de presença (depois do innerHTML pra ter o DOM)
+  if(window._atualizarBarraPresencaTreinador) window._atualizarBarraPresencaTreinador();
+
+  // Contadores nos botões de filtro (inclui Negociação)
+  const _ftMap={ftAll:nTodos,ftAberto:nAberto,ftPago:nPago,ftEntrada:nEntrada,ftNegociacao:nNegoc};
+  const _ftLabel={ftAll:'Todos',ftAberto:'Aberto',ftPago:'Pago',ftEntrada:'Entrada',ftNegociacao:'Negociação'};
   Object.keys(_ftMap).forEach(function(id){
     var el=document.getElementById(id);
     if(el) el.textContent=_ftLabel[id]+(_ftMap[id]>0?' ('+_ftMap[id]+')':'');
@@ -237,7 +255,7 @@ function _renderTreinadorDetail(t){
 }
 function closeTreinadorDetail(){
   window._treinadorAtivo=null;activeTreinadorStatus=null;
-  ['ftAll','ftAberto','ftPago','ftEntrada'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
+  ['ftAll','ftAberto','ftPago','ftEntrada','ftNegociacao'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
   const el=document.getElementById('ftAll');if(el)el.classList.add('active');
   document.getElementById('treinadorDetail').style.display='none';
   var _twrapClose=document.getElementById('treinadorLayoutWrap');
