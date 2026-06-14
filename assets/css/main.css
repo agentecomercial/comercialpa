@@ -1108,10 +1108,10 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
   /* Aba Geral → tabela principal vira accordion (#mainClientTable) */
   #mainClientTable{display:none;}
   /* Detalhe consultor (ADM) → também esconde tabela e mostra cards */
-  #consultorDetailTableEl{display:none;}
+  #consultorDetailTableEl{display:none!important;}
   /* Detalhe treinador → também esconde tabela e mostra cards */
-  #treinadorDetailTableEl{display:none;}
-  .client-cards-mobile{display:block;}
+  #treinadorDetailTableEl{display:none!important;}
+  .client-cards-mobile{display:block!important;}
 
   /* Grids de pessoas */
   .person-grid{grid-template-columns:1fr;}
