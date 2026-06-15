@@ -643,7 +643,10 @@ function gerarPropostaPDF(modo){
     if(_ehSave) _showToast('❌ jsPDF não carregado.','var(--red)');return;
   }
 
-  var total = selecionados.reduce(function(a,s){return a + s.val * (s.qty||1);},0);
+  /* Total cheio = soma(val × qty × parcelas) — em parcelado/12x multiplica
+     por 12 pra refletir o INVESTIMENTO FINAL real (igual ao modal). */
+  var parcelas = _propostaParcelas(pagamento);
+  var total = selecionados.reduce(function(a,s){return a + s.val * (s.qty||1) * parcelas;},0);
   /* ─── Leitura dos ajustes visuais do MODAL (em tempo real) ───
      Defaults vêm do painel de controle preview-proposta-painel-controle.html
      última config validada: mg=12, esc=0.9, h1=19, h2=9, body=12, tbl=10,
