@@ -281,10 +281,17 @@ function _propostaRenderTreinamentos(){
     precoInput.addEventListener('input', function(){_propostaRecalcular();});
     precoInput.addEventListener('focus', function(){this.select();});
     /* Marca como editado pelo usuario para nao ser sobrescrito ao trocar
-       a forma de pagamento (entrada manual prevalece) */
+       a forma de pagamento (entrada manual prevalece). Armazena o val
+       unit customizado = (input digitado) / qty atual — assim, quando
+       a qty mudar depois, input = editedVal × qty (multiplicação
+       continua valendo). */
     precoInput.addEventListener('input', function(){
       chk.dataset.edited = '1';
       this.value = (typeof lcMoneyMask==='function') ? lcMoneyMask(this.value) : this.value;
+      var qtyInpNow = document.getElementById('propqty_' + nome);
+      var qtyNow = qtyInpNow ? Math.max(1, parseInt(qtyInpNow.value) || 1) : 1;
+      var valDigitado = parseVal(this.value);
+      chk.dataset.editedVal = String(valDigitado / qtyNow);
       /* Mostra o botao de restaurar quando ha edicao manual */
       if(restoreBtn) restoreBtn.style.display = 'inline-flex';
     });
@@ -301,6 +308,7 @@ function _propostaRenderTreinamentos(){
     restoreBtn.addEventListener('click', function(e){
       e.stopPropagation();
       delete chk.dataset.edited;
+      delete chk.dataset.editedVal;
       var pgtoAtual = document.getElementById('propostaPagamento').value;
       var precoAtual = _PROPOSTA_PRECOS[nome][pgtoAtual];
       precoInput.value = (precoAtual !== null) ? formatVal(precoAtual) : formatVal(0);
@@ -450,16 +458,22 @@ function _propostaRecalcular(){
   // - Se ha preco de tabela, atualiza para o novo valor da forma de pagamento.
   // - Se nao ha preco de tabela, deixa o input editavel em 0,00 (ou o que o
   //   usuario tiver digitado).
-  /* Input azul "val unit" mostra preço × qty — mesma fórmula da coluna
-     VALOR do PDF. Se o usuário editou (dataset.edited), preserva. */
+  /* Input azul "val unit" mostra (preço unit × qty). Se o usuário
+     editou manualmente, usa o val unit customizado (chk.dataset.editedVal)
+     em vez do preço da tabela — qty continua multiplicando normalmente. */
   _PROPOSTA_TREINAMENTOS.forEach(function(nome){
     var inp = document.getElementById('propval_' + nome);
     var chk = document.getElementById('prop_' + nome);
     var qtyInp = document.getElementById('propqty_' + nome);
     if(!inp || !chk) return;
-    if(chk.dataset.edited) return;
-    var preco = _PROPOSTA_PRECOS[nome][pagamento];
     var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
+    if(chk.dataset.edited){
+      /* val unit customizado pelo usuário × qty atual */
+      var editedVal = parseFloat(chk.dataset.editedVal || '0') || 0;
+      inp.value = formatVal(editedVal * qty);
+      return;
+    }
+    var preco = _PROPOSTA_PRECOS[nome][pagamento];
     if(preco !== null){
       inp.value = formatVal(preco * qty);
     } else {
