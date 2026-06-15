@@ -620,8 +620,10 @@ function gerarPropostaPDF(modo){
     if(!chk.checked) return;
     var nome = chk.id.replace('prop_', '');
     var inp = document.getElementById('propval_' + nome);
+    var qtyInp = document.getElementById('propqty_' + nome);
     var val = inp ? parseVal(inp.value) : 0;
-    selecionados.push({nome: nome, val: val});
+    var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
+    selecionados.push({nome: nome, val: val, qty: qty});
   });
 
   if(_ehPreview) console.log('[gerarPropostaPDF preview] selecionados=', selecionados.length, 'jspdf=', typeof window.jspdf);
@@ -641,7 +643,7 @@ function gerarPropostaPDF(modo){
     if(_ehSave) _showToast('❌ jsPDF não carregado.','var(--red)');return;
   }
 
-  var total = selecionados.reduce(function(a,s){return a+s.val;},0);
+  var total = selecionados.reduce(function(a,s){return a + s.val * (s.qty||1);},0);
   /* ─── Leitura dos ajustes visuais do MODAL (em tempo real) ───
      Defaults vêm do painel de controle preview-proposta-painel-controle.html
      última config validada: mg=12, esc=0.9, h1=19, h2=9, body=12, tbl=10,
@@ -875,17 +877,19 @@ function gerarPropostaPDF(modo){
     var meta = _PRODUTOS_PROPOSTA[s.nome];
     var nomeCompleto = (meta && meta.nome) ? meta.nome : '';
     var descricao = nomeCompleto ? (s.nome + ' - ' + nomeCompleto) : s.nome;
-    return ['L' + String(i+1).padStart(2,'0'), descricao, pagLabel, formatVal(s.val)];
+    return ['L' + String(i+1).padStart(2,'0'), descricao, pagLabel, String(s.qty||1), formatVal(s.val)];
   });
   var _parcFinalPdf = (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? '12x' : '';
-  bodyRows.push(['—', 'INVESTIMENTO FINAL', _parcFinalPdf, formatVal(total)]);
+  var _qtyFinal = selecionados.reduce(function(a,s){return a + (s.qty||1);}, 0);
+  bodyRows.push(['—', 'INVESTIMENTO FINAL', _parcFinalPdf, String(_qtyFinal), formatVal(total)]);
 
-  /* Recalcula largura das colunas pra ocupar maxW totalmente */
-  var _wTab1 = 14, _wTab3 = 32, _wTab4 = 26;
-  var _wTab2 = maxW - _wTab1 - _wTab3 - _wTab4;
+  /* Recalcula largura das colunas pra ocupar maxW totalmente
+     5 colunas: LINHA · DESCRIÇÃO · PAGAMENTO · UNIDADE · VALOR */
+  var _wTab1 = 14, _wTab3 = 30, _wTabU = 18, _wTab4 = 26;
+  var _wTab2 = maxW - _wTab1 - _wTab3 - _wTabU - _wTab4;
   doc.autoTable({
     startY: y,
-    head: [['LINHA', 'DESCRIÇÃO', 'PAGAMENTO', 'VALOR (R$)']],
+    head: [['LINHA', 'DESCRIÇÃO', 'PAGAMENTO', 'UNIDADE', 'VALOR (R$)']],
     body: bodyRows,
     margin: {left: mg, right: mg},
     styles: {
@@ -907,7 +911,8 @@ function gerarPropostaPDF(modo){
       0: {cellWidth: _wTab1, halign: 'center'},
       1: {cellWidth: _wTab2, halign: 'left',   fontStyle: 'bold'},
       2: {cellWidth: _wTab3, halign: 'center'},
-      3: {cellWidth: _wTab4, halign: 'center', fontStyle: 'bold', font: 'times'}
+      3: {cellWidth: _wTabU, halign: 'center', fontStyle: 'bold'},
+      4: {cellWidth: _wTab4, halign: 'center', fontStyle: 'bold', font: 'times'}
     },
     alternateRowStyles: {fillColor: COR_ZEBRA},
     didParseCell: function(d){
@@ -916,7 +921,7 @@ function gerarPropostaPDF(modo){
         d.cell.styles.fillColor = COR_VERDE_BG;
         d.cell.styles.textColor = COR_VERDE_DK;
         d.cell.styles.fontStyle = 'bold';
-        d.cell.styles.fontSize = (d.column.index === 3) ? SZ_TBL * 1.25 : SZ_TBL;
+        d.cell.styles.fontSize = (d.column.index === 4) ? SZ_TBL * 1.25 : SZ_TBL;
         d.cell.styles.cellPadding = PAD_TBL * 1.8;
       }
     }
