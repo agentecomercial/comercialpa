@@ -905,7 +905,7 @@ function gerarPropostaPDF(modo){
     },
     columnStyles: {
       0: {cellWidth: _wTab1, halign: 'center'},
-      1: {cellWidth: _wTab2, halign: 'center', fontStyle: 'bold'},
+      1: {cellWidth: _wTab2, halign: 'left',   fontStyle: 'bold'},
       2: {cellWidth: _wTab3, halign: 'center'},
       3: {cellWidth: _wTab4, halign: 'center', fontStyle: 'bold', font: 'times'}
     },
