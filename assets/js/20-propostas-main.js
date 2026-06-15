@@ -858,17 +858,19 @@ function gerarPropostaPDF(modo){
   doc.setFontSize(SZ_BODY);
   doc.setTextColor(245, 225, 170);
   var motivY = y + 3.5;
-  /* Texto 100% JUSTIFICADO: TODAS as linhas (incluindo a última) têm
-     suas palavras distribuídas pelo espaço disponível. A última linha
-     justificada pode ficar com gaps maiores se for curta — isso é
-     intencional pra manter o padrão visual uniforme. */
+  /* Texto JUSTIFICADO no padrão Microsoft Word (Ctrl+J):
+     - Linhas do MEIO: palavras distribuídas pelo espaço disponível
+       (justificadas), sem limite máximo de gap entre palavras.
+     - ÚLTIMA linha: alinhada à esquerda com espaçamento natural —
+       evita o gap gigante quando a linha tem poucas palavras curtas. */
   var spaceW = doc.getTextWidth(' ') || (SZ_BODY * 0.25);
 
   motivLines.forEach(function(line, i){
+    var isUltima = (i === motivLines.length - 1);
     var palavras = String(line).trim().split(/\s+/).filter(Boolean);
 
-    /* Linhas com 1 palavra ou vazias: renderiza sem justificação */
-    if(palavras.length < 2){
+    /* Última linha OU linha com 1 palavra → alinhada à esquerda */
+    if(isUltima || palavras.length < 2){
       doc.text(line, motivX, motivY);
       motivY += 3.6;
       return;
