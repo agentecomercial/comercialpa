@@ -277,14 +277,12 @@ function _propostaRenderTreinamentos(){
     precoInput.placeholder = '0,00';
     precoInput.title = indisponivel ? 'Sem preco de tabela — digite manualmente' : 'Edite para sobrescrever o preco unitario';
     precoInput.style.cssText = 'width:112px;flex-shrink:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 8px;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:DM Mono,monospace;white-space:nowrap;';
-    /* 'input' pra atualização instantânea conforme o user digita */
-    precoInput.addEventListener('input', function(){_propostaRecalcular();});
     precoInput.addEventListener('focus', function(){this.select();});
-    /* Marca como editado pelo usuario para nao ser sobrescrito ao trocar
-       a forma de pagamento (entrada manual prevalece). Armazena o val
-       unit customizado = (input digitado) / qty atual — assim, quando
-       a qty mudar depois, input = editedVal × qty (multiplicação
-       continua valendo). */
+    /* Listener único de 'input': PRIMEIRO marca como editado e grava
+       o val unit customizado (= valor digitado / qty atual), DEPOIS
+       chama _propostaRecalcular. A ordem importa porque o recalcular
+       lê chk.dataset.edited pra decidir se preserva a edição manual
+       ou reaplica o preço da tabela. */
     precoInput.addEventListener('input', function(){
       chk.dataset.edited = '1';
       this.value = (typeof lcMoneyMask==='function') ? lcMoneyMask(this.value) : this.value;
@@ -292,8 +290,8 @@ function _propostaRenderTreinamentos(){
       var qtyNow = qtyInpNow ? Math.max(1, parseInt(qtyInpNow.value) || 1) : 1;
       var valDigitado = parseVal(this.value);
       chk.dataset.editedVal = String(valDigitado / qtyNow);
-      /* Mostra o botao de restaurar quando ha edicao manual */
       if(restoreBtn) restoreBtn.style.display = 'inline-flex';
+      _propostaRecalcular();
     });
 
     /* Botao restaurar preco de tabela — fica oculto enquanto nao houve
