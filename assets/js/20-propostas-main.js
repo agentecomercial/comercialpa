@@ -450,35 +450,35 @@ function _propostaRecalcular(){
   // - Se ha preco de tabela, atualiza para o novo valor da forma de pagamento.
   // - Se nao ha preco de tabela, deixa o input editavel em 0,00 (ou o que o
   //   usuario tiver digitado).
-  /* Input "valor unit" mostra SÓ o preço unitário da tabela. Se o usuário
-     editou manualmente (dataset.edited), preserva o valor digitado. */
+  /* Input azul "val unit" mostra preço × qty — mesma fórmula da coluna
+     VALOR do PDF. Se o usuário editou (dataset.edited), preserva. */
   _PROPOSTA_TREINAMENTOS.forEach(function(nome){
     var inp = document.getElementById('propval_' + nome);
     var chk = document.getElementById('prop_' + nome);
+    var qtyInp = document.getElementById('propqty_' + nome);
     if(!inp || !chk) return;
     if(chk.dataset.edited) return;
     var preco = _PROPOSTA_PRECOS[nome][pagamento];
+    var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
     if(preco !== null){
-      inp.value = formatVal(preco);
+      inp.value = formatVal(preco * qty);
     } else {
       /* sem preco de tabela e usuario ainda nao digitou — mantem 0,00 */
       if(!inp.value || inp.value === '—') inp.value = formatVal(0);
     }
   });
 
-  // Subtotal verde = val × qty × parcelas (valor CHEIO do investimento
-  // para este treinamento). Em 12x mostra o total dos 12 meses × qty.
+  // Subtotal verde = input × parcelas (valor CHEIO do investimento).
+  // Como o input já contém val × qty, só multiplicamos por parcelas.
   _PROPOSTA_TREINAMENTOS.forEach(function(nome){
     var inp = document.getElementById('propval_' + nome);
-    var qtyInp = document.getElementById('propqty_' + nome);
     var sub = document.getElementById('propsubtotal_' + nome);
     if(!sub) return;
-    var val = inp ? parseVal(inp.value) : 0;
-    var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
-    sub.textContent = formatVal(val * qty * parcelas);
+    var valLinha = inp ? parseVal(inp.value) : 0;
+    sub.textContent = formatVal(valLinha * parcelas);
   });
 
-  // Total = soma(val × qty × parcelas) — valor cheio do investimento.
+  // Total = soma(input × parcelas) — valor cheio do investimento.
   var total = 0;
   var totalQty = 0;
   var selecionados = [];
@@ -489,11 +489,11 @@ function _propostaRecalcular(){
     var nome = chk.id.replace('prop_', '');
     var inp = document.getElementById('propval_' + nome);
     var qtyInp = document.getElementById('propqty_' + nome);
-    var val = inp ? parseVal(inp.value) : 0;
+    var valLinha = inp ? parseVal(inp.value) : 0;
     var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
-    total += val * qty * parcelas;
+    total += valLinha * parcelas;
     totalQty += qty;
-    selecionados.push({nome: nome, val: val, qty: qty});
+    selecionados.push({nome: nome, val: valLinha, qty: qty});
   });
 
   document.getElementById('propostaTotal').textContent = formatVal(total);
@@ -644,12 +644,11 @@ function gerarPropostaPDF(modo){
     if(_ehSave) _showToast('❌ jsPDF não carregado.','var(--red)');return;
   }
 
-  /* INVESTIMENTO FINAL = soma(val × qty). Em 12x mostra a parcela
-     mensal acumulada (val unit × qty), NÃO multiplicado por 12 — pra
-     o cliente ver o que paga por mês. O modal mostra o valor cheio
-     do investimento; aqui no PDF é o que se paga mensalmente. */
+  /* INVESTIMENTO FINAL = soma(input). O input já vem como val × qty
+     do modal, então não multiplicamos por qty de novo. Em 12x mostra
+     a parcela mensal acumulada (NÃO o cheio — o modal mostra o cheio). */
   var parcelas = _propostaParcelas(pagamento);
-  var total = selecionados.reduce(function(a,s){return a + s.val * (s.qty||1);},0);
+  var total = selecionados.reduce(function(a,s){return a + s.val;},0);
   /* ─── Leitura dos ajustes visuais do MODAL (em tempo real) ───
      Defaults vêm do painel de controle preview-proposta-painel-controle.html
      última config validada: mg=12, esc=0.9, h1=19, h2=9, body=12, tbl=10,
@@ -884,9 +883,8 @@ function gerarPropostaPDF(modo){
     var nomeCompleto = (meta && meta.nome) ? meta.nome : '';
     var descricao = nomeCompleto ? (s.nome + ' - ' + nomeCompleto) : s.nome;
     var qty = s.qty || 1;
-    /* VALOR = val unit × qty (parcela mensal × qty em 12x, ou preço
-       cheio × qty nas demais formas). */
-    return ['L' + String(i+1).padStart(2,'0'), descricao, String(qty), pagLabel, formatVal(s.val * qty)];
+    /* VALOR = input (= val × qty, mesmo valor do "val unit" azul do modal). */
+    return ['L' + String(i+1).padStart(2,'0'), descricao, String(qty), pagLabel, formatVal(s.val)];
   });
   var _parcFinalPdf = (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? '12x' : '';
   bodyRows.push(['—', 'INVESTIMENTO FINAL', '', _parcFinalPdf, formatVal(total)]);
