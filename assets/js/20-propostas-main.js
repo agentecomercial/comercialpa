@@ -450,36 +450,35 @@ function _propostaRecalcular(){
   // - Se ha preco de tabela, atualiza para o novo valor da forma de pagamento.
   // - Se nao ha preco de tabela, deixa o input editavel em 0,00 (ou o que o
   //   usuario tiver digitado).
-  /* O input "valor unit" passa a refletir preço × qty (já multiplicado).
-     Se o usuário editou manualmente (dataset.edited), preserva a edição
-     — nesse caso o subtotal usa o valor digitado tal como está. */
+  /* Input "valor unit" mostra SÓ o preço unitário da tabela. Se o usuário
+     editou manualmente (dataset.edited), preserva o valor digitado. */
   _PROPOSTA_TREINAMENTOS.forEach(function(nome){
     var inp = document.getElementById('propval_' + nome);
     var chk = document.getElementById('prop_' + nome);
-    var qtyInp = document.getElementById('propqty_' + nome);
     if(!inp || !chk) return;
     if(chk.dataset.edited) return;
     var preco = _PROPOSTA_PRECOS[nome][pagamento];
-    var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
     if(preco !== null){
-      inp.value = formatVal(preco * qty);
+      inp.value = formatVal(preco);
     } else {
       /* sem preco de tabela e usuario ainda nao digitou — mantem 0,00 */
       if(!inp.value || inp.value === '—') inp.value = formatVal(0);
     }
   });
 
-  // Subtotais = input (já contém val × qty). Em 12x mostra a parcela total
-  // mensal (val × qty), não multiplicado por 12.
+  // Subtotal verde = val × qty × parcelas (valor CHEIO do investimento
+  // para este treinamento). Em 12x mostra o total dos 12 meses × qty.
   _PROPOSTA_TREINAMENTOS.forEach(function(nome){
     var inp = document.getElementById('propval_' + nome);
+    var qtyInp = document.getElementById('propqty_' + nome);
     var sub = document.getElementById('propsubtotal_' + nome);
     if(!sub) return;
-    var valLinha = inp ? parseVal(inp.value) : 0;
-    sub.textContent = formatVal(valLinha);
+    var val = inp ? parseVal(inp.value) : 0;
+    var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
+    sub.textContent = formatVal(val * qty * parcelas);
   });
 
-  // Total = soma(input) — em 12x é a parcela mensal total acumulada.
+  // Total = soma(val × qty × parcelas) — valor cheio do investimento.
   var total = 0;
   var totalQty = 0;
   var selecionados = [];
@@ -490,11 +489,11 @@ function _propostaRecalcular(){
     var nome = chk.id.replace('prop_', '');
     var inp = document.getElementById('propval_' + nome);
     var qtyInp = document.getElementById('propqty_' + nome);
-    var valLinha = inp ? parseVal(inp.value) : 0;
+    var val = inp ? parseVal(inp.value) : 0;
     var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
-    total += valLinha;
+    total += val * qty * parcelas;
     totalQty += qty;
-    selecionados.push({nome: nome, val: valLinha, qty: qty});
+    selecionados.push({nome: nome, val: val, qty: qty});
   });
 
   document.getElementById('propostaTotal').textContent = formatVal(total);
@@ -504,9 +503,9 @@ function _propostaRecalcular(){
       detalhe.textContent = 'Nenhum treinamento selecionado';
     } else {
       var base = totalQty + ' treinamento' + (totalQty > 1 ? 's' : '') + ' · ' + _PROPOSTA_LABELS[pagamento];
-      /* Em parcelado, mostra ao lado o total cheio (parcela × 12 parcelas). */
+      /* Em parcelado, mostra ao lado a parcela mensal (= total cheio / 12). */
       if(parcelas > 1){
-        base += ' · cheio ' + formatVal(total * parcelas);
+        base += ' · 12× ' + formatVal(total / parcelas);
       }
       detalhe.textContent = base;
     }
@@ -645,11 +644,12 @@ function gerarPropostaPDF(modo){
     if(_ehSave) _showToast('❌ jsPDF não carregado.','var(--red)');return;
   }
 
-  /* Total = soma(input). O input já vem como val × qty do modal.
-     Em 12x, o total no PDF mostra a parcela mensal acumulada
-     (consistente com o subtotal verde do modal). */
+  /* INVESTIMENTO FINAL = soma(val × qty). Em 12x mostra a parcela
+     mensal acumulada (val unit × qty), NÃO multiplicado por 12 — pra
+     o cliente ver o que paga por mês. O modal mostra o valor cheio
+     do investimento; aqui no PDF é o que se paga mensalmente. */
   var parcelas = _propostaParcelas(pagamento);
-  var total = selecionados.reduce(function(a,s){return a + s.val;},0);
+  var total = selecionados.reduce(function(a,s){return a + s.val * (s.qty||1);},0);
   /* ─── Leitura dos ajustes visuais do MODAL (em tempo real) ───
      Defaults vêm do painel de controle preview-proposta-painel-controle.html
      última config validada: mg=12, esc=0.9, h1=19, h2=9, body=12, tbl=10,
@@ -884,8 +884,9 @@ function gerarPropostaPDF(modo){
     var nomeCompleto = (meta && meta.nome) ? meta.nome : '';
     var descricao = nomeCompleto ? (s.nome + ' - ' + nomeCompleto) : s.nome;
     var qty = s.qty || 1;
-    /* VALOR = input (que já é val × qty). Espelha o subtotal do modal. */
-    return ['L' + String(i+1).padStart(2,'0'), descricao, String(qty), pagLabel, formatVal(s.val)];
+    /* VALOR = val unit × qty (parcela mensal × qty em 12x, ou preço
+       cheio × qty nas demais formas). */
+    return ['L' + String(i+1).padStart(2,'0'), descricao, String(qty), pagLabel, formatVal(s.val * qty)];
   });
   var _parcFinalPdf = (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? '12x' : '';
   bodyRows.push(['—', 'INVESTIMENTO FINAL', '', _parcFinalPdf, formatVal(total)]);
