@@ -858,40 +858,12 @@ function gerarPropostaPDF(modo){
   doc.setFontSize(SZ_BODY);
   doc.setTextColor(245, 225, 170);
   var motivY = y + 3.5;
-  /* Texto JUSTIFICADO no padrão Microsoft Word (Ctrl+J):
-     - Linhas do MEIO: palavras distribuídas pelo espaço disponível
-       (justificadas), sem limite máximo de gap entre palavras.
-     - ÚLTIMA linha: alinhada à esquerda com espaçamento natural —
-       evita o gap gigante quando a linha tem poucas palavras curtas. */
-  var spaceW = doc.getTextWidth(' ') || (SZ_BODY * 0.25);
-
-  motivLines.forEach(function(line, i){
-    var isUltima = (i === motivLines.length - 1);
-    var palavras = String(line).trim().split(/\s+/).filter(Boolean);
-
-    /* Última linha OU linha com 1 palavra → alinhada à esquerda */
-    if(isUltima || palavras.length < 2){
-      doc.text(line, motivX, motivY);
-      motivY += 3.6;
-      return;
-    }
-
-    /* Soma a largura real de cada palavra (sem espaços) */
-    var larguraPalavras = 0;
-    palavras.forEach(function(w){ larguraPalavras += doc.getTextWidth(w); });
-
-    /* Espaço entre palavras = (largura disponível − largura das palavras)
-       dividido pelo número de gaps. Salvaguarda mínima pra evitar palavras
-       grudadas se a medição der valor negativo. */
-    var nGaps = palavras.length - 1;
-    var espacoEntre = (motivMaxW - larguraPalavras) / nGaps;
-    if(espacoEntre < spaceW) espacoEntre = spaceW;
-
-    var curX = motivX;
-    palavras.forEach(function(w){
-      doc.text(w, curX, motivY);
-      curX += doc.getTextWidth(w) + espacoEntre;
-    });
+  /* Texto CENTRALIZADO na horizontal: cada linha é renderizada no
+     centro da faixa azul, sem gaps grandes entre palavras. Visual
+     mais elegante e simétrico que a justificação clássica. */
+  var motivCenterX = motivX + (motivMaxW / 2);
+  motivLines.forEach(function(line){
+    doc.text(String(line), motivCenterX, motivY, {align: 'center'});
     motivY += 3.6;
   });
   y += motivH + GAP_SEC;
