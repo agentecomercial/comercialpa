@@ -643,8 +643,11 @@ function gerarPropostaPDF(modo){
     if(_ehSave) _showToast('❌ jsPDF não carregado.','var(--red)');return;
   }
 
-  /* Total = soma dos VALOR de cada linha (que já é val × qty). */
-  var total = selecionados.reduce(function(a,s){return a + s.val * (s.qty||1);},0);
+  /* Total = soma dos VALOR de cada linha (que é val × qty × parcelas,
+     onde parcelas=12 em parcelado/parcelado_desc e 1 nas demais).
+     Mesmo cálculo dos subtotais mostrados no modal. */
+  var parcelas = _propostaParcelas(pagamento);
+  var total = selecionados.reduce(function(a,s){return a + s.val * (s.qty||1) * parcelas;},0);
   /* ─── Leitura dos ajustes visuais do MODAL (em tempo real) ───
      Defaults vêm do painel de controle preview-proposta-painel-controle.html
      última config validada: mg=12, esc=0.9, h1=19, h2=9, body=12, tbl=10,
@@ -879,8 +882,9 @@ function gerarPropostaPDF(modo){
     var nomeCompleto = (meta && meta.nome) ? meta.nome : '';
     var descricao = nomeCompleto ? (s.nome + ' - ' + nomeCompleto) : s.nome;
     var qty = s.qty || 1;
-    /* VALOR já vem como subtotal da linha (preço unitário × quantidade) */
-    return ['L' + String(i+1).padStart(2,'0'), descricao, String(qty), pagLabel, formatVal(s.val * qty)];
+    /* VALOR = subtotal cheio da linha (preço unitário × quantidade × parcelas).
+       Espelha o subtotal que o modal exibe em propsubtotal_<NOME>. */
+    return ['L' + String(i+1).padStart(2,'0'), descricao, String(qty), pagLabel, formatVal(s.val * qty * parcelas)];
   });
   var _parcFinalPdf = (pagamento === 'parcelado' || pagamento === 'parcelado_desc') ? '12x' : '';
   bodyRows.push(['—', 'INVESTIMENTO FINAL', '', _parcFinalPdf, formatVal(total)]);
