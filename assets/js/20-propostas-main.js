@@ -858,12 +858,43 @@ function gerarPropostaPDF(modo){
   doc.setFontSize(SZ_BODY);
   doc.setTextColor(245, 225, 170);
   var motivY = y + 3.5;
-  /* Texto CENTRALIZADO na horizontal: cada linha é renderizada no
-     centro da faixa azul, sem gaps grandes entre palavras. Visual
-     mais elegante e simétrico que a justificação clássica. */
-  var motivCenterX = motivX + (motivMaxW / 2);
-  motivLines.forEach(function(line){
-    doc.text(String(line), motivCenterX, motivY, {align: 'center'});
+  /* Texto JUSTIFICADO no padrão Word, com refinamento na distribuição:
+     - Para cada linha (exceto a última), calcula o gap entre palavras
+       baseado no espaço disponível.
+     - O `splitTextToSize` quebra linhas pra caber em motivMaxW; aqui
+       distribuímos pra ocupar EXATAMENTE motivMaxW.
+     - Para evitar linhas com gaps muito grandes, recalcula o split
+       com largura ligeiramente menor (98%) — assim cada linha tem
+       sempre uma "folga" de ~2% pra distribuir uniformemente, evitando
+       que algumas fiquem quase coladas e outras com buracos enormes. */
+  var motivLinesRedone = doc.splitTextToSize(_PROPOSTA_TEXTO.replace(/\n/g,' '), motivMaxW * 0.98);
+  /* Se o re-split deu o mesmo número de linhas, usa esse (mais bem
+     distribuído); senão, mantém o original pra não estourar a faixa. */
+  if(motivLinesRedone.length === motivLines.length) motivLines = motivLinesRedone;
+
+  var spaceW = doc.getTextWidth(' ') || (SZ_BODY * 0.25);
+  motivLines.forEach(function(line, i){
+    var isUltima = (i === motivLines.length - 1);
+    var palavras = String(line).trim().split(/\s+/).filter(Boolean);
+
+    if(isUltima || palavras.length < 2){
+      doc.text(line, motivX, motivY);
+      motivY += 3.6;
+      return;
+    }
+
+    var larguraPalavras = 0;
+    palavras.forEach(function(w){ larguraPalavras += doc.getTextWidth(w); });
+
+    var nGaps = palavras.length - 1;
+    var espacoEntre = (motivMaxW - larguraPalavras) / nGaps;
+    if(espacoEntre < spaceW) espacoEntre = spaceW;
+
+    var curX = motivX;
+    palavras.forEach(function(w){
+      doc.text(w, curX, motivY);
+      curX += doc.getTextWidth(w) + espacoEntre;
+    });
     motivY += 3.6;
   });
   y += motivH + GAP_SEC;
