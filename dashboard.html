@@ -1470,13 +1470,15 @@
             <div class="detail-sub" id="treinadorDetailSub"></div>
           </div>
           <div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-              <button class="fbtn active" id="ftAll" onclick="setTreinadorStatus(null)">Todos</button>
-              <button class="fbtn" id="ftAberto" onclick="setTreinadorStatus('aberto')">Aberto</button>
-              <button class="fbtn" id="ftPago" onclick="setTreinadorStatus('pago')">Pago</button>
-              <button class="fbtn" id="ftEntrada" onclick="setTreinadorStatus('entrada')">Entrada</button>
-              <button class="fbtn" id="ftNegociacao" onclick="setTreinadorStatus('negociacao')">Negociação</button>
-              <button class="clear-link" onclick="setTreinadorStatus(null)">Limpar</button>
+            <!-- STATUS: sem quebra de linha (nowrap), com scroll horizontal se estourar -->
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;">
+              <span style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;">Status</span>
+              <button class="fbtn active" id="ftAll" onclick="setTreinadorStatus(null)" style="flex-shrink:0;">Todos <span class="fbtn-num"></span></button>
+              <button class="fbtn fbtn-aberto" id="ftAberto" onclick="setTreinadorStatus('aberto')" style="flex-shrink:0;">Aberto <span class="fbtn-num"></span></button>
+              <button class="fbtn fbtn-pago" id="ftPago" onclick="setTreinadorStatus('pago')" style="flex-shrink:0;">Pago <span class="fbtn-num"></span></button>
+              <button class="fbtn fbtn-entrada" id="ftEntrada" onclick="setTreinadorStatus('entrada')" style="flex-shrink:0;">Entrada <span class="fbtn-num"></span></button>
+              <button class="fbtn fbtn-negoc" id="ftNegociacao" onclick="setTreinadorStatus('negociacao')" style="flex-shrink:0;">Negociação <span class="fbtn-num"></span></button>
+              <button class="clear-link" onclick="setTreinadorStatus(null)" style="flex-shrink:0;margin-left:auto;">× Limpar</button>
             </div>
             <button class="clear-link" onclick="closeTreinadorDetail()">← Voltar para todos</button>
           </div>
@@ -3773,7 +3775,7 @@ try{
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
 <script defer src="assets/js/24-aba-produto.js?v=20260603-151115"></script>
 <script defer src="assets/js/25-abas-consultor.js?v=20260614-220000"></script>
-<script defer src="assets/js/26-aba-treinador.js?v=20260614-220000"></script>
+<script defer src="assets/js/26-aba-treinador.js?v=20260614-230000"></script>
 <script defer src="assets/js/27-novos-membros.js?v=20260603-151115"></script>
 <script defer src="assets/js/28-modais-cliente.js?v=20260605-222750"></script>
 <script defer src="assets/js/18-usuarios.js?v=20260603-151115"></script>

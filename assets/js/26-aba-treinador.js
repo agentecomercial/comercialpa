@@ -214,12 +214,14 @@ function _renderTreinadorDetail(t){
   // Atualizar barra de presença (depois do innerHTML pra ter o DOM)
   if(window._atualizarBarraPresencaTreinador) window._atualizarBarraPresencaTreinador();
 
-  // Contadores nos botões de filtro (inclui Negociação)
+  // Contadores nos botões de filtro: atualiza apenas .fbtn-num (preserva
+  // as classes coloridas fbtn-aberto/fbtn-pago/fbtn-entrada/fbtn-negoc)
   const _ftMap={ftAll:nTodos,ftAberto:nAberto,ftPago:nPago,ftEntrada:nEntrada,ftNegociacao:nNegoc};
-  const _ftLabel={ftAll:'Todos',ftAberto:'Aberto',ftPago:'Pago',ftEntrada:'Entrada',ftNegociacao:'Negociação'};
   Object.keys(_ftMap).forEach(function(id){
     var el=document.getElementById(id);
-    if(el) el.textContent=_ftLabel[id]+(_ftMap[id]>0?' ('+_ftMap[id]+')':'');
+    if(!el) return;
+    var span=el.querySelector('.fbtn-num');
+    if(span) span.textContent=_ftMap[id]>0?'('+_ftMap[id]+')':'';
   });
   // Checkbox ministrante no detail
   var ministrante=_getTurmaMinistante();
