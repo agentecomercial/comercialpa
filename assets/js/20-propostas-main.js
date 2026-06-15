@@ -858,30 +858,38 @@ function gerarPropostaPDF(modo){
   doc.setFontSize(SZ_BODY);
   doc.setTextColor(245, 225, 170);
   var motivY = y + 3.5;
-  /* Texto JUSTIFICADO: para cada linha (exceto a última), distribui
-     o espaço extra entre as palavras. Garante espaço mínimo igual ao
-     de um " " normal pra evitar palavras grudadas se o cálculo falhar. */
-  var spaceW = doc.getTextWidth(' ') || (SZ_BODY * 0.25);  /* fallback */
+  /* Texto 100% JUSTIFICADO: TODAS as linhas (incluindo a última) têm
+     suas palavras distribuídas pelo espaço disponível. A última linha
+     justificada pode ficar com gaps maiores se for curta — isso é
+     intencional pra manter o padrão visual uniforme. */
+  var spaceW = doc.getTextWidth(' ') || (SZ_BODY * 0.25);
+
   motivLines.forEach(function(line, i){
-    var isUltima = (i === motivLines.length - 1);
     var palavras = String(line).trim().split(/\s+/).filter(Boolean);
-    if(isUltima || palavras.length < 2){
+
+    /* Linhas com 1 palavra ou vazias: renderiza sem justificação */
+    if(palavras.length < 2){
       doc.text(line, motivX, motivY);
-    } else {
-      /* Soma a largura de cada palavra (sem espaços) */
-      var larguraPalavras = 0;
-      palavras.forEach(function(w){ larguraPalavras += doc.getTextWidth(w); });
-      /* Espaço entre palavras = espaço sobrando dividido pelos gaps.
-         Se ficar menor que um " " normal (linha quase cheia ou
-         medições erradas), usa pelo menos o espaço normal. */
-      var espacoEntre = (motivMaxW - larguraPalavras) / (palavras.length - 1);
-      if(espacoEntre < spaceW) espacoEntre = spaceW;
-      var curX = motivX;
-      palavras.forEach(function(w){
-        doc.text(w, curX, motivY);
-        curX += doc.getTextWidth(w) + espacoEntre;
-      });
+      motivY += 3.6;
+      return;
     }
+
+    /* Soma a largura real de cada palavra (sem espaços) */
+    var larguraPalavras = 0;
+    palavras.forEach(function(w){ larguraPalavras += doc.getTextWidth(w); });
+
+    /* Espaço entre palavras = (largura disponível − largura das palavras)
+       dividido pelo número de gaps. Salvaguarda mínima pra evitar palavras
+       grudadas se a medição der valor negativo. */
+    var nGaps = palavras.length - 1;
+    var espacoEntre = (motivMaxW - larguraPalavras) / nGaps;
+    if(espacoEntre < spaceW) espacoEntre = spaceW;
+
+    var curX = motivX;
+    palavras.forEach(function(w){
+      doc.text(w, curX, motivY);
+      curX += doc.getTextWidth(w) + espacoEntre;
+    });
     motivY += 3.6;
   });
   y += motivH + GAP_SEC;
