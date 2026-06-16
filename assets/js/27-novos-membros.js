@@ -780,9 +780,18 @@ function _atualizarEquipeTurma(){
   // FIX: sempre atualizar _turmaAtiva em memória antes de qualquer save
   _turmaAtiva.consultores=allConsultors.slice();
   _turmaAtiva.treinadores=allTrainers.slice();
-  // Atualizar localStorage se a turma estiver na lista local
-  const turmas=_getTurmas(),idx=turmas.findIndex(t=>t.id===_turmaAtiva.id);
-  if(idx!==-1){turmas[idx].treinadores=allTrainers;turmas[idx].consultores=allConsultors;_saveTurmas(turmas);}
+  // Persiste em localStorage SEMPRE (upsert) — antes só salvava se a turma
+  // já estivesse na lista local; quando não estava E o Firebase falhava, a
+  // remoção não persistia em lugar nenhum e os nomes voltavam ao recarregar.
+  var turmas=_getTurmas();
+  var idx=turmas.findIndex(function(t){return t.id===_turmaAtiva.id;});
+  if(idx!==-1){
+    turmas[idx].treinadores=allTrainers.slice();
+    turmas[idx].consultores=allConsultors.slice();
+  } else {
+    turmas.push(_turmaAtiva);
+  }
+  _saveTurmas(turmas);
   // Salvar no Firebase — campos individuais E documento completo via saveStorage
   if(window._fbSave&&_turmaAtiva.id){
     window._fbSave(TURMAS_NODE+'/'+_turmaAtiva.id+'/treinadores',allTrainers)
