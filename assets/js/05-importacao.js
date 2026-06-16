@@ -1184,24 +1184,38 @@ function impAplicarSync(diff, criadoPor){
     inseridos++;
   });
 
-  // Atualizar consultores novos
+  // Atualizar consultores e treinadores novos
   (function(){
     try{
-      var novosConsultores = {};
+      var novosConsultores = {}, novosTreinadores = {};
       diff.inserir.forEach(function(obj){
-        var nome = (obj.consultor||'').trim().toUpperCase();
-        if(!nome||nome==='-'||nome==='—') return;
-        novosConsultores[nome] = true;
+        var nc = (obj.consultor||'').trim().toUpperCase();
+        if(nc&&nc!=='-'&&nc!=='—') novosConsultores[nc] = true;
+        var nt = (obj.treinador||'').trim().toUpperCase();
+        if(nt&&nt!=='-'&&nt!=='—') novosTreinadores[nt] = true;
       });
       var consultoresExistentes = (typeof allConsultors!=='undefined'&&Array.isArray(allConsultors))?allConsultors:[];
+      var treinadoresExistentes = (typeof allTrainers!=='undefined'&&Array.isArray(allTrainers))?allTrainers:[];
       Object.keys(novosConsultores).forEach(function(nome){
         if(!consultoresExistentes.some(function(c){ return (c||'').toUpperCase()===nome; })){
           if(typeof allConsultors!=='undefined'&&Array.isArray(allConsultors)) allConsultors.push(nome);
         }
+        /* SYNC usuarios/: cria conta "silenciosa" (login/senha vazios + ativo:true)
+           para o consultor aparecer no modal Gestão de Usuários com dot "sem acesso".
+           Idempotente — se já existe conta com esse nome, não duplica. */
+        if(window._registrarUsuario) window._registrarUsuario(nome, 'consultor', {modo:'silencioso'});
       });
+      Object.keys(novosTreinadores).forEach(function(nome){
+        if(!treinadoresExistentes.some(function(t){ return (t||'').toUpperCase()===nome; })){
+          if(typeof allTrainers!=='undefined'&&Array.isArray(allTrainers)) allTrainers.push(nome);
+        }
+        if(window._registrarUsuario) window._registrarUsuario(nome, 'treinador', {modo:'silencioso'});
+      });
+      /* Persiste a equipe da turma (consultores+treinadores) no Firebase/local */
+      if(typeof _atualizarEquipeTurma==='function') _atualizarEquipeTurma();
       if(typeof _buildColors==='function') _buildColors();
       if(typeof buildSelects==='function') buildSelects();
-    }catch(e){ console.warn('[IMPORT sync] Erro ao atualizar consultores:',e); }
+    }catch(e){ console.warn('[IMPORT sync] Erro ao atualizar consultores/treinadores:',e); }
   })();
 
   // Atualizar interface
