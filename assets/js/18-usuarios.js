@@ -384,20 +384,26 @@ function _montarGrid(membros,usuarios){
       :primAcesso?'Primeiro acesso pendente'
       :'Ativo';
 
-    // itens do dropdown
+    // itens do dropdown — ONCLICK INLINE (robusto): o dropdown é movido pra
+    // document.body (portal), e o addEventListener delegado às vezes não
+    // disparava (bug do "excluir não funciona"). onclick inline sobrevive ao
+    // portal e lê this.dataset, então sempre executa. enc() limpa aspas;
+    // o nome (mesmo com acento) é lido de this.dataset.nome, nunca interpolado
+    // no JS — seguro contra caracteres especiais.
+    var FECHA='window._fecharUrDd&&window._fecharUrDd();';
     var ddItems='';
     if(!temLogin){
-      ddItems='<button class="ur-dd-item btn-configurar-acesso" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'">⚙️ Configurar acesso</button>';
+      ddItems='<button class="ur-dd-item" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'" onclick="'+FECHA+'_abrirConfigurarAcesso(this.dataset.uid,this.dataset.nome,this.dataset.perfil)">⚙️ Configurar acesso</button>';
     } else {
-      ddItems='<button class="ur-dd-item btn-editar-acesso" data-uid="'+uid+'">✏️ Editar</button>'
-        +'<button class="ur-dd-item btn-alterar-senha" data-uid="'+uid+'" data-nome="'+enc(nomeU)+'">🔑 Alterar senha</button>'
-        +'<button class="ur-dd-item btn-reset-senha" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'">🔁 Resetar senha</button>'
+      ddItems='<button class="ur-dd-item" data-uid="'+uid+'" onclick="'+FECHA+'_abrirEditarAcesso(this.dataset.uid)">✏️ Editar</button>'
+        +'<button class="ur-dd-item" data-uid="'+uid+'" data-nome="'+enc(nomeU)+'" onclick="'+FECHA+'_abrirAlterarSenhaUsuario(this.dataset.uid,this.dataset.nome)">🔑 Alterar senha</button>'
+        +'<button class="ur-dd-item" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" onclick="'+FECHA+'resetarSenhaUsuario(this.dataset.uid,this.dataset.nome)">🔁 Resetar senha</button>'
         +'<hr class="ur-dd-sep">'
-        +'<button class="ur-dd-item btn-perms" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'">🔒 Permissões</button>'
-        +'<button class="ur-dd-item btn-toggle-congelado" data-uid="'+uid+'" data-congelado="'+(congelado?'true':'false')+'">'+(congelado?'☀ Descongelar':'❄ Congelar')+'</button>'
-        +'<button class="ur-dd-item btn-toggle-ativo" data-uid="'+uid+'" data-ativo="'+(ativo?'true':'false')+'">'+(ativo?'⏸ Pausar acesso':'▶ Ativar acesso')+'</button>';
+        +'<button class="ur-dd-item" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" data-perfil="'+u.perfil+'" onclick="'+FECHA+'abrirPermsModal(this.dataset.uid,this.dataset.nome,this.dataset.perfil)">🔒 Permissões</button>'
+        +'<button class="ur-dd-item" data-uid="'+uid+'" data-congelado="'+(congelado?'true':'false')+'" onclick="'+FECHA+'_toggleCongelado(this.dataset.uid,this.dataset.congelado!==&quot;true&quot;)">'+(congelado?'☀ Descongelar':'❄ Congelar')+'</button>'
+        +'<button class="ur-dd-item" data-uid="'+uid+'" data-ativo="'+(ativo?'true':'false')+'" onclick="'+FECHA+'_toggleAtivo(this.dataset.uid,this.dataset.ativo!==&quot;true&quot;)">'+(ativo?'⏸ Pausar acesso':'▶ Ativar acesso')+'</button>';
     }
-    ddItems+='<hr class="ur-dd-sep"><button class="ur-dd-item danger btn-excluir-usuario" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'">🗑 Excluir usuário</button>';
+    ddItems+='<hr class="ur-dd-sep"><button class="ur-dd-item danger" data-uid="'+uid+'" data-nome="'+enc(u.nome)+'" onclick="'+FECHA+'_excluirUsuario(this.dataset.uid,this.dataset.nome)">🗑 Excluir usuário</button>';
 
     return '<div class="usuario-row" data-nome="'+nomeU+'" data-ativo="'+(ativo?'true':'false')+'">'
       +'<div class="ur-avatar '+perfilCls+'">'+inicial+'</div>'
