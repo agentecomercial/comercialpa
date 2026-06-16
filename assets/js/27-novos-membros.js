@@ -325,6 +325,57 @@ window._renomearUsuario = function(nomeAntigo, nomeNovo, perfil){
   return { status:'movido', uidAntigo:alvo.uid, uidNovo:uidNovo };
 };
 
+/* ── REMOVER DA EQUIPE (caminho inverso) ────────────────────────────
+   Tira o nome de allConsultors/allTrainers conforme o perfil e persiste
+   a equipe da turma. Usado quando o usuário é excluído PELO modal
+   "Gestão de Usuários" — mantém os cards de consultor/treinador em
+   sincronia. NÃO mexe na equipe se o perfil for adm.
+   Retorna true se removeu algo. */
+window._removerDaEquipe = function(nome, perfil){
+  var nomeNorm = _normNome(nome);
+  if(!nomeNorm) return false;
+  var mexeu = false;
+
+  if(perfil === 'consultor' && typeof allConsultors !== 'undefined' && Array.isArray(allConsultors)){
+    var antesC = allConsultors.length;
+    allConsultors = allConsultors.filter(function(c){ return String(c).toUpperCase().trim() !== nomeNorm; });
+    window.allConsultors = allConsultors;
+    if(allConsultors.length !== antesC) mexeu = true;
+  }
+  if((perfil === 'treinador' || perfil === 'ministrante') && typeof allTrainers !== 'undefined' && Array.isArray(allTrainers)){
+    var antesT = allTrainers.length;
+    allTrainers = allTrainers.filter(function(t){ return String(t).toUpperCase().trim() !== nomeNorm; });
+    window.allTrainers = allTrainers;
+    if(allTrainers.length !== antesT) mexeu = true;
+  }
+  /* Perfil ausente/desconhecido: tenta remover dos dois (segurança) */
+  if(!perfil || (perfil!=='consultor' && perfil!=='treinador' && perfil!=='ministrante' && perfil!=='adm')){
+    if(typeof allConsultors !== 'undefined' && Array.isArray(allConsultors)){
+      var a1 = allConsultors.length;
+      allConsultors = allConsultors.filter(function(c){ return String(c).toUpperCase().trim() !== nomeNorm; });
+      window.allConsultors = allConsultors;
+      if(allConsultors.length !== a1) mexeu = true;
+    }
+    if(typeof allTrainers !== 'undefined' && Array.isArray(allTrainers)){
+      var a2 = allTrainers.length;
+      allTrainers = allTrainers.filter(function(t){ return String(t).toUpperCase().trim() !== nomeNorm; });
+      window.allTrainers = allTrainers;
+      if(allTrainers.length !== a2) mexeu = true;
+    }
+  }
+
+  if(mexeu){
+    if(typeof _atualizarEquipeTurma === 'function') _atualizarEquipeTurma();
+    if(typeof _buildColors === 'function') _buildColors();
+    if(typeof buildSelects === 'function') buildSelects();
+    if(typeof buildFilterBtns === 'function') buildFilterBtns();
+    if(typeof renderAll === 'function') renderAll();
+    if(typeof renderConsultor === 'function') renderConsultor();
+    if(typeof renderTreinador === 'function') renderTreinador();
+  }
+  return mexeu;
+};
+
 /* VARREDURA: detecta usuários "fantasma" (em allConsultors/allTrainers mas
    sem entrada em usuarios/) e enfileira modais de configuração */
 window._varrerUsuariosFantasma = function(){

@@ -843,13 +843,17 @@ function fecharNovoUsuario(){
   }
 }
 function _excluirUsuario(uid,nome){
-  if(!confirm('Excluir o acesso de "'+nome+'"?\nEsta ação não pode ser desfeita.')) return;
-  // Remover do localStorage imediatamente
+  if(!confirm('Excluir "'+nome+'"?\nRemove o acesso (login) E desvincula da turma (cards de consultor/treinador).\nClientes já vinculados mantêm o nome no histórico.\n\nEsta ação não pode ser desfeita.')) return;
+  // Captura o perfil ANTES de deletar — necessário pra sincronizar a equipe
   var local=_getUsuariosLocal();
+  var perfilExcluido=(local[uid]||{}).perfil||'';
   if(local[uid]){ delete local[uid]; _saveUsuariosLocal(local); }
+  // SYNC inverso: remove também de allConsultors/allTrainers + turma, pra que
+  // o card de consultor/treinador suma junto com o acesso (adm não é afetado).
+  if(window._removerDaEquipe) window._removerDaEquipe(nome, perfilExcluido);
   if(window._fbSave){
     window._fbSave('usuarios/'+uid,null).then(function(){
-      _showToast('✅ Acesso de '+nome+' removido.','var(--accent)');
+      _showToast('🗑 '+nome+' removido (acesso + turma).','var(--accent)');
       _renderUsuariosGrid();
     }).catch(function(e){
       _showToast('❌ Erro ao excluir: '+(e&&e.message?e.message:String(e)),'var(--red)');
