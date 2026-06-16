@@ -181,6 +181,148 @@ function _excluirUsuarioPorNome(nome){
   return uidAchado;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   NÚCLEO ÚNICO DE SINCRONIZAÇÃO COM usuarios/ (Gestão de Usuários)
+   Todo caminho que insere/exclui/renomeia consultor ou treinador deve
+   delegar a estas 3 funções para que o modal "Gestão de Usuários" e o
+   nó Firebase usuarios/{uid} fiquem SEMPRE consistentes.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Helper: nome normalizado (uppercase + trim) ou '' se inválido */
+function _normNome(nome){
+  var n = String(nome || '').toUpperCase().trim();
+  if(!n || n === '-' || n === '—') return '';
+  return n;
+}
+
+/* Helper: localiza entrada em usuarios/ pelo nome. Retorna {uid, dados} ou null */
+function _acharUsuarioPorNome(nome){
+  var nomeNorm = _normNome(nome);
+  if(!nomeNorm) return null;
+  var local = (typeof _getUsuariosLocal==='function') ? _getUsuariosLocal() : {};
+  var achado = null;
+  Object.keys(local||{}).forEach(function(uid){
+    var u = local[uid];
+    if(u && u.nome && String(u.nome).toUpperCase().trim() === nomeNorm){
+      achado = { uid: uid, dados: u };
+    }
+  });
+  return achado;
+}
+
+/* Helper: re-renderiza o modal "Gestão de Usuários" se estiver aberto */
+function _refreshGestaoUsuarios(){
+  var ov = document.getElementById('usuariosOverlay');
+  if(ov && ov.classList.contains('open') && typeof _renderUsuariosGrid==='function'){
+    try { _renderUsuariosGrid(); } catch(e){}
+  }
+}
+
+/* ── REGISTRAR ──────────────────────────────────────────────────────
+   Insere consultor/treinador em usuarios/. Idempotente por NOME.
+   opts.modo:
+     'auto' (default) → enfileira o wizard p/ o adm definir login/senha
+     'silencioso'     → grava direto com login/senha vazios + ativo:true
+                        (usado pela importação CSV, sem credenciais)
+   Retorna {status:'criado'|'existe'|'enfileirado', uid?} ou null. */
+window._registrarUsuario = function(nome, perfil, opts){
+  opts = opts || {};
+  var nomeNorm = _normNome(nome);
+  if(!nomeNorm) return null;
+  perfil = perfil || 'consultor';
+
+  /* Idempotência: se já existe conta com esse nome, NÃO duplica nem
+     rebaixa (ex.: um adm que também aparece como consultor). */
+  var existente = _acharUsuarioPorNome(nomeNorm);
+  if(existente) return { status:'existe', uid:existente.uid };
+
+  if(opts.modo === 'silencioso'){
+    var uid = perfil + '_' + (typeof _normalizeUid==='function' ? _normalizeUid(nomeNorm) : nomeNorm.toLowerCase().replace(/\s+/g,'_'));
+    var dados = {
+      nome: nomeNorm, login: '', senha: '', perfil: perfil,
+      vinculo: nomeNorm, ativo: true, primeiroAcesso: true,
+      _semCredencial: true, createdAt: Date.now(), updatedAt: Date.now()
+    };
+    var local = (typeof _getUsuariosLocal==='function') ? _getUsuariosLocal() : {};
+    local[uid] = dados;
+    if(typeof _saveUsuariosLocal==='function') _saveUsuariosLocal(local);
+    if(window._fbSave){ try { window._fbSave('usuarios/'+uid, dados); } catch(e){} }
+    _refreshGestaoUsuarios();
+    return { status:'criado', uid:uid };
+  }
+
+  /* modo auto: reaproveita a fila do wizard existente */
+  _autoCriarAcessoUsuario([nomeNorm], perfil);
+  return { status:'enfileirado' };
+};
+
+/* ── REMOVER ────────────────────────────────────────────────────────
+   Apaga consultor/treinador de usuarios/ por nome.
+   opts.preservarAdm (default true): NÃO apaga conta cujo perfil é 'adm'.
+   Se 'perfil' for informado e divergir do perfil da conta, aborta
+   (ex.: pedir remover 'consultor' mas a conta é 'treinador').
+   treinador↔ministrante são considerados compatíveis.
+   Retorna {status, uid?} ou null. */
+window._removerUsuario = function(nome, perfil, opts){
+  opts = opts || {};
+  var preservarAdm = opts.preservarAdm !== false;
+  var alvo = _acharUsuarioPorNome(nome);
+  if(!alvo) return null;
+  var perfilConta = alvo.dados ? alvo.dados.perfil : null;
+
+  if(preservarAdm && perfilConta === 'adm') return { status:'protegido', uid:alvo.uid };
+
+  if(perfil && perfilConta && perfilConta !== perfil){
+    var compat = (perfil === 'treinador' && perfilConta === 'ministrante');
+    if(!compat) return { status:'perfil-diverge', uid:alvo.uid };
+  }
+
+  var uidRemovido = _excluirUsuarioPorNome(_normNome(nome));
+  _refreshGestaoUsuarios();
+  return { status:'removido', uid:uidRemovido };
+};
+
+/* ── RENOMEAR ───────────────────────────────────────────────────────
+   Move a conta do nome antigo para o novo, preservando login/senha/
+   perfil/ativo. O UID deriva do nome, então renomear sem isto deixaria
+   a conta antiga órfã (fantasma) e o nome novo sem acesso.
+   Se não há conta para o nome antigo, não faz nada em usuarios/ (o nome
+   só estava na turma sem acesso configurado) — retorna null.
+   Retorna {status:'movido'|'protegido', uidAntigo, uidNovo} ou null. */
+window._renomearUsuario = function(nomeAntigo, nomeNovo, perfil){
+  var antigoNorm = _normNome(nomeAntigo);
+  var novoNorm = _normNome(nomeNovo);
+  if(!antigoNorm || !novoNorm || antigoNorm === novoNorm) return null;
+
+  var alvo = _acharUsuarioPorNome(antigoNorm);
+  if(!alvo) return null; /* sem conta — nada a migrar */
+
+  var dados = alvo.dados || {};
+  perfil = perfil || dados.perfil || 'consultor';
+
+  /* Monta a entrada nova preservando credenciais e perfil */
+  var uidNovo = perfil + '_' + (typeof _normalizeUid==='function' ? _normalizeUid(novoNorm) : novoNorm.toLowerCase().replace(/\s+/g,'_'));
+  var novosDados = Object.assign({}, dados, {
+    nome: novoNorm,
+    vinculo: (dados.vinculo && String(dados.vinculo).toUpperCase().trim() === antigoNorm) ? novoNorm : (dados.vinculo || novoNorm),
+    updatedAt: Date.now()
+  });
+
+  var local = (typeof _getUsuariosLocal==='function') ? _getUsuariosLocal() : {};
+  /* Remove a entrada antiga e grava a nova */
+  if(local[alvo.uid]) delete local[alvo.uid];
+  local[uidNovo] = novosDados;
+  if(typeof _saveUsuariosLocal==='function') _saveUsuariosLocal(local);
+  if(window._fbSave){
+    try {
+      if(alvo.uid !== uidNovo) window._fbSave('usuarios/'+alvo.uid, null);
+      window._fbSave('usuarios/'+uidNovo, novosDados);
+    } catch(e){}
+  }
+  _refreshGestaoUsuarios();
+  return { status:'movido', uidAntigo:alvo.uid, uidNovo:uidNovo };
+};
+
 /* VARREDURA: detecta usuários "fantasma" (em allConsultors/allTrainers mas
    sem entrada em usuarios/) e enfileira modais de configuração */
 window._varrerUsuariosFantasma = function(){
