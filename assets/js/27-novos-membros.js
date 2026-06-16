@@ -67,10 +67,11 @@ function salvarNovoConsultor(){
   if(!adicionados.length){_showToast('Todos já existem na turma.','var(--amber)');return;}
   _buildColors();_atualizarEquipeTurma();buildSelects();renderConsultor();fecharNovoConsultor();
   _showToast('✅ '+adicionados.length+' consultor'+(adicionados.length>1?'es':'')+' adicionado'+(adicionados.length>1?'s':'')+'!','var(--accent)');
-  /* SYNC usuarios/ via hub: enfileira o wizard p/ configurar login/senha. */
+  /* SYNC usuarios/: cria a conta IMEDIATAMENTE (modo silencioso, login/senha
+     vazios + ativo:true). Aparece na hora no Gestão de Usuários com dot
+     "sem acesso"; o admin configura login/senha lá quando quiser. */
   adicionados.forEach(function(n){
-    if(window._registrarUsuario) window._registrarUsuario(n, 'consultor');
-    else _autoCriarAcessoUsuario([n], 'consultor');
+    if(window._registrarUsuario) window._registrarUsuario(n, 'consultor', {modo:'silencioso'});
   });
 }
 
@@ -180,6 +181,8 @@ function _excluirUsuarioPorNome(nome){
   if(window._fbSave){
     try { window._fbSave('usuarios/'+uidAchado, null); } catch(e){}
   }
+  /* Re-renderiza o modal Gestão de Usuários se estiver aberto */
+  if(typeof _refreshGestaoUsuarios==='function') _refreshGestaoUsuarios();
   return uidAchado;
 }
 
@@ -535,9 +538,8 @@ function adicionarConsultorModal(){
   inp.value='';
   _showToast('✅ '+nome+' adicionado.','var(--accent)');
   if(typeof _addPendLog==='function')_addPendLog('Novo consultor adicionado (via Editar)','Consultor: '+nome,'👤');
-  /* SYNC usuarios/ via hub */
-  if(window._registrarUsuario) window._registrarUsuario(nome, 'consultor');
-  else _autoCriarAcessoUsuario([nome], 'consultor');
+  /* SYNC usuarios/: cria conta imediatamente (sem acesso) — aparece já no Gestão */
+  if(window._registrarUsuario) window._registrarUsuario(nome, 'consultor', {modo:'silencioso'});
 }
 function renomearConsultorModal(nomeAtual){
   var novoNome=prompt('Novo nome para "'+nomeAtual+'":', nomeAtual);
@@ -659,9 +661,8 @@ function adicionarTreinadorModal(){
   inp.value='';
   _showToast('✅ '+nome+' adicionado.','var(--accent)');
   if(typeof _addPendLog==='function')_addPendLog('Novo treinador adicionado (via Editar)','Treinador: '+nome,'👤');
-  /* SYNC usuarios/ via hub */
-  if(window._registrarUsuario) window._registrarUsuario(nome, 'treinador');
-  else _autoCriarAcessoUsuario([nome], 'treinador');
+  /* SYNC usuarios/: cria conta imediatamente (sem acesso) — aparece já no Gestão */
+  if(window._registrarUsuario) window._registrarUsuario(nome, 'treinador', {modo:'silencioso'});
 }
 function renomearTreinadorModal(nomeAtual){
   var novoNome=prompt('Novo nome para "'+nomeAtual+'":', nomeAtual);
@@ -762,10 +763,10 @@ function salvarNovoTreinador(){
   if(!adicionados.length){_showToast('Todos já existem na turma.','var(--amber)');return;}
   _buildColors();_atualizarEquipeTurma();buildSelects();buildFilterBtns();renderTreinador();fecharNovoTreinador();
   _showToast('✅ '+adicionados.length+' treinador'+(adicionados.length>1?'es':'')+' adicionado'+(adicionados.length>1?'s':'')+'!','var(--accent)');
-  /* SYNC usuarios/ via hub: enfileira o wizard p/ configurar login/senha. */
+  /* SYNC usuarios/: cria a conta IMEDIATAMENTE (modo silencioso). Aparece na
+     hora no Gestão de Usuários com "sem acesso"; configura login/senha lá. */
   adicionados.forEach(function(n){
-    if(window._registrarUsuario) window._registrarUsuario(n, 'treinador');
-    else _autoCriarAcessoUsuario([n], 'treinador');
+    if(window._registrarUsuario) window._registrarUsuario(n, 'treinador', {modo:'silencioso'});
   });
 }
 function _atualizarEquipeTurma(){
