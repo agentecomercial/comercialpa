@@ -375,6 +375,12 @@ window._removerDaEquipe = function(nome, perfil){
     if(typeof renderAll === 'function') renderAll();
     if(typeof renderConsultor === 'function') renderConsultor();
     if(typeof renderTreinador === 'function') renderTreinador();
+    /* Atualiza também as listas dos modais "Editar" se estiverem abertos —
+       senão o nome excluído pelo Gestão de Usuários continua visível neles. */
+    var _ovC = document.getElementById('editarConsultoresOverlay');
+    if(_ovC && _ovC.classList.contains('open') && typeof _renderEditarConsultoresLista === 'function') _renderEditarConsultoresLista();
+    var _ovT = document.getElementById('editarTreinadoresOverlay');
+    if(_ovT && _ovT.classList.contains('open') && typeof _renderEditarTreinadoresLista === 'function') _renderEditarTreinadoresLista();
   }
   return mexeu;
 };
