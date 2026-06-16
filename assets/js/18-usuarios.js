@@ -877,10 +877,11 @@ function _excluirUsuario(uid,nome){
      (dentro de _removerDaEquipe) — se aquele não rodasse (mexeu=false por
      nome divergente), o nó turmas/{id}/consultores ficava com o nome e ele
      voltava no reload. Aqui forçamos a gravação após a remoção. */
-  if(window._fbSave && window._turmaAtiva && _turmaAtiva.id){
+  var _ta = window._turmaAtiva || (typeof _turmaAtiva!=='undefined' ? _turmaAtiva : null);
+  if(window._fbSave && _ta && _ta.id){
     var _TN=(typeof TURMAS_NODE!=='undefined')?TURMAS_NODE:'turmas';
-    try{ window._fbSave(_TN+'/'+_turmaAtiva.id+'/consultores', (window.allConsultors||[]).slice()); }catch(e){}
-    try{ window._fbSave(_TN+'/'+_turmaAtiva.id+'/treinadores', (window.allTrainers||[]).slice()); }catch(e){}
+    try{ window._fbSave(_TN+'/'+_ta.id+'/consultores', (window.allConsultors||[]).slice()); }catch(e){}
+    try{ window._fbSave(_TN+'/'+_ta.id+'/treinadores', (window.allTrainers||[]).slice()); }catch(e){}
   }
   if(window._fbSave){
     window._fbSave('usuarios/'+uid,null).then(function(){
