@@ -162,15 +162,16 @@ window._autoAcessoProxPendente = function(){
   }
 };
 
-/* Helper: encontra UID em usuarios/ pelo nome e EXCLUI PERMANENTEMENTE */
+/* Helper: encontra UID em usuarios/ pelo nome e EXCLUI PERMANENTEMENTE.
+   Comparação robusta a acento/encoding via _nomeKey. */
 function _excluirUsuarioPorNome(nome){
   if(!nome) return null;
   var local = (typeof _getUsuariosLocal==='function') ? _getUsuariosLocal() : {};
-  var nomeNorm = String(nome).toUpperCase().trim();
+  var key = _nomeKey(nome);
   var uidAchado = null;
   Object.keys(local||{}).forEach(function(uid){
     var u = local[uid];
-    if(u && u.nome && String(u.nome).toUpperCase().trim() === nomeNorm){
+    if(u && u.nome && _nomeKey(u.nome) === key){
       uidAchado = uid;
     }
   });
@@ -200,15 +201,28 @@ function _normNome(nome){
   return n;
 }
 
-/* Helper: localiza entrada em usuarios/ pelo nome. Retorna {uid, dados} ou null */
+/* Helper: CHAVE de comparação robusta a acento/encoding.
+   Remove diacríticos (NFD), espaços e tudo que não é letra/número ASCII.
+   Ex.: "JOÃO TESTE", "JOSÃO TESTE", "joao teste" → "joaoteste"/"josaoteste".
+   Usada em TODAS as comparações de nome — antes usávamos toUpperCase().trim(),
+   que falhava quando o nome passava pelo HTML do dropdown e o "Ã" mudava de
+   encoding, deixando a exclusão sem casar (bug do consultor que não sumia). */
+function _nomeKey(nome){
+  return String(nome || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')  // tira acentos (combining marks)
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g,'');                         // só letras/números
+}
+
+/* Helper: localiza entrada em usuarios/ pelo nome (comparação robusta). */
 function _acharUsuarioPorNome(nome){
-  var nomeNorm = _normNome(nome);
-  if(!nomeNorm) return null;
+  var key = _nomeKey(nome);
+  if(!key) return null;
   var local = (typeof _getUsuariosLocal==='function') ? _getUsuariosLocal() : {};
   var achado = null;
   Object.keys(local||{}).forEach(function(uid){
     var u = local[uid];
-    if(u && u.nome && String(u.nome).toUpperCase().trim() === nomeNorm){
+    if(u && u.nome && _nomeKey(u.nome) === key){
       achado = { uid: uid, dados: u };
     }
   });
@@ -335,19 +349,19 @@ window._renomearUsuario = function(nomeAntigo, nomeNovo, perfil){
    sincronia. NÃO mexe na equipe se o perfil for adm.
    Retorna true se removeu algo. */
 window._removerDaEquipe = function(nome, perfil){
-  var nomeNorm = _normNome(nome);
-  if(!nomeNorm) return false;
+  var key = _nomeKey(nome);
+  if(!key) return false;
   var mexeu = false;
 
   if(perfil === 'consultor' && typeof allConsultors !== 'undefined' && Array.isArray(allConsultors)){
     var antesC = allConsultors.length;
-    allConsultors = allConsultors.filter(function(c){ return String(c).toUpperCase().trim() !== nomeNorm; });
+    allConsultors = allConsultors.filter(function(c){ return _nomeKey(c) !== key; });
     window.allConsultors = allConsultors;
     if(allConsultors.length !== antesC) mexeu = true;
   }
   if((perfil === 'treinador' || perfil === 'ministrante') && typeof allTrainers !== 'undefined' && Array.isArray(allTrainers)){
     var antesT = allTrainers.length;
-    allTrainers = allTrainers.filter(function(t){ return String(t).toUpperCase().trim() !== nomeNorm; });
+    allTrainers = allTrainers.filter(function(t){ return _nomeKey(t) !== key; });
     window.allTrainers = allTrainers;
     if(allTrainers.length !== antesT) mexeu = true;
   }
@@ -355,13 +369,13 @@ window._removerDaEquipe = function(nome, perfil){
   if(!perfil || (perfil!=='consultor' && perfil!=='treinador' && perfil!=='ministrante' && perfil!=='adm')){
     if(typeof allConsultors !== 'undefined' && Array.isArray(allConsultors)){
       var a1 = allConsultors.length;
-      allConsultors = allConsultors.filter(function(c){ return String(c).toUpperCase().trim() !== nomeNorm; });
+      allConsultors = allConsultors.filter(function(c){ return _nomeKey(c) !== key; });
       window.allConsultors = allConsultors;
       if(allConsultors.length !== a1) mexeu = true;
     }
     if(typeof allTrainers !== 'undefined' && Array.isArray(allTrainers)){
       var a2 = allTrainers.length;
-      allTrainers = allTrainers.filter(function(t){ return String(t).toUpperCase().trim() !== nomeNorm; });
+      allTrainers = allTrainers.filter(function(t){ return _nomeKey(t) !== key; });
       window.allTrainers = allTrainers;
       if(allTrainers.length !== a2) mexeu = true;
     }
