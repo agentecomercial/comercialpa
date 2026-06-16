@@ -768,6 +768,22 @@ async function salvarUsuario(){
 
   // ── Fix 3: Verificar duplicidade ────────────────────────────
   var local = _getUsuariosLocal();
+  /* UPSERT: se o UID veio vazio (fluxo de auto-acesso / configurar acesso)
+     mas já existe uma conta com o MESMO nome (e perfil compatível), reusa
+     esse UID. Sem isto, configurar acesso de quem já tem conta — ex.:
+     consultor criado silenciosamente na importação, ou re-configuração —
+     era tratado como NOVO e colidia com a própria conta ("login já em uso").
+     treinador↔ministrante são compatíveis. */
+  if(!uid){
+    var _uidExistente = Object.keys(local).find(function(k){
+      var u = local[k];
+      if(!u || !u.nome || u.nome.toUpperCase() !== nome) return false;
+      if(!u.perfil) return true;
+      if(u.perfil === perfil) return true;
+      return (perfil === 'treinador' && u.perfil === 'ministrante');
+    });
+    if(_uidExistente) uid = _uidExistente;
+  }
   var existentes = Object.values(local);
   var nomeJaExiste = existentes.some(function(u){
     return u.nome&&u.nome.toUpperCase()===nome && (!uid || Object.keys(local).find(function(k){return local[k]===u;})!==uid);
