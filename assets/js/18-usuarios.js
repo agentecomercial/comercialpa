@@ -844,13 +844,13 @@ function fecharNovoUsuario(){
 }
 function _excluirUsuario(uid,nome){
   if(!confirm('Excluir "'+nome+'"?\nRemove o acesso (login) E desvincula da turma (cards de consultor/treinador).\nClientes já vinculados mantêm o nome no histórico.\n\nEsta ação não pode ser desfeita.')) return;
-  // Captura o perfil ANTES de deletar — necessário pra sincronizar a equipe
   var local=_getUsuariosLocal();
-  var perfilExcluido=(local[uid]||{}).perfil||'';
   if(local[uid]){ delete local[uid]; _saveUsuariosLocal(local); }
-  // SYNC inverso: remove também de allConsultors/allTrainers + turma, pra que
-  // o card de consultor/treinador suma junto com o acesso (adm não é afetado).
-  if(window._removerDaEquipe) window._removerDaEquipe(nome, perfilExcluido);
+  /* SYNC inverso: "Excluir usuário" é uma ação TOTAL e explícita — remove o
+     nome de allConsultors E allTrainers independentemente do perfil registrado
+     (passa null = força os dois arrays). Antes, dependia do perfil e a
+     proteção adm/divergência podia deixar o card preso na turma. */
+  if(window._removerDaEquipe) window._removerDaEquipe(nome, null);
   if(window._fbSave){
     window._fbSave('usuarios/'+uid,null).then(function(){
       _showToast('🗑 '+nome+' removido (acesso + turma).','var(--accent)');
