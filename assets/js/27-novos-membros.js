@@ -67,9 +67,11 @@ function salvarNovoConsultor(){
   if(!adicionados.length){_showToast('Todos já existem na turma.','var(--amber)');return;}
   _buildColors();_atualizarEquipeTurma();buildSelects();renderConsultor();fecharNovoConsultor();
   _showToast('✅ '+adicionados.length+' consultor'+(adicionados.length>1?'es':'')+' adicionado'+(adicionados.length>1?'s':'')+'!','var(--accent)');
-  /* AUTO-CRIAR ACESSO: se algum dos adicionados ainda não existe em usuarios/,
-     abre o modal de cadastro pra forçar o adm a configurar login/senha. */
-  _autoCriarAcessoUsuario(adicionados, 'consultor');
+  /* SYNC usuarios/ via hub: enfileira o wizard p/ configurar login/senha. */
+  adicionados.forEach(function(n){
+    if(window._registrarUsuario) window._registrarUsuario(n, 'consultor');
+    else _autoCriarAcessoUsuario([n], 'consultor');
+  });
 }
 
 /* Fila uniforme de acessos pendentes — array de {nome, perfil} */
@@ -482,8 +484,9 @@ function adicionarConsultorModal(){
   inp.value='';
   _showToast('✅ '+nome+' adicionado.','var(--accent)');
   if(typeof _addPendLog==='function')_addPendLog('Novo consultor adicionado (via Editar)','Consultor: '+nome,'👤');
-  /* AUTO-CRIAR ACESSO — força configuração de login/senha em usuarios/ */
-  _autoCriarAcessoUsuario([nome], 'consultor');
+  /* SYNC usuarios/ via hub */
+  if(window._registrarUsuario) window._registrarUsuario(nome, 'consultor');
+  else _autoCriarAcessoUsuario([nome], 'consultor');
 }
 function renomearConsultorModal(nomeAtual){
   var novoNome=prompt('Novo nome para "'+nomeAtual+'":', nomeAtual);
@@ -605,8 +608,9 @@ function adicionarTreinadorModal(){
   inp.value='';
   _showToast('✅ '+nome+' adicionado.','var(--accent)');
   if(typeof _addPendLog==='function')_addPendLog('Novo treinador adicionado (via Editar)','Treinador: '+nome,'👤');
-  /* AUTO-CRIAR ACESSO — força configuração de login/senha em usuarios/ */
-  _autoCriarAcessoUsuario([nome], 'treinador');
+  /* SYNC usuarios/ via hub */
+  if(window._registrarUsuario) window._registrarUsuario(nome, 'treinador');
+  else _autoCriarAcessoUsuario([nome], 'treinador');
 }
 function renomearTreinadorModal(nomeAtual){
   var novoNome=prompt('Novo nome para "'+nomeAtual+'":', nomeAtual);
@@ -707,8 +711,11 @@ function salvarNovoTreinador(){
   if(!adicionados.length){_showToast('Todos já existem na turma.','var(--amber)');return;}
   _buildColors();_atualizarEquipeTurma();buildSelects();buildFilterBtns();renderTreinador();fecharNovoTreinador();
   _showToast('✅ '+adicionados.length+' treinador'+(adicionados.length>1?'es':'')+' adicionado'+(adicionados.length>1?'s':'')+'!','var(--accent)');
-  /* AUTO-CRIAR ACESSO: força configuração de login/senha em usuarios/ */
-  _autoCriarAcessoUsuario(adicionados, 'treinador');
+  /* SYNC usuarios/ via hub: enfileira o wizard p/ configurar login/senha. */
+  adicionados.forEach(function(n){
+    if(window._registrarUsuario) window._registrarUsuario(n, 'treinador');
+    else _autoCriarAcessoUsuario([n], 'treinador');
+  });
 }
 function _atualizarEquipeTurma(){
   if(!_turmaAtiva)return;
