@@ -501,10 +501,13 @@ function excluirConsultorModal(nome){
   if(!confirm('Excluir "'+nome+'" da turma?\nOs clientes vinculados não serão excluídos.')) return;
   allConsultors=allConsultors.filter(function(c){return c!==nome;});
   _atualizarEquipeTurma();
+  /* SYNC usuarios/: remove a conta (protege adm) — antes ficava fantasma */
+  var _rc = window._removerUsuario ? window._removerUsuario(nome, 'consultor') : null;
   _buildColors();buildSelects();buildFilterBtns();
   fecharModalEditarConsultores();
   renderAll();renderConsultor();
-  _showToast('✅ '+nome+' removido.','var(--accent)');
+  var _sufC = (_rc && _rc.status==='protegido') ? ' (conta adm preservada)' : (_rc && _rc.status==='removido' ? ' (Firebase + turma)' : '');
+  _showToast('🗑 '+nome+' removido'+_sufC+'.','var(--accent)');
   if(typeof _addPendLog==='function')_addPendLog('Consultor excluído',nome,'🗑️');
 }
 
@@ -566,12 +569,18 @@ function _confirmarExcluirTreinador(nome,idx){
 }
 
 function _executarExcluirTreinador(nome){
+  /* Confirmação dupla — exclusão é permanente em Firebase + local */
+  if(!confirm('EXCLUIR PERMANENTEMENTE "'+nome+'"?\n\nRemove o usuário do sistema (Firebase + cache local) E desvincula da turma.\nClientes JÁ vinculados mantêm o nome preservado nos cards (histórico).\n\nEsta ação NÃO pode ser desfeita.')) return;
   allTrainers=allTrainers.filter(function(t){return t!==nome;});
   _atualizarEquipeTurma();
+  /* SYNC usuarios/: remove a conta (protege adm) — antes ficava fantasma */
+  var _rt = window._removerUsuario ? window._removerUsuario(nome, 'treinador') : null;
   _buildColors();buildSelects();buildFilterBtns();
   _renderEditarTreinadoresLista();
   renderAll();renderTreinador();
-  _showToast('✅ '+nome+' removido.','var(--accent)');
+  var _sufT = (_rt && _rt.status==='protegido') ? ' (conta adm preservada)' : (_rt && _rt.status==='removido' ? ' (Firebase + turma)' : '');
+  _showToast('🗑 '+nome+' removido'+_sufT+'.','var(--accent)');
+  if(typeof _addPendLog==='function')_addPendLog('Treinador excluído permanentemente',nome,'🗑️');
 }
 function adicionarTreinadorModal(){
   var inp=document.getElementById('novoTreinadorModalInput');
@@ -610,10 +619,13 @@ function excluirTreinadorModal(nome){
   if(!confirm('Excluir "'+nome+'" da turma?\nOs clientes vinculados não serão excluídos.')) return;
   allTrainers=allTrainers.filter(function(t){return t!==nome;});
   _atualizarEquipeTurma();
+  /* SYNC usuarios/: remove a conta (protege adm) — antes ficava fantasma */
+  var _rtm = window._removerUsuario ? window._removerUsuario(nome, 'treinador') : null;
   _buildColors();buildSelects();buildFilterBtns();
   fecharModalEditarTreinadores();
   renderAll();renderTreinador();
-  _showToast('✅ '+nome+' removido.','var(--accent)');
+  var _sufTm = (_rtm && _rtm.status==='protegido') ? ' (conta adm preservada)' : (_rtm && _rtm.status==='removido' ? ' (Firebase + turma)' : '');
+  _showToast('🗑 '+nome+' removido'+_sufTm+'.','var(--accent)');
   if(typeof _addPendLog==='function')_addPendLog('Treinador excluído',nome,'🗑️');
 }
 
