@@ -271,19 +271,33 @@ function _renderUsuariosGrid(){
         alertEl.style.display='none';
       }
     }
-    // Montar membros a partir de TODOS os usuários cadastrados (não filtrar por turma)
+    /* Montar membros UNINDO duas fontes:
+       1) contas em usuarios/ (têm login/senha/perfil)
+       2) a equipe da turma (allConsultors/allTrainers) — garante que TODO
+          consultor/treinador da turma apareça no painel, mesmo SEM conta
+          em usuarios/ (aparece com dot "sem acesso"). Sem isto, um membro
+          cuja gravação em usuarios/ falhou sumia do painel. */
     membros={consultores:[],treinadores:[],adms:[]};
+    function _addUnico(lista,nome){
+      if(!nome) return;
+      var nn=String(nome).toUpperCase().trim();
+      var existe=lista.some(function(n){ return String(n).toUpperCase().trim()===nn; });
+      if(!existe) lista.push(nome);
+    }
     Object.values(usuarios||{}).forEach(function(u){
       if(!u.nome) return;
       var perfil=u.perfil||'consultor';
-      if(perfil==='adm'){
-        if(membros.adms.indexOf(u.nome)<0) membros.adms.push(u.nome);
-      } else if(perfil==='consultor'){
-        if(membros.consultores.indexOf(u.nome)<0) membros.consultores.push(u.nome);
-      } else if(perfil==='treinador'||perfil==='ministrante'){
-        if(membros.treinadores.indexOf(u.nome)<0) membros.treinadores.push(u.nome);
-      }
+      if(perfil==='adm') _addUnico(membros.adms, u.nome);
+      else if(perfil==='consultor') _addUnico(membros.consultores, u.nome);
+      else if(perfil==='treinador'||perfil==='ministrante') _addUnico(membros.treinadores, u.nome);
     });
+    /* Une com a equipe da turma ativa */
+    if(typeof allConsultors!=='undefined' && Array.isArray(allConsultors)){
+      allConsultors.forEach(function(n){ _addUnico(membros.consultores, n); });
+    }
+    if(typeof allTrainers!=='undefined' && Array.isArray(allTrainers)){
+      allTrainers.forEach(function(n){ if(n && n!=='-') _addUnico(membros.treinadores, n); });
+    }
     _montarGrid(membros,usuarios||{});
   }
 
@@ -465,7 +479,17 @@ function _montarGrid(membros,usuarios){
     }
   }
 
-  var consValidos=membros.consultores.map(function(nome){return encontrar(nome,'consultor');}).filter(Boolean);
+  /* Resolve [uid, dados] de um membro: usa a conta de usuarios/ se existir,
+     senão cria um placeholder "sem acesso" (login/senha vazios). Garante que
+     membro da turma sem conta apareça no painel pra poder configurar/excluir. */
+  function _resolverMembro(nome, perfil){
+    var e = encontrar(nome, perfil);
+    if(!e && perfil==='treinador') e = encontrar(nome, 'ministrante');
+    if(e) return e;
+    return [ uid_(perfil, nome), {nome:nome, perfil:perfil, login:'', senha:'', ativo:true} ];
+  }
+
+  var consValidos=membros.consultores.map(function(nome){return _resolverMembro(nome,'consultor');});
   html+=_secaoHeader('Consultores', consValidos.length, 'consultor');
   if(consValidos.length===0){
     html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum consultor.</div>';
@@ -473,7 +497,7 @@ function _montarGrid(membros,usuarios){
     consValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
   }
 
-  var treinValidos=membros.treinadores.map(function(nome){return encontrar(nome,'treinador')||encontrar(nome,'ministrante');}).filter(Boolean);
+  var treinValidos=membros.treinadores.map(function(nome){return _resolverMembro(nome,'treinador');});
   html+=_secaoHeader('Treinadores', treinValidos.length, 'treinador');
   if(treinValidos.length===0){
     html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum treinador.</div>';
@@ -498,36 +522,9 @@ function _montarGrid(membros,usuarios){
     outros.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
   }
 
-  /* Seção "Aguardando configuração": membros da turma sem conta em `usuarios/`.
-     Só exibe se há turma real carregada — evita mostrar o fallback hardcoded. */
-  var _temTurmaReal=!!_turmaAtiva||(function(){
-    var tid=localStorage.getItem(TURMA_ATIVA_KEY);
-    var tls=_getTurmas();
-    var t=tid?tls.find(function(x){return x.id===tid;}):null;
-    return !!(t&&(t.consultores||t.treinadores));
-  })();
-  var todosNomesRegistrados={};
-  Object.values(usuarios||{}).forEach(function(u){ if(u&&u.nome) todosNomesRegistrados[u.nome.trim().toUpperCase()]=1; });
-  var membrosAtuais=_temTurmaReal?_getMembros():{consultores:[],treinadores:[]};
-  var semConta=[];
-  (membrosAtuais.consultores||[]).concat(membrosAtuais.treinadores||[]).forEach(function(nome){
-    if(nome&&!todosNomesRegistrados[nome.trim().toUpperCase()]) semConta.push(nome.trim());
-  });
-  // remover duplicatas
-  semConta=semConta.filter(function(n,i,a){ return a.indexOf(n)===i; });
-  if(semConta.length){
-    html+='<div class="ur-secao-header"><div class="ur-secao-titulo" style="color:#fbbf24;">⏳ Aguardando configuração<span class="ur-secao-count">'+semConta.length+'</span></div></div>';
-    semConta.forEach(function(nome){
-      html+='<div class="usuario-row" style="opacity:.85;">'
-        +'<div class="ur-avatar" style="background:#2a2000;color:#fbbf24;border-color:#fbbf24;font-size:13px;font-weight:700;">'+nome.charAt(0)+'</div>'
-        +'<div class="ur-info"><div class="ur-nome">'+nome+'</div><div class="ur-login" style="color:#fbbf24;">Sem acesso configurado</div></div>'
-        +'<span class="ur-badge" style="background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.3);">Membro</span>'
-        +'<div class="ur-dot sem-acesso" title="Sem conta"></div>'
-        +'<div class="ur-acoes"><button class="ur-menu-btn btn-criar-acesso-membro" data-nome="'+nome+'" title="Criar acesso" style="color:#fbbf24;">⚙</button></div>'
-        +'<div class="ur-dd-data" style="display:none;"></div>'
-        +'</div>';
-    });
-  }
+  /* (Seção "Aguardando configuração" removida — membros da turma sem conta
+     agora aparecem nas próprias seções Consultores/Treinadores com dot
+     "sem acesso", via _resolverMembro acima.) */
 
   grid.innerHTML=html;
 
