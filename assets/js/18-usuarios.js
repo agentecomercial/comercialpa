@@ -864,15 +864,27 @@ function fecharNovoUsuario(){
 function _excluirUsuario(uid,nome){
   if(!confirm('Excluir "'+nome+'"?\nRemove o acesso (login) E desvincula da turma (cards de consultor/treinador).\nClientes já vinculados mantêm o nome no histórico.\n\nEsta ação não pode ser desfeita.')) return;
   var local=_getUsuariosLocal();
+  /* Nome CONFIÁVEL: prioriza o nome salvo na própria conta (uid), caindo
+     pro param só se não houver conta. Evita falha quando o data-nome do
+     botão chega vazio/divergente e _removerDaEquipe não casaria. */
+  var nomeReal = (local[uid] && local[uid].nome) ? local[uid].nome : nome;
   if(local[uid]){ delete local[uid]; _saveUsuariosLocal(local); }
-  /* SYNC inverso: "Excluir usuário" é uma ação TOTAL e explícita — remove o
-     nome de allConsultors E allTrainers independentemente do perfil registrado
-     (passa null = força os dois arrays). Antes, dependia do perfil e a
-     proteção adm/divergência podia deixar o card preso na turma. */
-  if(window._removerDaEquipe) window._removerDaEquipe(nome, null);
+  /* SYNC inverso: ação TOTAL — remove de allConsultors E allTrainers (null
+     = força os dois). Usa o nome confiável (não o do botão). */
+  if(window._removerDaEquipe) window._removerDaEquipe(nomeReal, null);
+  /* GARANTIA DE PERSISTÊNCIA: grava o nó da turma no Firebase EXPLICITAMENTE
+     com os arrays já filtrados. Antes dependia só de _atualizarEquipeTurma
+     (dentro de _removerDaEquipe) — se aquele não rodasse (mexeu=false por
+     nome divergente), o nó turmas/{id}/consultores ficava com o nome e ele
+     voltava no reload. Aqui forçamos a gravação após a remoção. */
+  if(window._fbSave && window._turmaAtiva && _turmaAtiva.id){
+    var _TN=(typeof TURMAS_NODE!=='undefined')?TURMAS_NODE:'turmas';
+    try{ window._fbSave(_TN+'/'+_turmaAtiva.id+'/consultores', (window.allConsultors||[]).slice()); }catch(e){}
+    try{ window._fbSave(_TN+'/'+_turmaAtiva.id+'/treinadores', (window.allTrainers||[]).slice()); }catch(e){}
+  }
   if(window._fbSave){
     window._fbSave('usuarios/'+uid,null).then(function(){
-      _showToast('🗑 '+nome+' removido (acesso + turma).','var(--accent)');
+      _showToast('🗑 '+nomeReal+' removido (acesso + turma).','var(--accent)');
       _renderUsuariosGrid();
     }).catch(function(e){
       _showToast('❌ Erro ao excluir: '+(e&&e.message?e.message:String(e)),'var(--red)');
