@@ -370,6 +370,8 @@ function editarNomeTreinador(nomeAtual){
       _turmaAtiva=turmas[ti];
     }
   }
+  /* SYNC usuarios/: migra a conta (preserva login/senha) */
+  if(window._renomearUsuario) window._renomearUsuario(nomeAtual, novoNome, 'treinador');
   _buildColors();buildSelects();buildFilterBtns();renderAll();
   _showToast('✅ Treinador renomeado para '+novoNome,'var(--accent)');
   if(typeof _addPendLog==='function')_addPendLog('Treinador renomeado',nomeAtual+' → '+novoNome,'✏️');
@@ -437,10 +439,13 @@ function _confirmarRenomearConsultor(idx,nomeAtual){
   allConsultors[allConsultors.indexOf(nomeAtual)]=novoNome;
   data.forEach(function(d){if(d.consultor===nomeAtual)d.consultor=novoNome;});
   _atualizarEquipeTurma();
+  /* SYNC usuarios/: migra a conta (preserva login/senha) — antes virava fantasma */
+  if(window._renomearUsuario) window._renomearUsuario(nomeAtual, novoNome, 'consultor');
   _buildColors();buildSelects();buildFilterBtns();
   _renderEditarConsultoresLista();
   renderAll();renderConsultor();
   _showToast('✅ Renomeado para '+novoNome,'var(--accent)');
+  if(typeof _addPendLog==='function')_addPendLog('Consultor renomeado',nomeAtual+' → '+novoNome,'✏️');
 }
 
 function _confirmarExcluirConsultor(nome,idx){
@@ -491,6 +496,8 @@ function renomearConsultorModal(nomeAtual){
   allConsultors[idx]=novoNome;
   data.forEach(function(d){if(d.consultor===nomeAtual)d.consultor=novoNome;});
   _atualizarEquipeTurma();
+  /* SYNC usuarios/: migra a conta (preserva login/senha) */
+  if(window._renomearUsuario) window._renomearUsuario(nomeAtual, novoNome, 'consultor');
   _buildColors();buildSelects();buildFilterBtns();
   fecharModalEditarConsultores();
   renderAll();renderConsultor();
@@ -554,10 +561,13 @@ function _confirmarRenomearTreinador(idx,nomeAtual){
   allTrainers[allTrainers.indexOf(nomeAtual)]=novoNome;
   data.forEach(function(d){if(d.treinador===nomeAtual)d.treinador=novoNome;});
   _atualizarEquipeTurma();
+  /* SYNC usuarios/: migra a conta (preserva login/senha) — antes virava fantasma */
+  if(window._renomearUsuario) window._renomearUsuario(nomeAtual, novoNome, 'treinador');
   _buildColors();buildSelects();buildFilterBtns();
   _renderEditarTreinadoresLista();
   renderAll();renderTreinador();
   _showToast('✅ Renomeado para '+novoNome,'var(--accent)');
+  if(typeof _addPendLog==='function')_addPendLog('Treinador renomeado',nomeAtual+' → '+novoNome,'✏️');
 }
 
 function _confirmarExcluirTreinador(nome,idx){
@@ -609,6 +619,8 @@ function renomearTreinadorModal(nomeAtual){
   allTrainers[idx]=novoNome;
   data.forEach(function(d){if(d.treinador===nomeAtual)d.treinador=novoNome;});
   _atualizarEquipeTurma();
+  /* SYNC usuarios/: migra a conta (preserva login/senha) */
+  if(window._renomearUsuario) window._renomearUsuario(nomeAtual, novoNome, 'treinador');
   _buildColors();buildSelects();buildFilterBtns();
   fecharModalEditarTreinadores();
   renderAll();renderTreinador();
