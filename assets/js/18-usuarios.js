@@ -5,26 +5,39 @@
 
 function abrirPainelUsuarios(){
   document.getElementById('usuariosOverlay').classList.add('open');
-  // Se _turmaAtiva já está em memória, renderiza direto.
-  // Se não (acessou o painel sem entrar numa turma), tenta carregar do Firebase
-  // para que _getMembros() retorne os membros reais (incluindo importados via planilha).
+  // GARANTE que a equipe da turma (allConsultors/allTrainers) esteja em memória
+  // ANTES de renderizar. Bug anterior: com _turmaAtiva presente mas allConsultors
+  // vazio (volátil — zera ao trocar de contexto), o painel renderizava 0/0 mesmo
+  // a turma tendo membros. Ordem das fontes: memória → _turmaAtiva → Firebase.
+  function _arr(v){ return Array.isArray(v)?v:(v?Object.values(v).filter(Boolean):[]); }
+
+  // 1) Já temos a equipe em memória → render direto.
+  if(allConsultors.length||allTrainers.length){ _renderUsuariosGrid(); return; }
+
+  // 2) _turmaAtiva tem as listas → repopula e renderiza.
   if(_turmaAtiva){
-    _renderUsuariosGrid();
-  } else {
-    var turmaId=localStorage.getItem(TURMA_ATIVA_KEY);
-    if(turmaId&&window._fbGet){
-      window._fbGet('turmas/'+turmaId).then(function(t){
-        if(t){
-          _turmaAtiva=Object.assign({id:turmaId},t);
-          window._turmaAtiva=_turmaAtiva;
-          if(!allConsultors.length&&t.consultores) allConsultors=t.consultores.slice();
-          if(!allTrainers.length&&t.treinadores) allTrainers=t.treinadores.slice();
-        }
-        _renderUsuariosGrid();
-      }).catch(function(){ _renderUsuariosGrid(); });
-    } else {
-      _renderUsuariosGrid();
+    var _c=_arr(_turmaAtiva.consultores), _tr=_arr(_turmaAtiva.treinadores);
+    if(_c.length||_tr.length){
+      if(!allConsultors.length) allConsultors=_c.slice();
+      if(!allTrainers.length)   allTrainers=_tr.slice();
+      _renderUsuariosGrid(); return;
     }
+  }
+
+  // 3) Buscar do Firebase pela turma ativa (memória ou localStorage).
+  var turmaId=(_turmaAtiva&&_turmaAtiva.id)||localStorage.getItem(TURMA_ATIVA_KEY);
+  if(turmaId&&window._fbGet){
+    window._fbGet('turmas/'+turmaId).then(function(t){
+      if(t){
+        _turmaAtiva=Object.assign({id:turmaId},t);
+        window._turmaAtiva=_turmaAtiva;
+        if(!allConsultors.length) allConsultors=_arr(t.consultores).slice();
+        if(!allTrainers.length)   allTrainers=_arr(t.treinadores).slice();
+      }
+      _renderUsuariosGrid();
+    }).catch(function(){ _renderUsuariosGrid(); });
+  } else {
+    _renderUsuariosGrid();
   }
 }
 function fecharPainelUsuarios(){document.getElementById('usuariosOverlay').classList.remove('open');}
