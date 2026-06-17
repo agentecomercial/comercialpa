@@ -1066,6 +1066,12 @@ function sincronizar(){
     } else {
       fbDados=fbDadosAntigo;
     }
+    // Anexar as listas REAIS de consultores/treinadores da turma (fonte de verdade p/ comparação)
+    if(fbTurmaUnif){
+      fbDados=fbDados||{};
+      fbDados.consultores=Array.isArray(fbTurmaUnif.consultores)?fbTurmaUnif.consultores:(fbTurmaUnif.consultores?Object.values(fbTurmaUnif.consultores):[]);
+      fbDados.treinadores=Array.isArray(fbTurmaUnif.treinadores)?fbTurmaUnif.treinadores:(fbTurmaUnif.treinadores?Object.values(fbTurmaUnif.treinadores):[]);
+    }
     fbTurmas=null; // já não usamos índice separado
     _exibirComparacao(fbDados,fbTurmas,fbUsuarios);
   }).catch(function(e){
@@ -1079,22 +1085,25 @@ function _exibirComparacao(fbDados,fbTurmas,fbUsuarios){
   var fbClientes=fbClientesArr.length;
   var diffClientes=localClientes-fbClientes;
 
-  // Derivar consultores/treinadores dos clientes do Firebase (não de campo separado)
+  // Consultores/treinadores: usar a lista REAL da turma (turmas/{id}) quando existir;
+  // fallback legado: derivar dos clientes.
   var localConsultores=allConsultors.length;
-  var fbConsultoresSet=new Set(fbClientesArr.map(function(c){return c&&c.consultor;}).filter(Boolean));
-  var fbConsultores=fbConsultoresSet.size;
+  var fbConsultores=(fbDados&&Array.isArray(fbDados.consultores))
+    ? fbDados.consultores.filter(function(n){return n&&String(n).trim();}).length
+    : new Set(fbClientesArr.map(function(c){return c&&c.consultor;}).filter(Boolean)).size;
   var diffConsultores=localConsultores-fbConsultores;
 
   var localTreinadores=allTrainers.length;
-  var fbTreinadoresSet=new Set(fbClientesArr.map(function(c){return c&&c.treinador;}).filter(function(t){return t&&t!=='-';}));
-  var fbTreinadores=fbTreinadoresSet.size;
+  var fbTreinadores=(fbDados&&Array.isArray(fbDados.treinadores))
+    ? fbDados.treinadores.filter(function(n){return n&&String(n).trim()&&n!=='-';}).length
+    : new Set(fbClientesArr.map(function(c){return c&&c.treinador;}).filter(function(t){return t&&t!=='-';})).size;
   var diffTreinadores=localTreinadores-fbTreinadores;
 
   var localUsuarios=Object.keys(_getUsuariosLocal()).length;
   var fbUsuariosCount=Object.keys(fbUsuarios||{}).length;
   var diffUsuarios=localUsuarios-fbUsuariosCount;
 
-  var temDiff=diffClientes!==0||diffTreinadores!==0||diffUsuarios!==0;
+  var temDiff=diffClientes!==0||diffConsultores!==0||diffTreinadores!==0||diffUsuarios!==0;
 
   function _row(label,local,fb,diff){
     var cor=diff>0?'var(--accent)':diff<0?'var(--red)':'var(--muted)';
@@ -1211,9 +1220,8 @@ function _executarPuxar(){
       if(titulo) document.getElementById('dashTitle').textContent=titulo;
     }
 
-    // ── Repopular consultores/treinadores do nó usuarios/ ──
-    // BLOQUEIA apenas PAUSADOS (ativo:false). Congelados continuam visíveis
-    // (só bloqueiam login).
+    // ── Repopular consultores/treinadores: FONTE DE VERDADE = turmas/{id} ──
+    // (mesma lógica do load em 02-main.js). BLOQUEIA apenas PAUSADOS (ativo:false).
     var consultoresDB=[];
     var treinadoresDB=[];
     var _bloqueadosNomes = new Set();
@@ -1223,16 +1231,19 @@ function _executarPuxar(){
         if(!u||!u.nome) return;
         var nomeUp = String(u.nome).toUpperCase().trim();
         _registradosNomes.add(nomeUp);
-        if(u.ativo === false){
-          _bloqueadosNomes.add(nomeUp);
-          return; // pausado → não entra no DB
-        }
-        var p=u.perfil||'';
-        if(p==='consultor'&&!consultoresDB.includes(u.nome)) consultoresDB.push(u.nome);
-        if((p==='treinador'||p==='ministrante')&&!treinadoresDB.includes(u.nome)) treinadoresDB.push(u.nome);
+        if(u.ativo === false) _bloqueadosNomes.add(nomeUp);
       });
     }
-    // Complementar com dados dos clientes — só se o nome for REGISTRADO em usuarios/.
+    // 1) Consultores/treinadores EXPLÍCITOS salvos na turma (fonte de verdade), exceto pausados
+    var _consTurma = fbTurma ? (Array.isArray(fbTurma.consultores)?fbTurma.consultores:(fbTurma.consultores?Object.values(fbTurma.consultores):[])) : [];
+    var _treTurma  = fbTurma ? (Array.isArray(fbTurma.treinadores)?fbTurma.treinadores:(fbTurma.treinadores?Object.values(fbTurma.treinadores):[])) : [];
+    _consTurma.forEach(function(n){
+      if(n&&String(n).trim()&&!consultoresDB.includes(n)&&!_bloqueadosNomes.has(String(n).toUpperCase().trim())) consultoresDB.push(n);
+    });
+    _treTurma.forEach(function(n){
+      if(n&&String(n).trim()&&n!=='-'&&!treinadoresDB.includes(n)&&!_bloqueadosNomes.has(String(n).toUpperCase().trim())) treinadoresDB.push(n);
+    });
+    // 2) Complementar com dados dos clientes — só se o nome for REGISTRADO em usuarios/.
     // Bloqueados nunca voltam. Nomes fantasma (digitados sem cadastro) não entram.
     data.forEach(function(c){
       if(c.consultor){
