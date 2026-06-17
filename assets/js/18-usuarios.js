@@ -10,9 +10,12 @@ function abrirPainelUsuarios(){
   // vazio (volátil — zera ao trocar de contexto), o painel renderizava 0/0 mesmo
   // a turma tendo membros. Ordem das fontes: memória → _turmaAtiva → Firebase.
   function _arr(v){ return Array.isArray(v)?v:(v?Object.values(v).filter(Boolean):[]); }
+  // Cria contas faltantes p/ os membros da turma (escolha do ADM: contas
+  // automáticas) e então renderiza. Idempotente — só cria quem não tem.
+  function _render(){ if(window._backfillContasEquipe) window._backfillContasEquipe(); _renderUsuariosGrid(); }
 
   // 1) Já temos a equipe em memória → render direto.
-  if(allConsultors.length||allTrainers.length){ _renderUsuariosGrid(); return; }
+  if(allConsultors.length||allTrainers.length){ _render(); return; }
 
   // 2) _turmaAtiva tem as listas → repopula e renderiza.
   if(_turmaAtiva){
@@ -20,7 +23,7 @@ function abrirPainelUsuarios(){
     if(_c.length||_tr.length){
       if(!allConsultors.length) allConsultors=_c.slice();
       if(!allTrainers.length)   allTrainers=_tr.slice();
-      _renderUsuariosGrid(); return;
+      _render(); return;
     }
   }
 
@@ -34,10 +37,10 @@ function abrirPainelUsuarios(){
         if(!allConsultors.length) allConsultors=_arr(t.consultores).slice();
         if(!allTrainers.length)   allTrainers=_arr(t.treinadores).slice();
       }
-      _renderUsuariosGrid();
-    }).catch(function(){ _renderUsuariosGrid(); });
+      _render();
+    }).catch(function(){ _render(); });
   } else {
-    _renderUsuariosGrid();
+    _render();
   }
 }
 function fecharPainelUsuarios(){document.getElementById('usuariosOverlay').classList.remove('open');}

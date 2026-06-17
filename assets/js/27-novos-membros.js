@@ -275,6 +275,28 @@ window._registrarUsuario = function(nome, perfil, opts){
   return { status:'enfileirado' };
 };
 
+/* ── BACKFILL DE CONTAS DA EQUIPE ───────────────────────────────────
+   Cria conta SILENCIOSA (login/senha vazios, primeiroAcesso) para cada
+   consultor/treinador da turma (allConsultors/allTrainers) que ainda NÃO
+   tem entrada em usuarios/. Cobre membros antigos/importados que nunca
+   geraram conta. Idempotente via _registrarUsuario (não duplica nem
+   rebaixa adm). Retorna o nº de contas efetivamente criadas. */
+window._backfillContasEquipe = function(){
+  if(typeof window._registrarUsuario !== 'function') return 0;
+  var criadas = 0;
+  function _proc(lista, perfil){
+    if(!Array.isArray(lista)) return;
+    lista.forEach(function(n){
+      if(!n || n === '-') return;
+      var r = window._registrarUsuario(n, perfil, {modo:'silencioso'});
+      if(r && r.status === 'criado') criadas++;
+    });
+  }
+  _proc((typeof allConsultors!=='undefined')?allConsultors:[], 'consultor');
+  _proc((typeof allTrainers!=='undefined')?allTrainers:[], 'treinador');
+  return criadas;
+};
+
 /* ── REMOVER ────────────────────────────────────────────────────────
    Apaga consultor/treinador de usuarios/ por nome.
    opts.preservarAdm (default true): NÃO apaga conta cujo perfil é 'adm'.
