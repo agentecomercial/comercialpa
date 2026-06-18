@@ -2260,6 +2260,16 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-metas-table td.r{text-align:right;}
 .np-lista-row{cursor:pointer;transition:background .12s;}
 .np-lista-row:hover td{background:rgba(255,255,255,.025);}
+.np-lista-row.sel td{background:rgba(56,189,248,.07);}
+.np-lista-chk-col{width:34px;text-align:center;}
+.np-lista-chk{cursor:pointer;width:15px;height:15px;accent-color:#38bdf8;vertical-align:middle;}
+.np-lista-soma{margin-top:12px;padding:10px 16px;border-radius:8px;border:1px dashed var(--border);display:flex;align-items:center;gap:18px;font-size:12px;color:var(--muted);}
+.np-lista-soma.on{border-style:solid;border-color:rgba(56,189,248,.35);background:rgba(56,189,248,.06);color:var(--text);}
+.np-soma-cnt b{color:#38bdf8;}
+.np-soma-val b{color:#38bdf8;font-variant-numeric:tabular-nums;font-size:15px;}
+.np-soma-clear{margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:4px 12px;font-size:11px;cursor:pointer;font-family:inherit;transition:all .12s;}
+.np-soma-clear:hover{color:#ff5252;border-color:rgba(255,82,82,.4);}
+.np-soma-hint{opacity:.85;}
 .np-lista-id{display:flex;align-items:center;gap:9px;}
 .np-lista-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
 .np-lista-nome{font-weight:700;white-space:nowrap;}
@@ -2271,7 +2281,7 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-lista-pct{color:var(--muted);font-weight:600;}
 .np-lista-acts{display:flex;gap:5px;}
 .np-lista-acts .np-meta-edit{margin-top:0;padding:4px 8px;font-size:12px;flex:none;}
-@media(max-width:980px){.np-metas-table th:nth-child(2),.np-metas-table td:nth-child(2){display:none;}}
+@media(max-width:980px){.np-metas-table th:nth-child(3),.np-metas-table td:nth-child(3){display:none;}}
 /* Linha pace semanal mini (mostra ritmo/falta da semana atual no card) */
 .np-mc-pace-mini{
   font-size:10px;color:#9aa5b1;padding:7px 9px;margin-top:8px;

@@ -902,6 +902,7 @@
     if(typeof _npAtualizarViewToggle==='function') _npAtualizarViewToggle();
     grid.className=(_view==='lista')?'np-metas-lista':'np-metas-grid';
     grid.innerHTML=(_view==='lista')?_npRenderMetasListaHtml(_rows):_rows.map(function(r){return r.card;}).join('');
+    if(_view==='lista' && typeof _npMetasAtualizarSelAll==='function') _npMetasAtualizarSelAll();
   }
 
   /* ── Render Metas em LISTA (Tabela Compacta) ─────────── */
@@ -931,7 +932,9 @@
       var arr=(s.col===col)?(s.dir>0?' <span class="np-sort-arr">&#x25B2;</span>':' <span class="np-sort-arr">&#x25BC;</span>'):'';
       return '<th'+(cls?' class="'+cls+'"':'')+' onclick="npSortMetasLista(\''+col+'\')" style="cursor:pointer;user-select:none;">'+label+arr+'</th>';
     }
+    var sel=window._npMetasSel||{};
     var th='<thead><tr>'
+      +'<th class="np-lista-chk-col"><input type="checkbox" id="npListaSelAll" class="np-lista-chk" title="Selecionar todos" onclick="npMetasListaSelAll(this)"></th>'
       +sh('nome','Consultor')
       +sh('status','Status')
       +sh('faturado','Faturado','r')
@@ -943,7 +946,9 @@
       +'</tr></thead>';
     var body=rows.map(function(r){
       var nm=_escJS2(r.nome);
-      return '<tr class="np-lista-row" role="button" tabindex="0" onclick="npAbrirConsultorDetalhe(\''+nm+'\')">'
+      var chk=sel[r.nome]?' checked':'';
+      return '<tr class="np-lista-row'+(sel[r.nome]?' sel':'')+'" role="button" tabindex="0" onclick="npAbrirConsultorDetalhe(\''+nm+'\')">'
+        +'<td class="np-lista-chk-col" onclick="event.stopPropagation();"><input type="checkbox" class="np-lista-chk" data-nome="'+_esc2(r.nome)+'"'+chk+' onclick="event.stopPropagation();npMetasListaSelChange(this)"></td>'
         +'<td><div class="np-lista-id"><span class="np-lista-av" style="background:'+r.cor+'22;color:'+r.cor+';border:1.5px solid '+r.cor+'55;">'+r.nome.charAt(0).toUpperCase()+'</span><span class="np-lista-nome">'+_esc2(r.nome)+'</span></div></td>'
         +'<td><span class="np-status-badge" style="background:'+r.col.bg+';color:'+r.col.text+';border:1px solid '+r.col.border+';">'+r.col.badge+'</span></td>'
         +'<td class="r np-lista-money">'+_npFmtR2(r.real)+'</td>'
@@ -958,8 +963,67 @@
         +'</div></td>'
         +'</tr>';
     }).join('');
-    return '<table class="np-metas-table">'+th+'<tbody>'+body+'</tbody></table>';
+    var hasSel=false; for(var _k in sel){ if(sel[_k]){ hasSel=true; break; } }
+    return '<table class="np-metas-table">'+th+'<tbody>'+body+'</tbody></table>'
+      +'<div class="np-lista-soma'+(hasSel?' on':'')+'" id="npListaSoma">'+_npSomaHtml()+'</div>';
   }
+
+  /* Conteúdo da barra de soma do faturado dos selecionados */
+  function _npSomaHtml(){
+    var sel=window._npMetasSel||{};
+    var rows=window._npMetasRows||[];
+    var n=0, soma=0;
+    rows.forEach(function(r){ if(sel[r.nome]){ n++; soma+=r.real; } });
+    if(n===0) return '<span class="np-soma-hint">&#x2611;&#xFE0F; Marque consultores para somar o faturado</span>';
+    return '<span class="np-soma-cnt"><b>'+n+'</b> selecionado'+(n>1?'s':'')+'</span>'
+      +'<span class="np-soma-val">Faturado somado: <b>'+_npFmtR2(soma)+'</b></span>'
+      +'<button type="button" class="np-soma-clear" onclick="npMetasListaLimparSel()">Limpar</button>';
+  }
+
+  function _npMetasAtualizarSoma(){
+    var el=document.getElementById('npListaSoma'); if(!el) return;
+    var sel=window._npMetasSel||{}, has=false;
+    for(var k in sel){ if(sel[k]){ has=true; break; } }
+    el.className='np-lista-soma'+(has?' on':'');
+    el.innerHTML=_npSomaHtml();
+  }
+
+  function _npMetasAtualizarSelAll(){
+    var sa=document.getElementById('npListaSelAll'); if(!sa) return;
+    var all=document.querySelectorAll('.np-lista-row .np-lista-chk');
+    var marc=document.querySelectorAll('.np-lista-row .np-lista-chk:checked');
+    sa.checked=all.length>0 && marc.length===all.length;
+    sa.indeterminate=marc.length>0 && marc.length<all.length;
+  }
+
+  window.npMetasListaSelChange=function(cb){
+    window._npMetasSel=window._npMetasSel||{};
+    var nome=cb?cb.getAttribute('data-nome'):null;
+    if(nome!=null){ if(cb.checked) window._npMetasSel[nome]=true; else delete window._npMetasSel[nome]; }
+    var tr=cb?cb.closest('tr'):null; if(tr) tr.classList.toggle('sel', !!(cb&&cb.checked));
+    _npMetasAtualizarSoma();
+    _npMetasAtualizarSelAll();
+  };
+
+  window.npMetasListaSelAll=function(cb){
+    window._npMetasSel=window._npMetasSel||{};
+    var rows=window._npMetasRows||[];
+    document.querySelectorAll('.np-lista-row .np-lista-chk').forEach(function(c){
+      c.checked=cb.checked;
+      var tr=c.closest('tr'); if(tr) tr.classList.toggle('sel', cb.checked);
+    });
+    rows.forEach(function(r){ if(cb.checked) window._npMetasSel[r.nome]=true; else delete window._npMetasSel[r.nome]; });
+    _npMetasAtualizarSoma();
+  };
+
+  window.npMetasListaLimparSel=function(){
+    window._npMetasSel={};
+    document.querySelectorAll('.np-lista-row .np-lista-chk').forEach(function(c){
+      c.checked=false; var tr=c.closest('tr'); if(tr) tr.classList.remove('sel');
+    });
+    var sa=document.getElementById('npListaSelAll'); if(sa){ sa.checked=false; sa.indeterminate=false; }
+    _npMetasAtualizarSoma();
+  };
 
   function _npAtualizarViewToggle(){
     var view=window._npMetasView||'card';
@@ -979,6 +1043,7 @@
     if(!grid||!rows){ if(window._npRenderTudo) window._npRenderTudo(); return; }
     grid.className=(view==='lista')?'np-metas-lista':'np-metas-grid';
     grid.innerHTML=(view==='lista')?_npRenderMetasListaHtml(rows):rows.map(function(r){return r.card;}).join('');
+    if(view==='lista') _npMetasAtualizarSelAll();
   };
 
   window.npSortMetasLista=function(col){
@@ -989,7 +1054,7 @@
     try{ localStorage.setItem('npMetasSort',JSON.stringify(s)); }catch(e){}
     var grid=document.getElementById('npMetasGrid');
     var rows=window._npMetasRows;
-    if(grid&&rows) grid.innerHTML=_npRenderMetasListaHtml(rows);
+    if(grid&&rows){ grid.innerHTML=_npRenderMetasListaHtml(rows); _npMetasAtualizarSelAll(); }
   };
 
   /* ── Status strip no dashboard ───────────────────────── */
