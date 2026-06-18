@@ -973,12 +973,12 @@
     var pending = tiers.filter(function(t) { return t.val > 0 && t.pct < 100; });
     var configured = tiers.filter(function(t) { return t.val > 0; });
 
-    /* ── Canvas ── */
+    /* ── Canvas · Layout Dark Gradient ── */
     var W = 520;
     var bandRows = pending.length > 0 ? pending.length : 1;
-    var H = 44 + (configured.length * 24) + 14 + 8 + 14 + 24 + (bandRows * 26) + 20;
+    var H = 54 + 14 + (configured.length * 36) + 20 + (bandRows * 24) + 14;
     if (H < 230) H = 230;
-    var DPR = 2, px = 18;
+    var DPR = 2, px = 20;
     var cv = document.createElement('canvas');
     cv.width = W * DPR; cv.height = H * DPR;
     var ctx = cv.getContext('2d');
@@ -986,70 +986,79 @@
     var SAN = 'system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
 
     function barH(x, y, w, h, pct, fill) {
-      ctx.fillStyle = '#1c2128'; _npRRect(ctx, x, y, w, h, h / 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.08)'; _npRRect(ctx, x, y, w, h, h / 2); ctx.fill();
       if (pct > 0) {
         ctx.fillStyle = fill;
         _npRRect(ctx, x, y, Math.max(h, w * Math.min(pct, 100) / 100), h, h / 2); ctx.fill();
       }
     }
     function lnH(y, x0, x1, col) {
-      ctx.strokeStyle = col || '#21262d'; ctx.lineWidth = 1;
+      ctx.strokeStyle = col || 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
     }
 
-    /* fundo gradiente */
-    var grd = ctx.createLinearGradient(0, 0, 0, H);
-    grd.addColorStop(0, '#111827'); grd.addColorStop(1, '#0d1117');
-    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+    /* fundo escuro */
+    ctx.fillStyle = '#080e18'; ctx.fillRect(0, 0, W, H);
 
-    /* header: nome esq | mes topo-dir | faturado baixo-dir */
-    ctx.fillStyle = 'rgba(56,189,248,0.09)'; ctx.fillRect(0, 0, W, 44);
-    ctx.font = '700 15px ' + SAN; ctx.fillStyle = '#e6edf3'; ctx.textBaseline = 'middle';
-    ctx.fillText(nome, px, 22);
-    ctx.font = '500 11px ' + SAN; ctx.fillStyle = '#636e7b'; ctx.textAlign = 'right';
-    ctx.fillText(mesAno, W - px, 12);
-    ctx.font = '700 13px ' + SAN; ctx.fillStyle = '#56d364';
-    ctx.fillText(_npFmtR(real), W - px, 32);
+    /* header com gradiente lateral azul */
+    var gh = ctx.createLinearGradient(0, 0, W, 0);
+    gh.addColorStop(0, 'rgba(56,189,248,0.18)'); gh.addColorStop(1, 'rgba(56,189,248,0.0)');
+    ctx.fillStyle = gh; ctx.fillRect(0, 0, W, 54);
+    lnH(54, 0, W, 'rgba(56,189,248,0.3)');
+    ctx.font = '700 16px ' + SAN; ctx.fillStyle = '#e6edf3'; ctx.textBaseline = 'middle';
+    ctx.fillText(nome, px, 27);
+    ctx.font = '500 10px ' + SAN; ctx.fillStyle = '#636e7b'; ctx.textAlign = 'right';
+    ctx.fillText(mesAno, W - px, 18);
+    ctx.font = '700 14px ' + SAN; ctx.fillStyle = '#56d364';
+    ctx.fillText(_npFmtR(real), W - px, 36);
     ctx.textAlign = 'left';
-    lnH(44, 0, W);
 
-    /* tiers — 1 linha: nome | valor completo | barra | % | badge */
-    var valX = px + 86, barX = px + 208, barW = 130;
-    var y = 62;
+    /* tiers com faixa de cor e gradiente */
+    var y = 68;
     tiers.forEach(function(t) {
       if (!t.val) return;
       var done = t.pct >= 100;
-      ctx.font = '12px ' + SAN; ctx.fillStyle = done ? '#56d364' : '#e6edf3'; ctx.textBaseline = 'middle';
-      ctx.fillText(t.ico + ' ' + t.lbl, px, y);
-      ctx.font = '500 11px ' + SAN; ctx.fillStyle = '#8b949e';
-      ctx.fillText(_npFmtR(t.val), valX, y);
-      barH(barX, y - 5, barW, 10, t.pct, done ? '#56d364' : t.col);
-      ctx.font = '700 10px ' + SAN; ctx.fillStyle = done ? '#56d364' : '#f0b429';
-      ctx.textAlign = 'right'; ctx.fillText(t.pct + '%', barX + barW + 38, y); ctx.textAlign = 'left';
+      var ac = done ? '#56d364' : t.col;
+      /* fundo sutil da linha */
+      ctx.fillStyle = done ? 'rgba(86,211,100,0.06)' : 'rgba(255,255,255,0.03)';
+      _npRRect(ctx, px - 4, y - 14, W - px * 2 + 8, 32, 6); ctx.fill();
+      /* borda esquerda com gradiente */
+      var bg2 = ctx.createLinearGradient(0, y - 14, 0, y + 18);
+      bg2.addColorStop(0, ac); bg2.addColorStop(1, 'transparent');
+      ctx.fillStyle = bg2; ctx.fillRect(px - 4, y - 14, 3, 32);
+      /* nome */
+      ctx.font = '13px ' + SAN; ctx.fillStyle = done ? '#56d364' : '#e6edf3'; ctx.textBaseline = 'middle';
+      ctx.fillText(t.ico + ' ' + t.lbl, px + 6, y);
+      /* valor completo */
+      ctx.font = '500 10px ' + SAN; ctx.fillStyle = '#8b949e';
+      ctx.fillText(_npFmtR(t.val), px + 88, y);
+      /* barra */
+      barH(px + 196, y - 5, 145, 10, t.pct, done ? '#56d364' : t.col);
+      /* % */
+      ctx.font = '700 11px ' + SAN; ctx.fillStyle = done ? '#56d364' : '#f0b429';
+      ctx.textAlign = 'right'; ctx.fillText(t.pct + '%', px + 364, y); ctx.textAlign = 'left';
+      /* badge ou ícone */
       if (done) {
-        var bx = barX + barW + 44, by = y - 9, bw = 68, bh = 18;
-        ctx.fillStyle = 'rgba(86,211,100,0.14)'; _npRRect(ctx, bx, by, bw, bh, 4); ctx.fill();
+        var bx = px + 370, by = y - 8, bw = 64, bh = 16;
+        ctx.fillStyle = 'rgba(86,211,100,0.15)'; _npRRect(ctx, bx, by, bw, bh, 4); ctx.fill();
         ctx.strokeStyle = 'rgba(86,211,100,0.4)'; ctx.lineWidth = 1; _npRRect(ctx, bx, by, bw, bh, 4); ctx.stroke();
         ctx.font = '700 9px ' + SAN; ctx.fillStyle = '#56d364';
         ctx.textAlign = 'center'; ctx.fillText('✅ BATIDA', bx + bw / 2, y + 0.5); ctx.textAlign = 'left';
       } else {
         ctx.font = '9px ' + SAN; ctx.fillStyle = '#f0b429';
-        ctx.fillText('⏳ pendente', barX + barW + 44, y);
+        ctx.fillText('⏳', px + 370, y);
       }
-      y += 24;
+      y += 36;
     });
 
-    /* banda âmbar ⚡ Para bater a meta */
-    var bandY = y + 8;
-    ctx.fillStyle = 'rgba(245,158,11,0.07)'; ctx.fillRect(0, bandY, W, H - bandY);
-    lnH(bandY, 0, W, 'rgba(245,158,11,0.25)');
-    bandY += 14;
-
+    /* separador + seção ⚡ Para bater a meta */
+    lnH(y + 2, px, W - px, 'rgba(245,158,11,0.2)');
+    var bandY = y + 14;
     ctx.font = '700 11px ' + SAN; ctx.fillStyle = '#f59e0b'; ctx.textBaseline = 'middle';
     ctx.fillText('⚡ PARA BATER A META', px, bandY);
     ctx.font = '500 10px ' + SAN; ctx.fillStyle = '#636e7b';
     ctx.fillText('· ' + dias + (dias === 1 ? ' dia útil restante' : ' dias úteis restantes'), px + 166, bandY);
-    bandY += 24;
+    bandY += 22;
 
     if (pending.length === 0) {
       ctx.font = '700 13px ' + SAN; ctx.fillStyle = '#56d364';
@@ -1057,17 +1066,17 @@
     } else {
       pending.forEach(function(p) {
         var ritmo = dias > 0 ? Math.round(p.falta / dias) : 0;
-        ctx.font = '13px ' + SAN; ctx.fillStyle = '#e6edf3'; ctx.textBaseline = 'middle';
+        ctx.font = '12px ' + SAN; ctx.fillStyle = '#e6edf3'; ctx.textBaseline = 'middle';
         ctx.fillText(p.ico + ' ' + p.lbl, px, bandY);
-        ctx.font = '500 11px ' + SAN; ctx.fillStyle = '#636e7b';
-        ctx.fillText('faltam', px + 84, bandY);
-        ctx.font = '700 13px ' + SAN; ctx.fillStyle = '#e3b341';
-        ctx.fillText(_npFmtR(p.falta), px + 130, bandY);
-        var pw = 126, ph = 20, ppx = W - px - pw;
-        ctx.fillStyle = 'rgba(245,158,11,0.18)'; _npRRect(ctx, ppx, bandY - ph / 2, pw, ph, 5); ctx.fill();
-        ctx.font = '700 11px ' + SAN; ctx.fillStyle = '#f59e0b';
+        ctx.font = '500 10px ' + SAN; ctx.fillStyle = '#636e7b';
+        ctx.fillText('faltam', px + 82, bandY);
+        ctx.font = '700 12px ' + SAN; ctx.fillStyle = '#e3b341';
+        ctx.fillText(_npFmtR(p.falta), px + 124, bandY);
+        var pw = 120, ph = 18, ppx = W - px - pw;
+        ctx.fillStyle = 'rgba(245,158,11,0.15)'; _npRRect(ctx, ppx, bandY - ph / 2, pw, ph, 5); ctx.fill();
+        ctx.font = '700 10px ' + SAN; ctx.fillStyle = '#f59e0b';
         ctx.textAlign = 'center'; ctx.fillText(_npFmtR(ritmo) + ' / dia', ppx + pw / 2, bandY + 0.5); ctx.textAlign = 'left';
-        bandY += 26;
+        bandY += 24;
       });
     }
 
