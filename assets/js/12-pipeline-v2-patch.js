@@ -1022,7 +1022,7 @@
       ctx.font = '12px ' + SAN; ctx.fillStyle = done ? '#56d364' : '#e6edf3'; ctx.textBaseline = 'middle';
       ctx.fillText(t.ico + ' ' + t.lbl, px, y);
       ctx.font = '500 10px ' + SAN; ctx.fillStyle = '#636e7b';
-      ctx.fillText(_npFmtR(t.val), px + 88, y);
+      ctx.fillText('R$' + Math.round(t.val / 1000) + 'k', px + 88, y);
       barH(barX, y - 5, barW, 10, t.pct, done ? '#56d364' : t.col);
       ctx.font = '700 10px ' + SAN; ctx.fillStyle = done ? '#56d364' : '#f0b429';
       ctx.textAlign = 'right'; ctx.fillText(t.pct + '%', barX + barW + 38, y); ctx.textAlign = 'left';
