@@ -1213,6 +1213,13 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .ur-dd-item.danger:hover{background:rgba(239,68,68,.08);color:#ef4444;}
 .ur-dd-sep{border:none;border-top:1px solid var(--border2);margin:3px 0;}
 .ur-secao-header{display:flex;align-items:center;justify-content:space-between;padding:10px 0 6px;position:sticky;top:0;background:var(--surface);z-index:10;border-bottom:1px solid var(--border2);margin-bottom:2px;}
+/* Lista de cards por seção — scroll a partir do 5º item (≈ 4 × 55px) */
+.ur-secao-lista{max-height:232px;overflow-y:auto;overflow-x:hidden;}
+.ur-secao-lista::-webkit-scrollbar{width:6px;}
+.ur-secao-lista::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:999px;}
+.ur-secao-lista::-webkit-scrollbar-thumb:hover{background:rgba(200,240,90,.45);}
+.ur-secao-lista::-webkit-scrollbar-track{background:transparent;}
+.ur-secao-lista{scrollbar-width:thin;scrollbar-color:rgba(200,240,90,.45) transparent;}
 .ur-secao-titulo{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:8px;}
 .ur-secao-count{background:var(--surface2);color:var(--muted);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;}
 /* legenda rodapé */
@@ -2219,8 +2226,12 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-st-negociacao{background:rgba(167,139,250,.12);color:#a78bfa;}
 .np-st-desistiu,.np-st-estorno{background:rgba(255,95,87,.12);color:var(--red);}
 .np-empty{padding:32px;text-align:center;color:var(--muted);font-size:13px;}
-/* Metas */
-.np-metas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:17px;}
+/* Metas — grid de 5 colunas (com fallback responsivo) */
+.np-metas-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+@media (max-width:1400px){.np-metas-grid{grid-template-columns:repeat(4,1fr);}}
+@media (max-width:1100px){.np-metas-grid{grid-template-columns:repeat(3,1fr);}}
+@media (max-width:800px){.np-metas-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:560px){.np-metas-grid{grid-template-columns:1fr;}}
 .np-meta-card{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px;}
 .np-meta-header{display:flex;align-items:center;gap:12px;margin-bottom:15px;}
 .np-meta-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;}
