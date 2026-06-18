@@ -235,6 +235,28 @@
         { titulo: 'SPIN Selling — aplicado ao FCIS',      url: 'treinamento-fcis/spin-selling.html', tipo: 'extra'  },
         { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-fcis/fechamento.html',   tipo: 'final' }
       ]
+    },
+    {
+      id: 'treinamento-tce',
+      titulo: 'Treinamento Comercial TCE',
+      descricao: 'Tour Crescimento Empresarial — imersão de 1 dia com Paulo Vieira. Treinamento comercial para a equipe vender o TCE. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      produto: 'TCE',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 15,
+      url: 'treinamento-tce/index.html',
+      icone: '🌱',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                        url: 'treinamento-tce/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — Produto (TCE)',             url: 'treinamento-tce/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-tce/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-tce/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Negociação e Objeções',     url: 'treinamento-tce/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado ao TCE',       url: 'treinamento-tce/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-tce/fechamento.html',   tipo: 'final' }
+      ]
     }
   ];
 })();
