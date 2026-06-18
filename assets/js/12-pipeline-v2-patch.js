@@ -138,12 +138,13 @@
       +'<input type="text" id="npLoteMaster" class="np-form-input" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value);npVerificarPctLote()" style="border-color:rgba(200,240,90,.3);width:100%;"></div>'
       /* ── Passo 2: Botões 50% / 75% (ocultos até ter valor nos campos) ── */
       +'<div id="npLotePct" style="display:none;border-top:1px dashed var(--border);padding-top:10px;">'
-      +'<div style="font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Aplicar % dos valores</div>'
-      +'<div style="display:flex;gap:8px;margin-bottom:6px;">'
+      +'<div style="font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Aplicar % dos valores <span style="font-weight:600;text-transform:none;letter-spacing:0;opacity:.7;">(opcional)</span></div>'
+      +'<div style="display:flex;gap:8px;">'
       +'<button type="button" id="npLotePct50" onclick="npAplicarPctLote(50)" style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">50%</button>'
       +'<button type="button" id="npLotePct75" onclick="npAplicarPctLote(75)" style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">75%</button>'
       +'</div>'
-      +'<button type="button" id="npLotePctDias" onclick="npAplicarDiasUteisLote()" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">&#x1F4C5; Proporcional dias \xfateis restantes</button>'
+      +'<div style="font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px;border-top:1px dashed var(--border);padding-top:10px;">Ou proporcional ao tempo</div>'
+      +'<button type="button" id="npLotePctDias" onclick="npAplicarDiasUteisLote()" style="width:100%;background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.25);color:#38bdf8;border-radius:6px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">&#x1F4C5; Dividir pelos dias \xfateis restantes</button>'
       +'</div>'
       +'</div>'
       +'<div class="np-lote-acts">'
@@ -295,11 +296,12 @@
   };
 
   function _npLotePctReset() {
-    var sBase = 'rgba(255,255,255,.05)';
-    ['npLotePct50','npLotePct75','npLotePctDias'].forEach(function(id){
+    ['npLotePct50','npLotePct75'].forEach(function(id){
       var b = document.getElementById(id);
-      if(b){ b.style.background=sBase; b.style.color='var(--muted)'; b.style.borderColor='var(--border)'; }
+      if(b){ b.style.background='rgba(255,255,255,.05)'; b.style.color='var(--muted)'; b.style.borderColor='var(--border)'; }
     });
+    var bd = document.getElementById('npLotePctDias');
+    if(bd){ bd.style.background='rgba(56,189,248,.06)'; bd.style.color='#38bdf8'; bd.style.borderColor='rgba(56,189,248,.25)'; }
   }
 
   function _npRestaurarBaseLote() {
