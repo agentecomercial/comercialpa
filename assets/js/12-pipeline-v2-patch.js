@@ -148,6 +148,7 @@
       +'</div>'
       +'<div class="np-lote-acts">'
       +'<button class="np-btn" style="font-size:12px;padding:8px 14px;width:100%;" onclick="npAplicarMetaLote()">Aplicar aos selecionados</button>'
+      +'<button class="np-btn-sec" style="font-size:11px;padding:7px 14px;width:100%;background:rgba(255,82,82,.07);border-color:rgba(255,82,82,.3);color:#ff5252;" onclick="npLimparMetaSelecionados()" title="Zera Mínima/Básica/Master dos consultores selecionados">&#x1F5D1; Limpar meta</button>'
       +'<button class="np-btn-sec" style="font-size:11px;padding:7px 14px;width:100%;" onclick="npCopiarMetasMesAnterior()">&#x21E6; Copiar m\xeas anterior</button>'
       +'</div>'
       +'</aside>';
@@ -558,6 +559,31 @@
     if(typeof _showToast==='function') _showToast('Template aplicado a '+selecionados.length+' consultor'+(selecionados.length>1?'es':'')+'. Clique em "Salvar metas" para confirmar.','var(--accent)');
   };
 
+  window.npLimparMetaSelecionados=function(){
+    var body=document.getElementById('npModalMetaBody');
+    if(!body) return;
+    var selecionados=Array.from(body.querySelectorAll('.np-meta-chk:checked')).map(function(cb){return cb.dataset.consChk;});
+    if(!selecionados.length){
+      if(typeof _showToast==='function') _showToast('Selecione ao menos um consultor.','var(--amber)');
+      return;
+    }
+    if(!confirm('Zerar Mínima, Básica e Master de '+selecionados.length+' consultor'+(selecionados.length>1?'es':'')+' selecionado'+(selecionados.length>1?'s':'')+' ? Clique OK para confirmar.')) return;
+    selecionados.forEach(function(nome){
+      ['metaMinima','metaBasica','metaMaster'].forEach(function(tipo){
+        var inp=body.querySelector('[data-cons="'+nome+'"][data-tipo="'+tipo+'"]');
+        if(inp) inp.value='';
+      });
+      /* Remove badge "meta" da linha */
+      var row=body.querySelector('[data-cons-row="'+nome+'"]');
+      if(row){
+        var badge=row.querySelector('.np-meta-badge');
+        if(badge){ badge.textContent='—'; badge.classList.add('muted'); }
+        row.classList.remove('has');
+      }
+    });
+    if(typeof _showToast==='function') _showToast('&#x1F5D1; Metas zeradas para '+selecionados.length+' consultor'+(selecionados.length>1?'es':'')+'. Clique em "Salvar metas" para confirmar.','var(--amber)');
+  };
+
   window.npCopiarMetasMesAnterior=function(){
     var mk=typeof _mesKey==='function'?_mesKey():'';
     if(!mk) return;
@@ -634,7 +660,7 @@
       if(typeof window._audit==='function') window._audit('meta.update',{type:'meta',id:mk},updates);
       var _mlbl=typeof _mesLabel==='function'?_mesLabel():mk;
       if(typeof _showToast==='function')_showToast('✅ Metas de '+_mlbl+' salvas!','var(--accent)');
-      if(typeof npFecharModalMeta==='function') npFecharModalMeta();
+      /* Modal permanece aberto — fecha só pelo botão Fechar */
       window._fbGet('pipelineGoals/'+mk).then(function(d){
         window._npGoals=d||{};
         if(typeof _npRenderTudo==='function') _npRenderTudo();
