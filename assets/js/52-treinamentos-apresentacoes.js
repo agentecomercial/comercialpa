@@ -175,7 +175,7 @@
       + '.trap-caminho-ic.b{ background:rgba(96,165,250,.15); color:var(--blue,#60a5fa); border-color:rgba(96,165,250,.3); }'
       + '.trap-caminho-tag.c{ background:linear-gradient(135deg, #f0c896, #e0a050); }'
       + '.trap-caminho-ic.c{ background:rgba(240,200,150,.15); color:#f0c896; border-color:rgba(240,200,150,.3); }'
-      + '.trap-cat-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; max-height:236px; overflow-y:auto; padding-right:5px; }'
+      + '.trap-cat-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; max-height:175px; overflow-y:auto; padding-right:5px; }'
       + '.trap-cat-list::-webkit-scrollbar{ width:8px; }'
       + '.trap-cat-list::-webkit-scrollbar-track{ background:transparent; }'
       + '.trap-cat-list::-webkit-scrollbar-thumb{ background:var(--border2,rgba(255,255,255,.16)); border-radius:4px; }'
