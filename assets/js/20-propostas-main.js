@@ -1091,7 +1091,20 @@ function gerarPropostaPDF(modo){
 ============================================================ */
 var _PRODUTOS_ORDEM_KEY = 'ci_produtos_ordem';
 
+/* Códigos OCULTOS da grade "Proposta Personalizada por Produto" (aba Produto).
+   Permanecem disponíveis na aba Consultor → botão Proposta e na tabela de preços.
+   Adicionados aqui sem autorização — mantidos no catálogo apenas para uso interno. */
+var _PRODUTOS_OCULTOS_GRADE = [
+  'CIS_PRESENCIAL_BRONZE',
+  'CIS_PRESENCIAL_BLACK',
+  'CIS_PRESENCIAL_DIAMOND',
+  'CIS_PRESENCIAL_VIP'
+];
+
 function _getProdutosOrdem(){
+  function _filtrarOcultos(arr){
+    return arr.filter(function(cod){ return _PRODUTOS_OCULTOS_GRADE.indexOf(cod) === -1; });
+  }
   try{
     var saved = localStorage.getItem(_PRODUTOS_ORDEM_KEY);
     if(saved){
@@ -1101,10 +1114,10 @@ function _getProdutosOrdem(){
       todos.forEach(function(cod){ if(arr.indexOf(cod)===-1) arr.push(cod); });
       // Remover códigos que não existem mais
       arr = arr.filter(function(cod){ return _PRODUTOS_PROPOSTA[cod]; });
-      return arr;
+      return _filtrarOcultos(arr);
     }
   }catch(e){}
-  return Object.keys(_PRODUTOS_PROPOSTA);
+  return _filtrarOcultos(Object.keys(_PRODUTOS_PROPOSTA));
 }
 
 function _saveProdutosOrdem(arr){

@@ -65,7 +65,20 @@ function salvarNovoConsultor(){
     }
   });
   if(!adicionados.length){_showToast('Todos já existem na turma.','var(--amber)');return;}
-  _buildColors();_atualizarEquipeTurma();buildSelects();renderConsultor();fecharNovoConsultor();
+  _buildColors();_atualizarEquipeTurma();buildSelects();renderConsultor();
+  /* Mantém o modal aberto — só fecha pelo botão "Cancelar". Limpa input + seleção + tira da lista os recém-adicionados. */
+  adicionados.forEach(function(n){
+    document.querySelectorAll('#novoConsultorLista .fbtn').forEach(function(b){
+      if(b.textContent===n) b.remove();
+    });
+  });
+  _ncSelecionados=[];
+  document.getElementById('novoConsultorNome').value='';
+  document.querySelectorAll('#novoConsultorLista .fbtn').forEach(function(b){b.classList.remove('active');});
+  /* Se esvaziou a lista, mostra o aviso "Todos já estão" */
+  if(!document.querySelectorAll('#novoConsultorLista .fbtn').length){
+    document.getElementById('novoConsultorVazio').style.display='block';
+  }
   _showToast('✅ '+adicionados.length+' consultor'+(adicionados.length>1?'es':'')+' adicionado'+(adicionados.length>1?'s':'')+'!','var(--accent)');
   /* SYNC usuarios/: cria a conta IMEDIATAMENTE (modo silencioso, login/senha
      vazios + ativo:true). Aparece na hora no Gestão de Usuários com dot
@@ -575,9 +588,11 @@ function adicionarConsultorModal(){
   allConsultors.push(nome);
   _atualizarEquipeTurma();
   _buildColors();buildSelects();buildFilterBtns();
-  fecharModalEditarConsultores();
+  /* Mantém o modal aberto — só fecha pelo botão "Fechar". Atualiza a lista interna. */
+  _renderEditarConsultoresLista();
   renderAll();renderConsultor();
   inp.value='';
+  inp.focus();
   _showToast('✅ '+nome+' adicionado.','var(--accent)');
   if(typeof _addPendLog==='function')_addPendLog('Novo consultor adicionado (via Editar)','Consultor: '+nome,'👤');
   /* SYNC usuarios/: cria conta imediatamente (sem acesso) — aparece já no Gestão */
@@ -698,9 +713,11 @@ function adicionarTreinadorModal(){
   allTrainers.push(nome);
   _atualizarEquipeTurma();
   _buildColors();buildSelects();buildFilterBtns();
-  fecharModalEditarTreinadores();
+  /* Mantém o modal aberto — só fecha pelo botão "Fechar". Atualiza a lista interna. */
+  _renderEditarTreinadoresLista();
   renderAll();renderTreinador();
   inp.value='';
+  inp.focus();
   _showToast('✅ '+nome+' adicionado.','var(--accent)');
   if(typeof _addPendLog==='function')_addPendLog('Novo treinador adicionado (via Editar)','Treinador: '+nome,'👤');
   /* SYNC usuarios/: cria conta imediatamente (sem acesso) — aparece já no Gestão */
@@ -803,7 +820,19 @@ function salvarNovoTreinador(){
     }
   });
   if(!adicionados.length){_showToast('Todos já existem na turma.','var(--amber)');return;}
-  _buildColors();_atualizarEquipeTurma();buildSelects();buildFilterBtns();renderTreinador();fecharNovoTreinador();
+  _buildColors();_atualizarEquipeTurma();buildSelects();buildFilterBtns();renderTreinador();
+  /* Mantém o modal aberto — só fecha pelo botão "Cancelar". Limpa input + seleção + tira da lista os recém-adicionados. */
+  adicionados.forEach(function(n){
+    document.querySelectorAll('#novoTreinadorLista .fbtn').forEach(function(b){
+      if(b.textContent===n) b.remove();
+    });
+  });
+  _ntSelecionados=[];
+  document.getElementById('novoTreinadorNome').value='';
+  document.querySelectorAll('#novoTreinadorLista .fbtn').forEach(function(b){b.classList.remove('active');});
+  if(!document.querySelectorAll('#novoTreinadorLista .fbtn').length){
+    document.getElementById('novoTreinadorVazio').style.display='block';
+  }
   _showToast('✅ '+adicionados.length+' treinador'+(adicionados.length>1?'es':'')+' adicionado'+(adicionados.length>1?'s':'')+'!','var(--accent)');
   /* SYNC usuarios/: cria a conta IMEDIATAMENTE (modo silencioso). Aparece na
      hora no Gestão de Usuários com "sem acesso"; configura login/senha lá. */

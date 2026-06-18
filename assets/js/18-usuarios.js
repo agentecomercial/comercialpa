@@ -511,12 +511,17 @@ function _montarGrid(membros,usuarios){
     return [ uid_(perfil, nome), {nome:nome, perfil:perfil, login:'', senha:'', ativo:true} ];
   }
 
+  /* Lista de cards é envolvida em .ur-secao-lista que vira rolável a partir
+     do 5º item (CSS define max-height ≈ 4 cards). Header fica fora para
+     que o sticky continue funcionando no scroll global do modal. */
   var consValidos=membros.consultores.map(function(nome){return _resolverMembro(nome,'consultor');});
   html+=_secaoHeader('Consultores', consValidos.length, 'consultor');
   if(consValidos.length===0){
     html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum consultor.</div>';
   } else {
+    html+='<div class="ur-secao-lista">';
     consValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
+    html+='</div>';
   }
 
   var treinValidos=membros.treinadores.map(function(nome){return _resolverMembro(nome,'treinador');});
@@ -524,7 +529,9 @@ function _montarGrid(membros,usuarios){
   if(treinValidos.length===0){
     html+='<div style="color:var(--muted);font-size:12px;padding:10px 0;">Nenhum treinador.</div>';
   } else {
+    html+='<div class="ur-secao-lista">';
     treinValidos.forEach(function(entry){ html+=_card(entry[0],entry[1]); });
+    html+='</div>';
   }
 
   /* Fix: garantir que TODO usuário em `usuarios/` apareça no painel.
@@ -937,11 +944,13 @@ function confirmarAlterarSenha(){
 ═══════════════════════════════════════════ */
 /* Fix 5: novoUsuarioOverlay e alterarSenhaOverlay NÃO fecham ao clicar fora —
    somente via botões "Cancelar" ou "Salvar" */
-['modalOverlay','addModalOverlay','titleModalOverlay','infoModalOverlay','periodModalOverlay','clientInfoOverlay','confirmOverlay','novaTurmaOverlay','novoConsultorOverlay','novoTreinadorOverlay','pagosModalOverlay','clientesModalOverlay','editarTreinadoresOverlay','editarConsultoresOverlay','pdfExportOverlay','pendLogOverlay','permsModalOverlay','pdfClientesOverlay','propostaOverlay','propProdOverlay','gerenciarTurmasOverlay','salvarComoOverlay','clienteDetalheOverlay','syncModalOverlay'].forEach(id=>{
+/* Consultor/Treinador (modais Editar e Novo): só fecham pelo botão dedicado —
+   evita perda do digitado se o usuário clicar fora por engano. */
+['modalOverlay','addModalOverlay','titleModalOverlay','infoModalOverlay','periodModalOverlay','clientInfoOverlay','confirmOverlay','novaTurmaOverlay','pagosModalOverlay','clientesModalOverlay','pdfExportOverlay','pendLogOverlay','permsModalOverlay','pdfClientesOverlay','propostaOverlay','propProdOverlay','gerenciarTurmasOverlay','salvarComoOverlay','clienteDetalheOverlay','syncModalOverlay'].forEach(id=>{
   const el=document.getElementById(id);if(el)el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});
 });
-// usuariosOverlay, novoUsuarioOverlay e alterarSenhaOverlay: bloquear fechamento por clique fora
-['usuariosOverlay','novoUsuarioOverlay','alterarSenhaOverlay'].forEach(function(id){
+// Modais que bloqueiam fechamento por clique fora (só fecham pelos botões):
+['usuariosOverlay','novoUsuarioOverlay','alterarSenhaOverlay','editarConsultoresOverlay','editarTreinadoresOverlay','novoConsultorOverlay','novoTreinadorOverlay'].forEach(function(id){
   var el=document.getElementById(id);
   if(el) el.addEventListener('click',function(e){
     if(e.target===el){e.stopPropagation();return;}
