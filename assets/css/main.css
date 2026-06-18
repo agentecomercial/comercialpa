@@ -2247,8 +2247,9 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-meta-foot-v2 .np-meta-edit{margin-top:0;flex:1;}
 .np-meta-edit-sem{background:rgba(212,165,116,.10);border-color:rgba(212,165,116,.30);color:#d4a574;}
 .np-meta-edit-sem:hover{background:rgba(212,165,116,.20);border-color:#d4a574;color:#f0c896;}
-.np-meta-copy-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12);color:#e6edf3;backdrop-filter:blur(4px);transition:all .15s;}
-.np-meta-copy-img:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.28);color:#fff;}
+.np-meta-copy-img{background:rgba(56,189,248,.10);border-color:rgba(56,189,248,.30);color:#7dd3fc;border-radius:20px;transition:all .15s;animation:npCopyPulse 2.8s ease-in-out infinite;}
+.np-meta-copy-img:hover{background:rgba(56,189,248,.22);border-color:#38bdf8;color:#bae6fd;transform:scale(1.03);}
+@keyframes npCopyPulse{0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,.25);}50%{box-shadow:0 0 0 5px rgba(56,189,248,0);}}
 /* Linha pace semanal mini (mostra ritmo/falta da semana atual no card) */
 .np-mc-pace-mini{
   font-size:10px;color:#9aa5b1;padding:7px 9px;margin-top:8px;
