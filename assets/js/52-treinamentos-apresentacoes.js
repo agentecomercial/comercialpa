@@ -857,9 +857,9 @@
   };
 
   /* ── Baixar treinamento COMPLETO como arquivo HTML ───────
-     Junta todos os slides de todas as partes num único arquivo
-     autossuficiente, com o CSS de identidade EMBUTIDO (look
-     original preservado) e escala responsiva. Baixa via Blob. */
+     Apresentação REAL e navegável (engine + animações): usa um
+     deck real como template, injeta TODOS os slides de TODAS as
+     partes e EMBUTE o CSS e a engine JS. Baixa via Blob. */
   window._trapBaixarHtml = function(id, btn){
     var item = _getItens().find(function(i){ return i.id === id; });
     if(!item || !Array.isArray(item.estrutura) || !item.estrutura.length){
@@ -876,8 +876,9 @@
     function _restore(){ if(btn){ btn.disabled = false; btn.innerHTML = lblOrig; } }
 
     var parser = new DOMParser();
-    var slidesHtml = '';
-    var cssHref = '';
+    var slidesHtml = '';        /* todos os .slide concatenados (sem alterar classes) */
+    var templateDoc = null;     /* 1º documento com .deck → molde com chrome + engine */
+    var cssHref = '', jsHref = '';
 
     var seq = Promise.resolve();
     partes.forEach(function(p){
@@ -885,53 +886,58 @@
         return fetch(p.url).then(function(r){ return r.ok ? r.text() : ''; }).then(function(txt){
           if(!txt) return;
           var doc = parser.parseFromString(txt, 'text/html');
-          if(!cssHref){
-            var _lnk = doc.querySelector('head link[rel="stylesheet"]');
-            if(_lnk && _lnk.getAttribute('href')) cssHref = new URL(_lnk.getAttribute('href'), absBase).href;
+          var deck = doc.querySelector('.deck');
+          if(deck && !templateDoc){
+            templateDoc = doc;
+            var lnk = doc.querySelector('head link[rel="stylesheet"]');
+            if(lnk && lnk.getAttribute('href')) cssHref = new URL(lnk.getAttribute('href'), absBase).href;
+            var scr = doc.querySelector('script[src]');
+            if(scr && scr.getAttribute('src')) jsHref = new URL(scr.getAttribute('src'), absBase).href;
           }
-          doc.querySelectorAll('.slide').forEach(function(sl){
+          doc.querySelectorAll('.deck .slide').forEach(function(sl){
             sl.querySelectorAll('script').forEach(function(s){ s.remove(); });
-            sl.classList.add('is-active');
-            sl.classList.remove('is-leaving','is-hidden-slide','dir-prev');
-            slidesHtml += '<div class="np-fit"><div class="np-fit-in">' + sl.outerHTML + '</div></div>';
+            slidesHtml += sl.outerHTML;   /* preserva classes/estrutura p/ a engine animar */
           });
         }).catch(function(){ /* ignora parte que falhar */ });
       });
     });
 
     seq.then(function(){
-      if(!slidesHtml){
+      if(!slidesHtml || !templateDoc){
         _restore();
-        alert('Não foi possível extrair o conteúdo.\n\nA geração do HTML completo precisa que você esteja acessando o painel ONLINE (GitHub Pages). Em arquivo local (file://) o navegador bloqueia a leitura das partes.');
+        alert('Não foi possível montar a apresentação.\n\nA geração precisa que você esteja acessando o painel ONLINE (GitHub Pages). Em arquivo local (file://) o navegador bloqueia a leitura das partes.');
         return;
       }
-      function _finish(cssTxt){
-        var styleTag = cssTxt ? ('<style>' + cssTxt + '</style>') : ('<link rel="stylesheet" href="' + cssHref + '">');
-        var wrapCss = '<style>'
-          + 'html,body{ margin:0; padding:0; background:#0a0e16; }'
-          + '.np-doc{ max-width:1280px; margin:0 auto; padding:24px 16px 40px; }'
-          + '.np-head{ color:#e6edf3; font-family:system-ui,-apple-system,sans-serif; text-align:center; padding:14px 0 22px; }'
-          + '.np-head h1{ font-size:22px; margin:0 0 4px; }'
-          + '.np-head .s{ font-size:12px; opacity:.7; }'
-          + '*{ animation:none !important; }'
-          + '.np-fit{ position:relative; width:100%; margin:0 auto 22px; border-radius:14px; overflow:hidden; box-shadow:0 14px 40px rgba(0,0,0,.5); }'
-          + '.np-fit::before{ content:""; display:block; padding-top:56.25%; }'
-          + '.np-fit-in{ position:absolute; inset:0; }'
-          + '.np-fit-in .slide{ position:absolute !important; top:0 !important; left:0 !important; inset:auto !important; width:1280px !important; height:720px !important; display:flex !important; transform-origin:top left; border-radius:0 !important; }'
-          + '.np-fit-in .slide::after{ animation:none !important; }'
-          + '</style>';
-        var fitScript = '<scr' + 'ipt>'
-          + '(function(){function fit(){var L=document.querySelectorAll(".np-fit");for(var i=0;i<L.length;i++){var s=L[i].clientWidth/1280;var sl=L[i].querySelector(".slide");if(sl)sl.style.transform="scale("+s+")";}}window.addEventListener("resize",fit);if(document.readyState!=="loading")fit();else window.addEventListener("DOMContentLoaded",fit);window.addEventListener("load",fit);})();'
-          + '</scr' + 'ipt>';
-        var head = '<div class="np-head"><h1>' + _esc(item.titulo) + '</h1>'
-          + '<div class="s">' + _esc(item.produto || '') + ' · Treinamento Comercial completo</div></div>';
-        var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
-          + '<meta name="viewport" content="width=device-width, initial-scale=1">'
-          + '<base href="' + absBase + '">'
-          + '<title>' + _esc(item.titulo) + '</title>'
-          + styleTag + wrapCss
-          + '</head><body><div class="np-doc">' + head + slidesHtml + '</div>' + fitScript + '</body></html>';
+      Promise.all([
+        cssHref ? fetch(cssHref).then(function(r){ return r.ok ? r.text() : ''; }).catch(function(){ return ''; }) : Promise.resolve(''),
+        jsHref  ? fetch(jsHref ).then(function(r){ return r.ok ? r.text() : ''; }).catch(function(){ return ''; }) : Promise.resolve('')
+      ]).then(function(res){
+        var cssText = res[0], jsText = res[1];
+        var d = templateDoc;
+        /* 1) injeta TODOS os slides no deck (substitui os do molde) */
+        var deck = d.querySelector('.deck');
+        deck.innerHTML = slidesHtml;
+        /* 2) base href p/ imagens/fontes resolverem (online) */
+        var headEl = d.querySelector('head');
+        if(headEl){
+          var baseEl = d.createElement('base'); baseEl.setAttribute('href', absBase);
+          headEl.insertBefore(baseEl, headEl.firstChild);
+        }
+        /* 3) embute o CSS (mantém o look e as animações originais) */
+        if(cssText){
+          var lnk = d.querySelector('head link[rel="stylesheet"]');
+          var st = d.createElement('style'); st.textContent = cssText;
+          if(lnk) lnk.replaceWith(st); else if(headEl) headEl.appendChild(st);
+        }
+        /* 4) embute a engine JS (navegação + transições) — roda no fim do body */
+        if(jsText){
+          var scr = d.querySelector('script[src]');
+          var ns = d.createElement('script'); ns.textContent = jsText;
+          if(scr) scr.replaceWith(ns); else d.body.appendChild(ns);
+        }
+        var tEl = d.querySelector('title'); if(tEl) tEl.textContent = item.titulo;
 
+        var html = '<!DOCTYPE html>\n' + d.documentElement.outerHTML;
         var slug = String(item.id || item.titulo || 'treinamento').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
         try{
           var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -943,10 +949,7 @@
           if(typeof _toast === 'function') _toast('HTML baixado: ' + slug + '-completo.html', 'var(--green,#34d399)');
         }catch(e){ alert('Erro ao baixar o HTML. ' + (e && e.message ? e.message : '')); }
         _restore();
-      }
-      if(cssHref){
-        fetch(cssHref).then(function(r){ return r.ok ? r.text() : ''; }).then(_finish).catch(function(){ _finish(''); });
-      } else { _finish(''); }
+      });
     });
   };
 
