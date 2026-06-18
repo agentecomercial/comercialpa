@@ -189,6 +189,12 @@
       + '.trap-cat-item button:hover{ background:rgba(200,240,90,.20); }'
       + '.trap-cat-item button.sec{ background:transparent; color:var(--muted,#9aa5b1); border-color:var(--border); padding:6px 9px; }'
       + '.trap-cat-item button.sec:hover{ color:var(--text); border-color:var(--border2,rgba(255,255,255,.14)); }'
+      + '.trap-cat-menu-wrap{ flex-shrink:0; }'
+      + '.trap-kebab{ font-size:16px; line-height:1; padding:5px 9px !important; font-weight:800; }'
+      + '.trap-cat-menu{ display:none; position:fixed; z-index:9999; min-width:200px; background:var(--bg-2,#161b22); border:1px solid var(--border2,rgba(255,255,255,.14)); border-radius:9px; padding:5px; box-shadow:0 12px 34px rgba(0,0,0,.55); flex-direction:column; gap:2px; }'
+      + '.trap-cat-menu.open{ display:flex; }'
+      + '.trap-cat-menu button{ background:none !important; border:none !important; color:var(--text,#e6edf3) !important; text-align:left !important; width:100%; padding:9px 11px !important; border-radius:6px; font-size:11.5px; font-weight:600; cursor:pointer; font-family:inherit; transition:background .12s; }'
+      + '.trap-cat-menu button:hover{ background:rgba(255,255,255,.08) !important; }'
       + '.trap-cat-empty{ font-size:11px; color:var(--muted,#9aa5b1); font-style:italic; padding:8px 0; }'
       + '.trap-caminho-t{ font-size:15px; font-weight:800; }'
       + '.trap-caminho-sub{ font-size:11px; color:var(--muted,#9aa5b1); }'
@@ -625,9 +631,14 @@
             +     '<div class="trap-cat-item-s">📦 ' + _esc(i.produto) + ' · ' + partes + pub + '</div>'
             +   '</div>'
             +   '<button onclick="window._trapAbrirAqui(\'' + _esc(i.id) + '\')" title="Abrir embutido no aplicativo">👁 Abrir</button>'
-            +   '<button class="sec" onclick="window._trapBaixarPdfCompleto(\'' + _esc(i.id) + '\',this)" title="Imprimir / salvar apostila completa em PDF">🖨️ Imprimir</button>'
-            +   '<button class="sec" onclick="window._trapBaixarHtml(\'' + _esc(i.id) + '\',this)" title="Baixar o treinamento completo como arquivo HTML">⬇ HTML</button>'
-            +   '<button class="sec" onclick="window._trapAbrirNovaAba(\'' + _esc(i.id) + '\')" title="Abrir em nova aba">↗</button>'
+            +   '<div class="trap-cat-menu-wrap">'
+            +     '<button class="sec trap-kebab" onclick="event.stopPropagation();window._trapToggleMenu(\'' + _esc(i.id) + '\',this)" title="Mais ações">⋮</button>'
+            +     '<div class="trap-cat-menu" id="trapMenu-' + _esc(i.id) + '">'
+            +       '<button onclick="window._trapBaixarPdfCompleto(\'' + _esc(i.id) + '\',this)">🖨️ Imprimir / Salvar PDF</button>'
+            +       '<button onclick="window._trapBaixarHtml(\'' + _esc(i.id) + '\',this)">⬇ Baixar HTML</button>'
+            +       '<button onclick="window._trapAbrirNovaAba(\'' + _esc(i.id) + '\')">↗ Abrir em nova aba</button>'
+            +     '</div>'
+            +   '</div>'
             + '</div>';
         }).join('')
       : '<div class="trap-cat-empty">Nenhum treinamento pronto na biblioteca ainda.</div>';
@@ -937,6 +948,31 @@
         fetch(cssHref).then(function(r){ return r.ok ? r.text() : ''; }).then(_finish).catch(function(){ _finish(''); });
       } else { _finish(''); }
     });
+  };
+
+  /* ── Menu "⋮" (mais ações) do item de treinamento ────────
+     Posiciona em fixed p/ não ser cortado pela lista rolável.
+     Fecha ao clicar fora ou rolar. Um menu aberto por vez. */
+  window._trapToggleMenu = function(id, btn){
+    var menu = document.getElementById('trapMenu-' + id);
+    if(!menu) return;
+    var isOpen = menu.classList.contains('open');
+    document.querySelectorAll('.trap-cat-menu.open').forEach(function(m){ m.classList.remove('open'); });
+    if(isOpen) return;
+    var r = btn.getBoundingClientRect();
+    menu.style.top = (r.bottom + 5) + 'px';
+    menu.style.left = Math.max(8, Math.min(r.right - 200, window.innerWidth - 208)) + 'px';
+    menu.classList.add('open');
+    setTimeout(function(){
+      function close(ev){
+        if(menu.contains(ev.target) || ev.target === btn) return;
+        menu.classList.remove('open');
+        document.removeEventListener('click', close, true);
+        window.removeEventListener('scroll', close, true);
+      }
+      document.addEventListener('click', close, true);
+      window.addEventListener('scroll', close, true);
+    }, 0);
   };
 
   /* Copia para a área de transferência o comando-modelo de criação de treinamento. */
