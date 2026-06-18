@@ -887,7 +887,7 @@
         +'<div class="np-meta-foot-v2">'
         +'<button class="np-meta-edit" onclick="event.stopPropagation();npAbrirModalMeta(\''+_escJS2(nome)+'\')">⚙ Configurar metas</button>'
         +'<button class="np-meta-edit np-meta-edit-sem" onclick="event.stopPropagation();npAbrirModalSemanal(\''+_escJS2(nome)+'\')" title="Configurar metas semanais">📅 Semanal</button>'
-        +'<button class="np-meta-edit np-meta-copy-img" onclick="event.stopPropagation();npCopiarMetaImg(\''+_escJS2(nome)+'\')">📋 Copiar</button>'
+        +'<button class="np-meta-edit np-meta-copy-img" onclick="event.stopPropagation();npCopiarMetaImg(\''+_escJS2(nome)+'\')">📸 Copiar</button>'
         +'</div>'
         +'</div>';
       return {nome:nome,i:i,cor:cor,real:real,pct:pct,col:col,tier:tierInfo,
@@ -926,7 +926,7 @@
         +'<td><div class="np-lista-acts" onclick="event.stopPropagation();">'
           +'<button class="np-meta-edit" title="Configurar metas" onclick="event.stopPropagation();npAbrirModalMeta(\''+nm+'\')">&#x2699;</button>'
           +'<button class="np-meta-edit np-meta-edit-sem" title="Metas semanais" onclick="event.stopPropagation();npAbrirModalSemanal(\''+nm+'\')">&#x1F4C5;</button>'
-          +'<button class="np-meta-edit np-meta-copy-img" title="Copiar imagem do card" onclick="event.stopPropagation();npCopiarMetaImg(\''+nm+'\')">&#x1F4CB;</button>'
+          +'<button class="np-meta-edit np-meta-copy-img" title="Copiar imagem do card" onclick="event.stopPropagation();npCopiarMetaImg(\''+nm+'\')">&#x1F4F8;</button>'
         +'</div></td>'
         +'</tr>';
     }).join('');
