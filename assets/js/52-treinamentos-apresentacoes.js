@@ -710,20 +710,23 @@
         +   '.pdf-hint .pdf-print{ background:linear-gradient(135deg,#0ea5e9,#06b6d4); border:none; color:#fff; } }'
         + '@media print{ .pdf-hint{ display:none !important; } }'
         + '</style>';
-      /* Orientação default: Paisagem (slide 16:9 em página 1280x720) */
-      var orientCss = '<style id="pdfOrient">@page{size:1280px 720px;margin:0}.pdf-page{width:1280px;height:720px}.pdf-scale{transform:translate(-50%,-50%) scale(1)}</style>';
+      /* Orientação default: A4 Paisagem — slide 16:9 encaixado e centralizado.
+         A4: 210x297mm => 793.7 x 1122.5px (96dpi). Slide nativo: 1280x720.
+         Paisagem (1122.5x793.7): escala = min(1122.5/1280, 793.7/720) = .8769
+         Retrato  (793.7x1122.5): escala = min(793.7/1280, 1122.5/720) = .6201 */
+      var orientCss = '<style id="pdfOrient">@page{size:A4 landscape;margin:0}.pdf-page{width:1122.5px;height:793.7px}.pdf-scale{transform:translate(-50%,-50%) scale(.8769)}</style>';
       var hintHtml = '<div class="pdf-hint">'
         + '<span>📄 ' + _esc(item.titulo) + '</span>'
         + '<span style="display:flex;gap:8px;align-items:center;">'
-        +   '<span style="opacity:.7;font-weight:500;">Orientação:</span>'
+        +   '<span style="opacity:.7;font-weight:500;">A4:</span>'
         +   '<button id="btnLand" class="on" onclick="setOrient(\'landscape\')">Paisagem</button>'
         +   '<button id="btnPort" onclick="setOrient(\'portrait\')">Retrato</button>'
         +   '<button class="pdf-print" onclick="window.print()">🖨️ Salvar PDF</button>'
         + '</span>'
         + '</div>';
       var orientScript = '<scr' + 'ipt>'
-        + 'var LAND="@page{size:1280px 720px;margin:0}.pdf-page{width:1280px;height:720px}.pdf-scale{transform:translate(-50%,-50%) scale(1)}";'
-        + 'var PORT="@page{size:720px 1280px;margin:0}.pdf-page{width:720px;height:1280px}.pdf-scale{transform:translate(-50%,-50%) scale(.5625)}";'
+        + 'var LAND="@page{size:A4 landscape;margin:0}.pdf-page{width:1122.5px;height:793.7px}.pdf-scale{transform:translate(-50%,-50%) scale(.8769)}";'
+        + 'var PORT="@page{size:A4 portrait;margin:0}.pdf-page{width:793.7px;height:1122.5px}.pdf-scale{transform:translate(-50%,-50%) scale(.6201)}";'
         + 'function setOrient(o){var e=document.getElementById("pdfOrient");if(e)e.textContent=(o==="portrait")?PORT:LAND;var L=document.getElementById("btnLand"),P=document.getElementById("btnPort");if(L)L.className=(o==="landscape")?"on":"";if(P)P.className=(o==="portrait")?"on":"";}'
         + '</scr' + 'ipt>';
       var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
