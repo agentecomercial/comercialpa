@@ -139,10 +139,12 @@
       /* ── Passo 2: Botões 50% / 75% (ocultos até ter valor nos campos) ── */
       +'<div id="npLotePct" style="display:none;border-top:1px dashed var(--border);padding-top:10px;">'
       +'<div style="font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Aplicar % dos valores</div>'
-      +'<div style="display:flex;gap:8px;">'
+      +'<div style="display:flex;gap:8px;margin-bottom:6px;">'
       +'<button type="button" id="npLotePct50" onclick="npAplicarPctLote(50)" style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">50%</button>'
       +'<button type="button" id="npLotePct75" onclick="npAplicarPctLote(75)" style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">75%</button>'
-      +'</div></div>'
+      +'</div>'
+      +'<button type="button" id="npLotePctDias" onclick="npAplicarDiasUteisLote()" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">&#x1F4C5; Proporcional dias \xfateis restantes</button>'
+      +'</div>'
       +'</div>'
       +'<div class="np-lote-acts">'
       +'<button class="np-btn" style="font-size:12px;padding:8px 14px;width:100%;" onclick="npAplicarMetaLote()">Aplicar aos selecionados</button>'
@@ -292,14 +294,33 @@
   };
 
   function _npLotePctReset() {
-    var b50 = document.getElementById('npLotePct50');
-    var b75 = document.getElementById('npLotePct75');
     var sBase = 'rgba(255,255,255,.05)';
-    if(b50){ b50.style.background=sBase; b50.style.color='var(--muted)'; b50.style.borderColor='var(--border)'; }
-    if(b75){ b75.style.background=sBase; b75.style.color='var(--muted)'; b75.style.borderColor='var(--border)'; }
+    ['npLotePct50','npLotePct75','npLotePctDias'].forEach(function(id){
+      var b = document.getElementById(id);
+      if(b){ b.style.background=sBase; b.style.color='var(--muted)'; b.style.borderColor='var(--border)'; }
+    });
+  }
+
+  function _npRestaurarBaseLote() {
+    if(!window._npLoteBase) return;
+    var fmt = typeof _npFmtMoneyInput === 'function' ? _npFmtMoneyInput : function(v){ return String(v); };
+    var b = window._npLoteBase;
+    var lMin = document.getElementById('npLoteMinima');
+    var lBas = document.getElementById('npLoteBasica');
+    var lMas = document.getElementById('npLoteMaster');
+    if(lMin) lMin.value = b.min ? fmt(b.min) : '';
+    if(lBas) lBas.value = b.bas ? fmt(b.bas) : '';
+    if(lMas) lMas.value = b.mas ? fmt(b.mas) : '';
   }
 
   window.npAplicarPctLote = function(pct) {
+    /* Toggle: clicou no já ativo → restaura valor original */
+    if(window._npLotePctAtivo === pct) {
+      _npRestaurarBaseLote();
+      window._npLotePctAtivo = null;
+      _npLotePctReset();
+      return;
+    }
     if(!window._npLoteBase) {
       var vMin2 = npParseMoney((document.getElementById('npLoteMinima')||{}).value||'');
       var vBas2 = npParseMoney((document.getElementById('npLoteBasica')||{}).value||'');
@@ -320,6 +341,51 @@
     var btnAtivo = document.getElementById('npLotePct'+pct);
     if(btnAtivo){ btnAtivo.style.background='rgba(200,240,90,.15)'; btnAtivo.style.color='var(--accent)'; btnAtivo.style.borderColor='rgba(200,240,90,.4)'; }
     if(typeof _showToast==='function') _showToast(pct+'% aplicado. Clique "Aplicar aos selecionados" para confirmar.','var(--accent)');
+  };
+
+  window.npAplicarDiasUteisLote = function() {
+    /* Toggle: clicou no já ativo → restaura valor original */
+    if(window._npLotePctAtivo === 'dias') {
+      _npRestaurarBaseLote();
+      window._npLotePctAtivo = null;
+      _npLotePctReset();
+      return;
+    }
+    if(!window._npLoteBase) {
+      var vMin3 = npParseMoney((document.getElementById('npLoteMinima')||{}).value||'');
+      var vBas3 = npParseMoney((document.getElementById('npLoteBasica')||{}).value||'');
+      var vMas3 = npParseMoney((document.getElementById('npLoteMaster')||{}).value||'');
+      window._npLoteBase = { min: vMin3||0, bas: vBas3||0, mas: vMas3||0 };
+    }
+    var base = window._npLoteBase;
+    /* Calcula total e restante de dias úteis do mês */
+    var hoje = new Date(); hoje.setHours(0,0,0,0);
+    var primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    var ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    var totalDias = 0, diasRestantes = 0;
+    for(var dd = new Date(primeiroDia); dd <= ultimoDia; dd.setDate(dd.getDate() + 1)) {
+      var dow = dd.getDay();
+      if(dow >= 1 && dow <= 5){
+        totalDias++;
+        if(+dd >= +hoje) diasRestantes++;
+      }
+    }
+    if(!totalDias || !diasRestantes){
+      if(typeof _showToast==='function') _showToast('Nenhum dia \xfatil dispon\xedvel.','var(--amber)');
+      return;
+    }
+    var fmt = typeof _npFmtMoneyInput === 'function' ? _npFmtMoneyInput : function(v){ return String(v); };
+    var lMin = document.getElementById('npLoteMinima');
+    var lBas = document.getElementById('npLoteBasica');
+    var lMas = document.getElementById('npLoteMaster');
+    if(lMin && base.min) lMin.value = fmt(Math.round(base.min * diasRestantes / totalDias));
+    if(lBas && base.bas) lBas.value = fmt(Math.round(base.bas * diasRestantes / totalDias));
+    if(lMas && base.mas) lMas.value = fmt(Math.round(base.mas * diasRestantes / totalDias));
+    window._npLotePctAtivo = 'dias';
+    _npLotePctReset();
+    var btnD = document.getElementById('npLotePctDias');
+    if(btnD){ btnD.style.background='rgba(56,189,248,.12)'; btnD.style.color='#38bdf8'; btnD.style.borderColor='rgba(56,189,248,.4)'; }
+    if(typeof _showToast==='function') _showToast('&#x1F4C5; Proporcional: '+diasRestantes+' de '+totalDias+' dias \xfateis. Clique "Aplicar aos selecionados" para confirmar.','var(--accent)');
   };
 
   /* Hover style do botão Copiar — injetado uma vez */
