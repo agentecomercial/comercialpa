@@ -625,7 +625,7 @@
             +     '<div class="trap-cat-item-s">📦 ' + _esc(i.produto) + ' · ' + partes + pub + '</div>'
             +   '</div>'
             +   '<button onclick="window._trapAbrirAqui(\'' + _esc(i.id) + '\')" title="Abrir embutido no aplicativo">👁 Abrir</button>'
-            +   '<button class="sec" onclick="window._trapBaixarPdfCompleto(\'' + _esc(i.id) + '\',this)" title="Baixar treinamento completo em PDF">📄 PDF</button>'
+            +   '<button class="sec" onclick="window._trapBaixarPdfCompleto(\'' + _esc(i.id) + '\',this)" title="Imprimir / salvar apostila completa em PDF">🖨️ Imprimir</button>'
             +   '<button class="sec" onclick="window._trapAbrirNovaAba(\'' + _esc(i.id) + '\')" title="Abrir em nova aba">↗</button>'
             + '</div>';
         }).join('')
@@ -646,17 +646,19 @@
 
   /* ── Baixar treinamento COMPLETO em PDF ──────────────────
      Busca cada parte (mesmo domínio — funciona online/Pages),
-     extrai todos os .slide, monta UM documento de impressão
-     (1 slide = 1 página, 1280x720) e dispara window.print().
-     O usuário escolhe "Salvar como PDF" no diálogo. */
+     extrai o CONTEÚDO de todos os .slide e remonta como uma
+     APOSTILA (documento A4 fundo branco / texto preto), com
+     capa, separadores de parte, rodapé e quebras de página
+     que não cortam cards/tabelas. Dispara window.print(). */
   window._trapBaixarPdfCompleto = function(id, btn){
     var item = _getItens().find(function(i){ return i.id === id; });
     if(!item || !Array.isArray(item.estrutura) || !item.estrutura.length){
       alert('Treinamento sem partes para gerar PDF.'); return;
     }
-    var urls = item.estrutura.map(function(p){ return p.url; }).filter(Boolean);
-    if(!urls.length){ alert('Treinamento sem partes.'); return; }
-    var base = urls[0].substring(0, urls[0].lastIndexOf('/') + 1);
+    var partes = item.estrutura.filter(function(p){ return p && p.url; });
+    if(!partes.length){ alert('Treinamento sem partes.'); return; }
+    var u0 = partes[0].url;
+    var base = u0.substring(0, u0.lastIndexOf('/') + 1);
     var absBase = new URL(base, window.location.href).href;
 
     var lblOrig = btn ? btn.innerHTML : '';
@@ -664,81 +666,149 @@
     function _restore(){ if(btn){ btn.disabled = false; btn.innerHTML = lblOrig; } }
 
     var parser = new DOMParser();
-    var headHtml = '';
-    var slidesHtml = '';
+    var sectionsHtml = '';
+    var partCount = 0;
+
+    /* Converte 1 slide em bloco de apostila (eyebrow + título + corpo) */
+    function _slideToHtml(sl){
+      sl.querySelectorAll('script').forEach(function(s){ s.remove(); });
+      var eb = sl.querySelector('.eyebrow');
+      var tt = sl.querySelector('.slide-title') || sl.querySelector('h1, h2');
+      var body = sl.querySelector('.slide-body');
+      var bodyHtml;
+      if(body){ bodyHtml = body.innerHTML; }
+      else {
+        var clone = sl.cloneNode(true);
+        var h = clone.querySelector('.slide-header'); if(h) h.remove();
+        bodyHtml = clone.innerHTML;
+      }
+      var out = '<section class="ap-slide">';
+      if(eb && eb.textContent.trim()) out += '<div class="ap-eyebrow">' + eb.innerHTML + '</div>';
+      if(tt && tt.textContent.trim()) out += '<h2 class="ap-title">' + tt.innerHTML + '</h2>';
+      out += '<div class="ap-body">' + bodyHtml + '</div></section>';
+      return out;
+    }
 
     /* Busca sequencial das partes (mantém a ordem da estrutura) */
     var seq = Promise.resolve();
-    urls.forEach(function(u){
+    partes.forEach(function(p){
       seq = seq.then(function(){
-        return fetch(u).then(function(r){ return r.ok ? r.text() : ''; }).then(function(txt){
+        return fetch(p.url).then(function(r){ return r.ok ? r.text() : ''; }).then(function(txt){
           if(!txt) return;
           var doc = parser.parseFromString(txt, 'text/html');
-          if(!headHtml){
-            doc.querySelectorAll('head link[rel="stylesheet"], head style').forEach(function(el){
-              headHtml += el.outerHTML;
-            });
-          }
-          doc.querySelectorAll('.slide').forEach(function(sl){
-            sl.querySelectorAll('script').forEach(function(s){ s.remove(); });
-            sl.classList.add('is-active');           /* usa regras de visibilidade existentes */
-            sl.classList.remove('is-leaving','is-hidden-slide','dir-prev');
-            slidesHtml += '<div class="pdf-page"><div class="pdf-scale">' + sl.outerHTML + '</div></div>';
-          });
+          var slides = doc.querySelectorAll('.slide');
+          if(!slides.length) return;   /* pula capa/menu (sem slides) */
+          partCount++;
+          var partHtml = '';
+          slides.forEach(function(sl){ partHtml += _slideToHtml(sl); });
+          sectionsHtml += '<div class="ap-part' + (partCount > 1 ? ' brk' : '') + '">'
+            + '<div class="ap-part-k">Parte ' + partCount + ' · ' + _esc(item.produto || '') + '</div>'
+            + '<h1 class="ap-part-t">' + _esc(p.titulo || ('Parte ' + partCount)) + '</h1>'
+            + '</div>' + partHtml;
         }).catch(function(){ /* ignora parte que falhar */ });
       });
     });
 
     seq.then(function(){
-      if(!slidesHtml){
+      if(!sectionsHtml){
         _restore();
-        alert('Não foi possível extrair os slides.\n\nO PDF completo precisa que você esteja acessando o painel ONLINE (GitHub Pages). Em arquivo local (file://) o navegador bloqueia a leitura das partes.');
+        alert('Não foi possível extrair o conteúdo.\n\nA impressão completa precisa que você esteja acessando o painel ONLINE (GitHub Pages). Em arquivo local (file://) o navegador bloqueia a leitura das partes.');
         return;
       }
-      var baseCss = '<style>'
-        + 'html,body{ margin:0; padding:0; background:#fff; }'
-        + '*{ animation:none !important; transition:none !important; }'
-        + '.pdf-page{ position:relative; overflow:hidden; page-break-after:always; break-after:page; }'
-        + '.pdf-page:last-child{ page-break-after:auto; break-after:auto; }'
-        + '.pdf-scale{ position:absolute; top:50%; left:50%; width:1280px; height:720px; }'
-        + '.pdf-page .slide{ position:absolute !important; inset:0 !important; display:flex !important; border-radius:0 !important; box-shadow:none !important; margin:0 !important; }'
-        + '.pdf-page .slide::after,.pdf-page .slide::before{ animation:none !important; }'
-        + '@media screen{ body{ background:#0a0e16; padding-top:54px; } .pdf-page{ margin:0 auto 16px; box-shadow:0 10px 40px rgba(0,0,0,.6); } '
-        +   '.pdf-hint{ position:fixed; top:0; left:0; right:0; z-index:99; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#161b22; color:#e6edf3; font:600 13px system-ui,sans-serif; padding:9px 16px; border-bottom:1px solid #30363d; } '
-        +   '.pdf-hint button{ background:rgba(255,255,255,.06); border:1px solid #30363d; color:#9aa5b1; border-radius:6px; padding:6px 12px; font:inherit; cursor:pointer; } '
-        +   '.pdf-hint button.on{ background:rgba(56,189,248,.16); border-color:#38bdf8; color:#38bdf8; } '
-        +   '.pdf-hint .pdf-print{ background:linear-gradient(135deg,#0ea5e9,#06b6d4); border:none; color:#fff; } }'
-        + '@media print{ .pdf-hint{ display:none !important; } }'
+      var hoje = new Date();
+      var dataStr = hoje.toLocaleDateString('pt-BR') + ' às ' + hoje.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      var css = '<style>'
+        + '*{ box-sizing:border-box; }'
+        + 'html,body{ margin:0; padding:0; background:#fff; color:#1a1a1a; font-family:"Segoe UI",system-ui,-apple-system,sans-serif; font-size:12px; line-height:1.5; }'
+        + 'img{ max-width:100% !important; height:auto; }'
+        /* Capa */
+        + '.ap-cover{ text-align:center; padding:6px 0 16px; border-bottom:3px solid #0a7d35; margin-bottom:18px; }'
+        + '.ap-cover .ap-prod{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#0a7d35; font-weight:800; }'
+        + '.ap-cover h1{ font-size:25px; margin:8px 0 6px; color:#0d1b0d; }'
+        + '.ap-cover .ap-date{ font-size:11px; color:#555; }'
+        + '.ap-cover .ap-desc{ font-size:11px; color:#444; max-width:620px; margin:8px auto 0; }'
+        /* Separador de parte */
+        + '.ap-part{ margin:16px 0 12px; padding:9px 14px; background:#eef6ee; border-left:5px solid #0a7d35; border-radius:4px; break-after:avoid; page-break-after:avoid; }'
+        + '.ap-part.brk{ break-before:page; page-break-before:always; }'
+        + '.ap-part-k{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:#0a7d35; font-weight:800; }'
+        + '.ap-part-t{ font-size:18px; margin:2px 0 0; color:#0d1b0d; }'
+        /* Bloco slide */
+        + '.ap-slide{ margin:0 0 14px; padding:0 0 11px; border-bottom:1px solid #e4e4e4; }'
+        + '.ap-eyebrow{ font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#0a7d35; font-weight:700; margin-bottom:2px; }'
+        + '.ap-title{ font-size:15px; color:#13270f; margin:0 0 8px; break-after:avoid; page-break-after:avoid; }'
+        /* Conteúdo genérico */
+        + '.ap-body *{ color:#1a1a1a !important; }'
+        + '.ap-body strong{ color:#0a3d18 !important; font-weight:700; }'
+        + '.ap-body h3{ font-size:12.5px; margin:9px 0 3px; color:#0d1b0d !important; break-after:avoid; }'
+        + '.ap-body h4{ font-size:11.5px; margin:7px 0 3px; }'
+        + '.ap-body p{ margin:4px 0; }'
+        + '.ap-body ul,.ap-body ol{ margin:4px 0 4px 18px; padding:0; }'
+        + '.ap-body li{ margin:3px 0; break-inside:avoid; }'
+        + '.ap-body .grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }'
+        + '.ap-body .grid-3{ grid-template-columns:1fr 1fr 1fr; }'
+        + '.ap-body .grid-1{ grid-template-columns:1fr; }'
+        + '.ap-body .card,.ap-body .quad,.ap-body .turn,.ap-body .col,.ap-body .step{ background:#f7f9f7 !important; border:1px solid #d8e2d8; border-radius:6px; padding:9px 11px; break-inside:avoid; page-break-inside:avoid; }'
+        + '.ap-body .card.solid{ background:#eaf4ea !important; border-color:#0a7d35; }'
+        + '.ap-body .card h3,.ap-body .card h4{ margin-top:0; }'
+        + '.ap-body .seq,.ap-body .aida,.ap-body .funnel,.ap-body .matrix,.ap-body .split,.ap-body .script-list,.ap-body .dialog,.ap-body .cols-aside{ display:block; }'
+        + '.ap-body .seq>*,.ap-body .aida>*,.ap-body .funnel>*,.ap-body .script-list>*,.ap-body .split>*{ margin:5px 0; break-inside:avoid; page-break-inside:avoid; }'
+        + '.ap-body table{ width:100%; border-collapse:collapse; margin:8px 0; font-size:11px; }'
+        + '.ap-body th,.ap-body td{ border:1px solid #cfd8cf; padding:5px 8px; text-align:left; vertical-align:top; }'
+        + '.ap-body thead th{ background:#eef6ee !important; color:#0d1b0d !important; font-weight:700; }'
+        + '.ap-body tr{ break-inside:avoid; page-break-inside:avoid; }'
+        + '.ap-body [style*="background-image"]{ background-image:none !important; }'
+        + '.ap-foot{ display:none; }'
+        /* Tela (pré-visualização) */
+        + '@media screen{ body{ background:#525659; } '
+        +   '.ap-doc{ background:#fff; max-width:820px; margin:60px auto 40px; padding:30px 36px; box-shadow:0 8px 34px rgba(0,0,0,.45); border-radius:3px; } '
+        +   '.ap-bar{ position:fixed; top:0; left:0; right:0; z-index:99; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#161b22; color:#e6edf3; font:600 13px system-ui,sans-serif; padding:9px 16px; border-bottom:1px solid #30363d; } '
+        +   '.ap-bar button{ background:rgba(255,255,255,.06); border:1px solid #30363d; color:#9aa5b1; border-radius:6px; padding:7px 13px; font:inherit; cursor:pointer; } '
+        +   '.ap-bar button.on{ background:rgba(56,189,248,.16); border-color:#38bdf8; color:#38bdf8; } '
+        +   '.ap-bar .ap-print{ background:linear-gradient(135deg,#0a7d35,#16a83e); border:none; color:#fff; font-weight:700; } }'
+        /* Impressão */
+        + '@media print{ '
+        +   'body{ background:#fff !important; color:#000 !important; } '
+        +   '*{ animation:none !important; transition:none !important; box-shadow:none !important; text-shadow:none !important; } '
+        +   '.ap-bar{ display:none !important; } '
+        +   '.ap-doc{ margin:0; padding:0; max-width:none; box-shadow:none; } '
+        +   '.ap-foot{ display:block; position:fixed; bottom:6mm; left:0; right:0; text-align:center; font-size:8.5px; color:#888; } }'
         + '</style>';
-      /* Orientação default: A4 Paisagem — slide 16:9 encaixado e centralizado.
-         A4: 210x297mm => 793.7 x 1122.5px (96dpi). Slide nativo: 1280x720.
-         Paisagem (1122.5x793.7): escala = min(1122.5/1280, 793.7/720) = .8769
-         Retrato  (793.7x1122.5): escala = min(793.7/1280, 1122.5/720) = .6201 */
-      var orientCss = '<style id="pdfOrient">@page{size:A4 landscape;margin:0}.pdf-page{width:1122.5px;height:793.7px}.pdf-scale{transform:translate(-50%,-50%) scale(.8769)}</style>';
-      var hintHtml = '<div class="pdf-hint">'
-        + '<span>📄 ' + _esc(item.titulo) + '</span>'
+      /* Orientação (default Retrato — documento). Margem A4 confortável. */
+      var orientCss = '<style id="apOrient">@page{ size:A4 portrait; margin:16mm 14mm 18mm; }</style>';
+      var bar = '<div class="ap-bar">'
+        + '<span>📄 ' + _esc(item.titulo) + ' — apostila</span>'
         + '<span style="display:flex;gap:8px;align-items:center;">'
         +   '<span style="opacity:.7;font-weight:500;">A4:</span>'
-        +   '<button id="btnLand" class="on" onclick="setOrient(\'landscape\')">Paisagem</button>'
-        +   '<button id="btnPort" onclick="setOrient(\'portrait\')">Retrato</button>'
-        +   '<button class="pdf-print" onclick="window.print()">🖨️ Salvar PDF</button>'
+        +   '<button id="btnPort" class="on" onclick="setOrient(\'portrait\')">Retrato</button>'
+        +   '<button id="btnLand" onclick="setOrient(\'landscape\')">Paisagem</button>'
+        +   '<button class="ap-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>'
         + '</span>'
         + '</div>';
-      var orientScript = '<scr' + 'ipt>'
-        + 'var LAND="@page{size:A4 landscape;margin:0}.pdf-page{width:1122.5px;height:793.7px}.pdf-scale{transform:translate(-50%,-50%) scale(.8769)}";'
-        + 'var PORT="@page{size:A4 portrait;margin:0}.pdf-page{width:793.7px;height:1122.5px}.pdf-scale{transform:translate(-50%,-50%) scale(.6201)}";'
-        + 'function setOrient(o){var e=document.getElementById("pdfOrient");if(e)e.textContent=(o==="portrait")?PORT:LAND;var L=document.getElementById("btnLand"),P=document.getElementById("btnPort");if(L)L.className=(o==="landscape")?"on":"";if(P)P.className=(o==="portrait")?"on":"";}'
+      var script = '<scr' + 'ipt>'
+        + 'var PORT="@page{size:A4 portrait;margin:16mm 14mm 18mm}";'
+        + 'var LAND="@page{size:A4 landscape;margin:14mm 16mm 16mm}";'
+        + 'function setOrient(o){var e=document.getElementById("apOrient");if(e)e.textContent=(o==="landscape")?LAND:PORT;var P=document.getElementById("btnPort"),L=document.getElementById("btnLand");if(P)P.className=(o==="portrait")?"on":"";if(L)L.className=(o==="landscape")?"on":"";}'
         + '</scr' + 'ipt>';
+      var cover = '<div class="ap-cover">'
+        + '<div class="ap-prod">' + _esc(item.produto || '') + ' · Treinamento Comercial</div>'
+        + '<h1>' + _esc(item.titulo) + '</h1>'
+        + '<div class="ap-date">Documento gerado em ' + _esc(dataStr) + '</div>'
+        + (item.descricao ? '<div class="ap-desc">' + _esc(item.descricao) + '</div>' : '')
+        + '</div>';
+      var foot = '<div class="ap-foot">Documento gerado automaticamente pelo sistema de treinamento</div>';
+
       var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
         + '<base href="' + absBase + '">'
-        + headHtml + baseCss + orientCss
-        + '<title>' + _esc(item.titulo) + '</title></head><body>'
-        + hintHtml
-        + slidesHtml
-        + orientScript
+        + css + orientCss
+        + '<title>' + _esc(item.titulo) + ' — Apostila</title></head><body>'
+        + bar
+        + '<div class="ap-doc">' + cover + sectionsHtml + '</div>'
+        + foot
+        + script
         + '</body></html>';
       var w = window.open('', '_blank');
-      if(!w){ _restore(); alert('Permita pop-ups (janelas) para gerar o PDF e tente novamente.'); return; }
+      if(!w){ _restore(); alert('Permita pop-ups (janelas) para gerar a impressão e tente novamente.'); return; }
       w.document.open(); w.document.write(html); w.document.close();
       _restore();
     });
