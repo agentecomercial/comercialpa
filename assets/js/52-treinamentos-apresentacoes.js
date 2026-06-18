@@ -625,6 +625,7 @@
             +     '<div class="trap-cat-item-s">📦 ' + _esc(i.produto) + ' · ' + partes + pub + '</div>'
             +   '</div>'
             +   '<button onclick="window._trapAbrirAqui(\'' + _esc(i.id) + '\')" title="Abrir embutido no aplicativo">👁 Abrir</button>'
+            +   '<button class="sec" onclick="window._trapBaixarPdfCompleto(\'' + _esc(i.id) + '\',this)" title="Baixar treinamento completo em PDF">📄 PDF</button>'
             +   '<button class="sec" onclick="window._trapAbrirNovaAba(\'' + _esc(i.id) + '\')" title="Abrir em nova aba">↗</button>'
             + '</div>';
         }).join('')
@@ -642,6 +643,83 @@
       +   '<div style="padding-top:10px;border-top:1px dashed var(--border);font-size:10px;color:var(--muted,#9aa5b1);"><b style="color:#f0c896;">Quando usar:</b> publicar um treinamento completo pronto da Febracis (ex.: FGPC, Método CIS).</div>'
       + '</div>';
   }
+
+  /* ── Baixar treinamento COMPLETO em PDF ──────────────────
+     Busca cada parte (mesmo domínio — funciona online/Pages),
+     extrai todos os .slide, monta UM documento de impressão
+     (1 slide = 1 página, 1280x720) e dispara window.print().
+     O usuário escolhe "Salvar como PDF" no diálogo. */
+  window._trapBaixarPdfCompleto = function(id, btn){
+    var item = _getItens().find(function(i){ return i.id === id; });
+    if(!item || !Array.isArray(item.estrutura) || !item.estrutura.length){
+      alert('Treinamento sem partes para gerar PDF.'); return;
+    }
+    var urls = item.estrutura.map(function(p){ return p.url; }).filter(Boolean);
+    if(!urls.length){ alert('Treinamento sem partes.'); return; }
+    var base = urls[0].substring(0, urls[0].lastIndexOf('/') + 1);
+    var absBase = new URL(base, window.location.href).href;
+
+    var lblOrig = btn ? btn.innerHTML : '';
+    if(btn){ btn.disabled = true; btn.innerHTML = '⏳ Gerando…'; }
+    function _restore(){ if(btn){ btn.disabled = false; btn.innerHTML = lblOrig; } }
+
+    var parser = new DOMParser();
+    var headHtml = '';
+    var slidesHtml = '';
+
+    /* Busca sequencial das partes (mantém a ordem da estrutura) */
+    var seq = Promise.resolve();
+    urls.forEach(function(u){
+      seq = seq.then(function(){
+        return fetch(u).then(function(r){ return r.ok ? r.text() : ''; }).then(function(txt){
+          if(!txt) return;
+          var doc = parser.parseFromString(txt, 'text/html');
+          if(!headHtml){
+            doc.querySelectorAll('head link[rel="stylesheet"], head style').forEach(function(el){
+              headHtml += el.outerHTML;
+            });
+          }
+          doc.querySelectorAll('.slide').forEach(function(sl){
+            sl.querySelectorAll('script').forEach(function(s){ s.remove(); });
+            sl.classList.add('is-active');           /* usa regras de visibilidade existentes */
+            sl.classList.remove('is-leaving','is-hidden-slide','dir-prev');
+            slidesHtml += '<div class="pdf-page">' + sl.outerHTML + '</div>';
+          });
+        }).catch(function(){ /* ignora parte que falhar */ });
+      });
+    });
+
+    seq.then(function(){
+      if(!slidesHtml){
+        _restore();
+        alert('Não foi possível extrair os slides.\n\nO PDF completo precisa que você esteja acessando o painel ONLINE (GitHub Pages). Em arquivo local (file://) o navegador bloqueia a leitura das partes.');
+        return;
+      }
+      var printCss = '<style>'
+        + '@page{ size:1280px 720px; margin:0; }'
+        + 'html,body{ margin:0; padding:0; background:#fff; }'
+        + '*{ animation:none !important; transition:none !important; }'
+        + '.pdf-page{ position:relative; width:1280px; height:720px; overflow:hidden; page-break-after:always; break-after:page; }'
+        + '.pdf-page:last-child{ page-break-after:auto; break-after:auto; }'
+        + '.pdf-page .slide{ position:absolute !important; inset:0 !important; display:flex !important; border-radius:0 !important; box-shadow:none !important; margin:0 !important; }'
+        + '.pdf-page .slide::after,.pdf-page .slide::before{ animation:none !important; }'
+        + '@media screen{ body{ background:#0a0e16; } .pdf-page{ margin:0 auto 16px; box-shadow:0 10px 40px rgba(0,0,0,.6); } .pdf-hint{ position:sticky; top:0; z-index:99; background:#161b22; color:#e6edf3; font:600 13px system-ui,sans-serif; padding:12px 16px; text-align:center; border-bottom:1px solid #30363d; } }'
+        + '@media print{ .pdf-hint{ display:none !important; } }'
+        + '</style>';
+      var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
+        + '<base href="' + absBase + '">'
+        + headHtml + printCss
+        + '<title>' + _esc(item.titulo) + '</title></head><body>'
+        + '<div class="pdf-hint">📄 ' + _esc(item.titulo) + ' — use Ctrl+P / Cmd+P e escolha “Salvar como PDF” (layout Paisagem, margens: Nenhuma)</div>'
+        + slidesHtml
+        + '<scr' + 'ipt>window.onload=function(){ setTimeout(function(){ try{ window.focus(); window.print(); }catch(e){} }, 700); };</scr' + 'ipt>'
+        + '</body></html>';
+      var w = window.open('', '_blank');
+      if(!w){ _restore(); alert('Permita pop-ups (janelas) para gerar o PDF e tente novamente.'); return; }
+      w.document.open(); w.document.write(html); w.document.close();
+      _restore();
+    });
+  };
 
   /* Copia para a área de transferência o comando-modelo de criação de treinamento. */
   function _trapCopiaFallback(txt){
