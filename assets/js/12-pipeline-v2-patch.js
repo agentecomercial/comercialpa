@@ -887,7 +887,7 @@
         +'<div class="np-meta-foot-v2">'
         +'<button class="np-meta-edit" onclick="event.stopPropagation();npAbrirModalMeta(\''+_escJS2(nome)+'\')">⚙ Configurar metas</button>'
         +'<button class="np-meta-edit np-meta-edit-sem" onclick="event.stopPropagation();npAbrirModalSemanal(\''+_escJS2(nome)+'\')" title="Configurar metas semanais">📅 Semanal</button>'
-        +'<button class="np-meta-edit np-meta-copy-img" onclick="event.stopPropagation();npCopiarMetaImg(\''+_escJS2(nome)+'\')">📋 Copiar</button>'
+        +'<button class="np-meta-edit np-meta-copy-img" onclick="event.stopPropagation();npCopiarMetaImg(\''+_escJS2(nome)+'\')">🖼️ Copiar img</button>'
         +'</div>'
         +'</div>';
     }).join('');
