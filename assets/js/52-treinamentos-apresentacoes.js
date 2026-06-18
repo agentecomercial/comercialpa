@@ -683,7 +683,7 @@
             sl.querySelectorAll('script').forEach(function(s){ s.remove(); });
             sl.classList.add('is-active');           /* usa regras de visibilidade existentes */
             sl.classList.remove('is-leaving','is-hidden-slide','dir-prev');
-            slidesHtml += '<div class="pdf-page">' + sl.outerHTML + '</div>';
+            slidesHtml += '<div class="pdf-page"><div class="pdf-scale">' + sl.outerHTML + '</div></div>';
           });
         }).catch(function(){ /* ignora parte que falhar */ });
       });
@@ -695,24 +695,44 @@
         alert('Não foi possível extrair os slides.\n\nO PDF completo precisa que você esteja acessando o painel ONLINE (GitHub Pages). Em arquivo local (file://) o navegador bloqueia a leitura das partes.');
         return;
       }
-      var printCss = '<style>'
-        + '@page{ size:1280px 720px; margin:0; }'
+      var baseCss = '<style>'
         + 'html,body{ margin:0; padding:0; background:#fff; }'
         + '*{ animation:none !important; transition:none !important; }'
-        + '.pdf-page{ position:relative; width:1280px; height:720px; overflow:hidden; page-break-after:always; break-after:page; }'
+        + '.pdf-page{ position:relative; overflow:hidden; page-break-after:always; break-after:page; }'
         + '.pdf-page:last-child{ page-break-after:auto; break-after:auto; }'
+        + '.pdf-scale{ position:absolute; top:50%; left:50%; width:1280px; height:720px; }'
         + '.pdf-page .slide{ position:absolute !important; inset:0 !important; display:flex !important; border-radius:0 !important; box-shadow:none !important; margin:0 !important; }'
         + '.pdf-page .slide::after,.pdf-page .slide::before{ animation:none !important; }'
-        + '@media screen{ body{ background:#0a0e16; } .pdf-page{ margin:0 auto 16px; box-shadow:0 10px 40px rgba(0,0,0,.6); } .pdf-hint{ position:sticky; top:0; z-index:99; background:#161b22; color:#e6edf3; font:600 13px system-ui,sans-serif; padding:12px 16px; text-align:center; border-bottom:1px solid #30363d; } }'
+        + '@media screen{ body{ background:#0a0e16; padding-top:54px; } .pdf-page{ margin:0 auto 16px; box-shadow:0 10px 40px rgba(0,0,0,.6); } '
+        +   '.pdf-hint{ position:fixed; top:0; left:0; right:0; z-index:99; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#161b22; color:#e6edf3; font:600 13px system-ui,sans-serif; padding:9px 16px; border-bottom:1px solid #30363d; } '
+        +   '.pdf-hint button{ background:rgba(255,255,255,.06); border:1px solid #30363d; color:#9aa5b1; border-radius:6px; padding:6px 12px; font:inherit; cursor:pointer; } '
+        +   '.pdf-hint button.on{ background:rgba(56,189,248,.16); border-color:#38bdf8; color:#38bdf8; } '
+        +   '.pdf-hint .pdf-print{ background:linear-gradient(135deg,#0ea5e9,#06b6d4); border:none; color:#fff; } }'
         + '@media print{ .pdf-hint{ display:none !important; } }'
         + '</style>';
+      /* Orientação default: Paisagem (slide 16:9 em página 1280x720) */
+      var orientCss = '<style id="pdfOrient">@page{size:1280px 720px;margin:0}.pdf-page{width:1280px;height:720px}.pdf-scale{transform:translate(-50%,-50%) scale(1)}</style>';
+      var hintHtml = '<div class="pdf-hint">'
+        + '<span>📄 ' + _esc(item.titulo) + '</span>'
+        + '<span style="display:flex;gap:8px;align-items:center;">'
+        +   '<span style="opacity:.7;font-weight:500;">Orientação:</span>'
+        +   '<button id="btnLand" class="on" onclick="setOrient(\'landscape\')">Paisagem</button>'
+        +   '<button id="btnPort" onclick="setOrient(\'portrait\')">Retrato</button>'
+        +   '<button class="pdf-print" onclick="window.print()">🖨️ Salvar PDF</button>'
+        + '</span>'
+        + '</div>';
+      var orientScript = '<scr' + 'ipt>'
+        + 'var LAND="@page{size:1280px 720px;margin:0}.pdf-page{width:1280px;height:720px}.pdf-scale{transform:translate(-50%,-50%) scale(1)}";'
+        + 'var PORT="@page{size:720px 1280px;margin:0}.pdf-page{width:720px;height:1280px}.pdf-scale{transform:translate(-50%,-50%) scale(.5625)}";'
+        + 'function setOrient(o){var e=document.getElementById("pdfOrient");if(e)e.textContent=(o==="portrait")?PORT:LAND;var L=document.getElementById("btnLand"),P=document.getElementById("btnPort");if(L)L.className=(o==="landscape")?"on":"";if(P)P.className=(o==="portrait")?"on":"";}'
+        + '</scr' + 'ipt>';
       var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
         + '<base href="' + absBase + '">'
-        + headHtml + printCss
+        + headHtml + baseCss + orientCss
         + '<title>' + _esc(item.titulo) + '</title></head><body>'
-        + '<div class="pdf-hint">📄 ' + _esc(item.titulo) + ' — use Ctrl+P / Cmd+P e escolha “Salvar como PDF” (layout Paisagem, margens: Nenhuma)</div>'
+        + hintHtml
         + slidesHtml
-        + '<scr' + 'ipt>window.onload=function(){ setTimeout(function(){ try{ window.focus(); window.print(); }catch(e){} }, 700); };</scr' + 'ipt>'
+        + orientScript
         + '</body></html>';
       var w = window.open('', '_blank');
       if(!w){ _restore(); alert('Permita pop-ups (janelas) para gerar o PDF e tente novamente.'); return; }
