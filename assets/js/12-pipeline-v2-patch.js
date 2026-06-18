@@ -897,6 +897,8 @@
     /* Card ou Lista — preferência persistida */
     var _view=window._npMetasView;
     if(!_view){ try{ _view=localStorage.getItem('npMetasView'); }catch(e){} _view=_view||'card'; window._npMetasView=_view; }
+    /* Ordenação persistida */
+    if(!window._npMetasSort){ try{ var _ss=localStorage.getItem('npMetasSort'); if(_ss) window._npMetasSort=JSON.parse(_ss); }catch(e){} }
     if(typeof _npAtualizarViewToggle==='function') _npAtualizarViewToggle();
     grid.className=(_view==='lista')?'np-metas-lista':'np-metas-grid';
     grid.innerHTML=(_view==='lista')?_npRenderMetasListaHtml(_rows):_rows.map(function(r){return r.card;}).join('');
@@ -909,9 +911,35 @@
       if(pct>=100) return '<span style="color:#c8f05a;font-weight:700;">&#x2705; '+pct+'%</span>';
       return '<span class="np-lista-falta">'+_npFmtR(falta)+'</span> <b class="np-lista-pct">'+pct+'%</b>';
     }
+    /* ── Ordenação ── */
+    var s=window._npMetasSort||{col:'nome',dir:1};
+    rows=rows.slice().sort(function(a,b){
+      if(s.col==='nome') return String(a.nome).localeCompare(String(b.nome),'pt-BR')*s.dir;
+      var va,vb;
+      switch(s.col){
+        case 'status': case 'progresso': va=a.pct; vb=b.pct; break;
+        case 'faturado': va=a.real; vb=b.real; break;
+        case 'minima': va=a.pctM; vb=b.pctM; break;
+        case 'basica': va=a.pctB; vb=b.pctB; break;
+        case 'master': va=a.pctMas; vb=b.pctMas; break;
+        default: va=0; vb=0;
+      }
+      if(va===vb) return String(a.nome).localeCompare(String(b.nome),'pt-BR');
+      return (va-vb)*s.dir;
+    });
+    function sh(col,label,cls){
+      var arr=(s.col===col)?(s.dir>0?' <span class="np-sort-arr">&#x25B2;</span>':' <span class="np-sort-arr">&#x25BC;</span>'):'';
+      return '<th'+(cls?' class="'+cls+'"':'')+' onclick="npSortMetasLista(\''+col+'\')" style="cursor:pointer;user-select:none;">'+label+arr+'</th>';
+    }
     var th='<thead><tr>'
-      +'<th>Consultor</th><th>Status</th><th class="r">Faturado</th><th>Progresso</th>'
-      +'<th>&#x1F948; M\xednima</th><th>&#x1F949; B\xe1sica</th><th>&#x1F947; Master</th><th></th>'
+      +sh('nome','Consultor')
+      +sh('status','Status')
+      +sh('faturado','Faturado','r')
+      +sh('progresso','Progresso')
+      +sh('minima','&#x1F948; M\xednima')
+      +sh('basica','&#x1F949; B\xe1sica')
+      +sh('master','&#x1F947; Master')
+      +'<th></th>'
       +'</tr></thead>';
     var body=rows.map(function(r){
       var nm=_escJS2(r.nome);
@@ -951,6 +979,17 @@
     if(!grid||!rows){ if(window._npRenderTudo) window._npRenderTudo(); return; }
     grid.className=(view==='lista')?'np-metas-lista':'np-metas-grid';
     grid.innerHTML=(view==='lista')?_npRenderMetasListaHtml(rows):rows.map(function(r){return r.card;}).join('');
+  };
+
+  window.npSortMetasLista=function(col){
+    var s=window._npMetasSort||{col:'nome',dir:1};
+    if(s.col===col){ s.dir=-s.dir; }
+    else { s.col=col; s.dir=(col==='nome')?1:-1; }  /* numéricos começam decrescente */
+    window._npMetasSort=s;
+    try{ localStorage.setItem('npMetasSort',JSON.stringify(s)); }catch(e){}
+    var grid=document.getElementById('npMetasGrid');
+    var rows=window._npMetasRows;
+    if(grid&&rows) grid.innerHTML=_npRenderMetasListaHtml(rows);
   };
 
   /* ── Status strip no dashboard ───────────────────────── */
