@@ -626,6 +626,7 @@
             +   '</div>'
             +   '<button onclick="window._trapAbrirAqui(\'' + _esc(i.id) + '\')" title="Abrir embutido no aplicativo">👁 Abrir</button>'
             +   '<button class="sec" onclick="window._trapBaixarPdfCompleto(\'' + _esc(i.id) + '\',this)" title="Imprimir / salvar apostila completa em PDF">🖨️ Imprimir</button>'
+            +   '<button class="sec" onclick="window._trapBaixarHtml(\'' + _esc(i.id) + '\',this)" title="Baixar o treinamento completo como arquivo HTML">⬇ HTML</button>'
             +   '<button class="sec" onclick="window._trapAbrirNovaAba(\'' + _esc(i.id) + '\')" title="Abrir em nova aba">↗</button>'
             + '</div>';
         }).join('')
@@ -841,6 +842,100 @@
         w.document.open(); w.document.write(html); w.document.close();
         _restore();
       }
+    });
+  };
+
+  /* ── Baixar treinamento COMPLETO como arquivo HTML ───────
+     Junta todos os slides de todas as partes num único arquivo
+     autossuficiente, com o CSS de identidade EMBUTIDO (look
+     original preservado) e escala responsiva. Baixa via Blob. */
+  window._trapBaixarHtml = function(id, btn){
+    var item = _getItens().find(function(i){ return i.id === id; });
+    if(!item || !Array.isArray(item.estrutura) || !item.estrutura.length){
+      alert('Treinamento sem partes para gerar HTML.'); return;
+    }
+    var partes = item.estrutura.filter(function(p){ return p && p.url; });
+    if(!partes.length){ alert('Treinamento sem partes.'); return; }
+    var u0 = partes[0].url;
+    var base = u0.substring(0, u0.lastIndexOf('/') + 1);
+    var absBase = new URL(base, window.location.href).href;
+
+    var lblOrig = btn ? btn.innerHTML : '';
+    if(btn){ btn.disabled = true; btn.innerHTML = '⏳ Gerando…'; }
+    function _restore(){ if(btn){ btn.disabled = false; btn.innerHTML = lblOrig; } }
+
+    var parser = new DOMParser();
+    var slidesHtml = '';
+    var cssHref = '';
+
+    var seq = Promise.resolve();
+    partes.forEach(function(p){
+      seq = seq.then(function(){
+        return fetch(p.url).then(function(r){ return r.ok ? r.text() : ''; }).then(function(txt){
+          if(!txt) return;
+          var doc = parser.parseFromString(txt, 'text/html');
+          if(!cssHref){
+            var _lnk = doc.querySelector('head link[rel="stylesheet"]');
+            if(_lnk && _lnk.getAttribute('href')) cssHref = new URL(_lnk.getAttribute('href'), absBase).href;
+          }
+          doc.querySelectorAll('.slide').forEach(function(sl){
+            sl.querySelectorAll('script').forEach(function(s){ s.remove(); });
+            sl.classList.add('is-active');
+            sl.classList.remove('is-leaving','is-hidden-slide','dir-prev');
+            slidesHtml += '<div class="np-fit"><div class="np-fit-in">' + sl.outerHTML + '</div></div>';
+          });
+        }).catch(function(){ /* ignora parte que falhar */ });
+      });
+    });
+
+    seq.then(function(){
+      if(!slidesHtml){
+        _restore();
+        alert('Não foi possível extrair o conteúdo.\n\nA geração do HTML completo precisa que você esteja acessando o painel ONLINE (GitHub Pages). Em arquivo local (file://) o navegador bloqueia a leitura das partes.');
+        return;
+      }
+      function _finish(cssTxt){
+        var styleTag = cssTxt ? ('<style>' + cssTxt + '</style>') : ('<link rel="stylesheet" href="' + cssHref + '">');
+        var wrapCss = '<style>'
+          + 'html,body{ margin:0; padding:0; background:#0a0e16; }'
+          + '.np-doc{ max-width:1280px; margin:0 auto; padding:24px 16px 40px; }'
+          + '.np-head{ color:#e6edf3; font-family:system-ui,-apple-system,sans-serif; text-align:center; padding:14px 0 22px; }'
+          + '.np-head h1{ font-size:22px; margin:0 0 4px; }'
+          + '.np-head .s{ font-size:12px; opacity:.7; }'
+          + '*{ animation:none !important; }'
+          + '.np-fit{ position:relative; width:100%; margin:0 auto 22px; border-radius:14px; overflow:hidden; box-shadow:0 14px 40px rgba(0,0,0,.5); }'
+          + '.np-fit::before{ content:""; display:block; padding-top:56.25%; }'
+          + '.np-fit-in{ position:absolute; inset:0; }'
+          + '.np-fit-in .slide{ position:absolute !important; top:0 !important; left:0 !important; inset:auto !important; width:1280px !important; height:720px !important; display:flex !important; transform-origin:top left; border-radius:0 !important; }'
+          + '.np-fit-in .slide::after{ animation:none !important; }'
+          + '</style>';
+        var fitScript = '<scr' + 'ipt>'
+          + '(function(){function fit(){var L=document.querySelectorAll(".np-fit");for(var i=0;i<L.length;i++){var s=L[i].clientWidth/1280;var sl=L[i].querySelector(".slide");if(sl)sl.style.transform="scale("+s+")";}}window.addEventListener("resize",fit);if(document.readyState!=="loading")fit();else window.addEventListener("DOMContentLoaded",fit);window.addEventListener("load",fit);})();'
+          + '</scr' + 'ipt>';
+        var head = '<div class="np-head"><h1>' + _esc(item.titulo) + '</h1>'
+          + '<div class="s">' + _esc(item.produto || '') + ' · Treinamento Comercial completo</div></div>';
+        var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
+          + '<meta name="viewport" content="width=device-width, initial-scale=1">'
+          + '<base href="' + absBase + '">'
+          + '<title>' + _esc(item.titulo) + '</title>'
+          + styleTag + wrapCss
+          + '</head><body><div class="np-doc">' + head + slidesHtml + '</div>' + fitScript + '</body></html>';
+
+        var slug = String(item.id || item.titulo || 'treinamento').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+        try{
+          var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url; a.download = slug + '-completo.html';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+          if(typeof _toast === 'function') _toast('HTML baixado: ' + slug + '-completo.html', 'var(--green,#34d399)');
+        }catch(e){ alert('Erro ao baixar o HTML. ' + (e && e.message ? e.message : '')); }
+        _restore();
+      }
+      if(cssHref){
+        fetch(cssHref).then(function(r){ return r.ok ? r.text() : ''; }).then(_finish).catch(function(){ _finish(''); });
+      } else { _finish(''); }
     });
   };
 
