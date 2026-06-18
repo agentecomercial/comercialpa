@@ -105,27 +105,48 @@
       document.head.appendChild(v5);
     }
 
+    /* Opções de consultores com meta para o select "Copiar de" */
+    var _consComMetaOpts = '<option value="">&#x2015; selecionar consultor &#x2015;</option>';
+    _cons.forEach(function(cn){
+      var cg = _goals[cn] || {};
+      if(cg.metaMinima || cg.metaBasica || cg.metaMaster){
+        _consComMetaOpts += '<option value="'+_esc2(cn)+'">'+_esc2(cn)+'</option>';
+      }
+    });
+
     var batchHtml='<aside class="np-lote-panel" id="npLotePanel">'
       +'<div class="np-lote-sel">'
       +'<span style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Selecionar</span>'
-      +'<button type="button" class="np-sel-btn" onclick="npSelTodos()" title="Marcar todos os consultores">✓ Todos</button>'
-      +'<button type="button" class="np-sel-btn np-sel-btn-sem" onclick="npSelSemMeta()" title="Marcar só consultores AINDA SEM meta — útil após copiar valores de quem já tem">○ Sem meta</button>'
-      +'<button type="button" class="np-sel-btn np-sel-btn-com" onclick="npSelComMeta()" title="Marcar só consultores que JÁ TÊM meta definida">● Com meta</button>'
-      +'<button type="button" class="np-sel-btn np-sel-btn-clear" onclick="npLimparSel()" title="Desmarcar todos">✕ Limpar</button>'
+      +'<button type="button" class="np-sel-btn" onclick="npSelTodos()" title="Marcar todos os consultores">&#x2713; Todos</button>'
+      +'<button type="button" class="np-sel-btn np-sel-btn-sem" onclick="npSelSemMeta()" title="Marcar só consultores AINDA SEM meta — útil após copiar valores de quem já tem">&#x25CB; Sem meta</button>'
+      +'<button type="button" class="np-sel-btn np-sel-btn-com" onclick="npSelComMeta()" title="Marcar só consultores que JÁ TÊM meta definida">&#x25CF; Com meta</button>'
+      +'<button type="button" class="np-sel-btn np-sel-btn-clear" onclick="npLimparSel()" title="Desmarcar todos">&#x2715; Limpar</button>'
       +'<span id="npLoteCounter" class="np-sel-cnt"><b>0</b> de '+_cons.length+' selecionados</span>'
       +'<label style="display:none;"><input type="checkbox" id="npLoteSelAll" onchange="npToggleSelAll(this)"></label>'
       +'</div>'
       +'<div class="np-lote-vals">'
+      /* ── Passo 1: Copiar de consultor ── */
+      +'<div><div style="font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">&#x1F4CB; Copiar de consultor</div>'
+      +'<select id="npLoteCopiarDe" onchange="npCopiarDe(this)" style="width:100%;background:var(--bg-2,#161b22);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 8px;font-size:11px;font-family:inherit;cursor:pointer;appearance:auto;">'
+      +_consComMetaOpts+'</select></div>'
+      /* ── 3 campos de meta ── */
       +'<div><div style="font-size:9px;font-weight:800;color:#ffe000;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">&#x1F948; M\xednima</div>'
-      +'<input type="text" id="npLoteMinima" class="np-form-input" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)" style="border-color:rgba(255,238,0,.3);width:100%;"></div>'
+      +'<input type="text" id="npLoteMinima" class="np-form-input" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value);npVerificarPctLote()" style="border-color:rgba(255,238,0,.3);width:100%;"></div>'
       +'<div><div style="font-size:9px;font-weight:800;color:#ff5252;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">&#x1F949; B\xe1sica</div>'
-      +'<input type="text" id="npLoteBasica" class="np-form-input" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)" style="border-color:rgba(255,82,82,.3);width:100%;"></div>'
+      +'<input type="text" id="npLoteBasica" class="np-form-input" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value);npVerificarPctLote()" style="border-color:rgba(255,82,82,.3);width:100%;"></div>'
       +'<div><div style="font-size:9px;font-weight:800;color:#c8f05a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">&#x1F947; Master</div>'
-      +'<input type="text" id="npLoteMaster" class="np-form-input" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value)" style="border-color:rgba(200,240,90,.3);width:100%;"></div>'
+      +'<input type="text" id="npLoteMaster" class="np-form-input" placeholder="manter atual" oninput="this.value=npMoneyMask(this.value);npVerificarPctLote()" style="border-color:rgba(200,240,90,.3);width:100%;"></div>'
+      /* ── Passo 2: Botões 50% / 75% (ocultos até ter valor nos campos) ── */
+      +'<div id="npLotePct" style="display:none;border-top:1px dashed var(--border);padding-top:10px;">'
+      +'<div style="font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Aplicar % dos valores</div>'
+      +'<div style="display:flex;gap:8px;">'
+      +'<button type="button" id="npLotePct50" onclick="npAplicarPctLote(50)" style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">50%</button>'
+      +'<button type="button" id="npLotePct75" onclick="npAplicarPctLote(75)" style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">75%</button>'
+      +'</div></div>'
       +'</div>'
       +'<div class="np-lote-acts">'
       +'<button class="np-btn" style="font-size:12px;padding:8px 14px;width:100%;" onclick="npAplicarMetaLote()">Aplicar aos selecionados</button>'
-      +'<button class="np-btn-sec" style="font-size:11px;padding:7px 14px;width:100%;" onclick="npCopiarMetasMesAnterior()">&#x21E6; Copiar mês anterior</button>'
+      +'<button class="np-btn-sec" style="font-size:11px;padding:7px 14px;width:100%;" onclick="npCopiarMetasMesAnterior()">&#x21E6; Copiar m\xeas anterior</button>'
       +'</div>'
       +'</aside>';
 
@@ -207,16 +228,100 @@
     if(loteMin) loteMin.value = (inpMin && inpMin.value) || '';
     if(loteBas) loteBas.value = (inpBas && inpBas.value) || '';
     if(loteMas) loteMas.value = (inpMas && inpMas.value) || '';
-    /* Recupera o nome do consultor copiado (só pra mensagem) */
+    /* Guarda base para cálculo de % e reseta select "Copiar de" */
+    window._npLoteBase = {
+      min: npParseMoney((inpMin && inpMin.value) || '') || 0,
+      bas: npParseMoney((inpBas && inpBas.value) || '') || 0,
+      mas: npParseMoney((inpMas && inpMas.value) || '') || 0
+    };
+    window._npLotePctAtivo = null;
+    var sel = document.getElementById('npLoteCopiarDe'); if(sel) sel.value = '';
+    if(typeof npVerificarPctLote === 'function') npVerificarPctLote();
     var consName = (row.getAttribute('data-cons-row')||'consultor').trim();
     if(typeof _showToast==='function'){
-      _showToast('📋 Valores de '+consName+' copiados. Marque os destinos e clique "Aplicar aos selecionados".','var(--accent)');
+      _showToast('&#x1F4CB; Valores de '+consName+' copiados. Marque os destinos e clique "Aplicar aos selecionados".','var(--accent)');
     }
-    /* Foco visual no painel superior */
     var panel = document.getElementById('npLotePanel');
     if(panel){ panel.style.transition='box-shadow .3s'; panel.style.boxShadow='0 0 0 2px rgba(200,240,90,.4)';
       setTimeout(function(){ panel.style.boxShadow=''; }, 900); }
   };
+  /* ── Passo 1: Copiar de consultor pelo select do painel lote ── */
+  window.npCopiarDe = function(sel) {
+    var nome = sel ? sel.value : '';
+    if(!nome) return;
+    var goals = window._npGoals || {};
+    var g = goals[nome] || {};
+    /* Lê do DOM (captura edições não salvas) */
+    var body = document.getElementById('npModalMetaBody');
+    if(body) {
+      var dMin = body.querySelector('[data-cons="'+nome+'"][data-tipo="metaMinima"]');
+      var dBas = body.querySelector('[data-cons="'+nome+'"][data-tipo="metaBasica"]');
+      var dMas = body.querySelector('[data-cons="'+nome+'"][data-tipo="metaMaster"]');
+      g = {
+        metaMinima: (dMin && npParseMoney(dMin.value)) || g.metaMinima || 0,
+        metaBasica: (dBas && npParseMoney(dBas.value)) || g.metaBasica || 0,
+        metaMaster: (dMas && npParseMoney(dMas.value)) || g.metaMaster || 0
+      };
+    }
+    var fmt = typeof _npFmtMoneyInput === 'function' ? _npFmtMoneyInput : function(v){ return String(v); };
+    var lMin = document.getElementById('npLoteMinima');
+    var lBas = document.getElementById('npLoteBasica');
+    var lMas = document.getElementById('npLoteMaster');
+    if(lMin) lMin.value = g.metaMinima ? fmt(g.metaMinima) : '';
+    if(lBas) lBas.value = g.metaBasica ? fmt(g.metaBasica) : '';
+    if(lMas) lMas.value = g.metaMaster ? fmt(g.metaMaster) : '';
+    window._npLoteBase = { min: g.metaMinima||0, bas: g.metaBasica||0, mas: g.metaMaster||0 };
+    window._npLotePctAtivo = null;
+    npVerificarPctLote();
+    var panel = document.getElementById('npLotePanel');
+    if(panel){ panel.style.transition='box-shadow .3s'; panel.style.boxShadow='0 0 0 2px rgba(200,240,90,.4)';
+      setTimeout(function(){ panel.style.boxShadow=''; }, 900); }
+    if(typeof _showToast==='function') _showToast('&#x1F4CB; Meta de '+nome+' copiada. Selecione % ou aplique diretamente.','var(--accent)');
+  };
+
+  /* ── Passo 2: Mostrar/ocultar botões de % ── */
+  window.npVerificarPctLote = function() {
+    var pctDiv = document.getElementById('npLotePct');
+    if(!pctDiv) return;
+    var vMin = (document.getElementById('npLoteMinima') || {}).value || '';
+    var vBas = (document.getElementById('npLoteBasica') || {}).value || '';
+    var vMas = (document.getElementById('npLoteMaster') || {}).value || '';
+    var temValor = !!(vMin.trim() || vBas.trim() || vMas.trim());
+    pctDiv.style.display = temValor ? '' : 'none';
+    if(!temValor){ window._npLoteBase = null; window._npLotePctAtivo = null; _npLotePctReset(); }
+  };
+
+  function _npLotePctReset() {
+    var b50 = document.getElementById('npLotePct50');
+    var b75 = document.getElementById('npLotePct75');
+    var sBase = 'rgba(255,255,255,.05)';
+    if(b50){ b50.style.background=sBase; b50.style.color='var(--muted)'; b50.style.borderColor='var(--border)'; }
+    if(b75){ b75.style.background=sBase; b75.style.color='var(--muted)'; b75.style.borderColor='var(--border)'; }
+  }
+
+  window.npAplicarPctLote = function(pct) {
+    if(!window._npLoteBase) {
+      var vMin2 = npParseMoney((document.getElementById('npLoteMinima')||{}).value||'');
+      var vBas2 = npParseMoney((document.getElementById('npLoteBasica')||{}).value||'');
+      var vMas2 = npParseMoney((document.getElementById('npLoteMaster')||{}).value||'');
+      window._npLoteBase = { min: vMin2||0, bas: vBas2||0, mas: vMas2||0 };
+    }
+    var base = window._npLoteBase;
+    var mult = pct / 100;
+    var fmt = typeof _npFmtMoneyInput === 'function' ? _npFmtMoneyInput : function(v){ return String(v); };
+    var lMin = document.getElementById('npLoteMinima');
+    var lBas = document.getElementById('npLoteBasica');
+    var lMas = document.getElementById('npLoteMaster');
+    if(lMin && base.min) lMin.value = fmt(Math.round(base.min * mult));
+    if(lBas && base.bas) lBas.value = fmt(Math.round(base.bas * mult));
+    if(lMas && base.mas) lMas.value = fmt(Math.round(base.mas * mult));
+    window._npLotePctAtivo = pct;
+    _npLotePctReset();
+    var btnAtivo = document.getElementById('npLotePct'+pct);
+    if(btnAtivo){ btnAtivo.style.background='rgba(200,240,90,.15)'; btnAtivo.style.color='var(--accent)'; btnAtivo.style.borderColor='rgba(200,240,90,.4)'; }
+    if(typeof _showToast==='function') _showToast(pct+'% aplicado. Clique "Aplicar aos selecionados" para confirmar.','var(--accent)');
+  };
+
   /* Hover style do botão Copiar — injetado uma vez */
   (function(){
     if(document.getElementById('npMetaCopyStyle')) return;
