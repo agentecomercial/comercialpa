@@ -954,97 +954,132 @@
     var now   = new Date();
     var mesAno = MESES[now.getMonth()].toUpperCase() + '/' + now.getFullYear();
 
-    var prox = _npProxTier(g, real);
-    var proxTxt = prox.batida === 'master'
-      ? 'Super Meta atingida! 🚀 Parabéns!'
-      : (prox.falta > 0 ? 'Próximo: faltam ' + _npFmtR(prox.falta) + ' para ' + prox.label : 'Sem metas configuradas');
+    /* dias úteis restantes no mês (seg-sex, a partir de hoje inclusive) */
+    var dias = (function() {
+      var hoje = new Date(); hoje.setHours(0,0,0,0);
+      var ultimo = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0); ultimo.setHours(0,0,0,0);
+      var cnt = 0;
+      for (var d = new Date(hoje); d <= ultimo; d.setDate(d.getDate() + 1)) {
+        var dow = d.getDay(); if (dow >= 1 && dow <= 5) cnt++;
+      }
+      return cnt;
+    })();
+
+    var tiers = [
+      { ico: '🥈', lbl: 'Mínima', val: m,   pct: pctM,   col: '#5b7fa6', falta: Math.max(0, m - real) },
+      { ico: '🥉', lbl: 'Básica', val: b,   pct: pctB,   col: '#c47d0a', falta: Math.max(0, b - real) },
+      { ico: '🥇', lbl: 'Master',       val: M,   pct: pctMas, col: '#b8960a', falta: Math.max(0, M - real) }
+    ];
+    var pending = tiers.filter(function(t) { return t.val > 0 && t.pct < 100; });
+    var configured = tiers.filter(function(t) { return t.val > 0; });
 
     /* ── Canvas ── */
-    var W = 520, H = 264, DPR = 2;
+    var W = 520;
+    var bandRows = pending.length > 0 ? pending.length : 1;
+    var H = 44 + (configured.length * 24) + 14 + 8 + 14 + 24 + (bandRows * 26) + 20;
+    if (H < 230) H = 230;
+    var DPR = 2, px = 18;
     var cv = document.createElement('canvas');
     cv.width = W * DPR; cv.height = H * DPR;
     var ctx = cv.getContext('2d');
     ctx.scale(DPR, DPR);
     var SAN = 'system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
 
-    /* fundo */
-    ctx.fillStyle = '#0d1117';
-    _npRRect(ctx, 0, 0, W, H, 12); ctx.fill();
-
-    /* header strip */
-    ctx.fillStyle = '#161b22';
-    _npRRect(ctx, 0, 0, W, 44, 12); ctx.fill();
-    ctx.fillRect(0, 32, W, 12);
-
-    ctx.fillStyle = '#8b949e';
-    ctx.font = '600 11px ' + SAN;
-    ctx.textBaseline = 'middle';
-    ctx.fillText('RELATÓRIO DE META  ·  ' + mesAno, 18, 22);
-
-    /* linha divisória */
-    function sep(y) { ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-    sep(44);
-
-    /* Consultor */
-    ctx.fillStyle = '#636e7b'; ctx.font = '500 12px ' + SAN;
-    ctx.fillText('Consultor', 18, 63);
-    ctx.fillStyle = '#e6edf3'; ctx.font = '700 13px ' + SAN;
-    ctx.fillText(nome, 112, 63);
-
-    /* Faturado */
-    ctx.fillStyle = '#636e7b'; ctx.font = '500 12px ' + SAN;
-    ctx.fillText('Faturado', 18, 86);
-    ctx.fillStyle = '#c8f05a'; ctx.font = '700 15px ' + SAN;
-    ctx.fillText(_npFmtR(real), 112, 86);
-
-    sep(102);
-
-    /* Tier rows */
-    function tier(y, emoji, label, meta, pct, ok) {
-      ctx.font = '13px ' + SAN; ctx.fillStyle = '#e6edf3';
-      ctx.fillText(emoji, 18, y);
-      ctx.font = '500 12px ' + SAN; ctx.fillStyle = '#8b949e';
-      ctx.fillText(label, 40, y);
-      if (meta > 0) {
-        ctx.font = '600 12px ' + SAN; ctx.fillStyle = '#c0c9d6';
-        ctx.fillText(_npFmtR(meta), 118, y);
-        ctx.font = '700 12px ' + SAN; ctx.fillStyle = ok ? '#56d364' : '#f0b429';
-        ctx.fillText((ok ? '✅ ' : '⏳ ') + pct + '%', 268, y);
-        /* barra */
-        var bx = 346, bw = 152, bh = 7, by = y - 7;
-        ctx.fillStyle = '#21262d'; _npRRect(ctx, bx, by, bw, bh, 4); ctx.fill();
-        var fill = Math.min(1, pct / 100);
-        if (fill > 0) {
-          ctx.fillStyle = ok ? '#56d364' : '#c8f05a';
-          _npRRect(ctx, bx, by, Math.max(bh, bw * fill), bh, 4); ctx.fill();
-        }
-      } else {
-        ctx.font = '500 12px ' + SAN; ctx.fillStyle = '#3a4149';
-        ctx.fillText('Não configurada', 118, y);
+    function barH(x, y, w, h, pct, fill) {
+      ctx.fillStyle = '#1c2128'; _npRRect(ctx, x, y, w, h, h / 2); ctx.fill();
+      if (pct > 0) {
+        ctx.fillStyle = fill;
+        _npRRect(ctx, x, y, Math.max(h, w * Math.min(pct, 100) / 100), h, h / 2); ctx.fill();
       }
     }
+    function lnH(y, x0, x1, col) {
+      ctx.strokeStyle = col || '#21262d'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+    }
 
-    tier(122, '🥈', 'Mínima', m, pctM,   pctM   >= 100);
-    tier(148, '🥉', 'Básica', b, pctB,   pctB   >= 100);
-    tier(174, '🥇', 'Master', M, pctMas, pctMas >= 100);
+    /* fundo gradiente */
+    var grd = ctx.createLinearGradient(0, 0, 0, H);
+    grd.addColorStop(0, '#111827'); grd.addColorStop(1, '#0d1117');
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
 
-    sep(190);
-
-    /* Próximo */
-    ctx.fillStyle = '#8b949e'; ctx.font = '500 11px ' + SAN;
-    ctx.fillText(proxTxt, 18, 208);
-
-    /* Branding */
-    ctx.fillStyle = '#2a3140'; ctx.font = '500 10px ' + SAN;
-    ctx.textAlign = 'right';
-    ctx.fillText('Febracis · Pipeline Comercial', W - 18, 248);
+    /* header: nome esq | mes topo-dir | faturado baixo-dir */
+    ctx.fillStyle = 'rgba(56,189,248,0.09)'; ctx.fillRect(0, 0, W, 44);
+    ctx.font = '700 15px ' + SAN; ctx.fillStyle = '#e6edf3'; ctx.textBaseline = 'middle';
+    ctx.fillText(nome, px, 22);
+    ctx.font = '500 11px ' + SAN; ctx.fillStyle = '#636e7b'; ctx.textAlign = 'right';
+    ctx.fillText(mesAno, W - px, 12);
+    ctx.font = '700 13px ' + SAN; ctx.fillStyle = '#56d364';
+    ctx.fillText(_npFmtR(real), W - px, 32);
     ctx.textAlign = 'left';
+    lnH(44, 0, W);
+
+    /* tiers compactos */
+    var barX = px + 120, barW = 150;
+    var y = 62;
+    tiers.forEach(function(t) {
+      if (!t.val) return;
+      var done = t.pct >= 100;
+      ctx.font = '12px ' + SAN; ctx.fillStyle = done ? '#56d364' : '#e6edf3'; ctx.textBaseline = 'middle';
+      ctx.fillText(t.ico + ' ' + t.lbl, px, y);
+      ctx.font = '500 10px ' + SAN; ctx.fillStyle = '#636e7b';
+      ctx.fillText(_npFmtR(t.val), px + 88, y);
+      barH(barX, y - 5, barW, 10, t.pct, done ? '#56d364' : t.col);
+      ctx.font = '700 10px ' + SAN; ctx.fillStyle = done ? '#56d364' : '#f0b429';
+      ctx.textAlign = 'right'; ctx.fillText(t.pct + '%', barX + barW + 38, y); ctx.textAlign = 'left';
+      if (done) {
+        var bx = barX + barW + 44, by = y - 9, bw = 68, bh = 18;
+        ctx.fillStyle = 'rgba(86,211,100,0.14)'; _npRRect(ctx, bx, by, bw, bh, 4); ctx.fill();
+        ctx.strokeStyle = 'rgba(86,211,100,0.4)'; ctx.lineWidth = 1; _npRRect(ctx, bx, by, bw, bh, 4); ctx.stroke();
+        ctx.font = '700 9px ' + SAN; ctx.fillStyle = '#56d364';
+        ctx.textAlign = 'center'; ctx.fillText('✅ BATIDA', bx + bw / 2, y + 0.5); ctx.textAlign = 'left';
+      } else {
+        ctx.font = '9px ' + SAN; ctx.fillStyle = '#f0b429';
+        ctx.fillText('⏳ pendente', barX + barW + 44, y);
+      }
+      y += 24;
+    });
+
+    /* banda âmbar ⚡ Para bater a meta */
+    var bandY = y + 8;
+    ctx.fillStyle = 'rgba(245,158,11,0.07)'; ctx.fillRect(0, bandY, W, H - bandY);
+    lnH(bandY, 0, W, 'rgba(245,158,11,0.25)');
+    bandY += 14;
+
+    ctx.font = '700 11px ' + SAN; ctx.fillStyle = '#f59e0b'; ctx.textBaseline = 'middle';
+    ctx.fillText('⚡ PARA BATER A META', px, bandY);
+    ctx.font = '500 10px ' + SAN; ctx.fillStyle = '#636e7b';
+    ctx.fillText('· ' + dias + (dias === 1 ? ' dia útil restante' : ' dias úteis restantes'), px + 166, bandY);
+    bandY += 24;
+
+    if (pending.length === 0) {
+      ctx.font = '700 13px ' + SAN; ctx.fillStyle = '#56d364';
+      ctx.textAlign = 'center'; ctx.fillText('🚀 Todas as metas batidas! Parabéns!', W / 2, bandY + 4); ctx.textAlign = 'left';
+    } else {
+      pending.forEach(function(p) {
+        var ritmo = dias > 0 ? Math.round(p.falta / dias) : 0;
+        ctx.font = '13px ' + SAN; ctx.fillStyle = '#e6edf3'; ctx.textBaseline = 'middle';
+        ctx.fillText(p.ico + ' ' + p.lbl, px, bandY);
+        ctx.font = '500 11px ' + SAN; ctx.fillStyle = '#636e7b';
+        ctx.fillText('faltam', px + 84, bandY);
+        ctx.font = '700 13px ' + SAN; ctx.fillStyle = '#e3b341';
+        ctx.fillText(_npFmtR(p.falta), px + 130, bandY);
+        var pw = 126, ph = 20, ppx = W - px - pw;
+        ctx.fillStyle = 'rgba(245,158,11,0.18)'; _npRRect(ctx, ppx, bandY - ph / 2, pw, ph, 5); ctx.fill();
+        ctx.font = '700 11px ' + SAN; ctx.fillStyle = '#f59e0b';
+        ctx.textAlign = 'center'; ctx.fillText(_npFmtR(ritmo) + ' / dia', ppx + pw / 2, bandY + 0.5); ctx.textAlign = 'left';
+        bandY += 26;
+      });
+    }
+
+    /* branding */
+    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = '500 10px ' + SAN;
+    ctx.textAlign = 'right'; ctx.fillText('Febracis · Pipeline Comercial', W - px, H - 10); ctx.textAlign = 'left';
 
     /* cópia */
     cv.toBlob(function(blob) {
       if (!blob) return;
       if (typeof ClipboardItem !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
-        navigator.clipboard.write([new ClipboardItem({'image/png': blob})])
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
           .then(function() { _npToastCopy('📋 Imagem copiada!'); })
           .catch(function() { _npDownloadMetaImg(blob, nome); });
       } else {
