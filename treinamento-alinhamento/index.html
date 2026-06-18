@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Alinhamento Inicial — Equipe Comercial Febracis</title>
+<link rel="stylesheet" href="assets/alinhamento.css" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--cis-blue-900); }
+  body { color: var(--cis-text); font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+
+  .app { display: grid; grid-template-columns: 260px 1fr; height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    position: relative;
+    background: linear-gradient(170deg, #141414 0%, #0d0d0d 100%);
+    border-right: 1px solid rgba(201,162,39,0.18);
+    display: flex; flex-direction: column;
+    padding: 22px 14px;
+    overflow-y: auto;
+    z-index: 6;
+  }
+  .sidebar .brand {
+    padding: 4px 12px 18px;
+    border-bottom: 1px solid rgba(201,162,39,0.12);
+    margin-bottom: 14px;
+  }
+  .sidebar .brand small {
+    display: block; font-size: 10px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--cis-muted); font-weight: 700;
+  }
+  .sidebar .brand h2 {
+    margin: 4px 0 0; font-size: 18px; color: var(--cis-yellow);
+    letter-spacing: -0.3px; font-weight: 900;
+  }
+
+  .sidenav { display: flex; flex-direction: column; gap: 4px; }
+  .sidenav-label {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cis-muted); font-weight: 700; margin: 14px 12px 6px;
+  }
+  .sidenav-item {
+    appearance: none; background: transparent; border: 1px solid transparent;
+    color: var(--cis-text); text-align: left; padding: 10px 12px;
+    border-radius: 10px; cursor: pointer; font: 600 14px/1.2 inherit;
+    display: flex; align-items: center; gap: 10px;
+    white-space: nowrap; transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .sidenav-item:hover { background: rgba(201,162,39,0.08); color: var(--cis-yellow); }
+  .sidenav-item.is-active {
+    background: rgba(201,162,39,0.15);
+    border-color: var(--cis-card-border-strong);
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .ico {
+    flex: 0 0 22px; height: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--cis-yellow);
+  }
+  .sidenav-item .ico svg { width: 16px; height: 16px; }
+  .sidenav-item .num {
+    flex: 0 0 22px; height: 22px; border-radius: 6px;
+    background: rgba(201,162,39,0.15); color: var(--cis-yellow);
+    font-weight: 900; font-size: 11px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .sidenav-item .meta {
+    margin-left: auto; font-size: 10px; color: var(--cis-muted); letter-spacing: 0.1em;
+  }
+  .sidenav-item .chevron {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 6px; color: var(--cis-muted);
+    background: transparent; border: 0; cursor: pointer; margin-left: 6px;
+    transition: transform .2s ease, background .15s ease, color .15s ease;
+    flex: 0 0 22px; padding: 0;
+  }
+  .sidenav-item .chevron:hover { background: rgba(201,162,39,0.18); color: var(--cis-yellow); }
+  .sidenav-item .chevron svg { width: 11px; height: 11px; }
+  .sidenav-item .chevron.is-open { transform: rotate(90deg); color: var(--cis-yellow); }
+
+  .sidenav-item.highlight {
+    background: linear-gradient(135deg, rgba(201,162,39,0.18), rgba(160,122,16,0.10));
+    border-color: var(--cis-card-border-strong); color: var(--cis-yellow);
+    font-weight: 800; margin-top: 6px;
+  }
+  .sidenav-item.highlight:hover { background: linear-gradient(135deg, rgba(201,162,39,0.28), rgba(160,122,16,0.18)); }
+  .sidenav-item.highlight.is-active { background: var(--cis-yellow); color: #111; }
+  .sidenav-item.highlight.is-active .ico { color: #111; }
+  .sidenav-item.highlight .chevron { color: var(--cis-yellow); }
+  .sidenav-item.highlight.is-active .chevron { color: #111; }
+
+  .sidebar .foot {
+    margin-top: auto; padding: 14px 12px 0;
+    border-top: 1px solid rgba(201,162,39,0.12);
+    font-size: 11px; color: var(--cis-muted); line-height: 1.4;
+  }
+
+  .sidenav-group { display: none; margin-left: 18px; padding-left: 8px; border-left: 2px solid rgba(201,162,39,0.18); margin-top: 4px; margin-bottom: 8px; }
+  .sidenav-group.is-open { display: block; }
+
+  .sidenav-sub {
+    list-style: none; margin: 4px 0 8px; padding: 4px 4px 8px 12px;
+    border-left: 2px solid rgba(201,162,39,0.18); margin-left: 18px;
+    display: none; max-height: 360px; overflow-y: auto; overscroll-behavior: contain;
+  }
+  .sidenav-sub.is-open { display: block; }
+  .sidenav-sub li { margin: 0; }
+  .sidenav-sub-item {
+    appearance: none; background: transparent; border: 0;
+    color: var(--cis-muted); text-align: left; padding: 6px 10px;
+    border-radius: 6px; cursor: pointer; font: 500 12px/1.35 inherit;
+    width: 100%; display: flex; gap: 8px; align-items: flex-start;
+    transition: background .12s ease, color .12s ease;
+  }
+  .sidenav-sub-item:hover { background: rgba(201,162,39,0.08); color: var(--cis-yellow); }
+  .sidenav-sub-item.is-current { background: rgba(201,162,39,0.18); color: var(--cis-yellow); font-weight: 700; }
+  .sidenav-sub-item .sub-n {
+    flex: 0 0 22px; font-family: ui-monospace, Consolas, monospace;
+    font-size: 10px; color: var(--cis-yellow); opacity: .7; padding-top: 1px;
+  }
+  .sidenav-sub-item.is-current .sub-n { opacity: 1; }
+  .sidenav-sub-item .sub-title { flex: 1; }
+
+  /* Main */
+  .main { position: relative; overflow: hidden; }
+  .view { display: none; }
+  .view.is-active { display: block; }
+
+  /* Menu view */
+  #menu-view {
+    height: 100vh; overflow: auto;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(40,40,40,0.4), transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(201,162,39,0.08), transparent 55%),
+      linear-gradient(160deg, #111 0%, #161616 55%, #1a1a1a 100%);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 56px 36px 96px; }
+
+  .hero {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: end; gap: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(201,162,39,0.18);
+    margin-bottom: 40px;
+  }
+  .hero .badge {
+    display: inline-block; background: var(--cis-yellow); color: #111;
+    padding: 6px 18px; border-radius: 999px; font-weight: 900;
+    letter-spacing: 0.18em; text-transform: uppercase; font-size: 12px; margin-bottom: 16px;
+  }
+  .hero h1 { font-size: 52px; line-height: 1; color: var(--cis-yellow); margin: 0 0 12px; letter-spacing: -1.5px; font-weight: 900; }
+  .hero h1 small { display:block; color:#fff; font-size: 22px; font-weight: 500; letter-spacing: -0.5px; margin-top:6px; }
+  .hero p.sub { max-width: 720px; font-size: 17px; color: var(--cis-muted); margin: 0; }
+  .hero .stats { text-align: right; color: var(--cis-muted); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .hero .stats strong { display:block; font-size: 44px; color: var(--cis-yellow); font-weight: 900; line-height:1; letter-spacing: -1px; }
+
+  .grid-modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; margin-bottom: 40px; }
+  .module-card {
+    background:
+      radial-gradient(circle at 90% 10%, rgba(201,162,39,0.10), transparent 50%),
+      rgba(22, 22, 22, 0.72);
+    border: 1px solid var(--cis-card-border);
+    border-radius: 18px; padding: 26px 30px;
+    cursor: pointer; color: inherit;
+    display: flex; flex-direction: column; gap: 12px;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    box-shadow: 0 24px 60px -32px rgba(0,0,0,0.95);
+    text-align: left; font: inherit; width: 100%;
+  }
+  .module-card:hover { transform: translateY(-3px); border-color: var(--cis-card-border-strong); box-shadow: 0 28px 70px -28px rgba(201,162,39,0.25); }
+  .module-card .tag { font-size: 12px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 700; text-transform: uppercase; }
+  .module-card h3 { margin: 0; font-size: 26px; color: #fff; line-height: 1.1; font-weight: 800; letter-spacing: -0.5px; }
+  .module-card p { margin: 0; color: var(--cis-muted); font-size: 14px; line-height: 1.5; }
+  .module-card .meta-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 12px; border-top: 1px solid rgba(201,162,39,0.18); font-size: 13px; color: var(--cis-muted); }
+  .module-card .meta-bar .go { color: var(--cis-yellow); font-weight: 800; letter-spacing: 0.06em; }
+  .module-card ul { margin: 0; padding: 0; list-style: none; display:flex; flex-direction: column; gap: 5px; }
+  .module-card ul li { display:flex; gap:8px; font-size: 13px; color: var(--cis-text); }
+  .module-card ul li::before { content: "•"; color: var(--cis-yellow); font-weight: 900; }
+
+  .section-title { font-size: 13px; letter-spacing: 0.2em; color: var(--cis-yellow); font-weight: 800; text-transform: uppercase; margin: 0 0 14px; }
+
+  .closing-card {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(201,162,39,0.22), transparent 50%),
+      linear-gradient(135deg, rgba(160,122,16,0.16), rgba(22,22,22,0.92));
+    border: 1px solid var(--cis-card-border-strong);
+    border-radius: 18px; padding: 26px 30px;
+    cursor: pointer; color: inherit;
+    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 24px;
+    margin-bottom: 22px;
+    transition: transform .2s ease, box-shadow .2s ease;
+    box-shadow: 0 28px 60px -28px rgba(201,162,39,0.25);
+    text-align: left; font: inherit; width: 100%;
+  }
+  .closing-card:hover { transform: translateY(-3px); box-shadow: 0 32px 70px -25px rgba(201,162,39,0.4); }
+  .closing-card .tag { font-size: 11px; letter-spacing: 0.2em; color: #111; font-weight: 900; text-transform: uppercase; background: var(--cis-yellow); padding: 4px 10px; border-radius: 999px; display: inline-block; }
+  .closing-card h3 { margin: 10px 0 6px; font-size: 28px; color: var(--cis-yellow); line-height: 1.05; font-weight: 900; letter-spacing: -1px; }
+  .closing-card p { margin: 0; color: #fff; font-size: 14px; line-height: 1.5; max-width: 580px; }
+  .closing-card .cta {
+    background: var(--cis-yellow); color: #111; padding: 14px 22px; border-radius: 12px;
+    font-weight: 900; letter-spacing: 0.06em; font-size: 14px;
+    display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 8px 24px -8px rgba(201,162,39,0.5);
+  }
+
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 40px; }
+  .info-grid .card { background: rgba(22,22,22,0.72); border: 1px solid var(--cis-card-border); border-radius: 14px; padding: 16px 20px; }
+  .info-grid .card h4 { margin: 0 0 6px; color: var(--cis-yellow); font-size: 15px; }
+  .info-grid .card p { margin: 0; color: var(--cis-text); font-size: 13px; line-height: 1.5; }
+  .info-grid .card kbd {
+    display: inline-block; background: rgba(201,162,39,0.18);
+    border: 1px solid var(--cis-card-border-strong); color: var(--cis-yellow);
+    padding: 2px 8px; border-radius: 6px;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; margin: 0 2px;
+  }
+
+  footer { text-align: center; color: var(--cis-muted); font-size: 13px; padding-top: 20px; border-top: 1px solid rgba(201,162,39,0.12); }
+
+  /* Player view */
+  #player-view { position: absolute; inset: 0; background: #000; }
+  #player-view iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+  .player-topbar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.65), rgba(0,0,0,0.0));
+    pointer-events: none; font-family: inherit;
+  }
+  .player-topbar > * { pointer-events: auto; }
+  .player-topbar .spacer { flex: 1; }
+
+  .pbtn {
+    appearance: none; background: rgba(22,22,22,0.7);
+    border: 1px solid var(--cis-card-border-strong); color: var(--cis-yellow);
+    padding: 7px 14px; border-radius: 999px; cursor: pointer;
+    font: 700 13px/1 "Inter", "Segoe UI", Arial, sans-serif; letter-spacing: 0.06em;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: background .15s ease, transform .15s ease, color .15s ease;
+  }
+  .pbtn:hover { background: rgba(201,162,39,0.2); transform: translateY(-1px); }
+  .pbtn:active { transform: translateY(0); }
+  .pbtn svg { width: 14px; height: 14px; }
+  .pbtn.is-on { background: var(--cis-yellow); color: #111; border-color: var(--cis-yellow); }
+
+  .player-topbar .module-label {
+    font: 700 11px/1 "Inter", "Segoe UI", Arial, sans-serif;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--cis-muted);
+    background: rgba(22,22,22,0.6); border: 1px solid rgba(201,162,39,0.25);
+    padding: 7px 14px; border-radius: 999px;
+  }
+  .player-topbar .module-label strong { color: var(--cis-yellow); margin-right: 6px; }
+
+  .is-fullscreen .sidebar { display: none; }
+  .is-fullscreen .app { grid-template-columns: 1fr; }
+
+  .sidebar-pull {
+    display: none;
+    position: fixed; top: 50%; left: 0; transform: translateY(-50%); z-index: 40;
+    background: linear-gradient(90deg, var(--cis-yellow) 0%, var(--cis-yellow-deep) 100%);
+    color: #111; border: 0; border-radius: 0 14px 14px 0;
+    padding: 22px 10px 22px 6px; cursor: pointer;
+    box-shadow: 6px 0 20px -4px rgba(0,0,0,0.6);
+    transition: padding-right .15s ease, transform .15s ease;
+  }
+  .sidebar-pull:hover { padding-right: 14px; transform: translateY(-50%) translateX(2px); }
+  .sidebar-pull svg { width: 18px; height: 18px; display: block; }
+  .is-fullscreen .sidebar-pull { display: inline-flex; align-items: center; justify-content: center; }
+
+  .is-fullscreen .sidebar.is-overlay {
+    display: flex !important; position: fixed; top: 0; bottom: 0; left: 0;
+    width: 280px; z-index: 45;
+    animation: sidebarIn .22s ease both;
+    box-shadow: 8px 0 30px -8px rgba(0,0,0,0.6);
+  }
+  .is-fullscreen .sidebar-pull.is-hidden { display: none; }
+
+  .sidebar-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 42;
+    animation: fadeIn .2s ease both;
+  }
+  .is-fullscreen .sidebar-backdrop.is-open { display: block; }
+
+  @keyframes sidebarIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .sidebar-close {
+    display: none; appearance: none; background: transparent;
+    border: 1px solid var(--cis-card-border-strong); color: var(--cis-yellow);
+    width: 30px; height: 30px; border-radius: 999px; cursor: pointer;
+    position: absolute; top: 14px; right: 12px;
+    align-items: center; justify-content: center; transition: background .15s ease;
+  }
+  .sidebar-close:hover { background: rgba(201,162,39,0.18); }
+  .sidebar-close svg { width: 14px; height: 14px; }
+  .is-fullscreen .sidebar.is-overlay .sidebar-close { display: inline-flex; }
+
+  .sidebar-toggle { display: none; position: fixed; top: 14px; left: 14px; z-index: 30; }
+
+  @media (max-width: 960px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 260px; transform: translateX(-100%); transition: transform .25s ease; }
+    .sidebar.is-open { transform: translateX(0); }
+    .sidebar-toggle { display: inline-flex; }
+    .hero { grid-template-columns: 1fr; }
+    .hero .stats { text-align: left; }
+    .hero h1 { font-size: 38px; }
+    .grid-modules { grid-template-columns: 1fr; }
+    .closing-card { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <button class="sidebar-close" id="sidebar-close" title="Fechar (Esc)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="brand">
+      <small>Equipe Comercial</small>
+      <h2>Alinhamento Inicial</h2>
+    </div>
+
+    <nav class="sidenav">
+      <button class="sidenav-item is-active" data-go="menu">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg></span>
+        Visão geral
+      </button>
+
+      <button class="sidenav-item highlight" data-go="fechamento">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
+        Meu Compromisso
+        <span class="meta">15</span>
+        <span class="chevron" data-toggle-sub="fechamento" title="Subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="fechamento"></ul>
+
+      <div class="sidenav-label">Trilha completa</div>
+
+      <button class="sidenav-item" data-go="1">
+        <span class="num">1</span>
+        Propósito
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="1" title="Subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="1"></ul>
+
+      <button class="sidenav-item" data-go="2">
+        <span class="num">2</span>
+        10 Pilares
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="2" title="Subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="2"></ul>
+
+      <button class="sidenav-item" data-go="3">
+        <span class="num">3</span>
+        Rotina
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="3" title="Subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="3"></ul>
+
+      <button class="sidenav-item" data-go="4">
+        <span class="num">4</span>
+        Postura
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="4" title="Subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="4"></ul>
+
+      <button class="sidenav-item" data-go="spin">
+        <span class="num">S</span>
+        Padrões Comerciais
+        <span class="meta">20</span>
+        <span class="chevron" data-toggle-sub="spin" title="Subtópicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <ul class="sidenav-sub" data-sub-for="spin"></ul>
+    </nav>
+
+    <div class="foot">
+      Conteúdo Febracis · uso interno (equipe comercial).
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- MENU VIEW -->
+    <section id="menu-view" class="view is-active">
+      <div class="wrap">
+
+        <header class="hero">
+          <div>
+            <span class="badge">Equipe Comercial</span>
+            <h1>Alinhamento Inicial<small>Visão, foco e execução com clareza, confiança e alta performance.</small></h1>
+            <p class="sub">Onboarding da equipe comercial Febracis. Do propósito ao compromisso: 4 módulos + Padrões Comerciais e SPIN + sessão de Encerramento. Tudo que você precisa saber para começar a performar no comercial da Febracis.</p>
+          </div>
+          <div class="stats">
+            <strong>115</strong>
+            Slides 16:9
+            <div style="margin-top:14px;"><strong>06</strong>Trilhas</div>
+          </div>
+        </header>
+
+        <button class="closing-card" data-go="fechamento">
+          <div>
+            <span class="tag">Encerramento</span>
+            <h3>Meu Compromisso com Você</h3>
+            <p>O que a empresa oferece, o que espera de você, e o compromisso bilateral que nos une. "Empresa não é ONG." Scripts de comprometimento, primeiros 90 dias e próximos passos.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <button class="closing-card" data-go="spin">
+          <div>
+            <span class="tag">Módulo Prático</span>
+            <h3>Padrões Comerciais e SPIN</h3>
+            <p>SPIN Selling obrigatório, funil padrão da equipe, CRM, métricas de performance e o padrão do campeão comercial Febracis. Tudo que você precisa dominar para performar no dia a dia.</p>
+          </div>
+          <span class="cta">Abrir agora ▶</span>
+        </button>
+
+        <h2 class="section-title">▸ Trilha do Alinhamento</h2>
+        <div class="grid-modules">
+
+          <button class="module-card" data-go="1">
+            <span class="tag">Módulo 1</span>
+            <h3>Propósito<br><span style="color: var(--cis-yellow); font-size:18px; font-weight:700;">e Mentalidade</span></h3>
+            <p>Por que estamos aqui. O ciclo Visão → Foco → Estratégia → Execução. Vendemos transformação — a mentalidade do campeão comercial.</p>
+            <ul>
+              <li>Propósito, metas e posicionamento comercial</li>
+              <li>Vendedor bonzinho não vende</li>
+              <li>Campeões não se justificam</li>
+            </ul>
+            <div class="meta-bar"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="2">
+            <span class="tag">Módulo 2</span>
+            <h3>Os 10 Pilares<br><span style="color: var(--cis-yellow); font-size:18px; font-weight:700;">da Excelência</span></h3>
+            <p>As fundações que sustentam o trabalho diário. Não são sugestões — são obrigações para quem quer crescer na equipe.</p>
+            <ul>
+              <li>Pontualidade, Responsabilidade, Disponibilidade</li>
+              <li>Comunicação, Excelência, Estudo</li>
+              <li>Feedback, Postura, Liderança, Regra Comercial</li>
+            </ul>
+            <div class="meta-bar"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="3">
+            <span class="tag">Módulo 3</span>
+            <h3>Rotina<br><span style="color: var(--cis-yellow); font-size:18px; font-weight:700;">Resultado e Execução</span></h3>
+            <p>A rotina que faz a diferença. 50+ ligações diárias, 100% de envolvimento, café antes do expediente. Disciplina constrói resultados.</p>
+            <ul>
+              <li>50+ ligações por dia — envolvido ou comprometido?</li>
+              <li>Meta não se discute, se bate</li>
+              <li>Dominar produto, treinamento e presença</li>
+            </ul>
+            <div class="meta-bar"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+          <button class="module-card" data-go="4">
+            <span class="tag">Módulo 4</span>
+            <h3>Postura<br><span style="color: var(--cis-yellow); font-size:18px; font-weight:700;">Hierarquia e Liderança</span></h3>
+            <p>Imagem, hierarquia clara e regras sem exceção. Feedback como crescimento, não ataque. O padrão de conduta que diferencia os campeões.</p>
+            <ul>
+              <li>Hierarquia: quem decide o quê</li>
+              <li>Lead não tem dono — quem pega, trabalha</li>
+              <li>Problemas existem — campeões resolvem</li>
+            </ul>
+            <div class="meta-bar"><span>20 slides</span><span class="go">Iniciar ▶</span></div>
+          </button>
+
+        </div>
+
+        <h2 class="section-title">▸ Como navegar</h2>
+        <div class="info-grid">
+          <div class="card">
+            <h4>Teclado</h4>
+            <p><kbd>→</kbd> ou <kbd>Espaço</kbd> avançam. <kbd>←</kbd> volta. <kbd>F</kbd> tela cheia. <kbd>Home</kbd>/<kbd>End</kbd> primeiro/último.</p>
+          </div>
+          <div class="card">
+            <h4>Touch / Mouse</h4>
+            <p>Deslize para os lados em telas táteis. Use os botões <em>Anterior / Próximo</em> no rodapé.</p>
+          </div>
+          <div class="card">
+            <h4>Sidebar</h4>
+            <p>Use a sidebar à esquerda para alternar rapidamente entre trilhas. A tela cheia <strong>não se perde</strong> ao trocar de módulo.</p>
+          </div>
+        </div>
+
+        <footer>
+          Alinhamento Inicial · Equipe Comercial Febracis · uso interno.
+        </footer>
+
+      </div>
+    </section>
+
+    <!-- PLAYER VIEW -->
+    <section id="player-view" class="view" aria-hidden="true">
+      <div class="player-topbar">
+        <button class="pbtn" id="back-menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Menu
+        </button>
+        <span class="module-label" id="module-label"><strong>—</strong> Módulo</span>
+        <div class="spacer"></div>
+      </div>
+      <iframe id="module-frame" title="Módulo" allow="fullscreen"></iframe>
+    </section>
+
+  </main>
+
+  <button class="sidebar-pull" id="sidebar-pull" title="Abrir menu" aria-label="Abrir menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+</div>
+
+<script>
+  const menuView   = document.getElementById('menu-view');
+  const playerView = document.getElementById('player-view');
+  const frame      = document.getElementById('module-frame');
+  const moduleLbl  = document.getElementById('module-label');
+  const backBtn    = document.getElementById('back-menu');
+  const sidebar    = document.getElementById('sidebar');
+
+  const ROUTES = {
+    menu:       { file: null,                  title: null },
+    fechamento: { file: 'fechamento.html',     title: '<strong>★</strong> Meu Compromisso' },
+    spin:       { file: 'spin-selling.html',   title: '<strong>S</strong> Padrões Comerciais' },
+    '1':        { file: 'modulo-1.html',       title: '<strong>01</strong> Propósito' },
+    '2':        { file: 'modulo-2.html',       title: '<strong>02</strong> 10 Pilares' },
+    '3':        { file: 'modulo-3.html',       title: '<strong>03</strong> Rotina' },
+    '4':        { file: 'modulo-4.html',       title: '<strong>04</strong> Postura' },
+  };
+
+  const NESTED_PARENT = {};
+
+  const SLIDE_TITLES = {
+    '1': [
+      'Propósito e Mentalidade — Capa',
+      'Por Que Estamos Aqui',
+      'Visão → Foco → Estratégia → Execução',
+      'O que Vamos Abordar',
+      'Como Vamos Trabalhar',
+      'Vendemos Transformação',
+      'Vendemos Esperança',
+      'Propósito: Entender o Contexto',
+      'Mentalidade do Campeão',
+      'Vendedor Bonzinho Não Vende',
+      'Campeões Não Se Justificam',
+      'Quem São Vocês?',
+      'Vida Pessoal, Formação e Relacionamentos',
+      'O que Nos Move',
+      'Metas e Processos',
+      'Posicionamento Comercial',
+      'Performance e Alta Excelência',
+      'O Padrão de Atuar',
+      'Exercício: Meu Propósito Comercial',
+      'Checklist — Propósito e Mentalidade'
+    ],
+    '2': [
+      'Os 10 Pilares da Excelência — Capa',
+      'As Fundações da Nossa Equipe',
+      'Pilar 1: Pontualidade',
+      'Pilar 2: Responsabilidade',
+      'Pilar 3: Disponibilidade',
+      'Pilar 4: Comunicação',
+      'Pilar 5: Excelência',
+      'Pilar 6: Estudo',
+      'Pilar 7: Feedback',
+      'Pilar 8: Postura',
+      'Pilar 9: Liderança',
+      'Pilar 10: Regra Comercial',
+      'Pilares em Prática',
+      'O que Quebra um Pilar',
+      'Compromisso e Adaptação',
+      'Execute, Dê Retorno, Resolva',
+      'Adaptação é Obrigatória',
+      'Disciplina e Profissionalismo',
+      'Exercício: Autoavaliação pelos Pilares',
+      'Checklist — Os 10 Pilares'
+    ],
+    '3': [
+      'Rotina, Resultado e Execução — Capa',
+      'A Rotina que Faz a Diferença',
+      '50+ Ligações Diárias',
+      '100% Envolvimento',
+      'Estrutura da Jornada Comercial',
+      'Café Antes do Expediente (08:30)',
+      'Meta — Não se Discute, se Bate',
+      'Performance Depende de Sono e Saúde',
+      'Resultado Vem da Repetição Constante',
+      'Dias Difíceis Não São Desculpa',
+      'Dominar o Produto é Obrigatório',
+      'Treinamento Contínuo',
+      'Presença no Setor',
+      'Celular Corporativo',
+      'Saúde, Disciplina e Resultados',
+      'O Ciclo da Alta Performance',
+      'Imagem Profissional',
+      'Exercício: Minha Rotina Ideal',
+      'Erros Fatais de Rotina',
+      'Checklist — Rotina e Execução'
+    ],
+    '4': [
+      'Postura, Hierarquia e Liderança — Capa',
+      'Imagem e Hierarquia Clara',
+      'Hierarquia: Quem Decide o Quê',
+      'Regras Internas — Sem Exceção',
+      'Postura Profissional no Dia a Dia',
+      'Imagem que Abre Portas',
+      'Celular e Distrações: Foco Total',
+      'Feedback: Oportunidade de Crescimento',
+      'Campeões Recebem Feedback sem Defender',
+      'Liderança: Meu Sucesso é o Seu',
+      'Lead Não Tem Dono — Quem Pega Trabalha',
+      'Comunicação Interna Oficial',
+      'Reportar Progresso: Transparência é Chave',
+      'Problemas Existem — Campeões Resolvem',
+      'Empresa Não É ONG',
+      'Meu Papel: Fazer Você Performar',
+      'Meu Dever: Dinheiro no Seu Bolso',
+      'Exercício: Meu Padrão de Postura',
+      'Erros que Destroem a Hierarquia',
+      'Checklist — Postura e Liderança'
+    ],
+    'spin': [
+      'Padrões Comerciais e SPIN — Capa',
+      'SPIN Selling é Obrigatório',
+      'Por que SPIN Funciona na Febracis',
+      'S — Perguntas de Situação',
+      'P — Perguntas de Problema',
+      'I — Perguntas de Implicação',
+      'N — Perguntas de Necessidade de Solução',
+      'SPIN Completo: Exemplo de Conversa',
+      'Funil Comercial Padrão da Equipe',
+      'CRM: Registrar é Obrigatório',
+      'Follow-up: Cadência e Padrão',
+      'Métricas que Você Vai Ser Cobrado',
+      'Pipeline Pessoal: Como Gerenciar',
+      'Atendimento de Alto Padrão',
+      'Como Estudar os Produtos da Febracis',
+      'Treinamentos Obrigatórios',
+      'Erros Comuns no Processo Comercial',
+      'O Padrão do Campeão Comercial',
+      'Exercício: Monte Seu Funil',
+      'Checklist — Padrões Comerciais'
+    ],
+    'fechamento': [
+      'Meu Compromisso com Você — Capa',
+      'O que a Empresa Oferece',
+      'O que a Empresa Espera',
+      'Empresa Não É ONG — O que Isso Significa',
+      'Meu Papel como Gestor',
+      'Meu Dever: Resultados no Seu Bolso',
+      'Se Você Quer Isso: Pode Contar Comigo',
+      'Os Primeiros 30 Dias',
+      'Os Primeiros 90 Dias',
+      'Metas e Rampas de Performance',
+      'Perguntas Frequentes do Início de Carreira',
+      'Compromisso Bilateral',
+      'Quando Buscar o Gestor',
+      'Exercício: Meu Compromisso Assinado',
+      'Próximos Passos — Vamos Começar'
+    ]
+  };
+
+  const slideTitlesByKey = {};
+  function renderSubtopics(key) {
+    const ul = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+    if (!ul) return;
+    const titles = slideTitlesByKey[key] || [];
+    ul.innerHTML = '';
+    titles.forEach((title, i) => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'sidenav-sub-item';
+      btn.dataset.deck = key;
+      btn.dataset.slide = String(i + 1);
+      btn.innerHTML = `<span class="sub-n">${String(i + 1).padStart(2, '0')}</span><span class="sub-title">${title.replace(/</g,'&lt;')}</span>`;
+      btn.addEventListener('click', () => openAtSlide(key, i + 1));
+      li.appendChild(btn);
+      ul.appendChild(li);
+    });
+  }
+
+  function loadSlideTitles() {
+    Object.keys(SLIDE_TITLES).forEach(key => {
+      slideTitlesByKey[key] = SLIDE_TITLES[key];
+      renderSubtopics(key);
+    });
+  }
+
+  function setActiveNav(key) {
+    document.querySelectorAll('.sidenav-item').forEach(b => b.classList.toggle('is-active', b.dataset.go === key));
+    document.querySelectorAll('.sidenav-sub').forEach(ul => ul.classList.toggle('is-open', ul.dataset.subFor === key));
+    syncChevrons();
+  }
+
+  function syncChevrons() {
+    document.querySelectorAll('.chevron[data-toggle-sub]').forEach(c => {
+      const key = c.dataset.toggleSub;
+      const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+      c.classList.toggle('is-open', !!(sub && sub.classList.contains('is-open')));
+    });
+  }
+
+  function toggleSubFor(key) {
+    const sub = document.querySelector(`.sidenav-sub[data-sub-for="${key}"]`);
+    if (sub) sub.classList.toggle('is-open');
+    syncChevrons();
+  }
+
+  function openAtSlide(key, slideN) {
+    if (frame.dataset.currentKey === key && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'cis-goto', n: slideN }, '*');
+      markCurrentSubtopic(key, slideN);
+      return;
+    }
+    openRoute(key);
+    const onLoad = () => {
+      frame.contentWindow.postMessage({ type: 'cis-goto', n: slideN }, '*');
+      markCurrentSubtopic(key, slideN);
+      frame.removeEventListener('load', onLoad);
+    };
+    frame.addEventListener('load', onLoad);
+  }
+
+  function markCurrentSubtopic(key, slideN) {
+    document.querySelectorAll('.sidenav-sub-item').forEach(b => {
+      b.classList.toggle('is-current', b.dataset.deck === key && b.dataset.slide === String(slideN));
+    });
+  }
+
+  function showMenu() {
+    playerView.classList.remove('is-active');
+    playerView.setAttribute('aria-hidden', 'true');
+    menuView.classList.add('is-active');
+    menuView.setAttribute('aria-hidden', 'false');
+    frame.src = 'about:blank';
+    history.replaceState(null, '', '#');
+    setActiveNav('menu');
+  }
+
+  function openRoute(key) {
+    if (key === 'menu') { showMenu(); return; }
+    const route = ROUTES[key];
+    if (!route || !route.file) return;
+    moduleLbl.innerHTML = route.title || ('Módulo ' + key);
+    frame.src = route.file;
+    frame.dataset.currentKey = key;
+    menuView.classList.remove('is-active');
+    menuView.setAttribute('aria-hidden', 'true');
+    playerView.classList.add('is-active');
+    playerView.setAttribute('aria-hidden', 'false');
+    history.replaceState(null, '', `#${key}`);
+    setActiveNav(key);
+    markCurrentSubtopic(key, 1);
+    if (sidebar) sidebar.classList.remove('is-open');
+  }
+
+  document.querySelectorAll('[data-go]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const chev = e.target.closest('.chevron[data-toggle-sub]');
+      if (chev && btn.contains(chev)) { e.preventDefault(); e.stopPropagation(); toggleSubFor(chev.dataset.toggleSub); return; }
+      openRoute(btn.dataset.go);
+    });
+  });
+  backBtn.addEventListener('click', showMenu);
+
+  window.addEventListener('message', (e) => {
+    const fromMain = e.source === (frame && frame.contentWindow);
+    if (!fromMain) return;
+    const msg = e.data || {};
+    if (msg.type === 'cis-nav') {
+      if (msg.target === 'menu') showMenu();
+      else if (msg.target === 'module' && msg.n) openRoute(String(msg.n));
+      else if (msg.target === 'fullscreen') toggleFullscreen();
+    } else if (msg.type === 'cis-slide-changed' && msg.n) {
+      const key = frame.dataset.currentKey;
+      if (key) markCurrentSubtopic(key, msg.n);
+    }
+  });
+
+  function broadcastFsState() {
+    const on = !!document.fullscreenElement;
+    if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 'cis-fullscreen-state', on }, '*');
+  }
+  frame.addEventListener('load', broadcastFsState);
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+  function syncFs() {
+    const on = !!document.fullscreenElement;
+    document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => {
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      const lbl = b.querySelector('.fs-label');
+      if (lbl) lbl.textContent = on ? 'Sair' : 'Tela cheia';
+    });
+  }
+  document.querySelectorAll('[data-nav="fullscreen"]').forEach(b => b.addEventListener('click', toggleFullscreen));
+  document.addEventListener('fullscreenchange', () => {
+    syncFs(); broadcastFsState();
+    const on = !!document.fullscreenElement;
+    document.body.classList.toggle('is-fullscreen', on);
+    if (!on) closeSidebarOverlay();
+  });
+
+  const pull = document.getElementById('sidebar-pull');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const closeBtn = document.getElementById('sidebar-close');
+
+  function openSidebarOverlay() { sidebar.classList.add('is-overlay'); backdrop.classList.add('is-open'); pull.classList.add('is-hidden'); }
+  function closeSidebarOverlay() { sidebar.classList.remove('is-overlay'); backdrop.classList.remove('is-open'); pull.classList.remove('is-hidden'); }
+
+  if (pull) pull.addEventListener('click', openSidebarOverlay);
+  if (backdrop) backdrop.addEventListener('click', closeSidebarOverlay);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebarOverlay);
+
+  document.querySelectorAll('[data-go]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const chev = e.target.closest('.chevron[data-toggle-sub]');
+      if (chev && btn.contains(chev)) return;
+      if (sidebar.classList.contains('is-overlay')) closeSidebarOverlay();
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'f' || e.key === 'F') { if (!playerView.classList.contains('is-active')) toggleFullscreen(); }
+    if (e.key === 'Escape') {
+      if (sidebar.classList.contains('is-overlay')) { closeSidebarOverlay(); return; }
+      if (playerView.classList.contains('is-active') && !document.fullscreenElement) showMenu();
+    }
+  });
+
+  const h = (location.hash || '').replace('#', '');
+  if (h && ROUTES[h]) openRoute(h);
+
+  loadSlideTitles();
+</script>
+
+</body>
+</html>

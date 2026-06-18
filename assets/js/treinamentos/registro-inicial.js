@@ -257,6 +257,28 @@
         { titulo: 'SPIN Selling — aplicado ao TCE',       url: 'treinamento-tce/spin-selling.html', tipo: 'extra'  },
         { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-tce/fechamento.html',   tipo: 'final' }
       ]
+    },
+    {
+      id: 'treinamento-alinhamento',
+      titulo: 'Alinhamento Inicial — Equipe Comercial',
+      descricao: 'Onboarding da equipe comercial Febracis. Propósito, 10 Pilares, Rotina, Postura, Padrões Comerciais e SPIN, e Compromisso bilateral. 7 HTMLs: índice + 4 módulos + Padrões Comerciais + Encerramento (115 slides).',
+      produto: 'Alinhamento',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 16,
+      url: 'treinamento-alinhamento/index.html',
+      icone: '🤝',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                          url: 'treinamento-alinhamento/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — Propósito e Mentalidade',     url: 'treinamento-alinhamento/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Os 10 Pilares da Excelência', url: 'treinamento-alinhamento/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Rotina, Resultado e Execução',url: 'treinamento-alinhamento/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Postura, Hierarquia e Liderança', url: 'treinamento-alinhamento/modulo-4.html', tipo: 'modulo' },
+        { titulo: 'Padrões Comerciais e SPIN Selling',      url: 'treinamento-alinhamento/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Meu Compromisso com Você',               url: 'treinamento-alinhamento/fechamento.html',   tipo: 'final'  }
+      ]
     }
   ];
 })();

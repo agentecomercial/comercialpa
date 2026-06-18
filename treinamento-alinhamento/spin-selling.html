@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Padrões Comerciais e SPIN | Alinhamento Inicial</title>
+<link rel="stylesheet" href="assets/alinhamento.css"/>
+<style>
+  .btn-next {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, var(--cis-yellow), var(--cis-yellow-deep));
+    color: #111; font-weight: 900; font-size: 18px; letter-spacing: 0.06em;
+    padding: 16px 32px; border-radius: 14px; text-decoration: none;
+    box-shadow: 0 12px 32px -8px rgba(201,162,39,0.5);
+    transition: transform .18s ease, box-shadow .18s ease;
+    margin-top: 8px;
+  }
+  .btn-next:hover { transform: translateY(-2px); box-shadow: 0 18px 40px -8px rgba(201,162,39,0.65); color: #111; }
+
+  .seq.seq-7 { grid-template-columns: repeat(7, 1fr); gap: 10px; }
+  .seq.seq-7 .seq-step { background: var(--cis-card-bg); border: 1px solid var(--cis-card-border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 5px; }
+  .seq.seq-7 .seq-step .n { font-size: 22px; color: var(--cis-yellow); font-weight: 900; line-height: 1; }
+  .seq.seq-7 .seq-step h4 { margin: 4px 0 0; color: #fff; font-size: 13px; line-height: 1.2; }
+  .seq.seq-7 .seq-step p { font-size: 11px; line-height: 1.35; color: var(--cis-muted); margin: 0; }
+
+  /* Dialog usando .turn/.bubble/.who */
+  .dialog .turn { display: flex; flex-direction: column; gap: 2px; }
+  .dialog .turn .who { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 800; color: var(--cis-muted); padding: 0 14px; }
+  .dialog .turn.consultant .who { color: var(--cis-yellow); }
+  .dialog .turn.prospect .who { color: #9bb4ff; }
+  .dialog .turn.note .who { color: #7cb87c; }
+  .dialog .turn.consultant .bubble { border-color: rgba(201,162,39,0.55); background: rgba(201,162,39,0.07); }
+  .dialog .turn.prospect .bubble { border-color: rgba(155,180,255,0.35); background: rgba(155,180,255,0.05); }
+  .dialog .turn.note .bubble { border-color: rgba(124,184,124,0.4); background: rgba(124,184,124,0.06); font-style: italic; }
+  .dialog .turn.note .who { color: #7cb87c; }
+
+  .spin-letter { font-size: 80px; font-weight: 900; color: var(--cis-yellow); line-height: 1; flex: 0 0 auto; opacity: 0.15; position: absolute; right: 24px; bottom: 16px; }
+
+  .cadence-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; flex: 1; }
+  .cadence-card { background: var(--cis-card-bg); border: 1px solid var(--cis-card-border); border-radius: 14px; padding: 18px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .cadence-card .day { font-size: 24px; font-weight: 900; color: var(--cis-yellow); line-height: 1; }
+  .cadence-card h4 { margin: 0; color: #fff; font-size: 15px; }
+  .cadence-card p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--cis-text); }
+  .cadence-card .goal { font-size: 12px; color: var(--cis-muted); margin-top: 4px; }
+
+  .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .metric-box { background: var(--cis-card-bg); border: 1px solid var(--cis-card-border); border-radius: 14px; padding: 22px 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .metric-box .icon { font-size: 28px; line-height: 1; }
+  .metric-box .label { font-size: 12px; color: var(--cis-muted); text-transform: uppercase; letter-spacing: 0.14em; }
+  .metric-box .value { font-size: 38px; font-weight: 900; color: var(--cis-yellow); line-height: 1; letter-spacing: -1px; }
+  .metric-box .desc { font-size: 12px; color: var(--cis-text); line-height: 1.4; }
+
+  .champion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; flex: 1; }
+  .champion-item { background: var(--cis-card-bg); border: 1px solid var(--cis-card-border); border-radius: 12px; padding: 16px 18px; display: flex; gap: 14px; align-items: flex-start; }
+  .champion-item .ico { font-size: 22px; flex: 0 0 auto; }
+  .champion-item h4 { margin: 0 0 4px; color: var(--cis-yellow); font-size: 15px; }
+  .champion-item p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--cis-text); }
+
+  .funil-bar { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .funil-step { display: grid; grid-template-columns: 28px 160px 1fr; gap: 12px; align-items: center; background: var(--cis-card-bg); border: 1px solid var(--cis-card-border); border-radius: 12px; padding: 11px 16px; }
+  .funil-step .n { font-size: 13px; font-weight: 900; color: var(--cis-yellow); text-align: center; }
+  .funil-step strong { color: var(--cis-yellow); font-size: 15px; }
+  .funil-step .desc { font-size: 13px; color: var(--cis-text); }
+
+  .checklist-two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex: 1; }
+  .checklist-col h3 { margin: 0 0 10px; color: var(--cis-yellow); font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="progress"><span></span></div>
+<a class="home-button" href="index.html">◀ Menu</a>
+<div class="stage">
+  <div class="deck">
+
+    <!-- SLIDE 1 — CAPA -->
+    <section class="slide module-cover">
+      <div class="slide-header" style="border:0; justify-content:center;">
+        <span class="module-badge">Padrões Comerciais</span>
+      </div>
+      <div class="slide-body" style="align-items:center; text-align:center;">
+        <h1 class="slide-title">Padrões Comerciais<br><span style="color:#fff; font-size:40px; font-weight:600;">e SPIN Selling</span></h1>
+        <p class="lead" style="max-width:860px;">
+          O processo que separa os que prospectam dos que convertem.<br>
+          <span style="color:var(--cis-muted); font-size:18px;">SPIN não é metodologia opcional — é o padrão operacional desta equipe.</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- SLIDE 2 — SPIN É OBRIGATÓRIO -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Padrões Comerciais • Base</span>
+          <h2 class="slide-title">SPIN Selling é Obrigatório</h2>
+          <p class="slide-subtitle">Não existe "jeito próprio" de vender na Febracis. Existe o processo — e o processo usa SPIN.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <p class="lead">Todo membro desta equipe usa <strong>SPIN Selling</strong> em todas as abordagens comerciais. Não é sugestão. Não é uma das opções. É o protocolo padrão.</p>
+        <div class="grid grid-3">
+          <div class="card">
+            <h3>Por que padronizar?</h3>
+            <p>Processo replicável gera resultado previsível. Improviso gera incerteza. Aqui treinamos o que funciona — não o que parece natural.</p>
+          </div>
+          <div class="card">
+            <h3>Criado por Neil Rackham</h3>
+            <p>35.000 calls analisadas ao longo de 12 anos. SPIN é a metodologia mais validada para venda consultiva de alto valor — exatamente o que vendemos.</p>
+          </div>
+          <div class="card solid">
+            <h3>Resultado esperado</h3>
+            <p>Quem domina SPIN fecha mais, perde menos para objeção de preço e gera mais indicações. Não há atalho.</p>
+          </div>
+        </div>
+        <p class="pullquote">"Vendedor que improvisa perde para o processo. Aqui o processo é o diferencial."</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 3 — POR QUE SPIN FUNCIONA NA FEBRACIS -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">SPIN • Aplicação Febracis</span>
+          <h2 class="slide-title">Por que SPIN Funciona na Febracis</h2>
+          <p class="slide-subtitle">Nosso cliente não compra curso. Compra transformação. SPIN descobre se ele sabe o quanto precisa dela.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <p class="lead">O produto da Febracis resolve dores que o cliente muitas vezes <strong>ainda não nomeou</strong>. SPIN é a ferramenta que traz essa dor à superfície — sem que o vendedor precise inventá-la.</p>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Venda de transformação exige diagnóstico</h3>
+            <p>Ninguém compra solução para um problema que ainda não reconhece. SPIN cria esse reconhecimento através de perguntas — não de argumentos.</p>
+          </div>
+          <div class="card">
+            <h3>O cliente vende para si mesmo</h3>
+            <p>Quando o prospect verbaliza a dor com as próprias palavras, ele se torna o maior vendedor da solução. SPIN orquestra isso sistematicamente.</p>
+          </div>
+          <div class="card">
+            <h3>Objeção de preço é sinal de SPIN incompleto</h3>
+            <p>"Tá caro" aparece quando a dor não foi suficientemente ampliada. Quem faz a Implicação corretamente raramente ouve essa objeção no início.</p>
+          </div>
+          <div class="card dark">
+            <h3>Diferencia o consultor do vendedor</h3>
+            <p>SPIN posiciona o membro da equipe como alguém que <strong>diagnostica</strong>, não que empurra produto. Isso gera confiança — e confiança fecha contrato.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4 — S: SITUAÇÃO -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">SPIN • S — Situação</span>
+          <h2 class="slide-title">S — Perguntas de Situação</h2>
+          <p class="slide-subtitle">Mapeie o contexto atual do cliente. Rápido — no máximo 4 perguntas.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <p class="lead"><strong>Situação</strong> = onde o cliente está agora. Empresa, time, momento de vida, contexto profissional. O objetivo é criar base para as próximas perguntas — não interrogar.</p>
+        <div class="grid grid-3">
+          <div class="card">
+            <h3>Exemplo 1 — Profissional</h3>
+            <p style="font-style:italic; color:#fff;">"Me conta um pouco do seu momento — você está mais na operação do negócio ou na estratégia hoje?"</p>
+            <p class="muted">Revela se o cliente está sobrecarregado ou se tem espaço para crescer.</p>
+          </div>
+          <div class="card">
+            <h3>Exemplo 2 — Pessoal</h3>
+            <p style="font-style:italic; color:#fff;">"Esse momento é mais de crescimento, de manutenção ou você sente que está num ponto de virada?"</p>
+            <p class="muted">Identifica a fase emocional — manutenção pode esconder estagnação.</p>
+          </div>
+          <div class="card">
+            <h3>Exemplo 3 — Histórico</h3>
+            <p style="font-style:italic; color:#fff;">"O que você já tentou para resolver isso antes? Terapia, curso, coaching?"</p>
+            <p class="muted">Mapeia tentativas anteriores e frustrações — terreno fértil para Implicação.</p>
+          </div>
+        </div>
+        <div class="card solid" style="margin-top:2px;">
+          <h3>Regra de Situação</h3>
+          <p>Máximo 4 perguntas. Acima disso vira interrogatório. Você já tem um briefing — use-o. Situação é contexto, não CRM ao vivo.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5 — P: PROBLEMA -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">SPIN • P — Problema</span>
+          <h2 class="slide-title">P — Perguntas de Problema</h2>
+          <p class="slide-subtitle">Localize o que trava, dói e frustra. O cliente precisa nomear a dor — não você.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <p class="lead"><strong>Problema</strong> = o que incomoda, trava e dói. A maioria dos vendedores pula essa etapa. Quem pula Problema não tem base para construir Implicação.</p>
+        <div class="grid grid-3">
+          <div class="card">
+            <h3>Exemplo 1 — Profissional</h3>
+            <p style="font-style:italic; color:#fff;">"Qual é o maior gargalo que você sente no seu negócio (ou na sua rotina) hoje?"</p>
+            <p class="muted">Abre espaço para que o cliente nomeie o problema com as próprias palavras.</p>
+          </div>
+          <div class="card">
+            <h3>Exemplo 2 — Emocional</h3>
+            <p style="font-style:italic; color:#fff;">"Que hábito ou comportamento sabota você há mais tempo — e que você ainda não conseguiu mudar?"</p>
+            <p class="muted">Toca em autossabotagem, que é uma das principais dores do ICP Febracis.</p>
+          </div>
+          <div class="card">
+            <h3>Exemplo 3 — Relacional</h3>
+            <p style="font-style:italic; color:#fff;">"Você sente que poderia estar crescendo mais rápido — mas tem algo que trava sempre que você chega perto?"</p>
+            <p class="muted">Revela padrão de estagnação sem nomear — o cliente completa a resposta.</p>
+          </div>
+        </div>
+        <p class="pullquote">A dor que o cliente nomeia vale dez vezes mais do que a dor que o consultor sugere. Pergunte. Cale-se. Espere.</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 6 — I: IMPLICAÇÃO -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">SPIN • I — Implicação</span>
+          <h2 class="slide-title">I — Perguntas de Implicação</h2>
+          <p class="slide-subtitle">A etapa mais poderosa do SPIN. Aqui a dor vira urgência — e o preço deixa de ser objeção.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <p class="lead"><strong>Implicação</strong> = o que esse problema está custando — em tempo, dinheiro, relacionamentos e saúde. Sem Implicação, a venda de transformação nunca fecha.</p>
+        <div class="grid grid-3">
+          <div class="card">
+            <h3>Exemplo 1 — Futuro</h3>
+            <p style="font-style:italic; color:#fff;">"Se nada mudar nos próximos 12 meses, o que pode acontecer na sua vida — no trabalho, em casa, na sua saúde?"</p>
+            <p class="muted">Força o cliente a projetar a consequência da inação. Silêncio é sinal de profundidade.</p>
+          </div>
+          <div class="card">
+            <h3>Exemplo 2 — Financeiro</h3>
+            <p style="font-style:italic; color:#fff;">"Quanto você acredita que já deixou de faturar — ou de ganhar — por causa dessa estagnação?"</p>
+            <p class="muted">Transforma dor emocional em custo financeiro concreto. Muda a conversa sobre preço.</p>
+          </div>
+          <div class="card">
+            <h3>Exemplo 3 — Relacional</h3>
+            <p style="font-style:italic; color:#fff;">"Quanto desse desgaste você leva para dentro de casa — para o seu cônjuge, seus filhos — sem perceber?"</p>
+            <p class="muted">Amplia a dor para quem o cliente ama. Uma das implicações mais poderosas para o ICP Febracis.</p>
+          </div>
+        </div>
+        <div class="card dark">
+          <h3>Regra de Implicação</h3>
+          <p>Nunca apresente proposta sem Implicação consolidada. Se o cliente ainda não verbalizou o custo da dor, volte uma etapa. "Preço alto" é sempre sintoma de Implicação incompleta.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7 — N: NECESSIDADE -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">SPIN • N — Necessidade de Solução</span>
+          <h2 class="slide-title">N — Perguntas de Necessidade de Solução</h2>
+          <p class="slide-subtitle">O cliente declara o que quer. O consultor só precisa conectar isso à solução.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <p class="lead"><strong>Necessidade de Solução</strong> = o que aconteceria se esse problema fosse resolvido. O cliente articula o valor da mudança — não o consultor.</p>
+        <div class="grid grid-3">
+          <div class="card">
+            <h3>Exemplo 1 — Visão</h3>
+            <p style="font-style:italic; color:#fff;">"Se você resolvesse isso definitivamente — não só controlasse, mas resolvesse — como seria sua vida daqui a 6 meses?"</p>
+            <p class="muted">O cliente constrói a visão de transformação. Isso é o que ele vai comprar.</p>
+          </div>
+          <div class="card">
+            <h3>Exemplo 2 — Valor</h3>
+            <p style="font-style:italic; color:#fff;">"Quanto valeria para você ter previsibilidade — emocional, financeira e nos seus relacionamentos — de verdade?"</p>
+            <p class="muted">Ancora o valor percebido antes de qualquer conversa de preço.</p>
+          </div>
+          <div class="card">
+            <h3>Exemplo 3 — Compromisso</h3>
+            <p style="font-style:italic; color:#fff;">"De 0 a 10, qual é a sua prontidão para resolver isso agora — não semana que vem, agora?"</p>
+            <p class="muted">Mede temperatura e cria comprometimento antes da proposta. Abaixo de 7: volte à Implicação.</p>
+          </div>
+        </div>
+        <p class="pullquote">Quando o cliente diz "vale muito" ou "vale tudo" antes de você apresentar o produto — o SPIN foi executado perfeitamente.</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 8 — SPIN COMPLETO: EXEMPLO DE CONVERSA -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">SPIN • Diálogo Completo</span>
+          <h2 class="slide-title">SPIN Completo: Exemplo de Conversa</h2>
+          <p class="slide-subtitle">8 turnos. S → P → I → N → Proposta. Consultor pergunta — cliente vende para si mesmo.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="dialog" style="gap:7px;">
+          <div class="turn consultant">
+            <span class="who">Consultor (S)</span>
+            <div class="bubble">"Você me disse que tem uma empresa há 7 anos. Hoje você está mais na operação ou consegue trabalhar a estratégia?"</div>
+          </div>
+          <div class="turn prospect">
+            <span class="who">Prospect</span>
+            <div class="bubble">"100% na operação. Não consigo sair disso. Minha empresa depende só de mim."</div>
+          </div>
+          <div class="turn consultant">
+            <span class="who">Consultor (P)</span>
+            <div class="bubble">"E o que mais te trava nesse 'não conseguir sair'? Qual é o maior gargalo que você sente hoje?"</div>
+          </div>
+          <div class="turn prospect">
+            <span class="who">Prospect</span>
+            <div class="bubble">"Minha equipe não entrega no nível que eu espero. Aí eu acabo voltando e fazendo eu mesmo. Todo dia."</div>
+          </div>
+          <div class="turn consultant">
+            <span class="who">Consultor (I)</span>
+            <div class="bubble">"Se esse padrão continuar pelos próximos 12 meses — o que acontece? No negócio, em casa, com você?"</div>
+          </div>
+          <div class="turn prospect">
+            <span class="who">Prospect</span>
+            <div class="bubble"><em>(pausa)</em> "Acho que eu quebro. Já tô no limite. Minha esposa tá pedindo mais presença e eu não tenho o que dar."</div>
+          </div>
+          <div class="turn consultant">
+            <span class="who">Consultor (N)</span>
+            <div class="bubble">"Se sua empresa funcionasse sem depender totalmente de você — e você chegasse em casa inteiro para a sua família — quanto isso vale?"</div>
+          </div>
+          <div class="turn prospect">
+            <span class="who">Prospect</span>
+            <div class="bubble">"Vale tudo. Esse é exatamente o que eu mais quero."</div>
+          </div>
+        </div>
+        <div class="card dark" style="margin-top:6px;">
+          <p style="font-size:13px; margin:0;"><strong style="color:var(--cis-yellow);">Análise:</strong> 8 turnos. Consultor fez 4 perguntas — não argumentou nenhuma vez. O cliente nomeou a dor (equipe), a implicação (família, saúde) e o valor da solução ("vale tudo"). Agora basta conectar ao produto.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 9 — FUNIL COMERCIAL -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Padrões Comerciais • Funil</span>
+          <h2 class="slide-title">Funil Comercial Padrão da Equipe</h2>
+          <p class="slide-subtitle">As 7 etapas obrigatórias. Pular uma etapa não agiliza o processo — quebra o processo.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="funil-bar">
+          <div class="funil-step"><span class="n">1</span><strong>Prospecção</strong><span class="desc">Identificar e ativar leads qualificados. Volume é obrigação — ligações, mensagens, indicações.</span></div>
+          <div class="funil-step"><span class="n">2</span><strong>Qualificação</strong><span class="desc">Verificar se o lead tem perfil, dor e prontidão. Lead não qualificado não recebe proposta.</span></div>
+          <div class="funil-step"><span class="n">3</span><strong>SPIN</strong><span class="desc">Diagnóstico completo: S → P → I → N. A venda acontece aqui — não na proposta.</span></div>
+          <div class="funil-step"><span class="n">4</span><strong>Proposta</strong><span class="desc">Apresentar a solução conectando cada dor mapeada no SPIN ao benefício correspondente do produto.</span></div>
+          <div class="funil-step"><span class="n">5</span><strong>Objeção</strong><span class="desc">Tratar objeções com perguntas — nunca com argumentos. Objeção é dor que ainda não foi amplificada.</span></div>
+          <div class="funil-step"><span class="n">6</span><strong>Fechamento</strong><span class="desc">CTA direto. Alternativa fechada. Próximo passo concreto. Não perguntar "tem interesse?" — confirmar ação.</span></div>
+          <div class="funil-step"><span class="n">7</span><strong>Pós-venda</strong><span class="desc">Follow-up de satisfação, coleta de indicação e reforço da decisão do cliente. A venda continua aqui.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 10 — CRM -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Padrões Comerciais • CRM</span>
+          <h2 class="slide-title">CRM: Registrar é Obrigatório</h2>
+          <p class="slide-subtitle">O que não está no CRM não aconteceu. Simples assim.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <p class="lead">Toda interação com lead ou cliente <strong>precisa ser registrada no CRM</strong> no mesmo dia. Não no fim da semana. Não quando der. No mesmo dia.</p>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>O que registrar</h3>
+            <ul class="tick-list">
+              <li>Data e canal do contato (ligação, WhatsApp, presencial)</li>
+              <li>Etapa do funil em que o lead está</li>
+              <li>Principais dores mapeadas no SPIN</li>
+              <li>Objeções levantadas e como foram tratadas</li>
+              <li>Próximo passo agendado (data + ação)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Quando registrar</h3>
+            <ul class="tick-list">
+              <li>Imediatamente após cada ligação ou contato</li>
+              <li>Ao mover o lead de etapa no funil</li>
+              <li>Ao agendar qualquer follow-up</li>
+              <li>Ao receber indicação de cliente</li>
+              <li>Ao finalizar uma venda — ganha ou perdida</li>
+            </ul>
+          </div>
+          <div class="card solid" style="grid-column: span 2;">
+            <h3>Por que isso é cobrado</h3>
+            <p>Gestor sem dados não pode ajudar. Membro sem histórico perde leads que retornam. CRM desatualizado = funil invisível = resultado imprevisível. Não toleramos isso.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 11 — FOLLOW-UP -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Padrões Comerciais • Follow-up</span>
+          <h2 class="slide-title">Follow-up: Cadência e Padrão</h2>
+          <p class="slide-subtitle">D+1 / D+3 / D+7 / D+14. Cadência não é insistência — é profissionalismo.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="cadence-grid">
+          <div class="cadence-card">
+            <span class="day">D+1</span>
+            <h4>Reforço da decisão</h4>
+            <p>Mensagem curta agradecendo a conversa. Reafirme 1 dor que ele mesmo nomeou. Confirme o próximo passo combinado.</p>
+            <p class="goal">Meta: manter presença sem pressão. Tom: leve e direto.</p>
+          </div>
+          <div class="cadence-card">
+            <span class="day">D+3</span>
+            <h4>Geração de valor</h4>
+            <p>Compartilhe algo relevante: depoimento de cliente similar, dado, insight sobre o problema dele. Não peça decisão ainda.</p>
+            <p class="goal">Meta: fortalecer autoridade e lembrar da dor mapeada.</p>
+          </div>
+          <div class="cadence-card">
+            <span class="day">D+7</span>
+            <h4>Retomada direta</h4>
+            <p>Contato mais direto. Pergunte sobre o que mudou desde a última conversa. Reabra SPIN se necessário. Proponha nova reunião.</p>
+            <p class="goal">Meta: identificar se a dor ficou ou se o lead esfriou.</p>
+          </div>
+          <div class="cadence-card" style="border-color: var(--cis-card-border-strong);">
+            <span class="day">D+14</span>
+            <h4>Última tentativa qualificada</h4>
+            <p>Mensagem honesta e direta. "Sei que você está ocupado — quero entender se ainda faz sentido continuarmos." Se não responder, pause e retome em 30 dias.</p>
+            <p class="goal">Meta: fechar o ciclo com dignidade ou reativar em 30d.</p>
+          </div>
+        </div>
+        <div class="card dark" style="margin-top:6px;">
+          <p style="font-size:13px; margin:0;"><strong style="color:var(--cis-yellow);">Regra:</strong> Follow-up sem personalização é spam. Cada contato precisa referenciar algo que o lead disse. Sem isso, é barulho — não relacionamento.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 12 — MÉTRICAS -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Padrões Comerciais • Performance</span>
+          <h2 class="slide-title">Métricas que Você Vai Ser Cobrado</h2>
+          <p class="slide-subtitle">Sem dado não existe análise. Sem análise não existe melhoria. Aqui medimos tudo.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="metric-grid">
+          <div class="metric-box">
+            <span class="icon">📞</span>
+            <span class="label">Ligações diárias</span>
+            <span class="value">50+</span>
+            <span class="desc">Volume mínimo esperado por dia de trabalho. Menos que isso é sinal de gerenciamento de pipeline — não de prospecção.</span>
+          </div>
+          <div class="metric-box">
+            <span class="icon">🤝</span>
+            <span class="label">Conexões semanais</span>
+            <span class="value">20+</span>
+            <span class="desc">Leads que respondem e entram em conversa qualificada. Conexão sem agendamento não conta.</span>
+          </div>
+          <div class="metric-box">
+            <span class="icon">📄</span>
+            <span class="label">Propostas mensais</span>
+            <span class="value">10+</span>
+            <span class="desc">Leads que passaram pelo SPIN completo e receberam proposta formal. Meta ajustada com gestor conforme produto.</span>
+          </div>
+          <div class="metric-box" style="border-color: var(--cis-card-border-strong); background: rgba(201,162,39,0.06);">
+            <span class="icon">✅</span>
+            <span class="label">Taxa de conversão</span>
+            <span class="value">30%</span>
+            <span class="desc">Mínimo esperado de proposta para fechamento. Abaixo disso indica problema no SPIN ou na qualificação — não no produto.</span>
+          </div>
+        </div>
+        <p class="pullquote">Número baixo de ligações não é problema de motivação — é problema de disciplina. Número baixo de conversão não é problema de produto — é problema de processo.</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 13 — PIPELINE PESSOAL -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Padrões Comerciais • Pipeline</span>
+          <h2 class="slide-title">Pipeline Pessoal: Como Gerenciar</h2>
+          <p class="slide-subtitle">Pipeline vivo é funil com movimento. Lead parado em etapa há mais de 7 dias está morto ou perdido.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <p class="lead">Gerenciar pipeline não é olhar o CRM uma vez por semana. É <strong>mover leads ativamente</strong> entre etapas todos os dias — ou descartá-los com método.</p>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Revisão diária do funil</h3>
+            <ul class="tick-list">
+              <li>Verificar quem precisa de follow-up hoje</li>
+              <li>Mover leads que avançaram de etapa</li>
+              <li>Descartar leads sem resposta após D+14</li>
+              <li>Priorizar leads com maior prontidão detectada</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Sinais de pipeline doente</h3>
+            <ul class="x-list">
+              <li>Muitos leads em "Qualificação" sem avançar</li>
+              <li>Propostas enviadas há mais de 7 dias sem resposta</li>
+              <li>Follow-ups sem personalização — mesmo texto para todos</li>
+              <li>Leads na base sem atividade há mais de 14 dias</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Como manter o funil vivo</h3>
+            <ul class="tick-list">
+              <li>Prospectar novos leads todos os dias — sem exceção</li>
+              <li>Definir próximo passo em toda interação</li>
+              <li>Registrar no CRM antes de fechar o computador</li>
+              <li>Revisar metas semanais com o gestor</li>
+            </ul>
+          </div>
+          <div class="card dark">
+            <h3>Regra de ouro</h3>
+            <p>Pipeline saudável tem leads em <strong>todas as etapas</strong> ao mesmo tempo. Se você só tem leads em Prospecção, em breve ficará sem nada para fechar. Se só tem leads em Proposta, em breve ficará sem pipeline.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 14 — ATENDIMENTO DE ALTO PADRÃO -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Padrões Comerciais • Atendimento</span>
+          <h2 class="slide-title">Atendimento de Alto Padrão</h2>
+          <p class="slide-subtitle">Escuta ativa. Presença total. Quem não ouve não vende — independente da metodologia.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="grid grid-3">
+          <div class="card">
+            <h3>Escuta ativa — o que é</h3>
+            <p>Ouvir para entender — não para responder. Enquanto o cliente fala, sua única função é <strong>absorver</strong> e identificar sinais de dor, urgência e prontidão.</p>
+          </div>
+          <div class="card">
+            <h3>Não interromper</h3>
+            <p>Interrupção quebra rapport imediatamente. Se o cliente está falando, ele está revelando. Deixe-o terminar — sempre. O silêncio depois da pergunta é ouro.</p>
+          </div>
+          <div class="card">
+            <h3>Não resolver na cabeça</h3>
+            <p>O pior hábito do consultor iniciante: ouvir meia frase e já montar a resposta mentalmente. Quando faz isso, perde a segunda metade — que normalmente contém a dor real.</p>
+          </div>
+          <div class="card">
+            <h3>Presença total</h3>
+            <p>Sem celular paralelo. Sem aba aberta. Sem responder mensagem durante a call. O cliente percebe — e a venda morre silenciosamente.</p>
+          </div>
+          <div class="card">
+            <h3>Validar antes de avançar</h3>
+            <p>Após cada resposta importante: "Entendo. Então se eu estiver correto, o que mais te pesa nisso é..." — confirme, não assuma. Cliente que se sente ouvido compra mais.</p>
+          </div>
+          <div class="card solid">
+            <h3>Regra 30/70</h3>
+            <p>Consultor fala <strong>30%</strong> do tempo. Cliente fala <strong>70%</strong>. Se a proporção inverteu, você está pitchando — não vendendo. Pare. Faça uma pergunta.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 15 — COMO ESTUDAR OS PRODUTOS -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Padrões Comerciais • Domínio de Produto</span>
+          <h2 class="slide-title">Como Estudar os Produtos da Febracis</h2>
+          <p class="slide-subtitle">Quem não domina o produto não consegue conectar a dor do cliente à solução. Domínio de produto é pré-requisito para vender.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <p class="lead">Existem quatro fases de domínio. Passar por todas é obrigatório antes de apresentar qualquer produto a um cliente real.</p>
+        <div class="grid grid-4" style="flex:1;">
+          <div class="card">
+            <div class="num" style="font-size:14px;">1</div>
+            <h3>Ler</h3>
+            <p>Ler o material do produto do começo ao fim. Não resumos. Não slides. O conteúdo completo. Você precisa saber o que vende antes de saber como vender.</p>
+          </div>
+          <div class="card">
+            <div class="num" style="font-size:14px;">2</div>
+            <h3>Assistir</h3>
+            <p>Assistir a uma call ou reunião de produto — ao vivo ou gravada. Ver como a dor do cliente se conecta ao resultado. Não existe substituto para observar alguém que domina.</p>
+          </div>
+          <div class="card">
+            <div class="num" style="font-size:14px;">3</div>
+            <h3>Praticar</h3>
+            <p>Roleplay com colega ou gestor antes de ir para cliente real. Simular objeções, SPIN e proposta. Praticar até soar natural — não decorado.</p>
+          </div>
+          <div class="card solid">
+            <div class="num" style="background:#111; color:var(--cis-yellow); font-size:14px;">4</div>
+            <h3>Explicar</h3>
+            <p>Conseguir explicar o produto em 3 minutos para alguém que nunca ouviu falar. Se não consegue explicar de forma simples, ainda não dominou. Estude mais.</p>
+          </div>
+        </div>
+        <p class="pullquote">Consultor que depende de script para falar do produto transmite insegurança. Cliente percebe e hesita.</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 16 — TREINAMENTOS OBRIGATÓRIOS -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Padrões Comerciais • Formação</span>
+          <h2 class="slide-title">Treinamentos Obrigatórios</h2>
+          <p class="slide-subtitle">Não são recomendações. São pré-requisitos para atuar com autonomia na equipe.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Treinamentos de Produto</h3>
+            <ul class="tick-list">
+              <li>Método CIS — completo (4 módulos + SPIN + Fechamento)</li>
+              <li>FGPC — Formação e Gestão de Pessoas por Competências</li>
+              <li>BHP — Base de Alta Performance</li>
+              <li>CEOP — Certificação em Excelência Organizacional e Pessoal</li>
+              <li>Master Coaching — nível avançado de desenvolvimento</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Treinamentos de Processo</h3>
+            <ul class="tick-list">
+              <li>SPIN Selling — teoria e prática (este módulo)</li>
+              <li>Tratamento de Objeções — cada objeção tem protocolo</li>
+              <li>Técnicas de Fechamento — alternativa fechada, urgência ética</li>
+              <li>CRM operacional — uso correto da ferramenta</li>
+              <li>Pós-venda e retenção — cliente fechado não é cliente fidelizado</li>
+            </ul>
+          </div>
+          <div class="card dark" style="grid-column: span 2;">
+            <h3>Prazo para conclusão</h3>
+            <p>Todo novo membro conclui os treinamentos de processo nos primeiros <strong>15 dias</strong>. Os treinamentos de produto são concluídos antes da primeira abordagem ao respectivo produto. Sem exceção.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 17 — ERROS COMUNS -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Padrões Comerciais • Erros</span>
+          <h2 class="slide-title">Erros Comuns no Processo Comercial</h2>
+          <p class="slide-subtitle">Os 6 erros mais frequentes que destroem conversão — e que são todos evitáveis com processo.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="grid grid-2" style="flex:1;">
+          <div class="card">
+            <h3 style="color:#ff8b8b;">Erro 1 — Pular o SPIN</h3>
+            <p>Ir direto para a proposta sem diagnóstico. O cliente recebe uma solução que não conecta à dor dele — e responde com "vou pensar". Resultado: perda de venda e de tempo.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:#ff8b8b;">Erro 2 — Não registrar no CRM</h3>
+            <p>Lead sem registro é lead perdido. Quando o cliente retorna, o consultor não tem histórico. A conversa recomeça do zero — e a confiança quebra.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:#ff8b8b;">Erro 3 — Follow-up genérico</h3>
+            <p>"Oi, tudo bem? Queria saber se você decidiu." — isso não é follow-up, é spam. Follow-up efetivo referencia algo específico da conversa anterior e gera valor.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:#ff8b8b;">Erro 4 — Falar mais que o cliente</h3>
+            <p>Consultor que fala mais de 30% do tempo está pitchando, não vendendo. Perguntas trazem dor. Argumentos constroem resistência. Quem fala demais, perde o controle.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:#ff8b8b;">Erro 5 — Proposta sem ancoragem de valor</h3>
+            <p>Apresentar preço sem que o cliente tenha verbalizado o custo da dor. Resultado inevitável: "tá caro". A pergunta certa antes do preço vale mais que qualquer desconto.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:#ff8b8b;">Erro 6 — Desistir na primeira objeção</h3>
+            <p>Objeção não é rejeição — é pedido de mais informação. Consultor que recua na primeira objeção nunca desenvolve o músculo do fechamento. Objeção tem protocolo: explore, não defenda.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 18 — O PADRÃO DO CAMPEÃO -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Padrões Comerciais • Top Performer</span>
+          <h2 class="slide-title">O Padrão do Campeão Comercial</h2>
+          <p class="slide-subtitle">O que diferencia quem performa consistentemente de quem performa eventualmente.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="champion-grid">
+          <div class="champion-item">
+            <span class="ico">🎯</span>
+            <div>
+              <h4>Processo antes de talento</h4>
+              <p>Campeão não improv visa. Segue o processo com tanta disciplina que parece natural. Talento sem processo é inconsistente. Processo sem talento é previsível — e previsível escala.</p>
+            </div>
+          </div>
+          <div class="champion-item">
+            <span class="ico">📊</span>
+            <div>
+              <h4>Obcecado com dados</h4>
+              <p>Conhece sua taxa de conversão, tempo médio de ciclo e número de follow-ups por fechamento. Analisa os dados toda semana. Ajusta o que não está funcionando — sem esperar o gestor mandar.</p>
+            </div>
+          </div>
+          <div class="champion-item">
+            <span class="ico">🔄</span>
+            <div>
+              <h4>Estuda mais do que os outros</h4>
+              <p>Assiste calls gravadas. Refaz roleplay. Pede feedback. Enquanto o time relaxa depois do expediente, o campeão revisa o que errou na call do dia e como vai corrigir amanhã.</p>
+            </div>
+          </div>
+          <div class="champion-item">
+            <span class="ico">🤫</span>
+            <div>
+              <h4>Silêncio estratégico</h4>
+              <p>Sabe usar o silêncio após as perguntas. Não tem pressa de preencher o vazio. O cliente preenche — e o que ele diz no silêncio é sempre mais valioso do que qualquer argumento do consultor.</p>
+            </div>
+          </div>
+          <div class="champion-item">
+            <span class="ico">🧠</span>
+            <div>
+              <h4>Alta inteligência emocional</h4>
+              <p>Não reage. Não defende. Quando o cliente está emocional, o campeão fica mais calmo — não mais agitado. Controla o tom, o ritmo e a direção da conversa sem que o cliente perceba.</p>
+            </div>
+          </div>
+          <div class="champion-item" style="border-color: var(--cis-card-border-strong);">
+            <span class="ico">💰</span>
+            <div>
+              <h4>Comprometido com o resultado do cliente</h4>
+              <p>Vende o que o cliente precisa — não o que é mais fácil de vender. Sabe que cliente satisfeito gera indicação. E indicação é o lead mais barato e mais fácil de fechar que existe.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 19 — EXERCÍCIO: MONTE SEU FUNIL -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Exercício Prático</span>
+          <h2 class="slide-title">Exercício: Monte Seu Funil</h2>
+          <p class="slide-subtitle">Planejamento de pipeline pessoal para a próxima semana. Faça agora — não depois.</p>
+        </div>
+        <span class="chip">15 min</span>
+      </header>
+      <div class="slide-body">
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Parte 1 — Inventário atual</h3>
+            <p>Responda por escrito:</p>
+            <ul class="dot-list" style="margin-top:8px;">
+              <li>Quantos leads você tem hoje em cada etapa do funil?</li>
+              <li>Qual etapa está mais vazia?</li>
+              <li>Quantas propostas enviadas aguardam resposta?</li>
+              <li>Qual é sua taxa de conversão das últimas 4 semanas?</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Parte 2 — Plano da semana</h3>
+            <p>Defina metas para os próximos 5 dias:</p>
+            <ul class="dot-list" style="margin-top:8px;">
+              <li>Número de novos contatos que vai prospectar por dia</li>
+              <li>Leads que precisam de follow-up e em qual data</li>
+              <li>Leads que avançam para SPIN esta semana</li>
+              <li>Quantas propostas pretende enviar até sexta-feira</li>
+            </ul>
+          </div>
+          <div class="card dark" style="grid-column: span 2;">
+            <h3>Parte 3 — SPIN em prática</h3>
+            <p>Escolha um lead atual. Escreva 2 perguntas de Situação, 2 de Problema, 2 de Implicação e 1 de Necessidade que você usaria na próxima call com ele. Compartilhe com o gestor para revisão antes da call.</p>
+          </div>
+        </div>
+        <p class="pullquote">Planejamento sem registro não existe. Escreva. Registre no CRM. Revise na sexta. Ajuste na segunda.</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 20 — CHECKLIST -->
+    <section class="slide">
+      <header class="slide-header">
+        <div>
+          <span class="eyebrow">Encerramento • Padrões Comerciais</span>
+          <h2 class="slide-title">Checklist — Padrões Comerciais</h2>
+          <p class="slide-subtitle">O que você precisa dominar antes de atuar com autonomia na equipe.</p>
+        </div>
+      </header>
+      <div class="slide-body">
+        <div class="checklist-two">
+          <div class="checklist-col">
+            <h3>SPIN Selling</h3>
+            <ul class="tick-list">
+              <li>Sei distinguir S, P, I e N sem consultar material</li>
+              <li>Consigo executar SPIN em roleplay de 15 minutos</li>
+              <li>Nunca apresento proposta antes de consolidar Implicação</li>
+              <li>Uso transições naturais entre as fases do SPIN</li>
+              <li>Mantenho proporção 30/70 (consultor/cliente)</li>
+              <li>Uso silêncio estratégico após perguntas-chave</li>
+            </ul>
+            <h3 style="margin-top:16px;">Funil e CRM</h3>
+            <ul class="tick-list">
+              <li>Registro toda interação no CRM no mesmo dia</li>
+              <li>Reviso e atualizo o pipeline diariamente</li>
+              <li>Sei identificar lead parado e reativar com follow-up</li>
+              <li>Tenho leads ativos em todas as 7 etapas do funil</li>
+            </ul>
+          </div>
+          <div class="checklist-col">
+            <h3>Métricas e Cadência</h3>
+            <ul class="tick-list">
+              <li>Faço 50+ ligações por dia de trabalho</li>
+              <li>Executo follow-up em D+1, D+3, D+7 e D+14</li>
+              <li>Cada follow-up é personalizado — sem texto genérico</li>
+              <li>Conheço minha taxa de conversão atual</li>
+            </ul>
+            <h3 style="margin-top:16px;">Produto e Formação</h3>
+            <ul class="tick-list">
+              <li>Concluí os treinamentos de processo (SPIN, Objeções, Fechamento)</li>
+              <li>Consigo explicar o produto em 3 minutos sem script</li>
+              <li>Sei conectar dor mapeada no SPIN ao produto correspondente</li>
+              <li>Tenho plano para concluir todos os treinamentos obrigatórios</li>
+            </ul>
+          </div>
+        </div>
+        <div style="text-align:center; margin-top:auto; padding-top:16px;">
+          <a class="btn-next" href="fechamento.html">★ Meu Compromisso com Você →</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div class="hud">
+  <div class="counter" data-counter></div>
+  <div class="nav-buttons">
+    <button class="fs-btn" data-nav="fullscreen" title="Tela cheia (F)" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg>
+      <span class="fs-label">Tela cheia</span>
+    </button>
+    <button data-nav="prev">◀ Anterior</button>
+    <button data-nav="next">Próximo ▶</button>
+  </div>
+</div>
+
+<script src="assets/alinhamento.js"></script>
+</body>
+</html>
