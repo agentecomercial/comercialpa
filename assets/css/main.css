@@ -2247,6 +2247,8 @@ thead th.sort-desc::after{content:' ↓';color:var(--accent);}
 .np-meta-foot-v2 .np-meta-edit{margin-top:0;flex:1;}
 .np-meta-edit-sem{background:rgba(212,165,116,.10);border-color:rgba(212,165,116,.30);color:#d4a574;}
 .np-meta-edit-sem:hover{background:rgba(212,165,116,.20);border-color:#d4a574;color:#f0c896;}
+.np-meta-copy-img{background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.28);color:#38bdf8;}
+.np-meta-copy-img:hover{background:rgba(56,189,248,.18);border-color:#38bdf8;color:#7dd3fc;}
 /* Linha pace semanal mini (mostra ritmo/falta da semana atual no card) */
 .np-mc-pace-mini{
   font-size:10px;color:#9aa5b1;padding:7px 9px;margin-top:8px;

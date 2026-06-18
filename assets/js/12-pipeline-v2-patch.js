@@ -686,6 +686,7 @@
         +'<div class="np-meta-foot-v2">'
         +'<button class="np-meta-edit" onclick="event.stopPropagation();npAbrirModalMeta(\''+_escJS2(nome)+'\')">⚙ Configurar metas</button>'
         +'<button class="np-meta-edit np-meta-edit-sem" onclick="event.stopPropagation();npAbrirModalSemanal(\''+_escJS2(nome)+'\')" title="Configurar metas semanais">📅 Semanal</button>'
+        +'<button class="np-meta-edit np-meta-copy-img" onclick="event.stopPropagation();npCopiarMetaImg(\''+_escJS2(nome)+'\')">📋 Copiar</button>'
         +'</div>'
         +'</div>';
     }).join('');
@@ -901,6 +902,156 @@
   window._npGetCol=_npGetCol;
   window._npGetMetaAtiva=_npGetMetaAtiva;
   window._npCOR=['#c8f05a','#60a5fa','#34d399','#f59e0b','#a78bfa','#f472b6','#fb923c','#38bdf8'];
+
+  /* ── Copiar card do consultor como imagem (Canvas) ─── */
+  function _npRRect(ctx, x, y, w, h, r) {
+    r = Math.min(r, Math.min(w, h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function _npToastCopy(msg) {
+    var t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(0);background:#1c2128;color:#c8f05a;border:1px solid rgba(200,240,90,.35);border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;z-index:99999;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.5);font-family:inherit;';
+    document.body.appendChild(t);
+    setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(function() { t.remove(); }, 350); }, 1900);
+  }
+
+  function _npDownloadMetaImg(blob, nome) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'meta-' + String(nome).toLowerCase().replace(/\s+/g, '-') + '.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1200);
+    _npToastCopy('⬇ Imagem salva!');
+  }
+
+  window.npCopiarMetaImg = function(nome) {
+    var g    = window._npGoals[nome] || {};
+    var todas = typeof window._npTodasVendas === 'function' ? window._npTodasVendas() : [];
+    var rank  = typeof window._npPorConsultor === 'function' ? window._npPorConsultor(todas, '', 'pago') : [];
+    var r    = rank.find(function(x) { return x.nome === nome; }) || { pago: 0 };
+    var real = r.pago;
+
+    var b    = +(g.metaBasica || g.metaValor || 0);
+    var m    = +(g.metaMinima || 0);
+    var M    = +(g.metaMaster || 0);
+    var pctM   = m ? Math.min(999, Math.round(real / m   * 100)) : 0;
+    var pctB   = b ? Math.min(999, Math.round(real / b   * 100)) : 0;
+    var pctMas = M ? Math.min(999, Math.round(real / M   * 100)) : 0;
+
+    var MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    var now   = new Date();
+    var mesAno = MESES[now.getMonth()].toUpperCase() + '/' + now.getFullYear();
+
+    var prox = _npProxTier(g, real);
+    var proxTxt = prox.batida === 'master'
+      ? 'Super Meta atingida! 🚀 Parabéns!'
+      : (prox.falta > 0 ? 'Próximo: faltam ' + _npFmtR(prox.falta) + ' para ' + prox.label : 'Sem metas configuradas');
+
+    /* ── Canvas ── */
+    var W = 520, H = 264, DPR = 2;
+    var cv = document.createElement('canvas');
+    cv.width = W * DPR; cv.height = H * DPR;
+    var ctx = cv.getContext('2d');
+    ctx.scale(DPR, DPR);
+    var SAN = 'system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
+
+    /* fundo */
+    ctx.fillStyle = '#0d1117';
+    _npRRect(ctx, 0, 0, W, H, 12); ctx.fill();
+
+    /* header strip */
+    ctx.fillStyle = '#161b22';
+    _npRRect(ctx, 0, 0, W, 44, 12); ctx.fill();
+    ctx.fillRect(0, 32, W, 12);
+
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '600 11px ' + SAN;
+    ctx.textBaseline = 'middle';
+    ctx.fillText('RELATÓRIO DE META  ·  ' + mesAno, 18, 22);
+
+    /* linha divisória */
+    function sep(y) { ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    sep(44);
+
+    /* Consultor */
+    ctx.fillStyle = '#636e7b'; ctx.font = '500 12px ' + SAN;
+    ctx.fillText('Consultor', 18, 63);
+    ctx.fillStyle = '#e6edf3'; ctx.font = '700 13px ' + SAN;
+    ctx.fillText(nome, 112, 63);
+
+    /* Faturado */
+    ctx.fillStyle = '#636e7b'; ctx.font = '500 12px ' + SAN;
+    ctx.fillText('Faturado', 18, 86);
+    ctx.fillStyle = '#c8f05a'; ctx.font = '700 15px ' + SAN;
+    ctx.fillText(_npFmtR(real), 112, 86);
+
+    sep(102);
+
+    /* Tier rows */
+    function tier(y, emoji, label, meta, pct, ok) {
+      ctx.font = '13px ' + SAN; ctx.fillStyle = '#e6edf3';
+      ctx.fillText(emoji, 18, y);
+      ctx.font = '500 12px ' + SAN; ctx.fillStyle = '#8b949e';
+      ctx.fillText(label, 40, y);
+      if (meta > 0) {
+        ctx.font = '600 12px ' + SAN; ctx.fillStyle = '#c0c9d6';
+        ctx.fillText(_npFmtR(meta), 118, y);
+        ctx.font = '700 12px ' + SAN; ctx.fillStyle = ok ? '#56d364' : '#f0b429';
+        ctx.fillText((ok ? '✅ ' : '⏳ ') + pct + '%', 268, y);
+        /* barra */
+        var bx = 346, bw = 152, bh = 7, by = y - 7;
+        ctx.fillStyle = '#21262d'; _npRRect(ctx, bx, by, bw, bh, 4); ctx.fill();
+        var fill = Math.min(1, pct / 100);
+        if (fill > 0) {
+          ctx.fillStyle = ok ? '#56d364' : '#c8f05a';
+          _npRRect(ctx, bx, by, Math.max(bh, bw * fill), bh, 4); ctx.fill();
+        }
+      } else {
+        ctx.font = '500 12px ' + SAN; ctx.fillStyle = '#3a4149';
+        ctx.fillText('Não configurada', 118, y);
+      }
+    }
+
+    tier(122, '🥈', 'Mínima', m, pctM,   pctM   >= 100);
+    tier(148, '🥉', 'Básica', b, pctB,   pctB   >= 100);
+    tier(174, '🥇', 'Master', M, pctMas, pctMas >= 100);
+
+    sep(190);
+
+    /* Próximo */
+    ctx.fillStyle = '#8b949e'; ctx.font = '500 11px ' + SAN;
+    ctx.fillText(proxTxt, 18, 208);
+
+    /* Branding */
+    ctx.fillStyle = '#2a3140'; ctx.font = '500 10px ' + SAN;
+    ctx.textAlign = 'right';
+    ctx.fillText('Febracis · Pipeline Comercial', W - 18, 248);
+    ctx.textAlign = 'left';
+
+    /* cópia */
+    cv.toBlob(function(blob) {
+      if (!blob) return;
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
+        navigator.clipboard.write([new ClipboardItem({'image/png': blob})])
+          .then(function() { _npToastCopy('📋 Imagem copiada!'); })
+          .catch(function() { _npDownloadMetaImg(blob, nome); });
+      } else {
+        _npDownloadMetaImg(blob, nome);
+      }
+    }, 'image/png');
+  };
 
   /* debug log removido */
 })();
