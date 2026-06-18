@@ -59,6 +59,182 @@
         { titulo: 'SPIN Selling para Closer',            url: 'treinamento-cis/spin-closer.html', tipo: 'extra'  },
         { titulo: 'Fechamento · Scripts, Narrativas e Roteiros', url: 'treinamento-cis/fechamento.html', tipo: 'final' }
       ]
+    },
+    {
+      id: 'treinamento-fgpc',
+      titulo: 'Treinamento Comercial FGPC',
+      descricao: 'Formação em Gestão de Pessoas com Perfil Comportamental — treinamento comercial para a equipe vender o FGPC. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      produto: 'FGPC',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 20,
+      url: 'treinamento-fgpc/index.html',
+      icone: '🧭',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                        url: 'treinamento-fgpc/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — Produto (FGPC)',            url: 'treinamento-fgpc/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-fgpc/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-fgpc/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Negociação e Objeções',     url: 'treinamento-fgpc/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado ao FGPC',      url: 'treinamento-fgpc/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-fgpc/fechamento.html',   tipo: 'final' }
+      ]
+    },
+    {
+      id: 'treinamento-ml5',
+      titulo: 'Treinamento Comercial ML5',
+      descricao: 'ML5 — Formação de Líderes (Líderes Nível 5 de Jim Collins, alta performance e mentalidade empresarial) — treinamento comercial para a equipe vender o ML5. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      produto: 'ML5',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 30,
+      url: 'treinamento-ml5/index.html',
+      icone: '👑',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                        url: 'treinamento-ml5/index.html',         tipo: 'index'  },
+        { titulo: 'Módulo 1 — Produto (ML5)',             url: 'treinamento-ml5/modulo-1.html',      tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-ml5/modulo-2.html',      tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-ml5/modulo-3.html',      tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Negociação e Objeções',     url: 'treinamento-ml5/modulo-4.html',      tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado ao ML5',       url: 'treinamento-ml5/spin-selling.html',  tipo: 'extra'  },
+        { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-ml5/fechamento.html',    tipo: 'final' }
+      ]
+    },
+    {
+      id: 'treinamento-if',
+      titulo: 'Treinamento Comercial IF',
+      descricao: 'Inteligência Financeira — treinamento comercial para a equipe vender o IF. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      produto: 'IF',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 21,
+      url: 'treinamento-if/index.html',
+      icone: '💰',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                        url: 'treinamento-if/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — Produto (IF)',              url: 'treinamento-if/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-if/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-if/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Negociação e Objeções',     url: 'treinamento-if/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado ao IF',        url: 'treinamento-if/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-if/fechamento.html',   tipo: 'final' }
+      ]
+    },
+    {
+      id: 'treinamento-bhp',
+      titulo: 'Treinamento Comercial BHP',
+      descricao: 'BHP — Gestão de Negócios — treinamento comercial para a equipe vender o BHP (programa empresarial presencial, 4 dias/40h). 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      produto: 'BHP',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 21,
+      url: 'treinamento-bhp/index.html',
+      icone: '📈',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                        url: 'treinamento-bhp/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — Produto (BHP)',             url: 'treinamento-bhp/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-bhp/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-bhp/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Negociação e Objeções',     url: 'treinamento-bhp/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado ao BHP',       url: 'treinamento-bhp/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-bhp/fechamento.html',   tipo: 'final' }
+      ]
+    },
+    {
+      id: 'treinamento-ceop',
+      titulo: 'Treinamento Comercial CEOP',
+      descricao: 'Comunicação Eficaz e Oratória Persuasiva — treinamento comercial para a equipe vender o CEOP. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      produto: 'CEOP',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 30,
+      url: 'treinamento-ceop/index.html',
+      icone: '🎤',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                        url: 'treinamento-ceop/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — Produto (CEOP)',            url: 'treinamento-ceop/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-ceop/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-ceop/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Negociação e Objeções',     url: 'treinamento-ceop/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado ao CEOP',      url: 'treinamento-ceop/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-ceop/fechamento.html',   tipo: 'final' }
+      ]
+    },
+    {
+      id: 'treinamento-tav',
+      titulo: 'Treinamento Comercial TAV',
+      descricao: 'Técnicas Avançadas de Vendas — treinamento comercial para a equipe vender o TAV. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      produto: 'TAV',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 40,
+      url: 'treinamento-tav/index.html',
+      icone: '🚀',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                        url: 'treinamento-tav/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — Produto (TAV)',             url: 'treinamento-tav/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-tav/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-tav/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Negociação e Objeções',     url: 'treinamento-tav/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado ao TAV',       url: 'treinamento-tav/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-tav/fechamento.html',   tipo: 'final' }
+      ]
+    },
+    {
+      id: 'treinamento-master-coaching',
+      titulo: 'Treinamento Comercial Master Coaching',
+      descricao: 'Master Coaching — a jornada definitiva do coach formado pela Febracis (CIS). Treinamento comercial para a equipe vender o Master Coaching. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      produto: 'Master Coaching',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 50,
+      url: 'treinamento-master-coaching/index.html',
+      icone: '🏆',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                            url: 'treinamento-master-coaching/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — Produto (Master Coaching)',     url: 'treinamento-master-coaching/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e Qualificação',     url: 'treinamento-master-coaching/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Apresentação e Proposta',       url: 'treinamento-master-coaching/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Negociação e Objeções',         url: 'treinamento-master-coaching/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado ao Master Coaching', url: 'treinamento-master-coaching/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Scripts e Roteiros',          url: 'treinamento-master-coaching/fechamento.html',   tipo: 'final' }
+      ]
+    },
+    {
+      id: 'treinamento-fcis',
+      titulo: 'Treinamento Comercial FCIS',
+      descricao: 'Formação em Coaching Integral Sistêmico (certificação internacional FCU) — treinamento comercial para a equipe vender o FCIS. 7 HTMLs: índice + 4 módulos + SPIN Selling + Fechamento (115 slides).',
+      produto: 'FCIS',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 25,
+      url: 'treinamento-fcis/index.html',
+      icone: '🧠',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                        url: 'treinamento-fcis/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — Produto (FCIS)',            url: 'treinamento-fcis/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e Qualificação', url: 'treinamento-fcis/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Apresentação e Proposta',   url: 'treinamento-fcis/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Negociação e Objeções',     url: 'treinamento-fcis/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado ao FCIS',      url: 'treinamento-fcis/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Scripts e Roteiros',      url: 'treinamento-fcis/fechamento.html',   tipo: 'final' }
+      ]
     }
   ];
 })();

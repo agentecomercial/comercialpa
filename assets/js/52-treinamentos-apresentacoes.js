@@ -164,7 +164,7 @@
       + '.trap-empty-ic{ font-size:48px; opacity:.4; margin-bottom:12px; }'
 
       /* Tela ADICIONAR */
-      + '.trap-add-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:24px; }'
+      + '.trap-add-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:18px; margin-bottom:24px; }'
       + '.trap-caminho{ background:linear-gradient(180deg, var(--bg-3,#1c2128), #161b22); border:1px solid var(--border); border-radius:14px; padding:22px; position:relative; }'
       + '.trap-caminho-tag{ position:absolute; top:14px; right:14px; font-size:9px; font-weight:800; padding:4px 10px; border-radius:100px; letter-spacing:.06em; color:var(--bg); }'
       + '.trap-caminho-tag.a{ background:linear-gradient(135deg, #c8f05a, #f0c896); }'
@@ -173,6 +173,19 @@
       + '.trap-caminho-ic{ width:44px; height:44px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:22px; border:1px solid; flex-shrink:0; }'
       + '.trap-caminho-ic.a{ background:rgba(200,240,90,.15); color:var(--accent); border-color:rgba(200,240,90,.3); }'
       + '.trap-caminho-ic.b{ background:rgba(96,165,250,.15); color:var(--blue,#60a5fa); border-color:rgba(96,165,250,.3); }'
+      + '.trap-caminho-tag.c{ background:linear-gradient(135deg, #f0c896, #e0a050); }'
+      + '.trap-caminho-ic.c{ background:rgba(240,200,150,.15); color:#f0c896; border-color:rgba(240,200,150,.3); }'
+      + '.trap-cat-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }'
+      + '.trap-cat-item{ display:flex; align-items:center; gap:10px; background:var(--bg-2,#161b22); border:1px solid var(--border); border-radius:9px; padding:10px 12px; }'
+      + '.trap-cat-item-ic{ font-size:18px; flex-shrink:0; }'
+      + '.trap-cat-item-info{ flex:1; min-width:0; }'
+      + '.trap-cat-item-t{ font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }'
+      + '.trap-cat-item-s{ font-size:10px; color:var(--muted,#9aa5b1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }'
+      + '.trap-cat-item button{ background:rgba(200,240,90,.10); border:1px solid rgba(200,240,90,.30); color:var(--accent); font-size:11px; font-weight:700; padding:6px 10px; border-radius:6px; cursor:pointer; font-family:inherit; flex-shrink:0; transition:all .15s; }'
+      + '.trap-cat-item button:hover{ background:rgba(200,240,90,.20); }'
+      + '.trap-cat-item button.sec{ background:transparent; color:var(--muted,#9aa5b1); border-color:var(--border); padding:6px 9px; }'
+      + '.trap-cat-item button.sec:hover{ color:var(--text); border-color:var(--border2,rgba(255,255,255,.14)); }'
+      + '.trap-cat-empty{ font-size:11px; color:var(--muted,#9aa5b1); font-style:italic; padding:8px 0; }'
       + '.trap-caminho-t{ font-size:15px; font-weight:800; }'
       + '.trap-caminho-sub{ font-size:11px; color:var(--muted,#9aa5b1); }'
       + '.trap-caminho-desc{ font-size:12px; color:var(--muted,#9aa5b1); line-height:1.6; margin-bottom:16px; }'
@@ -551,11 +564,12 @@
   function _viewAdicionar(){
     return ''
       + '<div class="trap-hero">'
-      +   '<div><h1>Adicionar conteúdo · 2 caminhos</h1><p>Crie do zero via Claude ou importe HTMLs existentes.</p></div>'
+      +   '<div><h1>Adicionar conteúdo · 3 caminhos</h1><p>Crie do zero via Claude, importe HTMLs existentes ou adicione um treinamento pronto da biblioteca.</p></div>'
       + '</div>'
       + '<div class="trap-add-grid">'
       +   _caminhoAHtml()
       +   _caminhoBHtml()
+      +   _caminhoCHtml()
       + '</div>'
       + _formMetadadosHtml();
   }
@@ -589,6 +603,73 @@
       +   '<div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);font-size:10px;color:var(--muted,#9aa5b1);"><b style="color:var(--blue,#60a5fa);">Quando usar:</b> material já feito; preserva 100% do HTML original.</div>'
       + '</div>';
   }
+
+  /* CAMINHO C · Biblioteca de treinamentos prontos da Febracis.
+     Lista os conteúdos standalone já construídos (origem 'html-existente'),
+     reaproveitando as ações de abrir embutido / nova aba já existentes. */
+  function _caminhoCHtml(){
+    var prontos = _getItens().filter(function(i){ return i.origem === 'html-existente'; });
+    var lista = prontos.length
+      ? prontos.map(function(i){
+          var partes = Array.isArray(i.estrutura) ? i.estrutura.length + ' partes' : 'standalone';
+          var pub = i.status === 'publicado' ? ' · ✓ na listagem' : '';
+          return ''
+            + '<div class="trap-cat-item">'
+            +   '<span class="trap-cat-item-ic">' + _esc(i.icone || '🎓') + '</span>'
+            +   '<div class="trap-cat-item-info">'
+            +     '<div class="trap-cat-item-t">' + _esc(i.titulo) + '</div>'
+            +     '<div class="trap-cat-item-s">📦 ' + _esc(i.produto) + ' · ' + partes + pub + '</div>'
+            +   '</div>'
+            +   '<button onclick="window._trapAbrirAqui(\'' + _esc(i.id) + '\')" title="Abrir embutido no aplicativo">👁 Abrir</button>'
+            +   '<button class="sec" onclick="window._trapAbrirNovaAba(\'' + _esc(i.id) + '\')" title="Abrir em nova aba">↗</button>'
+            + '</div>';
+        }).join('')
+      : '<div class="trap-cat-empty">Nenhum treinamento pronto na biblioteca ainda.</div>';
+    return ''
+      + '<div class="trap-caminho">'
+      +   '<div class="trap-caminho-tag c">CAMINHO C</div>'
+      +   '<div class="trap-caminho-h">'
+      +     '<div class="trap-caminho-ic c">📚</div>'
+      +     '<div><div class="trap-caminho-t">Treinamentos prontos</div><div class="trap-caminho-sub">Biblioteca Febracis · 1 clique</div></div>'
+      +   '</div>'
+      +   '<div class="trap-caminho-desc">Treinamentos comerciais standalone já construídos — com módulos completos e o módulo <b>SPIN Selling</b> adaptado ao produto. Já entram publicados na listagem; abra aqui ou em nova aba.</div>'
+      +   '<div class="trap-cat-list">' + lista + '</div>'
+      +   '<div style="margin-bottom:12px;padding:11px 13px;background:rgba(240,200,150,.06);border:1px solid rgba(240,200,150,.22);border-radius:9px;font-size:11px;color:var(--muted,#9aa5b1);line-height:1.6;"><b style="color:#f0c896;">➕ Adicionar um novo treinamento:</b><br>envie o PDF do produto ao <b>Claude Code</b> com o comando:<span style="display:block;margin-top:6px;background:#0a0e16;border:1px solid var(--border2,rgba(255,255,255,.14));border-radius:6px;padding:8px;font-family:ui-monospace,Consolas,monospace;color:#d6e2c0;">Novo treinamento: cria o treinamento comercial do produto &lt;nome&gt; a partir do PDF &lt;caminho&gt;, padr&atilde;o FGPC.</span><button onclick="window._trapCopiarComando(this)" style="margin-top:8px;background:rgba(200,240,90,.12);border:1px solid rgba(200,240,90,.30);color:var(--accent);font-size:10px;font-weight:700;padding:6px 11px;border-radius:6px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copiar comando</button></div>'
+      +   '<div style="padding-top:10px;border-top:1px dashed var(--border);font-size:10px;color:var(--muted,#9aa5b1);"><b style="color:#f0c896;">Quando usar:</b> publicar um treinamento completo pronto da Febracis (ex.: FGPC, Método CIS).</div>'
+      + '</div>';
+  }
+
+  /* Copia para a área de transferência o comando-modelo de criação de treinamento. */
+  function _trapCopiaFallback(txt){
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0'; ta.style.top = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    }catch(e){}
+  }
+  window._trapCopiarComando = function(btn){
+    var txt = 'Novo treinamento: cria o treinamento comercial do produto <nome> a partir do PDF <caminho>, padrão FGPC.';
+    function done(){
+      if(!btn) { _toast('Comando copiado', 'var(--green,#34d399)'); return; }
+      var orig = btn.innerHTML;
+      btn.innerHTML = '✓ Copiado!';
+      btn.style.background = 'var(--green,#34d399)';
+      btn.style.color = 'var(--bg,#0d1117)';
+      btn.style.borderColor = 'var(--green,#34d399)';
+      setTimeout(function(){
+        btn.innerHTML = orig;
+        btn.style.background = 'rgba(200,240,90,.12)';
+        btn.style.color = 'var(--accent)';
+        btn.style.borderColor = 'rgba(200,240,90,.30)';
+      }, 1600);
+    }
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(done, function(){ _trapCopiaFallback(txt); done(); });
+      } else { _trapCopiaFallback(txt); done(); }
+    }catch(e){ _trapCopiaFallback(txt); done(); }
+  };
 
   function _formMetadadosHtml(){
     return ''
