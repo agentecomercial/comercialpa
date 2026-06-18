@@ -857,9 +857,11 @@
   };
 
   /* ── Baixar treinamento COMPLETO como arquivo HTML ───────
-     Apresentação REAL e navegável (engine + animações): usa um
-     deck real como template, injeta TODOS os slides de TODAS as
-     partes e EMBUTE o CSS e a engine JS. Baixa via Blob. */
+     Replica a arquitetura real: SHELL (index.html, com o menu —
+     Visão geral, Trilha completa, módulos) + cada módulo embutido
+     como blob carregado no iframe. CSS e engine JS embutidos.
+     Resultado: 1 arquivo com menu navegável + apresentações
+     animadas, idêntico ao original. */
   window._trapBaixarHtml = function(id, btn){
     var item = _getItens().find(function(i){ return i.id === id; });
     if(!item || !Array.isArray(item.estrutura) || !item.estrutura.length){
@@ -876,8 +878,8 @@
     function _restore(){ if(btn){ btn.disabled = false; btn.innerHTML = lblOrig; } }
 
     var parser = new DOMParser();
-    var slidesHtml = '';        /* todos os .slide concatenados (sem alterar classes) */
-    var templateDoc = null;     /* 1º documento com .deck → molde com chrome + engine */
+    var shellTxt = '';          /* index.html (menu) — parte SEM .deck */
+    var moduleTxt = {};         /* nomeArquivo.html -> HTML cru (partes COM .deck) */
     var cssHref = '', jsHref = '';
 
     var seq = Promise.resolve();
@@ -885,27 +887,24 @@
       seq = seq.then(function(){
         return fetch(p.url).then(function(r){ return r.ok ? r.text() : ''; }).then(function(txt){
           if(!txt) return;
+          var fn = p.url.substring(p.url.lastIndexOf('/') + 1);
           var doc = parser.parseFromString(txt, 'text/html');
-          var deck = doc.querySelector('.deck');
-          if(deck && !templateDoc){
-            templateDoc = doc;
-            var lnk = doc.querySelector('head link[rel="stylesheet"]');
-            if(lnk && lnk.getAttribute('href')) cssHref = new URL(lnk.getAttribute('href'), absBase).href;
-            var scr = doc.querySelector('script[src]');
-            if(scr && scr.getAttribute('src')) jsHref = new URL(scr.getAttribute('src'), absBase).href;
+          if(doc.querySelector('.deck')){
+            moduleTxt[fn] = txt;
+            if(!cssHref){ var l = doc.querySelector('head link[rel="stylesheet"]'); if(l && l.getAttribute('href')) cssHref = new URL(l.getAttribute('href'), absBase).href; }
+            if(!jsHref){ var s = doc.querySelector('script[src]'); if(s && s.getAttribute('src')) jsHref = new URL(s.getAttribute('src'), absBase).href; }
+          } else if(!shellTxt){
+            shellTxt = txt;   /* capa/índice = shell com o menu */
           }
-          doc.querySelectorAll('.deck .slide').forEach(function(sl){
-            sl.querySelectorAll('script').forEach(function(s){ s.remove(); });
-            slidesHtml += sl.outerHTML;   /* preserva classes/estrutura p/ a engine animar */
-          });
         }).catch(function(){ /* ignora parte que falhar */ });
       });
     });
 
     seq.then(function(){
-      if(!slidesHtml || !templateDoc){
+      var temMod = Object.keys(moduleTxt).length > 0;
+      if(!temMod || !shellTxt){
         _restore();
-        alert('Não foi possível montar a apresentação.\n\nA geração precisa que você esteja acessando o painel ONLINE (GitHub Pages). Em arquivo local (file://) o navegador bloqueia a leitura das partes.');
+        alert('Não foi possível montar o treinamento.\n\nA geração precisa que você esteja acessando o painel ONLINE (GitHub Pages). Em arquivo local (file://) o navegador bloqueia a leitura das partes.');
         return;
       }
       Promise.all([
@@ -913,34 +912,47 @@
         jsHref  ? fetch(jsHref ).then(function(r){ return r.ok ? r.text() : ''; }).catch(function(){ return ''; }) : Promise.resolve('')
       ]).then(function(res){
         var cssText = res[0], jsText = res[1];
-        var d = templateDoc;
-        /* 1) injeta TODOS os slides no deck (substitui os do molde) */
-        var deck = d.querySelector('.deck');
-        deck.innerHTML = slidesHtml;
-        /* 2) base href p/ imagens/fontes resolverem (online) */
-        var headEl = d.querySelector('head');
-        if(headEl){
-          var baseEl = d.createElement('base'); baseEl.setAttribute('href', absBase);
-          headEl.insertBefore(baseEl, headEl.firstChild);
-        }
-        /* 3) embute o CSS (mantém o look e as animações originais) */
-        if(cssText){
-          var lnk = d.querySelector('head link[rel="stylesheet"]');
-          var st = d.createElement('style'); st.textContent = cssText;
-          if(lnk) lnk.replaceWith(st); else if(headEl) headEl.appendChild(st);
-        }
-        /* 4) embute a engine JS (navegação + transições) — roda no fim do body */
-        if(jsText){
-          var scr = d.querySelector('script[src]');
-          var ns = d.createElement('script'); ns.textContent = jsText;
-          if(scr) scr.replaceWith(ns); else d.body.appendChild(ns);
-        }
-        var tEl = d.querySelector('title'); if(tEl) tEl.textContent = item.titulo;
 
-        var html = '<!DOCTYPE html>\n' + d.documentElement.outerHTML;
+        /* Monta um documento self-contained (base + CSS inline + engine inline) */
+        function selfContained(rawTxt, isShell){
+          var d = parser.parseFromString(rawTxt, 'text/html');
+          var head = d.querySelector('head');
+          if(head){ var b = d.createElement('base'); b.setAttribute('href', absBase); head.insertBefore(b, head.firstChild); }
+          if(cssText){
+            var lnk = d.querySelector('head link[rel="stylesheet"]');
+            var st = d.createElement('style'); st.textContent = cssText;
+            if(lnk) lnk.replaceWith(st); else if(head) head.appendChild(st);
+          }
+          if(!isShell && jsText){   /* só módulos têm engine externa; o shell tem script inline próprio */
+            var scr = d.querySelector('script[src]');
+            var ns = d.createElement('script'); ns.textContent = jsText;
+            if(scr) scr.replaceWith(ns); else d.body.appendChild(ns);
+          }
+          var t = d.querySelector('title'); if(t && isShell) t.textContent = item.titulo;
+          return '<!DOCTYPE html>\n' + d.documentElement.outerHTML;
+        }
+
+        /* Módulos embutidos por nome de arquivo */
+        var MOD = {};
+        Object.keys(moduleTxt).forEach(function(fn){ MOD[fn] = selfContained(moduleTxt[fn], false); });
+
+        /* Shell (menu) */
+        var shellHtml = selfContained(shellTxt, true);
+        /* Aponta as rotas (ROUTES) do menu para os blobs embutidos */
+        shellHtml = shellHtml.replace(/file:\s*'([^']+\.html)'/g, function(m, fn){
+          return "file: (window.__MODURL && window.__MODURL['" + fn + "'])";
+        });
+        /* Bootstrap: cria os módulos como blob URLs ANTES do script do menu */
+        var modJson = JSON.stringify(MOD).replace(/<\/script/gi, '<\\/script');
+        var boot = '<scr' + 'ipt>window.__MOD=' + modJson + ';window.__MODURL={};'
+          + '(function(){for(var k in window.__MOD){try{window.__MODURL[k]=URL.createObjectURL(new Blob([window.__MOD[k]],{type:"text/html"}));}catch(e){}}})();'
+          + '</scr' + 'ipt>';
+        if(shellHtml.indexOf('</head>') >= 0) shellHtml = shellHtml.replace('</head>', boot + '</head>');
+        else shellHtml = boot + shellHtml;
+
         var slug = String(item.id || item.titulo || 'treinamento').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
         try{
-          var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+          var blob = new Blob([shellHtml], { type: 'text/html;charset=utf-8' });
           var url = URL.createObjectURL(blob);
           var a = document.createElement('a');
           a.href = url; a.download = slug + '-completo.html';
