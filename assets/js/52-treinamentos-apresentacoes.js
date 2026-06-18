@@ -668,6 +668,7 @@
     var parser = new DOMParser();
     var sectionsHtml = '';
     var partCount = 0;
+    var cssHref = '';   /* CSS do treinamento — para extrair a cor de identidade */
 
     /* Converte 1 slide em bloco de apostila (eyebrow + título + corpo) */
     function _slideToHtml(sl){
@@ -696,6 +697,10 @@
         return fetch(p.url).then(function(r){ return r.ok ? r.text() : ''; }).then(function(txt){
           if(!txt) return;
           var doc = parser.parseFromString(txt, 'text/html');
+          if(!cssHref){
+            var _lnk = doc.querySelector('head link[rel="stylesheet"]');
+            if(_lnk && _lnk.getAttribute('href')) cssHref = new URL(_lnk.getAttribute('href'), absBase).href;
+          }
           var slides = doc.querySelectorAll('.slide');
           if(!slides.length) return;   /* pula capa/menu (sem slides) */
           partCount++;
@@ -715,102 +720,127 @@
         alert('Não foi possível extrair o conteúdo.\n\nA impressão completa precisa que você esteja acessando o painel ONLINE (GitHub Pages). Em arquivo local (file://) o navegador bloqueia a leitura das partes.');
         return;
       }
-      var hoje = new Date();
-      var dataStr = hoje.toLocaleDateString('pt-BR') + ' às ' + hoje.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      /* Busca o CSS do treinamento p/ extrair a identidade visual; com fallback. */
+      var fb = { ac:'#16a83e', acd:'#0a6d2c', hd:'#0d1b0d' };
+      if(cssHref){
+        fetch(cssHref).then(function(r){ return r.ok ? r.text() : ''; }).then(function(cssTxt){
+          function pick(n, f){ var m = cssTxt.match(new RegExp('--' + n + '\\s*:\\s*([^;]+)')); return m ? m[1].trim() : f; }
+          _apMontar({ ac: pick('cis-yellow', fb.ac), acd: pick('cis-yellow-deep', fb.acd), hd: pick('cis-blue-900', fb.hd) });
+        }).catch(function(){ _apMontar(fb); });
+      } else { _apMontar(fb); }
 
-      var css = '<style>'
-        + '*{ box-sizing:border-box; }'
-        + 'html,body{ margin:0; padding:0; background:#fff; color:#1a1a1a; font-family:"Segoe UI",system-ui,-apple-system,sans-serif; font-size:12px; line-height:1.5; }'
-        + 'img{ max-width:100% !important; height:auto; }'
-        /* Capa */
-        + '.ap-cover{ text-align:center; padding:6px 0 16px; border-bottom:3px solid #0a7d35; margin-bottom:18px; }'
-        + '.ap-cover .ap-prod{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#0a7d35; font-weight:800; }'
-        + '.ap-cover h1{ font-size:25px; margin:8px 0 6px; color:#0d1b0d; }'
-        + '.ap-cover .ap-date{ font-size:11px; color:#555; }'
-        + '.ap-cover .ap-desc{ font-size:11px; color:#444; max-width:620px; margin:8px auto 0; }'
-        /* Separador de parte */
-        + '.ap-part{ margin:16px 0 12px; padding:9px 14px; background:#eef6ee; border-left:5px solid #0a7d35; border-radius:4px; break-after:avoid; page-break-after:avoid; }'
-        + '.ap-part.brk{ break-before:page; page-break-before:always; }'
-        + '.ap-part-k{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:#0a7d35; font-weight:800; }'
-        + '.ap-part-t{ font-size:18px; margin:2px 0 0; color:#0d1b0d; }'
-        /* Bloco slide */
-        + '.ap-slide{ margin:0 0 14px; padding:0 0 11px; border-bottom:1px solid #e4e4e4; }'
-        + '.ap-eyebrow{ font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#0a7d35; font-weight:700; margin-bottom:2px; }'
-        + '.ap-title{ font-size:15px; color:#13270f; margin:0 0 8px; break-after:avoid; page-break-after:avoid; }'
-        /* Conteúdo genérico */
-        + '.ap-body *{ color:#1a1a1a !important; }'
-        + '.ap-body strong{ color:#0a3d18 !important; font-weight:700; }'
-        + '.ap-body h3{ font-size:12.5px; margin:9px 0 3px; color:#0d1b0d !important; break-after:avoid; }'
-        + '.ap-body h4{ font-size:11.5px; margin:7px 0 3px; }'
-        + '.ap-body p{ margin:4px 0; }'
-        + '.ap-body ul,.ap-body ol{ margin:4px 0 4px 18px; padding:0; }'
-        + '.ap-body li{ margin:3px 0; break-inside:avoid; }'
-        + '.ap-body .grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }'
-        + '.ap-body .grid-3{ grid-template-columns:1fr 1fr 1fr; }'
-        + '.ap-body .grid-1{ grid-template-columns:1fr; }'
-        + '.ap-body .card,.ap-body .quad,.ap-body .turn,.ap-body .col,.ap-body .step{ background:#f7f9f7 !important; border:1px solid #d8e2d8; border-radius:6px; padding:9px 11px; break-inside:avoid; page-break-inside:avoid; }'
-        + '.ap-body .card.solid{ background:#eaf4ea !important; border-color:#0a7d35; }'
-        + '.ap-body .card h3,.ap-body .card h4{ margin-top:0; }'
-        + '.ap-body .seq,.ap-body .aida,.ap-body .funnel,.ap-body .matrix,.ap-body .split,.ap-body .script-list,.ap-body .dialog,.ap-body .cols-aside{ display:block; }'
-        + '.ap-body .seq>*,.ap-body .aida>*,.ap-body .funnel>*,.ap-body .script-list>*,.ap-body .split>*{ margin:5px 0; break-inside:avoid; page-break-inside:avoid; }'
-        + '.ap-body table{ width:100%; border-collapse:collapse; margin:8px 0; font-size:11px; }'
-        + '.ap-body th,.ap-body td{ border:1px solid #cfd8cf; padding:5px 8px; text-align:left; vertical-align:top; }'
-        + '.ap-body thead th{ background:#eef6ee !important; color:#0d1b0d !important; font-weight:700; }'
-        + '.ap-body tr{ break-inside:avoid; page-break-inside:avoid; }'
-        + '.ap-body [style*="background-image"]{ background-image:none !important; }'
-        + '.ap-foot{ display:none; }'
-        /* Tela (pré-visualização) */
-        + '@media screen{ body{ background:#525659; } '
-        +   '.ap-doc{ background:#fff; max-width:820px; margin:60px auto 40px; padding:30px 36px; box-shadow:0 8px 34px rgba(0,0,0,.45); border-radius:3px; } '
-        +   '.ap-bar{ position:fixed; top:0; left:0; right:0; z-index:99; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#161b22; color:#e6edf3; font:600 13px system-ui,sans-serif; padding:9px 16px; border-bottom:1px solid #30363d; } '
-        +   '.ap-bar button{ background:rgba(255,255,255,.06); border:1px solid #30363d; color:#9aa5b1; border-radius:6px; padding:7px 13px; font:inherit; cursor:pointer; } '
-        +   '.ap-bar button.on{ background:rgba(56,189,248,.16); border-color:#38bdf8; color:#38bdf8; } '
-        +   '.ap-bar .ap-print{ background:linear-gradient(135deg,#0a7d35,#16a83e); border:none; color:#fff; font-weight:700; } }'
-        /* Impressão */
-        + '@media print{ '
-        +   'body{ background:#fff !important; color:#000 !important; } '
-        +   '*{ animation:none !important; transition:none !important; box-shadow:none !important; text-shadow:none !important; } '
-        +   '.ap-bar{ display:none !important; } '
-        +   '.ap-doc{ margin:0; padding:0; max-width:none; box-shadow:none; } '
-        +   '.ap-foot{ display:block; position:fixed; bottom:6mm; left:0; right:0; text-align:center; font-size:8.5px; color:#888; } }'
-        + '</style>';
-      /* Orientação (default Retrato — documento). Margem A4 confortável. */
-      var orientCss = '<style id="apOrient">@page{ size:A4 portrait; margin:16mm 14mm 18mm; }</style>';
-      var bar = '<div class="ap-bar">'
-        + '<span>📄 ' + _esc(item.titulo) + ' — apostila</span>'
-        + '<span style="display:flex;gap:8px;align-items:center;">'
-        +   '<span style="opacity:.7;font-weight:500;">A4:</span>'
-        +   '<button id="btnPort" class="on" onclick="setOrient(\'portrait\')">Retrato</button>'
-        +   '<button id="btnLand" onclick="setOrient(\'landscape\')">Paisagem</button>'
-        +   '<button class="ap-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>'
-        + '</span>'
-        + '</div>';
-      var script = '<scr' + 'ipt>'
-        + 'var PORT="@page{size:A4 portrait;margin:16mm 14mm 18mm}";'
-        + 'var LAND="@page{size:A4 landscape;margin:14mm 16mm 16mm}";'
-        + 'function setOrient(o){var e=document.getElementById("apOrient");if(e)e.textContent=(o==="landscape")?LAND:PORT;var P=document.getElementById("btnPort"),L=document.getElementById("btnLand");if(P)P.className=(o==="portrait")?"on":"";if(L)L.className=(o==="landscape")?"on":"";}'
-        + '</scr' + 'ipt>';
-      var cover = '<div class="ap-cover">'
-        + '<div class="ap-prod">' + _esc(item.produto || '') + ' · Treinamento Comercial</div>'
-        + '<h1>' + _esc(item.titulo) + '</h1>'
-        + '<div class="ap-date">Documento gerado em ' + _esc(dataStr) + '</div>'
-        + (item.descricao ? '<div class="ap-desc">' + _esc(item.descricao) + '</div>' : '')
-        + '</div>';
-      var foot = '<div class="ap-foot">Documento gerado automaticamente pelo sistema de treinamento</div>';
+      function _apMontar(cor){
+        function _tint(hex, a){
+          hex = String(hex || '').trim().replace('#','');
+          if(hex.length === 3) hex = hex.split('').map(function(c){ return c + c; }).join('');
+          var r = parseInt(hex.substr(0,2),16), g = parseInt(hex.substr(2,2),16), b = parseInt(hex.substr(4,2),16);
+          if(isNaN(r)||isNaN(g)||isNaN(b)) return 'rgba(16,168,62,' + a + ')';
+          return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+        }
+        var hoje = new Date();
+        var dataStr = hoje.toLocaleDateString('pt-BR') + ' às ' + hoje.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-      var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
-        + '<base href="' + absBase + '">'
-        + css + orientCss
-        + '<title>' + _esc(item.titulo) + ' — Apostila</title></head><body>'
-        + bar
-        + '<div class="ap-doc">' + cover + sectionsHtml + '</div>'
-        + foot
-        + script
-        + '</body></html>';
-      var w = window.open('', '_blank');
-      if(!w){ _restore(); alert('Permita pop-ups (janelas) para gerar a impressão e tente novamente.'); return; }
-      w.document.open(); w.document.write(html); w.document.close();
-      _restore();
+        /* Variáveis de identidade aplicadas à apostila (fundo sempre claro p/ leitura) */
+        var rootVars = ':root{'
+          + '--ac:' + cor.ac + ';--acd:' + cor.acd + ';--hd:' + cor.hd + ';'
+          + '--tint:' + _tint(cor.ac, 0.10) + ';--tint2:' + _tint(cor.ac, 0.18) + ';--tline:' + _tint(cor.ac, 0.35) + ';'
+          + '}';
+
+        var css = '<style>'
+          + rootVars
+          + '*{ box-sizing:border-box; }'
+          + 'html,body{ margin:0; padding:0; background:#fff; color:#1a1a1a; font-family:"Segoe UI",system-ui,-apple-system,sans-serif; font-size:12px; line-height:1.5; }'
+          + 'img{ max-width:100% !important; height:auto; }'
+          /* Capa */
+          + '.ap-cover{ text-align:center; padding:6px 0 16px; border-bottom:3px solid var(--acd); margin-bottom:18px; }'
+          + '.ap-cover .ap-prod{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--acd); font-weight:800; }'
+          + '.ap-cover h1{ font-size:25px; margin:8px 0 6px; color:var(--hd); }'
+          + '.ap-cover .ap-date{ font-size:11px; color:#555; }'
+          + '.ap-cover .ap-desc{ font-size:11px; color:#444; max-width:620px; margin:8px auto 0; }'
+          /* Separador de parte */
+          + '.ap-part{ margin:16px 0 12px; padding:9px 14px; background:var(--tint); border-left:5px solid var(--acd); border-radius:4px; break-after:avoid; page-break-after:avoid; }'
+          + '.ap-part.brk{ break-before:page; page-break-before:always; }'
+          + '.ap-part-k{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--acd); font-weight:800; }'
+          + '.ap-part-t{ font-size:18px; margin:2px 0 0; color:var(--hd); }'
+          /* Bloco slide */
+          + '.ap-slide{ margin:0 0 14px; padding:0 0 11px; border-bottom:1px solid var(--tline); }'
+          + '.ap-eyebrow{ font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--acd); font-weight:700; margin-bottom:2px; }'
+          + '.ap-title{ font-size:15px; color:var(--hd); margin:0 0 8px; break-after:avoid; page-break-after:avoid; }'
+          /* Conteúdo genérico */
+          + '.ap-body *{ color:#1a1a1a !important; }'
+          + '.ap-body strong{ color:var(--acd) !important; font-weight:700; }'
+          + '.ap-body h3{ font-size:12.5px; margin:9px 0 3px; color:var(--hd) !important; break-after:avoid; }'
+          + '.ap-body h4{ font-size:11.5px; margin:7px 0 3px; color:var(--hd) !important; }'
+          + '.ap-body p{ margin:4px 0; }'
+          + '.ap-body ul,.ap-body ol{ margin:4px 0 4px 18px; padding:0; }'
+          + '.ap-body li{ margin:3px 0; break-inside:avoid; }'
+          + '.ap-body li::marker{ color:var(--acd); }'
+          + '.ap-body .grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }'
+          + '.ap-body .grid-3{ grid-template-columns:1fr 1fr 1fr; }'
+          + '.ap-body .grid-1{ grid-template-columns:1fr; }'
+          + '.ap-body .card,.ap-body .quad,.ap-body .turn,.ap-body .col,.ap-body .step{ background:var(--tint) !important; border:1px solid var(--tline); border-radius:6px; padding:9px 11px; break-inside:avoid; page-break-inside:avoid; }'
+          + '.ap-body .card.solid{ background:var(--tint2) !important; border-color:var(--acd); }'
+          + '.ap-body .card h3,.ap-body .card h4{ margin-top:0; }'
+          + '.ap-body .seq,.ap-body .aida,.ap-body .funnel,.ap-body .matrix,.ap-body .split,.ap-body .script-list,.ap-body .dialog,.ap-body .cols-aside{ display:block; }'
+          + '.ap-body .seq>*,.ap-body .aida>*,.ap-body .funnel>*,.ap-body .script-list>*,.ap-body .split>*{ margin:5px 0; break-inside:avoid; page-break-inside:avoid; }'
+          + '.ap-body table{ width:100%; border-collapse:collapse; margin:8px 0; font-size:11px; }'
+          + '.ap-body th,.ap-body td{ border:1px solid var(--tline); padding:5px 8px; text-align:left; vertical-align:top; }'
+          + '.ap-body thead th{ background:var(--tint) !important; color:var(--hd) !important; font-weight:700; }'
+          + '.ap-body tr{ break-inside:avoid; page-break-inside:avoid; }'
+          + '.ap-body [style*="background-image"]{ background-image:none !important; }'
+          + '.ap-foot{ display:none; }'
+          /* Tela (pré-visualização) */
+          + '@media screen{ body{ background:#525659; } '
+          +   '.ap-doc{ background:#fff; max-width:820px; margin:60px auto 40px; padding:30px 36px; box-shadow:0 8px 34px rgba(0,0,0,.45); border-radius:3px; } '
+          +   '.ap-bar{ position:fixed; top:0; left:0; right:0; z-index:99; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#161b22; color:#e6edf3; font:600 13px system-ui,sans-serif; padding:9px 16px; border-bottom:1px solid #30363d; } '
+          +   '.ap-bar button{ background:rgba(255,255,255,.06); border:1px solid #30363d; color:#9aa5b1; border-radius:6px; padding:7px 13px; font:inherit; cursor:pointer; } '
+          +   '.ap-bar button.on{ background:rgba(56,189,248,.16); border-color:#38bdf8; color:#38bdf8; } '
+          +   '.ap-bar .ap-print{ background:var(--acd); border:none; color:#fff; font-weight:700; } }'
+          /* Impressão */
+          + '@media print{ '
+          +   'body{ background:#fff !important; } '
+          +   '*{ animation:none !important; transition:none !important; box-shadow:none !important; text-shadow:none !important; } '
+          +   '.ap-bar{ display:none !important; } '
+          +   '.ap-doc{ margin:0; padding:0; max-width:none; box-shadow:none; } '
+          +   '.ap-foot{ display:block; position:fixed; bottom:6mm; left:0; right:0; text-align:center; font-size:8.5px; color:#888; } }'
+          + '</style>';
+        var orientCss = '<style id="apOrient">@page{ size:A4 portrait; margin:16mm 14mm 18mm; }</style>';
+        var bar = '<div class="ap-bar">'
+          + '<span>📄 ' + _esc(item.titulo) + ' — apostila</span>'
+          + '<span style="display:flex;gap:8px;align-items:center;">'
+          +   '<span style="opacity:.7;font-weight:500;">A4:</span>'
+          +   '<button id="btnPort" class="on" onclick="setOrient(\'portrait\')">Retrato</button>'
+          +   '<button id="btnLand" onclick="setOrient(\'landscape\')">Paisagem</button>'
+          +   '<button class="ap-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>'
+          + '</span>'
+          + '</div>';
+        var script = '<scr' + 'ipt>'
+          + 'var PORT="@page{size:A4 portrait;margin:16mm 14mm 18mm}";'
+          + 'var LAND="@page{size:A4 landscape;margin:14mm 16mm 16mm}";'
+          + 'function setOrient(o){var e=document.getElementById("apOrient");if(e)e.textContent=(o==="landscape")?LAND:PORT;var P=document.getElementById("btnPort"),L=document.getElementById("btnLand");if(P)P.className=(o==="portrait")?"on":"";if(L)L.className=(o==="landscape")?"on":"";}'
+          + '</scr' + 'ipt>';
+        var cover = '<div class="ap-cover">'
+          + '<div class="ap-prod">' + _esc(item.produto || '') + ' · Treinamento Comercial</div>'
+          + '<h1>' + _esc(item.titulo) + '</h1>'
+          + '<div class="ap-date">Documento gerado em ' + _esc(dataStr) + '</div>'
+          + (item.descricao ? '<div class="ap-desc">' + _esc(item.descricao) + '</div>' : '')
+          + '</div>';
+        var foot = '<div class="ap-foot">Documento gerado automaticamente pelo sistema de treinamento</div>';
+
+        var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
+          + '<base href="' + absBase + '">'
+          + css + orientCss
+          + '<title>' + _esc(item.titulo) + ' — Apostila</title></head><body>'
+          + bar
+          + '<div class="ap-doc">' + cover + sectionsHtml + '</div>'
+          + foot
+          + script
+          + '</body></html>';
+        var w = window.open('', '_blank');
+        if(!w){ _restore(); alert('Permita pop-ups (janelas) para gerar a impressão e tente novamente.'); return; }
+        w.document.open(); w.document.write(html); w.document.close();
+        _restore();
+      }
     });
   };
 
