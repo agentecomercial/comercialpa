@@ -1013,16 +1013,16 @@
     ctx.textAlign = 'left';
     lnH(44, 0, W);
 
-    /* tiers compactos */
-    var barX = px + 120, barW = 150;
+    /* tiers — 1 linha: nome | valor completo | barra | % | badge */
+    var valX = px + 86, barX = px + 208, barW = 130;
     var y = 62;
     tiers.forEach(function(t) {
       if (!t.val) return;
       var done = t.pct >= 100;
       ctx.font = '12px ' + SAN; ctx.fillStyle = done ? '#56d364' : '#e6edf3'; ctx.textBaseline = 'middle';
       ctx.fillText(t.ico + ' ' + t.lbl, px, y);
-      ctx.font = '500 10px ' + SAN; ctx.fillStyle = '#636e7b';
-      ctx.fillText('R$' + Math.round(t.val / 1000) + 'k', px + 88, y);
+      ctx.font = '500 11px ' + SAN; ctx.fillStyle = '#8b949e';
+      ctx.fillText(_npFmtR(t.val), valX, y);
       barH(barX, y - 5, barW, 10, t.pct, done ? '#56d364' : t.col);
       ctx.font = '700 10px ' + SAN; ctx.fillStyle = done ? '#56d364' : '#f0b429';
       ctx.textAlign = 'right'; ctx.fillText(t.pct + '%', barX + barW + 38, y); ctx.textAlign = 'left';
@@ -1070,10 +1070,6 @@
         bandY += 26;
       });
     }
-
-    /* branding */
-    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = '500 10px ' + SAN;
-    ctx.textAlign = 'right'; ctx.fillText('Febracis · Pipeline Comercial', W - px, H - 10); ctx.textAlign = 'left';
 
     /* cópia */
     cv.toBlob(function(blob) {
