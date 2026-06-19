@@ -135,6 +135,12 @@
       + '.trap-card-thumb{ aspect-ratio:16/9; background:linear-gradient(135deg, rgba(212,165,116,.15), rgba(212,165,116,.04)); border:1px solid var(--border); border-radius:10px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; font-size:36px; color:#f0c896; }'
       + '.trap-card-thumb.t-trein{ background:linear-gradient(135deg, rgba(96,165,250,.15), rgba(96,165,250,.04)); color:var(--blue,#60a5fa); }'
       + '.trap-card-thumb.t-apres{ background:linear-gradient(135deg, rgba(167,139,250,.15), rgba(167,139,250,.04)); color:var(--purple,#a78bfa); }'
+      + '.trap-card-thumb{ position:relative; overflow:hidden; }'
+      + '.trap-thumb-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }'
+      + '.trap-thumb-edit{ position:absolute; top:6px; right:6px; width:27px; height:27px; border-radius:7px; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.20); color:#fff; font-size:13px; line-height:1; cursor:pointer; display:none; align-items:center; justify-content:center; padding:0; backdrop-filter:blur(2px); z-index:2; }'
+      + '.trap-thumb-edit:hover{ background:rgba(0,0,0,.75); border-color:#fff; }'
+      + '.trap-thumb-edit.del{ right:39px; }'
+      + '.trap-card-thumb:hover .trap-thumb-edit{ display:inline-flex; }'
       + '.trap-card-meta{ display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }'
       + '.trap-badge{ font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; padding:3px 8px; border-radius:5px; display:inline-flex; align-items:center; gap:3px; }'
       + '.trap-badge.tr{ background:rgba(96,165,250,.14); color:var(--blue,#60a5fa); border:1px solid rgba(96,165,250,.3); }'
@@ -527,9 +533,16 @@
       + '<button class="trap-icbtn" onclick="event.stopPropagation();window._trapToggleStatus(\''+id+'\')" title="'+(i.status==='publicado'?'Ocultar':'Publicar')+'">'+(i.status==='publicado'?'👁':'⊘')+'</button>'
       + '<button class="trap-icbtn" onclick="event.stopPropagation();window._trapToggleNovo(\''+id+'\')" title="'+(i.novo?'Tirar badge Novo':'Marcar como Novo')+'">'+(i.novo?'✨':'⊕')+'</button>';
 
+    var _imgUrl = _trapImgs()[i.id];
+    var _thumbInner = _imgUrl
+      ? '<img class="trap-thumb-img" src="'+_imgUrl+'" alt="">'
+      : _esc(i.icone||'📄');
+    var _thumbEdit = '<button class="trap-thumb-edit" onclick="event.stopPropagation();window._trapTrocarImg(\''+id+'\')" title="Trocar imagem do card">📷</button>'
+      + (_imgUrl ? '<button class="trap-thumb-edit del" onclick="event.stopPropagation();window._trapRemoverImg(\''+id+'\')" title="Remover imagem (volta ao ícone)">✕</button>' : '');
+
     return ''
       + '<div class="trap-card'+ocultoCls+'" onclick="window._trapAbrirAqui(\''+id+'\')" title="Abrir embutido — clique nos botões para outras opções">'
-      +   '<div class="trap-card-thumb '+thumbCls+'">'+_esc(i.icone||'📄')+'</div>'
+      +   '<div class="trap-card-thumb '+thumbCls+(_imgUrl?' has-img':'')+'">'+_thumbInner+_thumbEdit+'</div>'
       +   '<div class="trap-card-meta">'
       +     '<span class="trap-badge '+tipoCls+'">'+tipoLabel+'</span>'
       +     '<span class="trap-badge prod">📦 '+_esc(i.produto)+'</span>'
@@ -546,9 +559,66 @@
       + '</div>';
   }
 
+  /* ── Imagem personalizada do card (localStorage por treinamento) ── */
+  var _trapImgPendingId = null;
+  function _trapImgs(){
+    try{ return JSON.parse(localStorage.getItem('trapCardImgs') || '{}'); }catch(e){ return {}; }
+  }
+  function _trapImgStore(id, url){
+    var m = _trapImgs();
+    if(url) m[id] = url; else delete m[id];
+    try{ localStorage.setItem('trapCardImgs', JSON.stringify(m)); return true; }
+    catch(e){ if(typeof _toast==='function') _toast('Não foi possível salvar (imagem grande demais). Tente outra menor.', 'var(--red)'); return false; }
+  }
+  function _trapEnsureImgInput(){
+    if(document.getElementById('trapImgInput')) return;
+    var inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*'; inp.id = 'trapImgInput'; inp.style.display = 'none';
+    inp.addEventListener('change', function(){
+      var f = inp.files && inp.files[0];
+      if(!f || !_trapImgPendingId){ return; }
+      var reader = new FileReader();
+      reader.onload = function(ev){
+        var img = new Image();
+        img.onload = function(){
+          /* redimensiona p/ no máx 720px de largura (mantém proporção) e comprime */
+          var maxW = 720;
+          var scale = Math.min(1, maxW / img.width);
+          var w = Math.max(1, Math.round(img.width * scale));
+          var h = Math.max(1, Math.round(img.height * scale));
+          var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+          cv.getContext('2d').drawImage(img, 0, 0, w, h);
+          var url;
+          try{ url = cv.toDataURL('image/jpeg', 0.82); }catch(e){ url = ev.target.result; }
+          if(_trapImgStore(_trapImgPendingId, url)){
+            if(typeof _renderTela==='function') _renderTela();
+            if(typeof _toast==='function') _toast('🖼️ Imagem do card atualizada.', 'var(--green,#34d399)');
+          }
+          _trapImgPendingId = null;
+        };
+        img.onerror = function(){ if(typeof _toast==='function') _toast('Arquivo de imagem inválido.', 'var(--red)'); _trapImgPendingId = null; };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(f);
+    });
+    document.body.appendChild(inp);
+  }
+  window._trapTrocarImg = function(id){
+    _trapEnsureImgInput();
+    _trapImgPendingId = id;
+    var inp = document.getElementById('trapImgInput');
+    if(inp){ inp.value = ''; inp.click(); }
+  };
+  window._trapRemoverImg = function(id){
+    _trapImgStore(id, null);
+    if(typeof _renderTela==='function') _renderTela();
+    if(typeof _toast==='function') _toast('Imagem removida — voltou ao ícone.', 'var(--muted)');
+  };
+
   function _bindPainelEvents(){
     var host = document.getElementById('trapConteudo');
     if(!host) return;
+    _trapEnsureImgInput();
     host.querySelectorAll('.trap-tabs button').forEach(function(b){
       b.addEventListener('click', function(){ _filtroTipo = b.dataset.tipo; _renderTela(); });
     });
