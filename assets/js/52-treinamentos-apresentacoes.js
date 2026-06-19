@@ -613,6 +613,9 @@
       + '.trap-crop-grid{ position:absolute; inset:0; pointer-events:none; background-image:linear-gradient(rgba(255,255,255,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.18) 1px,transparent 1px); background-size:33.333% 33.333%; opacity:.5; }'
       + '.trap-crop-zoom{ display:flex; align-items:center; gap:10px; margin:14px 2px 4px; }'
       + '.trap-crop-zoom span{ font-size:13px; opacity:.7; }'
+      + '.trap-crop-zbtn{ background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:7px; padding:5px 9px; font-size:13px; line-height:1; cursor:pointer; font-family:inherit; transition:all .12s; }'
+      + '.trap-crop-zbtn:hover{ border-color:rgba(56,189,248,.45); background:rgba(56,189,248,.10); }'
+      + '.trap-crop-zbtn:active{ transform:scale(.92); }'
       + '.trap-crop-zoom input[type=range]{ flex:1; accent-color:#38bdf8; cursor:pointer; }'
       + '.trap-crop-tools{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }'
       + '.trap-crop-tools button{ flex:1; min-width:110px; background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--muted,#9aa5b1); border-radius:7px; padding:7px 8px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .12s; display:inline-flex; align-items:center; justify-content:center; gap:5px; }'
@@ -640,7 +643,7 @@
       +     '<img id="trapCropImg" alt="" draggable="false">'
       +     '<div class="trap-crop-grid"></div>'
       +   '</div>'
-      +   '<div class="trap-crop-zoom"><span title="Diminuir">🔍➖</span><input type="range" id="trapCropZoom" min="20" max="320" value="100"><span title="Aumentar">🔍➕</span></div>'
+      +   '<div class="trap-crop-zoom"><button type="button" class="trap-crop-zbtn" id="trapCropZoomOut" title="Diminuir">🔍➖</button><input type="range" id="trapCropZoom" min="20" max="320" value="100"><button type="button" class="trap-crop-zbtn" id="trapCropZoomIn" title="Aumentar">🔍➕</button></div>'
       +   '<div class="trap-crop-tools">'
       +     '<button id="trapCropCenter" title="Centralizar a imagem">⊕ Centralizar</button>'
       +     '<button id="trapCropFill" title="Preencher o quadro (cobrir)">⤢ Preencher</button>'
@@ -671,6 +674,7 @@
     function doCenter(){ s.tx = (vpW() - s.iw * s.scale) / 2; s.ty = (VH - s.ih * s.scale) / 2; clamp(); apply(); }
     function doFill(){ s.scale = s.base; doCenter(); syncZoom(); }                       /* cobrir */
     function doFit(){ s.scale = Math.min(vpW() / s.iw, VH / s.ih); doCenter(); syncZoom(); } /* conter (mostra tudo) */
+    function stepZoom(d){ var pct = Math.max(20, Math.min(320, Math.round(s.scale / s.base * 100) + d)); setScale(s.base * pct / 100); }
     function apply(){
       img.style.width = (s.iw * s.scale) + 'px';
       img.style.height = (s.ih * s.scale) + 'px';
@@ -717,6 +721,8 @@
       window.removeEventListener('touchend', up);
       ov.remove(); _trapImgPendingId = null;
     }
+    document.getElementById('trapCropZoomOut').onclick = function(){ stepZoom(-15); };
+    document.getElementById('trapCropZoomIn').onclick = function(){ stepZoom(15); };
     document.getElementById('trapCropCenter').onclick = doCenter;
     document.getElementById('trapCropFill').onclick = doFill;
     document.getElementById('trapCropFit').onclick = doFit;
