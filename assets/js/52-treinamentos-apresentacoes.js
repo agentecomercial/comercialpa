@@ -141,6 +141,8 @@
       + '.trap-thumb-edit:hover{ background:rgba(0,0,0,.75); border-color:#fff; }'
       + '.trap-thumb-edit.del{ right:39px; }'
       + '.trap-card-thumb:hover .trap-thumb-edit{ display:inline-flex; }'
+      + '.trap-poster:hover .trap-thumb-edit{ display:inline-flex; }'
+      + '.trap-listrow:hover .trap-thumb-edit{ display:inline-flex; }'
       /* ── Seletor de modo de visualização ── */
       + '.trap-viewseg{ display:inline-flex; background:var(--surface2,#1c2128); border:1px solid var(--border); border-radius:9px; padding:2px; gap:2px; }'
       + '.trap-viewseg button{ background:none; border:none; color:var(--muted,#9aa5b1); border-radius:7px; padding:6px 11px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; }'
@@ -161,6 +163,9 @@
       + '.trap-poster-prod{ font-size:20px; font-weight:900; color:#fff; line-height:1.1; text-transform:uppercase; }'
       + '.trap-poster-tit{ font-size:10.5px; color:#cdd6e0; margin-top:5px; line-height:1.35; }'
       + '.trap-poster-cap .trap-badge{ margin-bottom:8px; }'
+      + '.trap-poster-acts{ display:flex; gap:6px; margin-top:10px; }'
+      + '.trap-poster-acts button{ background:rgba(200,240,90,.14); border:1px solid rgba(200,240,90,.35); color:var(--accent); font-size:10px; font-weight:700; padding:5px 9px; border-radius:6px; cursor:pointer; font-family:inherit; white-space:nowrap; }'
+      + '.trap-poster-acts button.sec{ background:rgba(0,0,0,.4); color:#dfe6ee; border-color:rgba(255,255,255,.22); }'
       /* ── Modo LISTA (banner largo) ── */
       + '.trap-list{ display:flex; flex-direction:column; gap:10px; }'
       + '.trap-listrow{ display:flex; background:var(--surf,#161b22); border:1px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; min-height:104px; transition:border-color .15s, box-shadow .15s; }'
@@ -587,6 +592,13 @@
     return '<button class="trap-icbtn" onclick="event.stopPropagation();window._trapToggleStatus(\''+id+'\')" title="'+(i.status==='publicado'?'Ocultar':'Publicar')+'">'+(i.status==='publicado'?'👁':'⊘')+'</button>'
       + '<button class="trap-icbtn" onclick="event.stopPropagation();window._trapToggleNovo(\''+id+'\')" title="'+(i.novo?'Tirar badge Novo':'Marcar como Novo')+'">'+(i.novo?'✨':'⊕')+'</button>';
   }
+  function _trapTemEstrutura(i){ return Array.isArray(i.estrutura) && i.estrutura.length > 0; }
+  /* Botão Imprimir (apostila/PDF) — só para itens com partes (treinamentos) */
+  function _trapPrintBtnHtml(i, cls){
+    if(!_trapTemEstrutura(i)) return '';
+    var id = _esc(i.id);
+    return '<button class="'+(cls||'sec')+'" onclick="event.stopPropagation();window._trapBaixarPdfCompleto(\''+id+'\',this)" title="Imprimir / Salvar apostila em PDF">🖨️ Imprimir</button>';
+  }
 
   function _cardHtml(i){
     var thumbCls = i.tipo === 'treinamento' ? 't-trein' : 't-apres';
@@ -603,6 +615,7 @@
       +   '<p class="trap-card-desc">'+_esc(i.descricao)+'</p>'
       +   '<div class="trap-card-actions">'
       +     '<button onclick="event.stopPropagation();window._trapAbrirAqui(\''+id+'\')" title="Visualizar dentro do aplicativo">👁 Abrir aqui</button>'
+      +     _trapPrintBtnHtml(i)
       +     '<button class="sec" onclick="event.stopPropagation();window._trapAbrirNovaAba(\''+id+'\')" title="Abrir em nova aba do navegador">↗</button>'
       +   '</div>'
       +   (_modoGestao ? '<div class="trap-card-foot" style="padding-top:8px;border-top:none;justify-content:flex-end;"><div class="trap-card-acts">'+_trapAdminActsHtml(i)+'</div></div>' : '')
@@ -627,6 +640,10 @@
       +     (i.status === 'oculto' ? '<span class="trap-badge oculto">⊘ Oculto</span>' : '')
       +     '<div class="trap-poster-prod">'+_esc(i.produto)+'</div>'
       +     '<div class="trap-poster-tit">'+_esc(i.titulo)+'</div>'
+      +     '<div class="trap-poster-acts">'
+      +       '<button onclick="event.stopPropagation();window._trapAbrirAqui(\''+id+'\')" title="Abrir">👁 Abrir</button>'
+      +       _trapPrintBtnHtml(i, 'sec')
+      +     '</div>'
       +   '</div>'
       + '</div>';
   }
@@ -648,6 +665,7 @@
       +   '</div>'
       +   '<div class="trap-listrow-acts">'
       +     '<button onclick="event.stopPropagation();window._trapAbrirAqui(\''+id+'\')">👁 Abrir aqui</button>'
+      +     _trapPrintBtnHtml(i)
       +     '<button class="sec" onclick="event.stopPropagation();window._trapAbrirNovaAba(\''+id+'\')">↗ Nova aba</button>'
       +     (_modoGestao ? '<div style="display:flex;gap:4px;justify-content:center;margin-top:2px;">'+_trapAdminActsHtml(i)+'</div>' : '')
       +   '</div>'
