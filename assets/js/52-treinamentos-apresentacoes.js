@@ -129,8 +129,8 @@
 
       /* Grid de cards */
       + '.trap-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px; }'
-      + '.trap-card{ background:linear-gradient(180deg, var(--bg-3,#1c2128), #161b22); border:1px solid var(--border); border-radius:14px; padding:16px; position:relative; display:flex; flex-direction:column; transition:all .2s; cursor:pointer; }'
-      + '.trap-card:hover{ transform:translateY(-2px); border-color:var(--border2,rgba(255,255,255,.14)); box-shadow:0 12px 36px rgba(0,0,0,.4); }'
+      + '.trap-card{ background:linear-gradient(180deg, var(--bg-3,#1c2128), #161b22); border:1px solid rgba(56,189,248,.45); border-radius:14px; padding:16px; position:relative; display:flex; flex-direction:column; transition:all .2s; cursor:pointer; box-shadow:0 0 14px rgba(56,189,248,.10); }'
+      + '.trap-card:hover{ transform:translateY(-2px); border-color:rgba(56,189,248,.85); box-shadow:0 12px 36px rgba(0,0,0,.4), 0 0 20px rgba(56,189,248,.28); }'
       + '.trap-card.oculto{ opacity:.45; }'
       + '.trap-card-thumb{ aspect-ratio:16/9; background:linear-gradient(135deg, rgba(212,165,116,.15), rgba(212,165,116,.04)); border:1px solid var(--border); border-radius:10px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; font-size:36px; color:#f0c896; }'
       + '.trap-card-thumb.t-trein{ background:linear-gradient(135deg, rgba(96,165,250,.15), rgba(96,165,250,.04)); color:var(--blue,#60a5fa); }'
@@ -141,6 +141,41 @@
       + '.trap-thumb-edit:hover{ background:rgba(0,0,0,.75); border-color:#fff; }'
       + '.trap-thumb-edit.del{ right:39px; }'
       + '.trap-card-thumb:hover .trap-thumb-edit{ display:inline-flex; }'
+      /* ── Seletor de modo de visualização ── */
+      + '.trap-viewseg{ display:inline-flex; background:var(--surface2,#1c2128); border:1px solid var(--border); border-radius:9px; padding:2px; gap:2px; }'
+      + '.trap-viewseg button{ background:none; border:none; color:var(--muted,#9aa5b1); border-radius:7px; padding:6px 11px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; }'
+      + '.trap-viewseg button:hover{ color:var(--text,#e6edf3); }'
+      + '.trap-viewseg button.on{ background:rgba(56,189,248,.16); color:#38bdf8; }'
+      /* ── Modo PÔSTER (vertical) ── */
+      + '.trap-grid-poster{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:14px; }'
+      + '.trap-poster{ position:relative; border-radius:13px; overflow:hidden; aspect-ratio:3/4.1; cursor:pointer; border:1px solid var(--border); transition:transform .18s, box-shadow .18s; }'
+      + '.trap-poster:hover{ transform:translateY(-3px); box-shadow:0 16px 40px rgba(0,0,0,.5); }'
+      + '.trap-poster.oculto{ opacity:.5; }'
+      + '.trap-poster .trap-poster-bg{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:46px; background:linear-gradient(160deg,#0e1322,#1b2540); color:#f0c896; }'
+      + '.trap-poster .trap-poster-bg.t-trein{ background:linear-gradient(160deg, rgba(96,165,250,.28), rgba(16,26,52,.95)); color:#9cc2ff; }'
+      + '.trap-poster .trap-poster-bg.t-apres{ background:linear-gradient(160deg, rgba(167,139,250,.28), rgba(28,18,52,.95)); color:#c4b5fd; }'
+      + '.trap-poster .trap-thumb-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }'
+      + '.trap-poster .trap-poster-grad{ position:absolute; inset:0; background:linear-gradient(transparent 32%, rgba(3,8,18,.93)); }'
+      + '.trap-poster::after{ content:""; position:absolute; right:14px; bottom:74px; width:52px; height:38px; background:repeating-linear-gradient(115deg, var(--gold,#e6b422) 0 3px, transparent 3px 8px); -webkit-mask:linear-gradient(115deg,#000 60%,transparent); mask:linear-gradient(115deg,#000 60%,transparent); opacity:.85; pointer-events:none; }'
+      + '.trap-poster-cap{ position:absolute; left:0; right:0; bottom:0; padding:14px 14px 16px; z-index:2; }'
+      + '.trap-poster-prod{ font-size:20px; font-weight:900; color:#fff; line-height:1.1; text-transform:uppercase; }'
+      + '.trap-poster-tit{ font-size:10.5px; color:#cdd6e0; margin-top:5px; line-height:1.35; }'
+      + '.trap-poster-cap .trap-badge{ margin-bottom:8px; }'
+      /* ── Modo LISTA (banner largo) ── */
+      + '.trap-list{ display:flex; flex-direction:column; gap:10px; }'
+      + '.trap-listrow{ display:flex; background:var(--surf,#161b22); border:1px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; min-height:104px; transition:border-color .15s, box-shadow .15s; }'
+      + '.trap-listrow:hover{ border-color:var(--border2,rgba(255,255,255,.14)); box-shadow:0 10px 28px rgba(0,0,0,.35); }'
+      + '.trap-listrow.oculto{ opacity:.5; }'
+      + '.trap-listrow-thumb{ position:relative; width:240px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:34px; overflow:hidden; }'
+      + '.trap-listrow-thumb .trap-thumb-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }'
+      + '.trap-listrow-body{ flex:1; min-width:0; padding:14px 16px; display:flex; flex-direction:column; justify-content:center; }'
+      + '.trap-listrow-body .trap-card-meta{ margin-bottom:7px; }'
+      + '.trap-listrow-body h3{ font-size:15px; font-weight:700; margin:0 0 5px; line-height:1.3; }'
+      + '.trap-listrow-body p{ font-size:11px; color:var(--muted,#9aa5b1); line-height:1.45; margin:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }'
+      + '.trap-listrow-acts{ display:flex; flex-direction:column; gap:6px; align-items:stretch; justify-content:center; padding:0 14px; flex:0 0 auto; }'
+      + '.trap-listrow-acts button{ background:rgba(200,240,90,.10); border:1px solid rgba(200,240,90,.30); color:var(--accent); font-size:11px; font-weight:700; padding:7px 14px; border-radius:6px; cursor:pointer; font-family:inherit; white-space:nowrap; }'
+      + '.trap-listrow-acts button.sec{ background:transparent; color:var(--muted,#9aa5b1); border-color:var(--border); }'
+      + '@media(max-width:680px){ .trap-listrow-thumb{ width:120px; } .trap-listrow-body p{ display:none; } }'
       + '.trap-card-meta{ display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }'
       + '.trap-badge{ font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; padding:3px 8px; border-radius:5px; display:inline-flex; align-items:center; gap:3px; }'
       + '.trap-badge.tr{ background:rgba(96,165,250,.14); color:var(--blue,#60a5fa); border:1px solid rgba(96,165,250,.3); }'
@@ -504,6 +539,11 @@
       +     produtos.map(function(p){ return '<option value="'+_esc(p)+'"'+(p===_filtroProduto?' selected':'')+'>📦 '+_esc(p)+'</option>'; }).join('')
       +   '</select>'
       +   '<div class="trap-spacer"></div>'
+      +   '<div class="trap-viewseg" id="trapViewSeg">'
+      +     '<button data-view="card"   class="'+(_trapView()==='card'?'on':'')+'"   title="Cards">▦ Card</button>'
+      +     '<button data-view="poster" class="'+(_trapView()==='poster'?'on':'')+'" title="Pôster vertical">🖼️ Pôster</button>'
+      +     '<button data-view="lista"  class="'+(_trapView()==='lista'?'on':'')+'"  title="Lista">☰ Lista</button>'
+      +   '</div>'
       +   '<button class="trap-chip '+(_filtroStatus==='publicado'?'active':'')+'" data-st="publicado">✓ Publicados</button>'
       +   (_modoGestao ? '<button class="trap-chip '+(_filtroStatus==='oculto'?'active':'')+'" data-st="oculto">⊘ Ocultos</button>' : '')
       +   '<button class="trap-chip '+(_filtroStatus===''?'active':'')+'" data-st="">Todos</button>'
@@ -517,45 +557,100 @@
             : '<div style="font-size:14px;font-weight:700;margin-bottom:6px;">Nenhum conteúdo encontrado</div>Tente ajustar os filtros.')
         + '</div>';
     } else {
-      html += '<div class="trap-grid">' + visiveis.map(_cardHtml).join('') + '</div>';
+      var _vw = _trapView();
+      if(_vw === 'poster'){ html += '<div class="trap-grid-poster">' + visiveis.map(_posterHtml).join('') + '</div>'; }
+      else if(_vw === 'lista'){ html += '<div class="trap-list">' + visiveis.map(_listHtml).join('') + '</div>'; }
+      else { html += '<div class="trap-grid">' + visiveis.map(_cardHtml).join('') + '</div>'; }
     }
     return html;
   }
 
-  function _cardHtml(i){
+  /* ── Modo de visualização (card | poster | lista) — persistido ── */
+  function _trapView(){ try{ return localStorage.getItem('trapView') || 'card'; }catch(e){ return 'card'; } }
+  window._trapSetView = function(v){ try{ localStorage.setItem('trapView', v); }catch(e){} if(typeof _renderTela==='function') _renderTela(); };
+
+  /* Helpers compartilhados pelos 3 modos */
+  function _trapBadgesHtml(i){
     var tipoLabel = i.tipo === 'treinamento' ? '🎓 Treinamento' : '🎯 Apresentação';
     var tipoCls = i.tipo === 'treinamento' ? 'tr' : 'ap';
+    return '<span class="trap-badge '+tipoCls+'">'+tipoLabel+'</span>'
+      + '<span class="trap-badge prod">📦 '+_esc(i.produto)+'</span>'
+      + (i.novo ? '<span class="trap-badge novo">✨ Novo</span>' : '')
+      + (i.status === 'oculto' ? '<span class="trap-badge oculto">⊘ Oculto</span>' : '');
+  }
+  function _trapThumbEditHtml(id, imgUrl){
+    return '<button class="trap-thumb-edit" onclick="event.stopPropagation();window._trapTrocarImg(\''+id+'\')" title="Trocar imagem">📷</button>'
+      + (imgUrl ? '<button class="trap-thumb-edit del" onclick="event.stopPropagation();window._trapRemoverImg(\''+id+'\')" title="Remover imagem">✕</button>' : '');
+  }
+  function _trapAdminActsHtml(i){
+    var id = _esc(i.id);
+    return '<button class="trap-icbtn" onclick="event.stopPropagation();window._trapToggleStatus(\''+id+'\')" title="'+(i.status==='publicado'?'Ocultar':'Publicar')+'">'+(i.status==='publicado'?'👁':'⊘')+'</button>'
+      + '<button class="trap-icbtn" onclick="event.stopPropagation();window._trapToggleNovo(\''+id+'\')" title="'+(i.novo?'Tirar badge Novo':'Marcar como Novo')+'">'+(i.novo?'✨':'⊕')+'</button>';
+  }
+
+  function _cardHtml(i){
     var thumbCls = i.tipo === 'treinamento' ? 't-trein' : 't-apres';
     var ocultoCls = i.status === 'oculto' ? ' oculto' : '';
     var id = _esc(i.id);
-
-    var adminActs = ''
-      + '<button class="trap-icbtn" onclick="event.stopPropagation();window._trapToggleStatus(\''+id+'\')" title="'+(i.status==='publicado'?'Ocultar':'Publicar')+'">'+(i.status==='publicado'?'👁':'⊘')+'</button>'
-      + '<button class="trap-icbtn" onclick="event.stopPropagation();window._trapToggleNovo(\''+id+'\')" title="'+(i.novo?'Tirar badge Novo':'Marcar como Novo')+'">'+(i.novo?'✨':'⊕')+'</button>';
-
     var _imgUrl = _trapImgs()[i.id];
-    var _thumbInner = _imgUrl
-      ? '<img class="trap-thumb-img" src="'+_imgUrl+'" alt="">'
-      : _esc(i.icone||'📄');
-    var _thumbEdit = '<button class="trap-thumb-edit" onclick="event.stopPropagation();window._trapTrocarImg(\''+id+'\')" title="Trocar imagem do card">📷</button>'
-      + (_imgUrl ? '<button class="trap-thumb-edit del" onclick="event.stopPropagation();window._trapRemoverImg(\''+id+'\')" title="Remover imagem (volta ao ícone)">✕</button>' : '');
+    var _thumbInner = _imgUrl ? '<img class="trap-thumb-img" src="'+_imgUrl+'" alt="">' : _esc(i.icone||'📄');
 
     return ''
       + '<div class="trap-card'+ocultoCls+'" onclick="window._trapAbrirAqui(\''+id+'\')" title="Abrir embutido — clique nos botões para outras opções">'
-      +   '<div class="trap-card-thumb '+thumbCls+(_imgUrl?' has-img':'')+'">'+_thumbInner+_thumbEdit+'</div>'
-      +   '<div class="trap-card-meta">'
-      +     '<span class="trap-badge '+tipoCls+'">'+tipoLabel+'</span>'
-      +     '<span class="trap-badge prod">📦 '+_esc(i.produto)+'</span>'
-      +     (i.novo ? '<span class="trap-badge novo">✨ Novo</span>' : '')
-      +     (i.status === 'oculto' ? '<span class="trap-badge oculto">⊘ Oculto</span>' : '')
-      +   '</div>'
+      +   '<div class="trap-card-thumb '+thumbCls+(_imgUrl?' has-img':'')+'">'+_thumbInner+_trapThumbEditHtml(id,_imgUrl)+'</div>'
+      +   '<div class="trap-card-meta">'+_trapBadgesHtml(i)+'</div>'
       +   '<h3 class="trap-card-tit">'+_esc(i.titulo)+'</h3>'
       +   '<p class="trap-card-desc">'+_esc(i.descricao)+'</p>'
       +   '<div class="trap-card-actions">'
       +     '<button onclick="event.stopPropagation();window._trapAbrirAqui(\''+id+'\')" title="Visualizar dentro do aplicativo">👁 Abrir aqui</button>'
       +     '<button class="sec" onclick="event.stopPropagation();window._trapAbrirNovaAba(\''+id+'\')" title="Abrir em nova aba do navegador">↗</button>'
       +   '</div>'
-      +   (_modoGestao ? '<div class="trap-card-foot" style="padding-top:8px;border-top:none;justify-content:flex-end;"><div class="trap-card-acts">'+adminActs+'</div></div>' : '')
+      +   (_modoGestao ? '<div class="trap-card-foot" style="padding-top:8px;border-top:none;justify-content:flex-end;"><div class="trap-card-acts">'+_trapAdminActsHtml(i)+'</div></div>' : '')
+      + '</div>';
+  }
+
+  /* Modo PÔSTER (vertical, estilo do anexo) */
+  function _posterHtml(i){
+    var ocultoCls = i.status === 'oculto' ? ' oculto' : '';
+    var id = _esc(i.id);
+    var imgUrl = _trapImgs()[i.id];
+    var bg = imgUrl
+      ? '<img class="trap-thumb-img" src="'+imgUrl+'" alt="">'
+      : '<div class="trap-poster-bg '+(i.tipo==='treinamento'?'t-trein':'t-apres')+'">'+_esc(i.icone||'📄')+'</div>';
+    return ''
+      + '<div class="trap-poster'+ocultoCls+'" onclick="window._trapAbrirAqui(\''+id+'\')" title="Abrir">'
+      +   bg
+      +   '<div class="trap-poster-grad"></div>'
+      +   _trapThumbEditHtml(id, imgUrl)
+      +   '<div class="trap-poster-cap">'
+      +     (i.novo ? '<span class="trap-badge novo">✨ Novo</span>' : '')
+      +     (i.status === 'oculto' ? '<span class="trap-badge oculto">⊘ Oculto</span>' : '')
+      +     '<div class="trap-poster-prod">'+_esc(i.produto)+'</div>'
+      +     '<div class="trap-poster-tit">'+_esc(i.titulo)+'</div>'
+      +   '</div>'
+      + '</div>';
+  }
+
+  /* Modo LISTA (banner largo) */
+  function _listHtml(i){
+    var thumbCls = i.tipo === 'treinamento' ? 't-trein' : 't-apres';
+    var ocultoCls = i.status === 'oculto' ? ' oculto' : '';
+    var id = _esc(i.id);
+    var imgUrl = _trapImgs()[i.id];
+    var thumbInner = imgUrl ? '<img class="trap-thumb-img" src="'+imgUrl+'" alt="">' : _esc(i.icone||'📄');
+    return ''
+      + '<div class="trap-listrow'+ocultoCls+'" onclick="window._trapAbrirAqui(\''+id+'\')" title="Abrir">'
+      +   '<div class="trap-listrow-thumb '+thumbCls+'">'+thumbInner+_trapThumbEditHtml(id,imgUrl)+'</div>'
+      +   '<div class="trap-listrow-body">'
+      +     '<div class="trap-card-meta">'+_trapBadgesHtml(i)+'</div>'
+      +     '<h3>'+_esc(i.titulo)+'</h3>'
+      +     '<p>'+_esc(i.descricao)+'</p>'
+      +   '</div>'
+      +   '<div class="trap-listrow-acts">'
+      +     '<button onclick="event.stopPropagation();window._trapAbrirAqui(\''+id+'\')">👁 Abrir aqui</button>'
+      +     '<button class="sec" onclick="event.stopPropagation();window._trapAbrirNovaAba(\''+id+'\')">↗ Nova aba</button>'
+      +     (_modoGestao ? '<div style="display:flex;gap:4px;justify-content:center;margin-top:2px;">'+_trapAdminActsHtml(i)+'</div>' : '')
+      +   '</div>'
       + '</div>';
   }
 
@@ -756,6 +851,9 @@
     });
     host.querySelectorAll('.trap-chip[data-st]').forEach(function(b){
       b.addEventListener('click', function(){ _filtroStatus = b.dataset.st; _renderTela(); });
+    });
+    host.querySelectorAll('.trap-viewseg button[data-view]').forEach(function(b){
+      b.addEventListener('click', function(){ window._trapSetView(b.dataset.view); });
     });
     var busca = host.querySelector('#trapBusca');
     if(busca) busca.addEventListener('input', function(){ _busca = busca.value; _renderTela(); setTimeout(function(){ var x=document.getElementById('trapBusca'); if(x){ x.focus(); x.setSelectionRange(_busca.length,_busca.length); } },0); });
