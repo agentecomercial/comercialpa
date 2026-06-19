@@ -279,6 +279,29 @@
         { titulo: 'Padrões Comerciais e SPIN Selling',      url: 'treinamento-alinhamento/spin-selling.html', tipo: 'extra'  },
         { titulo: 'Meu Compromisso com Você',               url: 'treinamento-alinhamento/fechamento.html',   tipo: 'final'  }
       ]
+    },
+    {
+      id: 'treinamento-ggb',
+      titulo: 'Green Golden Belt — GGB',
+      descricao: 'Treinamento comercial da TRILHA COMPLETA Green Golden Belt — argumento de venda da jornada Febracis inteira (CIS → FCIS → FGPC → BHP → ML5 → IF → TAV → CEOP → Master Coaching). Padrão FGPC. 8 HTMLs: índice + 4 módulos + SPIN + Fechamento + Módulo Especial "A Jornada GGB".',
+      produto: 'GGB',
+      tipo: 'treinamento',
+      status: 'publicado',
+      novo: true,
+      ordem: 17,
+      url: 'treinamento-ggb/index.html',
+      icone: '🥋',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Capa / Índice',                          url: 'treinamento-ggb/index.html',        tipo: 'index'  },
+        { titulo: 'Módulo 1 — O Produto: a Trilha GGB',     url: 'treinamento-ggb/modulo-1.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 2 — Prospecção e Qualificação',   url: 'treinamento-ggb/modulo-2.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 3 — Apresentação e Proposta',     url: 'treinamento-ggb/modulo-3.html',     tipo: 'modulo' },
+        { titulo: 'Módulo 4 — Negociação e Objeções',       url: 'treinamento-ggb/modulo-4.html',     tipo: 'modulo' },
+        { titulo: 'SPIN Selling — aplicado ao GGB',         url: 'treinamento-ggb/spin-selling.html', tipo: 'extra'  },
+        { titulo: 'Fechamento · Scripts e Roteiros',        url: 'treinamento-ggb/fechamento.html',   tipo: 'final'  },
+        { titulo: 'Módulo Especial — A Jornada GGB',        url: 'treinamento-ggb/jornada.html',      tipo: 'extra'  }
+      ]
     }
   ];
 })();
