@@ -579,25 +579,8 @@
       if(!f || !_trapImgPendingId){ return; }
       var reader = new FileReader();
       reader.onload = function(ev){
-        var img = new Image();
-        img.onload = function(){
-          /* redimensiona p/ no máx 720px de largura (mantém proporção) e comprime */
-          var maxW = 720;
-          var scale = Math.min(1, maxW / img.width);
-          var w = Math.max(1, Math.round(img.width * scale));
-          var h = Math.max(1, Math.round(img.height * scale));
-          var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-          cv.getContext('2d').drawImage(img, 0, 0, w, h);
-          var url;
-          try{ url = cv.toDataURL('image/jpeg', 0.82); }catch(e){ url = ev.target.result; }
-          if(_trapImgStore(_trapImgPendingId, url)){
-            if(typeof _renderTela==='function') _renderTela();
-            if(typeof _toast==='function') _toast('🖼️ Imagem do card atualizada.', 'var(--green,#34d399)');
-          }
-          _trapImgPendingId = null;
-        };
-        img.onerror = function(){ if(typeof _toast==='function') _toast('Arquivo de imagem inválido.', 'var(--red)'); _trapImgPendingId = null; };
-        img.src = ev.target.result;
+        /* abre o editor de enquadramento (arrastar + zoom) */
+        _trapAbrirCropper(_trapImgPendingId, ev.target.result);
       };
       reader.readAsDataURL(f);
     });
@@ -614,6 +597,130 @@
     if(typeof _renderTela==='function') _renderTela();
     if(typeof _toast==='function') _toast('Imagem removida — voltou ao ícone.', 'var(--muted)');
   };
+
+  /* ── Editor de enquadramento: arrastar + zoom no formato 16:9 do card ── */
+  function _trapEnsureCropperCss(){
+    if(document.getElementById('trapCropperCss')) return;
+    var st = document.createElement('style'); st.id = 'trapCropperCss';
+    st.textContent = ''
+      + '.trap-crop-ov{ position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,.72); display:flex; align-items:center; justify-content:center; backdrop-filter:blur(3px); }'
+      + '.trap-crop-box{ background:var(--bg-2,#161b22); border:1px solid var(--border2,rgba(255,255,255,.14)); border-radius:14px; padding:20px; width:min(92vw,580px); box-shadow:0 24px 70px rgba(0,0,0,.6); font-family:inherit; }'
+      + '.trap-crop-h{ font-size:15px; font-weight:800; color:var(--text,#e6edf3); margin-bottom:3px; }'
+      + '.trap-crop-sub{ font-size:11.5px; color:var(--muted,#9aa5b1); margin-bottom:14px; }'
+      + '.trap-crop-vp{ position:relative; overflow:hidden; border-radius:10px; border:1px solid var(--border); background:#0a0e16; margin:0 auto; cursor:grab; touch-action:none; user-select:none; }'
+      + '.trap-crop-vp.grabbing{ cursor:grabbing; }'
+      + '.trap-crop-vp img{ position:absolute; top:0; left:0; max-width:none; pointer-events:none; user-select:none; }'
+      + '.trap-crop-grid{ position:absolute; inset:0; pointer-events:none; background-image:linear-gradient(rgba(255,255,255,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.18) 1px,transparent 1px); background-size:33.333% 33.333%; opacity:.5; }'
+      + '.trap-crop-zoom{ display:flex; align-items:center; gap:10px; margin:14px 2px 4px; }'
+      + '.trap-crop-zoom span{ font-size:13px; opacity:.7; }'
+      + '.trap-crop-zoom input[type=range]{ flex:1; accent-color:#38bdf8; cursor:pointer; }'
+      + '.trap-crop-acts{ display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }'
+      + '.trap-crop-acts button{ border-radius:7px; padding:9px 18px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; border:1px solid var(--border); }'
+      + '.trap-crop-cancel{ background:transparent; color:var(--muted,#9aa5b1); }'
+      + '.trap-crop-cancel:hover{ color:var(--text); border-color:var(--border2,rgba(255,255,255,.14)); }'
+      + '.trap-crop-save{ background:linear-gradient(135deg,#0ea5e9,#06b6d4); border:none; color:#fff; }'
+      + '.trap-crop-save:hover{ filter:brightness(1.1); }';
+    document.head.appendChild(st);
+  }
+
+  function _trapAbrirCropper(id, srcUrl){
+    _trapEnsureCropperCss();
+    var old = document.getElementById('trapCropper'); if(old) old.remove();
+    var VW = 520, VH = Math.round(VW * 9 / 16);   /* viewport 16:9 = formato do card */
+    var ov = document.createElement('div');
+    ov.id = 'trapCropper'; ov.className = 'trap-crop-ov';
+    ov.innerHTML = ''
+      + '<div class="trap-crop-box">'
+      +   '<div class="trap-crop-h">🖼️ Ajustar imagem do card</div>'
+      +   '<div class="trap-crop-sub">Clique, segure e arraste a imagem para posicionar · use o controle abaixo para aproximar (zoom)</div>'
+      +   '<div class="trap-crop-vp" id="trapCropVp" style="width:' + VW + 'px;height:' + VH + 'px;max-width:100%;">'
+      +     '<img id="trapCropImg" alt="" draggable="false">'
+      +     '<div class="trap-crop-grid"></div>'
+      +   '</div>'
+      +   '<div class="trap-crop-zoom"><span>🔍➖</span><input type="range" id="trapCropZoom" min="100" max="320" value="100"><span>🔍➕</span></div>'
+      +   '<div class="trap-crop-acts">'
+      +     '<button class="trap-crop-cancel" id="trapCropCancel">Cancelar</button>'
+      +     '<button class="trap-crop-save" id="trapCropSave">Salvar enquadramento</button>'
+      +   '</div>'
+      + '</div>';
+    document.body.appendChild(ov);
+
+    var img = document.getElementById('trapCropImg');
+    var vp = document.getElementById('trapCropVp');
+    var zoom = document.getElementById('trapCropZoom');
+    var s = { iw:0, ih:0, base:1, scale:1, tx:0, ty:0, drag:false, ox:0, oy:0 };
+
+    function clamp(){
+      var dw = s.iw * s.scale, dh = s.ih * s.scale;
+      if(dw <= vpW()) s.tx = (vpW() - dw) / 2;
+      else { if(s.tx > 0) s.tx = 0; if(s.tx < vpW() - dw) s.tx = vpW() - dw; }
+      if(dh <= VH) s.ty = (VH - dh) / 2;
+      else { if(s.ty > 0) s.ty = 0; if(s.ty < VH - dh) s.ty = VH - dh; }
+    }
+    function vpW(){ return vp.clientWidth || VW; }
+    function apply(){
+      img.style.width = (s.iw * s.scale) + 'px';
+      img.style.height = (s.ih * s.scale) + 'px';
+      img.style.transform = 'translate(' + s.tx + 'px,' + s.ty + 'px)';
+    }
+    function init(){
+      s.iw = img.naturalWidth; s.ih = img.naturalHeight;
+      if(!s.iw || !s.ih){ return; }
+      s.base = Math.max(vpW() / s.iw, VH / s.ih);   /* cobre o viewport */
+      s.scale = s.base;
+      s.tx = (vpW() - s.iw * s.scale) / 2;
+      s.ty = (VH - s.ih * s.scale) / 2;
+      clamp(); apply();
+    }
+    img.onload = init;
+    img.src = srcUrl;
+    if(img.complete && img.naturalWidth){ init(); }
+
+    function pt(e){ var t = e.touches && e.touches[0]; return { x:(t ? t.clientX : e.clientX), y:(t ? t.clientY : e.clientY) }; }
+    function down(e){ s.drag = true; vp.classList.add('grabbing'); var p = pt(e); s.ox = p.x - s.tx; s.oy = p.y - s.ty; e.preventDefault(); }
+    function move(e){ if(!s.drag) return; var p = pt(e); s.tx = p.x - s.ox; s.ty = p.y - s.oy; clamp(); apply(); e.preventDefault(); }
+    function up(){ s.drag = false; vp.classList.remove('grabbing'); }
+    vp.addEventListener('mousedown', down);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+    vp.addEventListener('touchstart', down, { passive:false });
+    window.addEventListener('touchmove', move, { passive:false });
+    window.addEventListener('touchend', up);
+
+    zoom.addEventListener('input', function(){
+      var cx = vpW() / 2, cy = VH / 2;
+      var prev = s.scale;
+      s.scale = s.base * (parseInt(zoom.value, 10) / 100);
+      var k = s.scale / prev;
+      s.tx = cx - (cx - s.tx) * k;
+      s.ty = cy - (cy - s.ty) * k;
+      clamp(); apply();
+    });
+
+    function cleanup(){
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+      window.removeEventListener('touchmove', move);
+      window.removeEventListener('touchend', up);
+      ov.remove(); _trapImgPendingId = null;
+    }
+    document.getElementById('trapCropCancel').onclick = cleanup;
+    ov.addEventListener('click', function(e){ if(e.target === ov) cleanup(); });
+    document.getElementById('trapCropSave').onclick = function(){
+      var outW = 720, outH = Math.round(outW * 9 / 16);
+      var cv = document.createElement('canvas'); cv.width = outW; cv.height = outH;
+      var ctx = cv.getContext('2d');
+      var sx = -s.tx / s.scale, sy = -s.ty / s.scale;
+      var sw = vpW() / s.scale, sh = VH / s.scale;
+      try{ ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH); }catch(e){}
+      var url; try{ url = cv.toDataURL('image/jpeg', 0.85); }catch(e){ url = srcUrl; }
+      if(_trapImgStore(id, url)){
+        if(typeof _renderTela==='function') _renderTela();
+        if(typeof _toast==='function') _toast('🖼️ Imagem do card atualizada.', 'var(--green,#34d399)');
+      }
+      cleanup();
+    };
+  }
 
   function _bindPainelEvents(){
     var host = document.getElementById('trapConteudo');
