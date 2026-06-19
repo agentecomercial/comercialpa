@@ -614,6 +614,9 @@
       + '.trap-crop-zoom{ display:flex; align-items:center; gap:10px; margin:14px 2px 4px; }'
       + '.trap-crop-zoom span{ font-size:13px; opacity:.7; }'
       + '.trap-crop-zoom input[type=range]{ flex:1; accent-color:#38bdf8; cursor:pointer; }'
+      + '.trap-crop-tools{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }'
+      + '.trap-crop-tools button{ flex:1; min-width:110px; background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--muted,#9aa5b1); border-radius:7px; padding:7px 8px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .12s; display:inline-flex; align-items:center; justify-content:center; gap:5px; }'
+      + '.trap-crop-tools button:hover{ color:#38bdf8; border-color:rgba(56,189,248,.45); background:rgba(56,189,248,.08); }'
       + '.trap-crop-acts{ display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }'
       + '.trap-crop-acts button{ border-radius:7px; padding:9px 18px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; border:1px solid var(--border); }'
       + '.trap-crop-cancel{ background:transparent; color:var(--muted,#9aa5b1); }'
@@ -637,7 +640,12 @@
       +     '<img id="trapCropImg" alt="" draggable="false">'
       +     '<div class="trap-crop-grid"></div>'
       +   '</div>'
-      +   '<div class="trap-crop-zoom"><span>🔍➖</span><input type="range" id="trapCropZoom" min="100" max="320" value="100"><span>🔍➕</span></div>'
+      +   '<div class="trap-crop-zoom"><span title="Diminuir">🔍➖</span><input type="range" id="trapCropZoom" min="20" max="320" value="100"><span title="Aumentar">🔍➕</span></div>'
+      +   '<div class="trap-crop-tools">'
+      +     '<button id="trapCropCenter" title="Centralizar a imagem">⊕ Centralizar</button>'
+      +     '<button id="trapCropFill" title="Preencher o quadro (cobrir)">⤢ Preencher</button>'
+      +     '<button id="trapCropFit" title="Mostrar a imagem inteira (conter)">▢ Mostrar tudo</button>'
+      +   '</div>'
       +   '<div class="trap-crop-acts">'
       +     '<button class="trap-crop-cancel" id="trapCropCancel">Cancelar</button>'
       +     '<button class="trap-crop-save" id="trapCropSave">Salvar enquadramento</button>'
@@ -651,13 +659,18 @@
     var s = { iw:0, ih:0, base:1, scale:1, tx:0, ty:0, drag:false, ox:0, oy:0 };
 
     function clamp(){
-      var dw = s.iw * s.scale, dh = s.ih * s.scale;
-      if(dw <= vpW()) s.tx = (vpW() - dw) / 2;
-      else { if(s.tx > 0) s.tx = 0; if(s.tx < vpW() - dw) s.tx = vpW() - dw; }
-      if(dh <= VH) s.ty = (VH - dh) / 2;
+      var W = vpW(), dw = s.iw * s.scale, dh = s.ih * s.scale;
+      if(dw <= W){ if(s.tx < 0) s.tx = 0; if(s.tx > W - dw) s.tx = W - dw; }   /* menor: mantém dentro do quadro */
+      else { if(s.tx > 0) s.tx = 0; if(s.tx < W - dw) s.tx = W - dw; }          /* maior: cobre */
+      if(dh <= VH){ if(s.ty < 0) s.ty = 0; if(s.ty > VH - dh) s.ty = VH - dh; }
       else { if(s.ty > 0) s.ty = 0; if(s.ty < VH - dh) s.ty = VH - dh; }
     }
     function vpW(){ return vp.clientWidth || VW; }
+    function syncZoom(){ var v = Math.round(s.scale / s.base * 100); zoom.value = Math.max(20, Math.min(320, v)); }
+    function setScale(ns){ var cx = vpW() / 2, cy = VH / 2, k = ns / s.scale; s.tx = cx - (cx - s.tx) * k; s.ty = cy - (cy - s.ty) * k; s.scale = ns; clamp(); apply(); syncZoom(); }
+    function doCenter(){ s.tx = (vpW() - s.iw * s.scale) / 2; s.ty = (VH - s.ih * s.scale) / 2; clamp(); apply(); }
+    function doFill(){ s.scale = s.base; doCenter(); syncZoom(); }                       /* cobrir */
+    function doFit(){ s.scale = Math.min(vpW() / s.iw, VH / s.ih); doCenter(); syncZoom(); } /* conter (mostra tudo) */
     function apply(){
       img.style.width = (s.iw * s.scale) + 'px';
       img.style.height = (s.ih * s.scale) + 'px';
@@ -704,16 +717,22 @@
       window.removeEventListener('touchend', up);
       ov.remove(); _trapImgPendingId = null;
     }
+    document.getElementById('trapCropCenter').onclick = doCenter;
+    document.getElementById('trapCropFill').onclick = doFill;
+    document.getElementById('trapCropFit').onclick = doFit;
     document.getElementById('trapCropCancel').onclick = cleanup;
     ov.addEventListener('click', function(e){ if(e.target === ov) cleanup(); });
     document.getElementById('trapCropSave').onclick = function(){
       var outW = 720, outH = Math.round(outW * 9 / 16);
+      var ratio = outW / vpW();
       var cv = document.createElement('canvas'); cv.width = outW; cv.height = outH;
       var ctx = cv.getContext('2d');
-      var sx = -s.tx / s.scale, sy = -s.ty / s.scale;
-      var sw = vpW() / s.scale, sh = VH / s.scale;
-      try{ ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH); }catch(e){}
-      var url; try{ url = cv.toDataURL('image/jpeg', 0.85); }catch(e){ url = srcUrl; }
+      var dw = s.iw * s.scale, dh = s.ih * s.scale;
+      var covered = (dw >= vpW() - 0.5) && (dh >= VH - 0.5);
+      /* desenha a imagem na posição/escala atuais; áreas vazias ficam transparentes (PNG) */
+      try{ ctx.drawImage(img, s.tx * ratio, s.ty * ratio, dw * ratio, dh * ratio); }catch(e){}
+      var url;
+      try{ url = covered ? cv.toDataURL('image/jpeg', 0.85) : cv.toDataURL('image/png'); }catch(e){ url = srcUrl; }
       if(_trapImgStore(id, url)){
         if(typeof _renderTela==='function') _renderTela();
         if(typeof _toast==='function') _toast('🖼️ Imagem do card atualizada.', 'var(--green,#34d399)');
