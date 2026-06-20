@@ -635,7 +635,6 @@
       +   '<div class="trap-poster-grad"></div>'
       +   _trapThumbEditHtml(id, imgUrl)
       +   '<div class="trap-poster-cap">'
-      +     (i.novo ? '<span class="trap-badge novo">✨ Novo</span>' : '')
       +     (i.status === 'oculto' ? '<span class="trap-badge oculto">⊘ Oculto</span>' : '')
       +     '<div class="trap-poster-prod">'+_esc(i.produto)+'</div>'
       +     '<div class="trap-poster-tit">'+_esc(i.titulo)+'</div>'
