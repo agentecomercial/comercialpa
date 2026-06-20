@@ -162,9 +162,8 @@
       + '.trap-poster-prod{ font-size:21px; font-weight:900; color:rgba(255,255,255,.40); line-height:1.1; text-transform:uppercase; text-shadow:1px 1px 0 rgba(0,0,0,.45), 2px 2px 0 rgba(0,0,0,.38), 3px 3px 0 rgba(0,0,0,.30), 4px 4px 9px rgba(0,0,0,.60), 0 0 2px rgba(0,0,0,.5); }'
       + '.trap-poster-tit{ font-size:10.5px; color:rgba(234,240,246,.42); margin-top:5px; line-height:1.35; text-shadow:1px 1px 0 rgba(0,0,0,.45), 0 2px 5px rgba(0,0,0,.55); }'
       + '.trap-poster-cap .trap-badge{ margin-bottom:8px; }'
-      + '.trap-poster-acts{ display:flex; gap:6px; margin-top:10px; }'
-      + '.trap-poster-acts button{ background:rgba(200,240,90,.14); border:1px solid rgba(200,240,90,.35); color:var(--accent); font-size:10px; font-weight:700; padding:5px 9px; border-radius:6px; cursor:pointer; font-family:inherit; white-space:nowrap; }'
-      + '.trap-poster-acts button.sec{ background:rgba(0,0,0,.4); color:#dfe6ee; border-color:rgba(255,255,255,.22); }'
+      + '.trap-poster-kebab{ position:absolute; top:8px; right:8px; z-index:3; width:30px; height:30px; border-radius:8px; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.20); color:#fff; font-size:18px; font-weight:800; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; backdrop-filter:blur(2px); }'
+      + '.trap-poster-kebab:hover{ background:rgba(0,0,0,.78); border-color:#fff; }'
       /* ── Modo LISTA (banner largo) ── */
       + '.trap-list{ display:flex; flex-direction:column; gap:10px; }'
       + '.trap-listrow{ display:flex; background:var(--surf,#161b22); border:1px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; min-height:104px; transition:border-color .15s, box-shadow .15s; }'
@@ -629,20 +628,22 @@
     var bg = imgUrl
       ? '<img class="trap-thumb-img" src="'+imgUrl+'" alt="">'
       : '<div class="trap-poster-bg '+(i.tipo==='treinamento'?'t-trein':'t-apres')+'">'+_esc(i.icone||'📄')+'</div>';
+    var menuItems = ''
+      + '<button onclick="event.stopPropagation();window._trapTrocarImg(\''+id+'\')">📷 Trocar imagem</button>'
+      + (imgUrl ? '<button onclick="event.stopPropagation();window._trapRemoverImg(\''+id+'\')">✕ Remover imagem</button>' : '')
+      + '<button onclick="event.stopPropagation();window._trapAbrirAqui(\''+id+'\')">👁 Abrir</button>'
+      + (_trapTemEstrutura(i) ? '<button onclick="event.stopPropagation();window._trapBaixarPdfCompleto(\''+id+'\',this)">🖨️ Imprimir / PDF</button>' : '')
+      + '<button onclick="event.stopPropagation();window._trapAbrirNovaAba(\''+id+'\')">↗ Abrir em nova aba</button>';
     return ''
       + '<div class="trap-poster'+ocultoCls+'" onclick="window._trapAbrirAqui(\''+id+'\')" title="Abrir">'
       +   bg
       +   '<div class="trap-poster-grad"></div>'
-      +   _trapThumbEditHtml(id, imgUrl)
+      +   '<button class="trap-poster-kebab" onclick="event.stopPropagation();window._trapToggleMenu(\'p_'+id+'\',this)" title="Mais ações">&#8942;</button>'
+      +   '<div class="trap-cat-menu" id="trapMenu-p_'+id+'">'+menuItems+'</div>'
       +   '<div class="trap-poster-cap">'
       +     (i.status === 'oculto' ? '<span class="trap-badge oculto">⊘ Oculto</span>' : '')
       +     '<div class="trap-poster-prod">'+_esc(i.produto)+'</div>'
       +     '<div class="trap-poster-tit">'+_esc(i.titulo)+'</div>'
-      +     '<div class="trap-poster-acts">'
-      +       '<button onclick="event.stopPropagation();window._trapAbrirAqui(\''+id+'\')" title="Abrir">👁 Abrir</button>'
-      +       _trapPrintBtnHtml(i, 'sec')
-      +       '<button class="sec" onclick="event.stopPropagation();window._trapAbrirNovaAba(\''+id+'\')" title="Abrir em nova aba">↗</button>'
-      +     '</div>'
       +   '</div>'
       + '</div>';
   }
