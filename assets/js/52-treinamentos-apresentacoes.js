@@ -745,13 +745,21 @@
   function _trapAbrirCropper(id, srcUrl){
     _trapEnsureCropperCss();
     var old = document.getElementById('trapCropper'); if(old) old.remove();
-    var VW = 520, VH = Math.round(VW * 9 / 16);   /* viewport 16:9 = formato do card */
+    /* O recorte segue o formato do MODO atual: Pôster = retrato 3:4.1, Card/Lista = 16:9 */
+    var _vw = _trapView();
+    var ASPW = (_vw === 'poster') ? 3 : 16;
+    var ASPH = (_vw === 'poster') ? 4.1 : 9;
+    var ASP = ASPW / ASPH;
+    var fmtLabel = (_vw === 'poster') ? 'Pôster (retrato 3:4)' : 'Card / Lista (16:9)';
+    var VW, VH;
+    if(ASP >= 1){ VW = 520; VH = Math.round(VW / ASP); }   /* paisagem: fixa largura */
+    else { VH = 430; VW = Math.round(VH * ASP); }           /* retrato: fixa altura */
     var ov = document.createElement('div');
     ov.id = 'trapCropper'; ov.className = 'trap-crop-ov';
     ov.innerHTML = ''
       + '<div class="trap-crop-box">'
       +   '<div class="trap-crop-h">🖼️ Ajustar imagem do card</div>'
-      +   '<div class="trap-crop-sub">Clique, segure e arraste a imagem para posicionar · use o controle abaixo para aproximar (zoom)</div>'
+      +   '<div class="trap-crop-sub">Formato: <b style="color:#38bdf8">' + fmtLabel + '</b> · clique, segure e arraste para posicionar · use o controle para aproximar/afastar</div>'
       +   '<div class="trap-crop-vp" id="trapCropVp" style="width:' + VW + 'px;height:' + VH + 'px;max-width:100%;">'
       +     '<img id="trapCropImg" alt="" draggable="false">'
       +     '<div class="trap-crop-grid"></div>'
@@ -842,7 +850,9 @@
     document.getElementById('trapCropCancel').onclick = cleanup;
     ov.addEventListener('click', function(e){ if(e.target === ov) cleanup(); });
     document.getElementById('trapCropSave').onclick = function(){
-      var outW = 720, outH = Math.round(outW * 9 / 16);
+      var outW, outH;
+      if(ASP >= 1){ outW = 720; outH = Math.round(outW / ASP); }
+      else { outH = 980; outW = Math.round(outH * ASP); }
       var ratio = outW / vpW();
       var cv = document.createElement('canvas'); cv.width = outW; cv.height = outH;
       var ctx = cv.getContext('2d');
