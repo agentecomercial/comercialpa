@@ -641,6 +641,7 @@
       +     '<div class="trap-poster-acts">'
       +       '<button onclick="event.stopPropagation();window._trapAbrirAqui(\''+id+'\')" title="Abrir">👁 Abrir</button>'
       +       _trapPrintBtnHtml(i, 'sec')
+      +       '<button class="sec" onclick="event.stopPropagation();window._trapAbrirNovaAba(\''+id+'\')" title="Abrir em nova aba">↗</button>'
       +     '</div>'
       +   '</div>'
       + '</div>';
