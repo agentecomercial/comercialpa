@@ -302,6 +302,22 @@
         { titulo: 'Fechamento · Scripts e Roteiros',        url: 'treinamento-ggb/fechamento.html',   tipo: 'final'  },
         { titulo: 'Módulo Especial — A Jornada GGB',        url: 'treinamento-ggb/jornada.html',      tipo: 'extra'  }
       ]
+    },
+    {
+      id: 'apresentacao-ggb',
+      titulo: 'Green Golden Belt — Apresentação Comercial',
+      descricao: 'Apresentação de vendas CLIENTE-FINAL da trilha Green Golden Belt — deck premium (navy + dourado) para o consultor projetar e conduzir a conversa de venda. 16 slides: abertura, dor, solução, jornada das 9 etapas, prova, autoridade, investimento, garantia e CTA.',
+      produto: 'GGB',
+      tipo: 'apresentacao',
+      status: 'publicado',
+      novo: true,
+      ordem: 18,
+      url: 'apresentacao-ggb/index.html',
+      icone: '🎯',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Apresentação Comercial GGB', url: 'apresentacao-ggb/index.html', tipo: 'index' }
+      ]
     }
   ];
 })();
