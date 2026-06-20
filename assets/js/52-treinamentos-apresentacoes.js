@@ -158,7 +158,6 @@
       + '.trap-poster .trap-poster-bg.t-apres{ background:linear-gradient(160deg, rgba(167,139,250,.28), rgba(28,18,52,.95)); color:#c4b5fd; }'
       + '.trap-poster .trap-thumb-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }'
       + '.trap-poster .trap-poster-grad{ position:absolute; inset:0; background:linear-gradient(transparent 32%, rgba(3,8,18,.93)); }'
-      + '.trap-poster::after{ content:""; position:absolute; right:14px; bottom:74px; width:52px; height:38px; background:repeating-linear-gradient(115deg, var(--gold,#e6b422) 0 3px, transparent 3px 8px); -webkit-mask:linear-gradient(115deg,#000 60%,transparent); mask:linear-gradient(115deg,#000 60%,transparent); opacity:.85; pointer-events:none; }'
       + '.trap-poster-cap{ position:absolute; left:0; right:0; bottom:0; padding:14px 14px 16px; z-index:2; }'
       + '.trap-poster-prod{ font-size:20px; font-weight:900; color:#fff; line-height:1.1; text-transform:uppercase; }'
       + '.trap-poster-tit{ font-size:10.5px; color:#cdd6e0; margin-top:5px; line-height:1.35; }'
@@ -604,7 +603,7 @@
     var thumbCls = i.tipo === 'treinamento' ? 't-trein' : 't-apres';
     var ocultoCls = i.status === 'oculto' ? ' oculto' : '';
     var id = _esc(i.id);
-    var _imgUrl = _trapImgs()[i.id];
+    var _imgUrl = _trapImgGet(i.id, 'wide');
     var _thumbInner = _imgUrl ? '<img class="trap-thumb-img" src="'+_imgUrl+'" alt="">' : _esc(i.icone||'📄');
 
     return ''
@@ -626,7 +625,7 @@
   function _posterHtml(i){
     var ocultoCls = i.status === 'oculto' ? ' oculto' : '';
     var id = _esc(i.id);
-    var imgUrl = _trapImgs()[i.id];
+    var imgUrl = _trapImgGet(i.id, 'poster');
     var bg = imgUrl
       ? '<img class="trap-thumb-img" src="'+imgUrl+'" alt="">'
       : '<div class="trap-poster-bg '+(i.tipo==='treinamento'?'t-trein':'t-apres')+'">'+_esc(i.icone||'📄')+'</div>';
@@ -653,7 +652,7 @@
     var thumbCls = i.tipo === 'treinamento' ? 't-trein' : 't-apres';
     var ocultoCls = i.status === 'oculto' ? ' oculto' : '';
     var id = _esc(i.id);
-    var imgUrl = _trapImgs()[i.id];
+    var imgUrl = _trapImgGet(i.id, 'wide');
     var thumbInner = imgUrl ? '<img class="trap-thumb-img" src="'+imgUrl+'" alt="">' : _esc(i.icone||'📄');
     return ''
       + '<div class="trap-listrow'+ocultoCls+'" onclick="window._trapAbrirAqui(\''+id+'\')" title="Abrir">'
@@ -677,9 +676,22 @@
   function _trapImgs(){
     try{ return JSON.parse(localStorage.getItem('trapCardImgs') || '{}'); }catch(e){ return {}; }
   }
-  function _trapImgStore(id, url){
+  /* Formato (proporção) por modo de visualização: pôster (3:4) é independente de card/lista (16:9). */
+  function _trapFmt(){ return (_trapView() === 'poster') ? 'poster' : 'wide'; }
+  /* Lê a imagem do treinamento para um formato. Compatível com o formato antigo (string = 'wide'). */
+  function _trapImgGet(id, fmt){
+    var v = _trapImgs()[id];
+    if(typeof v === 'string') return (fmt === 'wide') ? v : '';   /* legado: string = imagem 16:9 */
+    if(v && typeof v === 'object') return v[fmt] || '';
+    return '';
+  }
+  function _trapImgStore(id, fmt, url){
     var m = _trapImgs();
-    if(url) m[id] = url; else delete m[id];
+    var v = m[id];
+    if(typeof v === 'string') v = { wide: v };          /* migra legado */
+    if(!v || typeof v !== 'object') v = {};
+    if(url) v[fmt] = url; else delete v[fmt];
+    if(Object.keys(v).length) m[id] = v; else delete m[id];
     try{ localStorage.setItem('trapCardImgs', JSON.stringify(m)); return true; }
     catch(e){ if(typeof _toast==='function') _toast('Não foi possível salvar (imagem grande demais). Tente outra menor.', 'var(--red)'); return false; }
   }
@@ -706,7 +718,7 @@
     if(inp){ inp.value = ''; inp.click(); }
   };
   window._trapRemoverImg = function(id){
-    _trapImgStore(id, null);
+    _trapImgStore(id, _trapFmt(), null);
     if(typeof _renderTela==='function') _renderTela();
     if(typeof _toast==='function') _toast('Imagem removida — voltou ao ícone.', 'var(--muted)');
   };
@@ -862,9 +874,9 @@
       try{ ctx.drawImage(img, s.tx * ratio, s.ty * ratio, dw * ratio, dh * ratio); }catch(e){}
       var url;
       try{ url = covered ? cv.toDataURL('image/jpeg', 0.85) : cv.toDataURL('image/png'); }catch(e){ url = srcUrl; }
-      if(_trapImgStore(id, url)){
+      if(_trapImgStore(id, (ASP >= 1 ? 'wide' : 'poster'), url)){
         if(typeof _renderTela==='function') _renderTela();
-        if(typeof _toast==='function') _toast('🖼️ Imagem do card atualizada.', 'var(--green,#34d399)');
+        if(typeof _toast==='function') _toast('🖼️ Imagem atualizada (' + (ASP >= 1 ? 'Card/Lista' : 'Pôster') + ').', 'var(--green,#34d399)');
       }
       cleanup();
     };
