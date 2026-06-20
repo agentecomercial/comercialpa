@@ -151,7 +151,7 @@
       /* ── Modo PÔSTER (vertical) ── */
       + '.trap-grid-poster{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:14px; }'
       + '.trap-poster{ position:relative; border-radius:13px; overflow:hidden; aspect-ratio:3/4.1; cursor:pointer; border:1px solid var(--border); transition:transform .18s, box-shadow .18s; }'
-      + '.trap-poster:hover{ transform:translateY(-3px); box-shadow:0 16px 40px rgba(0,0,0,.5); }'
+      + '.trap-poster:hover{ box-shadow:0 16px 40px rgba(0,0,0,.5); border-color:rgba(255,255,255,.28); }'
       + '.trap-poster.oculto{ opacity:.5; }'
       + '.trap-poster .trap-poster-bg{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:46px; background:linear-gradient(160deg,#0e1322,#1b2540); color:#f0c896; }'
       + '.trap-poster .trap-poster-bg.t-trein{ background:linear-gradient(160deg, rgba(96,165,250,.28), rgba(16,26,52,.95)); color:#9cc2ff; }'
@@ -162,7 +162,8 @@
       + '.trap-poster-prod{ font-size:21px; font-weight:900; color:rgba(255,255,255,.40); line-height:1.1; text-transform:uppercase; text-shadow:1px 1px 0 rgba(0,0,0,.45), 2px 2px 0 rgba(0,0,0,.38), 3px 3px 0 rgba(0,0,0,.30), 4px 4px 9px rgba(0,0,0,.60), 0 0 2px rgba(0,0,0,.5); }'
       + '.trap-poster-tit{ font-size:10.5px; color:rgba(234,240,246,.42); margin-top:5px; line-height:1.35; text-shadow:1px 1px 0 rgba(0,0,0,.45), 0 2px 5px rgba(0,0,0,.55); }'
       + '.trap-poster-cap .trap-badge{ margin-bottom:8px; }'
-      + '.trap-poster-kebab{ position:absolute; top:8px; right:8px; z-index:3; width:30px; height:30px; border-radius:8px; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.20); color:#fff; font-size:18px; font-weight:800; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; backdrop-filter:blur(2px); }'
+      + '.trap-poster-kebab{ position:absolute; top:8px; right:8px; z-index:3; width:30px; height:30px; border-radius:8px; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.20); color:#fff; font-size:18px; font-weight:800; line-height:1; cursor:pointer; display:none; align-items:center; justify-content:center; padding:0; backdrop-filter:blur(2px); }'
+      + '.trap-poster:hover .trap-poster-kebab{ display:flex; }'
       + '.trap-poster-kebab:hover{ background:rgba(0,0,0,.78); border-color:#fff; }'
       /* ── Modo LISTA (banner largo) ── */
       + '.trap-list{ display:flex; flex-direction:column; gap:10px; }'
