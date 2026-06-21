@@ -135,6 +135,7 @@
       + '.trap-card-thumb{ aspect-ratio:16/9; background:linear-gradient(135deg, rgba(212,165,116,.15), rgba(212,165,116,.04)); border:1px solid var(--border); border-radius:10px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; font-size:36px; color:#f0c896; }'
       + '.trap-card-thumb.t-trein{ background:linear-gradient(135deg, rgba(96,165,250,.15), rgba(96,165,250,.04)); color:var(--blue,#60a5fa); }'
       + '.trap-card-thumb.t-apres{ background:linear-gradient(135deg, rgba(167,139,250,.15), rgba(167,139,250,.04)); color:var(--purple,#a78bfa); }'
+      + '.trap-card-thumb.t-ring{ background:linear-gradient(135deg, rgba(248,113,113,.16), rgba(248,113,113,.04)); color:var(--red,#f87171); }'
       + '.trap-card-thumb{ position:relative; overflow:hidden; }'
       + '.trap-thumb-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }'
       + '.trap-thumb-edit{ position:absolute; top:6px; right:6px; width:27px; height:27px; border-radius:7px; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.20); color:#fff; font-size:13px; line-height:1; cursor:pointer; display:none; align-items:center; justify-content:center; padding:0; backdrop-filter:blur(2px); z-index:2; }'
@@ -156,6 +157,7 @@
       + '.trap-poster .trap-poster-bg{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:46px; background:linear-gradient(160deg,#0e1322,#1b2540); color:#f0c896; }'
       + '.trap-poster .trap-poster-bg.t-trein{ background:linear-gradient(160deg, rgba(96,165,250,.28), rgba(16,26,52,.95)); color:#9cc2ff; }'
       + '.trap-poster .trap-poster-bg.t-apres{ background:linear-gradient(160deg, rgba(167,139,250,.28), rgba(28,18,52,.95)); color:#c4b5fd; }'
+      + '.trap-poster .trap-poster-bg.t-ring{ background:linear-gradient(160deg, rgba(248,113,113,.28), rgba(52,18,18,.95)); color:#fca5a5; }'
       + '.trap-poster .trap-thumb-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }'
       + '.trap-poster .trap-poster-grad{ position:absolute; inset:0; background:linear-gradient(transparent 65%, rgba(3,8,18,.37) 84%, rgba(3,8,18,.78)); opacity:0; transition:opacity .2s; }'
       + '.trap-poster:hover .trap-poster-grad{ opacity:1; }'
@@ -186,6 +188,7 @@
       + '.trap-badge{ font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; padding:3px 8px; border-radius:5px; display:inline-flex; align-items:center; gap:3px; }'
       + '.trap-badge.tr{ background:rgba(96,165,250,.14); color:var(--blue,#60a5fa); border:1px solid rgba(96,165,250,.3); }'
       + '.trap-badge.ap{ background:rgba(167,139,250,.14); color:var(--purple,#a78bfa); border:1px solid rgba(167,139,250,.3); }'
+      + '.trap-badge.ring{ background:rgba(248,113,113,.14); color:var(--red,#f87171); border:1px solid rgba(248,113,113,.3); }'
       + '.trap-badge.prod{ background:rgba(212,165,116,.14); color:#f0c896; border:1px solid rgba(212,165,116,.3); }'
       + '.trap-badge.ativo{ background:rgba(52,211,153,.14); color:var(--green,#34d399); border:1px solid rgba(52,211,153,.3); }'
       + '.trap-badge.oculto{ background:rgba(239,68,68,.14); color:var(--red,#ef4444); border:1px solid rgba(239,68,68,.3); }'
@@ -537,6 +540,7 @@
       +   '<button class="'+(_filtroTipo===''?'active':'')+'" data-tipo="">📋 Tudo · '+itens.length+'</button>'
       +   '<button class="'+(_filtroTipo==='treinamento'?'active':'')+'" data-tipo="treinamento">🎓 Treinamentos · '+itens.filter(function(i){return i.tipo==='treinamento';}).length+'</button>'
       +   '<button class="'+(_filtroTipo==='apresentacao'?'active':'')+'" data-tipo="apresentacao">🎯 Apresentações · '+itens.filter(function(i){return i.tipo==='apresentacao';}).length+'</button>'
+      +   '<button class="'+(_filtroTipo==='ring'?'active':'')+'" data-tipo="ring">🥊 Ring · '+itens.filter(function(i){return i.tipo==='ring';}).length+'</button>'
       + '</div>'
       + '<div class="trap-filtros">'
       +   '<input class="trap-input" id="trapBusca" placeholder="🔍 Buscar por título ou descrição..." value="'+_esc(_busca)+'">'
@@ -577,8 +581,8 @@
 
   /* Helpers compartilhados pelos 3 modos */
   function _trapBadgesHtml(i){
-    var tipoLabel = i.tipo === 'treinamento' ? '🎓 Treinamento' : '🎯 Apresentação';
-    var tipoCls = i.tipo === 'treinamento' ? 'tr' : 'ap';
+    var tipoLabel = i.tipo === 'treinamento' ? '🎓 Treinamento' : (i.tipo === 'ring' ? '🥊 Ring' : '🎯 Apresentação');
+    var tipoCls = i.tipo === 'treinamento' ? 'tr' : (i.tipo === 'ring' ? 'ring' : 'ap');
     return '<span class="trap-badge '+tipoCls+'">'+tipoLabel+'</span>'
       + '<span class="trap-badge prod">📦 '+_esc(i.produto)+'</span>'
       + (i.novo ? '<span class="trap-badge novo">✨ Novo</span>' : '')
@@ -602,7 +606,7 @@
   }
 
   function _cardHtml(i){
-    var thumbCls = i.tipo === 'treinamento' ? 't-trein' : 't-apres';
+    var thumbCls = i.tipo === 'treinamento' ? 't-trein' : (i.tipo === 'ring' ? 't-ring' : 't-apres');
     var ocultoCls = i.status === 'oculto' ? ' oculto' : '';
     var id = _esc(i.id);
     var _imgUrl = _trapImgGet(i.id, 'wide');
@@ -630,7 +634,7 @@
     var imgUrl = _trapImgGet(i.id, 'poster');
     var bg = imgUrl
       ? '<img class="trap-thumb-img" src="'+imgUrl+'" alt="">'
-      : '<div class="trap-poster-bg '+(i.tipo==='treinamento'?'t-trein':'t-apres')+'">'+_esc(i.icone||'📄')+'</div>';
+      : '<div class="trap-poster-bg '+(i.tipo==='treinamento'?'t-trein':(i.tipo==='ring'?'t-ring':'t-apres'))+'">'+_esc(i.icone||'📄')+'</div>';
     var menuItems = ''
       + '<button onclick="event.stopPropagation();window._trapTrocarImg(\''+id+'\')">📷 Trocar imagem</button>'
       + (imgUrl ? '<button onclick="event.stopPropagation();window._trapRemoverImg(\''+id+'\')">✕ Remover imagem</button>' : '')
@@ -653,7 +657,7 @@
 
   /* Modo LISTA (banner largo) */
   function _listHtml(i){
-    var thumbCls = i.tipo === 'treinamento' ? 't-trein' : 't-apres';
+    var thumbCls = i.tipo === 'treinamento' ? 't-trein' : (i.tipo === 'ring' ? 't-ring' : 't-apres');
     var ocultoCls = i.status === 'oculto' ? ' oculto' : '';
     var id = _esc(i.id);
     var imgUrl = _trapImgGet(i.id, 'wide');

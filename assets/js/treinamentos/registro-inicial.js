@@ -318,6 +318,22 @@
       estrutura: [
         { titulo: 'Apresentação Comercial GGB', url: 'apresentacao-ggb/index.html', tipo: 'index' }
       ]
+    },
+    {
+      id: 'ring-treino-comercial',
+      titulo: 'Ring — Treino com Clientes Difíceis',
+      descricao: 'Arena de sparring do consultor: pratique respostas com clientes fictícios difíceis (filtráveis por perfil DISC: D/I/S/C e mistos), em modo Treino rápido (1 fala) ou Conversa completa, escolhendo etapa (abordagem, qualificação, apresentação, objeção, fechamento) e canal (WhatsApp, ligação, presencial). O agente avalia sua fala, atribui nota e sugere melhorias. App independente, abre direto no treino — sem login e sem os demais recursos do Agente Comercial.',
+      produto: 'Agente Comercial',
+      tipo: 'ring',
+      status: 'publicado',
+      novo: true,
+      ordem: 5,
+      url: 'ring-treino.html',
+      icone: '🥊',
+      origem: 'html-existente',
+      estrutura: [
+        { titulo: 'Treino com Clientes Difíceis', url: 'ring-treino.html', tipo: 'index' }
+      ]
     }
   ];
 })();
