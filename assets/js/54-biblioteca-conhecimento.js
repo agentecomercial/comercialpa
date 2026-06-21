@@ -25,7 +25,8 @@
     { id:'spin',      emoji:'🎯', cor:'167,139,250', titulo:'Perguntas SPIN',     sub:'Roteiro de perguntas Situação, Problema, Implicação e Necessidade.' },
     { id:'roi',       emoji:'💰', cor:'52,211,153',  titulo:'Calculadora de ROI', sub:'Calcule o retorno do investimento personalizado para o lead.' },
     { id:'turnover',  emoji:'💸', cor:'248,113,113', titulo:'Custo de Turnover',  sub:'Diagnostique o custo financeiro da rotatividade da equipe.' },
-    { id:'cac',       emoji:'📊', cor:'34,211,238',  titulo:'CAC / LTV',          sub:'Diagnóstico de Custo de Aquisição e Valor do Tempo de Vida do cliente.' }
+    { id:'cac',       emoji:'📊', cor:'34,211,238',  titulo:'CAC / LTV',          sub:'Diagnóstico de Custo de Aquisição e Valor do Tempo de Vida do cliente.' },
+    { id:'disc',      emoji:'🧠', cor:'139,92,246',  titulo:'Biblioteca DISC',    sub:'Teoria DISC completa: perfis D/I/S/C com medos e abordagem, Tipos de Jung, 6 Valores de Spranger, 8 Instâncias de Conexão e Q.E. na venda.' }
   ];
 
   var _cssInjetado = false;

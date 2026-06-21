@@ -2698,6 +2698,18 @@
   <script src="js/data/playbook-spin-tour.js"></script>
   <script src="js/data/perfis-treino.js"></script>
   <script src="js/data/api-key.js"></script>
+  <!-- Respostas de Elite por treinamento (50 por produto) -->
+  <script src="js/data/respostas/tce.js"></script>
+  <script src="js/data/respostas/bhp.js"></script>
+  <script src="js/data/respostas/ml5.js"></script>
+  <script src="js/data/respostas/fcis.js"></script>
+  <script src="js/data/respostas/fgpc.js"></script>
+  <script src="js/data/respostas/if.js"></script>
+  <script src="js/data/respostas/tav.js"></script>
+  <script src="js/data/respostas/ceop.js"></script>
+  <script src="js/data/respostas/master.js"></script>
+  <script src="js/data/respostas/cis.js"></script>
+  <script src="js/data/respostas/ggb.js"></script>
 </head>
 
 <body>
@@ -3503,6 +3515,92 @@
         <p style="font-size:12px;color:var(--muted);margin-top:10px;font-style:italic;">"A chave para grandes realizações está na capacidade de estabelecer conexões positivas com o outro." — Paulo Vieira & Deibson Silva</p>
       </div>
 
+      <!-- ════ CONTRIBUIÇÕES ════ -->
+
+      <!-- 1) Perfis mistos -->
+      <div class="card" style="margin-top:14px;">
+        <h2>🧩 Perfis Mistos — a maioria das pessoas</h2>
+        <p class="subtitle">Quase ninguém é 100% puro. A leitura real combina o fator dominante com o secundário. As 4 combinações mais comuns:</p>
+        <div class="grid-2" style="margin-top:10px;">
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-left:4px solid var(--hot);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">🔴🟡 D + I — O Executor Carismático</h3>
+            <p style="font-size:12.5px;line-height:1.6;">Quer resultado <em>e</em> holofote. Decide rápido e gosta de ser visto vencendo. <strong>Venda:</strong> resultado + status ("os líderes que mais crescem estão aqui"). Fechamento rápido com reconhecimento.</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-left:4px solid var(--hot);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">🔴🔵 D + C — O Estrategista Exigente</h3>
+            <p style="font-size:12.5px;line-height:1.6;">Quer resultado <em>com</em> precisão. Cobra dado e ROI, não tolera enrolação nem erro. <strong>Venda:</strong> número + prova + plano claro. Direto, mas com fundamentação impecável.</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-left:4px solid var(--warm);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">🟡🟢 I + S — O Relacionador Acolhedor</h3>
+            <p style="font-size:12.5px;line-height:1.6;">Pessoas + harmonia. Caloroso, evita conflito, decide pela confiança no consultor. <strong>Venda:</strong> vínculo + segurança + prova social de gente parecida. Sem pressão.</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-left:4px solid var(--green);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">🟢🔵 S + C — O Especialista Cauteloso</h3>
+            <p style="font-size:12.5px;line-height:1.6;">Segurança + precisão. Quer garantia, detalhe e tempo para decidir. <strong>Venda:</strong> dados + garantia + passo a passo. Respeite o ritmo, nada de urgência forçada.</p>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px;font-style:italic;">Combinações opostas (D+S, I+C) são raras e geram tensão interna — leia os dois fatores e priorize o <strong>medo dominante</strong>.</p>
+      </div>
+
+      <!-- 2) Identificação rápida por canal -->
+      <div class="card" style="margin-top:14px;">
+        <h2>🔍 Identificação rápida — leia o DISC em segundos</h2>
+        <p class="subtitle">Sinais práticos para identificar o perfil pelo canal, antes mesmo de perguntar qualquer coisa.</p>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;font-size:12px;line-height:1.5;border-collapse:collapse;margin-top:8px;min-width:560px;">
+            <tr style="text-align:left;color:var(--muted);border-bottom:1px solid var(--border);">
+              <th style="padding:7px 8px;">Perfil</th><th style="padding:7px 8px;">WhatsApp (texto)</th><th style="padding:7px 8px;">Áudio / ligação</th><th style="padding:7px 8px;">Presencial</th>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 8px;"><strong>🔴 D</strong></td><td style="padding:7px 8px;">Curto, seco, sem emoji. "Quanto custa? Funciona?"</td><td style="padding:7px 8px;">Rápido, imperativo, interrompe</td><td style="padding:7px 8px;">Aperto firme, vai direto ao ponto</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 8px;"><strong>🟡 I</strong></td><td style="padding:7px 8px;">Longo, emojis, "!!!", manda áudios</td><td style="padding:7px 8px;">Animado, conta história, ri</td><td style="padding:7px 8px;">Sorri, toca no braço, expansivo</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 8px;"><strong>🟢 S</strong></td><td style="padding:7px 8px;">Educado, calmo, pergunta de garantia</td><td style="padding:7px 8px;">Pausado, ouve mais que fala</td><td style="padding:7px 8px;">Reservado, cordial, observa</td></tr>
+            <tr><td style="padding:7px 8px;"><strong>🔵 C</strong></td><td style="padding:7px 8px;">Detalhado, pede dados/links, pergunta técnica</td><td style="padding:7px 8px;">Preciso, quer especificação</td><td style="padding:7px 8px;">Formal, anota, compara</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3) Erros fatais por perfil -->
+      <div class="card" style="margin-top:14px;">
+        <h2>⛔ Erros fatais por perfil — o que mata a venda</h2>
+        <p class="subtitle">O bloco "como abordá-lo" diz o que fazer. Aqui está o que <strong>nunca</strong> fazer com cada perfil:</p>
+        <div class="grid-2" style="margin-top:10px;">
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-left:4px solid var(--hot);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">🔴 D — nunca</h3>
+            <p style="font-size:12.5px;line-height:1.6;">Enrolar, ser lento, falar demais, usar emoção excessiva ou travar quando ele pede o número. Hesitação = perda de respeito.</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-left:4px solid var(--warm);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">🟡 I — nunca</h3>
+            <p style="font-size:12.5px;line-height:1.6;">Ser frio e só técnico, ignorar a história dele, cortar o papo ou tratar como mais um número. Sem conexão, ele some.</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-left:4px solid var(--green);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">🟢 S — nunca</h3>
+            <p style="font-size:12.5px;line-height:1.6;">Pressionar, criar urgência agressiva, forçar decisão na hora ou propor mudança brusca. Pressão trava o S no "vou pensar".</p>
+          </div>
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-left:4px solid var(--cold);border-radius:10px;padding:12px;">
+            <h3 style="margin-top:0;font-size:13px;">🔵 C — nunca</h3>
+            <p style="font-size:12.5px;line-height:1.6;">Prometer sem provar, faltar dado, ser superficial ou apressar sem informação. Exagero e vagueza destroem sua credibilidade.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4) DISC × Respostas de Elite -->
+      <div class="card" style="margin-top:14px;">
+        <h2>🎯 DISC × Respostas de Elite — calibre a objeção ao perfil</h2>
+        <p class="subtitle">A mesma objeção se responde diferente conforme o perfil. Exemplo com <strong>"tá caro"</strong> (vale para qualquer objeção):</p>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;font-size:12px;line-height:1.55;border-collapse:collapse;margin-top:8px;min-width:520px;">
+            <tr style="text-align:left;color:var(--muted);border-bottom:1px solid var(--border);">
+              <th style="padding:7px 8px;width:80px;">Perfil</th><th style="padding:7px 8px;">Ângulo para destravar</th>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 8px;"><strong>🔴 D</strong></td><td style="padding:7px 8px;">ROI e resultado. "O caro é continuar perdendo X — isso se paga em N meses." Direto, com número na ponta.</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 8px;"><strong>🟡 I</strong></td><td style="padding:7px 8px;">Status e experiência. "Os nomes que mais crescem estão aqui — você vai estar entre eles." Visão e pertencimento.</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 8px;"><strong>🟢 S</strong></td><td style="padding:7px 8px;">Segurança e garantia. "Você não decide na pressão; tem parcelamento tranquilo e suporte do início ao fim." Calma.</td></tr>
+            <tr><td style="padding:7px 8px;"><strong>🔵 C</strong></td><td style="padding:7px 8px;">Dados e detalhamento. "Veja exatamente o que está incluso e o comparativo." Prova e especificação.</td></tr>
+          </table>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px;font-style:italic;">Use junto da aba 💬 Respostas de Elite: escolha a resposta certa e ajuste o <strong>tom</strong> ao DISC do cliente.</p>
+      </div>
+
     </section>
 
     <!-- ============================================== -->
@@ -3545,7 +3643,17 @@
           <div class="cases-list" id="cases-list"></div>
         </div>
 
+        <style>
+          .resp-pill{ background:var(--bg-2); border:1px solid var(--border-strong); color:var(--text); padding:6px 11px; border-radius:999px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; transition:.15s; }
+          .resp-pill:hover{ border-color:var(--accent); }
+          .resp-pill.on{ background:var(--accent); color:#0f0f0f; border-color:var(--accent); }
+          .resp-grupo{ margin-bottom:18px; }
+          .resp-grupo-tit{ font-size:13px; font-weight:800; color:var(--text); margin:0 0 10px; padding:4px 0 6px; border-bottom:1px solid var(--border); }
+        </style>
         <div class="prompt-section" id="bib-respostas">
+          <p class="subtitle" style="margin-bottom:12px;">Respostas prontas para as principais objeções, organizadas por treinamento. Pesquise ou filtre pelo produto.</p>
+          <input type="text" id="resp-busca" placeholder="🔍 Pesquisar por objeção ou texto..." oninput="renderizarRespostas()" style="width:100%; box-sizing:border-box; padding:10px 14px; border-radius:10px; border:1px solid var(--border-strong); background:var(--bg-2); color:var(--text); font-size:14px; font-family:inherit; margin-bottom:10px;">
+          <div class="resp-pills" id="resp-pills" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;"></div>
           <div class="respostas-list" id="respostas-list"></div>
         </div>
 
@@ -9505,47 +9613,82 @@ Aguarde o user message — siga o cabeçalho.`;
       }
     ];
 
-    const RESPOSTAS_ELITE = [
-      { tag: 'Tá caro', texto: '"Entendo. Mas me responde uma coisa: nos últimos 6 meses, sem ter o método, quanto você acha que sua empresa deixou de faturar? Se a resposta for mais de R$ 30 mil, esse Tour já se pagou. O caro é continuar perdendo o que você nem sabe que tá perdendo."' },
-      { tag: 'Não tenho dinheiro agora', texto: '"Compreendo. Mas empresário com caixa apertado é o que mais precisa parar de perder por falta de método — porque sem método, mês que vem o caixa tá igual ou pior. Te pergunto: você prefere ajustar agora ou daqui a 6 meses, quando o problema dobrou?"' },
-      { tag: 'Crise / momento ruim', texto: '"Justamente por isso. Crise é quando o método separa quem fica do quem some. Os empresários que cresceram 3x na pandemia não foram os mais talentosos — foram os que tinham método quando o mercado mudou. Você quer ser esse cara em 12 meses ou continuar reagindo ao mercado?"' },
-      { tag: 'Vou pensar', texto: '"Justo. Mas pra eu te ajudar de verdade: o que exatamente você precisa pensar? Se for sobre se vai funcionar, te apresento 3 cases do seu setor. Se for sobre tempo, vou te mostrar como isso se encaixa. O que você tá pesando?"' },
-      { tag: 'Vou ver com calma', texto: '"Sem problema. Pra você não ter que voltar do zero quando olhar de novo, te mando 1 página com os 3 pontos centrais — isso te economiza 30 minutos depois. Quando você acha que volta a olhar, sexta ou começo da semana?"' },
-      { tag: 'Falar com sócio', texto: '"Faz total sentido. Decisão dessa magnitude exige alinhamento. Me ajuda a entender uma coisa: se fosse só sua decisão, você iria? E o que você gostaria que eu te enviasse pra apresentar pro seu sócio com clareza?"' },
-      { tag: 'Falar com esposa(o)', texto: '"Faz sentido. Decisão de líder se conversa em casa. Te mando 1 vídeo curto da própria esposa do Paulo Vieira falando como o método mudou a vida dela e da família — pra ela ter contexto. Em qual número mando, no seu ou no dela?"' },
-      { tag: 'Sem tempo', texto: '"Empresário sem tempo é exatamente quem mais precisa do Tour. Você está no operacional 100% — o Tour ensina como sair desse lugar. 1 dia agora vale 1 ano de operação errada. Quando seria o pior momento de sua agenda nos próximos 30 dias?"' },
-      { tag: 'Tô apagando incêndio', texto: '"E o que apaga incêndio é processo, não correria. Mais um mês na correria não muda nada — o método ensina a sair desse modo. Você quer continuar 12 meses no mesmo lugar ou trocar 1 dia agora pelos próximos 12 fora desse caos?"' },
-      { tag: 'Já fiz outros', texto: '"Concordo, a maioria é motivacional sem método. Diferença do Tour: é a metodologia que escalou a Febracis de R$ 300k a R$ 400 milhões e está dentro de Petrobras, Bradesco, Amazon. Você vai sair com ações pra implementar na segunda-feira, não com motivação."' },
-      { tag: 'Já tenho coach/mentor', texto: '"Que bom que você investe em desenvolvimento. Mas coach trabalha com você 1:1 — Tour traz METODOLOGIA validada em 16 mil análises mensais e cases corporativos como Petrobras. Não substitui seu coach, complementa: ele te ajuda a executar, o método te dá o quê executar."' },
-      { tag: 'Não conheço Paulo Vieira', texto: '"Justo, te apresento. Paulo Vieira é fundador da Febracis, maior escola de negócios da América Latina. 26 anos, 70 milhões de pessoas impactadas, 3 bilhões em faturamento. Empresa GPTW e RA1000. Te mando 1 vídeo curto dele falando do método — 3 minutos. Posso enviar?"' },
-      { tag: 'Empresa pequena demais', texto: '"Tour foi feito exatamente pra esse momento. Empresário pequeno que quer ficar grande precisa de método agora — empresário grande no Tour já chega errando. A maioria dos cases que viraram empresas de R$ 50mi começou aqui quando faturavam R$ 50k. É o seu salto."' },
-      { tag: 'Empresa grande demais / já passei dessa fase', texto: '"Empresários de R$ 100mi+ frequentam o Tour, e o feedback é o mesmo: ‘percebi 3 coisas óbvias que minha empresa não faz’. O Tour não é por tamanho, é por método. Você já tem escala. Tour te dá a próxima alavanca, não a primeira."' },
-      { tag: 'Estou começando agora', texto: '"Melhor momento. Empresário começando que pega método cedo não passa pelos erros caros que outros pagaram. Tour vai te dar 5 anos de aprendizado em 1 dia. Você quer construir certo do zero ou aprender do jeito caro?"' },
-      { tag: 'Acho que não é pra mim', texto: '"Posso te perguntar o que te fez achar isso? Pra eu não te empurrar algo que não serve, prefiro entender. Se realmente não for o momento, te oriento outro caminho. Mas pode ser também que tenha algo no formato que você ainda não viu — me conta?"' },
-      { tag: 'Quero garantia', texto: '"Garantia total na vida não existe — em treinamento, em casamento, em investimento. O que existe é prova: 16 mil empresários por mês passando pelo método, RA1000, GPTW e clientes Fortune 500. Se isso não é prova, nada é. A garantia que você precisa vem do método, não de uma cláusula."' },
-      { tag: 'Quero condição especial / desconto', texto: '"Trato você de igual: o investimento é o mesmo pra todos. Mas pra te ajudar a entrar agora, posso te oferecer flexibilidade na forma de pagamento — fica em quantas vezes pra caber no seu fluxo? Te mostro o parcelamento que faz sentido."' },
-      { tag: 'Manda mais material', texto: '"Mando, mas antes — pra te enviar o material certo, me responde uma pergunta: qual é o maior gargalo da sua empresa hoje? É time, é vendas, é processo? Pergunto porque cada material é diferente, e quero te entregar o que vai te servir, não material genérico."' },
-      { tag: 'Vou ver o site', texto: '"O site mostra 30% do método — o melhor está no Tour ao vivo. Mas pra você ganhar tempo, te mando agora 2 links exatos: depoimento de empresário do seu setor + 1 vídeo do método aplicado. Isso vai te poupar 1 hora navegando. Pode ser?"' },
-      { tag: 'Próximo ano', texto: '"Entendo. Mas o próximo ano começa com a base que você construir agora. Se você esperar 12 meses pra resolver, em janeiro do ano que vem você vai estar exatamente onde está hoje. O Tour antecipa esse 1 ano de aprendizado. Vale começar com base ou começar do zero?"' },
-      { tag: 'Final do ano / Janeiro', texto: '"Justamente esse é o pior cálculo. Empresário que vira o ano sem método entra em janeiro reagindo de novo. Quem entra em janeiro com plano feito em novembro fecha o ano +30%. Qual janeiro você quer viver?"' },
-      { tag: 'Estou de mudança / processo difícil agora', texto: '"Compreendo. E é por isso mesmo: momento de mudança é onde método importa mais. Sem clareza você toma decisão pelo cansaço, não pela estratégia. Tour te tira da reação e te coloca na escolha. Quando seria a melhor janela nos próximos 30-45 dias?"' },
-      { tag: 'Indecisão pura (não sei)', texto: '"Empresário forte decide. Indecisão é o sintoma de que falta clareza — e clareza é justamente o que o método entrega. Te pergunto direto: o que precisa acontecer pra você sentir que é hora? Quero entender pra te dar exatamente isso."' },
-      { tag: 'Encerramento educado (3 dias sem resposta)', texto: '"Pablo aqui de novo. Como você não respondeu, fico em dúvida: você quer continuar essa conversa ou prefere que eu arquive e te procure daqui 3 meses? Sem pressão, só não quero ficar te incomodando se não for o momento. Me responde só com SIM ou NÃO."' }
-    ];
+    // Respostas de Elite: carregadas de js/data/respostas/<id>.js (window.RESPOSTAS_ELITE), 50 por treinamento.
 
     function renderizarBiblioteca() {
       renderizarCases();
-
-      // Respostas
-      let respHtml = '';
-      RESPOSTAS_ELITE.forEach(function (r) {
-        respHtml += '<div class="resposta-item"><span class="resposta-tag">' + escapeHtml(r.tag) + '</span><p>' + escapeHtml(r.texto) + '</p>' +
-          '<button class="icon-btn" style="margin-top: 8px; padding: 5px 10px; font-size: 11px;" onclick="copiarTexto(this.previousElementSibling.textContent.replace(/^\\\"|\\\"$/g, \'\'), this)">📋 Copiar</button></div>';
-      });
-      document.getElementById('respostas-list').innerHTML = respHtml;
-
-      // Perguntas SPIN
+      renderizarPillsRespostas();
+      renderizarRespostas();
       renderizarBancoSPIN();
+    }
+
+    // ── Respostas de Elite por treinamento (dados em js/data/respostas/<id>.js → window.RESPOSTAS_ELITE) ──
+    var RESP_PRODUTOS = [
+      { id: 'tce', emoji: '🚀', nome: 'TCE' },
+      { id: 'bhp', emoji: '📈', nome: 'BHP' },
+      { id: 'ml5', emoji: '🎯', nome: 'ML5' },
+      { id: 'fcis', emoji: '🧭', nome: 'FCIS' },
+      { id: 'fgpc', emoji: '🧠', nome: 'FGPC' },
+      { id: 'if', emoji: '💰', nome: 'IF' },
+      { id: 'tav', emoji: '🔥', nome: 'TAV' },
+      { id: 'ceop', emoji: '🎤', nome: 'CEOP' },
+      { id: 'master', emoji: '🏆', nome: 'Master' },
+      { id: 'cis', emoji: '💎', nome: 'CIS' },
+      { id: 'ggb', emoji: '🥋', nome: 'GGB' }
+    ];
+    var _respFiltroProduto = 'todos';
+    function _respProdMeta(id) { for (var i = 0; i < RESP_PRODUTOS.length; i++) { if (RESP_PRODUTOS[i].id === id) return RESP_PRODUTOS[i]; } return { emoji: '', nome: id }; }
+    window.setRespProduto = function (p) { _respFiltroProduto = p; renderizarPillsRespostas(); renderizarRespostas(); };
+
+    function renderizarPillsRespostas() {
+      var cont = document.getElementById('resp-pills');
+      if (!cont) return;
+      var dados = window.RESPOSTAS_ELITE || [];
+      function cnt(id) { return id === 'todos' ? dados.length : dados.filter(function (r) { return r.produto === id; }).length; }
+      var html = '<button class="resp-pill' + (_respFiltroProduto === 'todos' ? ' on' : '') + '" onclick="setRespProduto(\'todos\')">Todos · ' + cnt('todos') + '</button>';
+      RESP_PRODUTOS.forEach(function (p) {
+        var c = cnt(p.id);
+        if (!c) return;
+        html += '<button class="resp-pill' + (_respFiltroProduto === p.id ? ' on' : '') + '" onclick="setRespProduto(\'' + p.id + '\')">' + p.emoji + ' ' + p.nome + ' · ' + c + '</button>';
+      });
+      cont.innerHTML = html;
+    }
+
+    function _respItemHtml(r) {
+      return '<div class="resposta-item"><span class="resposta-tag">' + escapeHtml(r.tag) + '</span><p>' + escapeHtml(r.texto) + '</p>' +
+        '<button class="icon-btn" style="margin-top: 8px; padding: 5px 10px; font-size: 11px;" onclick="copiarTexto(this.previousElementSibling.textContent.replace(/^\\\"|\\\"$/g, \'\'), this)">📋 Copiar</button></div>';
+    }
+
+    function renderizarRespostas() {
+      var alvo = document.getElementById('respostas-list');
+      if (!alvo) return;
+      var dados = window.RESPOSTAS_ELITE || [];
+      var bEl = document.getElementById('resp-busca');
+      var busca = (bEl ? bEl.value : '').trim().toLowerCase();
+      var lista = dados.filter(function (r) {
+        if (_respFiltroProduto !== 'todos' && r.produto !== _respFiltroProduto) return false;
+        if (busca) {
+          var meta = _respProdMeta(r.produto);
+          var hay = (r.tag + ' ' + r.texto + ' ' + meta.nome).toLowerCase();
+          if (hay.indexOf(busca) < 0) return false;
+        }
+        return true;
+      });
+      if (!lista.length) { alvo.innerHTML = '<p class="subtitle" style="padding:16px; text-align:center;">Nenhuma resposta encontrada.</p>'; return; }
+      var agrupar = _respFiltroProduto === 'todos';
+      var html = '';
+      if (agrupar) {
+        RESP_PRODUTOS.forEach(function (p) {
+          var doProd = lista.filter(function (r) { return r.produto === p.id; });
+          if (!doProd.length) return;
+          html += '<div class="resp-grupo"><div class="resp-grupo-tit">' + p.emoji + ' ' + p.nome + ' · ' + doProd.length + '</div>';
+          doProd.forEach(function (r) { html += _respItemHtml(r); });
+          html += '</div>';
+        });
+      } else {
+        lista.forEach(function (r) { html += _respItemHtml(r); });
+      }
+      alvo.innerHTML = html;
     }
 
     function renderizarCases() {
@@ -9810,6 +9953,40 @@ Aguarde o user message — siga o cabeçalho.`;
       const curto = '💸 *R$ ' + fmt(cMes) + '/mês* — ou *R$ ' + fmt(cAno) + '/ano* — saindo do seu caixa só com turnover (rescisão + recontratação + rampa). É dinheiro de contratar errado e mandar embora. Quer ver como travar isso?';
       window._turnoverCurto = curto;
       html += '<button class="icon-btn" style="margin-top: 8px; margin-left: 6px;" onclick="copiarTexto(window._turnoverCurto, this)">⚡ Copiar versão curta</button></div>';
+
+      // Explicação dos 4 custos (rescisão + recrutamento + rampa + perda de conhecimento) — fontes SHRM/Gallup/Deloitte
+      const explicCompleta =
+        '*Por que cada desligamento custa de 3x a 6x o salário?*\n' +
+        'Porque não é só a conta da saída — são 4 buracos no caixa:\n\n' +
+        '*1. Rescisão (CLT)* 💸\n' +
+        'Tudo que a empresa é obrigada a pagar para desligar: multa de 40% do FGTS, aviso prévio, férias e 13º proporcionais + encargos. Sozinha já gira em torno de *1,5 salário*. _(custo direto de separação — base CLT / SHRM.)_\n\n' +
+        '*2. Recrutamento* 🔎\n' +
+        'Achar e contratar o substituto: anúncio da vaga, triagem de currículos, entrevistas, testes, exame admissional e as horas do RH e do gestor paradas nisso. A *SHRM* estima de *6 a 9 meses de salário* para repor uma posição qualificada.\n\n' +
+        '*3. Rampa* 📈\n' +
+        'Ninguém rende 100% no primeiro mês. São *2 a 3 meses* até o novo colaborador atingir produtividade plena — salário cheio recebendo produção parcial. _(perda de produtividade no onboarding — Gallup.)_\n\n' +
+        '*4. Perda de conhecimento* 🧠\n' +
+        'Quem sai leva junto: relação com clientes, histórico, os "atalhos" do dia a dia. Isso vira retrabalho, erro e cliente mal atendido. A *Deloitte* aponta esse como o custo mais difícil de recuperar.\n\n' +
+        '_Somando os quatro, SHRM, Gallup e Deloitte convergem: cada desligamento custa de *3x a 6x* o salário mensal (CLT médio, já com encargos)._';
+      const explicCurta =
+        '*Para você entender onde o dinheiro evapora:*\n' +
+        '• *Rescisão* — a conta obrigatória da saída (multa FGTS + aviso + férias + 13º) ≈ *1,5 salário*.\n' +
+        '• *Recrutamento* — anúncio, triagem, entrevistas e horas de RH/gestor para repor a vaga (SHRM: 6–9 meses de salário).\n' +
+        '• *Rampa* — 2 a 3 meses até o novo render 100% (paga cheio, recebe parcial).\n' +
+        '• *Perda de conhecimento* — relação com o cliente e know-how que vão embora → retrabalho e erro (Deloitte).';
+      window._turnoverExplicA = explicCompleta;
+      window._turnoverExplicB = explicCurta;
+
+      html += '<div style="margin-top: 18px;"><label>📖 O que é cada custo (rescisão + recrutamento + rampa + perda de conhecimento)</label>';
+      html += '<div style="background: var(--bg-2); border: 1px solid var(--border-strong); border-left: 3px solid var(--blue, #60a5fa); border-radius: 8px; padding: 12px 14px; font-size: 13.5px; line-height: 1.6;">';
+      html += '<p style="margin:0 0 10px;"><strong>Por que cada desligamento custa de 3x a 6x o salário?</strong> Não é só a conta da saída — são 4 buracos no caixa:</p>';
+      html += '<p style="margin:0 0 8px;">💸 <strong>1. Rescisão (CLT)</strong> — multa de 40% do FGTS, aviso prévio, férias e 13º proporcionais + encargos. Sozinha já gira em torno de <strong>1,5 salário</strong>. <em>(custo direto de separação — CLT / SHRM.)</em></p>';
+      html += '<p style="margin:0 0 8px;">🔎 <strong>2. Recrutamento</strong> — anúncio, triagem, entrevistas, testes, exame admissional e horas de RH e gestor. A <strong>SHRM</strong> estima <strong>6 a 9 meses de salário</strong> para repor uma posição qualificada.</p>';
+      html += '<p style="margin:0 0 8px;">📈 <strong>3. Rampa</strong> — 2 a 3 meses até o novo render 100%: salário cheio recebendo produção parcial. <em>(perda de produtividade no onboarding — Gallup.)</em></p>';
+      html += '<p style="margin:0 0 10px;">🧠 <strong>4. Perda de conhecimento</strong> — relação com clientes, histórico e atalhos do dia a dia que vão embora → retrabalho e erro. A <strong>Deloitte</strong> aponta como o custo mais difícil de recuperar.</p>';
+      html += '<p style="margin:0; opacity:0.85;"><em>Somando os quatro, SHRM, Gallup e Deloitte convergem: 3x a 6x o salário mensal por desligamento (CLT médio, com encargos).</em></p>';
+      html += '</div>';
+      html += '<button class="icon-btn primary" style="margin-top: 8px;" onclick="copiarTexto(window._turnoverExplicA, this)">📋 Copiar explicação completa</button>';
+      html += '<button class="icon-btn" style="margin-top: 8px; margin-left: 6px;" onclick="copiarTexto(window._turnoverExplicB, this)">⚡ Copiar versão curta</button></div>';
 
       document.getElementById('turnover-resultado').innerHTML = html;
     }
@@ -10846,11 +11023,14 @@ Aguarde o user message — siga o cabeçalho.`;
       if (document.documentElement.classList.contains('bib-only')) {
         ocultarLoginOverlay();
         inicializarApp();
-        navegar('biblioteca');
-        try {
-          var _bt = (location.search.match(/[?&]bib=([a-z]+)/) || [])[1];
+        var _bt = '';
+        try { _bt = (location.search.match(/[?&]bib=([a-z]+)/) || [])[1] || ''; } catch (e) {}
+        if (_bt === 'disc') {
+          navegar('disc');
+        } else {
+          navegar('biblioteca');
           if (_bt && ['cases','respostas','spin','roi','turnover','cac'].indexOf(_bt) >= 0) trocarBibTab(_bt);
-        } catch (e) {}
+        }
         return;
       }
 
