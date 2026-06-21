@@ -2710,6 +2710,32 @@
   <script src="js/data/respostas/master.js"></script>
   <script src="js/data/respostas/cis.js"></script>
   <script src="js/data/respostas/ggb.js"></script>
+  <!-- Perguntas SPIN por setor (108 setores x 40) -->
+  <script src="js/data/spin/g01.js"></script>
+  <script src="js/data/spin/g02.js"></script>
+  <script src="js/data/spin/g03.js"></script>
+  <script src="js/data/spin/g04.js"></script>
+  <script src="js/data/spin/g05.js"></script>
+  <script src="js/data/spin/g06.js"></script>
+  <script src="js/data/spin/g07.js"></script>
+  <script src="js/data/spin/g08.js"></script>
+  <script src="js/data/spin/g09.js"></script>
+  <script src="js/data/spin/g10.js"></script>
+  <script src="js/data/spin/g11.js"></script>
+  <script src="js/data/spin/g12.js"></script>
+  <!-- Cases por setor (108 setores x 4) -->
+  <script src="js/data/cases/c01.js"></script>
+  <script src="js/data/cases/c02.js"></script>
+  <script src="js/data/cases/c03.js"></script>
+  <script src="js/data/cases/c04.js"></script>
+  <script src="js/data/cases/c05.js"></script>
+  <script src="js/data/cases/c06.js"></script>
+  <script src="js/data/cases/c07.js"></script>
+  <script src="js/data/cases/c08.js"></script>
+  <script src="js/data/cases/c09.js"></script>
+  <script src="js/data/cases/c10.js"></script>
+  <script src="js/data/cases/c11.js"></script>
+  <script src="js/data/cases/c12.js"></script>
 </head>
 
 <body>
@@ -9168,458 +9194,37 @@ Aguarde o user message — siga o cabeçalho.`;
     // =========================================================================
     // BIBLIOTECA — CASES, RESPOSTAS, ROI
     // =========================================================================
-    const CASES_POR_SETOR = [
-      // ===== VAREJO (4) =====
-      { setor: 'varejo', setorNome: 'Varejo', icone: '🛒', titulo: 'Rede de lojas que multiplicou faturamento em 18 meses', texto: 'Empresário com 4 lojas, faturamento estagnado em R$ 800k/mês há 2 anos. Aplicou o Método dos Dígitos no marketing digital + estruturou time com KPIs claros. Em 18 meses: 9 lojas, R$ 2,4mi/mês.' },
-      { setor: 'varejo', setorNome: 'Varejo', icone: '🛒', titulo: 'Loja de roupas que dobrou o ticket médio em 90 dias', texto: 'Boutique feminina com ticket de R$ 180. Treinou vendedoras em venda consultiva + estruturou cross-sell. Em 90 dias: ticket R$ 380 e conversão de visita 2,3x maior.' },
-      { setor: 'varejo', setorNome: 'Varejo', icone: '🛒', titulo: 'Distribuidora regional que profissionalizou a rota', texto: 'Distribuidora de bebidas com 14 representantes sem padrão. Implementou roteirização + script SPIN por canal. Em 6 meses: cobertura 60% maior e PA (positivação) subiu de 38% pra 71%.' },
-      { setor: 'varejo', setorNome: 'Varejo', icone: '🛒', titulo: 'Pet shop bairrista que virou rede de 4 unidades', texto: 'Loja única com fila e dono no balcão 12h/dia. Estruturou recompra programada + plano de saúde pet. Em 14 meses: 4 unidades, dono fora do operacional, recompra 68%.' },
+    // CASES_POR_SETOR: carregados de js/data/cases/c01..c12.js (window.CASES_POR_SETOR), 4 por setor.
 
-      // ===== SERVIÇOS (4) =====
-      { setor: 'servicos', setorNome: 'Serviços', icone: '🏢', titulo: 'Consultoria que saiu de R$ 50k para R$ 400k/mês', texto: 'Consultor solo virou empresa com 12 colaboradores. Estruturou prospecção (SPIN), criou times comerciais e aumentou ticket médio 4x. Receita 8x em 24 meses.' },
-      { setor: 'servicos', setorNome: 'Serviços', icone: '🏢', titulo: 'Agência que dobrou MRR cortando 40% dos clientes ruins', texto: 'Agência de marketing com 60 clientes, margem ruim. Aplicou ICP rigoroso, demitiu 24 contas que pagavam pouco. Em 8 meses: 36 clientes, MRR 2,1x e margem operacional 4x.' },
-      { setor: 'servicos', setorNome: 'Serviços', icone: '🏢', titulo: 'Escritório de advocacia que triplicou ticket virando empresarial', texto: 'Banca cível pessoa física, ticket R$ 4k. Migrou pra contencioso empresarial com sócios estruturados. Ticket médio R$ 14k, faturamento 3,2x em 18 meses.' },
-      { setor: 'servicos', setorNome: 'Serviços', icone: '🏢', titulo: 'Arquitetura que migrou de PF pra projetos corporativos', texto: 'Estúdio com 4 sócios, projetos residenciais brigando preço. Reposicionou pra projetos comerciais B2B (varejo + escritórios). Em 12 meses: ticket 6x e fila de espera.' },
-
-      // ===== SAÚDE (3) =====
-      { setor: 'saude', setorNome: 'Saúde / Estética', icone: '💉', titulo: 'Clínica que dobrou agenda em 6 meses', texto: 'Clínica de estética com agenda em 60% de ocupação. Aplicou marketing digital direcionado + treinou recepção em venda consultiva. Resultado: 95% de ocupação e ticket 30% maior.' },
-      { setor: 'saude', setorNome: 'Saúde / Estética', icone: '💉', titulo: 'Odonto que parou de competir por preço', texto: 'Consultório com 3 dentistas brigando pelo Smile e Sorriso. Estruturou planos premium + jornada de recompra com follow-up automatizado. Em 9 meses: ticket 2,4x e zero campanhas de desconto.' },
-      { setor: 'saude', setorNome: 'Saúde / Estética', icone: '💉', titulo: 'Estúdio de pilates de 2 virou rede de 7 unidades', texto: 'Donas com 2 estúdios e teto de receita. Padronizaram operação + criaram modelo de microfranquia. Em 22 meses: 7 unidades, faturamento 4,8x, donas só estratégicas.' },
-
-      // ===== INDÚSTRIA (3) =====
-      { setor: 'industria', setorNome: 'Indústria', icone: '🏭', titulo: 'Indústria familiar que se profissionalizou', texto: 'Empresa com sucessão complicada. Aplicou planejamento estratégico Febracis, definiu KPIs por área, montou conselho. Faturamento subiu 70% em 24 meses, sucessão estruturada.' },
-      { setor: 'industria', setorNome: 'Indústria', icone: '🏭', titulo: 'Metalúrgica que dobrou margem com conselho', texto: 'Metalúrgica de médio porte, sócios brigando há 3 anos. Estruturou conselho com membro externo + KPIs financeiros mensais. Margem operacional saiu de 8% pra 19% em 18 meses.' },
-      { setor: 'industria', setorNome: 'Indústria', icone: '🏭', titulo: 'Fábrica de cosméticos que parou de depender do dono', texto: 'Dono no chão de fábrica 14h/dia. Criou comitê executivo, contratou COO interno via méritos. Em 12 meses: dono fora do operacional, faturamento +35%, lançou 2 marcas novas.' },
-
-      // ===== TECNOLOGIA (3) =====
-      { setor: 'tecnologia', setorNome: 'Tecnologia / SaaS', icone: '💻', titulo: 'Startup B2B que escalou vendas', texto: 'SaaS B2B com 12 clientes em 8 meses (CAC alto demais). Reestruturou pitch comercial com SPIN, definiu ICP claro. Em 6 meses: 89 clientes, CAC reduzido em 60%.' },
-      { setor: 'tecnologia', setorNome: 'Tecnologia / SaaS', icone: '💻', titulo: 'Agência de tráfego que virou SaaS', texto: 'Agência com 40 contas pagando R$ 2k/mês. Empacotou metodologia em SaaS self-service. Em 14 meses: 600 contas pagantes, MRR 5x, margem de software.' },
-      { setor: 'tecnologia', setorNome: 'Tecnologia / SaaS', icone: '💻', titulo: 'Software house que cortou churn pela metade', texto: 'Software de gestão para clínicas, churn de 7%/mês (insustentável). Redefiniu ICP, melhorou onboarding em 30 dias. Em 6 meses: churn 3,1%/mês, NPS de 22 pra 64.' },
-
-      // ===== ALIMENTAÇÃO (3) =====
-      { setor: 'alimentacao', setorNome: 'Alimentação', icone: '🍽️', titulo: 'Restaurante que virou rede', texto: 'Restaurante único, fila de espera mas margem ruim. Aplicou Método dos Dígitos, otimizou cardápio e posicionamento. Hoje: 4 unidades, margem 3x maior.' },
-      { setor: 'alimentacao', setorNome: 'Alimentação', icone: '🍽️', titulo: 'Hamburgeria de bairro virou rede regional', texto: 'Hamburgeria artesanal com 1 ponto. Padronizou ficha técnica + treinou gerentes em P&L de unidade. Em 20 meses: 6 unidades em 3 cidades, margem operacional estável em 22%.' },
-      { setor: 'alimentacao', setorNome: 'Alimentação', icone: '🍽️', titulo: 'Confeitaria artesanal que estruturou delivery próprio', texto: 'Doceria com vendas dependendo de iFood. Lançou app/site próprio + programa de assinatura. Em 9 meses: 60% das vendas fora do iFood, ticket 1,8x e CAC orgânico.' },
-
-      // ===== CONSTRUÇÃO / IMOBILIÁRIA (3) =====
-      { setor: 'construcao', setorNome: 'Construção / Imobiliária', icone: '🏗️', titulo: 'Imobiliária que profissionalizou vendas', texto: 'Imobiliária com 6 corretores, conversão baixa. Treinou time inteiro em SPIN + roteiros padronizados. VGV 2,5x em 12 meses.' },
-      { setor: 'construcao', setorNome: 'Construção / Imobiliária', icone: '🏗️', titulo: 'Construtora regional que parou de queimar caixa', texto: 'Construtora com 3 obras simultâneas e DRE no vermelho 9 meses. Implementou orçamento por obra + comitê semanal de caixa. Em 12 meses: 3 obras lucrativas e fundo de reserva de 4 meses.' },
-      { setor: 'construcao', setorNome: 'Construção / Imobiliária', icone: '🏗️', titulo: 'Loja de materiais que triplicou margem', texto: 'Loja de construção brigando preço com home center. Estruturou venda técnica para construtores + crédito empresarial. Em 14 meses: margem operacional saiu de 6% pra 19%.' },
-
-      // ===== EDUCAÇÃO (2) =====
-      { setor: 'educacao', setorNome: 'Educação', icone: '📚', titulo: 'Escola que dobrou matrículas', texto: 'Escola particular com queda de matrículas. Aplicou marketing digital + processo comercial estruturado. 2x matrículas em 1 ciclo.' },
-      { setor: 'educacao', setorNome: 'Educação', icone: '📚', titulo: 'Curso técnico virou referência regional via inbound', texto: 'Curso técnico de saúde com captação 100% panfleto. Migrou pra inbound (blog + redes) e processo comercial inside sales. Em 12 meses: matrículas 3,4x, CAC 40% menor.' }
-    ];
-
-    const PERGUNTAS_SPIN_POR_SETOR = [
-      {
-        setor: 'varejo', setorNome: 'Varejo / Comércio', icone: '🛒',
-        S: [
-          'Quantas lojas você tem hoje?',
-          'Qual o ticket médio por venda?',
-          'Qual canal vende mais — presencial, digital ou marketplace?',
-          'Quem decide compras estratégicas — você ou tem sócio?',
-          'Quantos vendedores no time todo?',
-          'Há quanto tempo no varejo?',
-          'Sua margem operacional média está em quanto?'
-        ],
-        P: [
-          'Qual loja vende menos? Você sabe por quê?',
-          'O time tem meta clara ou cada um vende como acha?',
-          'Sua margem está crescendo ou caindo nos últimos 6 meses?',
-          'A taxa de conversão de visita pra venda é controlada?',
-          'Cliente que entra na sua loja volta ou compra 1 vez e some?',
-          'Você sabe quem é seu vendedor top e como ele vende?'
-        ],
-        I: [
-          'Se essa loja seguir assim, em 12 meses você abre nova ou fecha essa?',
-          'Quanto faturamento você está deixando na mesa por mês?',
-          'Quando foi a última vez que tirou férias sem o WhatsApp da loja tocando?',
-          'Se um vendedor-chave sair amanhã, sua melhor loja para?',
-          'Sem padrão, em 3 anos sua rede é o dobro ou ainda essa?',
-          'Você tá vendendo ou só repondo o que o cliente já pediu?'
-        ],
-        N: [
-          'Se você triplicasse a conversão dessa loja sem aumentar custo, abriria mais 2?',
-          'Se o time vendesse no padrão da sua melhor loja, qual o novo faturamento?',
-          'Se você saísse do operacional 60 dias, a operação roda ou para?',
-          'Se a recompra dobrasse, ainda precisaria brigar preço?',
-          'O que mudaria pra sua família se sua margem subisse 5 pontos?',
-          'Vale estruturar isso agora ou prefere continuar 12 meses no mesmo lugar?'
-        ]
-      },
-      {
-        setor: 'servicos', setorNome: 'Serviços / Consultoria', icone: '🏢',
-        S: [
-          'Quantos clientes ativos hoje?',
-          'Sua receita é recorrente ou projeto?',
-          'Como você capta — indicação, marketing, prospecção ativa?',
-          'Você é founder-led ou tem time comercial?',
-          'Qual seu ticket médio mensal por cliente?',
-          'Quantos colaboradores totais?',
-          'Há quanto tempo no mercado?'
-        ],
-        P: [
-          'Qual o gargalo: trazer cliente, fechar proposta ou entregar?',
-          'Onde você gasta mais energia que não dá retorno?',
-          'Quanto da sua semana é operacional vs estratégico?',
-          'Você sabe seu ICP claramente ou aceita qualquer cliente?',
-          'Cliente seu fica quantos meses em média antes de sair?',
-          'Você cobra por hora, projeto ou valor — e está confortável com isso?'
-        ],
-        I: [
-          'Sem resolver isso, sua empresa cresce ou estagna nos próximos 12 meses?',
-          'Quanto sua hora vale e quanto você usa em coisa que não escala?',
-          'Se você ficasse 30 dias fora, a empresa para?',
-          'Cada cliente errado que entra te custa quantos meses até descobrir?',
-          'Sem ICP, sua margem cresce ou só seu volume?',
-          'Em 5 anos, com mesma estrutura, você ainda está executando?'
-        ],
-        N: [
-          'Se dobrasse o ticket médio mantendo mesmo nº de clientes, mudaria sua operação?',
-          'Se trouxesse processo comercial, ficaria menos preso ao operacional?',
-          'Se filtrasse só clientes ICP, qual o novo NPS e a nova margem?',
-          'Se a empresa rodasse sem você 90 dias, o que você faria com esse tempo?',
-          'Se cobrasse por valor em vez de hora, o teto sumiria?',
-          'Vale a pena resolver isso agora?'
-        ]
-      },
-      {
-        setor: 'industria', setorNome: 'Indústria', icone: '🏭',
-        S: [
-          'Quantos colaboradores no total?',
-          'Empresa familiar ou profissionalizada?',
-          'Quem decide compras estratégicas?',
-          'Há quanto tempo no mercado?',
-          'Sua margem operacional média?',
-          'Tem conselho consultivo ou só os sócios?',
-          'Faturamento médio mensal?'
-        ],
-        P: [
-          'O time bate meta consistentemente ou depende de pessoas-chave?',
-          'Sua margem está crescendo ou caindo?',
-          'Há quanto tempo não muda processo de produção/vendas?',
-          'Sucessão está mapeada ou é tabu?',
-          'Você tem KPI por área ou só DRE no fim do mês?',
-          'Sócios alinhados ou cada um puxa pra um lado?'
-        ],
-        I: [
-          'Se um sócio sair ou você ficar 30 dias fora, a empresa para?',
-          'Quanto isso te impede de tirar férias, investir, vender no futuro?',
-          'Em 5 anos, com mesma estrutura, cresce ou esmorece?',
-          'Sem sucessão, o patrimônio que construiu vira ativo ou passivo pros filhos?',
-          'Cada decisão concentrada em você é quantas oportunidades perdidas?',
-          'Concorrente profissionalizado em 3 anos te come ou você dá conta?'
-        ],
-        N: [
-          'Se tivesse uma gestão que rodasse sem você 90 dias, faria diferença real?',
-          'Se o time tivesse KPIs claros, mudaria sua noite de domingo?',
-          'Se montasse conselho com membro externo, que decisões você desbloquearia?',
-          'Se a sucessão estivesse pronta, qual o valor que você poderia tirar do negócio?',
-          'Se a margem subisse 5 pontos, qual a nova capacidade de investir?',
-          'Vale estruturar agora ou prefere apagar incêndio mais 12 meses?'
-        ]
-      },
-      {
-        setor: 'tecnologia', setorNome: 'Tecnologia / SaaS', icone: '💻',
-        S: [
-          'MRR atual? Quantos clientes pagantes?',
-          'CAC e LTV — você mede?',
-          'Time comercial estruturado ou founder-led?',
-          'Você tem ICP definido ou aceita qualquer um?',
-          'Churn mensal está em quanto?',
-          'Captou rodada? Em qual estágio?',
-          'Quantos canais de aquisição rodam hoje?'
-        ],
-        P: [
-          'Pitch padronizado ou cada vendedor inventa?',
-          'Taxa de fechamento está ok ou você vende muito barato?',
-          'Churn está mapeado ou é caixa-preta?',
-          'Onboarding entrega valor em 30 dias ou cliente fica perdido?',
-          'NPS é medido sistematicamente ou anedotico?',
-          'Você sabe por qual canal vem o cliente que mais paga e fica?'
-        ],
-        I: [
-          'Com CAC alto e churn não-mapeado, em quanto tempo queima caixa?',
-          'Investidor cobra crescimento — você entrega no ritmo atual?',
-          'Sem método comercial, escala ou trava em 200k MRR?',
-          'Se o churn não cair, qual a runway até precisar de novo round?',
-          'Cada cliente errado custa quantos meses de CS até detectar?',
-          'Sem ICP claro, valuation reflete o produto ou o caos?'
-        ],
-        N: [
-          'Se a taxa de fechamento dobrasse com SPIN, mudaria seu round?',
-          'Se cada vendedor virasse 30% melhor, qual o MRR em 6 meses?',
-          'Se o churn caísse pela metade, a runway dobra?',
-          'Se filtrasse só ICP, NPS sobe e LTV junto — qual valuation?',
-          'Se o onboarding entregasse valor em 14 dias, qual o impacto em recompra?',
-          'Vale resolver agora ou esperar próximo round?'
-        ]
-      },
-      {
-        setor: 'saude', setorNome: 'Saúde / Estética', icone: '💉',
-        S: [
-          'Quantos profissionais ativos hoje?',
-          'Taxa de ocupação da agenda?',
-          'Ticket médio por procedimento?',
-          'Recompra ou single-shot é a maioria?',
-          'Como gera lead — indicação, mídia, ativo?',
-          'Tem recepção própria treinada ou terceirizada?',
-          'Faturamento médio mensal por profissional?'
-        ],
-        P: [
-          'Recepção converte ou só agenda?',
-          'Cliente que entra uma vez volta ou some?',
-          'Você compete por preço ou por valor percebido?',
-          'Pacote/programa fechado existe ou é tudo avulso?',
-          'Você sabe seu CAC por canal ou tudo entra junto?',
-          'Profissionais sentem dono do resultado ou são funcionários horistas?'
-        ],
-        I: [
-          'Com agenda em 60%, quanto você fatura a menos por mês?',
-          'Se a recepção fosse treinada em vendas, isso muda quanto?',
-          'Sem recompra mapeada, você cresce ou só roda?',
-          'Cada paciente que não volta é quanto de LTV perdido?',
-          'Em 24 meses concorrendo só por preço, sua margem aguenta?',
-          'Se 1 profissional-chave sai, quantos pacientes vão junto?'
-        ],
-        N: [
-          'Se dobrasse a recompra do cliente atual, sai da briga por preço?',
-          'Se a agenda fosse 95% ocupada, abriria nova unidade?',
-          'Se vendesse pacote em vez de avulso, mudaria seu DRE?',
-          'Se a recepção convertesse 30% mais, qual o novo faturamento?',
-          'Se profissionais virassem sócios de produto, mudaria a retenção deles?',
-          'Vale resolver isso esse semestre?'
-        ]
-      },
-      {
-        setor: 'construcao', setorNome: 'Construção / Imobiliária', icone: '🏗️',
-        S: [
-          'Quantos corretores ativos?',
-          'VGV mensal médio?',
-          'Como gera lead — portal, indicação, ativo, mídia?',
-          'Tem time interno ou só parceria com imobiliárias?',
-          'Ticket médio do imóvel que vocês movimentam?',
-          'Quantos lançamentos por ano?',
-          'Conversão de visita pra venda é medida?'
-        ],
-        P: [
-          'O time tem roteiro padrão ou cada corretor inventa?',
-          'Por que cliente foge antes de assinar?',
-          'Sua margem por unidade é boa ou virou commodity?',
-          'Você sabe em qual etapa do funil mais lead morre?',
-          'Quem são os 20% de corretores que fazem 80% das vendas — e por quê?',
-          'Visita marcada vira proposta ou some no caminho?'
-        ],
-        I: [
-          'Cada visita não-fechada é quanto de comissão perdida?',
-          'Sem método, você cresce ou só roda no mesmo lugar?',
-          'Em 12 meses com mesmo time, abre novo empreendimento ou para?',
-          'Se um corretor TOP sai, quantos meses até reposição?',
-          'Sem padrão, sua marca tá construindo confiança ou queimando lead?',
-          'Concorrente com SPIN te tira o cliente em quanto tempo?'
-        ],
-        N: [
-          'Se cada corretor virasse 30% melhor, em quanto multiplica o VGV?',
-          'Se a conversão dobrasse, justifica abrir novo lançamento?',
-          'Se padronizasse roteiro, quantos meses de treino do novato você economiza?',
-          'Se o pós-venda gerasse 2 indicações por cliente, qual o novo CAC?',
-          'Se você dependesse menos do dono nas negociações, quantas você desbloquearia?',
-          'Vale estruturar agora?'
-        ]
-      },
-      {
-        setor: 'educacao', setorNome: 'Educação', icone: '📚',
-        S: [
-          'Quantos alunos ativos hoje?',
-          'Renovação ano a ano (taxa)?',
-          'Origem das matrículas — orgânico, mídia paga, indicação?',
-          'Você tem time comercial ou recepção atende?',
-          'Ticket médio anual?',
-          'Há quanto tempo a escola opera?',
-          'Quantos cursos/níveis vocês oferecem?'
-        ],
-        P: [
-          'Por que a evasão acontece — preço, qualidade, distância, conveniência?',
-          'Marketing traz lead qualificado ou volume sem fit?',
-          'Time comercial existe ou recepção que vende sem método?',
-          'Você compete por preço ou por valor da formação?',
-          'Pais (ou aluno) recebem follow-up depois da matrícula?',
-          'Você sabe o NPS dos pais e dos alunos?'
-        ],
-        I: [
-          'Cada aluno que evade é quanto em LTV?',
-          'Sem método comercial, a escola cresce ou só repõe quem sai?',
-          'Em 3 anos com mesma estrutura, dobra ou estagna?',
-          'Sem indicação ativa, qual a sustentabilidade dos próximos 5 ciclos?',
-          'Se a concorrência baixa preço, você sobrevive na qualidade?',
-          'Cada matrícula errada custa quantos meses até a evasão?'
-        ],
-        N: [
-          'Se a captação dobrasse mantendo a evasão, justifica reestruturar comercial?',
-          'Se a evasão caísse 30%, mudaria o fluxo de caixa?',
-          'Se cada pai indicasse 1 família, qual o CAC zero?',
-          'Se a recepção virasse comercial treinado, qual a nova conversão?',
-          'Se o NPS subisse 20 pontos, mudaria a renovação?',
-          'Vale resolver antes do próximo ciclo?'
-        ]
-      },
-      {
-        setor: 'alimentacao', setorNome: 'Alimentação / Food Service', icone: '🍽️',
-        S: [
-          'Quantas unidades você opera?',
-          'Ticket médio por mesa/pedido?',
-          'Margem operacional média por unidade?',
-          'Você é dono presente ou tem gerente em cada loja?',
-          'Cardápio está estável ou rotaciona?',
-          'Mix de delivery vs salão (%)?',
-          'Quantos colaboradores totais?'
-        ],
-        P: [
-          'Você vende fila ou margem?',
-          'Funcionário roda muito ou fica?',
-          'Cardápio testa preço ou repete?',
-          'Você sabe seu CMV real por prato ou é estimativa?',
-          'iFood é parceiro ou refém da plataforma?',
-          'Há um gerente forte ou tudo passa por você?'
-        ],
-        I: [
-          'Margem ruim com fila cheia significa que você trabalha pro funcionário e fornecedor — quanto disso é estrutural?',
-          'Sem método de gestão, abre nova unidade ou trava?',
-          'Em 5 anos com mesma operação, sai do operacional ou continua refém?',
-          'Se o iFood mudar regra amanhã, sua receita aguenta?',
-          'Sem ficha técnica, cada prato vendido é lucro ou prejuízo silencioso?',
-          'Sem cultura, próximo gerente que sai leva quantos clientes junto?'
-        ],
-        N: [
-          'Se a margem dobrasse mantendo movimento, abriria nova unidade ou tirava pró-labore decente?',
-          'Se o time rodasse sem você, mudaria sua vida?',
-          'Se a marca tivesse delivery próprio com 30% das vendas, mudaria sua dependência?',
-          'Se o ticket subisse 20% via cross-sell estruturado, qual o novo DRE?',
-          'Se o CMV caísse 3 pontos com ficha técnica, isso é um carro novo por ano?',
-          'Vale resolver agora?'
-        ]
-      },
-      {
-        setor: 'universal', setorNome: 'Universais (sem setor identificado)', icone: '🎯',
-        S: [
-          'Há quanto tempo você está nesse negócio?',
-          'Qual o faturamento médio mensal hoje?',
-          'Quantos colaboradores no total?',
-          'Quem decide as decisões estratégicas — você sozinho ou tem sócio?',
-          'Você tem conselho consultivo ou se aconselha sozinho?',
-          'Sua receita é recorrente, projeto ou transacional?',
-          'Quem é seu cliente ideal — perfil claro ou genérico?',
-          'Margem operacional atual está em quanto?',
-          'Como o cliente te conhece hoje — indicação, mídia, ativo?',
-          'Você tem KPIs por área ou só DRE no fim do mês?',
-          'Como está sua base de caixa em meses de operação?',
-          'Quantas horas/semana você gasta no operacional vs estratégico?',
-          'Tem time comercial estruturado ou cada vendedor inventa?',
-          'Há quanto tempo não muda processo central?',
-          'Quantos canais de aquisição rodam ativamente?',
-          'Você mede NPS, retenção e LTV ou anedótico?',
-          'Quando foi a última vez que tirou férias de verdade?',
-          'Concorrência principal é quem — e por que ela existe?',
-          'Você é dependente de um cliente ou canal?',
-          'Sucessão está pensada ou tabu?',
-          'Quantas decisões importantes passam só por você?',
-          'Sua margem cresceu ou caiu nos últimos 12 meses?',
-          'Time roda no mérito ou no clima?',
-          'Você sabe por que sua melhor venda foi a melhor?',
-          'Faturamento atual é teto ou base?'
-        ],
-        P: [
-          'Qual o maior gargalo da sua empresa hoje?',
-          'O que tira seu sono em relação ao negócio?',
-          'Onde você sente que está deixando dinheiro na mesa?',
-          'Qual decisão você adia há mais de 6 meses e não sabe por quê?',
-          'O que dependia de você 5 anos atrás e ainda depende hoje?',
-          'Quando alguém pergunta "qual sua estratégia?", você responde rápido ou enrola?',
-          'Sua equipe vai pra guerra com você ou se esconde quando aperta?',
-          'Cliente reclama de quê com mais frequência?',
-          'Você sabe por que os clientes que somem foram embora?',
-          'Quem são os 20% que fazem 80% — e o que eles fazem diferente?',
-          'Você está crescendo por método ou por sorte/mercado?',
-          'Sua melhor decisão dos últimos 3 anos foi sua ou caiu no colo?',
-          'Há decisões que você toma cansado, no fim do dia?',
-          'Em qual área você sente que improvisa porque não tem método?',
-          'Onde você gasta mais energia sem retorno proporcional?',
-          'Tem dívida (financeira ou emocional) com sócio, time ou família?',
-          'Sua liderança forma gente ou substitui gente?',
-          'O que você sabe que precisa parar de fazer e ainda não parou?',
-          'Cliente reclama de preço ou de valor entregue?',
-          'Sua margem atual permite errar ou cada erro custa caro?',
-          'Você bate meta na ponta da agulha ou com folga?',
-          'Existe alguém na empresa que sabe o que você sabe?',
-          'Quantas decisões cabem só na sua cabeça?',
-          'Quando o time discorda, eles falam ou silenciam?',
-          'Você está cansado ou esgotado — e há quanto tempo?'
-        ],
-        I: [
-          'Se isso continuar, daqui a 12 meses onde sua empresa vai estar?',
-          'Quanto isso já te custou nos últimos 6 meses (em dinheiro ou energia)?',
-          'Como isso impacta seu sócio, sua família, seu time?',
-          'Em 5 anos com mesma estrutura, você está livre ou ainda executando?',
-          'Se você ficar 60 dias fora amanhã, o que para?',
-          'Concorrente com método em 24 meses te come ou você reage a tempo?',
-          'Cada decisão concentrada em você é quantas oportunidades perdidas?',
-          'Quanto da sua margem de hoje é fruto de mercado em alta — e some quando o ciclo virar?',
-          'Sem sucessão, o patrimônio que construiu vira ativo ou passivo?',
-          'Quanto tempo da sua vida você troca por uma operação que não escala?',
-          'Se o mercado cair 20% amanhã, sua empresa sobrevive 12 meses?',
-          'Funcionário-chave que sai amanhã leva quantos clientes junto?',
-          'Sem método, próximo nível chega ou é fantasia?',
-          'Quantos casamentos, jantares, viagens você já trocou pelo operacional?',
-          'Sem clareza estratégica, sua decisão é sua ou do mercado?',
-          'Cada cliente errado que entra custa quantos meses até detectar?',
-          'Sem KPI, seu time é mérito ou clima?',
-          'Sem indicação ativa, sua sustentabilidade dura quantos ciclos?',
-          'Em quanto tempo seu modelo atual fica obsoleto?',
-          'Empresa sem método é dependente de quem — você ou da sorte?',
-          'Quantas vezes a mesma crise repetiu nos últimos 3 anos?',
-          'Sem sucessão emocional, sua aposentadoria é negócio ou prejuízo?',
-          'Cada decisão adiada custa o quê em janela de oportunidade?',
-          'Sem cultura forte, gente boa fica ou só passa?',
-          'O custo da inação é maior do que o custo de mudar — você já calculou?'
-        ],
-        N: [
-          'Se você tivesse a solução ideal, que diferença real faria?',
-          'Quanto vale resolver isso pra você hoje?',
-          'Vale priorizar agora ou prefere continuar mais 12 meses como está?',
-          'Se o time tivesse autonomia com método, sua agenda mudaria como?',
-          'Se a empresa rodasse sem você 90 dias, o que você faria?',
-          'Se a margem subisse 5 pontos, qual a nova capacidade de investir?',
-          'Se cada vendedor virasse 30% melhor, qual o novo faturamento?',
-          'Se filtrasse só clientes ICP, qual a nova margem e o novo NPS?',
-          'Se a sucessão estivesse pronta, qual o valor que você poderia tirar?',
-          'Se a indicação fosse sistêmica, qual o novo CAC?',
-          'Se sua melhor decisão virasse padrão, quantas vezes ela se repetiria?',
-          'Se você dependesse menos de você, sua família te teria mais?',
-          'Se houvesse conselho com membro externo, quais decisões desbloqueariam?',
-          'Se o NPS subisse 20 pontos, mudaria a recompra?',
-          'Se padronizasse onboarding, quantos meses economiza por novo cliente?',
-          'Se cada erro custasse menos, sua tolerância pra inovar seria qual?',
-          'Se o operacional tivesse dono, sua mente livraria o quê?',
-          'Se a empresa valesse 3x mais em 5 anos, mudaria sua decisão hoje?',
-          'Se a próxima crise pegasse você com método, ela seria oportunidade?',
-          'Se você liderasse com clareza, quantos esforços paralelos sumiriam?',
-          'Se houvesse playbook comercial, quantos meses de treino você economiza?',
-          'Se você fosse mentor de outro empresário hoje, o que recomendaria pra si?',
-          'Se essa solução estivesse pronta em 30 dias, qual o ROI estimado?',
-          'Se você confiasse no time pra decidir, sua semana mudaria como?',
-          'Vale resolver agora ou prefere repetir os mesmos 12 meses?'
-        ]
-      }
-    ];
+    // PERGUNTAS_SPIN_POR_SETOR: carregadas de js/data/spin/g01..g12.js (window.PERGUNTAS_SPIN_POR_SETOR), 108 setores.
 
     // Respostas de Elite: carregadas de js/data/respostas/<id>.js (window.RESPOSTAS_ELITE), 50 por treinamento.
 
     function renderizarBiblioteca() {
+      popularDropdownsSetores();
       renderizarCases();
       renderizarPillsRespostas();
       renderizarRespostas();
       renderizarBancoSPIN();
+    }
+
+    // Popula os <select> de setor (Cases e SPIN) a partir de window.PERGUNTAS_SPIN_POR_SETOR (108 setores)
+    function popularDropdownsSetores() {
+      var dados = window.PERGUNTAS_SPIN_POR_SETOR || [];
+      if (!dados.length) return;
+      var ordenados = dados.slice().sort(function (a, b) { return String(a.setorNome).localeCompare(String(b.setorNome), 'pt'); });
+      ['cases-setor-filtro', 'spin-setor-filtro'].forEach(function (id) {
+        var sel = document.getElementById(id);
+        if (!sel) return;
+        var atual = sel.value || 'todos';
+        var html = '<option value="todos">Todos os setores</option>';
+        ordenados.forEach(function (s) {
+          html += '<option value="' + s.setor + '">' + (s.icone || '') + ' ' + s.setorNome + '</option>';
+        });
+        sel.innerHTML = html;
+        var existe = atual === 'todos' || ordenados.some(function (s) { return s.setor === atual; });
+        sel.value = existe ? atual : 'todos';
+      });
     }
 
     // ── Respostas de Elite por treinamento (dados em js/data/respostas/<id>.js → window.RESPOSTAS_ELITE) ──
@@ -9694,7 +9299,8 @@ Aguarde o user message — siga o cabeçalho.`;
     function renderizarCases() {
       const setorEl = document.getElementById('cases-setor-filtro');
       const filtro = setorEl ? setorEl.value : 'todos';
-      const lista = filtro === 'todos' ? CASES_POR_SETOR : CASES_POR_SETOR.filter(function (c) { return c.setor === filtro; });
+      var _dadosCases = window.CASES_POR_SETOR || [];
+      const lista = filtro === 'todos' ? _dadosCases : _dadosCases.filter(function (c) { return c.setor === filtro; });
       let html = '';
       if (lista.length === 0) {
         html = '<p class="subtitle">Nenhum case encontrado pra este setor.</p>';
@@ -9720,9 +9326,15 @@ Aguarde o user message — siga o cabeçalho.`;
       const lista = document.getElementById('spin-perguntas-list');
       if (!lista) return;
 
+      if (setorFiltro === 'todos') {
+        lista.innerHTML = '<p style="color:var(--muted); padding: 24px; text-align: center;">Selecione um setor acima para ver as perguntas SPIN — são 108 setores, 40 perguntas cada (10 por estágio).</p>';
+        return;
+      }
+
+      var _dadosSpin = window.PERGUNTAS_SPIN_POR_SETOR || [];
       let setoresExibidos = (setorFiltro === 'todos')
-        ? PERGUNTAS_SPIN_POR_SETOR
-        : PERGUNTAS_SPIN_POR_SETOR.filter(function (s) { return s.setor === setorFiltro; });
+        ? _dadosSpin
+        : _dadosSpin.filter(function (s) { return s.setor === setorFiltro; });
 
       if (setoresExibidos.length === 0) {
         lista.innerHTML = '<p style="color:var(--muted); padding: 20px; text-align: center;">Nenhuma pergunta encontrada com os filtros atuais.</p>';
