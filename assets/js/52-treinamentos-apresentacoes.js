@@ -527,6 +527,7 @@
       +   '<div><h1>Treinamentos & Apresentações</h1><p>Materiais internos e apresentações comerciais organizados por produto.</p></div>'
       +   '<div style="display:flex;gap:8px;align-items:center;">'
       +     '<button class="trap-btn-primary" onclick="window._trapIr(\'adicionar\')" style="background:transparent;border:1px solid var(--border2,rgba(255,255,255,.14));color:var(--text,#e6edf3);">+ Adicionar conteúdo</button>'
+      +     '<button class="trap-btn-primary" onclick="window._trapExportarImgs()" title="Baixar um arquivo com todas as imagens dos cards definidas neste servidor" style="background:transparent;border:1px solid var(--border2,rgba(255,255,255,.14));color:var(--text,#e6edf3);">⬇ Exportar imagens</button>'
       +     '<button class="trap-btn-primary" onclick="window.abrirEditorApresentacao && window.abrirEditorApresentacao({novo:true})">📐 Nova apresentação</button>'
       +   '</div>'
       + '</div>'
@@ -729,6 +730,38 @@
     _trapImgStore(id, _trapFmt(), null);
     if(typeof _renderTela==='function') _renderTela();
     if(typeof _toast==='function') _toast('Imagem removida — voltou ao ícone.', 'var(--muted)');
+  };
+
+  /* Exporta todas as imagens dos cards (localStorage) num arquivo JSON.
+     Como o localStorage é por origem (file:// ≠ 127.0.0.1:5500 ≠ Pages),
+     este arquivo permite levar as imagens para os outros servidores
+     ou ser convertido em arquivos versionados no repositório. */
+  window._trapExportarImgs = function(){
+    var m = _trapImgs();
+    var ids = Object.keys(m || {});
+    if(!ids.length){
+      if(typeof _toast==='function') _toast('Nenhuma imagem personalizada definida neste servidor.', 'var(--amber,#f59e0b)');
+      return;
+    }
+    /* conta quantas imagens (wide + poster) há no total */
+    var total = 0;
+    ids.forEach(function(id){
+      var v = m[id];
+      if(typeof v === 'string') total++;
+      else if(v && typeof v === 'object'){ if(v.wide) total++; if(v.poster) total++; }
+    });
+    try{
+      var payload = { _tipo:'trap-card-imgs', _exportadoEm:new Date().toISOString(), imagens:m };
+      var blob = new Blob([JSON.stringify(payload)], { type:'application/json;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'trap-imagens-cards.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+      if(typeof _toast==='function') _toast('⬇ Exportadas '+total+' imagem(ns) de '+ids.length+' card(s). Envie o arquivo trap-imagens-cards.json.', 'var(--green,#34d399)');
+    }catch(e){
+      if(typeof _toast==='function') _toast('Erro ao exportar: '+(e&&e.message?e.message:''), 'var(--red)');
+    }
   };
 
   /* ── Editor de enquadramento: arrastar + zoom no formato 16:9 do card ── */
