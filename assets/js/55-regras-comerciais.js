@@ -138,7 +138,7 @@
       +   '<div class="rgc-doc-tit">'+doc.emoji+' '+doc.titulo+'</div>'
       +   '<button class="rgc-back" onclick="window.open(\''+doc.url+'\',\'_blank\',\'noopener\')">↗ Nova aba</button>'
       + '</div>'
-      + '<div class="rgc-iframe-wrap"><iframe src="'+doc.url+'" title="'+doc.titulo+'"></iframe></div>';
+      + '<div class="rgc-iframe-wrap"><iframe src="'+doc.url+'" title="'+doc.titulo+'" allowfullscreen allow="fullscreen"></iframe></div>';
   }
 
   function _montarShell(){
