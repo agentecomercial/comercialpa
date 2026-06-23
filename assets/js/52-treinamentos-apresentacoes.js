@@ -682,16 +682,37 @@
 
   /* ── Imagem personalizada do card (localStorage por treinamento) ── */
   var _trapImgPendingId = null;
+  /* Manifest de imagens VERSIONADAS (arquivos no repo). Caminhos relativos à
+     dashboard.html → funcionam igual em file://, 127.0.0.1:5500 e GitHub Pages.
+     Gerado a partir de trap-imagens-cards.json (botão "Exportar imagens").
+     O localStorage (override do usuário) tem prioridade sobre estes arquivos. */
+  var TRAP_IMG_FILES = {
+    'treinamento-tce':             { wide:'assets/img/treinamentos/treinamento-tce-wide.jpg',             poster:'assets/img/treinamentos/treinamento-tce-poster.jpg' },
+    'treinamento-if':              { wide:'assets/img/treinamentos/treinamento-if-wide.jpg',              poster:'assets/img/treinamentos/treinamento-if-poster.jpg' },
+    'treinamento-cis':             { wide:'assets/img/treinamentos/treinamento-cis-wide.jpg',             poster:'assets/img/treinamentos/treinamento-cis-poster.jpg' },
+    'treinamento-ggb':             { wide:'assets/img/treinamentos/treinamento-ggb-wide.jpg',             poster:'assets/img/treinamentos/treinamento-ggb-poster.jpg' },
+    'treinamento-fgpc':            { wide:'assets/img/treinamentos/treinamento-fgpc-wide.jpg',            poster:'assets/img/treinamentos/treinamento-fgpc-poster.jpg' },
+    'treinamento-bhp':             { wide:'assets/img/treinamentos/treinamento-bhp-wide.jpg',             poster:'assets/img/treinamentos/treinamento-bhp-poster.jpg' },
+    'treinamento-ml5':             { wide:'assets/img/treinamentos/treinamento-ml5-wide.jpg',             poster:'assets/img/treinamentos/treinamento-ml5-poster.jpg' },
+    'treinamento-fcis':            { wide:'assets/img/treinamentos/treinamento-fcis-wide.jpg',            poster:'assets/img/treinamentos/treinamento-fcis-poster.jpg' },
+    'treinamento-ceop':            { wide:'assets/img/treinamentos/treinamento-ceop-wide.jpg',            poster:'assets/img/treinamentos/treinamento-ceop-poster.jpg' },
+    'treinamento-master-coaching': { wide:'assets/img/treinamentos/treinamento-master-coaching-wide.jpg', poster:'assets/img/treinamentos/treinamento-master-coaching-poster.jpg' },
+    'treinamento-tav':             { wide:'assets/img/treinamentos/treinamento-tav-wide.jpg',             poster:'assets/img/treinamentos/treinamento-tav-poster.jpg' },
+    'treinamento-alinhamento':     { wide:'assets/img/treinamentos/treinamento-alinhamento-wide.jpg',     poster:'assets/img/treinamentos/treinamento-alinhamento-poster.jpg' }
+  };
   function _trapImgs(){
     try{ return JSON.parse(localStorage.getItem('trapCardImgs') || '{}'); }catch(e){ return {}; }
   }
   /* Formato (proporção) por modo de visualização: pôster (3:4) é independente de card/lista (16:9). */
   function _trapFmt(){ return (_trapView() === 'poster') ? 'poster' : 'wide'; }
-  /* Lê a imagem do treinamento para um formato. Compatível com o formato antigo (string = 'wide'). */
+  /* Lê a imagem do treinamento para um formato. Compatível com o formato antigo (string = 'wide').
+     Prioridade: 1) override do usuário (localStorage) → 2) arquivo versionado (TRAP_IMG_FILES). */
   function _trapImgGet(id, fmt){
     var v = _trapImgs()[id];
-    if(typeof v === 'string') return (fmt === 'wide') ? v : '';   /* legado: string = imagem 16:9 */
-    if(v && typeof v === 'object') return v[fmt] || '';
+    if(typeof v === 'string'){ if(fmt === 'wide' && v) return v; }   /* legado: string = imagem 16:9 */
+    else if(v && typeof v === 'object' && v[fmt]) return v[fmt];
+    var f = TRAP_IMG_FILES[id];
+    if(f && f[fmt]) return f[fmt];
     return '';
   }
   function _trapImgStore(id, fmt, url){
