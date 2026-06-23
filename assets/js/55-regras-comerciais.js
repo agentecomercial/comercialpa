@@ -171,6 +171,43 @@
       + '</div>';
   }
 
+  /* ── Ponte de fullscreen com o deck em iframe ──────────────────────
+     O deck (regras-cis-indicacao), quando dentro do shell, delega o
+     fullscreen ao pai via postMessage({type:'cis-nav', target:'fullscreen'})
+     e espera receber de volta {type:'cis-fullscreen-state', on}. Sem este
+     listener no shell, o botão "Tela cheia" do deck não fazia nada. */
+  var _bridgeReady = false;
+  function _currentDeckFrame(){
+    var host = document.getElementById('regrasScreen');
+    return host ? host.querySelector('.rgc-iframe-wrap iframe') : null;
+  }
+  function _toggleDeckFullscreen(){
+    var wrap = document.querySelector('#regrasScreen .rgc-iframe-wrap');
+    if(!wrap) return;
+    if(!document.fullscreenElement){
+      if(wrap.requestFullscreen) wrap.requestFullscreen();
+    } else if(document.exitFullscreen){
+      document.exitFullscreen();
+    }
+  }
+  function _broadcastFsState(){
+    var frame = _currentDeckFrame();
+    if(frame && frame.contentWindow){
+      frame.contentWindow.postMessage({ type:'cis-fullscreen-state', on: !!document.fullscreenElement }, '*');
+    }
+  }
+  function _setupDeckBridge(){
+    if(_bridgeReady) return;
+    _bridgeReady = true;
+    window.addEventListener('message', function(e){
+      var frame = _currentDeckFrame();
+      if(!frame || e.source !== frame.contentWindow) return;
+      var m = e.data || {};
+      if(m.type === 'cis-nav' && m.target === 'fullscreen') _toggleDeckFullscreen();
+    });
+    document.addEventListener('fullscreenchange', _broadcastFsState);
+  }
+
   window.regrasNav = function(vista){
     if(vista && vista.indexOf('doc:') === 0){
       var id = vista.slice(4);
@@ -186,6 +223,7 @@
 
   window.abrirRegrasComerciais = function(){
     _injectCss();
+    _setupDeckBridge();
     _registrarNoArrayTelas();
     _vista = 'home'; _docAtual = null;
     _montarShell();
