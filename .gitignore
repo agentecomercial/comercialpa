@@ -42,3 +42,21 @@ package-lock.json
 secrets.json
 credentials.json
 js/data/api-key.js
+
+# Scripts Vitória — contêm o TOKEN do MCP Sales Cube em texto plano (NUNCA commitar)
+Faturamento-Vitoria.ps1
+Leads-Vitoria.ps1
+Leads-Vitoria-Campanha.ps1
+Meta-Vitoria.ps1
+Movimentacao-Leads.ps1
+
+# Dados de negócio exportados (receita/faturamento/metas — não publicar)
+RECEITA_*.csv
+Faturamento_Vitoria_*.csv
+Leads_Vitoria_*.csv
+metas-vitoria.json
+
+# Previews de design (não fazem parte da app de produção)
+*-preview.html
+botao-copiar-card-consultor-10-opcoes.html
+relatorio-filtros-status-simulacao.html
