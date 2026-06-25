@@ -174,6 +174,173 @@ function abrirPagosModal(){
   document.getElementById('pagosModalOverlay').classList.add('open');
 }
 function openConsultorDetail(c){window._consultorAtivo=c;_renderConsultorDetail(c);}
+
+/* ── Copiar resumo do card do consultor (para enviar ao consultor) ── */
+function _copiarTextoFallback(txt){
+  try{
+    var ta=document.createElement('textarea');
+    ta.value=txt;
+    ta.style.position='fixed';ta.style.top='-2000px';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.focus();ta.select();
+    var ok=document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){return false;}
+}
+
+/* Desenha o card do consultor (estilo "Foco no restante") em um canvas.
+   dd = {nome,clientes,periodo,pct,faturadoStr,metaStr,restante,restanteStr,
+         potencialStr,abertoStr,entradaStr} */
+function _cardConsultorCanvas(dd){
+  var W = 1040, H = 440, DPR = 2;
+  var cv = document.createElement('canvas');
+  cv.width = W * DPR; cv.height = H * DPR;
+  var ctx = cv.getContext('2d'); ctx.scale(DPR, DPR);
+  var SAN = 'system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+  var mg = 34;
+  function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  // fundo
+  ctx.fillStyle = '#080e18'; ctx.fillRect(0,0,W,H);
+  // header com gradiente azul
+  var hH = 104;
+  var g = ctx.createLinearGradient(0,0,W,0);
+  g.addColorStop(0,'rgba(56,189,248,0.18)'); g.addColorStop(0.6,'rgba(56,189,248,0)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,hH);
+  ctx.strokeStyle = 'rgba(56,189,248,0.3)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0,hH); ctx.lineTo(W,hH); ctx.stroke();
+  // nome + clientes
+  ctx.textAlign = 'left'; ctx.fillStyle = '#e6edf3'; ctx.font = '800 34px ' + SAN;
+  ctx.fillText(dd.nome, mg, 50);
+  ctx.fillStyle = '#8b98ad'; ctx.font = '500 16px ' + SAN;
+  ctx.fillText(dd.clientes + ' cliente' + (dd.clientes !== 1 ? 's' : ''), mg, 76);
+  // período + faturado (direita)
+  ctx.textAlign = 'right'; ctx.fillStyle = '#8b98ad'; ctx.font = '600 15px ' + SAN;
+  ctx.fillText(dd.periodo, W - mg, 44);
+  ctx.fillStyle = '#56d364'; ctx.font = '800 26px ' + SAN;
+  ctx.fillText(dd.faturadoStr, W - mg, 80);
+
+  // FOCO NO RESTANTE
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#8b98ad'; ctx.font = '600 18px ' + SAN;
+  ctx.fillText('⏳ Falta para a meta', W/2, 150);
+  if(dd.restante > 0){
+    ctx.fillStyle = '#f0b429'; ctx.font = '800 52px ' + SAN;
+    ctx.fillText(dd.restanteStr, W/2, 206);
+  } else {
+    ctx.fillStyle = '#56d364'; ctx.font = '800 44px ' + SAN;
+    ctx.fillText('Meta batida! 🎉', W/2, 202);
+  }
+
+  // barra de progresso
+  var by = 236, bh = 30, bx = mg, bw = W - mg*2;
+  ctx.fillStyle = 'rgba(255,255,255,0.08)'; rr(bx,by,bw,bh,bh/2); ctx.fill();
+  if(dd.pct > 0){
+    var fw = Math.max(bh, bw * Math.min(dd.pct,100) / 100);
+    var gg = ctx.createLinearGradient(bx,0,bx+bw,0); gg.addColorStop(0,'#34d399'); gg.addColorStop(1,'#56d364');
+    ctx.fillStyle = gg; rr(bx,by,fw,bh,bh/2); ctx.fill();
+  }
+  // faturado | % | meta
+  var ly = by + bh + 26;
+  ctx.textAlign = 'left'; ctx.fillStyle = '#8b98ad'; ctx.font = '700 16px ' + SAN;
+  ctx.fillText('✅ ' + dd.faturadoStr, mg, ly);
+  ctx.textAlign = 'center'; ctx.fillStyle = (dd.pct >= 100 ? '#56d364' : '#f0b429'); ctx.font = '800 18px ' + SAN;
+  ctx.fillText(dd.pct + '%', W/2, ly);
+  ctx.textAlign = 'right'; ctx.fillStyle = '#8b98ad'; ctx.font = '700 16px ' + SAN;
+  ctx.fillText('🎯 ' + dd.metaStr, W - mg, ly);
+
+  // KPIs (Potencial · Em aberto · Entradas)
+  var ky = ly + 22, kh = 72, kgap = 12, kw = (bw - 2*kgap) / 3;
+  var kpis = [['💼 POTENCIAL', dd.potencialStr], ['📂 EM ABERTO', dd.abertoStr], ['🔵 ENTRADAS', dd.entradaStr]];
+  kpis.forEach(function(k, i){
+    var kx = mg + i*(kw + kgap);
+    ctx.fillStyle = '#0c1426'; rr(kx,ky,kw,kh,10); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; rr(kx,ky,kw,kh,10); ctx.stroke();
+    ctx.textAlign = 'left'; ctx.fillStyle = '#8b98ad'; ctx.font = '700 11px ' + SAN;
+    ctx.fillText(k[0], kx + 14, ky + 28);
+    ctx.fillStyle = '#e6edf3'; ctx.font = '800 19px ' + SAN;
+    ctx.fillText(k[1], kx + 14, ky + 54);
+  });
+  return cv;
+}
+
+window.copiarCardConsultor=function(c,ev){
+  if(ev&&ev.stopPropagation) ev.stopPropagation();
+  var card=(ev&&ev.currentTarget)?ev.currentTarget:document.getElementById('kpiCopiarConsultor');
+
+  var cdA=data.filter(function(d){return d&&d.cliente&&d.consultor===c;});
+  var potencial=cdA.filter(function(d){return d.status==='negociacao';}).reduce(function(a,d){return a+d.valor;},0);
+  var pago=cdA.filter(function(d){return d.status==='pago';}).reduce(function(a,d){return a+d.valor;},0);
+  var aberto=cdA.filter(function(d){return d.status==='aberto';}).reduce(function(a,d){return a+d.valor;},0);
+  var entrada=cdA.reduce(function(a,d){return a+(d.entrada||0);},0);
+  var metaInd=allConsultors.length>0?META/allConsultors.length:0;
+  var pct=metaInd>0?Math.round((pago/metaInd)*100):0;
+  var restante=Math.max(metaInd-pago,0);
+  var n=cdA.length;
+
+  var L=[];
+  L.push('📊 '+c.toUpperCase()+' — '+n+' cliente'+(n!==1?'s':''));
+  L.push('');
+  L.push('🎯 Meta individual: '+formatVal(metaInd));
+  L.push('✅ Faturado: '+formatVal(pago)+' ('+pct+'% da meta)');
+  L.push('⏳ Restante: '+(restante>0?formatVal(restante):'Meta atingida! 🎉'));
+  L.push('');
+  L.push('💼 Potencial (negociação): '+formatVal(potencial));
+  L.push('📂 Em aberto: '+formatVal(aberto));
+  L.push('🔵 Entradas: '+(entrada>0?formatVal(entrada):'—'));
+  var txt=L.join('\n');
+
+  function ok(){
+    if(!card) return;
+    var html=card.innerHTML, bc=card.style.borderColor;
+    card.innerHTML='<div style="font-size:9px;font-weight:600;color:var(--pago);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Copiado!</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--pago);font-family:\'DM Mono\',monospace;white-space:nowrap;">✓</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">Imagem + texto</div>';
+    card.style.borderColor='var(--pago)';
+    setTimeout(function(){card.innerHTML=html;card.style.borderColor=bc||'var(--border)';},1600);
+  }
+  function fail(){ if(_copiarTextoFallback(txt)) ok(); else alert('Não foi possível copiar automaticamente.\n\n'+txt); }
+  function soTexto(){
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(ok,fail); }
+    else { fail(); }
+  }
+
+  /* Monta a imagem (estilo "Foco no restante") e copia IMAGEM + TEXTO juntos.
+     Se o navegador/app não suportar imagem no clipboard, cai para só-texto. */
+  var _mesesF=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  /* Período da TURMA (intervalo completo): usa o texto do período (ex.
+     "01/06/2026 → 30/06/2026"); se não houver, deriva mês/ano do início;
+     por fim, mês atual. */
+  var _periodo='';
+  if(typeof _periodText!=='undefined' && _periodText) _periodo=String(_periodText).replace(/\s+/g,' ').trim();
+  if(!_periodo && typeof _periodStart!=='undefined' && _periodStart){
+    var _ps=String(_periodStart).split('-');           // "2026-06-01"
+    var _mi=parseInt(_ps[1],10)-1;
+    if(_mi>=0 && _mi<=11) _periodo=_mesesF[_mi]+'/'+_ps[0];
+  }
+  if(!_periodo){ var _dn=new Date(); _periodo=_mesesF[_dn.getMonth()]+'/'+_dn.getFullYear(); }
+  var dd={
+    nome:c.toUpperCase(), clientes:n, periodo:_periodo,
+    pct:pct, faturadoStr:formatVal(pago), metaStr:formatVal(metaInd),
+    restante:restante, restanteStr:formatVal(restante),
+    potencialStr:formatVal(potencial), abertoStr:formatVal(aberto),
+    entradaStr:(entrada>0?formatVal(entrada):'—')
+  };
+  var canvas=null;
+  try{ canvas=_cardConsultorCanvas(dd); }catch(e){ canvas=null; }
+
+  if(canvas && navigator.clipboard && window.ClipboardItem && navigator.clipboard.write){
+    canvas.toBlob(function(blob){
+      if(!blob){ soTexto(); return; }
+      try{
+        var item=new ClipboardItem({ 'image/png':blob, 'text/plain':new Blob([txt],{type:'text/plain'}) });
+        navigator.clipboard.write([item]).then(ok, function(){ soTexto(); });
+      }catch(e){ soTexto(); }
+    },'image/png');
+  } else {
+    soTexto();
+  }
+};
 function _renderConsultorDetail(c){
   const cdA=data.filter(d=>d&&d.cliente&&d.consultor===c).sort((a,b)=>a.cliente.localeCompare(b.cliente,'pt-BR'));
   var _cdStatus=activeConsultorStatus===null?cdA:activeConsultorStatus==='entrada'?cdA.filter(d=>d.entrada>0):cdA.filter(d=>d.status===activeConsultorStatus);
@@ -227,7 +394,7 @@ function _renderConsultorDetail(c){
     +'<span style="font-size:10px;color:var(--muted);">da meta</span>'
     +'</div>'
     // KPI cards — clicáveis para filtrar lista
-    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">'
+    +'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;">'
     +'<div onclick="setConsultorStatus(\'negociacao\')" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--accent)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Potencial</div>'
     +'<div style="font-size:13px;font-weight:700;color:var(--text);font-family:\'DM Mono\',monospace;white-space:nowrap;">'+formatVal(potencial)+'</div>'
@@ -247,6 +414,12 @@ function _renderConsultorDetail(c){
     +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Entradas</div>'
     +'<div style="font-size:13px;font-weight:700;color:var(--blue);font-family:\'DM Mono\',monospace;white-space:nowrap;">'+(entrada>0?formatVal(entrada):'—')+'</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+nEntrada+' cliente'+(nEntrada!==1?'s':'')+'</div>'
+    +'</div>'
+    // Botão Copiar — gera o resumo do card para enviar ao consultor
+    +'<div id="kpiCopiarConsultor" onclick="copiarCardConsultor(\''+c+'\',event)" title="Copiar resumo deste card" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--purple)44\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
+    +'<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Copiar</div>'
+    +'<div style="font-size:15px;font-weight:700;color:var(--purple);font-family:\'DM Mono\',monospace;white-space:nowrap;">📷</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">Enviar card</div>'
     +'</div>'
     +'</div>'
     // Barra de presença

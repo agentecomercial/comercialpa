@@ -207,6 +207,9 @@ function abrirPropostaModal(){
   var ph = document.getElementById('propostaPreviewPlaceholder');
   if(frame){frame.src='about:blank';frame.style.display='none';}
   if(ph) ph.style.display='flex';
+  /* Zera a modalidade Elite/Legacy Belt a cada abertura (evita vazar o texto
+     da Seção I para uma proposta comum). A grade carregada é preservada. */
+  if(typeof window._beltReset === 'function') window._beltReset();
   document.getElementById('propostaOverlay').classList.add('open');
   /* Ativa o preview em tempo real desde o início — qualquer interação
      (sliders, +/− qty, preço, checkbox) regenera o PDF instantaneamente
@@ -217,6 +220,45 @@ function abrirPropostaModal(){
 function fecharPropostaModal(){
   document.getElementById('propostaOverlay').classList.remove('open');
   window._propostaPreviewAtivo = false; // reset para próxima abertura
+}
+
+/* visualizarPropostaPDF() — abre o "Espelho do PDF" em tela cheia.
+   É ESTRITAMENTE de consulta: não altera nenhum dado da proposta nem
+   dispara o download. Reaproveita o MESMO PDF do preview embutido
+   (gerarPropostaPDF('preview') popula propostaPreviewFrame._lastBlobUrl),
+   garantindo que a visualização = documento gerado, 1:1. */
+function visualizarPropostaPDF(){
+  var cliente = _propostaClienteAtual();
+  if(!cliente){ if(window._showToast) _showToast('⚠️ Selecione um cliente.','var(--amber)'); return; }
+  var marcados = document.querySelectorAll('#propostaTreinamentos input[type=checkbox]:checked').length;
+  if(!marcados){ if(window._showToast) _showToast('⚠️ Selecione ao menos um treinamento.','var(--amber)'); return; }
+
+  function _abrirVisual(){
+    /* Gera/atualiza o blob do preview (mesmo gerador do "Gerar PDF") */
+    try { gerarPropostaPDF('preview'); } catch(e){ console.error('[visualizarPropostaPDF]', e); }
+    var framePv = document.getElementById('propostaPreviewFrame');
+    var url = framePv && framePv._lastBlobUrl;
+    if(!url){ if(window._showToast) _showToast('❌ Não foi possível montar a visualização.','var(--red)'); return; }
+    var fsFrame = document.getElementById('propostaVisualFrame');
+    if(fsFrame) fsFrame.src = url + '#toolbar=0&navpanes=0&view=FitH';
+    var ov = document.getElementById('propostaVisualOverlay');
+    if(ov) ov.classList.add('open');
+  }
+
+  /* Garante o jsPDF antes (1ª vez é assíncrono); senão o blob ainda não existe */
+  if(typeof window.jspdf === 'undefined' && typeof window._ensureJsPDF === 'function'){
+    if(window._showToast) _showToast('⏳ Preparando visualização…','var(--muted)');
+    window._ensureJsPDF().then(_abrirVisual).catch(function(){
+      if(window._showToast) _showToast('❌ Erro ao carregar gerador de PDF.','var(--red)');
+    });
+  } else {
+    _abrirVisual();
+  }
+}
+
+function fecharPropostaVisual(){
+  var ov = document.getElementById('propostaVisualOverlay');
+  if(ov) ov.classList.remove('open');
 }
 
 function _propostaRenderTreinamentos(){
@@ -350,18 +392,22 @@ function _propostaSelecionarTodos(){
   _propostaRecalcular();
 }
 
-/* Seleciona EXCLUSIVAMENTE os 8 treinamentos do pacote GGB.
-   Desmarca todo o resto. */
+/* Botão GGB com TOGGLE: 1º clique marca exclusivamente os 8 treinamentos do
+   pacote GGB (desmarca o resto); clicar de novo desmarca os 8.
+   Usa o mesmo estado das modalidades (window._beltAtivo) para que os 3 botões
+   (Elite/Legacy/GGB) se excluam mutuamente e reflitam o destaque ativo. */
 function _propostaSelecionarGGB(){
   var container = document.getElementById('propostaTreinamentos');
   if(!container) return;
+  var jaAtivo = (window._beltAtivo === 'ggb');
   container.querySelectorAll('input[type=checkbox]').forEach(function(chk){
     var nome = chk.id.replace('prop_','');
-    chk.checked = _PROPOSTA_GGB.indexOf(nome) !== -1;
+    chk.checked = jaAtivo ? false : (_PROPOSTA_GGB.indexOf(nome) !== -1);
   });
-  /* Como nao estao todos marcados, reseta o texto do botao Selecionar Todos */
-  var btnAll = document.getElementById('btnPropostaSelecionarTodos');
-  if(btnAll) btnAll.textContent = 'Selecionar todos';
+  window._beltAtivo = jaAtivo ? null : 'ggb';
+  window._beltAtivoCliente = null;
+  window._beltMarcados = jaAtivo ? [] : _PROPOSTA_GGB.slice();
+  if(typeof window._beltAtualizarBotoes === 'function') window._beltAtualizarBotoes(window._beltAtivo);
   _propostaRecalcular();
 }
 window._propostaSelecionarGGB = _propostaSelecionarGGB;
@@ -612,43 +658,44 @@ window._propostaZoom = function(acao){
    modo = 'preview'           → renderiza no #propostaPreviewFrame via blob URL
    Em ambos os modos é gerado EXATAMENTE o mesmo PDF (mesmo código jsPDF),
    garantindo que preview = impresso 1:1. */
-function gerarPropostaPDF(modo){
+function gerarPropostaPDF(modo, loteCtx, loteDoc){
   modo = modo || 'save';
-  var _ehSave = (modo === 'save');
-  var _ehPreview = (modo === 'preview');
-  if(_ehSave) console.log('%c[gerarPropostaPDF] versão EXECUTIVE FINANCIAL v3 carregada', 'background:#0a1f3d;color:#f5b400;padding:3px 8px;font-weight:700;');
-  var cliente = _propostaClienteAtual();
-  if(_ehPreview) console.log('[gerarPropostaPDF preview] cliente=', cliente);
+  var _emLote = !!loteCtx;                       // geração em lote (dados por parâmetro)
+  var _ehSave = (modo === 'save') && !_emLote;
+  var _ehPreview = (modo === 'preview') && !_emLote;
+  var cliente = _emLote ? loteCtx.cliente : _propostaClienteAtual();
   if(!cliente){
     if(_ehSave) _showToast('⚠️ Selecione um cliente.','var(--amber)');
-    if(_ehPreview) console.warn('[gerarPropostaPDF preview] ABORTOU: sem cliente selecionado');
     return;
   }
 
-  var pagamento = document.getElementById('propostaPagamento').value;
-  var pagLabel = _PROPOSTA_LABELS[pagamento];
-  var selecionados = [];
-  var container = document.getElementById('propostaTreinamentos');
-  container.querySelectorAll('input[type=checkbox]').forEach(function(chk){
-    if(!chk.checked) return;
-    var nome = chk.id.replace('prop_', '');
-    var inp = document.getElementById('propval_' + nome);
-    var qtyInp = document.getElementById('propqty_' + nome);
-    var val = inp ? parseVal(inp.value) : 0;
-    var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
-    selecionados.push({nome: nome, val: val, qty: qty});
-  });
+  var pagamento = _emLote ? loteCtx.pagamento : document.getElementById('propostaPagamento').value;
+  var pagLabel = _emLote ? loteCtx.pagLabel : _PROPOSTA_LABELS[pagamento];
+  var selecionados;
+  if(_emLote){
+    selecionados = loteCtx.selecionados || [];
+  } else {
+    selecionados = [];
+    var container = document.getElementById('propostaTreinamentos');
+    container.querySelectorAll('input[type=checkbox]').forEach(function(chk){
+      if(!chk.checked) return;
+      var nome = chk.id.replace('prop_', '');
+      var inp = document.getElementById('propval_' + nome);
+      var qtyInp = document.getElementById('propqty_' + nome);
+      var val = inp ? parseVal(inp.value) : 0;
+      var qty = qtyInp ? Math.max(1, parseInt(qtyInp.value) || 1) : 1;
+      selecionados.push({nome: nome, val: val, qty: qty});
+    });
+  }
 
-  if(_ehPreview) console.log('[gerarPropostaPDF preview] selecionados=', selecionados.length, 'jspdf=', typeof window.jspdf);
   if(!selecionados.length){
     if(_ehSave) _showToast('⚠️ Selecione ao menos um treinamento.','var(--amber)');
-    if(_ehPreview) console.warn('[gerarPropostaPDF preview] ABORTOU: nenhum treinamento marcado');
     return;
   }
   if(typeof window.jspdf === 'undefined'){
     if(typeof window._ensureJsPDF==='function'){
       if(_ehSave) _showToast('⏳ Preparando gerador de PDF (primeira vez)…','var(--muted)');
-      window._ensureJsPDF().then(function(){ gerarPropostaPDF(modo); }).catch(function(){
+      window._ensureJsPDF().then(function(){ gerarPropostaPDF(modo, loteCtx, loteDoc); }).catch(function(){
         if(_ehSave) _showToast('❌ Erro ao carregar jsPDF.','var(--red)');
       });
       return;
@@ -660,7 +707,9 @@ function gerarPropostaPDF(modo){
      do modal, então não multiplicamos por qty de novo. Em 12x mostra
      a parcela mensal acumulada (NÃO o cheio — o modal mostra o cheio). */
   var parcelas = _propostaParcelas(pagamento);
-  var total = selecionados.reduce(function(a,s){return a + s.val;},0);
+  var total = _emLote
+    ? (loteCtx.total != null ? loteCtx.total : selecionados.reduce(function(a,s){return a + (s.val||0);},0))
+    : selecionados.reduce(function(a,s){return a + s.val;},0);
   /* ─── Leitura dos ajustes visuais do MODAL (em tempo real) ───
      Defaults vêm do painel de controle preview-proposta-painel-controle.html
      última config validada: mg=12, esc=0.9, h1=19, h2=9, body=12, tbl=10,
@@ -683,7 +732,7 @@ function gerarPropostaPDF(modo){
   var _corH  = document.getElementById('propCorHeader') ? document.getElementById('propCorHeader').value || '#0f0f0f' : '#0f0f0f';
   var _corA  = document.getElementById('propCorAccent') ? document.getElementById('propCorAccent').value || '#c8f05a' : '#c8f05a';
   var _valid = document.getElementById('propValidade') ? document.getElementById('propValidade').value || '30' : '30';
-  var _consultor = _propostaConsultorAtual();
+  var _consultor = _emLote ? (loteCtx.consultor || '') : _propostaConsultorAtual();
 
   function _hexRgb(hex){
     var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
@@ -697,7 +746,8 @@ function gerarPropostaPDF(modo){
      Reescrito do zero. Sem function declarations aninhadas
      (evita problemas em strict mode com hoisting de bloco).
   ═══════════════════════════════════════════════ */
-  var doc = new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  var doc = loteDoc || new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  if(_emLote && !loteCtx.isFirst){ doc.addPage(); }   // cada cliente começa em nova página
   var W = 210, H = 297, mg = _mgUser;
   /* Constantes calculadas a partir dos sliders do modal × escala global. */
   var ESC = _escUser;
@@ -844,7 +894,11 @@ function gerarPropostaPDF(modo){
   // Box motivacional · Estilo 26 (Fundo Navy + texto bege/dourado italic Times)
   var motivX = mg + 5;
   var motivMaxW = maxW - 10;
-  var motivLines = doc.splitTextToSize(_PROPOSTA_TEXTO.replace(/\n/g,' '), motivMaxW);
+  /* Texto da Seção I: no lote vem por cliente; individual usa Elite/Legacy ativo ou padrão. */
+  var _txtIntro = _emLote
+    ? (loteCtx.txtIntro || _PROPOSTA_TEXTO)
+    : ((typeof window._beltTextoIntro === 'function' && window._beltTextoIntro()) || _PROPOSTA_TEXTO);
+  var motivLines = doc.splitTextToSize(_txtIntro.replace(/\n/g,' '), motivMaxW);
   var motivH = motivLines.length * 3.6 + 5;
   _quebraPagina(motivH + 3);
   /* Fundo navy escura sólida */
@@ -867,7 +921,7 @@ function gerarPropostaPDF(modo){
        com largura ligeiramente menor (98%) — assim cada linha tem
        sempre uma "folga" de ~2% pra distribuir uniformemente, evitando
        que algumas fiquem quase coladas e outras com buracos enormes. */
-  var motivLinesRedone = doc.splitTextToSize(_PROPOSTA_TEXTO.replace(/\n/g,' '), motivMaxW * 0.98);
+  var motivLinesRedone = doc.splitTextToSize(_txtIntro.replace(/\n/g,' '), motivMaxW * 0.98);
   /* Se o re-split deu o mesmo número de linhas, usa esse (mais bem
      distribuído); senão, mantém o original pra não estourar a faixa. */
   if(motivLinesRedone.length === motivLines.length) motivLines = motivLinesRedone;
@@ -1032,21 +1086,26 @@ function gerarPropostaPDF(modo){
   doc.text('ESPECIALISTA FEBRACIS', mg + 1, assinY + 8);
   doc.text('ACEITE DO CLIENTE', mg + assinW + 11, assinY + 8);
 
-  // ── RODAPÉ NAVY ────────────────────────────────────
-  var totalPgs = doc.internal.getNumberOfPages();
-  for(var pg = 1; pg <= totalPgs; pg++){
-    doc.setPage(pg);
-    doc.setFillColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
-    doc.rect(0, H - 9, W, 9, 'F');
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(6.5);
-    doc.setTextColor(COR_OURO[0], COR_OURO[1], COR_OURO[2]);
-    doc.text('FEBRACIS', mg, H - 3.5);
-    doc.setFont('helvetica','normal');
-    doc.setTextColor(170, 180, 200);
-    doc.text('· DOC. ' + _docRef + ' · CONFIDENCIAL · USO INTERNO', mg + 14, H - 3.5);
-    doc.text('PÁG. ' + pg + ' / ' + totalPgs, W - mg, H - 3.5, {align:'right'});
+  // ── RODAPÉ NAVY (no lote, só carimba quando for a última proposta) ──
+  if(!_emLote || loteCtx.isLast){
+    var totalPgs = doc.internal.getNumberOfPages();
+    for(var pg = 1; pg <= totalPgs; pg++){
+      doc.setPage(pg);
+      doc.setFillColor(COR_NAVY[0], COR_NAVY[1], COR_NAVY[2]);
+      doc.rect(0, H - 9, W, 9, 'F');
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(COR_OURO[0], COR_OURO[1], COR_OURO[2]);
+      doc.text('FEBRACIS', mg, H - 3.5);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(170, 180, 200);
+      doc.text('· DOC. ' + _docRef + ' · CONFIDENCIAL · USO INTERNO', mg + 14, H - 3.5);
+      doc.text('PÁG. ' + pg + ' / ' + totalPgs, W - mg, H - 3.5, {align:'right'});
+    }
   }
+
+  /* No lote, devolve o doc compartilhado sem salvar/preview (salvo no fim pelo orquestrador). */
+  if(_emLote){ return doc; }
 
   /* ── Ramificação final: save (baixa arquivo) ou preview (renderiza no iframe) ── */
   if(_ehPreview){
@@ -1080,6 +1139,36 @@ function gerarPropostaPDF(modo){
   _showToast('✅ Proposta gerada para '+cliente+'!','var(--accent)');
   if(typeof _addPendLog==='function') _addPendLog('Proposta gerada','Cliente: '+cliente+' · '+selecionados.length+' treinamentos','📋');
 }
+
+/* gerarPropostaLotePDF(lista, nomeArquivo)
+   lista = [{cliente, consultor, pagamento, pagLabel, selecionados:[{nome,val,qty}], total, txtIntro}]
+   Gera UM único PDF com todas as propostas (cada cliente em nova página),
+   reutilizando o mesmo desenho da proposta individual. */
+function gerarPropostaLotePDF(lista, nomeArquivo){
+  if(!lista || !lista.length){ _showToast('⚠️ Nenhum cliente para gerar.','var(--amber)'); return; }
+  if(typeof window.jspdf === 'undefined'){
+    if(typeof window._ensureJsPDF==='function'){
+      _showToast('⏳ Preparando gerador de PDF (primeira vez)…','var(--muted)');
+      window._ensureJsPDF().then(function(){ gerarPropostaLotePDF(lista, nomeArquivo); }).catch(function(){
+        _showToast('❌ Erro ao carregar jsPDF.','var(--red)');
+      });
+      return;
+    }
+    _showToast('❌ jsPDF não carregado.','var(--red)'); return;
+  }
+  var doc = null;
+  lista.forEach(function(c, i){
+    c.isFirst = (i === 0);
+    c.isLast  = (i === lista.length - 1);
+    doc = gerarPropostaPDF('save', c, doc);   // acumula no mesmo doc
+  });
+  if(doc){
+    doc.save(nomeArquivo || 'Propostas em lote.pdf');
+    _showToast('✅ '+lista.length+' proposta'+(lista.length!==1?'s':'')+' gerada'+(lista.length!==1?'s':'')+' em 1 PDF!','var(--accent)');
+    if(typeof _addPendLog==='function') _addPendLog('Propostas em lote','('+lista.length+' clientes) em 1 PDF','📦');
+  }
+}
+window.gerarPropostaLotePDF = gerarPropostaLotePDF;
 
 
 /* ============================================================

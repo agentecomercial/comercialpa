@@ -32,6 +32,9 @@ function salvarArquivoLocal(){
 var _gerenciarTurmasList=[]; // cache das turmas no modal
 
 function abrirGerenciarTurmas(){
+  _gtBusca='';
+  var _bi=document.getElementById('gtBuscaInput');if(_bi)_bi.value='';
+  var _bc=document.getElementById('gtBuscaClear');if(_bc)_bc.style.display='none';
   var lista=document.getElementById('gerenciarTurmasLista');
   lista.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px;">Carregando do Firebase...</div>';
   document.getElementById('gerenciarTurmasOverlay').classList.add('open');
@@ -208,6 +211,21 @@ function _gtAnoPopOnDocClick(e){
 }
 
 var _gtLayout='lista';
+var _gtBusca='';
+
+function _gtSetBusca(v){
+  _gtBusca=(v||'').trim().toLowerCase();
+  var inp=document.getElementById('gtBuscaInput');
+  if(inp && inp.value!==v) inp.value=v;
+  var clr=document.getElementById('gtBuscaClear');
+  if(clr) clr.style.display=_gtBusca?'block':'none';
+  _renderGerenciarLista();
+}
+function _gtMatchBusca(t){
+  if(!_gtBusca) return true;
+  var alvo=((t.nome||'')+' '+(t.codigo||'')+' '+(t.id||'')).toLowerCase();
+  return alvo.indexOf(_gtBusca)!==-1;
+}
 
 function _gtToggleDropdown(){
   var dd=document.getElementById('gtLayoutDropdown');
@@ -281,10 +299,10 @@ function _renderGerenciarLista(){
 // ── Layout Lista (padrão) — com ações de edição ──
 function _gtRenderLista(el){
   el.innerHTML='';
-  // Filtrar por ano selecionado
-  var _listaFiltrada=_gerenciarTurmasList.filter(function(t){return _gtExtrairAno(t)===_gtAnoAtual;});
+  // Filtrar por ano selecionado + busca
+  var _listaFiltrada=_gerenciarTurmasList.filter(function(t){return _gtExtrairAno(t)===_gtAnoAtual && _gtMatchBusca(t);});
   if(!_listaFiltrada.length){
-    el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px;">Nenhuma turma em '+_gtAnoAtual+'.</div>';
+    el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px;">'+(_gtBusca?'Nenhuma turma encontrada para "'+_gtBusca+'" em '+_gtAnoAtual+'.':'Nenhuma turma em '+_gtAnoAtual+'.')+'</div>';
     return;
   }
   _listaFiltrada.forEach(function(t,i){
@@ -368,7 +386,7 @@ var _gtCores     = APP_CONST.PALETTE_SWIM;
 var _gtBgs       = APP_CONST.PALETTE_SWIM_BG;
 
 function _gtMesMap(){
-  var turmasAno=_gerenciarTurmasList.filter(function(t){return _gtExtrairAno(t)===_gtAnoAtual;});
+  var turmasAno=_gerenciarTurmasList.filter(function(t){return _gtExtrairAno(t)===_gtAnoAtual && _gtMatchBusca(t);});
   var map={};for(var m=1;m<=12;m++)map[m]=[];
   turmasAno.forEach(function(t){var m=_gtExtrairMes(t);if(m>=1&&m<=12)map[m].push(t);else map[1].push(t);});
   return {map:map,turmasAno:turmasAno};
@@ -540,13 +558,21 @@ function _gtRenderG(el){
   });
   el.innerHTML=html;
 }
-// ── H: Swimlane ──
+// ── H: Swimlane (cards densos com meta + barra proporcional) ──
+function _gtMetaCurta(v){
+  v=v||0;
+  if(v>=1000000) return 'R$ '+(v/1000000).toFixed(v%1000000?1:0).replace('.',',')+'M';
+  if(v>=1000)    return 'R$ '+Math.round(v/1000)+'k';
+  return 'R$ '+v;
+}
 function _gtRenderH(el){
   var d=_gtMesMap();
   var tiposSet={};d.turmasAno.forEach(function(t){tiposSet[_gtExtrairTipo(t)]=true;});
   var tipos=Object.keys(tiposSet).sort();
   if(!tipos.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0;">Nenhuma turma em '+_gtAnoAtual+'.</div>';return;}
-  var html='<div style="overflow-x:auto;"><div style="display:grid;grid-template-columns:110px repeat(12,1fr);gap:3px;min-width:680px;">';
+  // Maior meta do ano → base da barra proporcional
+  var maxMeta=0;d.turmasAno.forEach(function(t){if((t.meta||0)>maxMeta)maxMeta=t.meta||0;});
+  var html='<div style="overflow-x:auto;"><div style="display:grid;grid-template-columns:110px repeat(12,1fr);gap:3px;min-width:760px;">';
   html+='<div></div>';
   _gtMeses.forEach(function(m){html+='<div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center;padding:4px 0;text-transform:uppercase;letter-spacing:.04em;">'+m+'</div>';});
   tipos.forEach(function(tipo,ti){
@@ -554,16 +580,23 @@ function _gtRenderH(el){
     html+='<div style="font-size:11px;font-weight:700;color:'+cor+';display:flex;align-items:center;padding-right:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+tipo+'</div>';
     for(var m=1;m<=12;m++){
       var list=d.map[m].filter(function(t){return _gtExtrairTipo(t)===tipo;});
-      if(!list.length){html+='<div style="height:44px;border-radius:4px;background:var(--surface2);opacity:.3;"></div>';}
+      if(!list.length){html+='<div style="min-height:58px;border-radius:4px;background:var(--surface2);opacity:.3;"></div>';}
       else{
-        var t=list[0];
-        var ps=_gtFmtDate(t.periodStart),pe=_gtFmtDate(t.periodEnd);
-        var periodo=ps&&pe?ps+' → '+pe:(t.periodText||'');
-        var idx=_gerenciarTurmasList.indexOf(t);
-        html+='<div onclick="_gtAbrirEditar('+idx+')" title="'+t.nome+(periodo?' · '+periodo:'')+'" style="height:44px;border-radius:4px;background:'+bg+';border:1px solid '+cor+'55;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:'+cor+';cursor:pointer;overflow:hidden;padding:0 3px;text-align:center;">'
-          +(t.codigo||t.id)
-          +(periodo?'<span style="font-size:8px;opacity:.8;margin-top:2px;overflow:hidden;max-width:100%;text-overflow:ellipsis;white-space:nowrap;">'+periodo+'</span>':'')
-          +'</div>';
+        html+='<div style="display:flex;flex-direction:column;gap:3px;">';
+        list.forEach(function(t){
+          var ps=_gtFmtDate(t.periodStart),pe=_gtFmtDate(t.periodEnd);
+          var periodo=ps&&pe?ps+' → '+pe:(t.periodText||'');
+          var idx=_gerenciarTurmasList.indexOf(t);
+          var meta=t.meta||0;
+          var pct=maxMeta>0?Math.max(Math.round(meta/maxMeta*100),meta>0?6:0):0;
+          html+='<div onclick="_gtAbrirEditar('+idx+')" title="'+t.nome+(periodo?' · '+periodo:'')+(meta?' · Meta '+formatVal(meta):'')+'" style="min-height:58px;border-radius:5px;background:'+bg+';border:1px solid '+cor+'55;color:'+cor+';cursor:pointer;overflow:hidden;padding:6px 7px;box-sizing:border-box;text-align:left;">'
+            +'<div style="font-size:10px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(t.codigo||t.id)+'</div>'
+            +(periodo?'<div style="font-size:8px;opacity:.85;font-weight:600;margin:1px 0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+periodo+'</div>':'<div style="height:4px;"></div>')
+            +'<div style="height:4px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;"><i style="display:block;height:100%;width:'+pct+'%;border-radius:3px;background:'+cor+';"></i></div>'
+            +'<div style="font-size:8px;opacity:.85;font-weight:700;margin-top:3px;">'+(meta?'Meta '+_gtMetaCurta(meta):'Sem meta')+'</div>'
+            +'</div>';
+        });
+        html+='</div>';
       }
     }
   });

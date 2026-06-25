@@ -1397,21 +1397,21 @@
       /* valor completo */
       ctx.font = '500 10px ' + SAN; ctx.fillStyle = '#8b949e';
       ctx.fillText(_npFmtR(t.val), px + 88, y);
-      /* barra */
-      barH(px + 196, y - 5, 145, 10, t.pct, done ? '#56d364' : t.col);
-      /* % */
+      /* barra (encurtada p/ não cobrir o %) */
+      barH(px + 196, y - 5, 132, 10, t.pct, done ? '#56d364' : t.col);
+      /* % — alinhado à direita, com folga após a barra */
       ctx.font = '700 11px ' + SAN; ctx.fillStyle = done ? '#56d364' : '#f0b429';
-      ctx.textAlign = 'right'; ctx.fillText(t.pct + '%', px + 364, y); ctx.textAlign = 'left';
-      /* badge ou ícone */
+      ctx.textAlign = 'right'; ctx.fillText(t.pct + '%', px + 388, y); ctx.textAlign = 'left';
+      /* badge ou ícone — encostado à direita */
       if (done) {
-        var bx = px + 370, by = y - 8, bw = 64, bh = 16;
+        var bx = px + 416, by = y - 8, bw = 64, bh = 16;
         ctx.fillStyle = 'rgba(86,211,100,0.15)'; _npRRect(ctx, bx, by, bw, bh, 4); ctx.fill();
         ctx.strokeStyle = 'rgba(86,211,100,0.4)'; ctx.lineWidth = 1; _npRRect(ctx, bx, by, bw, bh, 4); ctx.stroke();
         ctx.font = '700 9px ' + SAN; ctx.fillStyle = '#56d364';
         ctx.textAlign = 'center'; ctx.fillText('✅ BATIDA', bx + bw / 2, y + 0.5); ctx.textAlign = 'left';
       } else {
         ctx.font = '9px ' + SAN; ctx.fillStyle = '#f0b429';
-        ctx.fillText('⏳', px + 370, y);
+        ctx.textAlign = 'center'; ctx.fillText('⏳', px + 448, y); ctx.textAlign = 'left';
       }
       y += 36;
     });

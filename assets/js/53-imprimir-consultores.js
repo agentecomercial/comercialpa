@@ -23,7 +23,7 @@
     return _mesFiltro || _mesAtualYM();
   }
   /* Pré-seleção sugerida — marcas com ⭐ e marcadas por default na 1ª abertura. */
-  var PRE_SELECT = ['esc_todos','st_negoc','st_pago','st_aberto','pe_curso_atual','ex_fin','ex_trein_pg','ex_entradas','ex_negoc'];
+  var PRE_SELECT = ['pe_curso_atual','esc_sel','ex_fin','ex_detalh'];
   var _primeiraAbertura = true;
   /* Cache de turmas vindas do Firebase (assíncrono — preenchido após o load) */
   var _fbTurmasCache = {};
@@ -56,12 +56,13 @@
       ]}
     ]},
     { id:'status', ic:'💰', nome:'Por status de venda', opts:[
-      { id:'st_parent', ic:'📋', t:'Quais status entram no relatório', d:'FILTRO — só os status marcados aparecem nos blocos:', isParent:true, subs:[
+      { id:'st_parent', ic:'📋', t:'Quais status entram no relatório', d:'Cada status marcado vira um BLOCO com a lista de clientes:', isParent:true, subs:[
         { id:'st_negoc',   ic:'🤝', t:'Em NEGOCIAÇÃO' },
         { id:'st_pago',    ic:'💚', t:'Só PAGOS' },
         { id:'st_aberto',  ic:'🟠', t:'Só EM ABERTO' },
         { id:'st_entrada', ic:'💵', t:'Com ENTRADA recebida' },
-        { id:'st_desist',  ic:'❌', t:'Desistências / cancelados' }
+        { id:'st_desist',  ic:'❌', t:'Desistências / cancelados' },
+        { id:'st_vazio',   ic:'⬜', t:'Sem treinamento (status diferente)' }
       ]}
     ]},
     { id:'treinamento', ic:'🎓', nome:'Por treinamento / produto', opts:[
@@ -108,6 +109,7 @@
         case 'st_negoc':   return _clientesDoEscopo().filter(function(c){return String(c.status||'').toLowerCase()==='negociacao';}).length;
         case 'st_entrada': return _clientesDoEscopo().filter(function(c){return +(c.entrada||0)>0;}).length;
         case 'st_desist':  return _clientesDoEscopo().filter(function(c){var s=String(c.status||'').toLowerCase();return s==='desistiu'||s==='cancelado'||s==='cancelada';}).length;
+        case 'st_vazio':   return _clientesDoEscopo().filter(_ehStatusOutro).length;
       }
     } catch(e){}
     return null;
@@ -116,6 +118,8 @@
   function _esc(s){ return (window._esc ? window._esc(s) : String(s||'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})); }
   function _escSafe(s){ return String(s||'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function _fmtR(v){ return (typeof formatVal==='function') ? formatVal(v) : ('R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})); }
+  /* Nome do aluno SEMPRE em caixa alta no relatório */
+  function _cliUp(c){ return String((c&&c.cliente)||'').toUpperCase(); }
 
   /* ──────────── CSS inline (one-shot) ──────────── */
   function _injetarCss(){
@@ -374,11 +378,11 @@
                 + '<div class="icv-multi-cons-chips">'+consChips+'</div>'
                 + '</div>';
             }
-            /* Sub-opções de Status (st_*) e Escopo (esc_*) viraram FILTROS
-               em cascata — não geram bloco. Mostro tag "FILTRO" pra deixar
-               claro pro usuário. */
-            var ehFiltro = /^st_|^esc_/.test(s.id);
-            var filtroTag = ehFiltro ? '<span class="filtro-tag">FILTRO</span>' : '';
+            /* Escopo (esc_*) = FILTRO em cascata (recorta os blocos).
+               Status (st_*) agora GERAM bloco com a lista de clientes. */
+            var filtroTag = /^esc_/.test(s.id) ? '<span class="filtro-tag">FILTRO</span>'
+                          : /^st_/.test(s.id)  ? '<span class="filtro-tag" style="background:rgba(86,211,100,.16);color:#56d364;">BLOCO</span>'
+                          : '';
             return '<label class="icv-sub-opt'+(ssel?' sel':'')+'" data-opt-id="'+s.id+'">'
               + '<input type="checkbox" '+(ssel?'checked':'')+'>'
               + '<span class="ic">'+s.ic+'</span>'
@@ -754,6 +758,10 @@
        _clientesFiltrados()        → escopo + status + consultor. Cascata
                                      completa. Usado por blocos que devem
                                      espelhar os filtros do usuário. */
+  /* Status conhecidos do sistema. "Sem treinamento" = status DIFERENTE de todos
+     estes (inclui vazio) — cliente que ainda não escolheu treinamento. */
+  var _STATUS_CONHECIDOS = ['aberto','pago','negociacao','entrada','desistiu','estorno','cancelado','cancelada'];
+  function _ehStatusOutro(c){ return _STATUS_CONHECIDOS.indexOf(String((c&&c.status)||'').toLowerCase().trim()) === -1; }
   function _filtroStatusAtivo(){
     var sts = new Set();
     if(_selecionadas.has('st_pago'))    sts.add('pago');
@@ -764,6 +772,11 @@
   }
   function _filtroEntradaAtivo(){
     return _selecionadas.has('st_entrada');
+  }
+  function _filtroVazioAtivo(){
+    /* st_vazio ("Sem treinamento") participa da cascata: clientes com status
+       diferente dos conhecidos (inclui vazio). */
+    return _selecionadas.has('st_vazio');
   }
   function _filtroConsultoresAtivo(){
     var set = new Set();
@@ -806,12 +819,14 @@
     var lista = _clientesDoEscopoComConsultor();
     var sts = _filtroStatusAtivo();
     var fent = _filtroEntradaAtivo();
-    var algumStatus = sts.size > 0 || fent;
+    var fvaz = _filtroVazioAtivo();
+    var algumStatus = sts.size > 0 || fent || fvaz;
     if(!algumStatus) return lista;
     return lista.filter(function(c){
       var st = String(c.status||'').toLowerCase();
       if(sts.size > 0 && sts.has(st)) return true;
       if(fent && +(c.entrada||0) > 0) return true;
+      if(fvaz && _ehStatusOutro(c)) return true;
       return false;
     });
   }
@@ -826,6 +841,7 @@
     if(sts.has('negociacao')) stLabel.push(labels.negociacao);
     if(sts.has('desistiu'))   stLabel.push(labels.desistiu);
     if(_filtroEntradaAtivo()) stLabel.push('COM ENTRADA');
+    if(_filtroVazioAtivo())   stLabel.push('SEM TREINAMENTO');
     if(stLabel.length) partes.push('status=' + stLabel.join(','));
     var cs = _filtroConsultoresAtivo();
     if(cs){
@@ -971,11 +987,17 @@
       /* FILTROS (não geram bloco) */
       case 'esc_parent': case 'esc_todos': case 'esc_top3':
       case 'esc_bateu':  case 'esc_sel':
-      case 'st_parent':  case 'st_pago':   case 'st_aberto':
-      case 'st_negoc':   case 'st_entrada':case 'st_desist':
+      case 'st_parent':
       case 'pe_curso_atual': case 'pe_mes': case 'pe_outro':
       case 'ex_resumo':
         return null;
+      /* BLOCOS · por status de venda (cada status marcado lista seus clientes) */
+      case 'st_negoc':    return _sec_stFiltro('negociacao', 'Em negociação', 'NEGOCIAÇÃO');
+      case 'st_pago':     return _sec_stFiltro('pago', 'Pagos', 'PAGOS');
+      case 'st_aberto':   return _sec_stFiltro('aberto', 'Em aberto', 'ABERTO');
+      case 'st_entrada':  return _sec_stEntrada();
+      case 'st_desist':   return _sec_stDesist();
+      case 'st_vazio':    return _sec_semTreinamento();
       /* BLOCOS DE TREINAMENTO */
       case 'tr_agrup':    return _sec_trAgrupado();
       case 'tr_top5':     return _sec_trTop5();
@@ -1007,12 +1029,12 @@
       html += '<h3 style="margin-top:14px;color:#b88a5a;">'+_esc(n)+' · '+s.qtd+' cliente(s) · '+_fmtR(s.total)+'</h3>';
       html += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;color:#9aa5b1;"><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;text-align:left;">Treinamento</th><th style="padding:5px 8px;text-align:right;">Valor</th><th style="padding:5px 8px;">Status</th></tr></thead><tbody>';
       lst.forEach(function(c){
-        html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:5px 8px;">'+_esc(c.cliente)+'</td><td style="padding:5px 8px;color:#9aa5b1;">'+_esc(c.treinamento||'—')+'</td><td style="padding:5px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:5px 8px;text-align:center;font-size:10px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
+        html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:5px 8px;">'+_esc(_cliUp(c))+'</td><td style="padding:5px 8px;color:#9aa5b1;">'+_esc(c.treinamento||'—')+'</td><td style="padding:5px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:5px 8px;text-align:center;font-size:10px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
       });
       html += '</tbody></table>';
       txt += '\n▼ '+n+' · '+s.qtd+' cliente(s) · '+_fmtR(s.total)+'\n';
       lst.forEach(function(c){
-        txt += '   • '+c.cliente+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
+        txt += '   • '+_cliUp(c)+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
       });
     });
     return { titulo:'👥 Todos os consultores', html:html, txt:txt };
@@ -1027,13 +1049,13 @@
       + '<p style="color:#9aa5b1;">'+s.qtd+' cliente(s) · Total: <b>'+_fmtR(s.total)+'</b> · Pago: <b style="color:#34d399;">'+_fmtR(s.pago)+'</b> · Aberto: <b style="color:#f59e0b;">'+_fmtR(s.aberto)+'</b></p>';
     html += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;color:#9aa5b1;"><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;">Treinamento</th><th style="padding:5px 8px;text-align:right;">Valor</th><th style="padding:5px 8px;">Status</th></tr></thead><tbody>';
     lst.forEach(function(c){
-      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:5px 8px;">'+_esc(c.cliente)+'</td><td style="padding:5px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:5px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:5px 8px;text-align:center;font-size:10px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
+      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:5px 8px;">'+_esc(_cliUp(c))+'</td><td style="padding:5px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:5px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:5px 8px;text-align:center;font-size:10px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
     });
     html += '</tbody></table>';
     var txt = '👤 '+_consultorEscolhido+'\n'
       + s.qtd+' cliente(s) · Total: '+_fmtR(s.total)+' · Pago: '+_fmtR(s.pago)+' · Aberto: '+_fmtR(s.aberto)+'\n';
     lst.forEach(function(c){
-      txt += '   • '+c.cliente+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
+      txt += '   • '+_cliUp(c)+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
     });
     return { titulo:'👤 Consultor selecionado', html:html, txt:txt };
   }
@@ -1053,12 +1075,12 @@
       html += '<h3 style="margin-top:14px;color:#b88a5a;">'+_esc(nome)+' · '+s.qtd+' cliente(s) · pago: <b style="color:#34d399;">'+_fmtR(s.pago)+'</b></h3>';
       html += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;"><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;text-align:left;">Treinamento</th><th style="padding:5px 8px;text-align:right;">Valor</th><th style="padding:5px 8px;">Status</th></tr></thead><tbody>';
       lst.forEach(function(c){
-        html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:4px 8px;">'+_esc(c.cliente)+'</td><td style="padding:4px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:4px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:4px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
+        html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:4px 8px;">'+_esc(_cliUp(c))+'</td><td style="padding:4px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:4px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:4px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
       });
       html += '</tbody></table>';
       txt += '\n▼ '+nome+' · '+s.qtd+' cliente(s) · pago '+_fmtR(s.pago)+'\n';
       lst.forEach(function(c){
-        txt += '   • '+c.cliente+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
+        txt += '   • '+_cliUp(c)+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
       });
     });
     html += '<p style="margin-top:8px;color:#9aa5b1;">Total faturado dos selecionados: <b style="color:#d4a574;">'+_fmtR(totGeral)+'</b></p>';
@@ -1139,8 +1161,8 @@
       + '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;"><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;text-align:left;">Consultor</th><th style="padding:5px 8px;text-align:left;">Treinamento</th><th style="padding:5px 8px;text-align:right;">Valor</th><th style="padding:5px 8px;">Status</th></tr></thead><tbody>';
     var txt = '📋 TODOS OS CLIENTES ('+lst.length+')\n';
     lst.forEach(function(c){
-      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:4px 8px;">'+_esc(c.cliente)+'</td><td style="padding:4px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:4px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:4px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:4px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
-      txt += '• '+c.cliente+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
+      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:4px 8px;">'+_esc(_cliUp(c))+'</td><td style="padding:4px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:4px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:4px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:4px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
+      txt += '• '+_cliUp(c)+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
     });
     html += '</tbody></table>';
     return { titulo:'📋 Todos os clientes', html:html, txt:txt };
@@ -1151,9 +1173,10 @@
     return String(s||'').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]+\s*/u, '').trim();
   }
   function _sec_stFiltro(status, titulo, lblTxt){
-    /* Bloco de status fixo — filtra hardcoded por status, respeita consultor.
-       Mensagem vazia segue padrão "Nenhum X registrado. —". Header "TÍTULO (N · R$)". */
-    var lst = _clientesDoEscopoComConsultor().filter(function(c){ return String(c.status||'').toLowerCase() === status; });
+    /* Bloco de status fixo — filtra por status sobre o RECORTE em cascata
+       (respeita os checkboxes de status). Se o status do bloco não estiver
+       marcado, _clientesFiltrados() não o inclui → bloco vazio. */
+    var lst = _clientesFiltrados().filter(function(c){ return String(c.status||'').toLowerCase() === status; });
     var sum = lst.reduce(function(a,c){ return a + +(c.valor||0); }, 0);
     var tituloLimpo = _stripEmoji(titulo);
     var header = '<h2>'+_esc(tituloLimpo)+' ('+lst.length+(lst.length ? ' · '+_fmtR(sum) : '')+')</h2>';
@@ -1171,14 +1194,14 @@
       + '<table><thead><tr><th>Cliente</th><th>Treinamento</th><th style="text-align:right;">Valor</th><th>Forma</th><th>Consultor</th></tr></thead><tbody>';
     lst.forEach(function(c){
       var forma = c.forma || c.formaPagamento || '—';
-      html += '<tr><td>'+_esc(c.cliente)+'</td><td>'+_esc(c.treinamento||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td><td>'+_esc(forma)+'</td><td>'+_esc(c.consultor||'—')+'</td></tr>';
-      txt += '• '+c.cliente+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+(c.consultor||'—')+'\n';
+      html += '<tr><td>'+_esc(_cliUp(c))+'</td><td>'+_esc(c.treinamento||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td><td>'+_esc(forma)+'</td><td>'+_esc(c.consultor||'—')+'</td></tr>';
+      txt += '• '+_cliUp(c)+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+(c.consultor||'—')+'\n';
     });
     html += '</tbody></table>';
     return { titulo:tituloLimpo, html:html, txt:txt };
   }
   function _sec_stEntrada(){
-    var lst = _clientesDoEscopoComConsultor().filter(function(c){ return +(c.entrada||0) > 0; });
+    var lst = _clientesFiltrados().filter(function(c){ return +(c.entrada||0) > 0; });
     var sum = lst.reduce(function(a,c){ return a + +(c.entrada||0); }, 0);
     var tituloLimpo = 'Entradas recebidas';
     var header = '<h2>'+tituloLimpo+' ('+lst.length+(lst.length ? ' · '+_fmtR(sum) : '')+')</h2>';
@@ -1189,11 +1212,56 @@
     var html = header
       + '<table><thead><tr><th>Cliente</th><th>Consultor</th><th style="text-align:right;">Entrada</th><th style="text-align:right;">Valor total</th></tr></thead><tbody>';
     lst.forEach(function(c){
-      html += '<tr><td>'+_esc(c.cliente)+'</td><td>'+_esc(c.consultor||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.entrada)+'</td><td style="text-align:right;">'+_fmtR(c.valor)+'</td></tr>';
-      txt += '• '+c.cliente+' · '+(c.consultor||'—')+' · entrada '+_fmtR(c.entrada)+' / total '+_fmtR(c.valor)+'\n';
+      html += '<tr><td>'+_esc(_cliUp(c))+'</td><td>'+_esc(c.consultor||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.entrada)+'</td><td style="text-align:right;">'+_fmtR(c.valor)+'</td></tr>';
+      txt += '• '+_cliUp(c)+' · '+(c.consultor||'—')+' · entrada '+_fmtR(c.entrada)+' / total '+_fmtR(c.valor)+'\n';
     });
     html += '</tbody></table>';
     return { titulo:tituloLimpo, html:html, txt:txt };
+  }
+  /* Bloco · desistências / cancelados (status desistiu/cancelado/cancelada) */
+  function _sec_stDesist(){
+    var alvo = ['desistiu','cancelado','cancelada'];
+    var lst = _clientesDoEscopoComConsultor().filter(function(c){ return alvo.indexOf(String(c.status||'').toLowerCase()) !== -1; });
+    var sum = lst.reduce(function(a,c){ return a + +(c.valor||0); }, 0);
+    var titulo = 'Desistências / cancelados';
+    var header = '<h2>'+titulo+' ('+lst.length+(lst.length ? ' · '+_fmtR(sum) : '')+')</h2>';
+    var txt = titulo.toUpperCase()+' ('+lst.length+(lst.length?' · '+_fmtR(sum):'')+')\n';
+    if(!lst.length){
+      return { titulo:titulo, html: header + '<div class="rs-empty"><span>Nenhuma desistência registrada.</span><span class="dash">—</span></div>', txt: txt + '  Nenhuma.\n' };
+    }
+    var html = header
+      + '<table><thead><tr><th>Cliente</th><th>Treinamento</th><th style="text-align:right;">Valor</th><th>Consultor</th></tr></thead><tbody>';
+    lst.forEach(function(c){
+      html += '<tr><td>'+_esc(c.cliente)+'</td><td>'+_esc(c.treinamento||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td><td>'+_esc(c.consultor||'—')+'</td></tr>';
+      txt += '• '+c.cliente+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+(c.consultor||'—')+'\n';
+    });
+    html += '</tbody></table>';
+    return { titulo:titulo, html:html, txt:txt };
+  }
+  /* Bloco · clientes SEM TREINAMENTO (status diferente dos conhecidos, inclui vazio).
+     Lista os clientes do escopo/consultor que ainda não escolheram treinamento. */
+  function _sec_semTreinamento(){
+    var seen = {}, lst = [];
+    _clientesFiltrados().forEach(function(c){
+      if(!_ehStatusOutro(c)) return;
+      var k = String(c.cliente||'').toLowerCase().trim();
+      if(!k || seen[k]) return; seen[k] = 1; lst.push(c);
+    });
+    var titulo = 'Sem treinamento';
+    var header = '<h2>'+titulo+' ('+lst.length+')</h2>';
+    var txt = 'SEM TREINAMENTO ('+lst.length+')\n';
+    if(!lst.length){
+      return { titulo:titulo, html: header + '<div class="rs-empty"><span>Nenhum cliente sem treinamento.</span><span class="dash">—</span></div>', txt: txt + '  Nenhum.\n' };
+    }
+    var html = header
+      + '<table><thead><tr><th>Cliente</th><th>Consultor</th><th>Status</th></tr></thead><tbody>';
+    lst.forEach(function(c){
+      var st = String(c.status||'').trim() || '—';
+      html += '<tr><td>'+_esc(_cliUp(c))+'</td><td>'+_esc(c.consultor||'—')+'</td><td>'+_esc(st)+'</td></tr>';
+      txt += '• '+_cliUp(c)+' · '+(c.consultor||'—')+'\n';
+    });
+    html += '</tbody></table>';
+    return { titulo:titulo, html:html, txt:txt };
   }
 
   /* ── TREINAMENTO ── (consolida TODAS as turmas) */
@@ -1212,11 +1280,11 @@
       html += '<h3 style="margin-top:14px;color:#b88a5a;">'+_esc(k)+' · '+lst.length+' venda(s) · '+_fmtR(sum)+'</h3>';
       html += '<ul style="margin:0;padding-left:18px;font-size:11px;">';
       lst.forEach(function(c){
-        html += '<li>'+_esc(c.cliente)+' ('+_esc(c.consultor||'—')+') · '+_fmtR(c.valor)+'</li>';
+        html += '<li>'+_esc(_cliUp(c))+' ('+_esc(c.consultor||'—')+') · '+_fmtR(c.valor)+'</li>';
       });
       html += '</ul>';
       txt += '\n▼ '+k+' · '+lst.length+' venda(s) · '+_fmtR(sum)+'\n';
-      lst.forEach(function(c){ txt += '   • '+c.cliente+' ('+(c.consultor||'—')+') · '+_fmtR(c.valor)+'\n'; });
+      lst.forEach(function(c){ txt += '   • '+_cliUp(c)+' ('+(c.consultor||'—')+') · '+_fmtR(c.valor)+'\n'; });
     });
     return { titulo:'Por treinamento', html:html, txt:txt };
   }
@@ -1228,8 +1296,8 @@
     var html = '<h2>Top 5 maiores vendas</h2><table><thead><tr><th style="width:8mm;">#</th><th>Cliente</th><th>Treinamento</th><th>Consultor</th><th style="text-align:right;">Valor</th></tr></thead><tbody>';
     var txt = 'TOP 5 MAIORES VENDAS\n';
     top.forEach(function(c,i){
-      html += '<tr><td>'+(i+1)+'</td><td>'+_esc(c.cliente)+'</td><td>'+_esc(c.treinamento||'—')+'</td><td>'+_esc(c.consultor||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td></tr>';
-      txt += (i+1)+'. '+c.cliente+' · '+(c.treinamento||'—')+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+'\n';
+      html += '<tr><td>'+(i+1)+'</td><td>'+_esc(_cliUp(c))+'</td><td>'+_esc(c.treinamento||'—')+'</td><td>'+_esc(c.consultor||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td></tr>';
+      txt += (i+1)+'. '+_cliUp(c)+' · '+(c.treinamento||'—')+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+'\n';
     });
     html += '</tbody></table>';
     return { titulo:'Top 5 maiores vendas', html:html, txt:txt };
@@ -1248,8 +1316,8 @@
     var html = head + '<table><thead><tr><th style="width:8mm;">#</th><th>Cliente</th><th>Consultor</th><th>Treinamento</th><th style="text-align:right;">Valor</th></tr></thead><tbody>';
     var txt = 'TOP HIGH TICKET (≥ R$ 30.000)\n';
     lst.forEach(function(c, i){
-      html += '<tr><td>'+(i+1)+'</td><td>'+_esc(c.cliente)+'</td><td>'+_esc(c.consultor||'—')+'</td><td>'+_esc(c.treinamento||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td></tr>';
-      txt += (i+1)+'. '+c.cliente+' · '+(c.consultor||'—')+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+'\n';
+      html += '<tr><td>'+(i+1)+'</td><td>'+_esc(_cliUp(c))+'</td><td>'+_esc(c.consultor||'—')+'</td><td>'+_esc(c.treinamento||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td></tr>';
+      txt += (i+1)+'. '+_cliUp(c)+' · '+(c.consultor||'—')+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+'\n';
     });
     html += '</tbody></table>';
     return { titulo:'Top vendas High Ticket', html:html, txt:txt };
@@ -1326,7 +1394,7 @@
   }
   function _sec_exTopTreinamentos(){
     var map = {};
-    _clientesDoEscopoComConsultor().forEach(function(c){
+    _clientesFiltrados().forEach(function(c){
       if(String(c.status||'').toLowerCase() !== 'pago') return;
       var k = c.treinamento || '(Sem treinamento)';
       if(!map[k]) map[k] = { nome:k, qtd:0, total:0 };
@@ -1518,13 +1586,13 @@
       + '<p style="font-size:10px;color:#9aa5b1;margin:2px 0 6px;">Pago: <b style="color:#34d399;">'+_fmtR(s.pago)+'</b> · Aberto: <b style="color:#f59e0b;">'+_fmtR(s.aberto)+'</b> · Negociação: <b style="color:#a855f7;">'+_fmtR(s.negociacao)+'</b></p>'
       + '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;color:#9aa5b1;"><th style="padding:4px 8px;text-align:left;">Cliente</th><th style="padding:4px 8px;text-align:left;">Consultor</th><th style="padding:4px 8px;text-align:left;">Treinamento</th><th style="padding:4px 8px;text-align:right;">Valor</th><th style="padding:4px 8px;">Status</th></tr></thead><tbody>';
     lst.forEach(function(c){
-      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:3px 8px;">'+_esc(c.cliente)+'</td><td style="padding:3px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:3px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:3px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:3px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
+      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:3px 8px;">'+_esc(_cliUp(c))+'</td><td style="padding:3px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:3px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:3px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:3px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
     });
     html += '</tbody></table>';
     var txt = '\n▼ '+nome+(codigo?' · '+codigo:'')+' · '+s.qtd+' cliente(s) · '+_fmtR(s.total)+'\n';
     txt += '   Pago: '+_fmtR(s.pago)+' · Aberto: '+_fmtR(s.aberto)+' · Negoc: '+_fmtR(s.negociacao)+'\n';
     lst.forEach(function(c){
-      txt += '   • '+c.cliente+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
+      txt += '   • '+_cliUp(c)+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
     });
     return { html:html, txt:txt };
   }
@@ -1571,13 +1639,13 @@
       + '<p style="color:#9aa5b1;">Total: <b>'+s.qtd+' cliente(s)</b> · Faturado: <b style="color:#34d399;">'+_fmtR(s.pago)+'</b> · Aberto: <b style="color:#f59e0b;">'+_fmtR(s.aberto)+'</b> · Negociação: <b style="color:#a855f7;">'+_fmtR(s.negociacao)+'</b></p>'
       + '<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#1c2128;color:#9aa5b1;"><th style="padding:5px 8px;text-align:left;">Cliente</th><th style="padding:5px 8px;text-align:left;">Consultor</th><th style="padding:5px 8px;text-align:left;">Treinamento</th><th style="padding:5px 8px;text-align:right;">Valor</th><th style="padding:5px 8px;">Status</th></tr></thead><tbody>';
     lst.forEach(function(c){
-      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:4px 8px;">'+_esc(c.cliente)+'</td><td style="padding:4px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:4px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:4px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:4px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
+      html += '<tr style="border-bottom:1px solid #2a2f37;"><td style="padding:4px 8px;">'+_esc(_cliUp(c))+'</td><td style="padding:4px 8px;color:#9aa5b1;">'+_esc(c.consultor||'—')+'</td><td style="padding:4px 8px;">'+_esc(c.treinamento||'—')+'</td><td style="padding:4px 8px;text-align:right;">'+_fmtR(c.valor)+'</td><td style="padding:4px 8px;text-align:center;font-size:9px;">'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
     });
     html += '</tbody></table>';
     var txt = '📚 CURSO/TURMA: '+nome+(codigo?' · '+codigo:'')+'\n'
       + s.qtd+' cliente(s) · Pago '+_fmtR(s.pago)+' · Aberto '+_fmtR(s.aberto)+'\n';
     lst.forEach(function(c){
-      txt += '• '+c.cliente+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
+      txt += '• '+_cliUp(c)+' · '+(c.consultor||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n';
     });
     return { titulo:'📚 Curso atual', html:html, txt:txt };
   }
@@ -1667,24 +1735,29 @@
   }
   function _sec_exDetalh(){
     var grupos = _porConsultor();
-    var nomes = Object.keys(grupos).sort();
+    /* Ordena consultores por faturamento (PAGO) decrescente */
+    var nomes = Object.keys(grupos).sort(function(a,b){
+      return _statsConsultor(grupos[b]).pago - _statsConsultor(grupos[a]).pago;
+    });
     if(!nomes.length){
       return { titulo:'Detalhado', html:'<h2>Detalhado por consultor</h2><div class="rs-empty"><span>Sem consultores no recorte.</span><span class="dash">—</span></div>', txt:'DETALHADO POR CONSULTOR\n  (sem dados)\n' };
     }
     var html = '<h2>Detalhado por consultor</h2>';
     var txt = 'DETALHADO POR CONSULTOR\n';
     nomes.forEach(function(n){
-      var lst = grupos[n], s = _statsConsultor(lst);
+      /* Clientes ordenados do maior para o menor valor */
+      var lst = grupos[n].slice().sort(function(a,b){ return +(b.valor||0) - +(a.valor||0); });
+      var s = _statsConsultor(lst);
       /* Consultores um abaixo do outro — sem quebra de página */
       html += '<div class="rs-detalh-item"><h3>'+_esc(n)+'</h3>'
         + '<p>Clientes: <b>'+s.qtd+'</b> · Faturado: <b>'+_fmtR(s.pago)+'</b> · Aberto: <b>'+_fmtR(s.aberto)+'</b></p>';
       html += '<table><thead><tr><th>Cliente</th><th>Treinamento</th><th style="text-align:right;">Valor</th><th>Status</th></tr></thead><tbody>';
       lst.forEach(function(c){
-        html += '<tr><td>'+_esc(c.cliente)+'</td><td>'+_esc(c.treinamento||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td><td>'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
+        html += '<tr><td>'+_esc(_cliUp(c))+'</td><td>'+_esc(c.treinamento||'—')+'</td><td style="text-align:right;font-weight:700;">'+_fmtR(c.valor)+'</td><td>'+_esc(String(c.status||'').toUpperCase())+'</td></tr>';
       });
       html += '</tbody></table></div>';
       txt += '\n═══ '+n+' ═══\nClientes: '+s.qtd+' · Faturado: '+_fmtR(s.pago)+' · Aberto: '+_fmtR(s.aberto)+'\n';
-      lst.forEach(function(c){ txt += '   • '+c.cliente+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n'; });
+      lst.forEach(function(c){ txt += '   • '+_cliUp(c)+' · '+(c.treinamento||'—')+' · '+_fmtR(c.valor)+' · '+String(c.status||'').toUpperCase()+'\n'; });
     });
     return { titulo:'Detalhado', html:html, txt:txt };
   }
@@ -1710,6 +1783,13 @@
     'ex_aberto':    24,
     'ex_entradas':  26,
     'ex_assin':     28,
+    /* 30-39 · BLOCOS POR STATUS DE VENDA (cada status marcado lista os clientes) */
+    'st_negoc':     30,
+    'st_pago':      31,
+    'st_aberto':    32,
+    'st_entrada':   33,
+    'st_desist':    34,
+    'st_vazio':     35,
     /* 40-49 · TREINAMENTOS / produtos */
     'tr_agrup':     40,
     'tr_top5':      42,

@@ -952,6 +952,12 @@ async function impImportarSheets(){
     if(typeof _temMojibake==='function'&&_temMojibake(texto.slice(0,2000))){
       console.warn('[IMPORT] Mojibake no Google Sheets — aplicando sanitização');
     }
+    // Garante a biblioteca XLSX carregada (lazy) antes de usar
+    if(typeof XLSX==='undefined' && typeof window._ensureXLSX==='function'){
+      document.getElementById('importModalSub').textContent='Carregando leitor de planilha...';
+      await window._ensureXLSX();
+    }
+    if(typeof XLSX==='undefined'){ throw new Error('Não foi possível carregar o leitor de planilha (XLSX).'); }
     var wb=XLSX.read(texto,{type:'string',raw:false});
     var ws=wb.Sheets[wb.SheetNames[0]];
     var aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});

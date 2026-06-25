@@ -25,6 +25,38 @@
   // consultor=true mostra "· NOME DO CONSULTOR" no final; forma=true mostra "· FORMA Nx" antes.
   var _exibir = { consultor: true, forma: true };
 
+  // Filtro de consultores: {NOME_UPPER: true/false}. Desmarcado = fora do relatório.
+  // Inicializado em _renderModal a partir dos consultores presentes na turma ativa.
+  var _consSel = {};
+  // Ordena as linhas de detalhe por VALOR (maior→menor) quando true; senão alfabético por cliente.
+  var _ordenarValor = false;
+
+  // Consultores presentes na turma sendo impressa (distintos, em caixa alta, sem '—').
+  function _consultoresDaTurma(){
+    var vistos = {};
+    _coletaItens().forEach(function(it){
+      var n = String(it.consultor||'').trim();
+      if(n && n !== '—') vistos[n] = true;
+    });
+    return Object.keys(vistos).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+  }
+  // Itens da turma já filtrados pelos consultores selecionados.
+  function _itensFiltrados(){
+    return _coletaItens().filter(function(it){ return _consSel[it.consultor] !== false; });
+  }
+  // Ordena uma lista de detalhe conforme o toggle. usaEntrada → ordena por it.entrada.
+  function _ordenaDetalhe(lista, usaEntrada){
+    return lista.slice().sort(function(a,b){
+      if(_ordenarValor){
+        var va = usaEntrada ? (a.entrada||0) : (a.valor||0);
+        var vb = usaEntrada ? (b.entrada||0) : (b.valor||0);
+        if(vb !== va) return vb - va;
+        return a.cliente.localeCompare(b.cliente,'pt-BR'); // empate → alfabético
+      }
+      return a.cliente.localeCompare(b.cliente,'pt-BR');
+    });
+  }
+
   function _fmtR(v){ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
   function _pad(s,n){ s=String(s||''); while(s.length<n) s+=' '; return s.slice(0,n); }
   function _padL(s,n){ s=String(s||''); while(s.length<n) s=' '+s; return s; }
@@ -148,8 +180,7 @@
   }
 
   function _bPagos(itens){
-    var pagos = itens.filter(function(it){return it.status==='pago';})
-                     .sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+    var pagos = _ordenaDetalhe(itens.filter(function(it){return it.status==='pago';}), false);
     if(!pagos.length) return SEP_LIN+'\n✅ TREINAMENTOS PAGOS (0)\n'+SEP_LIN+'\nNenhum pagamento registrado.\n';
     var linhas = pagos.map(function(it,i){
       var n=String(i+1).padStart(2,'0');
@@ -163,8 +194,7 @@
   }
 
   function _bEntradas(itens){
-    var ents = itens.filter(function(it){return it.entrada>0;})
-                    .sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+    var ents = _ordenaDetalhe(itens.filter(function(it){return it.entrada>0;}), true);
     if(!ents.length) return SEP_LIN+'\n💵 ENTRADAS RECEBIDAS (0)\n'+SEP_LIN+'\nNenhuma entrada registrada.\n';
     var linhas = ents.map(function(it,i){
       var n=String(i+1).padStart(2,'0');
@@ -180,8 +210,7 @@
   }
 
   function _bAberto(itens){
-    var abs = itens.filter(function(it){return it.status==='aberto';})
-                   .sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+    var abs = _ordenaDetalhe(itens.filter(function(it){return it.status==='aberto';}), false);
     if(!abs.length) return SEP_LIN+'\n⏳ EM ABERTO (0)\n'+SEP_LIN+'\nNada em aberto.\n';
     var totAberto = abs.reduce(function(s,it){return s+(it.valor||0);},0);
     var linhas = abs.map(function(it,i){
@@ -196,8 +225,7 @@
   }
 
   function _bNegociacao(itens){
-    var neg = itens.filter(function(it){return it.status==='negociacao';})
-                   .sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+    var neg = _ordenaDetalhe(itens.filter(function(it){return it.status==='negociacao';}), false);
     if(!neg.length) return SEP_LIN+'\n🤝 EM NEGOCIAÇÃO (0)\n'+SEP_LIN+'\nNada em negociação.\n';
     var totNeg = neg.reduce(function(s,it){return s+(it.valor||0);},0);
     var linhas = neg.map(function(it,i){
@@ -301,7 +329,7 @@
   // ── MONTA RELATÓRIO COMPLETO ───────────────────────────────────
   function _gerarRelatorio(){
     var t = _turmaTxt();
-    var itens = _coletaItens();
+    var itens = _itensFiltrados();
     var partes = [];
     partes.push('📊 RELATÓRIO — '+t.nome);
     if(t.periodo) partes.push('Período: '+t.periodo);
@@ -321,7 +349,7 @@
 
   // ── UI: contagens nas seções (preview de "quantos itens") ──────
   function _contagensSecao(){
-    var itens = _coletaItens();
+    var itens = _itensFiltrados();
     var cnt = {
       resumo: 3,
       pagos:  itens.filter(function(it){return it.status==='pago';}).length,
@@ -354,7 +382,12 @@
         +'</div>';
       }).join('');
 
-      // Grupo: EXIBIR no detalhe (toggles que removem sufixos das linhas)
+      // Inicializa a seleção de consultores (default: todos marcados). Preserva
+      // escolhas já feitas; só adiciona consultores novos da turma.
+      var _consTurma = _consultoresDaTurma();
+      _consTurma.forEach(function(n){ if(!(n in _consSel)) _consSel[n] = true; });
+
+      // Grupo: EXIBIR no detalhe (toggles de sufixos + ordenação por valor)
       var htmlExibir = '<div class="sup-side-group">'
         + '<div class="sup-side-grouph">⚙️ Exibir no detalhe</div>'
         + (function(){
@@ -370,9 +403,31 @@
               +'</div>';
             }).join('');
           })()
+        + (function(){
+            var on = !!_ordenarValor;
+            return '<div class="sup-side-item small'+(on?' on':'')+'" data-ord="valor" onclick="window._supToggleOrdenar()">'
+              +'<div class="dot">'+(on?'✓':'')+'</div>'
+              +'<span class="nm">Ordenar por valor (maior→menor)</span>'
+            +'</div>';
+          })()
         + '</div>';
 
-      listEl.innerHTML = htmlSecoes + htmlExibir;
+      // Grupo: CONSULTORES da turma (filtro — só os marcados entram no relatório)
+      var htmlCons = '<div class="sup-side-group">'
+        + '<div class="sup-side-grouph">👤 Consultores da turma</div>'
+        + (_consTurma.length
+            ? _consTurma.map(function(n){
+                var on = _consSel[n] !== false;
+                var attr = String(n).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+                return '<div class="sup-side-item small'+(on?' on':'')+'" data-cons="'+attr+'" onclick="window._supToggleCons(this.getAttribute(\'data-cons\'))">'
+                  +'<div class="dot">'+(on?'✓':'')+'</div>'
+                  +'<span class="nm">'+n+'</span>'
+                +'</div>';
+              }).join('')
+            : '<div class="sup-side-item small" style="opacity:.6;cursor:default;"><span class="nm">Nenhum consultor na turma.</span></div>')
+        + '</div>';
+
+      listEl.innerHTML = htmlSecoes + htmlExibir + htmlCons;
     }
     _renderPreview();
   }
@@ -426,10 +481,32 @@
     _renderPreview();
   };
 
+  // Filtro de consultor: alterna 1 consultor. Como muda contagens das seções,
+  // re-renderiza o painel inteiro (preserva a seleção via _consSel persistente).
+  window._supToggleCons = function(nome){
+    if(nome==null) return;
+    _consSel[nome] = (_consSel[nome] === false); // false→true / true(undefined)→false
+    _renderModal();
+  };
+
+  // Ordenação por valor (maior→menor): não muda contagens, só a ordem do detalhe.
+  window._supToggleOrdenar = function(){
+    _ordenarValor = !_ordenarValor;
+    var item = document.querySelector('.sup-side-item[data-ord="valor"]');
+    if(item){
+      item.classList.toggle('on', _ordenarValor);
+      var dot = item.querySelector('.dot');
+      if(dot) dot.textContent = _ordenarValor?'✓':'';
+    }
+    _renderPreview();
+  };
+
   window._supMarcarTodos = function(marcar){
     SECOES.forEach(function(s){ _sel[s.id]=!!marcar; });
     // "Marcar tudo" / "Limpar" também aplicam aos toggles de exibir colunas
     Object.keys(_exibir).forEach(function(k){ _exibir[k] = !!marcar; });
+    // ...e à seleção de consultores (limpar = relatório vazio; marcar = todos)
+    _consultoresDaTurma().forEach(function(n){ _consSel[n] = !!marcar; });
     _renderModal();
   };
 
@@ -740,8 +817,8 @@
           y += 4;
         }
 
-        // ── Coleta dados ───────────────────────────────────────
-        var itens = _coletaItens();
+        // ── Coleta dados (já filtrada pelos consultores selecionados) ──
+        var itens = _itensFiltrados();
 
         // Forma de pagamento formatada (PIX/DÉBITO/TRANSF não mostram parcelas)
         function _formaPgto(it){
@@ -806,7 +883,7 @@
 
         // PAGOS
         if(_sel.pagos){
-          var pagos = itens.filter(function(it){return it.status==='pago';}).sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+          var pagos = _ordenaDetalhe(itens.filter(function(it){return it.status==='pago';}), false);
           _drawH2('Treinamentos Pagos ('+pagos.length+')');
           if(pagos.length) _tabelaItens(pagos);
           else _drawKv('Nenhum pagamento registrado.', '—');
@@ -815,7 +892,7 @@
         // ENTRADAS — TODAS as entradas registradas (incluindo as de subs já pagos
         // para manter rastreabilidade histórica dos pagamentos parcelados)
         if(_sel.entradas){
-          var ents = itens.filter(function(it){return it.entrada>0;}).sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+          var ents = _ordenaDetalhe(itens.filter(function(it){return it.entrada>0;}), true);
           _drawH2('Entradas Recebidas ('+ents.length+')');
           if(ents.length) _tabelaItens(ents, {usaEntrada:true});
           else _drawKv('Nenhuma entrada registrada.', '—');
@@ -823,7 +900,7 @@
 
         // NEGOCIAÇÃO
         if(_sel.negociacao){
-          var negs = itens.filter(function(it){return it.status==='negociacao';}).sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+          var negs = _ordenaDetalhe(itens.filter(function(it){return it.status==='negociacao';}), false);
           var totN = negs.reduce(function(s,it){return s+it.valor;},0);
           _drawH2('Em Negociação ('+negs.length+' · '+_fmtR(totN)+')');
           if(negs.length) _tabelaItens(negs);
@@ -832,7 +909,7 @@
 
         // ABERTO
         if(_sel.aberto){
-          var abs = itens.filter(function(it){return it.status==='aberto';}).sort(function(a,b){return a.cliente.localeCompare(b.cliente,'pt-BR');});
+          var abs = _ordenaDetalhe(itens.filter(function(it){return it.status==='aberto';}), false);
           var totA = abs.reduce(function(s,it){return s+it.valor;},0);
           _drawH2('Em Aberto ('+abs.length+' · '+_fmtR(totA)+')');
           if(abs.length) _tabelaItens(abs);

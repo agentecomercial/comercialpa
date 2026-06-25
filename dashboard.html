@@ -333,7 +333,7 @@
 
 <!-- MODAL GERENCIAR TURMAS (ADM) -->
 <div class="modal-overlay" id="gerenciarTurmasOverlay" style="z-index:1500;align-items:flex-start;padding:20px 0;overflow-y:auto;">
-  <div class="modal" style="width:min(96vw,860px);max-height:88vh;display:flex;flex-direction:column;">
+  <div class="modal" style="width:min(96vw,1240px);max-height:88vh;display:flex;flex-direction:column;">
     <div class="modal-title">⚙ Gerenciar Turmas</div>
     <!-- Controles: layout picker + ano -->
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 4px;">
@@ -356,6 +356,12 @@
         </div>
       </div>
       <div id="gtYearBar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
+      <div style="position:relative;margin-left:auto;flex:1;min-width:160px;max-width:320px;">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.6;pointer-events:none;">🔍</span>
+        <input id="gtBuscaInput" type="text" placeholder="Buscar turma..." oninput="_gtSetBusca(this.value)"
+          style="width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:7px 30px 7px 30px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;height:34px;box-sizing:border-box;">
+        <span id="gtBuscaClear" onclick="_gtSetBusca('')" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);cursor:pointer;">✕</span>
+      </div>
     </div>
     <div id="gerenciarTurmasLista" style="flex:1;overflow:auto;margin:8px 0;min-height:120px;"></div>
     <div class="modal-actions">
@@ -712,7 +718,7 @@
 
         <div class="modal-field" style="margin:0;">
           <label class="modal-label">Consultor <small style="color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0;">(selecione ou digite manualmente)</small></label>
-          <select class="modal-select" id="propostaConsultor" onchange="_propostaConsultorAtualizar()"></select>
+          <select class="modal-select" id="propostaConsultor" onchange="_propostaConsultorAtualizar();window._beltAoSelecionarConsultor&&_beltAoSelecionarConsultor()"></select>
           <input type="text" class="modal-input" id="propostaConsultorManual"
                  placeholder="Digite o nome do consultor"
                  oninput="_propostaConsultorAtualizar()"
@@ -744,14 +750,37 @@
           </select>
         </div>
 
-        <div style="flex:1;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <label class="modal-label" style="margin:0;">Treinamentos</label>
-            <div style="display:flex;gap:6px;align-items:center;">
-              <button onclick="_propostaSelecionarGGB()" style="background:rgba(80,140,255,.10);border:1px solid rgba(80,140,255,.35);border-radius:var(--radius-sm);padding:3px 10px;font-size:11px;font-weight:700;color:#93c5fd;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;letter-spacing:.05em;" onmouseover="this.style.borderColor='#5096ff';this.style.color='#bcd5ff';this.style.background='rgba(80,140,255,.18)'" onmouseout="this.style.borderColor='rgba(80,140,255,.35)';this.style.color='#93c5fd';this.style.background='rgba(80,140,255,.10)'" id="btnPropostaSelecionarGGB" title="Seleciona exclusivamente IF, MASTER, CEOP, FGPC, BHP, FCIS, ML5, TAV">Selecionar GGB</button>
-              <button onclick="_propostaSelecionarTodos()" style="background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:3px 10px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'" id="btnPropostaSelecionarTodos">Selecionar todos</button>
+        <!-- Grade da turma (mapeamento) — acordeão recolhível · base p/ Elite/Legacy Belt -->
+        <div class="modal-field" style="margin:0;">
+          <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden;">
+            <div onclick="_beltToggleAcc()" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;cursor:pointer;">
+              <span style="font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;min-width:0;">📎 Grade da turma
+                <span id="beltChip" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.08);color:var(--muted);white-space:nowrap;">sem grade</span>
+              </span>
+              <span id="beltCaret" style="color:var(--muted);font-size:11px;transition:transform .2s;flex-shrink:0;">▾</span>
+            </div>
+            <div id="beltAccBody" style="display:none;padding:0 12px 11px;">
+              <div style="display:flex;gap:6px;">
+                <input type="text" class="modal-input" id="beltLink" placeholder="Cole o link da planilha (Google Sheets publicado)…" style="flex:1;min-width:0;margin:0;">
+                <button type="button" onclick="_beltLerLink()" style="flex-shrink:0;background:rgba(80,140,255,.10);border:1px solid rgba(80,140,255,.35);border-radius:var(--radius-sm);padding:0 12px;font-size:11px;font-weight:700;color:#93c5fd;cursor:pointer;font-family:'DM Sans',sans-serif;">🔗 Ler link</button>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:6px;">
+                <button type="button" onclick="document.getElementById('beltArquivo').click()" style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:7px 10px;font-size:11px;font-weight:600;color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;">📎 Escolher arquivo (.xlsx / .csv / imagem / .pdf)</button>
+                <input type="file" id="beltArquivo" accept=".xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp,.pdf,image/*" style="display:none;" onchange="_beltArquivoChange(this)">
+              </div>
+              <div id="beltStatus" style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.55;"></div>
             </div>
           </div>
+        </div>
+
+        <div style="flex:1;">
+          <!-- Montagem rápida: 3 botões em cima padronizados (mesma altura/largura), todos com toggle -->
+          <div style="display:flex;gap:6px;margin-bottom:9px;">
+            <button onclick="_beltAplicar('elite')" style="flex:1 1 0;height:34px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;padding:0 6px;line-height:1;background:rgba(240,180,40,.12);border:1px solid rgba(240,180,40,.4);border-radius:var(--radius-sm);font-size:11px;font-weight:700;color:#f0b429;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onmouseover="this.style.background='rgba(240,180,40,.22)'" onmouseout="this.style.background='rgba(240,180,40,.12)'" id="btnEliteBelt" title="Marca os treinamentos PENDENTES do cliente conforme a grade da turma. Clique de novo para desmarcar.">🟡 Elite Belt</button>
+            <button onclick="_beltAplicar('legacy')" style="flex:1 1 0;height:34px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;padding:0 6px;line-height:1;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);border-radius:var(--radius-sm);font-size:11px;font-weight:700;color:#a78bfa;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onmouseover="this.style.background='rgba(167,139,250,.22)'" onmouseout="this.style.background='rgba(167,139,250,.12)'" id="btnLegacyBelt" title="Pendentes do cliente + CI obrigatório. Clique de novo para desmarcar.">🟣 Legacy Belt</button>
+            <button onclick="_propostaSelecionarGGB()" style="flex:1 1 0;height:34px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;padding:0 6px;line-height:1;background:rgba(80,140,255,.10);border:1px solid rgba(80,140,255,.35);border-radius:var(--radius-sm);font-size:11px;font-weight:700;color:#93c5fd;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onmouseover="this.style.borderColor='#5096ff';this.style.color='#bcd5ff';this.style.background='rgba(80,140,255,.18)'" onmouseout="this.style.borderColor='rgba(80,140,255,.35)';this.style.color='#93c5fd';this.style.background='rgba(80,140,255,.10)'" id="btnPropostaSelecionarGGB" title="Seleciona IF, MASTER, CEOP, FGPC, BHP, FCIS, ML5, TAV. Clique de novo para desmarcar.">Selecionar GGB</button>
+          </div>
+          <label class="modal-label" style="margin:0 0 6px;display:block;">Treinamentos</label>
           <div id="propostaTreinamentos" style="display:flex;flex-direction:column;gap:4px;"></div>
         </div>
 
@@ -876,9 +905,30 @@
     <!-- Footer -->
     <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;">
       <button class="modal-cancel" onclick="fecharPropostaModal()">Cancelar</button>
+      <button class="modal-cancel" id="propostaBtnVisualizar" onclick="visualizarPropostaPDF()" style="border-color:rgba(200,240,90,.4);color:var(--accent);">👁 Visualização</button>
       <button class="modal-save" id="propostaBtnGerar" onclick="gerarPropostaPDF()" style="background:var(--blue);border-color:var(--blue);">⬇ Gerar PDF</button>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL VISUALIZAÇÃO · ESPELHO DO PDF (somente leitura) -->
+<div class="modal-overlay" id="propostaVisualOverlay" style="z-index:1450;">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:98vw;max-width:98vw;height:96vh;max-height:96vh;margin:auto;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div class="modal-title" style="margin:0;">👁 Visualização da Proposta</div>
+        <div class="modal-subtitle" style="margin:0;">Espelho do PDF — confira todas as informações antes de gerar o documento.</div>
+      </div>
+      <button onclick="fecharPropostaVisual()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div style="flex:1;background:#3a3a3a;position:relative;overflow:hidden;">
+      <iframe id="propostaVisualFrame" src="about:blank" title="Visualização da proposta" style="width:100%;height:100%;border:none;background:#3a3a3a;"></iframe>
+    </div>
+    <div style="padding:12px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;">
+      <button class="modal-cancel" onclick="fecharPropostaVisual()">Fechar</button>
+      <button class="modal-save" onclick="fecharPropostaVisual();gerarPropostaPDF()" style="background:var(--blue);border-color:var(--blue);">⬇ Gerar PDF</button>
+    </div>
   </div>
 </div>
 
@@ -3815,7 +3865,7 @@ try{
 <!-- Turma · Layout Mobile Accordion (Consultor + Treinador) — só ativo em ≤ 768px -->
 <script defer src="assets/js/56-turma-mobile-accordion.js?v=20260610-320000"></script>
 <script defer src="assets/js/57-treinador-mobile-cards.js?v=20260614-210000"></script>
-<script defer src="assets/js/53-imprimir-consultores.js?v=20260611-420000"></script>
+<script defer src="assets/js/53-imprimir-consultores.js?v=20260625-02"></script>
 <script defer src="assets/js/99-diag.js?v=20260603-151115"></script>
 <script defer src="assets/js/99-schema-asserter.js?v=20260603-151115"></script>
 <script defer src="assets/js/99-smoke-test.js?v=20260604-090737"></script>
@@ -3823,13 +3873,14 @@ try{
 <script defer src="assets/js/22-pdf-consultor.js?v=20260603-151115"></script>
 <script defer src="assets/js/23-gerenciar-turmas.js"></script>
 <script defer src="assets/js/24-aba-produto.js?v=20260603-151115"></script>
-<script defer src="assets/js/25-abas-consultor.js?v=20260614-220000"></script>
+<script defer src="assets/js/25-abas-consultor.js?v=20260624-03"></script>
 <script defer src="assets/js/26-aba-treinador.js?v=20260614-230000"></script>
 <script defer src="assets/js/27-novos-membros.js?v=20260617-095000"></script>
 <script defer src="assets/js/28-modais-cliente.js?v=20260605-222750"></script>
 <script defer src="assets/js/18-usuarios.js?v=20260617-095000"></script>
 <script defer src="assets/js/19-pdf-clientes.js"></script>
-<script defer src="assets/js/20-propostas-main.js?v=20260614-410000"></script>
+<script defer src="assets/js/20-propostas-main.js?v=20260624-01"></script>
+<script defer src="assets/js/54-proposta-belt.js?v=20260624-05"></script>
 <script defer src="assets/js/17-presenca.js?v=20260614-180000"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/gerenciarTreinamentos.css">
@@ -3846,7 +3897,7 @@ try{
 
 <script defer src="assets/js/04-card-clientes.js?v=20260603-151115"></script>
 
-<script defer src="assets/js/05-importacao.js?v=20260615-120000"></script>
+<script defer src="assets/js/05-importacao.js?v=20260624-01"></script>
 <script defer src="assets/js/05b-lista-clientes.js?v=20260603-151115"></script>
 
 <!-- ══════════════════════════════════════════════════════════
