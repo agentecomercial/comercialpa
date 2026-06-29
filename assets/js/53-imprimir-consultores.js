@@ -962,15 +962,19 @@
     return todos;
   }
   function _statsConsultor(clientes){
+    /* Regra granular: soma por sub-treinamento (igual aos KPIs da aba Geral).
+       Cliente em negociação com um sub já pago contribui no Pago E na Negociação. */
+    var _fat = (typeof window._faturadoDoCliente==='function')        ? window._faturadoDoCliente        : function(d){return d.status==='pago'?(d.valor||0):0;};
+    var _abr = (typeof window._abertoDoCliente==='function')          ? window._abertoDoCliente          : function(d){return d.status==='aberto'?(d.valor||0):0;};
+    var _neg = (typeof window._negociacaoDoCliente==='function')      ? window._negociacaoDoCliente      : function(d){return d.status==='negociacao'?(d.valor||0):0;};
+    var _entP= (typeof window._entradaPendenteDoCliente==='function') ? window._entradaPendenteDoCliente : function(d){return d.status==='pago'?0:(d.entrada||0);};
     var pago = 0, aberto = 0, entrada = 0, neg = 0, total = 0;
     clientes.forEach(function(c){
-      var v = +(c.valor||0);
-      var st = String(c.status||'').toLowerCase();
-      total += v;
-      if(st === 'pago') pago += v;
-      else if(st === 'aberto') aberto += v;
-      else if(st === 'negociacao') neg += v;
-      entrada += +(c.entrada||0);
+      total   += +(c.valor||0);
+      pago    += _fat(c);
+      aberto  += _abr(c);
+      neg     += _neg(c);
+      entrada += _entP(c);
     });
     return { total:total, pago:pago, aberto:aberto, negociacao:neg, entrada:entrada, qtd:clientes.length };
   }

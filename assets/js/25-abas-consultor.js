@@ -20,7 +20,12 @@ function renderConsultor(){
   if(wrap) wrap.style.display='grid';
   document.getElementById('consultorCards').style.display='';
   const metaInd=allConsultors.length>0?META/allConsultors.length:0;
-  const _rankMapC=[...allConsultors].map(c=>({nome:c,pago:data.filter(d=>d&&d.cliente&&d.consultor===c&&d.status==='pago').reduce((a,d)=>a+d.valor,0)})).sort((a,b)=>b.pago-a.pago);
+  /* Regra granular: soma por sub-treinamento (igual aos KPIs da aba Geral).
+     Cliente em negociação com um sub já pago contribui no Faturado. */
+  var _fat = (typeof window._faturadoDoCliente==='function')        ? window._faturadoDoCliente        : function(d){return d.status==='pago'?(d.valor||0):0;};
+  var _abr = (typeof window._abertoDoCliente==='function')          ? window._abertoDoCliente          : function(d){return d.status==='aberto'?(d.valor||0):0;};
+  var _entP= (typeof window._entradaPendenteDoCliente==='function') ? window._entradaPendenteDoCliente : function(d){return d.status==='pago'?0:(d.entrada||0);};
+  const _rankMapC=[...allConsultors].map(c=>({nome:c,pago:data.filter(d=>d&&d.cliente&&d.consultor===c).reduce((a,d)=>a+_fat(d),0)})).sort((a,b)=>b.pago-a.pago);
   const _posMapC={};_rankMapC.forEach((c,i)=>{_posMapC[c.nome]=i;});
   var _sessC=_getSessao?_getSessao():null;
   var _perfilC=_sessC?_sessC.perfil:'adm';
@@ -33,9 +38,14 @@ function renderConsultor(){
   // ── Renderizar apenas os cards de consultores (sem ranking embutido) ──
   document.getElementById('consultorCards').innerHTML=_listaC.map(c=>{
     const cdA=data.filter(d=>d&&d.cliente&&d.consultor===c);
-    const cd=activeConsultorStatus===null?cdA:activeConsultorStatus==='entrada'?cdA.filter(d=>d.entrada>0):cdA.filter(d=>d.status===activeConsultorStatus);
-    const total=cd.reduce((a,d)=>a+d.valor,0),pago=cd.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
-    const aberto=cd.filter(d=>d.status==='aberto').reduce((a,d)=>a+d.valor,0),entrada=cd.reduce((a,d)=>a+d.entrada,0);
+    const cd=activeConsultorStatus===null?cdA
+      :activeConsultorStatus==='entrada'   ?cdA.filter(d=>_entP(d)>0)
+      :activeConsultorStatus==='pago'      ?cdA.filter(d=>_fat(d)>0)
+      :activeConsultorStatus==='aberto'    ?cdA.filter(d=>_abr(d)>0)
+      :activeConsultorStatus==='negociacao'?cdA.filter(d=>window._negociacaoDoCliente?window._negociacaoDoCliente(d)>0:d.status==='negociacao')
+      :cdA.filter(d=>d.status===activeConsultorStatus);
+    const total=cd.reduce((a,d)=>a+d.valor,0),pago=cd.reduce((a,d)=>a+_fat(d),0);
+    const aberto=cd.reduce((a,d)=>a+_abr(d),0),entrada=cd.reduce((a,d)=>a+_entP(d),0);
     const pctMeta=metaInd>0?Math.round((pago/metaInd)*100):0;
     const colMeta=getCol(pctMeta);
     const restante=Math.max(metaInd-pago,0);
@@ -70,11 +80,11 @@ function renderConsultor(){
   const _rankCFat=[...allConsultors].map(c=>({
     nome:c,
     total:data.filter(d=>d&&d.cliente&&d.consultor===c).reduce((a,d)=>a+d.valor,0),
-    pago:data.filter(d=>d&&d.cliente&&d.consultor===c&&d.status==='pago').reduce((a,d)=>a+d.valor,0),
+    pago:data.filter(d=>d&&d.cliente&&d.consultor===c).reduce((a,d)=>a+_fat(d),0),
     clientes:data.filter(d=>d&&d.cliente&&d.consultor===c).length
   })).sort((a,b)=>b.pago-a.pago);
 
-  const _totalPagoC=data.filter(d=>d&&d.cliente&&d.status==='pago').reduce((a,d)=>a+d.valor,0);
+  const _totalPagoC=data.filter(d=>d&&d.cliente).reduce((a,d)=>a+_fat(d),0);
   const _pctGeralC=Math.round((_totalPagoC/META)*100);
   const _colGeralC=getCol(_pctGeralC);
 
@@ -156,8 +166,9 @@ function abrirClientesModal(tipo){
   _abrirClientesModalComLista(lista,titulo,subExtra,{statusAlvo:_statusAlvo});
 }
 function abrirPagosModal(){
-  const pagos=data.filter(d=>d&&d.cliente&&d.status==='pago').sort((a,b)=>b.valor-a.valor);
-  const total=pagos.reduce((a,d)=>a+d.valor,0);
+  const _fat=(typeof window._faturadoDoCliente==='function')?window._faturadoDoCliente:function(d){return d.status==='pago'?(d.valor||0):0;};
+  const pagos=data.filter(d=>d&&d.cliente&&_fat(d)>0).sort((a,b)=>_fat(b)-_fat(a));
+  const total=pagos.reduce((a,d)=>a+_fat(d),0);
   const pct=Math.round((total/META)*100);
   const col=getCol(pct);
   document.getElementById('pagosModalSub').innerHTML=
@@ -169,7 +180,7 @@ function abrirPagosModal(){
       <td style="text-align:center;font-size:12px;">${d.treinamento||'—'}</td>
       <td style="text-align:center;font-size:12px;color:var(--muted);">${d.treinamento==='CI'?d.treinador:'-'}</td>
       <td style="text-align:center;font-size:12px;color:var(--muted);">${d.consultor.toUpperCase()}</td>
-      <td style="text-align:right;font-weight:600;color:${col.text};">${formatVal(d.valor)}</td>
+      <td style="text-align:right;font-weight:600;color:${col.text};">${formatVal(_fat(d))}</td>
     </tr>`).join('');
   document.getElementById('pagosModalOverlay').classList.add('open');
 }
@@ -268,11 +279,15 @@ window.copiarCardConsultor=function(c,ev){
   if(ev&&ev.stopPropagation) ev.stopPropagation();
   var card=(ev&&ev.currentTarget)?ev.currentTarget:document.getElementById('kpiCopiarConsultor');
 
+  var _fat = (typeof window._faturadoDoCliente==='function')        ? window._faturadoDoCliente        : function(d){return d.status==='pago'?(d.valor||0):0;};
+  var _abr = (typeof window._abertoDoCliente==='function')          ? window._abertoDoCliente          : function(d){return d.status==='aberto'?(d.valor||0):0;};
+  var _neg = (typeof window._negociacaoDoCliente==='function')      ? window._negociacaoDoCliente      : function(d){return d.status==='negociacao'?(d.valor||0):0;};
+  var _entP= (typeof window._entradaPendenteDoCliente==='function') ? window._entradaPendenteDoCliente : function(d){return d.status==='pago'?0:(d.entrada||0);};
   var cdA=data.filter(function(d){return d&&d.cliente&&d.consultor===c;});
-  var potencial=cdA.filter(function(d){return d.status==='negociacao';}).reduce(function(a,d){return a+d.valor;},0);
-  var pago=cdA.filter(function(d){return d.status==='pago';}).reduce(function(a,d){return a+d.valor;},0);
-  var aberto=cdA.filter(function(d){return d.status==='aberto';}).reduce(function(a,d){return a+d.valor;},0);
-  var entrada=cdA.reduce(function(a,d){return a+(d.entrada||0);},0);
+  var potencial=cdA.reduce(function(a,d){return a+_neg(d);},0);
+  var pago=cdA.reduce(function(a,d){return a+_fat(d);},0);
+  var aberto=cdA.reduce(function(a,d){return a+_abr(d);},0);
+  var entrada=cdA.reduce(function(a,d){return a+_entP(d);},0);
   var metaInd=allConsultors.length>0?META/allConsultors.length:0;
   var pct=metaInd>0?Math.round((pago/metaInd)*100):0;
   var restante=Math.max(metaInd-pago,0);
@@ -343,23 +358,34 @@ window.copiarCardConsultor=function(c,ev){
 };
 function _renderConsultorDetail(c){
   const cdA=data.filter(d=>d&&d.cliente&&d.consultor===c).sort((a,b)=>a.cliente.localeCompare(b.cliente,'pt-BR'));
-  var _cdStatus=activeConsultorStatus===null?cdA:activeConsultorStatus==='entrada'?cdA.filter(d=>d.entrada>0):cdA.filter(d=>d.status===activeConsultorStatus);
+  /* Regra granular: soma/conta por sub-treinamento (igual aos KPIs da aba Geral).
+     Cliente em negociação com um sub já pago contribui no Faturado E na Negociação. */
+  var _fat = (typeof window._faturadoDoCliente==='function')        ? window._faturadoDoCliente        : function(d){return d.status==='pago'?(d.valor||0):0;};
+  var _abr = (typeof window._abertoDoCliente==='function')          ? window._abertoDoCliente          : function(d){return d.status==='aberto'?(d.valor||0):0;};
+  var _neg = (typeof window._negociacaoDoCliente==='function')      ? window._negociacaoDoCliente      : function(d){return d.status==='negociacao'?(d.valor||0):0;};
+  var _entP= (typeof window._entradaPendenteDoCliente==='function') ? window._entradaPendenteDoCliente : function(d){return d.status==='pago'?0:(d.entrada||0);};
+  var _cdStatus=activeConsultorStatus===null?cdA
+    :activeConsultorStatus==='entrada'   ?cdA.filter(d=>_entP(d)>0)
+    :activeConsultorStatus==='pago'      ?cdA.filter(d=>_fat(d)>0)
+    :activeConsultorStatus==='aberto'    ?cdA.filter(d=>_abr(d)>0)
+    :activeConsultorStatus==='negociacao'?cdA.filter(d=>_neg(d)>0)
+    :cdA.filter(d=>d.status===activeConsultorStatus);
   var _fpC=window._getFiltroPresencaConsultor?window._getFiltroPresencaConsultor():null;
   const cd=_fpC?_cdStatus.filter(d=>(d.presenca||'pendente')===_fpC):_cdStatus;
   if(window._renderFiltrosPresencaConsultor) window._renderFiltrosPresencaConsultor();
 
   // ── Métricas agregadas ──
   // POTENCIAL = vendas em NEGOCIAÇÃO (não total geral)
-  const potencial=cdA.filter(d=>d.status==='negociacao').reduce((a,d)=>a+d.valor,0);
+  const potencial=cdA.reduce((a,d)=>a+_neg(d),0);
   const total=cdA.reduce((a,d)=>a+d.valor,0); // mantido para subtítulo
-  const pago=cdA.filter(d=>d.status==='pago').reduce((a,d)=>a+d.valor,0);
-  const aberto=cdA.filter(d=>d.status==='aberto').reduce((a,d)=>a+d.valor,0);
-  const entrada=cdA.reduce((a,d)=>a+(d.entrada||0),0);
+  const pago=cdA.reduce((a,d)=>a+_fat(d),0);
+  const aberto=cdA.reduce((a,d)=>a+_abr(d),0);
+  const entrada=cdA.reduce((a,d)=>a+_entP(d),0);
   const nTodos=cdA.length;
-  const nPago=cdA.filter(d=>d.status==='pago').length;
-  const nAberto=cdA.filter(d=>d.status==='aberto').length;
-  const nEntrada=cdA.filter(d=>d.entrada>0).length;
-  const nPotencial=cdA.filter(d=>d.status==='negociacao').length;
+  const nPago=cdA.filter(d=>_fat(d)>0).length;
+  const nAberto=cdA.filter(d=>_abr(d)>0).length;
+  const nEntrada=cdA.filter(d=>_entP(d)>0).length;
+  const nPotencial=cdA.filter(d=>_neg(d)>0).length;
 
   const fl=activeConsultorStatus?' · Filtro: '+activeConsultorStatus.toUpperCase():'';
   const _metaInd=allConsultors.length>0?META/allConsultors.length:0;
@@ -429,7 +455,7 @@ function _renderConsultorDetail(c){
 
   // ── Botões de filtro: atualizar contagem em cada .fbtn-num (sem
   //    destruir os spans coloridos da Opcao 3) ──
-  const nNegoc=cdA.filter(d=>d.status==='negociacao').length;
+  const nNegoc=cdA.filter(d=>_neg(d)>0).length;
   const _fcMap={fcAll:nTodos,fcAberto:nAberto,fcPago:nPago,fcEntrada:nEntrada,fcNegociacao:nNegoc};
   Object.keys(_fcMap).forEach(function(id){
     var el=document.getElementById(id);

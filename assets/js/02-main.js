@@ -155,6 +155,29 @@ function _buildColors(){
   allConsultors.forEach((c,i)=>{const cor=PALETTE_C[i%PALETTE_C.length];cColors[c]=cor;const h=cor.slice(1);cBg[c]='rgba('+parseInt(h.slice(0,2),16)+','+parseInt(h.slice(2,4),16)+','+parseInt(h.slice(4,6),16)+',.1)';});
 }
 
+/* Cor ÚNICA e determinística por consultor para a faixa do card mobile.
+   O hue é espaçado pelo índice do consultor em allConsultors, então dois
+   consultores diferentes NUNCA recebem a mesma cor (ao contrário das
+   classes CSS fixas cons-*, que colidiam no fallback azul). Aplicada inline
+   no banner — sobrepõe a classe. Retorna null quando não há consultor. */
+function _gradConsultorMobile(nome){
+  if(!nome) return null;
+  var lista=(typeof allConsultors!=='undefined'&&allConsultors.length)?allConsultors:[];
+  var idx=lista.indexOf?lista.indexOf(nome):-1;
+  var tot=lista.length||1;
+  if(idx<0){ /* não está na lista atual — deriva hash estável do nome */
+    var hsh=0,s=String(nome);
+    for(var k=0;k<s.length;k++) hsh=(hsh*31+s.charCodeAt(k))>>>0;
+    tot=Math.max(tot,12); idx=hsh%tot;
+  }
+  var hue=Math.round(idx*360/Math.max(tot,1))%360;
+  return {
+    grad:'linear-gradient(180deg,hsl('+hue+',58%,26%) 0%,hsl('+hue+',64%,7%) 100%)',
+    border:'hsl('+hue+',55%,56%)'
+  };
+}
+window._gradConsultorMobile=_gradConsultorMobile;
+
 /* ═══════════════════════════════════════════
    FORMATAÇÃO
 ═══════════════════════════════════════════ */
@@ -1909,7 +1932,11 @@ function renderAll(){
         var consSlug = consAtual
           ? consAtual.trim().split(/\s+/)[0].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
           : '';
-        var consBannerHtml = '<div class="mob-cons-banner'+(consAtual?' has':' empty')+(consSlug?' cons-'+consSlug:'')+'">'
+        /* Cor única por consultor (inline sobrepõe a classe) — garante que
+           consultores diferentes nunca tenham a mesma faixa. */
+        var _gc = (typeof _gradConsultorMobile==='function') ? _gradConsultorMobile(consAtual) : null;
+        var consBannerStyle = _gc ? ' style="background:'+_gc.grad+';border-bottom-color:'+_gc.border+';"' : '';
+        var consBannerHtml = '<div class="mob-cons-banner'+(consAtual?' has':' empty')+(consSlug?' cons-'+consSlug:'')+'"'+consBannerStyle+'>'
           + '<span class="bub bub-a"></span>'
           + '<span class="bub bub-b"></span>'
           + '<span class="bub bub-c"></span>'

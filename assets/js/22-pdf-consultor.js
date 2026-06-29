@@ -103,19 +103,23 @@ function gerarPdfConsultor(acao){
   selecionados.forEach(function(c){
     var cdA=data.filter(function(d){return d.consultor===c;});
 
-    // Filtrar clientes conforme seleção de status — fonte única de verdade
-    var clientesFiltrados=cdA.filter(function(d){
-      if(d.status==='pago'&&_pdfSecs.pagos) return true;
-      if(d.status==='aberto'&&_pdfSecs.em_aberto) return true;
-      return false;
-    });
-    var pagos=clientesFiltrados.filter(function(d){return d.status==='pago';});
-    var abertos=clientesFiltrados.filter(function(d){return d.status==='aberto';});
-    var entradaFiltrada=clientesFiltrados.filter(function(d){return d.entrada>0;});
+    /* Regra granular: um cliente em negociação com sub pago entra em PAGOS
+       (pelo valor do sub pago), igual aos KPIs da aba Geral / aba Consultor. */
+    var _fat = (typeof window._faturadoDoCliente==='function')        ? window._faturadoDoCliente        : function(d){return d.status==='pago'?(d.valor||0):0;};
+    var _abr = (typeof window._abertoDoCliente==='function')          ? window._abertoDoCliente          : function(d){return d.status==='aberto'?(d.valor||0):0;};
+    var _entP= (typeof window._entradaPendenteDoCliente==='function') ? window._entradaPendenteDoCliente : function(d){return d.status==='pago'?0:(d.entrada||0);};
 
-    // Totais baseados nos filtrados
-    var totalPago=pagos.reduce(function(a,d){return a+d.valor;},0);
-    var totalAberto=abertos.reduce(function(a,d){return a+d.valor;},0);
+    // Filtrar clientes conforme seleção de status — fonte única de verdade
+    var pagos=_pdfSecs.pagos?cdA.filter(function(d){return _fat(d)>0;}):[];
+    var abertos=_pdfSecs.em_aberto?cdA.filter(function(d){return _abr(d)>0;}):[];
+    // União (dedup) p/ entrada + tabela completa
+    var _vistos={},clientesFiltrados=[];
+    pagos.concat(abertos).forEach(function(d){var k=data.indexOf(d);if(!_vistos[k]){_vistos[k]=1;clientesFiltrados.push(d);}});
+    var entradaFiltrada=clientesFiltrados.filter(function(d){return _entP(d)>0;});
+
+    // Totais baseados nos filtrados (granular por sub-treinamento)
+    var totalPago=pagos.reduce(function(a,d){return a+_fat(d);},0);
+    var totalAberto=abertos.reduce(function(a,d){return a+_abr(d);},0);
     var totalVal=clientesFiltrados.reduce(function(a,d){return a+d.valor;},0);
     var pct=metaInd>0?Math.round((totalPago/metaInd)*100):0;
     var rgb=corPct(pct);
@@ -159,7 +163,7 @@ function gerarPdfConsultor(acao){
         checkY(6);doc.setFillColor(248,252,249);doc.rect(mg,y,W-mg*2,5.5,'F');
         doc.setDrawColor(220,235,220);doc.setLineWidth(0.1);doc.line(mg,y+5.5,W-mg,y+5.5);
         doc.setTextColor(50,50,50);doc.setFontSize(7);doc.setFont('helvetica','normal');doc.text(d.cliente.toUpperCase(),mg+3,y+4);doc.text(d.treinamento||'—',mg+65,y+4);
-        doc.setTextColor(46,139,87);doc.setFont('helvetica','bold');doc.text(formatVal(d.valor),W-mg-2,y+4,{align:'right'});y+=5.5;
+        doc.setTextColor(46,139,87);doc.setFont('helvetica','bold');doc.text(formatVal(_fat(d)),W-mg-2,y+4,{align:'right'});y+=5.5;
       });y+=4;
     }
     // Em aberto
@@ -172,12 +176,12 @@ function gerarPdfConsultor(acao){
         checkY(6);doc.setFillColor(255,252,245);doc.rect(mg,y,W-mg*2,5.5,'F');
         doc.setDrawColor(230,210,180);doc.setLineWidth(0.1);doc.line(mg,y+5.5,W-mg,y+5.5);
         doc.setTextColor(50,50,50);doc.setFontSize(7);doc.setFont('helvetica','normal');doc.text(d.cliente.toUpperCase(),mg+3,y+4);doc.text(d.treinamento||'—',mg+65,y+4);
-        doc.setTextColor(150,90,0);doc.setFont('helvetica','bold');doc.text(formatVal(d.valor),W-mg-2,y+4,{align:'right'});y+=5.5;
+        doc.setTextColor(150,90,0);doc.setFont('helvetica','bold');doc.text(formatVal(_abr(d)),W-mg-2,y+4,{align:'right'});y+=5.5;
       });y+=4;
     }
     // Com entrada — apenas dos clientes filtrados por status
     if(_pdfSecs.entrada&&entradaFiltrada.length){
-      var totalEnt=entradaFiltrada.reduce(function(a,d){return a+d.entrada;},0);
+      var totalEnt=entradaFiltrada.reduce(function(a,d){return a+_entP(d);},0);
       checkY(8+entradaFiltrada.length*6);
       doc.setFillColor(235,244,255);doc.setDrawColor(160,195,230);doc.setLineWidth(0.2);doc.roundedRect(mg,y,W-mg*2,6,1,1,'FD');
       doc.setTextColor(30,100,180);doc.setFontSize(7);doc.setFont('helvetica','bold');
@@ -186,7 +190,7 @@ function gerarPdfConsultor(acao){
         checkY(6);doc.setFillColor(245,249,255);doc.rect(mg,y,W-mg*2,5.5,'F');
         doc.setDrawColor(200,220,240);doc.setLineWidth(0.1);doc.line(mg,y+5.5,W-mg,y+5.5);
         doc.setTextColor(50,50,50);doc.setFontSize(7);doc.setFont('helvetica','normal');doc.text(d.cliente.toUpperCase(),mg+3,y+4);doc.text(d.treinamento||'—',mg+65,y+4);
-        doc.setTextColor(30,100,180);doc.setFont('helvetica','bold');doc.text(formatVal(d.entrada),W-mg-2,y+4,{align:'right'});y+=5.5;
+        doc.setTextColor(30,100,180);doc.setFont('helvetica','bold');doc.text(formatVal(_entP(d)),W-mg-2,y+4,{align:'right'});y+=5.5;
       });y+=4;
     }
     // Tabela completa — respeita filtros de status
@@ -207,7 +211,8 @@ function gerarPdfConsultor(acao){
     checkY(16+selecionados.length*8);
     doc.setFillColor(245,250,245);doc.setDrawColor(180,220,180);doc.setLineWidth(0.2);doc.roundedRect(mg,y,W-mg*2,12+selecionados.length*8,3,3,'FD');
     doc.setTextColor(46,139,87);doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text('Ranking — Faturado',mg+4,y+8);y+=12;
-    var rank=selecionados.map(function(c){return{nome:c,pago:data.filter(function(d){return d.consultor===c&&d.status==='pago';}).reduce(function(a,d){return a+d.valor;},0)};}).sort(function(a,b){return b.pago-a.pago;});
+    var _fatRk=(typeof window._faturadoDoCliente==='function')?window._faturadoDoCliente:function(d){return d.status==='pago'?(d.valor||0):0;};
+    var rank=selecionados.map(function(c){return{nome:c,pago:data.filter(function(d){return d.consultor===c;}).reduce(function(a,d){return a+_fatRk(d);},0)};}).sort(function(a,b){return b.pago-a.pago;});
     rank.forEach(function(r,i){
       doc.setTextColor(80,80,80);doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text((i+1)+'. '+r.nome,mg+6,y);
       doc.setTextColor(46,139,87);doc.setFont('helvetica','bold');doc.text(formatVal(r.pago),W-mg-4,y,{align:'right'});y+=7;
